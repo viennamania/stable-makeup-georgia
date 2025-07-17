@@ -28,10 +28,7 @@ import {
 
 
 
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
+
 
 import {
   ConnectButton,
@@ -83,6 +80,23 @@ import { useSearchParams } from 'next/navigation';
 
 
 import { paymentUrl } from "../../../config/payment";
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
+
 
 
 
@@ -204,14 +218,15 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    chain: chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
-  
-  
-    // the contract's address
-    ///address: contractAddressArbitrum,
-
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -557,25 +572,35 @@ export default function Index({ params }: any) {
     
         //console.log(result);
     
-        setBalance( Number(result) / 10 ** 6 );
-        } catch (error) {
-          console.log("getBalance error", error);
+        //setBalance( Number(result) / 10 ** 6 );
+        if (chain === 'bsc') {
+          setBalance( Number(result) / 10 ** 18 );
+        } else {
+          setBalance( Number(result) / 10 ** 6 );
+        }
+
+
+      } catch (error) {
+        console.log("getBalance error", error);
       }
 
 
-      // getWalletBalance
-      const result = await getWalletBalance({
-        address: address || "",
-        client: client,
-        chain: arbitrum,
-      });
-      //console.log("getWalletBalance", result);
-      /*
-      {value: 193243898588330546n, decimals: 18, displayValue: '0.193243898588330546', symbol: 'ETH', name: 'ETH'}
-      */
-      if (result) {
-        setNativeBalance(Number(result.value) / 10 ** result.decimals);
-      }
+    // getWalletBalance
+    const result = await getWalletBalance({
+      address: address || "",
+      client: client,
+      chain: chain === "ethereum" ? ethereum :
+              chain === "polygon" ? polygon :
+              chain === "arbitrum" ? arbitrum :
+              chain === "bsc" ? bsc : arbitrum,
+    });
+    //console.log("getWalletBalance", result);
+    /*
+    {value: 193243898588330546n, decimals: 18, displayValue: '0.193243898588330546', symbol: 'ETH', name: 'ETH'}
+    */
+    if (result) {
+      setNativeBalance(Number(result.value) / 10 ** result.decimals);
+    }
 
      
 
@@ -605,149 +630,6 @@ export default function Index({ params }: any) {
 
 
   const [escrowWalletAddress, setEscrowWalletAddress] = useState('');
-  const [makeingEscrowWallet, setMakeingEscrowWallet] = useState(false);
-
-  const makeEscrowWallet = async () => {
-      
-    if (!address) {
-      toast.error('Please connect your wallet');
-      return;
-    }
-
-
-    setMakeingEscrowWallet(true);
-
-    fetch('/api/order/getEscrowWalletAddress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        lang: params.lang,
-        chain: params.center,
-        walletAddress: address,
-        //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-        isSmartAccount: false,
-      }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        
-        //console.log('getEscrowWalletAddress data.result', data.result);
-
-
-        if (data.result) {
-          setEscrowWalletAddress(data.result.escrowWalletAddress);
-          toast.success(Escrow_Wallet_Address_has_been_created);
-        } else {
-          toast.error(Failed_to_create_Escrow_Wallet_Address);
-        }
-    })
-    .finally(() => {
-      setMakeingEscrowWallet(false);
-    });
-
-  }
-
-  //console.log("escrowWalletAddress", escrowWalletAddress);
-
-
-
-
-  // get escrow wallet address and balance
-  
-  const [escrowBalance, setEscrowBalance] = useState(0);
-  const [escrowNativeBalance, setEscrowNativeBalance] = useState(0);
-
-  
-  useEffect(() => {
-
-    const getEscrowBalance = async () => {
-
-      if (!address) {
-        setEscrowBalance(0);
-        return;
-      }
-
-      if (!escrowWalletAddress || escrowWalletAddress === '') return;
-
-
-      
-      const result = await balanceOf({
-        contract,
-        address: escrowWalletAddress,
-      });
-
-      //console.log('escrowWalletAddress balance', result);
-
-  
-      setEscrowBalance( Number(result) / 10 ** 6 );
-            
-
-
-      /*
-      await fetch('/api/user/getUSDTBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: params.center,
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-        console.log('getUSDTBalanceByWalletAddress data.result.displayValue', data.result?.displayValue);
-
-        setEscrowBalance(data.result?.displayValue);
-
-      } );
-       */
-
-
-
-
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: params.center,
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-
-        ///console.log('getBalanceByWalletAddress data', data);
-
-
-        setEscrowNativeBalance(data.result?.displayValue);
-
-      });
-      
-
-
-
-    };
-
-    getEscrowBalance();
-
-    const interval = setInterval(() => {
-      getEscrowBalance();
-    } , 1000);
-
-    return () => clearInterval(interval);
-
-  } , [address, escrowWalletAddress, contract, params.center]);
-  
-
-  //console.log('escrowBalance', escrowBalance);
-
 
 
 
@@ -1656,6 +1538,11 @@ export default function Index({ params }: any) {
           <ConnectButton
             client={client}
             wallets={wallets}
+            chain={chain === 'ethereum' ? ethereum :
+                    chain === 'polygon' ? polygon :
+                    chain === 'arbitrum' ? arbitrum :
+                    chain === 'bsc' ? bsc : arbitrum}
+
             theme={"light"}
             connectButton={{
               style: {
@@ -1754,13 +1641,10 @@ export default function Index({ params }: any) {
                     <ConnectButton
                       client={client}
                       wallets={wallets}
-
-                      /*
-                      accountAbstraction={{
-                        chain: arbitrum,
-                        sponsorGas: true
-                      }}
-                      */
+                      chain={chain === 'ethereum' ? ethereum :
+                              chain === 'polygon' ? polygon :
+                              chain === 'arbitrum' ? arbitrum :
+                              chain === 'bsc' ? bsc : arbitrum}
                       
                       theme={"light"}
 
@@ -2800,13 +2684,11 @@ export default function Index({ params }: any) {
                     <ConnectButton
                       client={client}
                       wallets={wallets}
+                      chain={chain === "ethereum" ? ethereum :
+                              chain === "polygon" ? polygon :
+                              chain === "arbitrum" ? arbitrum :
+                              chain === "bsc" ? bsc : arbitrum}
 
-                      /*
-                      accountAbstraction={{
-                        chain: arbitrum,
-                        sponsorGas: true
-                      }}
-                      */
                       
                       theme={"light"}
 
