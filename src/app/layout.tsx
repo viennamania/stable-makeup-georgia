@@ -20,6 +20,11 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import localFont from "next/font/local";
 
+
+import { chain } from "@/app/config/contractAddresses";
+import Image from "next/image";
+
+
 const pretendard = localFont({
   src: "../static/fonts/PretendardVariable.woff2",
   display: "swap",
@@ -57,6 +62,9 @@ export default function RootLayout({
   
    }, []);
    */
+
+
+   const [showChain, setShowChain] = React.useState(true);
 
 
   return (
@@ -112,8 +120,51 @@ export default function RootLayout({
         <ThirdwebProvider>
 
           <Toaster />
+
+          {/* chain image */}
+          <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4">
+            {/* Display the current chain */}
+            {/* show and hide button to toggle chain display */}
+  
+            <button
+              className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => setShowChain(!showChain)}
+            >
+              {showChain ? 'Hide Chain' : 'Show Chain'}
+            </button>
+
+            <div className={`flex flex-col items-center justify-center ${showChain ? 'block' : 'hidden'}`}>
+              {/* Display the current chain name */}
+              {/* Use the chain variable to determine which chain is currently selected */}
+              {/* Assuming you have a variable named 'chain' that holds the current chain name */}
+              <h1 className="text-lg font-semibold text-gray-800 mb-2">
+                Current Chain
+              </h1>
+              {/* Display the chain logo */}
+              {/* Use the chain variable to determine which logo to display */}
+              {/* Assuming you have images named logo-chain-ethereum.png, logo-chain-polygon.png, etc. in the public directory */}
+              {/* Adjust the path as necessary based on your project structure */}
+
+              <Image
+                src={`/logo-chain-${chain}.png`}
+                alt={`Chain logo for ${chain}`}
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full"
+                style={{ objectFit: "cover" }}
+              />
+              <span className="text-sm text-gray-600">
+                {
+                chain &&
+                chain.charAt(0).toUpperCase() + chain.slice(1)
+                }
+              </span>
+            </div>
+
             
           {children}
+
+          </div>
 
           <Analytics />
           <SpeedInsights />
