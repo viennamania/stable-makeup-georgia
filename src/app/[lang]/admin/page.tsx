@@ -2197,12 +2197,26 @@ export default function Index({ params }: any) {
 
                   <div className="flex flex-row gap-2 justify-center items-center">
                     <span className="text-sm text-zinc-600">
-                      가스비용
+                      가스수량
                     </span>
                     <div className="text-xl font-semibold text-zinc-800">
                       {Number(nativeBalance).toFixed(8)}
                     </div>
-                    <p className="text-sm text-zinc-800">ETH</p>
+                    <p className="text-sm text-zinc-800">
+                      {chain === "ethereum" ? "ETH" :
+                      chain === "polygon" ? "POL" :
+                      chain === "arbitrum" ? "ETH" :
+                      chain === "bsc" ? "BNB" : ""}
+                    </p>
+
+                    <Image
+                      src={`/logo-chain-${chain}.png`}
+                      alt={`${chain} logo`}
+                      width={20}
+                      height={20}
+                      className="rounded-lg"
+                    />
+
                   </div>
 
                   <div className="flex flex-row gap-2 justify-center items-center">
