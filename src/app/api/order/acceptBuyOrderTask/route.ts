@@ -115,8 +115,6 @@ export async function POST(request: NextRequest) {
 
     console.log("sellerWalletAddress", sellerWalletAddress);
 
-
-
     if (!sellerWalletAddress) {
       console.log("error");
       console.log("sellerWalletAddress is null");
@@ -129,7 +127,6 @@ export async function POST(request: NextRequest) {
       
       continue;
     }
-
 
 
     const sellerStorecode = "admin";
