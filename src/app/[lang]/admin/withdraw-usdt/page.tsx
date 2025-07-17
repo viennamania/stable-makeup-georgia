@@ -26,10 +26,7 @@ import {
     
 } from "thirdweb/react";
 
-import {
-    polygon,
-    arbitrum,
-} from "thirdweb/chains";
+
 
 import {
   getContract,
@@ -54,6 +51,24 @@ import Image from 'next/image';
 
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
+
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
+
 
 
 
@@ -120,14 +135,15 @@ export default function SendUsdt({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum ,
-  
-  
-  
-    // the contract's address
-    ///address: contractAddressArbitrum,
+    chain: chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -260,49 +276,18 @@ export default function SendUsdt({ params }: any) {
     // get the balance
     const getBalance = async () => {
 
-      ///console.log('getBalance address', address);
 
-      const contractUsdt = getContract({
-        client,
-        chain: arbitrum,
-        address: contractAddressArbitrum,
-      });
-
-      
       const result = await balanceOf({
         //contract,
-        contract: contractUsdt,
+        contract: contract,
         address: address || "",
       });
 
-  
-      //console.log("balanceOf address", address);
-      //console.log("balanceOf result", result);
-
-
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: params.center,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-
-      */
-
+      if (chain === "bsc") {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
     };
 
@@ -316,7 +301,7 @@ export default function SendUsdt({ params }: any) {
 
   //} , [address, contract, params.center]);
 
-  } , [address]);
+  } , [address, contract]);
 
 
 
@@ -463,72 +448,6 @@ export default function SendUsdt({ params }: any) {
 
   
 
-  const sendOtp = async () => {
-
-    setIsSendingOtp(true);
-      
-    const response = await fetch('/api/transaction/setOtp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        lang: params.lang,
-        chain: params.center,
-        walletAddress: address,
-        mobile: user.mobile,
-      }),
-    });
-
-    const data = await response.json();
-
-    //console.log("data", data);
-
-    if (data.result) {
-      setIsSendedOtp(true);
-      toast.success('OTP sent successfully');
-    } else {
-      toast.error('Failed to send OTP');
-    }
-
-    setIsSendingOtp(false);
-
-  };
-
-  const verifyOtp = async () => {
-
-    setIsVerifingOtp(true);
-      
-    const response = await fetch('/api/transaction/verifyOtp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        lang: params.lang,
-        chain: params.center,
-        walletAddress: address,
-        otp: otp,
-      }),
-    });
-
-    const data = await response.json();
-
-    //console.log("data", data);
-
-    if (data.status === 'success') {
-      setVerifiedOtp(true);
-      toast.success('OTP verified successfully');
-    } else {
-      toast.error('Failed to verify OTP');
-    }
-
-    setIsVerifingOtp(false);
-  
-  }
-
-
-
 
   const [sending, setSending] = useState(false);
   const sendUsdt = async () => {
@@ -635,9 +554,12 @@ export default function SendUsdt({ params }: any) {
             address: address || "",
           });
 
-          //console.log(result);
+          if (chain === "bsc") {
+            setBalance( Number(result) / 10 ** 18 );
+          } else {
+            setBalance( Number(result) / 10 ** 6 );
+          }
 
-          setBalance( Number(result) / 10 ** 6 );
 
         } else {
 
@@ -645,7 +567,6 @@ export default function SendUsdt({ params }: any) {
 
         }
       
-
 
     } catch (error) {
       toast.error(Failed_to_send_USDT);
@@ -781,9 +702,11 @@ export default function SendUsdt({ params }: any) {
                 <ConnectButton
                   client={client}
                   wallets={wallets}
-                  chain={arbitrum}
+                  chain={chain === "ethereum" ? ethereum :
+                          chain === "polygon" ? polygon :
+                          chain === "arbitrum" ? arbitrum :
+                          chain === "bsc" ? bsc : arbitrum}
 
-                
                   theme={"light"}
 
                   // button color is dark skyblue convert (49, 103, 180) to hex

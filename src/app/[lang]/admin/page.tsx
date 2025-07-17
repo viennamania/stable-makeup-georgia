@@ -39,12 +39,6 @@ import {
   getWalletBalance,
 } from "thirdweb/wallets";
 
-import {
-  ethereum,
-  polygon,
-  arbitrum,
-  bsc,
-} from "thirdweb/chains";
 
 
 import {
@@ -80,6 +74,13 @@ import GearSetupIcon from "@/components/gearSetupIcon";
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../dictionaries";
 
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
 
 import {
   chain,
@@ -984,6 +985,10 @@ export default function Index({ params }: any) {
             <ConnectButton
               client={client}
               wallets={wallets}
+              chain={chain === "ethereum" ? ethereum :
+                      chain === "polygon" ? polygon :
+                      chain === "arbitrum" ? arbitrum :
+                      chain === "bsc" ? bsc : arbitrum}
               
               theme={"light"}
 
