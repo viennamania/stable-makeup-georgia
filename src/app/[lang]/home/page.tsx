@@ -32,11 +32,6 @@ import {
 
 
 import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
-import {
   ConnectButton,
   useActiveAccount,
   useActiveWallet,
@@ -79,6 +74,22 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -197,14 +208,19 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
-  
-  
-  
+    chain: chain === 'ethereum' ? ethereum :
+      chain === 'polygon' ? polygon :
+      chain === 'arbitrum' ? arbitrum :
+      chain === 'bsc' ? bsc : ethereum,
+
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === 'ethereum' ? ethereumContractAddressUSDT :
+      chain === 'polygon' ? polygonContractAddressUSDT :
+      chain === 'arbitrum' ? arbitrumContractAddressUSDT :
+      chain === 'bsc' ? bscContractAddressUSDT :
+      ethereumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -533,30 +549,12 @@ export default function Index({ params }: any) {
         address: address || "",
       });
 
-  
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: "admin",
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
 
 
 
@@ -2648,11 +2646,12 @@ const fetchBuyOrders = async () => {
               <ConnectButton
                 client={client}
                 wallets={wallets}
-                chain={arbitrum}
 
-                
                 accountAbstraction={{
-                  chain: arbitrum,
+                  chain: chain === 'ethereum' ? ethereum :
+                          chain === 'polygon' ? polygon :
+                          chain === 'arbitrum' ? arbitrum :
+                          chain === 'bsc' ? bsc : arbitrum,
                   sponsorGas: true
                 }}
                 

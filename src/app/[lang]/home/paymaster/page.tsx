@@ -685,10 +685,12 @@ export default function Index({ params }: any) {
           address: address,
         });
     
-        //console.log(result);
+        if (chain === 'bsc') {
+          setBalance( Number(result) / 10 ** 18 );
+        } else {
+          setBalance( Number(result) / 10 ** 6 );
+        }
     
-        setBalance( Number(result) / 10 ** 6 );
-  
       };
   
       if (address) getBalance();
