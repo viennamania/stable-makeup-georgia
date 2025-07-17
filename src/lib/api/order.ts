@@ -87,7 +87,7 @@ export async function getUsdtPrice(data: any) {
   }
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('setup');
+  const collection = client.db('georgia').collection('setup');
 
   const result = await collection.findOne<UserProps>(
     { $and: [ { walletAddress: data.walletAddress }, { usdtPrice: { $exists: true } } ] }
@@ -125,7 +125,7 @@ export async function updatePrice(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('setup');
+  const collection = client.db('georgia').collection('setup');
 
   // update and return update, or if not exists, insert and return insert
 
@@ -186,7 +186,7 @@ export async function insertSellOrder(data: any) {
 
   // get user mobile number by wallet address
 
-  const userCollection = client.db('ultraman').collection('users');
+  const userCollection = client.db('georgia').collection('users');
 
 
   const user = await userCollection.findOne<UserProps>(
@@ -212,7 +212,7 @@ export async function insertSellOrder(data: any) {
 
 
 
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
  
   const result = await collection.insertOne(
@@ -258,7 +258,7 @@ export async function getOrderById(orderId: string): Promise<UserProps | null> {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   
   // check orderId is valid ObjectId
@@ -289,7 +289,7 @@ export async function getOrderById(orderId: string): Promise<UserProps | null> {
 export async function getOpenOrdersCount(): Promise<number> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   const result = await collection.countDocuments(
     { status: 'ordered', createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() } }
@@ -325,7 +325,7 @@ export async function getSellOrders(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -404,7 +404,7 @@ export async function getAllSellOrders(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -489,7 +489,7 @@ export async function getOneSellOrder(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -551,7 +551,7 @@ export async function deleteSellOrder(
 ): Promise<boolean> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -600,7 +600,7 @@ export async function cancelTradeByBuyer(
   console.log('cancelTradeByBuyer orderId: ' + orderId);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -667,7 +667,7 @@ export async function cancelTradeByBuyer(
 export async function cancelTradeByAdmin() {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   // status is 'accepted'
   // acceptedAt is more than 1 hour ago
@@ -710,7 +710,7 @@ export async function getSellOrdersForBuyer(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -784,7 +784,7 @@ export async function getSellOrdersByWalletAddress(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   const results = await collection.find<UserProps>(
@@ -825,7 +825,7 @@ export async function acceptSellOrder(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   // random number for tradeId
   // 100000 ~ 999999 string
@@ -950,7 +950,7 @@ export async function requestPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   const result = await collection.updateOne(
@@ -1000,7 +1000,7 @@ export async function confirmPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   const result = await collection.updateOne(
@@ -1068,7 +1068,7 @@ export async function confirmPayment(data: any) {
 
 
       // update store collection
-      const storeCollection = client.db('ultraman').collection('stores');
+      const storeCollection = client.db('georgia').collection('stores');
       const store = await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
@@ -1112,7 +1112,7 @@ export async function confirmPayment(data: any) {
 
 
       // update agent collection
-      const agentCollection = client.db('ultraman').collection('agents');
+      const agentCollection = client.db('georgia').collection('agents');
       const agent = await agentCollection.updateOne(
         { agentcode: agentcode },
         { $set: {
@@ -1176,7 +1176,7 @@ export async function getTradesByWalletAddress(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1223,7 +1223,7 @@ export async function getTradesByWalletAddressProcessing(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1272,7 +1272,7 @@ export async function getSellTradesByWalletAddress(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1315,7 +1315,7 @@ export async function getSellTradesByWalletAddressProcessing(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1355,7 +1355,7 @@ export async function getPaymentRequestedUsdtAmountByWalletAddress(
 ): Promise<any> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
   const results = await collection.aggregate([
     {
@@ -1390,7 +1390,7 @@ export async function getPaymentRequestedUsdtAmountByWalletAddress(
 
 export async function updateOne(data: any) {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // update and return updated user
@@ -1436,7 +1436,7 @@ export async function sellOrderRollbackPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('orders');
+  const collection = client.db('georgia').collection('orders');
 
 
   const result = await collection.updateOne(
@@ -1494,7 +1494,7 @@ export async function insertBuyOrder(data: any) {
   const client = await clientPromise;
 
 
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const store = await storeCollection.findOne<any>(
     { storecode: data.storecode },
     { projection:
@@ -1528,7 +1528,7 @@ export async function insertBuyOrder(data: any) {
   }
 
 
-  const userCollection = client.db('ultraman').collection('users');
+  const userCollection = client.db('georgia').collection('users');
 
 
   const user = await userCollection.findOne<UserProps>(
@@ -1555,7 +1555,7 @@ export async function insertBuyOrder(data: any) {
   }
 
 
-  const agentCollection = client.db('ultraman').collection('agents');
+  const agentCollection = client.db('georgia').collection('agents');
   const agent = await agentCollection.findOne<any>(
     { agentcode: agentcode },
   );
@@ -1582,7 +1582,7 @@ export async function insertBuyOrder(data: any) {
 
 
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
  
   const result = await collection.insertOne(
@@ -1699,7 +1699,7 @@ export async function insertBuyOrderForClearance(data: any) {
   const client = await clientPromise;
 
 
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const store = await storeCollection.findOne<any>(
     { storecode: data.storecode },
     { projection:
@@ -1738,7 +1738,7 @@ export async function insertBuyOrderForClearance(data: any) {
   // clearance user's storecode is 'admin'
   const clearanceStorecode = 'admin';
 
-  const userCollection = client.db('ultraman').collection('users');
+  const userCollection = client.db('georgia').collection('users');
 
 
   const user = await userCollection.findOne<UserProps>(
@@ -1765,7 +1765,7 @@ export async function insertBuyOrderForClearance(data: any) {
   }
 
 
-  const agentCollection = client.db('ultraman').collection('agents');
+  const agentCollection = client.db('georgia').collection('agents');
   const agent = await agentCollection.findOne<any>(
     { agentcode: agentcode },
   );
@@ -1792,7 +1792,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
 
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
  
   const result = await collection.insertOne(
@@ -1908,7 +1908,7 @@ export async function insertBuyOrderForUser(data: any) {
   const client = await clientPromise;
 
 
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const store = await storeCollection.findOne<any>(
     { storecode: data.storecode },
     { projection:
@@ -1954,7 +1954,7 @@ export async function insertBuyOrderForUser(data: any) {
   }
 
 
-  const agentCollection = client.db('ultraman').collection('agents');
+  const agentCollection = client.db('georgia').collection('agents');
   const agent = await agentCollection.findOne<any>(
     { agentcode: agentcode },
   );
@@ -1972,7 +1972,7 @@ export async function insertBuyOrderForUser(data: any) {
 
 
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   const mobile = '';
   const avatar = '';
@@ -2117,7 +2117,7 @@ export async function getBuyOrders(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -2369,7 +2369,7 @@ export async function deleteBuyOrder(
 ): Promise<boolean> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -2430,7 +2430,7 @@ export async function getBuyOrdersForSeller(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -2629,7 +2629,7 @@ export async function acceptBuyOrder(data: any) {
 
   // check validation of storecode
 
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const stores = await storeCollection.findOne<any>(
     {
       storecode: data.storecode,
@@ -2653,7 +2653,7 @@ export async function acceptBuyOrder(data: any) {
 
 
   // if privateSale is false, then get user by storecode and walletAddress
-  const order = await client.db('ultraman')
+  const order = await client.db('georgia')
     .collection('buyorders')
     .findOne<any>(
       { _id: new ObjectId(data.orderId + '')},
@@ -2664,7 +2664,7 @@ export async function acceptBuyOrder(data: any) {
   if (order && order?.privateSale === false) {
     
 
-    const userCollection = client.db('ultraman').collection('users');
+    const userCollection = client.db('georgia').collection('users');
     user = await userCollection.findOne<UserProps>(
       {
         walletAddress: data.sellerWalletAddress,
@@ -2706,7 +2706,7 @@ export async function acceptBuyOrder(data: any) {
 
 
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
 
@@ -2811,7 +2811,7 @@ export async function buyOrderRequestPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   let result = null;
@@ -2869,7 +2869,7 @@ export async function buyOrderRequestPayment(data: any) {
     if (order) {
 
       // update user collection buyOrderStatus to "paymentRequested"
-      const userCollection = client.db('ultraman').collection('users');
+      const userCollection = client.db('georgia').collection('users');
       await userCollection.updateOne(
         {
           walletAddress: order.walletAddress,
@@ -2918,7 +2918,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   let result = null;
 
@@ -2988,7 +2988,7 @@ export async function buyOrderConfirmPayment(data: any) {
       const walletAddress = order.walletAddress;
 
       // update user collection buyOrderStatus to "paymentConfirmed"
-      const userCollection = client.db('ultraman').collection('users');
+      const userCollection = client.db('georgia').collection('users');
 
       if (userCollection) {
 
@@ -3095,7 +3095,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
 
       // update store collection
-      const storeCollection = client.db('ultraman').collection('stores');
+      const storeCollection = client.db('georgia').collection('stores');
       const store = await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
@@ -3143,7 +3143,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
       //console.log('confirmPayment totalPaymentConfirmedClearance: ' + JSON.stringify(totalPaymentConfirmedClearance));
       // update store collection
-      const storeCollection = client.db('ultraman').collection('stores');
+      const storeCollection = client.db('georgia').collection('stores');
       const store = await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
@@ -3230,7 +3230,7 @@ export async function buyOrderConfirmPayment(data: any) {
       ]).toArray();
       //console.log('confirmPayment totalUsdtAmountClearance: ' + totalUsdtAmountClearance[0]?.totalUsdtAmount || 0);
       // update agent collection
-      const agentCollection = client.db('ultraman').collection('agents');
+      const agentCollection = client.db('georgia').collection('agents');
 
       
       const agent = await agentCollection.updateOne(
@@ -3279,7 +3279,7 @@ export async function buyOrderConfirmPayment(data: any) {
       
       //console.log('confirmPayment totalPaymentConfirmedClearance: ' + JSON.stringify(totalPaymentConfirmedClearance));
       // update agent collection
-      const agentCollection = client.db('ultraman').collection('agents');
+      const agentCollection = client.db('georgia').collection('agents');
       const agent = await agentCollection.updateOne(
         { agentcode: agentcode },
         { $set: {
@@ -3345,7 +3345,7 @@ export async function buyOrderRollbackPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   const result = await collection.updateOne(
@@ -3375,7 +3375,7 @@ export async function buyOrderRollbackPayment(data: any) {
     if (order) {
       
       // update user collection buyOrderStatus to "cancelled"
-      const userCollection = client.db('ultraman').collection('users');
+      const userCollection = client.db('georgia').collection('users');
       await userCollection.updateOne(
         {
           walletAddress: order.walletAddress,
@@ -3409,7 +3409,7 @@ export async function buyOrderRollbackPayment(data: any) {
 export async function buyOrderGetOrderById(orderId: string): Promise<UserProps | null> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   const result = await collection.findOne<UserProps>(
     { _id: new ObjectId(orderId) }
@@ -3454,7 +3454,7 @@ export async function cancelTradeBySeller(
 
 
   // check validation of storecode
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const stores = await storeCollection.findOne<any>(
     {
       storecode: storecode,
@@ -3469,7 +3469,7 @@ export async function cancelTradeBySeller(
 
 
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -3514,7 +3514,7 @@ export async function cancelTradeBySeller(
 
 
     // update user status to 'cancelled'
-    const userCollection = client.db('ultraman').collection('users');
+    const userCollection = client.db('georgia').collection('users');
 
     await userCollection.updateOne(
       {
@@ -3567,7 +3567,7 @@ export async function getOneBuyOrder(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -3622,7 +3622,7 @@ export async function getOneBuyOrderByTradeId(
   }
 ): Promise<any | null> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const result = await collection.findOne<UserProps>(
     {
       tradeId: tradeId,
@@ -3653,7 +3653,7 @@ export async function getOneBuyOrderByNicknameAndStorecode(
   }
 ): Promise<UserProps | null> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const result = await collection.findOne<UserProps>(
     {
       nickname: nickname,
@@ -3681,7 +3681,7 @@ export async function updateBuyOrderByQueueId(data: any) {
   }
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   const result = await collection.updateOne(
     { queueId: data.queueId },
@@ -3741,7 +3741,7 @@ export async function getAllBuyOrdersBySeller(
   //console.log('getAllBuyOrdersBySeller endDateTime: ' + endDateTime);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   const results = await collection.find<UserProps>(
@@ -3870,7 +3870,7 @@ export async function getDailyBuyOrder(
   */
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
 
@@ -3947,7 +3947,7 @@ export async function getDailyBuyOrderBySeller(
   */
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   // sum of krwAmount by day
   /*
@@ -4033,7 +4033,7 @@ export async function getAllBuyOrdersByStorecode(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       storecode: storecode,
@@ -4207,7 +4207,7 @@ export async function getAllTradesByAdmin(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
 
@@ -4727,7 +4727,7 @@ export async function getAllTradesByAdmin(
   console.log('getAllClearancesByAdmin searchStoreBankAccountNumber: ' + searchStoreBankAccountNumber);
   */
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       // 'seller.walletAddress': walletAddress,
@@ -5025,7 +5025,7 @@ export async function getAllTradesForAgent(
   //console.log('getAllTradesForAgent startDate: ' + startDate);
   //console.log('getAllTradesForAgent endDate: ' + endDate);
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       privateSale: { $ne: true },
@@ -5260,7 +5260,7 @@ export async function getAllBuyOrdersForAgent(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       agentcode: { $regex: agentcode, $options: 'i' },
@@ -5387,7 +5387,7 @@ export async function getAllTradesByStorecode(
   //console.log('getAllTradesByStorecode startDate: ' + startDate);
   //console.log('getAllTradesByStorecode endDate: ' + endDate);
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
 
@@ -5700,7 +5700,7 @@ export async function getAllBuyOrdersByAdmin(
     endDate = new Date().toISOString();
   }
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const results = await collection.find<UserProps>(
     {
 
@@ -5865,7 +5865,7 @@ export async function getAllBuyOrdersForMatching(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       
@@ -5938,7 +5938,7 @@ export async function insertStore(data: any) {
     return null;
   }
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
   // check storecode is unique
   const stores = await collection.findOne<UserProps>(
     {
@@ -6002,7 +6002,7 @@ export async function deleteStoreCode(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
 
   // delete storecode
   const result = await collection.deleteOne(
@@ -6033,7 +6033,7 @@ export async function getAllStores(
 ): Promise<any> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
 
   // search storeCone, storeName, storeDescription
 
@@ -6099,7 +6099,7 @@ export async function getStoreByStorecode(
   //console.log('getStoreByStorecode storecode: ' + storecode);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
 
   const result = await collection.findOne<any>(
     { storecode: storecode }
@@ -6121,7 +6121,7 @@ export async function getStoreByStorecode(
 // getRandomStore
 export async function getRandomStore(): Promise<any> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
 
   const result = await collection.aggregate<any>([
     { $sample: { size: 1 } }
@@ -6186,7 +6186,7 @@ export async function getCollectOrdersForSeller(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -6295,7 +6295,7 @@ export async function getCollectOrdersForUser(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -6371,7 +6371,7 @@ export async function getAllBuyOrdersForRequestPayment(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
 
   const results = await collection.find<UserProps>(
     {
@@ -6433,7 +6433,7 @@ export async function updateBuyOrderPayactionResult(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -6461,7 +6461,7 @@ export async function getTradeId(
   }
 ): Promise<string | null> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   // get tradeId
   const result = await collection.findOne<any>(
     { _id: new ObjectId(orderId) },
@@ -6496,7 +6496,7 @@ export async function updateBuyOrderSettlement(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -6510,8 +6510,8 @@ export async function updateBuyOrderSettlement(
 
 
 
-    const collectionBuyorders = client.db('ultraman').collection('buyorders');
-    const collectionStore = client.db('ultraman').collection('stores');
+    const collectionBuyorders = client.db('georgia').collection('buyorders');
+    const collectionStore = client.db('georgia').collection('stores');
 
 
     // totalSettlementCount is count of all buyorders with settlement and storecode
@@ -6581,7 +6581,7 @@ export async function updateBuyOrderSettlement(
 // getTotalNumberOfBuyOrders
 export async function getTotalNumberOfBuyOrders(): Promise<{ totalCount: number }> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   // get total number of buy orders
   const totalCount = await collection.countDocuments(
     {
@@ -6608,7 +6608,7 @@ export async function buyOrderWebhook(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },

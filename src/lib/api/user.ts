@@ -97,7 +97,7 @@ export async function insertOne(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   // check same walletAddress or smae nickname
 
@@ -132,7 +132,7 @@ export async function insertOne(data: any) {
 
 
   // check storecode from stores collection
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const store = await storeCollection.findOne(
     { storecode: data.storecode }
   );
@@ -187,7 +187,7 @@ export async function insertOne(data: any) {
 
     // check buyer.depositBankAccountNumber is exist bankusers collection
     // if exist, skip insert
-    const bankUsersCollection = client.db('ultraman').collection('bankusers');
+    const bankUsersCollection = client.db('georgia').collection('bankusers');
     const checkBankUser = await bankUsersCollection.findOne(
       {
         bankAccountNumber: depositBankAccountNumber,
@@ -220,7 +220,7 @@ export async function insertOne(data: any) {
       }
     );
     // update store collection
-    const storeCollection = client.db('ultraman').collection('stores');
+    const storeCollection = client.db('georgia').collection('stores');
     const store = await storeCollection.updateOne(
       { storecode: data.storecode },
       { $set: { totalBuyerCount: totalMemberCount } }
@@ -264,7 +264,7 @@ export async function insertOneVerified(data: any) {
 
 
   // check storecode from stores collection
-  const storeCollection = client.db('ultraman').collection('stores');
+  const storeCollection = client.db('georgia').collection('stores');
   const store = await storeCollection.findOne(
     { storecode: data.storecode }
   );
@@ -274,7 +274,7 @@ export async function insertOneVerified(data: any) {
   }
 
 
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   
   // check same nickname and storecode
@@ -372,7 +372,7 @@ export async function updateOne(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // update and return updated user
@@ -425,7 +425,7 @@ export async function updateOne(data: any) {
 
 export async function updateAvatar(data: any) {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // update and return updated user
@@ -464,7 +464,7 @@ export async function updateAvatar(data: any) {
 
 export async function updateSellerStatus(data: any) {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // update and return updated user
@@ -476,7 +476,7 @@ export async function updateSellerStatus(data: any) {
 
   
   // check data.accountNumber is exist from bankusers collection
-  const bankUsersCollection = client.db('ultraman').collection('bankusers');
+  const bankUsersCollection = client.db('georgia').collection('bankusers');
   const checkBankUser = await bankUsersCollection.findOne(
     {
       bankAccountNumber: data.accountNumber,
@@ -551,7 +551,7 @@ export async function updateSellerStatus(data: any) {
 
 export async function updateSellerStatusForClearance(data: any) {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // update and return updated user
@@ -563,7 +563,7 @@ export async function updateSellerStatusForClearance(data: any) {
 
 
   // check data.accountNumber is exist from bankusers collection
-  const bankUsersCollection = client.db('ultraman').collection('bankusers');
+  const bankUsersCollection = client.db('georgia').collection('bankusers');
   const checkBankUser = await bankUsersCollection.findOne(
     {
       bankAccountNumber: data.accountNumber,
@@ -651,7 +651,7 @@ export async function updateBuyer({
   //console.log('updateSeller walletAddress: ' + walletAddress + ' seller: ' + JSON.stringify(buyer));
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   return await collection.updateOne(
     {
@@ -681,7 +681,7 @@ export async function getOneByVirtualAccount(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   // id is number
 
@@ -706,7 +706,7 @@ export async function getOneByWalletAddress(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
 
@@ -740,7 +740,7 @@ export async function getPayUserByWalletAddress(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // walletPrivateKey is not null
@@ -776,7 +776,7 @@ export async function getOneByTelegramId(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   // id is number
 
@@ -803,7 +803,7 @@ export async function getOneByNickname(
 
   const client = await clientPromise;
 
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   const results = await collection.findOne<UserProps>(
     {
@@ -834,7 +834,7 @@ export async function getAllUsers(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   console.log('limit: ' + limit);
@@ -915,7 +915,7 @@ export async function getAllBuyers(
 ): Promise<any> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
   // walletAddress is not empty and not null
   // order by nickname asc
   // if storecode is empty, return all users
@@ -1009,7 +1009,7 @@ export async function getAllBuyersForAgent(
   
  
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   const users = await collection.aggregate<UserProps>([
@@ -1095,7 +1095,7 @@ export async function getAllBuyersByStorecode(
   }
 ): Promise<ResultProps> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
   // walletAddress is not empty and not null
   // order by nickname asc
   // if storecode is empty, return all users
@@ -1163,7 +1163,7 @@ export async function getAllSellersByStorecode(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
   // walletAddress is not empty and not null
   // order by nickname asc
   // if storecode is empty, return all users
@@ -1269,7 +1269,7 @@ export async function getAllUsersByStorecode(
   
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   // walletAddress is not empty and not null
   // order by nickname asc
@@ -1324,7 +1324,7 @@ export async function getAllUsersByStorecodeAndVerified(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   // walletAddress is not empty and not null
   // order by nickname asc
@@ -1375,7 +1375,7 @@ export async function getBestSellers(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   console.log('limit: ' + limit);
@@ -1433,7 +1433,7 @@ export async function getUserWalletPrivateKeyByWalletAddress(
 ): Promise<string | null> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   const results = await collection.findOne<UserProps>(
     { walletAddress },
@@ -1458,7 +1458,7 @@ export async function getUserByEmail(
   console.log('getUser email: ' + email);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   return await collection.findOne<UserProps>(
@@ -1478,7 +1478,7 @@ export async function getUserByNickname(
   console.log('getUser nickname: ' + nickname);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   return await collection.findOne<UserProps>(
     {
@@ -1497,7 +1497,7 @@ export async function checkUserByEmail(
   console.log('getUser email: ' + email);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   const results = await collection.findOne<UserProps>(
@@ -1530,7 +1530,7 @@ export async function loginUserByEmail(
   console.log('getUser email: ' + email);
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   const results = await collection.findOne<UserProps>(
@@ -1544,7 +1544,7 @@ export async function loginUserByEmail(
   if (results) {
     
     // user_login_sesson
-    const sessionCollection = client.db('ultraman').collection('user_login_sessions');
+    const sessionCollection = client.db('georgia').collection('user_login_sessions');
     const sessionResults = await sessionCollection.insertOne({
       id: results.id,
       email: results.email,
@@ -1576,7 +1576,7 @@ export async function loginUserByEmail(
 
 export async function searchUser(query: string): Promise<UserProps[]> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   
   return await collection
@@ -1657,7 +1657,7 @@ export async function searchUser(query: string): Promise<UserProps[]> {
 
 export async function getUserCount(): Promise<number> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
   return await collection.countDocuments();
 }
 
@@ -1665,7 +1665,7 @@ export async function getUserCount(): Promise<number> {
 
 export async function updateUser(username: string, bio: string) {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   // check dupplicated nickname
@@ -1683,7 +1683,7 @@ export async function checkUser(id: string, password: string): Promise<UserProps
   
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
   const results = await collection.findOne<UserProps>(
     {
       id,
@@ -1714,7 +1714,7 @@ export async function getAllUsersForSettlement(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   console.log('limit: ' + limit);
@@ -1764,7 +1764,7 @@ export async function getAllUsersForSettlementOfStore(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   console.log('limit: ' + limit);
@@ -1825,7 +1825,7 @@ export async function updateSettlementAmountOfFee(
   console.log('updateSettlementAmountOfFee walletAddress: ' + walletAddress + ' settlementAmountOfFee: ' + settlementAmountOfFee);
   
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   return await collection.updateOne(
     { walletAddress },
@@ -1847,7 +1847,7 @@ export async function getAllUsersForSettlementOfFee(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
 
   console.log('limit: ' + limit);
@@ -1908,7 +1908,7 @@ export async function setEscrowWalletAddressByWalletAddress(
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
 
   return await collection.updateOne(
     {
@@ -1938,7 +1938,7 @@ export async function getAllAdmin(
   }
 ): Promise<ResultProps> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('users');
+  const collection = client.db('georgia').collection('users');
   // walletAddress is not empty and not null
   // order by nickname asc
   // if storecode is empty, return all users

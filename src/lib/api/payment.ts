@@ -197,7 +197,7 @@ export async function getAllPaymentsByStorecode(
 }): Promise<any[]> {
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('payments');
+  const collection = client.db('georgia').collection('payments');
 
   // get all payments by storecode
   const payments = await collection

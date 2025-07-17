@@ -16,7 +16,7 @@ export async function insertOne(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('opts');
+  const collection = client.db('georgia').collection('opts');
 
 
 
@@ -83,7 +83,7 @@ export async function findOne(data: any) {
   }
 
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('opts');
+  const collection = client.db('georgia').collection('opts');
 
   const result = await collection.findOne<UserProps>(
     {
