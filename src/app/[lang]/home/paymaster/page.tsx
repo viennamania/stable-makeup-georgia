@@ -20,11 +20,6 @@ import {
 
 
 import {
-    polygon,
-    arbitrum,
-} from "thirdweb/chains";
-
-import {
     ConnectButton,
     useActiveAccount,
     useActiveWallet,
@@ -66,7 +61,20 @@ import { getDictionary } from "../../../dictionaries";
 import { useSearchParams } from "next/navigation";
 
 
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
 
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -317,17 +325,16 @@ export default function Index({ params }: any) {
     const contract = getContract({
       // the client you have created via `createThirdwebClient()`
       client,
-      // the chain the contract is deployed on
-      
-      
-      chain: arbitrum,
-    
-    
-    
-      // the contract's address
-      ///address: contractAddressArbitrum,
-  
-      address: contractAddressArbitrum,
+
+      chain: chain === "ethereum" ? ethereum :
+              chain === "polygon" ? polygon :
+              chain === "arbitrum" ? arbitrum :
+              chain === "bsc" ? bsc : arbitrum,
+   
+      address: chain === "ethereum" ? ethereumContractAddressUSDT :
+              chain === "polygon" ? polygonContractAddressUSDT :
+              chain === "arbitrum" ? arbitrumContractAddressUSDT :
+              chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
   
   
       // OPTIONAL: the contract's abi
@@ -2252,11 +2259,20 @@ export default function Index({ params }: any) {
                         <ConnectButton
                           client={client}
                           wallets={wallets}
-                          chain={arbitrum}
-
+                          /*
+                          chain={chain === 'ethereum' ? ethereum :
+                            chain === 'polygon' ? polygon :
+                            chain === 'arbitrum' ? arbitrum :
+                            chain === 'bsc' ? bsc :
+                            undefined
+                          }
+                          */
                           
                           accountAbstraction={{
-                            chain: arbitrum,
+                            chain: chain === 'ethereum' ? ethereum :
+                              chain === 'polygon' ? polygon :
+                              chain === 'arbitrum' ? arbitrum :
+                              chain === 'bsc' ? bsc : ethereum,
                             sponsorGas: true
                           }}
                           
