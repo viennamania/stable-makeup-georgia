@@ -18,6 +18,7 @@
 @layer base {
 	body {
 		/*@apply bg-zinc-950 text-neutral-200;*/
-		@apply bg-[#E7EDF1] text-zinc-500;
+		/*@apply bg-[#E7EDF1] text-zinc-500;*/
+		@apply bg-green-100 text-neutral-900;
 	}
 }
