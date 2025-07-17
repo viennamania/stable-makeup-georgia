@@ -1804,11 +1804,7 @@ export default function Index({ params }: any) {
         // transfer my wallet to seller wallet address
 
         
-        //const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
-        const sellerWalletAddress = "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666"; // for test
-
-        console.log('sellerWalletAddress', sellerWalletAddress);
-
+        const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
 
         const usdtAmount = buyOrders[index].usdtAmount;
 
@@ -4577,22 +4573,8 @@ const [tradeSummary, setTradeSummary] = useState({
                             </td>
                             
                             <td className="p-2">
-                              <div className="flex flex-row items-center gap-2">
-                                {/*
-                                <Image
-                                  src={item.avatar || "/profile-default.png"}
-                                  alt="Avatar"
-                                  width={20}
-                                  height={20}
-                                  priority={true} // Added priority property
-                                  className="rounded-full"
-                                  style={{
-                                      objectFit: 'cover',
-                                      width: '20px',
-                                      height: '20px',
-                                  }}
-                                />
-                                */}
+                              <div className="flex flex-col items-center gap-2">
+
                                 <div className="flex flex-row gap-2 items-center justify-center">
 
                                   <div className="text-sm text-zinc-500">
@@ -4613,6 +4595,15 @@ const [tradeSummary, setTradeSummary] = useState({
                                   </div>
 
                                 </div>
+
+                                {/* item.store.sellerWalletAddress */ }
+                                <div className="text-sm text-zinc-500">
+                                  {
+                                    item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                  }
+                                </div>
+
+
                               </div>
                             </td>
 
