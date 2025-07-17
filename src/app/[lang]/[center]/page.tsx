@@ -81,12 +81,6 @@ import { getDictionary } from "../../dictionaries";
 
 
 
-
-
-
-
-
-
 const wallets = [
   inAppWallet({
     auth: {

@@ -82,6 +82,8 @@ import { useSearchParams } from 'next/navigation';
 
 
 
+import { paymentUrl } from "../../../config/payment";
+
 
 
 interface BuyOrder {
@@ -2157,11 +2159,12 @@ export default function Index({ params }: any) {
                 </span>
                 <button
                   onClick={() => {
-                    window.open(`https://cryptoss.beauty/ko/${store?.storecode}/paymaster`, '_blank');
+                    window.open(`${paymentUrl}/${params.lang}/${store?.storecode}/paymaster`, '_blank');
                   }}
                   className="text-sm text-zinc-500 underline"
                 >
-                  https://cryptoss.beauty/ko/{store?.storecode}/paymaster
+                  {paymentUrl + '/' + params.lang + '/' + store?.storecode + '/paymaster'}
+
                 </button>
               
               
