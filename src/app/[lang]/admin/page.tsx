@@ -353,10 +353,12 @@ export default function Index({ params }: any) {
           contract,
           address: address,
         });
-    
-        //console.log(result);
-    
-        setBalance( Number(result) / 10 ** 6 );
+
+        if (chain === 'bsc') {
+          setBalance( Number(result) / 10 ** 18 );
+        } else {
+          setBalance( Number(result) / 10 ** 6 );
+        }
 
       } catch (error) {
         console.error("Error getting balance", error);
