@@ -1,5 +1,26 @@
 export const thirdwebClientId = '79125a56ef0c1629d4863b6df0a43cce';
 
+
+
+
+
+
+export const chain = process.env.NEXT_PUBLIC_CHAIN;
+
+
+
+export const ethereumContractAddressUSDT = "0xdac17f958d2ee523a2206206994597c13d831ec7"; // USDT on Ethereum
+
+export const polygonContractAddressUSDT = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
+
+export const arbitrumContractAddressUSDT = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+
+export const bscContractAddressUSDT = "0x55d398326f99059fF775485246999027B3197955"; // USDT on BSC
+
+
+
+
+
 // 721
 //export const nftDropContractAddressHorse = '0xAdC05ca4766ee90B68d8B75D8AdedB00ca6C5846';
 

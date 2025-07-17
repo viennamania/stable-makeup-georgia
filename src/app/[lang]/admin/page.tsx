@@ -40,8 +40,10 @@ import {
 } from "thirdweb/wallets";
 
 import {
+  ethereum,
   polygon,
   arbitrum,
+  bsc,
 } from "thirdweb/chains";
 
 
@@ -79,7 +81,13 @@ import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../dictionaries";
 
 
-
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -113,20 +121,6 @@ const wallets = [
   createWallet("com.okex.wallet"),
 
 ];
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
-/*
-const client = createThirdwebClient({
-  clientId: "dfb94ef692c2f754a60d35aeb8604f3d",
-});
-*/
-
-
 
 
 
@@ -168,14 +162,21 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -365,12 +366,12 @@ export default function Index({ params }: any) {
       const result = await getWalletBalance({
         address: address,
         client: client,
-        chain: arbitrum,
+        chain: chain === "ethereum" ? ethereum :
+                chain === "polygon" ? polygon :
+                chain === "arbitrum" ? arbitrum :
+                chain === "bsc" ? bsc : arbitrum,
       });
-      //console.log("getWalletBalance", result);
-      /*
-      {value: 193243898588330546n, decimals: 18, displayValue: '0.193243898588330546', symbol: 'ETH', name: 'ETH'}
-      */
+
       if (result) {
         setNativeBalance(Number(result.value) / 10 ** result.decimals);
       }
@@ -983,13 +984,6 @@ export default function Index({ params }: any) {
             <ConnectButton
               client={client}
               wallets={wallets}
-
-              /*
-              accountAbstraction={{
-                chain: arbitrum,
-                sponsorGas: true
-              }}
-              */
               
               theme={"light"}
 
