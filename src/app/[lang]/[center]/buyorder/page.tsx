@@ -16,7 +16,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
+import {
+  clientId,
+  client
+} from "../../../client";
 
 
 
@@ -5133,7 +5136,7 @@ const fetchBuyOrders = async () => {
                                 </button>
                                 {/* new window */}
                                 <a
-                                  href={`${paymentUrl}/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+                                  href={`${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-sm text-blue-600 font-semibold hover:underline"
@@ -7409,7 +7412,7 @@ const UserPaymentPage = (
       
       {/* iframe */}
       <iframe
-        src={`${paymentUrl}/kr/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
+        src={`${paymentUrl}/kr/${clientId}/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
 
         
           

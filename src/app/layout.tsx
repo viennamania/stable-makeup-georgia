@@ -20,7 +20,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import localFont from "next/font/local";
 
-
+import { clientId } from "./client";
 import { chain } from "@/app/config/contractAddresses";
 import Image from "next/image";
 
@@ -134,6 +134,14 @@ export default function RootLayout({
             </button>
 
             <div className={`flex flex-col items-center justify-center ${showChain ? 'block' : 'hidden'}`}>
+              {/* Display client ID */}
+              <div className="flex flex-row items-center gap-2 mb-4">
+                <span className="text-sm text-gray-600">Client ID:</span>
+                <span className="text-sm font-semibold text-gray-800">
+                  {clientId}
+                </span>
+              </div>
+
               {/* Display the current chain name */}
               {/* Use the chain variable to determine which chain is currently selected */}
               {/* Assuming you have a variable named 'chain' that holds the current chain name */}

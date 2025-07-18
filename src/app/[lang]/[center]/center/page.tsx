@@ -15,7 +15,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
+import {
+  clientId,
+  client
+} from "../../../client";
 
 
 
@@ -2043,11 +2046,11 @@ export default function Index({ params }: any) {
                 </span>
                 <button
                   onClick={() => {
-                    window.open(`${paymentUrl}/${params.lang}/${store?.storecode}/paymaster`, '_blank');
+                    window.open(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`, '_blank');
                   }}
                   className="text-sm text-zinc-500 underline"
                 >
-                  {paymentUrl + '/' + params.lang + '/' + store?.storecode + '/paymaster'}
+                  {paymentUrl + '/' + params.lang + '/' + clientId + '/' + store?.storecode + '/paymaster'}
 
                 </button>
               
@@ -2055,7 +2058,7 @@ export default function Index({ params }: any) {
                 {/* 복사 버튼 */}
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(`https://cryptoss.beauty/ko/${store?.storecode}/paymaster`);
+                    navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`);
                     toast.success('가맹점 홈페이지 링크가 복사되었습니다.');
                   } }
                   className="bg-[#3167b4] text-sm text-[#f3f4f6] px-2 py-1 rounded-lg hover:bg-[#3167b4]/80"
