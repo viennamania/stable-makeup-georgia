@@ -1531,7 +1531,9 @@ export async function insertBuyOrder(data: any) {
   const userCollection = client.db('georgia').collection('users');
 
 
-  const user = await userCollection.findOne<UserProps>(
+
+  
+  let user = await userCollection.findOne<UserProps>(
     {
       storecode: data.storecode,
       walletAddress: data.walletAddress
@@ -1540,7 +1542,37 @@ export async function insertBuyOrder(data: any) {
 
   if (!user) {
     console.log('insertBuyOrder user is null: ' + JSON.stringify(user));
-    return null;
+    // inser user if not exists
+    await userCollection.insertOne({
+      storecode: data.storecode,
+      walletAddress: data.walletAddress,
+      nickname: nickname,
+      buyOrderStatus: 'ordered',
+      latestBuyOrder: {
+        storecode: data.storecode,
+        storeName: store.storeName,
+        storeLogo: store.storeLogo,
+        usdtAmount: data.usdtAmount,
+        krwAmount: data.krwAmount,
+        rate: data.rate,
+        createdAt: new Date().toISOString(),
+      }
+    });
+
+    // re-fetch user
+    const newUser = await userCollection.findOne<UserProps>(
+      {
+        storecode: data.storecode,
+        walletAddress: data.walletAddress
+      },
+    );
+    if (!newUser) {
+      console.log('insertBuyOrder newUser is null: ' + JSON.stringify(newUser));
+      return null;
+    }
+
+
+    user = newUser;
   }
 
 
