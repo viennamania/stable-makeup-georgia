@@ -50,18 +50,6 @@ export async function POST(request: NextRequest) {
 
     const storecode = buyOrder?.storecode;
 
-    console.log("storecode", storecode);
-
-    if (buyOrder?.tradeId === "51970415") {
-      console.log("buyOrder", buyOrder);
-    }
-
-
-
-
-
-
-
 
 
     //console.log("storecode", storecode);
@@ -291,6 +279,7 @@ export async function POST(request: NextRequest) {
 
       if (!payactionResponse.ok) {
         console.error("Payaction API response error", payactionResponse.status, payactionResponse.statusText);
+        
         continue;
       }
 

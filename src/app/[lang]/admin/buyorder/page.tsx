@@ -37,11 +37,6 @@ import {
 
 
 import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
-import {
   ConnectButton,
   useActiveAccount,
   useActiveWallet,
@@ -86,6 +81,22 @@ import { getAllUsersForSettlementOfStore } from "@/lib/api/user";
 
 import { paymentUrl } from "../../../config/payment";
 import { send } from "process";
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
 
 
 interface BuyOrder {
@@ -175,16 +186,6 @@ const wallets = [
 ];
 
 
-// get escrow wallet address
-
-//const escrowWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
 
 
 export default function Index({ params }: any) {
@@ -222,14 +223,21 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -555,8 +563,6 @@ export default function Index({ params }: any) {
         return;
       }
 
-      ///console.log('getBalance address', address);
-
       
       const result = await balanceOf({
         contract,
@@ -564,11 +570,11 @@ export default function Index({ params }: any) {
       });
 
   
-      console.log('getBalance result', result);
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
     };
@@ -3017,7 +3023,11 @@ const fetchBuyOrders = async () => {
             <ConnectButton
               client={client}
               wallets={wallets}
-              chain={arbitrum}
+
+              chain={chain === "ethereum" ? ethereum :
+                      chain === "polygon" ? polygon :
+                      chain === "arbitrum" ? arbitrum :
+                      chain === "bsc" ? bsc : arbitrum}
 
               /*
               accountAbstraction={{
@@ -5617,10 +5627,20 @@ const fetchBuyOrders = async () => {
                               hover:shadow-blue-500/50
                             "
                             onClick={() => {
-                              window.open(
-                                `https://arbiscan.io/tx/${item.transactionHash}`,
-                                '_blank'
-                              );
+                              let url = '';
+                              if (chain === "ethereum") {
+                                url = `https://etherscan.io/tx/${item.transactionHash}`;
+                              } else if (chain === "polygon") {
+                                url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                              } else if (chain === "arbitrum") {
+                                url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                              } else if (chain === "bsc") {
+                                url = `https://bscscan.com/tx/${item.transactionHash}`;
+                              } else {
+                                url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                              }
+                              window.open(url, '_blank');
+
                             }}
                           >
                             <div className="flex flex-row gap-2 items-center justify-center">
@@ -5714,8 +5734,6 @@ const fetchBuyOrders = async () => {
 
 
                         {/* font monospace */}
-
-                      {/* `https://arbiscan.io/tx/${item.settlement.txid}` */}
 
                       <td className="p-2">
                         <div className="w-full flex flex-col gap-2 items-center justify-center">
@@ -5823,10 +5841,19 @@ const fetchBuyOrders = async () => {
                                 "
 
                                 onClick={() => {
-                                  window.open(
-                                    `https://arbiscan.io/tx/${item.settlement.txid}`,
-                                    '_blank'
-                                  );
+                                  let url = '';
+                                  if (chain === "ethereum") {
+                                    url = `https://etherscan.io/tx/${item.settlement.txid}`;
+                                  } else if (chain === "polygon") {
+                                    url = `https://polygonscan.com/tx/${item.settlement.txid}`;
+                                  } else if (chain === "arbitrum") {
+                                    url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                  } else if (chain === "bsc") {
+                                    url = `https://bscscan.com/tx/${item.settlement.txid}`;
+                                  } else {
+                                    url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                  }
+                                  window.open(url, '_blank');
                                 }}
                               >
 
@@ -6767,13 +6794,23 @@ const fetchBuyOrders = async () => {
                                 <div>{Escrow}: {item.usdtAmount} USDT</div>
                                 <button
                                   className="bg-white text-black px-2 py-2 rounded-md"
+
                                   onClick={() => {
-                        
-                                      window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
-                                      
-
-
+                                    let url = '';
+                                    if (chain === "ethereum") {
+                                      url = `https://etherscan.io/tx/${item.escrowTransactionHash}`;
+                                    } else if (chain === "polygon") {
+                                      url = `https://polygonscan.com/tx/${item.escrowTransactionHash}`;
+                                    } else if (chain === "arbitrum") {
+                                      url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                                    } else if (chain === "bsc") {
+                                      url = `https://bscscan.com/tx/${item.escrowTransactionHash}`;
+                                    } else {
+                                      url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                                    }
+                                    window.open(url, '_blank');
                                   }}
+
                                 >
                                   <Image
                                     src='/logo-arbitrum.png'
