@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const { storecode, walletAddress, nickname, usdtAmount, krwAmount, rate, privateSale, buyer } = body;
+  const { storecode, walletAddress, nickname, usdtAmount, krwAmount, rate, privateSale, buyer, paymentMethod } = body;
 
   console.log("setBuyOrder =====  body", body);
 
@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
     krwAmount: krwAmount,
     rate: rate,
     privateSale: privateSale,
-    buyer: buyer
+    buyer: buyer,
+    paymentMethod: paymentMethod,
   });
 
   ///console.log("setBuyOrder =====  result", result);

@@ -1648,6 +1648,8 @@ export async function insertBuyOrder(data: any) {
       
       buyer: data.buyer,
 
+      paymentMethod: data.paymentMethod || 'bank', // default to bank if not provided
+
       tradeId: tradeId,
     }
   );

@@ -17,12 +17,6 @@ import {
 
 
 
-
-// Download the helper library from https://www.twilio.com/docs/node/install
-import twilio from "twilio";
-
-
-
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
@@ -32,10 +26,12 @@ export async function POST(request: NextRequest) {
           amount: amount
   */
 
-  const { lang, chain, orderId, transactionHash,
-
+  const {
+    lang,
+    chain,
+    orderId,
+    transactionHash,
     bankInfo,
-
   } = body;
 
 
