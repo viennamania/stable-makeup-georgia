@@ -153,6 +153,8 @@ interface BuyOrder {
 
   userStats: any;
 
+  paymentMethod: string;
+
 }
 
 
@@ -4768,23 +4770,40 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
-                              <div className="flex flex-row items-center gap-2">
-                                <div className="text-lg text-yellow-600 font-bold">
-                                  {/*item.seller?.bankInfo?.bankName*/}
-                                  {item.store?.bankInfo?.bankName}
-                                </div>
-                                <div className="text-lg text-yellow-600 font-bold">
-                                  {/*item.seller?.bankInfo?.accountHolder*/}
-                                  {item.store?.bankInfo?.accountHolder}
-                                </div>
+                            {item?.paymentMethod === 'mkrw' ? (
+                              <div className="flex flex-row gap-2 items-center justify-center">
+                                <Image
+                                  src="/icon-mkrw.png"
+                                  alt="MKRW"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
+                                <span className="text-sm font-semibold text-zinc-500">
+                                  MKRW
+                                </span>
                               </div>
-                              <div className="text-sm text-zinc-500">
-                                {/*item.seller?.bankInfo?.accountNumber*/}
-                                {item.store?.bankInfo?.accountNumber}
-                              </div>
+                            ) : (
 
-                            </div>
+
+                              <div className="flex flex-col gap-2 items-center justify-center">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="text-sm text-yellow-600 font-bold">
+                                    {/*item.seller?.bankInfo?.bankName*/}
+                                    {item.store?.bankInfo?.bankName}
+                                  </div>
+                                  <div className="text-sm text-yellow-600 font-bold">
+                                    {/*item.seller?.bankInfo?.accountHolder*/}
+                                    {item.store?.bankInfo?.accountHolder}
+                                  </div>
+                                </div>
+                                <div className="text-sm text-zinc-500">
+                                  {/*item.seller?.bankInfo?.accountNumber*/}
+                                  {item.store?.bankInfo?.accountNumber}
+                                </div>
+                              </div>
+                            
+                            )}
 
 
                           </div>
