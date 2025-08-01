@@ -4266,6 +4266,19 @@ const fetchBuyOrders = async () => {
                               //Number(item.krwAmount / item.usdtAmount).toFixed(2)
                             }
                           </span>
+
+                          {/* paymentMethod */}
+                          <span className="text-sm text-zinc-500">
+                            {item.paymentMethod === 'bank' ? '은행'
+                            : item.paymentMethod === 'card' ? '카드'
+                            : item.paymentMethod === 'pg' ? 'PG'
+                            : item.paymentMethod === 'cash' ? '현금'
+                            : item.paymentMethod === 'crypto' ? '암호화폐'
+                            : item.paymentMethod === 'giftcard' ? '기프트카드'
+                            : item.paymentMethod === 'mkrw' ? 'MKRW' : '기타'
+                            }
+                          </span>
+
                         </div>
                       </td>
 
@@ -4773,7 +4786,7 @@ const fetchBuyOrders = async () => {
                             {item?.paymentMethod === 'mkrw' ? (
                               <div className="flex flex-row gap-2 items-center justify-center">
                                 <Image
-                                  src="/icon-mkrw.png"
+                                  src="/token-mkrw-icon.png"
                                   alt="MKRW"
                                   width={20}
                                   height={20}
