@@ -6692,11 +6692,17 @@ export async function updateBuyOrderEscrowBalance(
   {
     orderId,
     escrowBalance,
+    transactionHash,
   }: {
     orderId: string;
     escrowBalance: number;
+    transactionHash: string;
   }
 ): Promise<boolean> {
+
+  console.log('updateBuyOrderEscrowBalance orderId: ' + orderId);
+  console.log('updateBuyOrderEscrowBalance escrowBalance: ' + escrowBalance);
+
   const client = await clientPromise;
   const collection = client.db('georgia').collection('buyorders');
   // update buyorder
@@ -6704,8 +6710,13 @@ export async function updateBuyOrderEscrowBalance(
     { _id: new ObjectId(orderId) },
     { $set: {
       'escrowWallet.balance': escrowBalance,
+      'escrowWallet.transactionHash': transactionHash,
+      'escrowWallet.updatedAt': new Date().toISOString(),
     } }
   );
+
+  console.log('updateBuyOrderEscrowBalance result: ' + JSON.stringify(result));
+
   if (result.modifiedCount === 1) {
     return true;
   } else {

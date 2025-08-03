@@ -191,6 +191,7 @@ export async function POST(request: NextRequest) {
       const result = await updateBuyOrderEscrowBalance({
         orderId: buyOrder._id,
         escrowBalance: amount,
+        transactionHash: transactionHash,
       });
 
       console.log("updateBuyOrderEscrowBalance result", result);
