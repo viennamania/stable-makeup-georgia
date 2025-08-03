@@ -1698,8 +1698,8 @@ export async function insertBuyOrder(data: any) {
       _id: result.insertedId,
 
       walletAddress: data.walletAddress,
-      escrowWalletAddress: data.escrowWallet.walletAddress || '', // optional, can be empty
-      
+      escrowWalletAddress: data.escrowWallet.address || '', // optional, can be empty
+
       
     };
 
