@@ -12,6 +12,15 @@ import {
 } from '@lib/api/transfer';
 
 
+import {
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "../../../config/contractAddresses";
+
 
 export async function POST(request: NextRequest) {
 
@@ -120,7 +129,14 @@ export async function POST(request: NextRequest) {
 
 
 
+  if (contractAddress === bscContractAddressMKRW) {
 
+
+    console.log("toAddress", toAddress);
+    console.log("fromAddress", fromAddress);
+    console.log("value", value);
+
+  }
 
 
   const result = insertOne({
@@ -132,7 +148,7 @@ export async function POST(request: NextRequest) {
     timestamp,
   });
 
-  ///console.log("insertOne", result);
+  console.log("insertOne", result);
 
   
 
