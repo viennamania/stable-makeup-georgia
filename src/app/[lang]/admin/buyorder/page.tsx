@@ -4241,7 +4241,7 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2">
                         <div className="
-                          w-28
+                          w-36
                           flex flex-col gap-2 items-end justify-start">
 
                           <div className="flex flex-row items-center justify-end gap-1">
@@ -4308,22 +4308,35 @@ const fetchBuyOrders = async () => {
 
                             {item.paymentMethod === 'mkrw' && item?.escrowWallet?.address && (
                               <div className="flex flex-col items-center justify-center gap-2">
-                                <span className="text-sm text-zinc-500 font-semibold">
-                                  MKRW 에스크로
-                                </span>
-                                <button
-                                  className="text-sm text-blue-600 font-semibold underline"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(item?.escrowWallet.address);
-                                    toast.success(Copied_Wallet_Address);
-                                  }}
-                                >
-                                
-                                  <span className="text-sm text-zinc-500">
-                                    {item?.escrowWallet.address.substring(0, 6)}...{item?.escrowWallet.address.substring(item?.escrowWallet.address.length - 4)}
-                                  </span>
 
-                                </button>
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                  <span className="text-sm text-zinc-500 font-semibold">
+                                    지갑
+                                  </span>
+                                  <button
+                                    className="text-sm text-blue-600 font-semibold underline"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(item?.escrowWallet.address);
+                                      toast.success(Copied_Wallet_Address);
+                                    }}
+                                  >
+                                    <span className="text-sm text-zinc-500">
+                                      {item?.escrowWallet.address.substring(0, 6)}...{item?.escrowWallet.address.substring(item?.escrowWallet.address.length - 4)}
+                                    </span>
+                                  </button>
+                                </div>
+
+                                {/* balance */}
+                                {item?.escrowWallet?.balance ? (
+                                  <span className="text-sm text-zinc-500">
+                                    {item?.escrowWallet?.balance.toFixed(0)} MKRW
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-zinc-500">
+                                    에스크로 잔액 없음
+                                  </span>
+                                )}
+
                               </div>
 
                             )}

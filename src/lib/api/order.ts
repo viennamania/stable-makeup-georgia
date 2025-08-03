@@ -6660,3 +6660,52 @@ export async function buyOrderWebhook(
     return false;
   }
 }
+
+
+
+// getBuyOrderByEscrowWalletAddress
+export async function getBuyOrderByEscrowWalletAddress(
+  {
+    escrowWalletAddress,
+  }: {
+    escrowWalletAddress: string;
+  }
+): Promise<any | null> {
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('buyorders');
+  // get buyorder by escrow wallet address
+  const result = await collection.findOne<any>(
+    { 'escrow.walletAddress': escrowWalletAddress }
+  );
+  if (result) {
+    return result;
+  } else {
+    return null;
+  }
+}
+
+// updateBuyOrderEscrowBalance
+export async function updateBuyOrderEscrowBalance(
+  {
+    orderId,
+    escrowBalance,
+  }: {
+    orderId: string;
+    escrowBalance: number;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('buyorders');
+  // update buyorder
+  const result = await collection.updateOne(
+    { _id: new ObjectId(orderId) },
+    { $set: {
+      'escrowWallet.balance': escrowBalance,
+    } }
+  );
+  if (result.modifiedCount === 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
