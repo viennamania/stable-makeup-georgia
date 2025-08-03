@@ -157,6 +157,10 @@ interface BuyOrder {
 
   paymentMethod: string;
 
+  escrowWallet: {
+    address: string;
+    balance: number;
+  };
 }
 
 
@@ -4284,16 +4288,47 @@ const fetchBuyOrders = async () => {
                           </span>
 
                           {/* paymentMethod */}
-                          <span className="text-sm text-zinc-500">
-                            {item.paymentMethod === 'bank' ? '은행'
-                            : item.paymentMethod === 'card' ? '카드'
-                            : item.paymentMethod === 'pg' ? 'PG'
-                            : item.paymentMethod === 'cash' ? '현금'
-                            : item.paymentMethod === 'crypto' ? '암호화폐'
-                            : item.paymentMethod === 'giftcard' ? '기프트카드'
-                            : item.paymentMethod === 'mkrw' ? 'MKRW' : '기타'
-                            }
-                          </span>
+                          <div className="flex flex-col items-center justify-end gap-2">
+                            
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <span className="text-sm text-zinc-500 font-semibold">
+                                결제방법
+                              </span>
+                              <span className="text-sm text-zinc-500">
+                                {item.paymentMethod === 'bank' ? '은행'
+                                : item.paymentMethod === 'card' ? '카드'
+                                : item.paymentMethod === 'pg' ? 'PG'
+                                : item.paymentMethod === 'cash' ? '현금'
+                                : item.paymentMethod === 'crypto' ? '암호화폐'
+                                : item.paymentMethod === 'giftcard' ? '기프트카드'
+                                : item.paymentMethod === 'mkrw' ? 'MKRW' : '기타'
+                                }
+                              </span>
+                            </div>
+
+                            {item.paymentMethod === 'mkrw' && item?.escrowWallet?.address && (
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <span className="text-sm text-zinc-500 font-semibold">
+                                  MKRW 에스크로
+                                </span>
+                                <button
+                                  className="text-sm text-blue-600 font-semibold underline"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item?.escrowWallet.address);
+                                    toast.success(Copied_Wallet_Address);
+                                  }}
+                                >
+                                
+                                  <span className="text-sm text-zinc-500">
+                                    {item?.escrowWallet.address.substring(0, 6)}...{item?.escrowWallet.address.substring(item?.escrowWallet.address.length - 4)}
+                                  </span>
+
+                                </button>
+                              </div>
+
+                            )}
+       
+                          </div>
 
                         </div>
                       </td>
