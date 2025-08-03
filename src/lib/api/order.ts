@@ -6671,11 +6671,14 @@ export async function getBuyOrderByEscrowWalletAddress(
     escrowWalletAddress: string;
   }
 ): Promise<any | null> {
+
+  console.log('getBuyOrderByEscrowWalletAddress escrowWalletAddress: ' + escrowWalletAddress);
+
   const client = await clientPromise;
   const collection = client.db('georgia').collection('buyorders');
   // get buyorder by escrow wallet address
   const result = await collection.findOne<any>(
-    { 'escrow.walletAddress': escrowWalletAddress }
+    { 'escrowWallet.address': escrowWalletAddress },
   );
   if (result) {
     return result;

@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
 
     console.log("toAddress", toAddress);
     console.log("fromAddress", fromAddress);
-    console.log("value", value);
+    console.log("amount", amount);
 
     // get buy order by escrow wallet address
     const buyOrder = await getBuyOrderByEscrowWalletAddress({
@@ -207,6 +207,8 @@ export async function POST(request: NextRequest) {
       }
       */
 
+    } else {
+      console.log("No buy order found for escrow wallet address", toAddress);
     }
 
   }
