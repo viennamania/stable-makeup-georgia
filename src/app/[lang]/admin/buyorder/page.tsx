@@ -1769,6 +1769,8 @@ export default function Index({ params }: any) {
 
     buyerWalletAddress: string,
 
+    paymentMethod: string, // 'bank' or 'mkrw' or 'usdt'
+
   ) => {
     // confirm payment
     // send usdt to buyer wallet address
@@ -1886,27 +1888,54 @@ export default function Index({ params }: any) {
           if (transactionHash) {
 
 
+            if (paymentMethod === 'mkrw') {
+
+              const response = await fetch('/api/order/buyOrderConfirmPaymentWithEscrow', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  lang: params.lang,
+                  storecode: storecode,
+                  orderId: orderId,
+                  paymentAmount: krwAmount,
+                  transactionHash: transactionHash,
+                  ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
+                  isSmartAccount: false,
+                })
+              });
+
+              const data = await response.json();
 
 
-            const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                lang: params.lang,
-                storecode: storecode,
-                orderId: orderId,
-                paymentAmount: krwAmount,
-                transactionHash: transactionHash,
-                ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-                isSmartAccount: false,
-              })
-            });
 
-            const data = await response.json();
+            } else {
 
-            //console.log('data', data);
+              const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  lang: params.lang,
+                  storecode: storecode,
+                  orderId: orderId,
+                  paymentAmount: krwAmount,
+                  transactionHash: transactionHash,
+                  ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
+                  isSmartAccount: false,
+                })
+              });
+
+              const data = await response.json();
+
+              //console.log('data', data);
+
+            }
+
+
+
 
 
             await fetch('/api/order/getAllBuyOrders', {
@@ -4773,7 +4802,9 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2">
 
-                        {item?.status === 'paymentConfirmed' && (
+                        {
+                        !item?.escrowTransactionHash
+                        && item?.status === 'paymentConfirmed' && (
                           <div className="
                             w-32
                             flex flex-col gap-2 items-center justify-center">
@@ -5435,6 +5466,8 @@ const fetchBuyOrders = async () => {
                                           item.usdtAmount,
                                           
                                           item.walletAddress,
+
+                                          item.paymentMethod,
                                         );
                                       }}
 
@@ -5721,7 +5754,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                        {/* polygonscan */}
+
                         {item?.transactionHash
                         && item?.transactionHash !== '0x'
                         && (
@@ -5770,6 +5803,52 @@ const fetchBuyOrders = async () => {
                         )}
 
 
+                        {item?.escrowTransactionHash
+                        && item?.escrowTransactionHash !== '0x'
+                        && (
+                          <button
+                            className="text-sm text-blue-600 font-semibold
+                              border border-blue-600 rounded-lg p-2
+                              bg-blue-100
+                              w-full text-center
+                              hover:bg-blue-200
+                              cursor-pointer
+                              transition-all duration-200 ease-in-out
+                              hover:scale-105
+                              hover:shadow-lg
+                              hover:shadow-blue-500/50
+                            "
+                            onClick={() => {
+                              let url = '';
+                              if (chain === "ethereum") {
+                                url = `https://etherscan.io/tx/${item.escrowTransactionHash}`;
+                              } else if (chain === "polygon") {
+                                url = `https://polygonscan.com/tx/${item.escrowTransactionHash}`;
+                              } else if (chain === "arbitrum") {
+                                url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                              } else if (chain === "bsc") {
+                                url = `https://bscscan.com/tx/${item.escrowTransactionHash}`;
+                              } else {
+                                url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                              }
+                              window.open(url, '_blank');
+
+                            }}
+                          >
+                            <div className="flex flex-row gap-2 items-center justify-center">
+                              <Image
+                                src={`/logo-chain-${chain}.png`}
+                                alt={`${chain} Logo`}
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <span className="text-sm">
+                                에스크로(MKRW) 전송내역
+                              </span>
+                            </div>
+                          </button>
+                        )}
 
 
 

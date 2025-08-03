@@ -69,6 +69,7 @@ export interface UserProps {
   totalPaymentConfirmedKrwAmount: number,
   totalPaymentConfirmedUsdtAmount: number,
 
+  escrowWallet: any
 }
 
 export interface ResultProps {
@@ -2976,6 +2977,9 @@ export async function buyOrderConfirmPayment(data: any) {
 
         autoConfirmPayment: autoConfirmPayment,
 
+        escrowTransactionHash: data.escrowTransactionHash,
+        escrowTransactionConfirmedAt: new Date().toISOString(),
+
       } }
     );
 
@@ -2991,6 +2995,9 @@ export async function buyOrderConfirmPayment(data: any) {
         queueId: data.queueId,
         transactionHash: data.transactionHash,
         paymentConfirmedAt: new Date().toISOString(),
+
+        escrowTransactionHash: data.escrowTransactionHash,
+        escrowTransactionConfirmedAt: new Date().toISOString(),
 
       } }
     );
@@ -3059,94 +3066,8 @@ export async function buyOrderConfirmPayment(data: any) {
           }
         );
 
-
-
       }
 
-
-      
-      
-      //console.log('confirmPayment storecode: ' + storecode);
-
-      /*
-      const totalPaymentConfirmedCount = await collection.countDocuments(
-        {
-          storecode: storecode,
-          status: 'paymentConfirmed',
-          privateSale: false, // exclude private sale
-        }
-      );
-      //console.log('confirmPayment totalPaymentConfirmedCount: ' + totalPaymentConfirmedCount);
-
-
-      const totalKrwAmount = await collection.aggregate([
-        { $match: {
-          storecode: storecode,
-          status: 'paymentConfirmed',
-          privateSale: false, // exclude private sale
-        }},
-        { $group: { _id: null, totalKrwAmount: { $sum: '$krwAmount' } } }
-      ]).toArray();
-      //console.log('confirmPayment totalKrwAmount: ' + totalKrwAmount[0]?.totalKrwAmount || 0);
-
-
-      const totalUsdtAmount = await collection.aggregate([
-        
-        //{ $match: { storecode: storecode, status: 'paymentConfirmed' } },
-        { $match: {
-          storecode: storecode,
-          status: 'paymentConfirmed',
-          privateSale: false, // exclude private sale
-        }},
-
-        { $group: { _id: null, totalUsdtAmount: { $sum: '$usdtAmount' } } }
-      ]).toArray();
-      //console.log('confirmPayment totalUsdtAmount: ' + totalUsdtAmount[0]?.totalUsdtAmount || 0);
-
-
-      const totalPaymentConfirmedClearanceCount = await collection.countDocuments(
-        {
-          storecode: storecode,
-          status: 'paymentConfirmed',
-          privateSale: true, // include private sale
-        }
-      );
-      //console.log('confirmPayment totalPaymentConfirmedClearanceCount: ' + totalPaymentConfirmedClearanceCount);
-      const totalKrwAmountClearance = await collection.aggregate([
-        { $match: {
-          storecode: storecode,
-          status: 'paymentConfirmed',
-          privateSale: true, // include private sale
-        }},
-        { $group: { _id: null, totalKrwAmount: { $sum: '$krwAmount' } } }
-      ]).toArray();
-      //console.log('confirmPayment totalKrwAmountClearance: ' + totalKrwAmountClearance[0]?.totalKrwAmount || 0);
-      const totalUsdtAmountClearance = await collection.aggregate([
-        { $match: {
-          storecode: storecode,
-          status: 'paymentConfirmed',
-          privateSale: true, // include private sale
-        }},
-        { $group: { _id: null, totalUsdtAmount: { $sum: '$usdtAmount' } } }
-      ]).toArray();
-
-
-
-      // update store collection
-      const storeCollection = client.db('georgia').collection('stores');
-      const store = await storeCollection.updateOne(
-        { storecode: storecode },
-        { $set: {
-          totalPaymentConfirmedCount: totalPaymentConfirmedCount,
-          totalKrwAmount: totalKrwAmount[0]?.totalKrwAmount || 0,
-          totalUsdtAmount: totalUsdtAmount[0]?.totalUsdtAmount || 0,
-
-          totalPaymentConfirmedClearanceCount: totalPaymentConfirmedClearanceCount,
-          totalKrwAmountClearance: totalKrwAmountClearance[0]?.totalKrwAmount || 0,
-          totalUsdtAmountClearance: totalUsdtAmountClearance[0]?.totalUsdtAmount || 0,
-        } }
-      );
-      */
 
       const totalPaymentConfirmed = await collection.aggregate([
         { $match: {
@@ -3205,86 +3126,6 @@ export async function buyOrderConfirmPayment(data: any) {
 
       const agentcode = order.agentcode;
 
-      /*
-      // settlement
-      const totalPaymentConfirmedCount = await collection.countDocuments(
-        {
-          agentcode: agentcode,
-          status: 'paymentConfirmed',
-          privateSale: false, // exclude private sale
-        }
-      );
-
-      //console.log('confirmPayment totalPaymentConfirmedCount: ' + totalPaymentConfirmedCount);
-      const totalKrwAmount = await collection.aggregate([
-        { $match: {
-          agentcode: agentcode,
-          status: 'paymentConfirmed',
-          privateSale: false, // exclude private sale
-        }},
-        { $group: { _id: null, totalKrwAmount: { $sum: '$krwAmount' } } }
-      ]).toArray();
-      //console.log('confirmPayment totalKrwAmount: ' + totalKrwAmount[0]?.totalKrwAmount || 0);
-      const totalUsdtAmount = await collection.aggregate([
-        { $match: {
-          agentcode: agentcode,
-          status: 'paymentConfirmed',
-          privateSale: false, // exclude private sale
-        }},
-        { $group: { _id: null, totalUsdtAmount: { $sum: '$usdtAmount' } } }
-      ]).toArray(); 
-      //console.log('confirmPayment totalUsdtAmount: ' + totalUsdtAmount[0]?.totalUsdtAmount || 0);
-
-
-
-
-
-
-      // clearance
-      const totalPaymentConfirmedClearanceCount = await collection.countDocuments(
-        {
-          agentcode: agentcode,
-          status: 'paymentConfirmed',
-          privateSale: true, // include private sale
-        }
-      );
-      //console.log('confirmPayment totalPaymentConfirmedClearanceCount: ' + totalPaymentConfirmedClearanceCount);
-      const totalKrwAmountClearance = await collection.aggregate([
-        { $match: {
-          agentcode: agentcode,
-          status: 'paymentConfirmed',
-          privateSale: true, // include private sale
-        }},
-        { $group: { _id: null, totalKrwAmount: { $sum: '$krwAmount' } } }
-      ]).toArray();
-      //console.log('confirmPayment totalKrwAmountClearance: ' + totalKrwAmountClearance[0]?.totalKrwAmount || 0);
-      const totalUsdtAmountClearance = await collection.aggregate([
-        { $match: {
-          agentcode: agentcode,
-          status: 'paymentConfirmed',
-          privateSale: true, // include private sale
-        }},
-        { $group: { _id: null, totalUsdtAmount: { $sum: '$usdtAmount' } } }
-      ]).toArray();
-      //console.log('confirmPayment totalUsdtAmountClearance: ' + totalUsdtAmountClearance[0]?.totalUsdtAmount || 0);
-      // update agent collection
-      const agentCollection = client.db('georgia').collection('agents');
-
-      
-      const agent = await agentCollection.updateOne(
-        { agentcode: agentcode },
-        { $set: {
-          totalPaymentConfirmedCount: totalPaymentConfirmedCount,
-          totalKrwAmount: totalKrwAmount[0]?.totalKrwAmount || 0,
-          totalUsdtAmount: totalUsdtAmount[0]?.totalUsdtAmount || 0,
-
-
-          totalPaymentConfirmedClearanceCount: totalPaymentConfirmedClearanceCount,
-          totalKrwAmountClearance: totalKrwAmountClearance[0]?.totalKrwAmount || 0,
-          totalUsdtAmountClearance: totalUsdtAmountClearance[0]?.totalUsdtAmount || 0,
-        } }
-      );
-      */
 
       const totalPaymentConfirmed = await collection.aggregate([
         { $match: {
@@ -3331,24 +3172,10 @@ export async function buyOrderConfirmPayment(data: any) {
       );
 
 
-
-
     }
 
 
 
-
-    
-
-
-
-    /*
-    const updated = await collection.findOne<UserProps>(
-      { _id: new ObjectId(data.orderId+'') }
-    );
-
-    return updated;
-    */
     return {
       status: 'paymentConfirmed',
       paymentAmount: paymentAmount,
@@ -3364,6 +3191,17 @@ export async function buyOrderConfirmPayment(data: any) {
   }
   
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
