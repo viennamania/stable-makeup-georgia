@@ -96,6 +96,8 @@ import {
   polygonContractAddressUSDT,
   arbitrumContractAddressUSDT,
   bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
 
@@ -245,6 +247,25 @@ export default function Index({ params }: any) {
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: bsc,
+
+    // the contract's address
+    address: bscContractAddressMKRW,
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
 
 
 
@@ -597,6 +618,33 @@ export default function Index({ params }: any) {
 
 
 
+    // balance of MKRW
+  const [mkrwBalance, setMkrwBalance] = useState(0);
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    // get the balance
+    const getMkrwBalance = async () => {
+      const result = await balanceOf({
+        contract: contractMKRW,
+        address: address,
+      });
+  
+      setMkrwBalance( Number(result) / 10 ** 18 );
+
+  
+    };
+    if (address) getMkrwBalance();
+    const interval = setInterval(() => {
+      if (address) getMkrwBalance();
+    } , 5000);
+    return () => clearInterval(interval);
+  }, [address, contractMKRW]);
+
+
+
+
 
 
 
@@ -743,7 +791,7 @@ export default function Index({ params }: any) {
 
     return () => clearInterval(interval);
 
-  } , [address, escrowWalletAddress, contract, "admin"]);
+  } , [address, escrowWalletAddress, contract,]);
   
 
   //console.log('escrowBalance', escrowBalance);
@@ -3262,8 +3310,7 @@ const fetchBuyOrders = async () => {
 
 
           {address && (
-              <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-4">
-
+              <div className="w-full flex flex-col items-end justify-center gap-4">
 
                   <div className="flex flex-row items-center justify-center gap-2">
                       <Image
@@ -3286,9 +3333,26 @@ const fetchBuyOrders = async () => {
                   </div>
 
                   <div className="flex flex-row items-center justify-center  gap-2">
+                    <Image
+                        src="/icon-tether.png"
+                        alt="USDT"
+                        width={50}
+                        height={50}
+                        className="w-6 h-6"
+                    />
+                    <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                        {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </span>
+                  </div>
+
+                  {/* mkrwBalance */}
+                  { mkrwBalance && mkrwBalance > 0 && (
+                    <div className="flex flex-row items-center justify-center gap-2">
                       <Image
-                          src="/icon-tether.png"
-                          alt="USDT"
+                          src="/icon-krw.png"
+                          alt="KRW"
                           width={50}
                           height={50}
                           className="w-6 h-6"
@@ -3296,61 +3360,13 @@ const fetchBuyOrders = async () => {
                       <span className="text-2xl xl:text-4xl font-semibold text-green-600"
                         style={{ fontFamily: 'monospace' }}
                       >
-                          {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       </span>
-                  </div>
+                    </div>
+                  )}
 
               </div>
           )}
-
-
-          <div className="w-full flex flex-row items-center justify-end gap-2">
-
-            {/*
-            <div className="flex flex-col gap-2 items-center">
-              <div className="text-sm">{Total}</div>
-              <div className="text-xl font-semibold text-zinc-500">
-                {buyOrders.length} 
-              </div>
-            </div>
-            */}
-
-
-
-            {/*}
-            <div className="flex flex-col gap-2 items-center">
-              <div className="text-sm">
-                {Buy_Order_Accept}
-              </div>
-              <div className="text-xl font-semibold text-white">
-                {buyOrders.filter((item) => item.status === 'accepted').length}
-              </div>
-            </div>
-            */}
-
-              {/*
-            <div className="flex flex-col gap-2 items-center">
-              <div className="text-sm">거래중</div>
-              <div className="text-xl font-semibold text-zinc-500">
-
-                {
-                  buyOrders.filter((item) => item.status === 'accepted' || item.status === 'paymentRequested').length
-
-                }
-
-              </div>
-            </div>
-
-          
-            <div className="flex flex-col gap-2 items-center">
-              <div className="text-sm">전체</div>
-              <div className="text-xl font-semibold text-zinc-500">
-                {totalCount || 0}
-              </div>
-            </div>
-            */}
-
-          </div>
 
 
 

@@ -17,6 +17,8 @@ export const arbitrumContractAddressUSDT = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b6
 
 export const bscContractAddressUSDT = "0x55d398326f99059fF775485246999027B3197955"; // USDT on BSC
 
+// bscContractAddressMKRW
+export const bscContractAddressMKRW = "0xEb0a5ea0001Aa9f419BbaF8ceDad265A60f0B10f"; // MKRW on BSC
 
 
 
