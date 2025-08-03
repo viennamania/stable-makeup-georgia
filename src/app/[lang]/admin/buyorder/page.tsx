@@ -4241,7 +4241,7 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2">
                         <div className="
-                          w-36
+                          w-40 
                           flex flex-col gap-2 items-end justify-start">
 
                           <div className="flex flex-row items-center justify-end gap-1">
@@ -4311,7 +4311,7 @@ const fetchBuyOrders = async () => {
 
                                 <div className="flex flex-row items-center justify-center gap-2">
                                   <span className="text-sm text-zinc-500 font-semibold">
-                                    지갑
+                                    에스크로
                                   </span>
                                   <button
                                     className="text-sm text-blue-600 font-semibold underline"
@@ -4320,17 +4320,27 @@ const fetchBuyOrders = async () => {
                                       toast.success(Copied_Wallet_Address);
                                     }}
                                   >
-                                    <span className="text-sm text-zinc-500">
                                       {item?.escrowWallet.address.substring(0, 6)}...{item?.escrowWallet.address.substring(item?.escrowWallet.address.length - 4)}
-                                    </span>
                                   </button>
                                 </div>
 
                                 {/* balance */}
                                 {item?.escrowWallet?.balance ? (
-                                  <span className="text-sm text-zinc-500">
-                                    {item?.escrowWallet?.balance.toFixed(0)} MKRW
-                                  </span>
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <span className="text-lg text-yellow-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}
+                                    >
+                                      {
+                                        item?.escrowWallet?.balance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                      }
+                                    </span>
+                                    <span className="text-sm text-zinc-500">
+                                      MKRW
+                                    </span>
+                                  </div>
+
                                 ) : (
                                   <span className="text-sm text-zinc-500">
                                     에스크로 잔액 없음
