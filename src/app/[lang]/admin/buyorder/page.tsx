@@ -4834,18 +4834,7 @@ const fetchBuyOrders = async () => {
                             w-32
                             flex flex-col gap-2 items-center justify-center">
 
-                            <div className="flex flex-row gap-2 items-center justify-center">
-                              <Image
-                                src="/icon-bank-auto.png"
-                                alt="Bank Auto"
-                                width={20}
-                                height={20}
-                                className="animate-spin"
-                              />
-                              <span className="text-sm font-semibold text-zinc-500">
-                                입금 확인중...
-                              </span>
-                            </div>
+
 
                             {item?.paymentMethod === 'mkrw' ? (
                               <div className="flex flex-row gap-2 items-center justify-center">
@@ -4857,13 +4846,28 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 rounded-full"
                                 />
                                 <span className="text-sm font-semibold text-zinc-500">
-                                  MKRW
+                                  MKRW 에스크로
                                 </span>
                               </div>
                             ) : (
 
-
                               <div className="flex flex-col gap-2 items-center justify-center">
+
+                                <div className="flex flex-row gap-2 items-center justify-center">
+                                  <Image
+                                    src="/icon-bank-auto.png"
+                                    alt="Bank Auto"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                  />
+                                  <span className="text-sm font-semibold text-zinc-500">
+                                    입금 확인중...
+                                  </span>
+                                </div>
+
+
+
                                 <div className="flex flex-col items-center gap-2">
                                   <div className="text-sm text-yellow-600 font-bold">
                                     {/*item.seller?.bankInfo?.bankName*/}
@@ -4879,6 +4883,7 @@ const fetchBuyOrders = async () => {
                                   {item.store?.bankInfo?.accountNumber}
                                 </div>
                               </div>
+                              
                             
                             )}
 
