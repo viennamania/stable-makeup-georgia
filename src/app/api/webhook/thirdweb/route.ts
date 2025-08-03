@@ -106,6 +106,10 @@ export async function POST(request: NextRequest) {
     data,
   } = body;
 
+  console.log("data", data);
+
+  
+
 
   const {
     chainId,
@@ -120,6 +124,8 @@ export async function POST(request: NextRequest) {
     logIndex,
   } = data;
 
+
+  
 
 
 
