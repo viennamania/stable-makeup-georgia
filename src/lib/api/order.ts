@@ -1651,6 +1651,8 @@ export async function insertBuyOrder(data: any) {
       paymentMethod: data.paymentMethod || 'bank', // default to bank if not provided
 
       tradeId: tradeId,
+
+      escrowWallet: data.escrowWallet || '', // optional, can be empty
     }
   );
 

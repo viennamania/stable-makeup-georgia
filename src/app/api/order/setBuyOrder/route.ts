@@ -11,11 +11,54 @@ import {
 */
 
 
+import {
+  createThirdwebClient,
+  eth_getTransactionByHash,
+  getContract,
+  sendAndConfirmTransaction,
+  
+  sendBatchTransaction,
+
+
+} from "thirdweb";
+
+import { ethers } from "ethers";
+
+
+//import { polygonAmoy } from "thirdweb/chains";
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+ } from "thirdweb/chains";
+
+import {
+  privateKeyToAccount,
+  smartWallet,
+  getWalletBalance,
+  
+ } from "thirdweb/wallets";
+
+
+
+
+
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const { storecode, walletAddress, nickname, usdtAmount, krwAmount, rate, privateSale, buyer, paymentMethod } = body;
+  const {
+    storecode,
+    walletAddress,
+    nickname,
+    usdtAmount,
+    krwAmount,
+    rate,
+    privateSale,
+    buyer,
+    paymentMethod
+  } = body;
 
   console.log("setBuyOrder =====  body", body);
 
@@ -45,6 +88,65 @@ export async function POST(request: NextRequest) {
   */
   
 
+  // generate escrow wallet
+
+  const escrowWalletPrivateKey = ethers.Wallet.createRandom().privateKey;
+
+  if (!escrowWalletPrivateKey) {
+    return NextResponse.json({
+      result: null,
+      error: "Failed to generate escrow wallet private key",
+    }, { status: 500 });
+  }
+
+  const client = createThirdwebClient({
+    secretKey: process.env.THIRDWEB_SECRET_KEY || "",
+  });
+
+  if (!client) {
+    return NextResponse.json({
+      result: null,
+      error: "Failed to create Thirdweb client",
+    }, { status: 500 });
+  }
+
+  const personalAccount = privateKeyToAccount({
+    client,
+    privateKey: escrowWalletPrivateKey,
+  });
+
+
+  if (!personalAccount) {
+    return NextResponse.json({
+      result: null,
+      error: "Failed to create personal account",
+    }, { status: 500 });
+  }
+
+  const wallet = smartWallet({
+    chain: bsc,
+    sponsorGas: true,
+  });
+
+
+  // Connect the smart wallet
+  const account = await wallet.connect({
+    client: client,
+    personalAccount: personalAccount,
+  });
+
+  if (!account) {
+    return NextResponse.json({
+      result: null,
+      error: "Failed to connect smart wallet",
+    }, { status: 500 });
+  }
+
+  const escrowWalletAddress = account.address;
+
+
+
+
   const result = await insertBuyOrder({
     //agentcode: agentcode,
     storecode: storecode,
@@ -59,6 +161,11 @@ export async function POST(request: NextRequest) {
     privateSale: privateSale,
     buyer: buyer,
     paymentMethod: paymentMethod,
+
+    escrowWallet: {
+      address: escrowWalletAddress,
+      privateKey: escrowWalletPrivateKey,
+    },
   });
 
   ///console.log("setBuyOrder =====  result", result);
