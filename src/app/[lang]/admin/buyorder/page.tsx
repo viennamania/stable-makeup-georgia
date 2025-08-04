@@ -4192,30 +4192,32 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
 
-                            <div className="flex flex-row items-center gap-2">
-                              <span className="text-lg text-yellow-600 font-bold">
-                                {
-                                  //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
+                            {item?.paymentMethod === 'bank' && (
+                              <div className="flex flex-row items-center gap-2">
+                                <span className="text-lg text-yellow-600 font-bold">
+                                  {
+                                    //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
 
-                                  item?.buyer?.depositName
+                                    item?.buyer?.depositName
 
-                                }
-                              </span>
-                              <span className="
-                                hidden xl:flex
-                                text-sm text-zinc-500">
-                                {
-                                  item?.buyer?.depositBankName
-                                }
-                              </span>
-                              <span className="
-                                text-sm text-zinc-500">
-                                {
-                                  item?.buyer?.depositBanktAccountNumber &&
-                                  item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
-                                }
-                              </span>
-                            </div>
+                                  }
+                                </span>
+                                <span className="
+                                  hidden xl:flex
+                                  text-sm text-zinc-500">
+                                  {
+                                    item?.buyer?.depositBankName
+                                  }
+                                </span>
+                                <span className="
+                                  text-sm text-zinc-500">
+                                  {
+                                    item?.buyer?.depositBanktAccountNumber &&
+                                    item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
+                                  }
+                                </span>
+                              </div>
+                            )}
 
 
                           </div>
