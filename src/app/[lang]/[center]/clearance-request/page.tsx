@@ -2631,7 +2631,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
   const [usdtAmount, setUsdtAmount] = useState(0);
   const [krwAmount, setKrwAmount] = useState(0);
-  const [rate, setRate] = useState(1380);
+  const [rate, setRate] = useState(1400);
 
 
 

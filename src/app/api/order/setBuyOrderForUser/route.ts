@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     nickname: '',
     usdtAmount: 7.25,
     krwAmount: 10000,
-    rate: 1380,
+    rate: 1400,
     privateSale: true,
     buyer: { depositBankName: '', depositName: '' }
   }

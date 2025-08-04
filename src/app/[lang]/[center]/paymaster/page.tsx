@@ -918,7 +918,7 @@ export default function Index({ params }: any) {
 
 
 
-    const [rate, setRate] = useState(1380);
+    const [rate, setRate] = useState(1400);
 
 
 

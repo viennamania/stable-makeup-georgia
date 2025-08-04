@@ -1931,7 +1931,7 @@ export async function insertBuyOrderForUser(data: any) {
     "walletAddress":"0x1eba71B17AA4beE24b54dC10cA32AAF0789b8D9A",
     "nickname":"",
     "usdtAmount":7.25,
-    "krwAmount":10000,"rate":1380,
+    "krwAmount":10000,"rate":1400,
     "privateSale":true,
     "buyer":{"depositBankName":"","depositName":""}
     }
