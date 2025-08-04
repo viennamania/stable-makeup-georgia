@@ -933,7 +933,7 @@ export default function SendUsdt({ params }: any) {
 
                     // check if start 0, if so remove it
 
-                    e.target.value = e.target.value.replace(/^0+/, ''),
+                    //e.target.value = e.target.value.replace(/^0+/, ''),
 
 
 
