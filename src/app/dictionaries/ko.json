@@ -76,9 +76,9 @@
 
 
     "Enter_Wallet_Address": "받는사람주소 입력",
-    "Enter_the_amount_and_recipient_address": "보낼 금액과 받는사람 USDT통장번호 입력",
+    "Enter_the_amount_and_recipient_address": "보낼 금액과 받는사람 지갑주소 입력",
     "Select_a_user": "받는사람 선택",
-    "User_wallet_address": "받는사람 USDT통장번호",
+    "User_wallet_address": "받는사람 지갑주소",
 
     "This_address_is_not_white_listed": "이 주소는 화이트리스트에 없습니다.",
 
@@ -198,10 +198,10 @@
 
     "Checking_the_bank_transfer_from_the_buyer": "구매자의 은행 송금 확인 중",
 
-    "I_agree_to_check_the_bank_transfer_of": "구매자의 KRW 은행 송금을 확인하고 USDT를 구매자의 USDT통장번호로 전송하는 것에 동의합니다.",
+    "I_agree_to_check_the_bank_transfer_of": "구매자의 KRW 은행 송금을 확인하고 USDT를 구매자의 지갑주소로 전송하는 것에 동의합니다.",
 
 
-    "Transfering_USDT_to_the_buyer_wallet_address": "구매자 USDT통장번호로 USDT 전송 중",
+    "Transfering_USDT_to_the_buyer_wallet_address": "구매자 지갑주소로 USDT 전송 중",
 
 
     "SMS_will_be_sent_to_your_mobile_number": "구매자가 주문을 수락하면 SMS가 귀하의 휴대폰 번호로 전송됩니다.",
@@ -225,7 +225,7 @@
     "I_gree_to_escrow_USDT_to_the_smart_contract_and_request_payment_to_the_buyer": "USDT를 에스크로 보관소에 보내고 구매자에게 결제를 요청하는 것에 동의합니다.",
 
 
-    "My_Wallet_Address": "내 USDT통장번호",
+    "My_Wallet_Address": "내 지갑주소",
     "My_Phone_Number": "내 전화번호",
 
     "Wallet_Address_Description1": "이 지갑의 주소는",
@@ -236,10 +236,10 @@
     "Chat_with_Seller": "판매자와 채팅",
     "Chat_with_Buyer": "구매자와 채팅",
 
-    "You_must_have_a_wallet_address_to_buy_USDT": "USDT를 구매하려면 USDT통장번호가 필요합니다.",
+    "You_must_have_a_wallet_address_to_buy_USDT": "USDT를 구매하려면 지갑주소가 필요합니다.",
 
 
-    "Make_Wallet_Address": "USDT통장번호 만들기",
+    "Make_Wallet_Address": "지갑주소 만들기",
 
     
 
@@ -252,11 +252,11 @@
     "PRICE_5000000_KRW": "500만원",
     "PRICE_10000000_KRW": "1,000만원",
 
-    "Please_keep_Your_Wallet_address_safe": "판매자와 분쟁 시 본인 USDT통장번호가 꼭 필요하므로 본인 USDT통장번호를 잘 저장해놓으시기 바랍니다.",
+    "Please_keep_Your_Wallet_address_safe": "판매자와 분쟁 시 본인 지갑주소가 꼭 필요하므로 본인 지갑주소를 잘 저장해놓으시기 바랍니다.",
 
     "Waiting_for_the_USDT_to_be_sent_to_the_store_address": "USDT가 상점 주소로 전송되기를 기다리는 중입니다.",
 
-    "Successfully_sent_USDT_to_the_store_address": "USDT가 상점 USDT통장번호로 성공적으로 전송되었습니다. 5분내로 상점에서 충전 상태를 확인할 수 있습니다.",
+    "Successfully_sent_USDT_to_the_store_address": "USDT가 상점 지갑주소로 성공적으로 전송되었습니다. 5분내로 상점에서 충전 상태를 확인할 수 있습니다.",
 
 
 
@@ -267,7 +267,7 @@
 
 
 
-    "Your_wallet_address_is_copied": "USDT통장번호가 복사되었습니다.",
+    "Your_wallet_address_is_copied": "지갑주소가 복사되었습니다.",
 
     "Charge": "충전하기",
 
@@ -333,13 +333,13 @@
 
     "Make_Escrow_Wallet": "에스크로 지갑 만들기",
 
-    "Escrow_Wallet_Address_has_been_created": "에스크로 USDT통장번호가 생성되었습니다.",
-    "Failed_to_create_Escrow_Wallet_Address": "에스크로 USDT통장번호 생성에 실패했습니다.",
+    "Escrow_Wallet_Address_has_been_created": "에스크로 지갑주소가 생성되었습니다.",
+    "Failed_to_create_Escrow_Wallet_Address": "에스크로 지갑주소 생성에 실패했습니다.",
 
     
     "Newest_order_has_been_arrived": "새로운 주문이 도착했습니다.",
     "Escrow_balance_is_less_than_payment_amount": "에스크로 잔액이 결제금액보다 적습니다.",
 
-    "Copied_Wallet_Address": "USDT통장번호가 복사되었습니다."
+    "Copied_Wallet_Address": "지갑주소가 복사되었습니다."
 
 }

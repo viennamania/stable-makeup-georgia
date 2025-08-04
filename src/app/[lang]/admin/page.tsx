@@ -88,6 +88,8 @@ import {
   polygonContractAddressUSDT,
   arbitrumContractAddressUSDT,
   bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
 
@@ -179,6 +181,23 @@ export default function Index({ params }: any) {
             chain === "arbitrum" ? arbitrumContractAddressUSDT :
             chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: bsc,
+
+    // the contract's address
+    address: bscContractAddressMKRW,
 
     // OPTIONAL: the contract's abi
     //abi: [...],
@@ -395,6 +414,39 @@ export default function Index({ params }: any) {
     return () => clearInterval(interval);
 
   } , [address, contract]);
+
+
+
+
+
+  // balance of MKRW
+  const [mkrwBalance, setMkrwBalance] = useState(0);
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    // get the balance
+    const getMkrwBalance = async () => {
+      const result = await balanceOf({
+        contract: contractMKRW,
+        address: address,
+      });
+  
+      setMkrwBalance( Number(result) / 10 ** 18 );
+
+  
+    };
+    if (address) getMkrwBalance();
+    const interval = setInterval(() => {
+      if (address) getMkrwBalance();
+    } , 5000);
+    return () => clearInterval(interval);
+  }, [address, contractMKRW]);
+
+
+
+
+
 
 
 
@@ -2187,15 +2239,90 @@ export default function Index({ params }: any) {
 
 
 
-                  <div className="mt-5 flex flex-row gap-2 justify-center items-center">
-                    <span className="text-sm text-zinc-600">
-                      내 USDT 보증금
+                  <div className="mt-5 w-full flex flex-row gap-2 justify-center items-center">
+
+                    <span className="w-20 text-sm text-zinc-600">
+                      내 테더 잔액
                     </span>
                     <div className="text-4xl font-semibold text-zinc-800">
-                      {Number(balance).toFixed(2)}
+                      {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </div>
                     <p className="text-sm text-zinc-800">USDT</p>
+
+
+                    <button
+                      disabled={!address}
+                      onClick={() => {
+                        // redirect to send USDT page
+                        router.push(
+                          "/" + params.lang + "/admin/withdraw-usdt"
+                        );
+
+                      }}
+                      className="flex bg-[#3167b4]
+                      text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    >
+                      <Image
+                        src="/icon-share.png"
+                        alt="Withdraw USDT"
+                        width={20}
+                        height={20}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-white font-semibold">
+                        출금하기
+                      </span>
+
+                    </button>
+
                   </div>
+
+                  {mkrwBalance > 0 && (
+
+
+                    <div className="w-full flex flex-row gap-2 justify-center items-center">
+
+                      <span className="w-20 text-sm text-zinc-600">
+                        내 포인트 잔액
+                      </span>
+                      <div className="text-4xl font-semibold text-zinc-800">
+                        {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      </div>
+                      <p className="text-sm text-zinc-800">MKRW</p>
+
+
+                      <button
+                        disabled={!address}
+                        onClick={() => {
+                          // redirect to send USDT page
+                          router.push(
+                            "/" + params.lang + "/admin/withdraw-mkrw"
+                          );
+
+                        }}
+                        className="flex bg-[#3167b4]
+                        text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      >
+                        <Image
+                          src="/icon-share.png"
+                          alt="Withdraw MKRW"
+                          width={20}
+                          height={20}
+                          className="mr-2"
+                        />
+                        <span className="text-sm text-white font-semibold">
+                          출금하기
+                        </span>
+
+                      </button>
+
+                    </div>
+
+
+                  )}
+
+
+
 
                   <div className="flex flex-row gap-2 justify-center items-center">
                     <span className="text-sm text-zinc-600">
@@ -2243,46 +2370,6 @@ export default function Index({ params }: any) {
 
               )}
 
-
-
-              {/* send button */}
-              <div className="w-full flex flex-row gap-2 justify-between items-center mt-5">
-                <button
-                  //disabled={!address}
-                  onClick={() => {
-                    // send USDT
-                    //console.log("send USDT");
-
-                    //if (!address) {
-                    //  toast.error(Please_connect_your_wallet_first);
-                    //  return;
-                  // }
-
-                    // redirect to send USDT page
-                    router.push(
-                      "/" + params.lang + "/admin/withdraw-usdt"
-                    );
-
-                  }}
-                  className=" w-full flex bg-[#3167b4]
-                  text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                >
-                  <Image
-                    src="/icon-share.png"
-                    alt="Withdraw USDT"
-                    width={20}
-                    height={20}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-white font-semibold">
-                    USDT 출금하기
-                  </span>
-
-                </button>
-
-
-                
-              </div>
 
               {/* Go Buy USDT */}
               {/*

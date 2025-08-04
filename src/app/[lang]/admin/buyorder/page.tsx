@@ -622,7 +622,7 @@ export default function Index({ params }: any) {
 
 
 
-    // balance of MKRW
+  // balance of MKRW
   const [mkrwBalance, setMkrwBalance] = useState(0);
   useEffect(() => {
     if (!address) {
