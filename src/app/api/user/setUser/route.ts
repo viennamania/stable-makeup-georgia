@@ -12,12 +12,12 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const { storecode, walletAddress, nickname, mobile } = body;
+  const { storecode, walletAddress, nickname, mobile} = body;
 
 
-  if (!storecode || !walletAddress || !nickname || !mobile) {
+  if (!storecode || !walletAddress || !nickname) {
     return NextResponse.json({
-      error: "Missing required fields: storecode, walletAddress, nickname, or mobile.",
+      error: "Missing required fields: storecode, walletAddress, or nickname",
     }, { status: 400 });
   }
 
