@@ -127,6 +127,8 @@ interface BuyOrder {
   autoConfirmPayment: boolean;
 
   agent: any;
+
+  paymentMethod: string;
 }
 
 
@@ -3356,31 +3358,42 @@ const fetchBuyOrders = async () => {
                         <td className="p-2">
                           <div className="flex flex-row items-center gap-2">
 
-                            
-                            <div className="flex flex-col gap-2 items-center">
+                            {item?.paymentMethod === 'bank' && (
+                              <div className="flex flex-col gap-2 items-center">
 
-                              <div className="text-sm text-yellow-600 font-semibold">
-                                {
-                                  item?.buyer?.depositName
+                                <div className="text-sm text-yellow-600 font-semibold">
+                                  {
+                                    item?.buyer?.depositName
 
-                                }
+                                  }
+                                </div>
+                                <div className="text-sm text-zinc-500 font-semibold">
+                                  {
+                                    item?.buyer?.depositBankName
+
+                                  }
+                                </div>
+
+                                <div className="text-sm text-zinc-500 font-semibold">
+                                  {
+                                    item?.buyer?.depositBankAccountNumber &&
+                                    item?.buyer?.depositBankAccountNumber.slice(0, 5) + '...'
+                                  }
+                                </div>
+
                               </div>
-                              <div className="text-sm text-zinc-500 font-semibold">
-                                {
-                                  item?.buyer?.depositBankName
+                            )}
 
-                                }
+                            {item?.paymentMethod === 'mkrw' && (
+                              <div className="flex flex-col gap-2 items-center">
+
+                                <div className="text-sm text-gray-600 font-semibold">
+                                  MKRW 지갑
+                                </div>
+
                               </div>
+                            )}
 
-                              <div className="text-sm text-zinc-500 font-semibold">
-                                {
-                                  item?.buyer?.depositBankAccountNumber &&
-                                  item?.buyer?.depositBankAccountNumber.slice(0, 5) + '...'
-                                }
-                              </div>
-
-
-                            </div>
 
                           </div>
                         </td>
@@ -3480,29 +3493,41 @@ const fetchBuyOrders = async () => {
 
 
                         <td className="p-2">
-                          <div className="flex flex-col gap-2 items-center justify-center">
-                            <div className="text-sm font-semibold text-zinc-500">
-                              {item?.store?.bankInfo?.bankName}
-                            </div>
 
-                            {/* copy account number to clipboard */}
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
-                                toast.success('입금통장번호가 복사되었습니다.');
-                              }}
-                              className="text-sm text-zinc-500 font-semibold
-                                hover:text-blue-600 cursor-pointer
-                                hover:underline"
-                              title="입금통장번호 복사"
-                            >
-                              {item?.store?.bankInfo?.accountNumber}
-                            </button>
+                          {item?.paymentMethod === 'bank' && (
+                            <div className="flex flex-col gap-2 items-center justify-center">
+                              <div className="text-sm font-semibold text-zinc-500">
+                                {item?.store?.bankInfo?.bankName}
+                              </div>
 
-                            <div className="text-sm font-semibold text-zinc-500">
-                              {item?.store?.bankInfo?.accountHolder}
+                              {/* copy account number to clipboard */}
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
+                                  toast.success('입금통장번호가 복사되었습니다.');
+                                }}
+                                className="text-sm text-zinc-500 font-semibold
+                                  hover:text-blue-600 cursor-pointer
+                                  hover:underline"
+                                title="입금통장번호 복사"
+                              >
+                                {item?.store?.bankInfo?.accountNumber}
+                              </button>
+
+                              <div className="text-sm font-semibold text-zinc-500">
+                                {item?.store?.bankInfo?.accountHolder}
+                              </div>
                             </div>
-                          </div>
+                          )}
+
+                          { item?.paymentMethod === 'mkrw' && (
+                            <div className="flex flex-col gap-2 items-center justify-center">
+                              <span className="text-sm font-semibold text-zinc-500">
+                                MKRW 지갑
+                              </span>
+                            </div>
+                          )}
+
                         </td>
 
 
