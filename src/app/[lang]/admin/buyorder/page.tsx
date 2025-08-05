@@ -5362,34 +5362,36 @@ const fetchBuyOrders = async () => {
                                   
 
                                   {/* seller bank info */}
-                                  <div className="flex flex-col gap-2 items-center justify-center">
-                                    <div className="flex flex-row gap-2 items-center justify-center">
-                                      <span className="text-sm text-zinc-500">
-                                        
-                                        {/*item.seller?.bankInfo?.bankName*/}
-                                        {item.store?.bankInfo?.bankName}
+
+                                  {item?.paymentMethod === 'bank' && (
+
+                                    <div className="flex flex-col gap-2 items-center justify-center">
+                                      <div className="flex flex-row gap-2 items-center justify-center">
+                                        <span className="text-sm text-zinc-500">
+                                          
+                                          {/*item.seller?.bankInfo?.bankName*/}
+                                          {item.store?.bankInfo?.bankName}
 
 
-                                      </span>
+                                        </span>
+                                        <span className="text-sm text-zinc-500">
+                                          {/*item.seller?.bankInfo?.accountHolder*/}
+                                          {item.store?.bankInfo?.accountHolder}
+                                        </span>
+
+                                      </div>
+
                                       <span className="text-sm text-zinc-500">
-                                        {/*item.seller?.bankInfo?.accountHolder*/}
-                                        {item.store?.bankInfo?.accountHolder}
+                                        {/*
+                                          item.seller?.bankInfo?.accountNumber
+                                        */}
+                                        {item.store?.bankInfo?.accountNumber}
                                       </span>
 
                                     </div>
 
-                                    <span className="text-sm text-zinc-500">
-                                      {/*
-                                        item.seller?.bankInfo?.accountNumber
-                                      */}
-                                      {item.store?.bankInfo?.accountNumber}
-                                    </span>
-
-                                  </div>
-
-                                  
-
-
+                                  )}
+         
                                 </div>
                               )}
 
