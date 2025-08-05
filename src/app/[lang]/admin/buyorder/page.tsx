@@ -1191,72 +1191,103 @@ export default function Index({ params }: any) {
       );
 
 
-      const response = await fetch('/api/order/cancelTradeBySeller', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          orderId: orderId,
-          storecode: "admin",
-          walletAddress: address,
-          cancelTradeReason: cancelTradeReason[index],
-        })
-      });
+      // if escrowWallet is exists, call cancelTradeBySellerWithEscrow API
+      const buyOrder = buyOrders[index];
 
-      if (!response.ok) {
-        toast.error('거래취소에 실패했습니다.');
-        setCancellings(
-          cancellings.map((item, i) => i === index ? false : item)
-        );
-        return;
-      }
+      if (buyOrder?.escrowWallet && buyOrder?.escrowWallet?.transactionHash) {
 
-      const data = await response.json();
+        const result = await fetch('/api/order/cancelTradeBySellerWithEscrow', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: orderId,
+            storecode: "admin",
+            walletAddress: address,
+            cancelTradeReason: cancelTradeReason[index],
+          })
 
-      ///console.log('data', data);
+        });
 
-      if (data.result) {
-
-        toast.success(Order_has_been_cancelled);
-
-        playSong();
+        const data = await result.json();
+        //console.log('cancelTradeBySellerWithEscrow data', data);
 
 
-        await fetch('/api/order/getAllBuyOrders', {
+
+
+      } else {
+
+        const response = await fetch('/api/order/cancelTradeBySeller', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(
-            {
-              storecode: searchStorecode,
-              limit: Number(limitValue),
-              page: Number(pageValue),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-              searchOrderStatusCancelled: searchOrderStatusCancelled,
-              searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-              searchStoreName: searchStoreName,
-
-              fromDate: searchFormDate,
-              toDate: searchToDate,
-            }
-          )
-        }).then(async (response) => {
-          const data = await response.json();
-          //console.log('data', data);
-          if (data.result) {
-            setBuyOrders(data.result.orders);
-
-            setTotalCount(data.result.totalCount);
-          }
+          body: JSON.stringify({
+            orderId: orderId,
+            storecode: "admin",
+            walletAddress: address,
+            cancelTradeReason: cancelTradeReason[index],
+          })
         });
 
-      } else {
-        toast.error('거래취소에 실패했습니다.');
+        if (!response.ok) {
+          toast.error('거래취소에 실패했습니다.');
+          setCancellings(
+            cancellings.map((item, i) => i === index ? false : item)
+          );
+          return;
+        }
+
+        const data = await response.json();
+
+        ///console.log('data', data);
+
+        if (data.result) {
+
+          toast.success(Order_has_been_cancelled);
+
+          playSong();
+
+
+          await fetch('/api/order/getAllBuyOrders', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(
+              {
+                storecode: searchStorecode,
+                limit: Number(limitValue),
+                page: Number(pageValue),
+                walletAddress: address,
+                searchMyOrders: searchMyOrders,
+                searchOrderStatusCancelled: searchOrderStatusCancelled,
+                searchOrderStatusCompleted: searchOrderStatusCompleted,
+
+                searchStoreName: searchStoreName,
+
+                fromDate: searchFormDate,
+                toDate: searchToDate,
+              }
+            )
+          }).then(async (response) => {
+            const data = await response.json();
+            //console.log('data', data);
+            if (data.result) {
+              setBuyOrders(data.result.orders);
+
+              setTotalCount(data.result.totalCount);
+            }
+          });
+
+        } else {
+          toast.error('거래취소에 실패했습니다.');
+        }
+
+
       }
+
 
 
       setAgreementForCancelTrade(
@@ -4185,28 +4216,13 @@ const fetchBuyOrders = async () => {
                       
                       <td className="p-2">
                         <div className="flex flex-col items-start justify-start gap-2">
-                          {/*
-                          <Image
-                            src={item.avatar || "/profile-default.png"}
-                            alt="Avatar"
-                            width={20}
-                            height={20}
-                            priority={true} // Added priority property
-                            className="rounded-full"
-                            style={{
-                                objectFit: 'cover',
-                                width: '20px',
-                                height: '20px',
-                            }}
-                          />
-                          */}
                           
                           <div className="flex flex-col gap-2 items-center justify-center">
 
 
                             <div className="flex flex-row items-center gap-2">
                               <Image
-                                src={item?.buyer?.avatar || "/profile-default.png"}
+                                src={item?.buyer?.avatar || "/icon-buyer.png"}
                                 alt="Avatar"
                                 width={20}
                                 height={20}
@@ -5315,6 +5331,11 @@ const fetchBuyOrders = async () => {
                                     className="w-full h-8
                                     text-center rounded-md text-sm text-zinc-500 font-semibold bg-zinc-100 border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   />
+                                  {/* warning message */}
+                                  {/* 취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다. */}
+                                  <div className="text-xs text-red-500">
+                                    취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다.
+                                  </div>
 
 
 
@@ -6811,7 +6832,7 @@ const fetchBuyOrders = async () => {
                           <p className="mt-2 mb-2 flex items-center gap-2">
 
                             <Image
-                                src={item.avatar || '/profile-default.png'}
+                                src={item.avatar || '/icon-buyer.png'}
                                 alt="Avatar"
                                 width={32}
                                 height={32}
@@ -6883,7 +6904,7 @@ const fetchBuyOrders = async () => {
                           <div className="mt-4 flex flex-col gap-2 items-start justify-center">
                             <div className="flex flex-row items-center gap-2">
                               <Image
-                                src={item?.buyer?.avatar || "/profile-default.png"}
+                                src={item?.buyer?.avatar || "/icon-buyer.png"}
                                 alt="Profile Image"
                                 width={32}
                                 height={32}
@@ -6913,7 +6934,7 @@ const fetchBuyOrders = async () => {
                     
                           <div className="mt-4 flex flex-row items-center gap-2">
                             <Image
-                              src={item.seller?.avatar || "/profile-default.png"}
+                              src={item.seller?.avatar || "/icon-seller.png"}
                               alt="Profile Image"
                               width={32}
                               height={32}
