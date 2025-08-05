@@ -5207,7 +5207,7 @@ const fetchBuyOrders = async () => {
                                 className="w-5 h-5"
                               />
                               <span className="text-sm">
-                                {item?.escrowWallet?.balance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} MKRW 돌아주기
+                                {item?.escrowWallet?.balance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} MKRW 회수하기
                               </span>
                             </div>
                           </button>
