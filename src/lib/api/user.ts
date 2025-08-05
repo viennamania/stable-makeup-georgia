@@ -78,7 +78,7 @@ export async function insertOne(data: any) {
   // check data.depositBankAccountNumber 
   // data.depositBankAccountNumber is only number
   /// if data.depositBankAccountNumber has special character, extract only number
-  
+
   let depositBankAccountNumber = data.buyer.depositBankAccountNumber;
 
 
@@ -125,6 +125,9 @@ export async function insertOne(data: any) {
 
 
   if (checkUser) {
+
+    console.log('insertOne user already exists: ' + JSON.stringify(checkUser));
+
     return {
       error: 'user already exists',
     }
