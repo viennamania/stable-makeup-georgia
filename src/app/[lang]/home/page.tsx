@@ -6059,7 +6059,7 @@ const UserPaymentPage = (
       
       {/* iframe */}
       <iframe
-        src={`https://cryptoss.beauty/kr/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
+        src={`https://cryptoss.beauty/ko/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
 
         
           

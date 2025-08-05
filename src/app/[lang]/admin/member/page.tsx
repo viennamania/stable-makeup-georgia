@@ -3019,7 +3019,7 @@ const UserHomePage = (
       
       {/* iframe */}
       <iframe
-        src={`${paymentUrl}/kr/${clientId}/${selectedItem?.storecode}/payment?`
+        src={`${paymentUrl}/ko/${clientId}/${selectedItem?.storecode}/payment?`
           + 'storeUser=' + selectedItem?.nickname
           + '&depositBankName=' + selectedItem?.buyer?.depositBankName
           + '&depositBankAccountNumber=' + selectedItem?.buyer?.depositBankAccountNumber

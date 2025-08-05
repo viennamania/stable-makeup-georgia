@@ -6324,7 +6324,7 @@ const UserPaymentPage = (
       
       {/* iframe */}
       <iframe
-        src={`https://cryptoss-runway.vercel.app/kr/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
+        src={`https://cryptoss-runway.vercel.app/ko/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
 
         
           

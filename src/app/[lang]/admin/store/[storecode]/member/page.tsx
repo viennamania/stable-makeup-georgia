@@ -1533,7 +1533,7 @@ export default function Index({ params }: any) {
                 className="w-5 h-5"
               />
               <a
-                href={`https://www.cryptoss.beauty/kr/${store && store.storecode}/paymaster`}
+                href={`https://www.cryptoss.beauty/ko/${store && store.storecode}/paymaster`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-500 underline"
@@ -1552,7 +1552,7 @@ export default function Index({ params }: any) {
                 className="w-5 h-5"
               />
               <a
-                href={`https://www.cryptoss.beauty/kr/${store && store.storecode}/paymaster-register`}
+                href={`https://www.cryptoss.beauty/ko/${store && store.storecode}/paymaster-register`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-500 underline"
@@ -2230,7 +2230,7 @@ const UserPaymentPage = (
       
       {/* iframe */}
       <iframe
-        src={`https://cryptoss.beauty/kr/${selectedItem?.storecode}/payment?`
+        src={`https://cryptoss.beauty/ko/${selectedItem?.storecode}/payment?`
           + 'storeUser=' + selectedItem?.nickname
           + '&depositBankName=' + selectedItem?.buyer?.depositBankName
           + '&depositBankAccountNumber=' + selectedItem?.buyer?.depositBankAccountNumber
