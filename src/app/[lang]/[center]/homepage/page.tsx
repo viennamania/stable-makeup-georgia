@@ -149,6 +149,13 @@ interface BuyOrder {
     totalPaymentFailedCount: number;
   };
 
+  paymentMethod: string;
+
+  escrowWallet: {
+    address: string;
+    balance: number;
+  };
+
 }
 
 
@@ -588,7 +595,29 @@ export default function Index({ params }: any) {
 
 
 
+  // balance of MKRW
+  const [mkrwBalance, setMkrwBalance] = useState(0);
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    // get the balance
+    const getMkrwBalance = async () => {
+      const result = await balanceOf({
+        contract: contractMKRW,
+        address: address,
+      });
+  
+      setMkrwBalance( Number(result) / 10 ** 18 );
 
+  
+    };
+    if (address) getMkrwBalance();
+    const interval = setInterval(() => {
+      if (address) getMkrwBalance();
+    } , 5000);
+    return () => clearInterval(interval);
+  }, [address, contractMKRW]);
 
 
 
@@ -2545,37 +2574,6 @@ const fetchBuyOrders = async () => {
                 {address && !loadingUser && (
                     <div className="w-full flex flex-row items-center justify-end gap-2">
 
-                      <div className="hidden flex-row items-center justify-center gap-2">
-
-                          <button
-                              className="text-lg text-zinc-600 underline"
-                              onClick={() => {
-                                  navigator.clipboard.writeText(address);
-                                  toast.success(Copied_Wallet_Address);
-                              } }
-                          >
-                              {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                          </button>
-                          
-                          <Image
-                              src="/icon-shield.png"
-                              alt="Wallet"
-                              width={100}
-                              height={100}
-                              className="w-6 h-6"
-                          />
-
-                      </div>
-
-                      <div className="hidden flex-row items-center justify-end  gap-2">
-                          <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                              {Number(balance).toFixed(3)}
-                          </span>
-                          {' '}
-                          <span className="text-sm">USDT</span>
-                      </div>
-
-
                       <button
                         onClick={() => {
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
@@ -2761,111 +2759,6 @@ const fetchBuyOrders = async () => {
                 */}
 
 
-                <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-2">
-
-
-                  <div className="flex flex-row items-center justify-center gap-2">
-                    {/* 구매주문하기 버튼 */}
-                    {/* new window */}
-
-                    <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/' + params.center + '/paymaster');
-                        //window.open(
-                        //  '/'+ params.lang + '/home/paymaster',
-                        //</div>  '_blank'
-                        //);
-                      }}
-                      className="bg-yellow-500 text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-yellow-400"
-                    >
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <Image
-                          src="/icon-paymaster-buy.webp"
-                          alt="Buy"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-sm">
-                          구매주문하기
-                        </span>
-                      </div>
-                    </button>
-
-                    {/* 출금하기 버튼 */}
-                    <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/' + params.center + '/withdraw-usdt');
-                        //window.open(
-                        //  '/'+ params.lang + '/home/withdraw',
-                        //  '_blank'
-                        //);
-                      }}
-                      className="bg-green-500 text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-green-400"
-                    >
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <Image
-                          src="/icon-withdraw.png"
-                          alt="Withdraw"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-sm">
-                          출금하기
-                        </span>
-                      </div>
-                    </button>
-                  </div>
-
-
-
-
-                  {address && (
-                    <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
-
-                        <div className="flex flex-row items-center justify-center gap-2">
-                            <Image
-                                src="/icon-shield.png"
-                                alt="Wallet"
-                                width={100}
-                                height={100}
-                                className="w-6 h-6"
-                            />
-                            <span className="text-sm text-zinc-500">
-                              USDT통장
-                            </span>
-                            <button
-                                className="text-lg text-zinc-600 underline"
-                                onClick={() => {
-                                    navigator.clipboard.writeText(address);
-                                    toast.success(Copied_Wallet_Address);
-                                } }
-                            >
-                                {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                            </button>
-
-                        </div>
-
-                        <div className="flex flex-row items-center justify-center  gap-2">
-                            <span className="text-sm text-zinc-500">
-                                잔액
-                            </span>
-                            <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                                {Number(balance).toFixed(3)}
-                            </span>
-                            {' '}
-                            <span className="text-sm">USDT</span>
-                        </div>
-
-                      </div>
-
-                  )}
-
-                </div>
-
-
-
 
                 <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-2">
 
@@ -2930,7 +2823,139 @@ const fetchBuyOrders = async () => {
                 </div>
 
 
+                <div className="mt-5 w-full flex flex-col xl:flex-row items-center justify-end gap-2">
 
+
+                  <div className="flex flex-row items-center justify-center gap-2">
+                    {/* 구매주문하기 버튼 */}
+                    {/* new window */}
+
+                    <button
+                      onClick={() => {
+                        router.push('/' + params.lang + '/' + params.center + '/paymaster');
+                        //window.open(
+                        //  '/'+ params.lang + '/home/paymaster',
+                        //</div>  '_blank'
+                        //);
+                      }}
+                      className="bg-yellow-500 text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-yellow-400"
+                    >
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <Image
+                          src="/icon-paymaster-buy.webp"
+                          alt="Buy"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-sm">
+                          구매주문하기
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* 출금하기 버튼 */}
+                    <button
+                      onClick={() => {
+                        router.push('/' + params.lang + '/' + params.center + '/withdraw-usdt');
+                        //window.open(
+                        //  '/'+ params.lang + '/home/withdraw',
+                        //  '_blank'
+                        //);
+                      }}
+                      className="bg-green-500 text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-green-400"
+                    >
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <Image
+                          src="/icon-withdraw.png"
+                          alt="Withdraw"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-sm">
+                          출금하기
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+
+
+
+
+                  {address && (
+                    <div className="
+                    w-64
+                    flex flex-col items-center justify-center gap-2">
+
+                        <div className="flex flex-row items-center justify-center gap-2">
+                            <Image
+                                src="/icon-shield.png"
+                                alt="Wallet"
+                                width={100}
+                                height={100}
+                                className="w-6 h-6"
+                            />
+                            <span className="text-sm text-zinc-500">
+                              지갑주소
+                            </span>
+                            <button
+                                className="text-lg text-zinc-600 underline"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(address);
+                                    toast.success(Copied_Wallet_Address);
+                                } }
+                            >
+                                {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                            </button>
+
+                        </div>
+
+                        <div className="w-full flex flex-col items-end justify-center gap-2">
+                        
+                          <div className="flex flex-row items-center justify-center  gap-2">
+                              <Image
+                                  src="/token-usdt-icon.png"
+                                  alt="USDT"
+                                  width={50}
+                                  height={50}
+                                  className="w-6 h-6"
+                              />
+                              <span className="text-xl xl:text-2xl font-semibold text-green-600">
+                                  {Number(balance).toFixed(3)}
+                              </span>
+                              {' '}
+                              <span className="w-20 text-sm">USDT</span>
+                          </div>
+
+                          {/* mkrwBalance */}
+                          { mkrwBalance && mkrwBalance > 0 && (
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <Image
+                                  src="/token-mkrw-icon.png"
+                                  alt="MKRW"
+                                  width={50}
+                                  height={50}
+                                  className="w-6 h-6"
+                              />
+                              <span className="text-xl xl:text-2xl font-semibold text-green-600"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                  {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                              {' '}
+                              <span className="w-20 text-sm">MKRW</span>
+                            </div>
+                          )}
+
+                        </div>
+
+
+                      </div>
+
+                  )}
+
+                </div>
 
 
                 <div className='flex flex-row items-center gap-2 mt-8'>
@@ -2943,7 +2968,7 @@ const fetchBuyOrders = async () => {
                     />
 
                     <div className="text-2xl font-semibold">
-                      거래내역
+                      구매주문내역
                     </div>
                 </div>
 
@@ -5237,7 +5262,7 @@ const fetchBuyOrders = async () => {
                                 ${item.status !== 'cancelled' && 'h-16'}
 
                                 mb-4 flex flex-row items-center bg-zinc-100
-                                px-2 py-1 rounded-md`}>
+                                px-2 py-1 rounded-md gap-2`}>
                                   <Image
                                     src="/icon-trade.png"
                                     alt="Trade"
@@ -5400,20 +5425,60 @@ const fetchBuyOrders = async () => {
 
                       
 
-                              <div className="mb-4 flex flex-row items-start justify-start gap-2">
-                                <div className="flex flex-row items-center gap-2">
-                                  <Image
-                                    src="/icon-bank.png"
-                                    alt="Bank Transfer"
-                                    width={20}
-                                    height={20}
-                                    className="rounded-lg"
-                                  />
-                                </div>
+                              <div className="mt-2 mb-4 flex flex-row items-start justify-start gap-2">
 
-                                <div className="flex flex-row items-center gap-2">
-                                  {Payment}: {Bank_Transfer}
-                                </div>
+                                {item?.paymentMethod === 'bank' && (
+
+                                  <div className="flex flex-row items-center gap-2">
+                                      <Image
+                                        src="/icon-bank.png"
+                                        alt="Bank Transfer"
+                                        width={20}
+                                      height={20}
+                                      className="rounded-lg"
+                                    />
+
+                                    <div className="flex flex-row items-center gap-2">
+                                      {Payment}: {Bank_Transfer}
+                                    </div>
+
+                                  </div>
+                                )}
+
+                                {item?.paymentMethod === 'mkrw' && (
+
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="flex flex-row items-center gap-2">
+                                      <Image
+                                        src="/token-mkrw-icon.png"
+                                        alt="MKRW"
+                                        width={20}
+                                        height={20}
+                                        className="rounded-lg"
+                                      />
+                                      <div className="flex flex-row items-center gap-2">
+                                        {Payment}: MKRW
+                                      </div>
+                                    </div>
+                                    {/* escrow address */}
+                                    <div className="flex flex-row items-center gap-2">
+                                      <span className="text-sm text-zinc-500 underline underline-offset-2">
+                                        에스크로
+                                      </span>
+                                      <p className="text-lg text-yellow-600 font-semibold"
+                                        style={{ fontFamily: 'monospace' }}>
+                                        {item.escrowWallet?.address &&
+                                          item.escrowWallet?.address.slice(0, 5) + '...' + item.escrowWallet?.address.slice(-4)}
+                                      </p>
+                                      <p className="text-sm text-zinc-500">
+                                        {item.escrowWallet?.balance &&
+                                          Number(item.escrowWallet?.balance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} MKRW
+                                      </p>
+                                    </div>
+
+                                  </div>
+
+                                )}
 
                               </div>
 
@@ -5729,22 +5794,21 @@ const fetchBuyOrders = async () => {
                               */}
 
                               {/* 판매하기 버튼 */}
-                              <div className="w-full flex flex-col items-center justify-center gap-2">
-                                <button
-                                  className="mt-4 text-sm bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600"
-                                  onClick={() => {
-                                    // 판매하기 버튼 클릭 시 동작
-                                  }}
-                                >
-                                  {Sell}
-                                </button>
-
+                              {item.status === 'accepted' && item.seller && item.seller.walletAddress !== address && (
+                                <div className="w-full flex flex-col items-center justify-center gap-2">
+                                  <button
+                                    className="mt-4 text-sm bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600"
+                                    onClick={() => {
+                                      // 판매하기 버튼 클릭 시 동작
+                                    }}
+                                  >
+                                    {Sell}
+                                  </button>
                                   <span>{
                                     item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
                                   }</span>
-
-
-                              </div>
+                                </div>
+                              )}
 
 
                               {
