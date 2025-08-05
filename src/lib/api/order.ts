@@ -2392,6 +2392,360 @@ export async function getBuyOrders(
 
 
 
+
+
+
+
+
+export async function getBuyOrdersGroupByStorecodeDaily(
+  {
+    storecode,
+    fromDate,
+    toDate,
+  }: {
+
+    storecode: string;
+    fromDate: string;
+    toDate: string;
+
+  }
+): Promise<any> {
+
+  console.log('getBuyOrdersGroupByStorecodeDaily storecode: ' + storecode);
+  console.log('getBuyOrdersGroupByStorecodeDaily fromDate: ' + fromDate);
+  console.log('getBuyOrdersGroupByStorecodeDaily toDate: ' + toDate);
+
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('buyorders');
+
+  // fromDate format: YYYY-MM-DD
+  // toDate format: YYYY-MM-DD
+
+  // group by korean timezone, so we need to convert fromDate, toDate to UTC time
+  // plus 9 hours to UTC time
+  // so if hours larger than 24, then add 1 day to date
+
+
+  const fromDateValue = fromDate ? new Date(fromDate + 'T00:00:00+09:00').toISOString() : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
+
+
+  console.log('getBuyOrdersGroupByStorecodeDaily fromDateValue: ' + fromDateValue);
+  console.log('getBuyOrdersGroupByStorecodeDaily toDateValue: ' + toDateValue);
+
+
+  // order by date descending
+  
+  const pipeline = [
+    {
+      $match: {
+        
+       // if storecode is not empty, then match storecode
+        storecode: storecode ? { $regex: storecode, $options: 'i' } : { $ne: null },
+
+
+        status: 'paymentConfirmed',
+        privateSale: { $ne: true },
+        createdAt: {
+          $gte: fromDateValue,
+          $lte: toDateValue,
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          date: { 
+            $dateToString: { 
+              format: "%Y-%m-%d", 
+              date: { $dateFromString: { dateString: "$createdAt" } },
+              timezone: "Asia/Seoul"
+            } 
+          },
+
+        },
+        totalUsdtAmount: { $sum: "$usdtAmount" },
+        totalKrwAmount: { $sum: "$krwAmount" },
+        totalCount: { $sum: 1 }, // Count the number of orders
+
+
+        // if settlement fields is exist in buyorders, then count settlement
+        totalSettlementCount: { $sum: { $cond: [{ $ifNull: ["$settlement", false] }, 1, 0] } },
+
+        // sum of settlement.settlementAmount
+        totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
+
+        // sum of settlement.settlementAmountKRW
+        // convert settlement.settlementAmountKRW to double
+        totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
+
+        // agentFeeAmount, agentFeeAmountKRW
+        totalAgentFeeAmount: { $sum: "$settlement.agentFeeAmount" },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.agentFeeAmountKRW" } },
+
+        // feeAmount, feeAmountKRW
+        totalFeeAmount: { $sum: "$settlement.feeAmount" },
+        totalFeeAmountKRW: { $sum: { $toDouble: "$settlement.feeAmountKRW" } },
+
+      }
+    },
+    {
+      $sort: { "_id.date": -1 } // Sort by date descending
+    }
+  ];
+  
+
+
+  const results = await collection.aggregate(pipeline).toArray();
+  //console.log('getBuyOrdersGroupByStorecodeDaily results: ' + JSON.stringify(results));
+
+
+  // aggregate with escrows collection when escrows date is same as buyorders date
+  // escrows date is '2024-01-01'
+
+  const escrowCollection = client.db('georgia').collection('escrows');
+  const escrowPipeline = [
+    {
+      $match: {
+        storecode: storecode ? { $regex: storecode, $options: 'i' } : { $ne: null },
+
+        // withdrawAmount > 0,
+        // depositAmount > 0,
+        withdrawAmount: { $gt: 0 },
+
+        date: {
+          $gte: fromDateValue,
+          $lte: toDateValue,
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          date: { 
+            $dateToString: { 
+              format: "%Y-%m-%d", 
+              date: { $dateFromString: { dateString: "$date" } },
+              timezone: "Asia/Seoul"
+            } 
+          },
+        },
+        totalEscrowDepositAmount: { $sum: "$depositAmount" },
+        totalEscrowWithdrawAmount: { $sum: "$withdrawAmount" },
+        totalEscrowCount: { $sum: 1 }, // Count the number of escrows
+      }
+    },
+    {
+      $sort: { "_id.date": -1 } // Sort by date descending
+    }
+  ];
+
+  const escrowResults = await escrowCollection.aggregate(escrowPipeline).toArray();
+
+
+
+
+
+
+
+  return {
+    storecode: storecode,
+    fromDate: fromDate,
+    toDate: toDate,
+    orders: results.map(result => ({
+      date: result._id.date,
+      totalCount: result.totalCount,
+      totalUsdtAmount: result.totalUsdtAmount,
+      totalKrwAmount: result.totalKrwAmount,
+      totalSettlementCount: result.totalSettlementCount,
+      totalSettlementAmount: result.totalSettlementAmount,
+      totalSettlementAmountKRW: result.totalSettlementAmountKRW,
+
+      totalAgentFeeAmount: result.totalAgentFeeAmount,
+      totalAgentFeeAmountKRW: result.totalAgentFeeAmountKRW,
+      totalFeeAmount: result.totalFeeAmount,
+      totalFeeAmountKRW: result.totalFeeAmountKRW,
+
+
+      totalEscrowDepositAmount: escrowResults.find(escrow => escrow._id.date === result._id.date)?.totalEscrowDepositAmount || 0,
+      totalEscrowWithdrawAmount: escrowResults.find(escrow => escrow._id.date === result._id.date)?.totalEscrowWithdrawAmount || 0,
+      totalEscrowCount: escrowResults.find(escrow => escrow._id.date === result._id.date)?.totalEscrowCount || 0,
+
+
+    }))
+  }
+
+}
+
+
+
+
+
+
+
+
+
+// getBuyOrdersGroupByAgentcodeDaily
+export async function getBuyOrdersGroupByAgentcodeDaily(
+  {
+    agentcode,
+    fromDate,
+    toDate,
+  }: {
+
+    agentcode: string;
+    fromDate: string;
+    toDate: string;
+
+  }
+): Promise<any> {
+
+  console.log('getBuyOrdersGroupByAgentcodeDaily agentcode: ' + agentcode);
+  console.log('getBuyOrdersGroupByAgentcodeDaily fromDate: ' + fromDate);
+  console.log('getBuyOrdersGroupByAgentcodeDaily toDate: ' + toDate);
+
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('buyorders');
+
+  // fromDate format: YYYY-MM-DD
+  // toDate format: YYYY-MM-DD
+
+  // group by korean timezone, so we need to convert fromDate, toDate to UTC time
+  // plus 9 hours to UTC time
+  // so if hours larger than 24, then add 1 day to date
+  const fromDateValue = fromDate ? new Date(fromDate + 'T00:00:00+09:00').toISOString() : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
+
+  console.log('getBuyOrdersGroupByAgentcodeDaily fromDateValue: ' + fromDateValue);
+  console.log('getBuyOrdersGroupByAgentcodeDaily toDateValue: ' + toDateValue);
+  // order by date descending
+  const pipeline = [
+    {
+      $match: {
+        agentcode: agentcode ? { $regex: agentcode, $options: 'i' } : { $ne: null },
+
+        status: 'paymentConfirmed',
+        privateSale: { $ne: true },
+        createdAt: {
+          $gte: fromDateValue,
+          $lte: toDateValue,
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          date: { 
+            $dateToString: { 
+              format: "%Y-%m-%d", 
+              date: { $dateFromString: { dateString: "$createdAt" } },
+              timezone: "Asia/Seoul"
+            } 
+          },
+          agentcode: "$agentcode"
+        },
+        totalUsdtAmount: { $sum: "$usdtAmount" },
+        totalKrwAmount: { $sum: "$krwAmount" },
+        totalCount: { $sum: 1 }, // Count the number of orders
+
+        // if settlement fields is exist in buyorders, then count settlement
+        totalSettlementCount: { $sum: { $cond: [{ $ifNull: ["$settlement", false] }, 1, 0] } },
+
+        // sum of settlement.settlementAmount
+        totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
+
+        // sum of settlement.settlementAmountKRW
+        // convert settlement.settlementAmountKRW to double
+        totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
+
+        // agentFeeAmount, agentFeeAmountKRW
+        totalAgentFeeAmount: { $sum: "$settlement.agentFeeAmount" },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.agentFeeAmountKRW" } },
+
+        // feeAmount, feeAmountKRW
+        totalFeeAmount: { $sum: "$settlement.feeAmount" },
+        totalFeeAmountKRW: { $sum: { $toDouble: "$settlement.feeAmountKRW" } },
+
+      }
+    },
+    {
+      $sort: { "_id.date": -1 } // Sort by date descending
+    }
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+  //console.log('getBuyOrdersGroupByAgentcodeDaily results: ' + JSON.stringify(results));
+  // aggregate with escrows collection when escrows date is same as buyorders date
+  // escrows date is '2024-01-01'
+  const escrowCollection = client.db('georgia').collection('escrows');
+  const escrowPipeline = [
+    {
+      $match: {
+        agentcode: agentcode ? { $regex: agentcode, $options: 'i' } : { $ne: null },
+
+        // withdrawAmount > 0,
+        // depositAmount > 0,
+        withdrawAmount: { $gt: 0 },
+
+        date: {
+          $gte: fromDateValue,
+          $lte: toDateValue,
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          date: { 
+            $dateToString: { 
+              format: "%Y-%m-%d", 
+              date: { $dateFromString: { dateString: "$date" } },
+              timezone: "Asia/Seoul"
+            } 
+          },
+          agentcode: "$agentcode"
+        },
+        totalEscrowDepositAmount: { $sum: "$depositAmount" },
+        totalEscrowWithdrawAmount: { $sum: "$withdrawAmount" },
+        totalEscrowCount: { $sum: 1 }, // Count the number of escrows
+      }
+    },
+    {
+      $sort: { "_id.date": -1 } // Sort by date descending
+    }
+  ];
+  const escrowResults = await escrowCollection.aggregate(escrowPipeline).toArray();
+  //console.log('getBuyOrdersGroupByAgentcodeDaily escrowResults: ' + JSON.stringify(escrowResults));
+  return {
+    agentcode: agentcode,
+    fromDate: fromDate,
+    toDate: toDate,
+    orders: results.map(result => ({
+      date: result._id.date,
+      agentcode: result._id.agentcode,
+      totalCount: result.totalCount,
+      totalUsdtAmount: result.totalUsdtAmount,
+      totalKrwAmount: result.totalKrwAmount,
+      totalSettlementCount: result.totalSettlementCount,
+      totalSettlementAmount: result.totalSettlementAmount,
+      totalSettlementAmountKRW: result.totalSettlementAmountKRW,
+
+      totalAgentFeeAmount: result.totalAgentFeeAmount,
+      totalAgentFeeAmountKRW: result.totalAgentFeeAmountKRW,
+      totalFeeAmount: result.totalFeeAmount,
+      totalFeeAmountKRW: result.totalFeeAmountKRW,
+
+      totalEscrowDepositAmount: escrowResults.find(escrow => escrow._id.date === result._id.date && escrow._id.agentcode === result._id.agentcode)?.totalEscrowDepositAmount || 0,
+      totalEscrowWithdrawAmount: escrowResults.find(escrow => escrow._id.date === result._id.date && escrow._id.agentcode === result._id.agentcode)?.totalEscrowWithdrawAmount || 0,
+      totalEscrowCount: escrowResults.find(escrow => escrow._id.date === result._id.date && escrow._id.agentcode === result._id.agentcode)?.totalEscrowCount || 0,
+
+    }))
+  }
+}
+
+
+
+
 // deleete sell order by orderId
 export async function deleteBuyOrder(
 
