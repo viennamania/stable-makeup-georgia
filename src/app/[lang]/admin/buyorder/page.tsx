@@ -4388,9 +4388,18 @@ const fetchBuyOrders = async () => {
                                   </div>
 
                                 ) : (
-                                  <span className="text-sm text-zinc-500">
-                                    에스크로 잔액 없음
-                                  </span>
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/loading.png"
+                                      alt="Loading"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 animate-spin"
+                                    />
+                                    <span className="text-sm text-zinc-500">
+                                      에스크로 진행중...
+                                    </span>
+                                  </div>
                                 )}
 
                               </div>
