@@ -50,11 +50,21 @@ export async function POST(request: NextRequest) {
     });
   }
 
+
+
+  const buyer = {
+    depositBankAccountNumber: '123456789',
+    depositBankName: 'Bank of Example',
+    depositName: 'John Doe',
+  };
+
   const result = await insertOne({
     storecode: storecode,
     walletAddress: walletAddress,
     nickname: nickname,
     mobile: mobile,
+
+    buyer: buyer,
   });
 
   if (!result) {

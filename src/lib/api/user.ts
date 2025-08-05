@@ -59,6 +59,9 @@ export interface ResultProps {
 }
 
 
+
+
+
 export async function insertOne(data: any) {
 
   ///console.log('insertOne data: ' + JSON.stringify(data));
@@ -75,7 +78,10 @@ export async function insertOne(data: any) {
   // check data.depositBankAccountNumber 
   // data.depositBankAccountNumber is only number
   /// if data.depositBankAccountNumber has special character, extract only number
+  
   let depositBankAccountNumber = data.buyer.depositBankAccountNumber;
+
+
   if (data.buyer.depositBankAccountNumber) {
     depositBankAccountNumber = data.buyer.depositBankAccountNumber.replace(/[^0-9]/g, '');
   } else {
