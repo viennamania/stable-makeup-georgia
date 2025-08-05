@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
             storecode: sellerStorecode,
             orderId: buyorder._id,
             walletAddress: sellerWalletAddress,
-            cancelTradeReason: "들록된 판매자 정보가 없습니다.",
+            cancelTradeReason: "등록된 판매자 정보가 없습니다.",
           });
 
 
