@@ -2566,83 +2566,115 @@ const fetchBuyOrders = async () => {
             </div>
 
 
- 
-            {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-            {/* memnu buttons same width left side */}
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/store')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  가맹점관리
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/agent')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  에이전트관리
+              </button>
+
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/member')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  회원관리
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  구매주문관리
+              </button>
 
                 <button
-                    onClick={() => router.push('/' + params.lang + '/admin/store')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    가맹점관리
-                </button>
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  거래내역
+              </button>
 
-               <button
-                    onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    에이전트관리
-                </button>
-
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/member')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    회원관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    구매주문관리
-                </button>
-
-                 <button
-                    onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    거래내역
-                </button>
-
-                <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                  <Image
-                    src="/icon-clearance.png"
-                    alt="Clearance"
-                    width={35}
-                    height={35}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-sm font-semibold">
-                    청산내역
-                  </div>
+              <div className='flex w-32 items-center justify-center gap-2
+              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance"
+                  width={35}
+                  height={35}
+                  className="w-4 h-4"
+                />
+                <div className="text-sm font-semibold">
+                  청산내역
                 </div>
+              </div>
 
 
-            </div>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(가맹)
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(AG)
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  보유량내역
+              </button>
+
+          </div>
+
+          
 
 
             <div className='flex flex-row items-center space-x-4'>

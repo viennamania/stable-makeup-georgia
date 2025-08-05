@@ -2602,9 +2602,6 @@ const fetchBuyOrders = async () => {
           </div>
 
 
-
-          {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-          {/* memnu buttons same width left side */}
           <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
 
               <button
@@ -2666,7 +2663,6 @@ const fetchBuyOrders = async () => {
                 </div>
               </div>
 
-
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -2678,6 +2674,38 @@ const fetchBuyOrders = async () => {
                   청산내역
               </button>
 
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(가맹)
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(AG)
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  보유량내역
+              </button>          
 
           </div>
 
