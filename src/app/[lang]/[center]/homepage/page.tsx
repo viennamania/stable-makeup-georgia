@@ -5256,12 +5256,17 @@ const fetchBuyOrders = async () => {
 
 
 
-                            { (item.status === 'accepted' || item.status === 'paymentRequested' || item.status === 'cancelled') && (
+                            { ( item.status === 'ordered'
+                            || item.status === 'accepted'
+                            || item.status === 'paymentRequested'
+                            || item.status === 'cancelled'
+                            || item.status === 'paymentConfirmed'
+                            ) && (
                                 
                               <div className={`
                                 ${item.status !== 'cancelled' && 'h-16'}
 
-                                mb-4 flex flex-row items-center bg-zinc-100
+                                flex flex-row items-center bg-zinc-100
                                 px-2 py-1 rounded-md gap-2`}>
                                   <Image
                                     src="/icon-trade.png"
@@ -5275,7 +5280,8 @@ const fetchBuyOrders = async () => {
                                     {item.tradeId}
                                   </p>
 
-                                  {item.status === 'cancelled' ? (
+                                  {item.status === 'cancelled'
+                                  || item.status === 'paymentConfirmed' ? (
                                     <p className="ml-2 text-sm text-zinc-500">
                                       {new Date(item.acceptedAt)?.toLocaleString()}
                                     </p>
@@ -5334,6 +5340,25 @@ const fetchBuyOrders = async () => {
                             )}
 
 
+                              {item.status === 'paymentConfirmed' && (
+                                <div className="flex flex-row items-center gap-2 mt-4">
+                                  <Image
+                                    src="/icon-completed.png"
+                                    alt="Completed"
+                                    width={32}
+                                    height={32}
+                                  />
+                                  <span className="text-sm font-semibold text-green-600">
+                                    {Completed}
+                                  </span>
+                                  <span>{
+                                    item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
+                                  }</span>
+                                </div>
+                              )}
+
+
+
                               {/*
                               
                               {item.acceptedAt && (
@@ -5362,14 +5387,9 @@ const fetchBuyOrders = async () => {
                                 </div>
                               )}
 
-
-
-
-                    
+            
 
                               <div className="mt-4 flex flex-col items-start justify-start gap-2">
-
-
 
                                 <div className="mb-2 flex flex-row items-center justify-start gap-2">
                                   <Image
@@ -5425,7 +5445,7 @@ const fetchBuyOrders = async () => {
 
                       
 
-                              <div className="mt-2 mb-4 flex flex-row items-start justify-start gap-2">
+                              <div className="mt-2 mb-4 w-full flex flex-row items-start justify-start gap-2">
 
                                 {item?.paymentMethod === 'bank' && (
 
@@ -5447,7 +5467,7 @@ const fetchBuyOrders = async () => {
 
                                 {item?.paymentMethod === 'mkrw' && (
 
-                                  <div className="flex flex-col items-center gap-2">
+                                  <div className="w-full flex flex-col items-start justify-start gap-2">
                                     <div className="flex flex-row items-center gap-2">
                                       <Image
                                         src="/token-mkrw-icon.png"
@@ -5780,18 +5800,7 @@ const fetchBuyOrders = async () => {
 
 
                               {/* if status is accepted, show payment request button */}
-                              {/*
-                              {item.status === 'paymentConfirmed' && (
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-sm font-semibold text-green-600">
-                                    {Completed}
-                                  </span>
-                                  <span>{
-                                    item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
-                                  }</span>
-                                </div>
-                              )}
-                              */}
+                                               
 
                               {/* 판매하기 버튼 */}
                               {item.status === 'accepted' && item.seller && item.seller.walletAddress !== address && (
@@ -5868,6 +5877,7 @@ const fetchBuyOrders = async () => {
 
                                   <div className="mt-4 flex flex-col gap-2 items-start justify-start">
 
+                                  {/*
                                     <div className="flex flex-row items-center gap-2">
 
                                       <Image
@@ -5897,9 +5907,6 @@ const fetchBuyOrders = async () => {
                                     </div>
 
                                     <div className="flex flex-row gap-2 items-center justify-start">
-
-                                      {/* rotate loading icon */}
-                                    
                                       <Image
                                         src="/loading.png"
                                         alt="Escrow"
@@ -5916,6 +5923,7 @@ const fetchBuyOrders = async () => {
                                     
 
                                     </div>
+                                  */}
 
 
                                   </div>
