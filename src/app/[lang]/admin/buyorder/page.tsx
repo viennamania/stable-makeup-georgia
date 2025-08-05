@@ -5822,7 +5822,14 @@ const fetchBuyOrders = async () => {
 
                             }}
                           >
-                            <div className="flex flex-row gap-2 items-center justify-center">
+                            <div className="flex flex-row gap-2 items-center justify-start ml-2">
+                              <Image
+                                src={`/token-usdt-icon.png`}
+                                alt="USDT Logo"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
                               <Image
                                 src={`/logo-chain-${chain}.png`}
                                 alt={`${chain} Logo`}
@@ -5831,7 +5838,7 @@ const fetchBuyOrders = async () => {
                                 className="w-5 h-5"
                               />
                               <span className="text-sm">
-                                USDT 전송내역
+                                판매코인(USDT) 전송내역
                               </span>
                             </div>
                           </button>
@@ -5870,7 +5877,14 @@ const fetchBuyOrders = async () => {
 
                             }}
                           >
-                            <div className="flex flex-row gap-2 items-center justify-center">
+                            <div className="flex flex-row gap-2 items-center justify-start ml-2">
+                              <Image
+                                src={`/token-mkrw-icon.png`}
+                                alt="MKRW Logo"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
                               <Image
                                 src={`/logo-chain-${chain}.png`}
                                 alt={`${chain} Logo`}
