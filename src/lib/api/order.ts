@@ -3667,11 +3667,15 @@ export async function cancelTradeBySeller(
     walletAddress,
     cancelTradeReason,
 
+    escrowTransactionHash,
+
   }: {
     storecode: string;
     orderId: string;
     walletAddress: string;
     cancelTradeReason: string;
+
+    escrowTransactionHash?: string; // optional, if exists, then update escrowTransactionHash
   
   }
 
@@ -3732,6 +3736,9 @@ export async function cancelTradeBySeller(
 
       cancelledAt: new Date().toISOString(),
       cancelTradeReason: cancelTradeReason,
+
+      escrowTransactionHash: escrowTransactionHash || '', // optional, if exists, then update escrowTransactionHash
+      escrowTransactionCancelledAt: new Date().toISOString(),
     } }
   );
 

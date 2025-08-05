@@ -18,11 +18,57 @@ import {
 } from '@lib/api/store';
 
 
+import {
+  createThirdwebClient,
+  eth_getTransactionByHash,
+  getContract,
+  sendAndConfirmTransaction,
+  
+  sendTransaction,
+  sendBatchTransaction,
+  eth_maxPriorityFeePerGas,
 
-// Download the helper library from https://www.twilio.com/docs/node/install
-import twilio from "twilio";
+
+} from "thirdweb";
+
+//import { polygonAmoy } from "thirdweb/chains";
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+ } from "thirdweb/chains";
+
+import {
+  privateKeyToAccount,
+  smartWallet,
+  getWalletBalance,
+  
+ } from "thirdweb/wallets";
 
 
+import {
+  mintTo,
+  totalSupply,
+  transfer,
+  
+  getBalance,
+
+  balanceOf,
+
+} from "thirdweb/extensions/erc20";
+
+
+// NEXT_PUBLIC_CHAIN
+const chain = process.env.NEXT_PUBLIC_CHAIN || "arbitrum";
+
+import {
+  bscContractAddressMKRW,
+} from "../../../config/contractAddresses";
+
+
+
+export const maxDuration = 60; // This function can run for a maximum of 60 seconds
 
 
 
@@ -82,12 +128,16 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  console.log("buyOrder.status", buyOrder.status);
+
 
 
 
   // 결제요청한 정보가 자동입금(payaction)인 경우 주문-메칭 제외처리
   if (buyOrder.status === "paymentRequested") {
 
+
+    /*
     const tradeId = buyOrder.tradeId;
 
 
@@ -106,12 +156,7 @@ export async function POST(request: NextRequest) {
     const payactionShopId = payactionKeys.payactionShopId;
 
 
-
-
-
     const payactionUrl = "https://api.payaction.app/order-exclude";
-
-
 
     if (!payactionApiKey || !payactionShopId) {
       console.error("Payaction API key or Shop ID is not defined for storecode:", buyOrder.storecode);
@@ -150,12 +195,6 @@ export async function POST(request: NextRequest) {
         payactionResult: result,
       });
 
-      /*
-      {
-        status: 'NOT_RUN',
-        message: "The condition for the workflow order-exclude-v2 is not met. Workflow won't run"
-      }
-        */
 
 
       if (response.status !== 200) {
@@ -168,11 +207,6 @@ export async function POST(request: NextRequest) {
 
 
         // update order payactionResult
-
-
-
-
-
 
 
         throw new Error("Payaction API error");
@@ -203,6 +237,121 @@ export async function POST(request: NextRequest) {
         result: false,
       });
     }
+    */
+
+
+
+
+
+   // transfer escrowWallet.address, escrowWallet.privateKey, escrowWallet.balance
+    // mkrw contract
+
+
+
+    const escrowWalletPrivateKey = buyOrder.escrowWallet.privateKey;
+
+    if (!escrowWalletPrivateKey) {
+      return NextResponse.json({
+        result: null,
+      });
+    }
+
+
+    const client = createThirdwebClient({
+      secretKey: process.env.THIRDWEB_SECRET_KEY || "",
+    });
+
+    if (!client) {
+      return NextResponse.json({
+        result: null,
+      });
+    }
+
+
+    const personalAccount = privateKeyToAccount({
+      client,
+      privateKey: escrowWalletPrivateKey,
+    });
+  
+    if (!personalAccount) {
+      return NextResponse.json({
+        result: null,
+      });
+    }
+
+
+    const wallet = smartWallet({
+      chain: chain === "bsc" ? bsc : chain === "arbitrum" ? arbitrum : polygon,
+      sponsorGas: true,
+    });
+
+    // Connect the smart wallet
+    const account = await wallet.connect({
+      client: client,
+      personalAccount: personalAccount,
+    });
+
+    if (!account) {
+      return NextResponse.json({
+        result: null,
+      });
+    }
+
+
+
+
+
+    const contract = getContract({
+      client,
+      chain: chain === "bsc" ? bsc : chain === "arbitrum" ? arbitrum : polygon,
+      address: bscContractAddressMKRW, // MKRW on BSC
+    });
+
+    const transaction = transfer({
+      contract,
+      to: buyOrder.walletAddress,
+      amount: buyOrder.escrowWallet.balance,
+    });
+
+
+    const transferResult = await sendTransaction({
+      account: account,
+      transaction: transaction,
+    });
+
+    const escrowTransactionHash = transferResult.transactionHash;
+
+
+    console.log("escrowTransactionHash", escrowTransactionHash);
+
+
+
+
+
+    const result = await cancelTradeBySeller({
+      storecode: storecode,
+      orderId: orderId,
+      walletAddress: walletAddress,
+      cancelTradeReason: cancelTradeReason,
+
+      escrowTransactionHash: escrowTransactionHash,
+    });
+
+
+
+
+    if (result) {
+
+      return NextResponse.json({
+        result: true,
+      });
+
+    } else {
+      return NextResponse.json({
+        result: false,
+      });
+    }
+
 
 
 
@@ -210,7 +359,8 @@ export async function POST(request: NextRequest) {
 
   } else if (buyOrder.status === "accepted") {
 
-    const result = await cancelTradeBySeller({
+
+     const result = await cancelTradeBySeller({
       storecode: storecode,
       orderId: orderId,
       walletAddress: walletAddress,

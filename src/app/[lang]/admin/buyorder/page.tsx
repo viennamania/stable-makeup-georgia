@@ -1176,129 +1176,184 @@ export default function Index({ params }: any) {
 
 
 
-    const cancelTrade = async (orderId: string, index: number) => {
+
+  const cancelTrade = async (orderId: string, index: number) => {
 
 
 
-      if (cancellings[index]) {
-        return;
-      }
+    if (cancellings[index]) {
+      return;
+    }
 
 
 
-      setCancellings(
-        cancellings.map((item, i) => i === index ? true : item)
-      );
+    setCancellings(
+      cancellings.map((item, i) => i === index ? true : item)
+    );
 
 
-      // if escrowWallet is exists, call cancelTradeBySellerWithEscrow API
-      const buyOrder = buyOrders[index];
+    // if escrowWallet is exists, call cancelTradeBySellerWithEscrow API
+    const buyOrder = buyOrders[index];
 
-      if (buyOrder?.escrowWallet && buyOrder?.escrowWallet?.transactionHash) {
+    if (buyOrder?.escrowWallet && buyOrder?.escrowWallet?.transactionHash) {
 
-        const result = await fetch('/api/order/cancelTradeBySellerWithEscrow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            orderId: orderId,
-            storecode: "admin",
-            walletAddress: address,
-            cancelTradeReason: cancelTradeReason[index],
-          })
+      try {
 
-        });
+      const result = await fetch('/api/order/cancelTradeBySellerWithEscrow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          storecode: "admin",
+          walletAddress: address,
+          cancelTradeReason: cancelTradeReason[index],
+        })
 
-        const data = await result.json();
-        //console.log('cancelTradeBySellerWithEscrow data', data);
+      });
+
+      const data = await result.json();
+      //console.log('cancelTradeBySellerWithEscrow data', data);
 
 
+      if (data.result) {
 
+        toast.success(Order_has_been_cancelled);
 
-      } else {
+        playSong();
 
-        const response = await fetch('/api/order/cancelTradeBySeller', {
+        await fetch('/api/order/getAllBuyOrders', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            orderId: orderId,
-            storecode: "admin",
-            walletAddress: address,
-            cancelTradeReason: cancelTradeReason[index],
-          })
+          body: JSON.stringify(
+            {
+              storecode: searchStorecode,
+              limit: Number(limitValue),
+              page: Number(pageValue),
+              walletAddress: address,
+              searchMyOrders: searchMyOrders,
+              searchOrderStatusCancelled: searchOrderStatusCancelled,
+              searchOrderStatusCompleted: searchOrderStatusCompleted,
+
+              searchStoreName: searchStoreName,
+
+              fromDate: searchFormDate,
+              toDate: searchToDate,
+            }
+          )
+        }).then(async (response) => {
+          const data = await response.json();
+          //console.log('data', data);
+          if (data.result) {
+            setBuyOrders(data.result.orders);
+
+            setTotalCount(data.result.totalCount);
+          }
         });
 
-        if (!response.ok) {
-          toast.error('거래취소에 실패했습니다.');
-          setCancellings(
-            cancellings.map((item, i) => i === index ? false : item)
-          );
-          return;
-        }
-
-        const data = await response.json();
-
-        ///console.log('data', data);
-
-        if (data.result) {
-
-          toast.success(Order_has_been_cancelled);
-
-          playSong();
-
-
-          await fetch('/api/order/getAllBuyOrders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-              {
-                storecode: searchStorecode,
-                limit: Number(limitValue),
-                page: Number(pageValue),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-                searchOrderStatusCancelled: searchOrderStatusCancelled,
-                searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                searchStoreName: searchStoreName,
-
-                fromDate: searchFormDate,
-                toDate: searchToDate,
-              }
-            )
-          }).then(async (response) => {
-            const data = await response.json();
-            //console.log('data', data);
-            if (data.result) {
-              setBuyOrders(data.result.orders);
-
-              setTotalCount(data.result.totalCount);
-            }
-          });
-
-        } else {
-          toast.error('거래취소에 실패했습니다.');
-        }
-
-
+      } else {
+        toast.error('거래취소에 실패했습니다.');
       }
 
 
 
-      setAgreementForCancelTrade(
-        agreementForCancelTrade.map((item, i) => i === index ? false : item)
-      );
 
+    } catch (error) {
+      console.error('Error cancelling trade with escrow:', error);
+      toast.error('거래취소에 실패했습니다.');
       setCancellings(
         cancellings.map((item, i) => i === index ? false : item)
       );
+      return;
+    }
+
+
+    } else {
+
+      const response = await fetch('/api/order/cancelTradeBySeller', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          storecode: "admin",
+          walletAddress: address,
+          cancelTradeReason: cancelTradeReason[index],
+        })
+      });
+
+      if (!response.ok) {
+        toast.error('거래취소에 실패했습니다.');
+        setCancellings(
+          cancellings.map((item, i) => i === index ? false : item)
+        );
+        return;
+      }
+
+      const data = await response.json();
+
+      ///console.log('data', data);
+
+      if (data.result) {
+
+        toast.success(Order_has_been_cancelled);
+
+        playSong();
+
+
+        await fetch('/api/order/getAllBuyOrders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(
+            {
+              storecode: searchStorecode,
+              limit: Number(limitValue),
+              page: Number(pageValue),
+              walletAddress: address,
+              searchMyOrders: searchMyOrders,
+              searchOrderStatusCancelled: searchOrderStatusCancelled,
+              searchOrderStatusCompleted: searchOrderStatusCompleted,
+
+              searchStoreName: searchStoreName,
+
+              fromDate: searchFormDate,
+              toDate: searchToDate,
+            }
+          )
+        }).then(async (response) => {
+          const data = await response.json();
+          //console.log('data', data);
+          if (data.result) {
+            setBuyOrders(data.result.orders);
+
+            setTotalCount(data.result.totalCount);
+          }
+        });
+
+      } else {
+        toast.error('거래취소에 실패했습니다.');
+      }
+
 
     }
+
+
+
+    setAgreementForCancelTrade(
+      agreementForCancelTrade.map((item, i) => i === index ? false : item)
+    );
+
+    setCancellings(
+      cancellings.map((item, i) => i === index ? false : item)
+    );
+
+  }
 
 
 
@@ -5976,19 +6031,21 @@ const fetchBuyOrders = async () => {
                         && item?.escrowTransactionHash !== '0x'
                         && (
                           <button
-                            className="
+                            className={`
+                              ${item.status === 'cancelled' ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'}
                               flex flex-row gap-2 items-center justify-between
-                              text-sm text-blue-600 font-semibold
-                              border border-blue-600 rounded-lg p-2
-                              bg-blue-100
+                              text-sm font-semibold
+                              border border-purple-600 rounded-lg p-2
                               w-full text-center
-                              hover:bg-blue-200
+                              hover:bg-purple-200
                               cursor-pointer
                               transition-all duration-200 ease-in-out
                               hover:scale-105
                               hover:shadow-lg
-                              hover:shadow-blue-500/50
-                            "
+                              hover:shadow-purple-500/50
+                            `}
+
+                            
                             onClick={() => {
                               let url = '';
                               if (chain === "ethereum") {
@@ -6022,7 +6079,11 @@ const fetchBuyOrders = async () => {
                                 className="w-5 h-5"
                               />
                               <span className="text-sm">
-                                에스크로(MKRW) 전송내역
+                                {item?.status === 'cancelled' ?
+                                  '에스크로(MKRW) 회수내역'
+                                  :
+                                  '에스크로(MKRW) 전송내역'
+                                }
                               </span>
                             </div>
                             <Image
