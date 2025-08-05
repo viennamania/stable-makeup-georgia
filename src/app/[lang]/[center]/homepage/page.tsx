@@ -32,9 +32,22 @@ import {
 
 
 import {
+  ethereum,
   polygon,
   arbitrum,
+  bsc,
 } from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
+
 
 import {
   ConnectButton,
@@ -169,17 +182,6 @@ const wallets = [
 ];
 
 
-// get escrow wallet address
-
-//const escrowWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
-
 
 export default function Index({ params }: any) {
 
@@ -203,15 +205,39 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: bsc,
+
+    // the contract's address
+    address: bscContractAddressMKRW,
 
     // OPTIONAL: the contract's abi
     //abi: [...],
@@ -540,31 +566,11 @@ export default function Index({ params }: any) {
       });
 
   
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: "admin",
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
-
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
     };
 
@@ -573,7 +579,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       if (address) getBalance();
-    } , 1000);
+    } , 5000);
 
 
     return () => clearInterval(interval);
@@ -2492,43 +2498,46 @@ const fetchBuyOrders = async () => {
 
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   {!address && (
+
                     <ConnectButton
                       client={client}
                       wallets={wallets}
-
-                      /*
                       accountAbstraction={{
-                        chain: arbitrum,
+                        chain: chain === "ethereum" ? ethereum :
+                               chain === "polygon" ? polygon :
+                               chain === "arbitrum" ? arbitrum :
+                               chain === "bsc" ? bsc : arbitrum,
                         sponsorGas: true
                       }}
-                      */
                       
                       theme={"light"}
 
                       // button color is dark skyblue convert (49, 103, 180) to hex
                       connectButton={{
-                          style: {
-                              backgroundColor: "#3167b4", // dark skyblue
-                              color: "#f3f4f6", // gray-300
-                              padding: "2px 10px",
-                              borderRadius: "10px",
-                              fontSize: "14px",
-                              width: "60x",
-                              height: "38px",
-                          },
-                          label: "로그인 및 지갑연결",
+                        style: {
+                          backgroundColor: "#3167b4", // dark skyblue
+                          // font color is gray-300
+                          color: "#f3f4f6", // gray-300
+                          padding: "10px 20px",
+                          borderRadius: "10px",
+                          fontSize: "16px",
+                          // w-full
+                          width: "100%",
+                        },
+                        label: "로그인 및 회원가입",
                       }}
 
                       connectModal={{
                         size: "wide", 
                         //size: "compact",
-                        titleIcon: "https://www.stable.makeup/logo.png",                           
+                        titleIcon: "https://cdn.thirdweb.com/thirdweb-logo.svg",                          
                         showThirdwebBranding: false,
                       }}
 
                       locale={"ko_KR"}
                       //locale={"en_US"}
                     />
+
                   )}
                 </div>
 
@@ -2560,7 +2569,7 @@ const fetchBuyOrders = async () => {
 
                       <div className="hidden flex-row items-center justify-end  gap-2">
                           <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                              {Number(balance).toFixed(2)}
+                              {Number(balance).toFixed(3)}
                           </span>
                           {' '}
                           <span className="text-sm">USDT</span>
@@ -2843,7 +2852,7 @@ const fetchBuyOrders = async () => {
                                 잔액
                             </span>
                             <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                                {Number(balance).toFixed(2)}
+                                {Number(balance).toFixed(3)}
                             </span>
                             {' '}
                             <span className="text-sm">USDT</span>
@@ -3699,8 +3708,8 @@ const fetchBuyOrders = async () => {
                                   }}
                                 >
                                   {
-                                    Number(item.rate).toFixed(2)
-                                    //Number(item.krwAmount / item.usdtAmount).toFixed(2)
+                                    Number(item.rate).toFixed(3)
+                                    //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                                   }
                                 </span>
                               </div>
@@ -4810,7 +4819,7 @@ const fetchBuyOrders = async () => {
                                     }}>
                                     {Number(
                                       100 - (item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0) - (item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3)
-                                    ).toFixed(2)
+                                    ).toFixed(3)
                                     }%
                                   </span>
                                 </div>
@@ -4827,7 +4836,7 @@ const fetchBuyOrders = async () => {
                                     style={{
                                       fontFamily: 'monospace',
                                     }}>
-                                    {Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(2)}%
+                                    {Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(3)}%
                                   </span>
                                 </div>
 
@@ -4843,7 +4852,7 @@ const fetchBuyOrders = async () => {
                                     style={{
                                       fontFamily: 'monospace',
                                     }}>
-                                    {Number(item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3).toFixed(2)}%
+                                    {Number(item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3).toFixed(3)}%
                                   </span>
                                 </div>
 
@@ -4859,7 +4868,7 @@ const fetchBuyOrders = async () => {
                                     // dealerFeePercent
                                     Number(
                                       100 - (item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0) - (item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3)
-                                    ).toFixed(2)
+                                    ).toFixed(3)
 
                                   }%
                                 </span>
@@ -4870,7 +4879,7 @@ const fetchBuyOrders = async () => {
                                 >
                                   에이전트:{' '}
                                   {
-                                    Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(2)
+                                    Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(3)
                                   }%
                                 </span>
                                 <span className="text-sm text-zinc-500"
@@ -4880,7 +4889,7 @@ const fetchBuyOrders = async () => {
                                 >
                                   센터:{' '}
                                   {
-                                    Number(item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3).toFixed(2)
+                                    Number(item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3).toFixed(3)
                                   }%
                                 </span>
                                 
@@ -5365,7 +5374,7 @@ const fetchBuyOrders = async () => {
 
                                   <p className="text-lg font-semibold text-zinc-500">{Rate}: {
 
-                                    Number(item.krwAmount / item.usdtAmount).toFixed(2)
+                                    Number(item.krwAmount / item.usdtAmount).toFixed(3)
 
                                     }</p>
                                 </div>
@@ -6281,7 +6290,7 @@ const TradeDetail = (
 
     const [amount, setAmount] = useState(1000);
     const price = 91.17; // example price
-    const receiveAmount = (amount / price).toFixed(2);
+    const receiveAmount = (amount / price).toFixed(3);
     const commission = 0.01; // example commission
   
     return (
