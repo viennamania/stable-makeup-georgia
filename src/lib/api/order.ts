@@ -6915,3 +6915,323 @@ export async function updateBuyOrderEscrowBalance(
     return false;
   }
 }
+
+
+
+
+
+
+// escrows collection
+// date: 20240101, depositAmount, withdrawAmount, beforeBalance, afterBalance
+// deposit escrow
+export async function depositEscrow(
+  {
+    storecode,
+    date,
+    depositAmount,
+  }: {
+    storecode: string;
+    date: string;
+    depositAmount: number;
+  }
+): Promise<boolean> {
+
+  // get store.escrowAmountUSDT from storecode
+  const client = await clientPromise;
+  const collection = client.db('ultraman').collection('stores');
+  const store = await collection.findOne<any>(
+    { storecode: storecode },
+    { projection: { escrowAmountUSDT: 1 } }
+  );
+
+  if (!store) {
+    console.log('store not found for storecode: ' + storecode);
+    return false;
+  }
+
+
+  const storeEscrowAmountUSDT = store.escrowAmountUSDT || 0;
+
+  // insert escrow record
+  const escrowCollection = client.db('georgia').collection('escrows');
+  const result = await escrowCollection.insertOne(
+    {
+      storecode: storecode,
+      date: date,
+      depositAmount: depositAmount,
+      beforeBalance: storeEscrowAmountUSDT,
+      afterBalance: storeEscrowAmountUSDT + depositAmount,
+    }
+  );
+  if (result.insertedId) {
+    // update store.escrowAmountUSDT
+    const updateResult = await collection.updateOne(
+      { storecode: storecode },
+      { $inc: { escrowAmountUSDT: depositAmount } }
+    );
+    if (updateResult.modifiedCount === 1) {
+      return true;
+    } else {
+      console.log('update store escrowAmountUSDT failed for storecode: ' + storecode);
+      return false;
+    }
+  } else {
+    console.log('insert escrow record failed for storecode: ' + storecode);
+    return false;
+  }
+}
+
+// withdraw escrow
+export async function withdrawEscrow(
+  {
+    storecode,
+    date,
+    withdrawAmount,
+  }: {
+    storecode: string;
+    date: string;
+    withdrawAmount: number;
+  }
+): Promise<boolean> {
+
+  // get store.escrowAmountUSDT from storecode
+  const client = await clientPromise;
+  const collection = client.db('ultraman').collection('stores');
+  const store = await collection.findOne<any>(
+    { storecode: storecode },
+    { projection: { escrowAmountUSDT: 1 } }
+  );
+
+  if (!store) {
+    console.log('store not found for storecode: ' + storecode);
+    return false;
+  }
+
+  const storeEscrowAmountUSDT = store.escrowAmountUSDT || 0;
+
+  if (storeEscrowAmountUSDT < withdrawAmount) {
+    console.log('store.escrowAmountUSDT is less than withdrawAmount for storecode: ' + storecode);
+    return false;
+  }
+
+  // insert escrow record
+  const escrowCollection = client.db('georgia').collection('escrows');
+  const result = await escrowCollection.insertOne(
+    {
+      storecode: storecode,
+      date: date,
+      withdrawAmount: withdrawAmount,
+      beforeBalance: storeEscrowAmountUSDT,
+      afterBalance: storeEscrowAmountUSDT - withdrawAmount,
+    }
+  );
+  
+  if (result.insertedId) {
+    // update store.escrowAmountUSDT
+    const updateResult = await collection.updateOne(
+      { storecode: storecode },
+      { $inc: { escrowAmountUSDT: -withdrawAmount } }
+    );
+    
+    if (updateResult.modifiedCount === 1) {
+      return true;
+    } else {
+      console.log('update store escrowAmountUSDT failed for storecode: ' + storecode);
+      return false;
+    }
+  } else {
+    console.log('insert escrow record failed for storecode: ' + storecode);
+    return false;
+  }
+}
+
+  
+
+// getEscrowHistory
+export async function getEscrowHistory(
+  {
+    storecode,
+    limit,
+    page,
+  }: {
+    storecode: string;
+    limit: number;
+    page: number;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('escrows');
+  
+  const results = await collection.find<any>(
+    { storecode: storecode },
+  ).sort({ _id: -1 }).limit(limit).skip((page - 1) * limit).toArray();
+
+  const totalCount = await collection.countDocuments(
+    { storecode: storecode }
+  );
+
+  return {
+    totalCount: totalCount,
+    escrows: results,
+  };
+}
+
+
+
+
+
+// getEscrowBalanceByStorecode
+// Get the escrow balance for a specific storecode
+export async function getEscrowBalanceByStorecode(
+  {
+    storecode,
+  }: {
+    storecode: string;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('stores');
+  const store = await collection.findOne<any>(
+    { storecode: storecode },
+    { projection: { escrowAmountUSDT: 1 } }
+  );
+
+  if (!store) {
+    console.log('store not found for storecode: ' + storecode);
+    return {
+      escrowBalance: 0,
+    };
+  }
+
+
+
+
+  // get latest date from escrows collection with withdrawAmount > 0
+  // if no escrows found, return 0
+ 
+  const escrowCollection = client.db('georgia').collection('escrows');
+  const buyordersCollection = client.db('georgia').collection('buyorders');
+
+
+
+
+  const latestEscrow = await escrowCollection.find<any>(
+    { storecode: storecode, withdrawAmount: { $gt: 0 } },
+  ).sort({ date: -1 }).limit(1).toArray();
+
+  //console.log('getEscrowBalanceByStorecode latestEscrow: ' + JSON.stringify(latestEscrow));
+  //  [{"_id":"6888e772edb063fa5cfe9ead","storecode":"dtwuzgst","date":"2025-07-29","withdrawAmount":113.42,"beforeBalance":1579.7389999999996,"afterBalance":1466.3189999999995}]
+
+
+  if (latestEscrow.length === 0) {
+
+    const totalSettlement = await buyordersCollection.aggregate([
+      {
+        $match: {
+          storecode: storecode,
+          settlement: { $exists: true },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.feeAmount', 0] } },
+          totalAgentFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.agentFeeAmount', 0] } },
+        },
+      },
+    ]).toArray();
+
+    if (totalSettlement.length === 0) {
+
+      return {
+        escrowBalance: store.escrowAmountUSDT || 0,
+        todayMinusedEscrowAmount: 0,
+      };
+
+    } else {
+
+      const totalFeeAmount = totalSettlement[0].totalFeeAmount || 0;
+      const totalAgentFeeAmount = totalSettlement[0].totalAgentFeeAmount || 0;
+
+      const todayMinusedEscrowAmount = totalFeeAmount + totalAgentFeeAmount;
+
+      // calculate escrow balance
+      const escrowBalance = (store.escrowAmountUSDT || 0) - todayMinusedEscrowAmount;
+
+      return {
+        escrowBalance: escrowBalance,
+        todayMinusedEscrowAmount: todayMinusedEscrowAmount,
+      };
+
+    }
+
+
+
+  } else {
+
+    // get sum of settlement.feeAmount + settlement.dealerAmount from buyorders where storecode is storecode
+    // where settlementUpdatedAt is greater than  latestEscrow[0].date
+
+
+    // latestEscrow[0].date is in 'YYYY-MM-DD' format and korean timezone
+    // so we need to convert it to UTC date format
+    // and plus one day to get the end of the day
+    // e.g. '2025-07-28' -> '2025-07
+
+    //const latestEscrowDate = new Date(latestEscrow[0].date + 'T00:00:00+09:00').toISOString();
+
+    const latestEscrowDate = new Date(latestEscrow[0].date + 'T00:00:00+09:00').toISOString();
+    // plus one day to get the end of the day
+    const latestEscrowDatePlusOne = 
+      new Date(new Date(latestEscrowDate).getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+    console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
+    // 2025-07-28T15:00:00.000Z
+
+    const totalSettlement = await buyordersCollection.aggregate([
+      {
+        $match: {
+          storecode: storecode,
+          settlementUpdatedAt: { $gt: latestEscrowDatePlusOne },
+          settlement: { $exists: true },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.feeAmount', 0] } },
+          totalAgentFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.agentFeeAmount', 0] } },
+        },
+      },
+    ]).toArray();
+
+    if (totalSettlement.length === 0) {
+
+      return {
+        escrowBalance: store.escrowAmountUSDT || 0,
+        todayMinusedEscrowAmount: 0,
+      };
+
+    } else {
+
+      const totalFeeAmount = totalSettlement[0].totalFeeAmount || 0;
+      const totalAgentFeeAmount = totalSettlement[0].totalAgentFeeAmount || 0;
+
+      console.log('getEscrowBalanceByStorecode totalFeeAmount: ' + totalFeeAmount);
+      console.log('getEscrowBalanceByStorecode totalAgentFeeAmount: ' + totalAgentFeeAmount);
+
+      const todayMinusedEscrowAmount = totalFeeAmount + totalAgentFeeAmount;
+      // calculate escrow balance
+      const escrowBalance = (store.escrowAmountUSDT || 0) - todayMinusedEscrowAmount;
+
+      return {
+        escrowBalance: escrowBalance,
+        todayMinusedEscrowAmount: todayMinusedEscrowAmount,
+      };
+
+    }
+
+  }
+
+
+}
