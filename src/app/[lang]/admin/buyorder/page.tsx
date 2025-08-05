@@ -160,6 +160,7 @@ interface BuyOrder {
   escrowWallet: {
     address: string;
     balance: number;
+    transactionHash: string;
   };
 }
 
@@ -5090,8 +5091,62 @@ const fetchBuyOrders = async () => {
 
 
 
-                        {false && item?.seller?.walletAddress === address && (
+                        {item?.seller?.walletAddress === address && (
 
+                          <>
+
+
+
+                        {/* 상태가 cancelled 이고, escrowTransactionHash가 없을 경우 */}
+                        {/* 에스크로 돌아주기 버튼 */}
+                        { item.status === 'cancelled'
+                        && item?.escrowWallet?.transactionHash
+                        && item?.escrowWallet?.transactionHash !== '0x'
+                        && (!item?.escrowTransactionHash || item?.escrowTransactionHash === '0x')
+                        && (
+                          <button
+                            className="text-sm text-blue-600 font-semibold
+                              border border-blue-600 rounded-lg p-2
+                              bg-blue-100
+                              w-full text-center
+                              hover:bg-blue-200
+                              cursor-pointer
+                              transition-all duration-200 ease-in-out
+                              hover:scale-105
+                              hover:shadow-lg
+                              hover:shadow-blue-500/50
+                            "
+                            onClick={() => {
+                              // TODO: implement return to escrow logic
+                            }}
+                          >
+                            <div className="flex flex-row gap-2 items-center justify-start ml-2">
+                              <Image
+                                src={`/token-mkrw-icon.png`}
+                                alt="MKRW Logo"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <Image
+                                src={`/logo-chain-${chain}.png`}
+                                alt={`${chain} Logo`}
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <span className="text-sm">
+                                {item?.escrowWallet?.balance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} MKRW 돌아주기
+                              </span>
+                            </div>
+                          </button>
+                        )}
+
+
+
+
+
+                            {/*
                             <button
                               onClick={() => {
                                 
@@ -5121,6 +5176,10 @@ const fetchBuyOrders = async () => {
                                 height={24}
                               />
                             </button>
+                            */}
+
+
+                          </>
 
 
                         )}
@@ -5264,13 +5323,16 @@ const fetchBuyOrders = async () => {
                               )}
 
                               {item.status === 'cancelled' && (
-                                <div className="
-                                flex flex-col gap-2 items-center justify-center
-                                text-sm text-red-600">
-                                  {item.cancelTradeReason ? item.cancelTradeReason :
-                                    "거래취소사유 없음"
-                                  }
-                                  
+
+                                <div className="flex flex-col gap-2 items-center justify-center">
+                                  <div className="
+                                  flex flex-col gap-2 items-center justify-center
+                                  text-sm text-red-600">
+                                    {item.cancelTradeReason ? item.cancelTradeReason :
+                                      "거래취소사유 없음"
+                                    }
+                                  </div>
+
                                 </div>
                               )}
                             </div>
@@ -5821,11 +5883,17 @@ const fetchBuyOrders = async () => {
 
 
 
+
+
+
+
                         {item?.transactionHash
                         && item?.transactionHash !== '0x'
                         && (
                           <button
-                            className="text-sm text-blue-600 font-semibold
+                            className="
+                              flex flex-row gap-2 items-center justify-between
+                              text-sm text-blue-600 font-semibold
                               border border-blue-600 rounded-lg p-2
                               bg-blue-100
                               w-full text-center
@@ -5872,6 +5940,13 @@ const fetchBuyOrders = async () => {
                                 판매코인(USDT) 전송내역
                               </span>
                             </div>
+                            <Image
+                              src="/icon-share.png"
+                              alt="Share Icon"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
                           </button>
                         )}
 
@@ -5880,7 +5955,9 @@ const fetchBuyOrders = async () => {
                         && item?.escrowTransactionHash !== '0x'
                         && (
                           <button
-                            className="text-sm text-blue-600 font-semibold
+                            className="
+                              flex flex-row gap-2 items-center justify-between
+                              text-sm text-blue-600 font-semibold
                               border border-blue-600 rounded-lg p-2
                               bg-blue-100
                               w-full text-center
@@ -5927,6 +6004,13 @@ const fetchBuyOrders = async () => {
                                 에스크로(MKRW) 전송내역
                               </span>
                             </div>
+                            <Image
+                              src="/icon-share.png"
+                              alt="Share Icon"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
                           </button>
                         )}
 
