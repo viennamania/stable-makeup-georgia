@@ -4223,7 +4223,14 @@ const fetchBuyOrders = async () => {
                           </div>
 
                           {/* wallet address */}
-                          <div className="flex flex-row items-center gap-2">
+                          <div className="flex flex-row items-center gap-1">
+                            <Image
+                              src="/icon-shield.png"
+                              alt="Wallet Address"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
                             <button
                               className="text-sm text-blue-600 font-semibold underline
                               "
@@ -4332,18 +4339,22 @@ const fetchBuyOrders = async () => {
                                 : item.paymentMethod === 'cash' ? '현금'
                                 : item.paymentMethod === 'crypto' ? '암호화폐'
                                 : item.paymentMethod === 'giftcard' ? '기프트카드'
-                                : item.paymentMethod === 'mkrw' ? 'MKRW' : '기타'
+                                : item.paymentMethod === 'mkrw' ? 'MKRW 에스크로' : '기타'
                                 }
                               </span>
                             </div>
 
                             {item.paymentMethod === 'mkrw' && item?.escrowWallet?.address && (
-                              <div className="flex flex-col items-center justify-center gap-2">
+                              <div className="flex flex-col items-end justify-center gap-2">
 
                                 <div className="flex flex-row items-center justify-center gap-2">
-                                  <span className="text-sm text-zinc-500 font-semibold">
-                                    에스크로
-                                  </span>
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Escrow Wallet"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
                                   <button
                                     className="text-sm text-blue-600 font-semibold underline"
                                     onClick={() => {
@@ -4358,6 +4369,13 @@ const fetchBuyOrders = async () => {
                                 {/* balance */}
                                 {item?.escrowWallet?.balance ? (
                                   <div className="flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/token-mkrw-icon.png"
+                                      alt="MKRW Token"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
                                     <span className="text-lg text-yellow-600 font-semibold"
                                       style={{
                                         fontFamily: 'monospace',
@@ -4366,9 +4384,6 @@ const fetchBuyOrders = async () => {
                                       {
                                         item?.escrowWallet?.balance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                       }
-                                    </span>
-                                    <span className="text-sm text-zinc-500">
-                                      MKRW
                                     </span>
                                   </div>
 
@@ -4499,7 +4514,14 @@ const fetchBuyOrders = async () => {
                               </div>
 
                               {/* wallet address */}
-                              <div className="flex flex-row items-center justify-center gap-2">
+                              <div className="flex flex-row items-center justify-center gap-1">
+                                <Image
+                                  src="/icon-shield.png"
+                                  alt="Wallet Address"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
                                 <button
                                   className="text-sm text-blue-600 font-semibold underline
                                   "
