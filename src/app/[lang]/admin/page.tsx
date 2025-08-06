@@ -1747,14 +1747,18 @@ export default function Index({ params }: any) {
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 거래금액(원)</h2>
                     <p className="text-lg text-zinc-500">
-                      {Number(totalSummary.totalClearanceAmountKrw)?.toLocaleString()} 원
+                      {
+                        !totalSummary.totalClearanceAmountKrw ? "0" :
+                      Number(totalSummary.totalClearanceAmountKrw)?.toLocaleString()} 원
                     </p>
                   </div>
 
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 거래량(USDT)</h2>
                     <p className="text-lg text-zinc-500">
-                      {Number(totalSummary.totalClearanceAmountUsdt)?.toLocaleString()} USDT
+                      {
+                        !totalSummary.totalClearanceAmountUsdt ? "0" :
+                      Number(totalSummary.totalClearanceAmountUsdt)?.toLocaleString()} USDT
                     </p>
                   </div>
                 </div>
@@ -2216,7 +2220,7 @@ export default function Index({ params }: any) {
                   <div className="mt-5 flex flex-row gap-2 justify-center items-center">
 
                     <span className="text-sm text-zinc-600">
-                      내 USDT통장
+                      내 지갑주소
                     </span>
                     <button
                       className="text-lg text-zinc-800 underline"
@@ -2239,15 +2243,25 @@ export default function Index({ params }: any) {
 
 
 
-                  <div className="mt-5 w-full flex flex-row gap-2 justify-center items-center">
-
+                  <div className="mt-5 flex flex-row gap-2 justify-between items-center">
+                    <Image
+                      src="/token-usdt-icon.png"
+                      alt="USDT"
+                      width={35}
+                      height={35}
+                      className="rounded-lg w-6 h-6"
+                    />
                     <span className="w-20 text-sm text-zinc-600">
                       내 테더 잔액
                     </span>
-                    <div className="text-4xl font-semibold text-zinc-800">
+                    <div className="
+                    w-40 flex flex-col items-end justify-center
+                    text-4xl font-semibold text-green-600"
+                    style={{ fontFamily: "monospace" }}
+                    >
                       {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </div>
-                    <p className="text-sm text-zinc-800">USDT</p>
+                    <p className="w-14 text-sm text-zinc-800">USDT</p>
 
 
                     <button
@@ -2262,16 +2276,16 @@ export default function Index({ params }: any) {
                       className="flex bg-[#3167b4]
                       text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                     >
+                      <span className="text-sm text-gray-100">
+                        출금하기
+                      </span>
                       <Image
                         src="/icon-share.png"
                         alt="Withdraw USDT"
                         width={20}
                         height={20}
-                        className="mr-2"
+                        className="ml-2"
                       />
-                      <span className="text-sm text-white font-semibold">
-                        출금하기
-                      </span>
 
                     </button>
 
@@ -2280,15 +2294,25 @@ export default function Index({ params }: any) {
                   {mkrwBalance > 0 && (
 
 
-                    <div className="w-full flex flex-row gap-2 justify-center items-center">
-
+                    <div className="flex flex-row gap-2 justify-center items-center">
+                      <Image
+                        src="/token-mkrw-icon.png"
+                        alt="MKRW"
+                        width={35}
+                        height={35}
+                        className="rounded-lg w-6 h-6"
+                      />
                       <span className="w-20 text-sm text-zinc-600">
                         내 포인트 잔액
                       </span>
-                      <div className="text-4xl font-semibold text-zinc-800">
+                      <div className="
+                      w-40  flex flex-col items-end justify-center
+                      text-4xl font-semibold text-yellow-600"
+                      style={{ fontFamily: "monospace" }}
+                      >
                         {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                       </div>
-                      <p className="text-sm text-zinc-800">MKRW</p>
+                      <p className="w-14 text-sm text-zinc-800">MKRW</p>
 
 
                       <button
@@ -2303,16 +2327,17 @@ export default function Index({ params }: any) {
                         className="flex bg-[#3167b4]
                         text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                       >
+
+                        <span className="text-sm text-gray-100">
+                          출금하기
+                        </span>
                         <Image
                           src="/icon-share.png"
                           alt="Withdraw MKRW"
                           width={20}
                           height={20}
-                          className="mr-2"
+                          className="ml-2"
                         />
-                        <span className="text-sm text-white font-semibold">
-                          출금하기
-                        </span>
 
                       </button>
 
@@ -2324,11 +2349,22 @@ export default function Index({ params }: any) {
 
 
 
-                  <div className="flex flex-row gap-2 justify-center items-center">
+                  <div className="
+                  mt-5
+                  flex flex-row gap-2 justify-center items-center">
+                    <Image
+                      src={`/logo-chain-${chain}.png`}
+                      alt={`${chain} logo`}
+                      width={20}
+                      height={20}
+                      className="rounded-lg"
+                    />
                     <span className="text-sm text-zinc-600">
                       가스수량
                     </span>
-                    <div className="text-xl font-semibold text-zinc-800">
+                    <div className="text-xl font-semibold text-zinc-800"
+                      style={{ fontFamily: "monospace" }}
+                    >
                       {Number(nativeBalance).toFixed(8)}
                     </div>
                     <p className="text-sm text-zinc-800">
@@ -2337,15 +2373,6 @@ export default function Index({ params }: any) {
                       chain === "arbitrum" ? "ETH" :
                       chain === "bsc" ? "BNB" : ""}
                     </p>
-
-                    <Image
-                      src={`/logo-chain-${chain}.png`}
-                      alt={`${chain} logo`}
-                      width={20}
-                      height={20}
-                      className="rounded-lg"
-                    />
-
                   </div>
 
                   <div className="flex flex-row gap-2 justify-center items-center">
@@ -2364,7 +2391,7 @@ export default function Index({ params }: any) {
                 <div className="mt-5 flex flex-row gap-2 justify-center items-center">
                   {/* 로그인하고 나의 자산을 확인하세요 */}
                   <span className="text-sm text-zinc-600">
-                    로그인하고 나의 USDT통장에서 자산을 확인하세요
+                    로그인하고 나의 지갑주소에서 자산을 확인하세요
                   </span>
                 </div>
 
