@@ -3986,7 +3986,7 @@ const fetchBuyOrders = async () => {
                     </th>
                     
                     <th className="p-2">
-                      구매금액(원)<br/>{Buy_Amount}(USDT)<br/>단가(환율)
+                      {Buy_Amount}(USDT)<br/>구매금액(원)<br/>단가(환율)
                     </th>
                     {/*
                     <th className="p-2">{Payment_Amount}</th>
@@ -4385,21 +4385,6 @@ const fetchBuyOrders = async () => {
                           w-40 
                           flex flex-col gap-2 items-end justify-start">
 
-                          <div className="flex flex-row items-center justify-end gap-1">
-                            <span className="text-xl text-yellow-600 font-semibold"
-                              style={{
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              {
-                                item.krwAmount?.toLocaleString()
-                              }
-                            </span>
-                            <span className="text-sm text-zinc-500">
-                              원
-                            </span>
-                          </div>
-
                           <div className="flex flex-row items-center justify-end gap-2">
                             <Image
                               src="/icon-tether.png"
@@ -4414,6 +4399,22 @@ const fetchBuyOrders = async () => {
                               }}
                             >
                               {item.usdtAmount}
+                            </span>
+                          </div>
+
+
+                          <div className="flex flex-row items-center justify-end gap-1">
+                            <span className="text-xl text-yellow-600 font-semibold"
+                              style={{
+                                fontFamily: 'monospace',
+                              }}
+                            >
+                              {
+                                item.krwAmount?.toLocaleString()
+                              }
+                            </span>
+                            <span className="text-sm text-zinc-500">
+                              원
                             </span>
                           </div>
 
