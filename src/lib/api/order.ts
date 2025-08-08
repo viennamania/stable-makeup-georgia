@@ -4970,6 +4970,8 @@ export async function getAllTradesByAdmin(
   */
   const client = await clientPromise;
   const collection = client.db('georgia').collection('buyorders');
+
+
   const results = await collection.find<UserProps>(
     {
       // 'seller.walletAddress': walletAddress,
@@ -4981,7 +4983,19 @@ export async function getAllTradesByAdmin(
       agentcode: { $regex: agentcode, $options: 'i' },
       storecode: { $regex: storecode, $options: 'i' },
       nickname: { $regex: searchBuyer, $options: 'i' },
-      'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+      
+      
+
+      //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+      ...(searchDepositName && searchDepositName.trim() !== '' ? {
+        $or: [
+          { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+          { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+        ],
+      } : {}),
+
+
+
       'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
       //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -4991,6 +5005,11 @@ export async function getAllTradesByAdmin(
     .sort({ createdAt: -1 })
     // .sort({ paymentConfirmedAt: -1 })
     .limit(limit).skip((page - 1) * limit).toArray();
+
+
+
+
+
 
 
   // get total count of orders
@@ -5005,13 +5024,26 @@ export async function getAllTradesByAdmin(
       agentcode: { $regex: agentcode, $options: 'i' },
       storecode: { $regex: storecode, $options: 'i' },
       nickname: { $regex: searchBuyer, $options: 'i' },
-      'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+      
+      
+      
+      //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+      ...(searchDepositName && searchDepositName.trim() !== '' ? {
+        $or: [
+          { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+          { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+        ],
+      } : {}),
+
+
       'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
       //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
       createdAt: { $gte: fromDateValue, $lt: toDateValue },
     }
   );
+
+
 
 
 
@@ -5026,7 +5058,17 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+ 
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -5040,6 +5082,8 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+
+
   // sum of usdtAmount
   const totalUsdtAmount = await collection.aggregate([
     {
@@ -5050,7 +5094,18 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        
+        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -5064,6 +5119,8 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+
+
   // totalSettlementCount
   const totalSettlementCount = await collection.aggregate([
     {
@@ -5074,7 +5131,18 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+
+
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         settlement: { $exists: true, $ne: null },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
@@ -5089,6 +5157,8 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+
+
   // totalSettlementAmount
   const totalSettlementAmount = await collection.aggregate([
     {
@@ -5099,7 +5169,19 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+
+
+
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         settlement: { $exists: true, $ne: null },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
@@ -5114,6 +5196,8 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+
+
   // totalSettlementAmountKRW
   const totalSettlementAmountKRW = await collection.aggregate([
     {
@@ -5124,7 +5208,17 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         settlement: { $exists: true, $ne: null },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
@@ -5141,6 +5235,8 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+
+
   // total feeAmount
   const totalFeeAmount = await collection.aggregate([
     {
@@ -5151,7 +5247,17 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         settlement: { $exists: true, $ne: null },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
@@ -5166,6 +5272,8 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+
+
   // total feeAmountKRW
   const totalFeeAmountKRW = await collection.aggregate([
     {
@@ -5176,7 +5284,17 @@ export async function getAllTradesByAdmin(
         agentcode: { $regex: agentcode, $options: 'i' },
         storecode: { $regex: storecode, $options: 'i' },
         nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        
+        
+        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName && searchDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
+          ],
+        } : {}),
+
+
         'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
         settlement: { $exists: true, $ne: null },
         //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
@@ -7213,6 +7331,54 @@ export async function getEscrowHistory(
 
 
 
+
+
+
+
+
+
+
+// updateBuyOrderDepositCompleted
+// update buyer.depositCompleted to true
+// and depositCompletedAt to current date
+// this is used when the buyer has completed the deposit
+export async function updateBuyOrderDepositCompleted(
+  {
+    orderId,
+  }: {
+    orderId: string;
+  }
+): Promise<boolean> {
+
+  console.log('updateBuyOrderDepositCompleted orderId: ' + orderId);
+
+  const client = await clientPromise;
+  const collection = client.db('georgia').collection('buyorders');
+  // update buyorder
+  const result = await collection.updateOne(
+    { _id: new ObjectId(orderId) },
+    { $set: {
+      'buyer.depositCompleted': true,
+      'buyer.depositCompletedAt': new Date().toISOString(),
+    } }
+  );
+
+  console.log('updateBuyOrderDepositCompleted result: ' + JSON.stringify(result));
+
+  if (result.modifiedCount === 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+
+
+
+
+
 // getEscrowBalanceByStorecode
 // Get the escrow balance for a specific storecode
 export async function getEscrowBalanceByStorecode(
@@ -7318,7 +7484,7 @@ export async function getEscrowBalanceByStorecode(
     const latestEscrowDatePlusOne = 
       new Date(new Date(latestEscrowDate).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
-    //console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
+    console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
     // 2025-07-28T15:00:00.000Z
 
     const totalSettlement = await buyordersCollection.aggregate([
@@ -7333,10 +7499,15 @@ export async function getEscrowBalanceByStorecode(
         $group: {
           _id: null,
           totalFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.feeAmount', 0] } },
+          
           totalAgentFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.agentFeeAmount', 0] } },
+
         },
       },
     ]).toArray();
+
+    //console.log('getEscrowBalanceByStorecode totalSettlement: ' + JSON.stringify(totalSettlement));
+
 
     if (totalSettlement.length === 0) {
 
@@ -7348,12 +7519,11 @@ export async function getEscrowBalanceByStorecode(
     } else {
 
       const totalFeeAmount = totalSettlement[0].totalFeeAmount || 0;
+
       const totalAgentFeeAmount = totalSettlement[0].totalAgentFeeAmount || 0;
 
-      //console.log('getEscrowBalanceByStorecode totalFeeAmount: ' + totalFeeAmount);
-      //console.log('getEscrowBalanceByStorecode totalAgentFeeAmount: ' + totalAgentFeeAmount);
-
       const todayMinusedEscrowAmount = totalFeeAmount + totalAgentFeeAmount;
+
       // calculate escrow balance
       const escrowBalance = (store.escrowAmountUSDT || 0) - todayMinusedEscrowAmount;
 
@@ -7367,45 +7537,4 @@ export async function getEscrowBalanceByStorecode(
   }
 
 
-}
-
-
-
-
-
-
-
-
-// updateBuyOrderDepositCompleted
-// update buyer.depositCompleted to true
-// and depositCompletedAt to current date
-// this is used when the buyer has completed the deposit
-export async function updateBuyOrderDepositCompleted(
-  {
-    orderId,
-  }: {
-    orderId: string;
-  }
-): Promise<boolean> {
-
-  console.log('updateBuyOrderDepositCompleted orderId: ' + orderId);
-
-  const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
-  // update buyorder
-  const result = await collection.updateOne(
-    { _id: new ObjectId(orderId) },
-    { $set: {
-      'buyer.depositCompleted': true,
-      'buyer.depositCompletedAt': new Date().toISOString(),
-    } }
-  );
-
-  console.log('updateBuyOrderDepositCompleted result: ' + JSON.stringify(result));
-
-  if (result.modifiedCount === 1) {
-    return true;
-  } else {
-    return false;
-  }
 }

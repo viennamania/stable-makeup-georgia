@@ -2259,12 +2259,10 @@ const fetchBuyOrders = async () => {
         searchMyOrders: searchMyOrders,
         searchOrderStatusCompleted: true,
         
-        //searchBuyer: searchBuyer,
-        searchBuyer: '',
-        //searchDepositName: searchDepositName,
-        searchDepositName: '',
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-        searchStoreBankAccountNumber: '',
+
+        searchBuyer: searchBuyer,
+        /////searchDepositName: searchDepositName,
+        searchStoreBankAccountNumber: searchStoreBankAccountNumber,
 
 
         fromDate: searchFromDate,
@@ -2311,6 +2309,10 @@ const fetchBuyOrders = async () => {
   } , [address, searchMyOrders, searchStorecode,
       searchFromDate,
       searchToDate,
+
+      searchBuyer,
+      searchStoreBankAccountNumber,
+      searchDepositName,
   ]);
 
 
