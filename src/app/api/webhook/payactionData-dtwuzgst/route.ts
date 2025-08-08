@@ -242,6 +242,7 @@ export async function POST(request: NextRequest) {
     bank_code === '020' ? '국민카드' :
     bank_code === '081' ? '하나카드' :
     bank_code === '002' ? '외환카드' :
+    bank_code === '089' ? '케이뱅크' :
     '알 수 없는 은행';
 
 
