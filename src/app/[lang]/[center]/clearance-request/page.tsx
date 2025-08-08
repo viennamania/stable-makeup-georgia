@@ -3863,7 +3863,9 @@ const [tradeSummary, setTradeSummary] = useState({
                               <span className="text-sm text-zinc-500">
                                   잔액
                               </span>
-                              <span className="text-2xl xl:text-4xl font-semibold text-green-600">
+                              <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                                  style={{ fontFamily: 'monospace' }}
+                              >
                                   {
                                     Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                   }
@@ -4098,11 +4100,9 @@ const [tradeSummary, setTradeSummary] = useState({
 
                           <p className="mt-4 text-xl font-bold text-zinc-400">1 USDT = {
                             // currency format
-                            Number(rate)?.toLocaleString('ko-KR', {
-                              style: 'currency',
-                              currency: 'KRW'
-                            })
-                          }</p>
+                            Number(rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          } 원
+                          </p>
 
                           <div className=" flex flex-col items-center gap-2">
                             
@@ -4155,7 +4155,9 @@ const [tradeSummary, setTradeSummary] = useState({
                                 
                                 } }
                               />
-                              <span className="text-xl text-zinc-400 font-bold">
+                              <span className="text-2xl text-yellow-600 font-semibold"
+                                style={{ fontFamily: 'monospace' }}
+                              >
                                 {krwAmount === 0 ? '0' : Number(krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                               </span>
                               <span className="text-xl text-zinc-400 font-bold">
@@ -4163,22 +4165,30 @@ const [tradeSummary, setTradeSummary] = useState({
                               </span>
 
                             </div>
-                            {/* 매입수량 */}
-                            <span className="text-lg font-semibold text-zinc-400">
-                              매입수량(USDT)
-                            </span>
-
-                            <p className=" text-xl text-zinc-400 font-bold">
-                              
-
-
-                              = {
-                              krwAmount === 0 ? '0' :
-                              
-                              (krwAmount / rate).toFixed(3) === 'NaN' ? '0' : (krwAmount / rate).toFixed(3)
-
-                              }{' '}USDT
-                            </p>
+                            {/* 판매량 */}
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="text-lg font-semibold text-zinc-400">
+                                판매량(USDT)
+                              </span>
+                              {'='}
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-tether.png"
+                                  alt="Tether"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <span className=" text-2xl text-green-600 font-semibold"
+                                  style={{ fontFamily: 'monospace' }}
+                                >
+                                {
+                                  krwAmount === 0 ? '0' :
+                                  (krwAmount / rate).toFixed(3) === 'NaN' ? '0' : (krwAmount / rate).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                }
+                                </span>
+                              </div>
+                            </div>
 
                           </div>
 
@@ -4230,7 +4240,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                   }
                                   className={`text-lg text-white  px-4 py-2 rounded-md ${krwAmount === 0 || agreementPlaceOrder === false
                                     || !buyerNickname
-                                     ? 'bg-gray-500' : 'bg-green-500'}`}
+                                     ? 'bg-gray-500' : 'bg-green-600'}`}
 
 
                                   onClick={() => {
@@ -5153,7 +5163,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                         gap-1 text-sm text-white px-2 py-1 rounded-md
                                         ${acceptingBuyOrder[index] || !agreementForTrade[index] ?
                                           'bg-zinc-500 text-white' :
-                                          'bg-green-500 text-white '}
+                                          'bg-green-600 text-white '}
                                       `}
                                       onClick={() => {
                                         acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
@@ -5208,7 +5218,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                       
                                       className={`
                                         w-24 h-8
-                                        flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                                        flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
                                       onClick={() => {
 
                                         requestPayment(
@@ -5275,7 +5285,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                           w-32 h-8
                                           flex flex-row
                                           items-center justify-center
-                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${confirmingPayment[index] || !confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${confirmingPayment[index] || !confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
 
                                 
                                         onClick={() => {
@@ -5457,7 +5467,7 @@ const [tradeSummary, setTradeSummary] = useState({
                           <article
                               //key={index}
                               className={` w-96 xl:w-full h-full relative
-                                ${item.walletAddress === address ? 'border-green-500' : 'border-gray-200'}
+                                ${item.walletAddress === address ? 'border-green-600' : 'border-gray-200'}
 
                                 ${item.status === 'accepted' || item.status === 'paymentRequested' ? 'border-red-600' : 'border-gray-200'}
 
@@ -5829,7 +5839,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                 {address && item.walletAddress !== address && item?.buyer && item?.buyer?.walletAddress === address && (
                                   <button
-                                    className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                                    className="bg-green-600 text-white px-4 py-2 rounded-lg"
                                     onClick={() => {
                                         //console.log('Buy USDT');
                                         // go to chat
@@ -6078,7 +6088,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                   <button
                                     disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                     
-                                    className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                                    className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
                                     onClick={() => {
 
                                       requestPayment(
@@ -6274,7 +6284,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                                 <button
                                                   disabled={!address || !agreementForTrade[index]}
                                                   className={`m-10 text-lg text-white px-4 py-2 rounded-md
-                                                    ${!address || !agreementForTrade[index] ? 'bg-zinc-800' : 'bg-green-500 hover:bg-green-600'}
+                                                    ${!address || !agreementForTrade[index] ? 'bg-zinc-800' : 'bg-green-600 hover:bg-green-600'}
                                                     `}
                                                   onClick={() => {
         
@@ -6382,7 +6392,7 @@ const [tradeSummary, setTradeSummary] = useState({
               {/* 처음으로 */}
               <button
                 disabled={Number(page) <= 1}
-                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-600 hover:bg-green-600'}`}
                 onClick={() => {
                   
                   //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=1`);
@@ -6397,7 +6407,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
               <button
                 disabled={Number(page) <= 1}
-                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-600 hover:bg-green-600'}`}
                 onClick={() => {
                   
                   //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=${Number(page) - 1}`);
@@ -6417,7 +6427,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
               <button
                 disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-600 hover:bg-green-600'}`}
                 onClick={() => {
                   
                   //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=${Number(page) + 1}`);
@@ -6432,7 +6442,7 @@ const [tradeSummary, setTradeSummary] = useState({
               {/* 마지막 */}
               <button
                 disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+                className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-600 hover:bg-green-600'}`}
                 onClick={() => {
                   
                   //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
@@ -6573,7 +6583,7 @@ const TradeDetail = (
 
       <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-6">
         <div className="flex items-center">
-          <span className="inline-block w-4 h-4 rounded-full bg-green-500 mr-2"></span>
+          <span className="inline-block w-4 h-4 rounded-full bg-green-600 mr-2"></span>
           <h2 className="text-lg font-semibold text-black ">Iskan9</h2>
           <span className="ml-2 text-blue-500 text-sm">318 trades</span>
         </div>
@@ -6637,7 +6647,7 @@ const TradeDetail = (
           
           <div className="mt-6 flex space-x-4">
             <button
-                className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg"
                 onClick={() => {
                     console.log('Buy USDT');
                     // go to chat
