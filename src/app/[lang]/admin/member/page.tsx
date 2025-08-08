@@ -16,7 +16,7 @@ import { useRouter }from "next//navigation";
 import { toast } from 'react-hot-toast';
 
 import {
-  clientId,
+  //clientId,
   client
 } from "../../../client";
 
@@ -2711,7 +2711,7 @@ export default function Index({ params }: any) {
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText(
-                                    paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
+                                    paymentUrl + '/' + params.lang + '/' + params.chain + '/' + item.storecode + '/payment?'
                                     + 'storeUser=' + item.nickname
                                     + '&depositBankName=' + item?.buyer?.depositBankName
                                     + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
@@ -2731,7 +2731,7 @@ export default function Index({ params }: any) {
                               <button
                                 onClick={() => {
                                   window.open(
-                                    paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
+                                    paymentUrl + '/' + params.lang + '/' + params.chain + '/' + item.storecode + '/payment?'
                                     + 'storeUser=' + item.nickname
                                     + '&depositBankName=' + item?.buyer?.depositBankName
                                     + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
@@ -3019,7 +3019,7 @@ const UserHomePage = (
       
       {/* iframe */}
       <iframe
-        src={`${paymentUrl}/ko/${clientId}/${selectedItem?.storecode}/payment?`
+        src={`${paymentUrl}/ko/${params.chain}/${selectedItem?.storecode}/payment?`
           + 'storeUser=' + selectedItem?.nickname
           + '&depositBankName=' + selectedItem?.buyer?.depositBankName
           + '&depositBankAccountNumber=' + selectedItem?.buyer?.depositBankAccountNumber
