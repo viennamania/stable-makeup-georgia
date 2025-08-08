@@ -2062,87 +2062,96 @@ export default function Index({ params }: any) {
 
   const [latestBuyOrder, setLatestBuyOrder] = useState<BuyOrder | null>(null);
 
+  const [searchWithdrawDepositName, setSearchWithdrawDepositName] = useState("");
+
+
+  const fetchBuyOrders = async () => {
+
+    console.log('fetchBuyOrders===============>');
+    //console.log("address=", address);
+    //console.log("searchMyOrders=", searchMyOrders);
+
+
+    //console.log('acceptingBuyOrder', acceptingBuyOrder);
+    //console.log('escrowing', escrowing);
+    //console.log('requestingPayment', requestingPayment);
+    //console.log('confirmingPayment', confirmingPayment);
+
+
+
+    // check all agreementForTrade is false
+
+    if (
+      //!address || !searchMyOrders
+      agreementForTrade.some((item) => item === true)
+      || acceptingBuyOrder.some((item) => item === true)
+      || agreementForCancelTrade.some((item) => item === true)
+      || confirmPaymentCheck.some((item) => item === true)
+      || rollbackPaymentCheck.some((item) => item === true)
+      || acceptingBuyOrder.some((item) => item === true)
+      || escrowing.some((item) => item === true)
+      || requestingPayment.some((item) => item === true)
+      || confirmingPayment.some((item) => item === true)
+      || rollbackingPayment.some((item) => item === true)
+    ) {
+      return;
+    }
+
+
+    
+    setFetchingBuyOrders(true);
+
+    const response = await fetch('/api/order/getAllCollectOrdersForUser', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+
+          {
+            storecode: params.center,
+            limit: Number(limit),
+            page: Number(page),
+            walletAddress: address,
+            searchMyOrders: searchMyOrders,
+
+            fromDate: searchFromDate,
+            toDate: searchToDate,
+
+            searchWithdrawDepositName: searchWithdrawDepositName,
+
+          }
+
+      ),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch buy orders');
+      setFetchingBuyOrders(false);
+      toast.error('주문을 불러오는 데 실패했습니다');
+      return;
+    }
+
+    setFetchingBuyOrders(false);
+
+
+    const data = await response.json();
+
+
+    setBuyOrders(data.result.orders);
+
+    setTotalCount(data.result.totalCount);
+    
+
+
+  }
+
+
 
   useEffect(() => {
 
 
-    const fetchBuyOrders = async () => {
 
-      console.log('fetchBuyOrders===============>');
-      //console.log("address=", address);
-      //console.log("searchMyOrders=", searchMyOrders);
-
-
-      //console.log('acceptingBuyOrder', acceptingBuyOrder);
-      //console.log('escrowing', escrowing);
-      //console.log('requestingPayment', requestingPayment);
-      //console.log('confirmingPayment', confirmingPayment);
-
-
-
-      // check all agreementForTrade is false
-
-      if (
-        //!address || !searchMyOrders
-        agreementForTrade.some((item) => item === true)
-        || acceptingBuyOrder.some((item) => item === true)
-        || agreementForCancelTrade.some((item) => item === true)
-        || confirmPaymentCheck.some((item) => item === true)
-        || rollbackPaymentCheck.some((item) => item === true)
-        || acceptingBuyOrder.some((item) => item === true)
-        || escrowing.some((item) => item === true)
-        || requestingPayment.some((item) => item === true)
-        || confirmingPayment.some((item) => item === true)
-        || rollbackingPayment.some((item) => item === true)
-      ) {
-        return;
-      }
-
-
-      
-      setFetchingBuyOrders(true);
-
-      const response = await fetch('/api/order/getAllCollectOrdersForUser', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-
-            {
-              storecode: params.center,
-              limit: Number(limit),
-              page: Number(page),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-            }
-
-        ),
-      });
-
-      if (!response.ok) {
-        console.error('Failed to fetch buy orders');
-        setFetchingBuyOrders(false);
-        toast.error('주문을 불러오는 데 실패했습니다');
-        return;
-      }
-
-      setFetchingBuyOrders(false);
-
-
-      const data = await response.json();
-
-
-      setBuyOrders(data.result.orders);
-
-      setTotalCount(data.result.totalCount);
-      
-
-
-    }
 
 
     if (!address || !searchFromDate || !searchToDate) {
@@ -3240,11 +3249,12 @@ const [tradeSummary, setTradeSummary] = useState({
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
                         }}
                         className="
-                        w-40
                         items-center justify-center
                         bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                       >
-                        <div className="flex flex-col itmens-center justify-center gap-2">
+                        <div className="
+                          w-40 xl:w-48
+                          flex flex-col xl:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
                           </span>
@@ -3262,7 +3272,6 @@ const [tradeSummary, setTradeSummary] = useState({
                               </span>
                             </div>
                           )}
-
                         </div>
                       </button>
 
@@ -4221,83 +4230,133 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
+              <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-3 mt-4">
 
+                <div className="selection:w-full flex flex-col xl:flex-row items-center justify-between gap-3">
 
-              <div className="mt-5 selection:w-full flex flex-col xl:flex-row items-center justify-between gap-3">
+                  {/* serach fromDate and toDate */}
+                  {/* DatePicker for fromDate and toDate */}
+                  <div className="flex flex-col xl:flex-row items-center gap-2">
+                    <div className="flex flex-row items-center gap-2">
+                      <Image
+                        src="/icon-calendar.png"
+                        alt="Calendar"
+                        width={20}
+                        height={20}
+                        className="rounded-lg w-5 h-5"
+                      />
+                      <input
+                        type="date"
+                        value={searchFromDate}
+                        
+                        //onChange={(e) => setSearchFromDate(e.target.value)}
+                        // route to the date picker
+                        onChange={(e) => {
+                          router.push(
+                            '/' + params.lang + '/' + params.center + '/clearance-request?limit=' + limitValue + '&page=1' +
+                            '&fromDate=' + e.target.value + '&toDate=' + searchToDate
+                          );
+                        }}
+                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                      />
+                    </div>
 
+                    <span className="text-sm text-zinc-500">~</span>
 
-
-                {/* serach fromDate and toDate */}
-                {/* DatePicker for fromDate and toDate */}
-                <div className="flex flex-col xl:flex-row items-center gap-2">
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-calendar.png"
-                      alt="Calendar"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <input
-                      type="date"
-                      value={searchFromDate}
-                      
-                      //onChange={(e) => setSearchFromDate(e.target.value)}
-                      // route to the date picker
-                      onChange={(e) => {
-                        router.push(
-                          '/' + params.lang + '/' + params.center + '/clearance-request?limit=' + limitValue + '&page=1' +
-                          '&fromDate=' + e.target.value + '&toDate=' + searchToDate
-                        );
-                      }}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
+                    <div className="flex flex-row items-center gap-2">
+                      <Image
+                        src="/icon-calendar.png"
+                        alt="Calendar"
+                        width={20}
+                        height={20}
+                        className="rounded-lg w-5 h-5"
+                      />
+                      <input
+                        type="date"
+                        value={searchToDate}
+                        //onChange={(e) => setSearchToDate(e.target.value)}
+                        // route to the date picker
+                        onChange={(e) => {
+                          router.push(
+                            '/' + params.lang + '/' + params.center + '/clearance-request?limit=' + limitValue + '&page=1' +
+                            '&fromDate=' + searchFromDate + '&toDate=' + e.target.value
+                          );
+                        }}
+                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                      />
+                    </div>
                   </div>
 
-                  <span className="text-sm text-zinc-500">~</span>
+                  {fetchingBuyOrders ? (
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <Image
+                        src="/loading.png"
+                        alt="Loading"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 animate-spin"
+                      />
+                      <span className="text-sm text-zinc-500">로딩중...</span>
+                    </div>
+                  ) : (
+                    <>  </>
+                  )}
 
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-calendar.png"
-                      alt="Calendar"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <input
-                      type="date"
-                      value={searchToDate}
-                      //onChange={(e) => setSearchToDate(e.target.value)}
-                      // route to the date picker
-                      onChange={(e) => {
-                        router.push(
-                          '/' + params.lang + '/' + params.center + '/clearance-request?limit=' + limitValue + '&page=1' +
-                          '&fromDate=' + searchFromDate + '&toDate=' + e.target.value
-                        );
-                      }}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
                 </div>
 
-                {fetchingBuyOrders ? (
-                  <div className="flex flex-row items-center justify-center gap-2">
-                    <Image
-                      src="/loading.png"
-                      alt="Loading"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5 animate-spin"
+
+                {/* search depositName */}
+                {/*
+                <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
+
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchWithdrawDepositName}
+                      onChange={(e) => setSearchWithdrawDepositName(e.target.value)}
+                      placeholder="출금자명"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     />
-                    <span className="text-sm text-zinc-500">로딩중...</span>
                   </div>
-                ) : (
-                  <>  </>
-                )}
+
+                  <div className="
+                    w-28  
+                    flex flex-row items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setPageValue(1);
+                        
+                        fetchBuyOrders();
+
+                        getTradeSummary();
+                      }}
+                      className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+   
+                      title="검색"
+
+                      //disabled={fetchingBuyOrders}
+                    >
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <Image
+                          src="/icon-search.png"
+                          alt="Search"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-5 h-5"
+                        />
+                        <span className="text-sm">
+                          검색
+                        </span>
+                      </div>
+
+                    </button>
+                  </div>
+
+                </div>
+                */}
+
 
               </div>
-
-
 
 
 
@@ -4475,6 +4534,8 @@ const [tradeSummary, setTradeSummary] = useState({
 
                           <th className="p-2">{Buyer}</th>
 
+                           <th className="p-2">회원통장</th>
+
                           <th className="p-2">
                             <div className="flex flex-col items-center">
                               <span>
@@ -4488,12 +4549,24 @@ const [tradeSummary, setTradeSummary] = useState({
                               </span>
                             </div>
                           </th>
-                          <th className="p-2">회원아이디 / 회원통장</th>
+                         
                           {/*
                           <th className="p-2">{Payment_Amount}</th>
                           */}
 
-                          <th className="p-2">{Seller} / {Status}</th>
+                          <th className="p-2">
+                            <div className="flex flex-col items-center">
+                              <span className="text-sm">
+                                {Seller}
+                              </span>
+                              <span className="text-sm">
+                                {Status}
+                              </span>
+                            </div>
+                          </th>
+
+                          <th className="p-2">거래소전송</th>
+
                           <th className="p-2">거래취소</th>
                           <th className="p-2">USDT 전송</th>
                           <th className="p-2">출금상태</th>
@@ -4598,7 +4671,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                       {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
                                     </span>
                                   </div>
-
+                                  {/*
                                   <div className="text-sm text-zinc-500">
                                     {
                                       //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
@@ -4609,10 +4682,10 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                     }
                                   </div>
-                                  <div className="text-sm font-semibold text-zinc-500">
+                                  */}
+                                  <div className="text-lg font-semibold text-yellow-600">
                                     {
-                                      //item.walletAddress === address ? 'Me' :
-                                      item?.nickname
+                                      item?.buyer?.nickname ? item?.buyer?.nickname : item?.nickname
                                     }
                                   </div>
 
@@ -4620,6 +4693,49 @@ const [tradeSummary, setTradeSummary] = useState({
                               </div>
                             </td>
 
+
+                            <td className="p-2">
+
+                              {item?.buyer?.nickname ? (
+
+                                <div className="flex flex-row items-center gap-2 justify-center">
+
+                                  {/*
+                                  <div className="text-lg font-semibold text-yellow-600">
+                                    {item.buyer?.nickname}
+                                  </div>
+                                  */}
+
+                                  <div className="flex flex-col gap-2 items-center justify-center">
+                                    <div className="text-lg font-semibold text-zinc-500">
+                                      {item.buyer?.depositBankName}
+                                    </div>
+                                    <div className="text-lg font-semibold text-zinc-500">
+                                      {item.buyer?.depositBankAccountNumber}
+                                    </div>
+                                    <div className="text-lg font-semibold text-zinc-500">
+                                      {item.buyer?.depositName}
+                                    </div>
+                                  </div>
+                                </div>
+
+                              ) : (
+
+                                <div className="flex flex-col gap-2 items-center justify-center">
+                                  <div className="text-lg font-semibold text-zinc-500">
+                                    {item.seller?.bankInfo?.bankName}
+                                  </div>
+                                  <div className="text-lg font-semibold text-zinc-500">
+                                    {item.seller?.bankInfo?.accountNumber}
+                                  </div>
+                                  <div className="text-lg font-semibold text-zinc-500">
+                                    {item.seller?.bankInfo?.accountHolder}
+                                  </div>
+                                </div>
+
+                              )}
+
+                            </td>
 
 
                             <td className="p-2">
@@ -4658,47 +4774,6 @@ const [tradeSummary, setTradeSummary] = useState({
                                   }
                                 </span>
                               </div>
-                            </td>
-
-
-                            <td className="p-2">
-
-                              {item?.buyer?.nickname ? (
-
-                                <div className="flex flex-row items-center gap-2 justify-center">
-                                  <div className="text-lg font-semibold text-yellow-600">
-                                    {item.buyer?.nickname}
-                                  </div>
-
-                                  <div className="flex flex-col gap-2 items-center justify-center">
-                                    <div className="text-lg font-semibold text-zinc-500">
-                                      {item.buyer?.depositBankName}
-                                    </div>
-                                    <div className="text-lg font-semibold text-zinc-500">
-                                      {item.buyer?.depositBankAccountNumber}
-                                    </div>
-                                    <div className="text-lg font-semibold text-zinc-500">
-                                      {item.buyer?.depositName}
-                                    </div>
-                                  </div>
-                                </div>
-
-                              ) : (
-
-                                <div className="flex flex-col gap-2 items-center justify-center">
-                                  <div className="text-lg font-semibold text-zinc-500">
-                                    {item.seller?.bankInfo?.bankName}
-                                  </div>
-                                  <div className="text-lg font-semibold text-zinc-500">
-                                    {item.seller?.bankInfo?.accountNumber}
-                                  </div>
-                                  <div className="text-lg font-semibold text-zinc-500">
-                                    {item.seller?.bankInfo?.accountHolder}
-                                  </div>
-                                </div>
-
-                              )}
-
                             </td>
 
                             {/*
@@ -4850,12 +4925,32 @@ const [tradeSummary, setTradeSummary] = useState({
                                           className="w-5 h-5"
                                         />
                                         <span className="text-sm">
-                                          USDT 전송내역(가맹점)
+                                          USDT 전송내역
                                         </span>
                                       </div>
                                     </button>
 
 
+
+                      
+
+                                  </div>
+                                )}
+
+
+                                {item.status === 'completed' && (
+                                  <div className="text-sm text-green-600">
+                                    {Completed_at}
+                                  </div>
+                                )}
+
+                              </div>
+                            </td>
+
+
+
+                            <td className="p-2">
+                              <div className="flex flex-row items-center gap-2 justify-center">
                                     {item?.settlement
                                     && item?.settlement?.txid
                                     && item?.settlement?.txid !== '0x'
@@ -4888,24 +4983,14 @@ const [tradeSummary, setTradeSummary] = useState({
                                             className="w-5 h-5"
                                           />
                                           <span className="text-sm">
-                                            USDT 전송내역(회원)
+                                            USDT 전송내역
                                           </span>
                                         </div>
                                       </button>
                                     )}
-                      
 
                                   </div>
-                                )}
-
-
-                                {item.status === 'completed' && (
-                                  <div className="text-sm text-green-600">
-                                    {Completed_at}
-                                  </div>
-                                )}
-
-                              </div>
+                                
                             </td>
 
 

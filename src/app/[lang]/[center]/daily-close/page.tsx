@@ -1140,11 +1140,12 @@ export default function Index({ params }: any) {
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
                         }}
                         className="
-                        w-40
                         items-center justify-center
                         bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                       >
-                        <div className="flex flex-col itmens-center justify-center gap-2">
+                        <div className="
+                          w-40 xl:w-48
+                          flex flex-col xl:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
                           </span>
@@ -1162,7 +1163,6 @@ export default function Index({ params }: any) {
                               </span>
                             </div>
                           )}
-
                         </div>
                       </button>
 

@@ -2935,11 +2935,12 @@ const fetchBuyOrders = async () => {
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
                         }}
                         className="
-                        w-40
                         items-center justify-center
                         bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                       >
-                        <div className="flex flex-col itmens-center justify-center gap-2">
+                        <div className="
+                          w-40 xl:w-48
+                          flex flex-col xl:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
                           </span>
@@ -2957,7 +2958,6 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
                           )}
-
                         </div>
                       </button>
 
@@ -3445,96 +3445,81 @@ const fetchBuyOrders = async () => {
 
 
                 {/* search depositName */}
-                <div className="flex flex-col items-center gap-2">
-
-
-                  <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
-                    {/* search nickname */}
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchBuyer}
-                        onChange={(e) => setSearchBuyer(e.target.value)}
-                        placeholder="회원 아이디"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      />
-                    </div>
-
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchDepositName}
-                        onChange={(e) => setSearchDepositName(e.target.value)}
-                        placeholder="입금자명"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      />
-                    </div>
-
-                    {/* searchStoreBankAccountNumber */}
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchStoreBankAccountNumber}
-                        onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                        placeholder="입금통장번호"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      /> 
-                    </div>
-
-
-
-                  
-
-
-                    {/* 검색 버튼 */}
-                    <div className="
-                      w-28  
-                      flex flex-row items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setPageValue(1);
-                          
-                          fetchBuyOrders();
-
-                          getTradeSummary();
-                        }}
-                        //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                        className={`${
-                          fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
-                        }
-                        text-white px-4 py-2 rounded-lg w-full
-                        hover:bg-[#3167b4]/80
-                        hover:cursor-pointer
-                        hover:scale-105
-                        transition-transform duration-200 ease-in-out`}
-                        title="검색"
-
-                        disabled={fetchingBuyOrders}
-                      >
-                        <div className="flex flex-row items-center justify-between gap-2">
-                          <Image
-                            src="/icon-search.png"
-                            alt="Search"
-                            width={20}
-                            height={20}
-                            className="rounded-lg w-5 h-5"
-                          />
-                          <span className="text-sm">
-                            {fetchingBuyOrders ? '검색중...' : '검색'}
-                          </span>
-                        </div>
-
-                      </button>
-                    </div>
-
+                <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
+                  {/* search nickname */}
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchBuyer}
+                      onChange={(e) => setSearchBuyer(e.target.value)}
+                      placeholder="회원 아이디"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
                   </div>
 
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchDepositName}
+                      onChange={(e) => setSearchDepositName(e.target.value)}
+                      placeholder="입금자명"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+                  </div>
 
+                  {/* searchStoreBankAccountNumber */}
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchStoreBankAccountNumber}
+                      onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
+                      placeholder="입금통장번호"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    /> 
+                  </div>
+
+                  {/* 검색 버튼 */}
+                  <div className="
+                    w-28  
+                    flex flex-row items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setPageValue(1);
+                        
+                        fetchBuyOrders();
+
+                        getTradeSummary();
+                      }}
+                      //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+                      className={`${
+                        fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
+                      }
+                      text-white px-4 py-2 rounded-lg w-full
+                      hover:bg-[#3167b4]/80
+                      hover:cursor-pointer
+                      hover:scale-105
+                      transition-transform duration-200 ease-in-out`}
+                      title="검색"
+
+                      disabled={fetchingBuyOrders}
+                    >
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <Image
+                          src="/icon-search.png"
+                          alt="Search"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-5 h-5"
+                        />
+                        <span className="text-sm">
+                          {fetchingBuyOrders ? '검색중...' : '검색'}
+                        </span>
+                      </div>
+
+                    </button>
+                  </div>
 
                 </div>
-
-
-
 
   
 

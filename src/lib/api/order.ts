@@ -2171,7 +2171,7 @@ export async function getBuyOrders(
 
       //{ walletAddress: walletAddress, status: { $ne: 'paymentConfirmed' } },
       {
-        agentcode: { $regex: agentcode, $options: 'i' },
+        ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
         storecode: storecode || { $ne: null },
@@ -2183,11 +2183,11 @@ export async function getBuyOrders(
           : { $ne: 'nothing' }))),
 
         privateSale: privateSale || { $ne: true },
-        "store.storeName": { $regex: searchStoreName, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        "buyer.depositName": { $regex: searchDepositName, $options: 'i' },
+        ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
+        ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
+        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
 
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         // filter by fromDate and toDate
         // fromDate format: YYYY-MM-DD
@@ -2211,7 +2211,7 @@ export async function getBuyOrders(
     const totalCount = await collection.countDocuments(
       {
 
-        agentcode: { $regex: agentcode, $options: 'i' },
+        ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
         storecode: storecode || { $ne: null },
         
@@ -2224,12 +2224,12 @@ export async function getBuyOrders(
 
         pirvateSale: { $ne: true },
 
-        "store.storeName": { $regex: searchStoreName, $options: 'i' },
+        ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        "buyer.depositName": { $regex: searchDepositName, $options: 'i' },
+        ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
+        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
 
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         // filter by fromDate and toDate
         ///createdAt: {
@@ -2269,7 +2269,7 @@ export async function getBuyOrders(
 
     const results = await collection.find<UserProps>(
       {
-        agentcode: { $regex: agentcode, $options: 'i' },
+        ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
         storecode: storecode || { $ne: null },
@@ -2302,15 +2302,15 @@ export async function getBuyOrders(
 
 
         // search store name
-        "store.storeName": { $regex: searchStoreName, $options: 'i' },
+        ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
         // search buyer name
-        nickname: { $regex: searchBuyer, $options: 'i' },
+        ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
         // search deposit name
-        "buyer.depositName": { $regex: searchDepositName, $options: 'i' },
+        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
 
         // search store bank account number
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         // filter by fromDate and toDate
         /*
@@ -2348,7 +2348,7 @@ export async function getBuyOrders(
 
     const totalCount = await collection.countDocuments(
       {
-        agentcode: { $regex: agentcode, $options: 'i' },
+        ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
         storecode: storecode || { $ne: null },
@@ -2360,12 +2360,12 @@ export async function getBuyOrders(
         //privateSale: { $ne: true },
         privateSale: privateSale || { $ne: true },
 
-        "store.storeName": { $regex: searchStoreName, $options: 'i' },
+        ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        "buyer.depositName": { $regex: searchDepositName, $options: 'i' },
+        ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
+        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
 
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         // filter by fromDate and toDate
         
@@ -2441,7 +2441,7 @@ export async function getBuyOrdersGroupByStorecodeDaily(
       $match: {
         
        // if storecode is not empty, then match storecode
-        storecode: storecode ? { $regex: storecode, $options: 'i' } : { $ne: null },
+        storecode: storecode ? { $regex: String(storecode), $options: 'i' } : { $ne: null },
 
 
         status: 'paymentConfirmed',
@@ -6490,9 +6490,6 @@ export async function getCollectOrdersForSeller(
 
 
 
-
-
-
 export async function getCollectOrdersForUser(
 
   {
@@ -6504,6 +6501,8 @@ export async function getCollectOrdersForUser(
 
     fromDate,
     toDate,
+
+    searchWithdrawDepositName,
   }: {
     storecode: string;
     limit: number;
@@ -6513,6 +6512,8 @@ export async function getCollectOrdersForUser(
 
     fromDate?: string;
     toDate?: string;
+
+    searchWithdrawDepositName?: string;
   }
 
 ): Promise<ResultProps> {
@@ -6561,6 +6562,43 @@ export async function getCollectOrdersForUser(
 
         createdAt: { $gte: fromDateValue, $lt: toDateValue },
 
+        // if store.bankInfo.accountHolder is exist, and searchWithdrawDepositName is not empty, then search by store.bankInfo.accountHolder
+        // or buyer.depositName is exist, and searchWithdrawDepositName is not empty, then search by buyer.depositName
+
+        /*
+        $or: [
+          { 'store.bankInfo.accountHolder': { $regex: searchWithdrawDepositName, $options: 'i' } },
+          { 'buyer.depositName': { $regex: searchWithdrawDepositName, $options: 'i' } },
+        ], 
+        */
+       /*
+        errorLabelSet: Set(0) {},
+        errorResponse: {
+          ok: 0,
+          errmsg: '$regex has to be a string',
+          code: 2,
+          codeName: 'BadValue',
+          '$clusterTime': {
+            clusterTime: new Timestamp({ t: 1754661900, i: 1 }),
+            signature: [Object]
+          },
+          operationTime: new Timestamp({ t: 1754661900, i: 1 })
+        },
+        ok: 0,
+        code: 2,
+        codeName: 'BadValue',
+        '$clusterTime': {
+          clusterTime: new Timestamp({ t: 1754661900, i: 1 }),
+          signature: {
+            hash: Binary.createFromBase64('m44on9ySijyLEn0GO4Rg4B65sTQ=', 0),
+            keyId: new Long('7511921603412754437')
+          }
+        },
+        operationTime: new Timestamp({ t: 1754661900, i: 1 })
+        */
+
+
+
       },
       
       //{ projection: { _id: 0, emailVerified: 0 } }
@@ -6575,7 +6613,19 @@ export async function getCollectOrdersForUser(
         storecode: storecode,
         privateSale: true,
 
+        // if store.bankInfo.accountHolder is exist, and searchWithdrawDepositName is not empty, then search by store.bankInfo.accountHolder
+        // or buyer.depositName is exist, and searchWithdrawDepositName is not empty, then search by buyer.depositName
+        /*
+        $or: [
+          { 'store.bankInfo.accountHolder': { $regex: searchWithdrawDepositName, $options: 'i' } },
+          { 'buyer.depositName': { $regex: searchWithdrawDepositName, $options: 'i' } },
+        ],
+        */
+
+
         createdAt: { $gte: fromDateValue, $lt: toDateValue },
+
+
       }
     );
 
