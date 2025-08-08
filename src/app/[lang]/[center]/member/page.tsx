@@ -3020,7 +3020,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      `<script src="${paymentUrl}/${params.lang}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}">결제하기</script>`
+                                      `<script src="${paymentUrl}/${params.lang}/${clientId}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}">결제하기</script>`
                                     );
                                     toast.success('회원 결제페이지 스크립트가 복사되었습니다.');
                                   }}
