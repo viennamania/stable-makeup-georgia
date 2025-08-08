@@ -7469,7 +7469,7 @@ export async function getEscrowBalanceByStorecode(
   } else {
 
     // get sum of settlement.feeAmount + settlement.dealerAmount from buyorders where storecode is storecode
-    // where settlementUpdatedAt is greater than  latestEscrow[0].date
+    // where settlement.createdAt is greater than  latestEscrow[0].date
 
 
     // latestEscrow[0].date is in 'YYYY-MM-DD' format and korean timezone
@@ -7486,12 +7486,13 @@ export async function getEscrowBalanceByStorecode(
 
     console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
     // 2025-07-28T15:00:00.000Z
+    // getEscrowBalanceByStorecode latestEscrowDatePlusOne: 2025-08-08T15:00:00.000Z
 
     const totalSettlement = await buyordersCollection.aggregate([
       {
         $match: {
           storecode: storecode,
-          settlementUpdatedAt: { $gt: latestEscrowDatePlusOne },
+          'settlement.createdAt': { $gt: latestEscrowDatePlusOne },
           settlement: { $exists: true },
         },
       },
