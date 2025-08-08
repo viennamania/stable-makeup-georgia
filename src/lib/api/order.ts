@@ -7004,7 +7004,7 @@ export async function depositEscrow(
 
   // get store.escrowAmountUSDT from storecode
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
   const store = await collection.findOne<any>(
     { storecode: storecode },
     { projection: { escrowAmountUSDT: 1 } }
