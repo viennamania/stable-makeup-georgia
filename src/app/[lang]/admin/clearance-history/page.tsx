@@ -3557,8 +3557,6 @@ const fetchBuyOrders = async () => {
 
 
 
-
-
                                 {item.status === 'completed' && (
                                   <div className="text-sm text-green-500">
                                     {Completed_at}
