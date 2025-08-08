@@ -16,7 +16,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
+import {
+  clientId,
+  client
+} from "../../../client";
 
 
 
@@ -5006,7 +5009,7 @@ const fetchBuyOrders = async () => {
 
                                 {/* new window */}
                                 <a
-                                  href={`${paymentUrl}/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+                                  href={`${paymentUrl}/ko/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-sm text-blue-600 font-semibold hover:underline"
@@ -5087,7 +5090,7 @@ const fetchBuyOrders = async () => {
 
                                 {/* new window */}
                                 <a
-                                  href={`${paymentUrl}/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+                                  href={`${paymentUrl}/ko/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-sm text-blue-600 font-semibold hover:underline"
@@ -5149,7 +5152,7 @@ const fetchBuyOrders = async () => {
 
                                   {/* new window */}
                                   <a
-                                    href={`${paymentUrl}/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+                                    href={`${paymentUrl}/ko/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-sm text-blue-600 font-semibold hover:underline"
@@ -5218,7 +5221,7 @@ const fetchBuyOrders = async () => {
                                 </button>
                                 {/* new window */}
                                 <a
-                                  href={`${paymentUrl}/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+                                  href={`${paymentUrl}/ko/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-sm text-blue-600 font-semibold hover:underline"
@@ -7513,7 +7516,7 @@ const UserPaymentPage = (
       
       {/* iframe */}
       <iframe
-        src={`${paymentUrl}/ko/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
+        src={`${paymentUrl}/ko/${clientId}/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
 
         
           
