@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
 
     fromDate,
     toDate,
+
+    searchWithdrawDepositName,
   } = body;
 
 
@@ -32,6 +34,8 @@ export async function POST(request: NextRequest) {
 
     fromDate,
     toDate,
+
+    searchWithdrawDepositName,
   });
 
  

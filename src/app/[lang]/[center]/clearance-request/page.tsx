@@ -997,6 +997,9 @@ export default function Index({ params }: any) {
                     walletAddress: address,
                     searchMyOrders: searchMyOrders,
 
+                    fromDate: searchFromDate,
+                    toDate: searchToDate,
+                    searchWithdrawDepositName: searchWithdrawDepositName,
                   }
                 ),
             })
@@ -1109,6 +1112,10 @@ export default function Index({ params }: any) {
               page: Number(page),
               walletAddress: address,
               searchMyOrders: searchMyOrders,
+
+              fromDate: searchFromDate,
+              toDate: searchToDate,
+              searchWithdrawDepositName: searchWithdrawDepositName,
             }
           )
         }).then(async (response) => {
@@ -1371,6 +1378,10 @@ export default function Index({ params }: any) {
                     page: Number(page),
                     walletAddress: address,
                     searchMyOrders: searchMyOrders,
+
+                    fromDate: searchFromDate,
+                    toDate: searchToDate,
+                    searchWithdrawDepositName: searchWithdrawDepositName,
                   }
                 ),
               })
@@ -1475,6 +1486,10 @@ export default function Index({ params }: any) {
                   page: Number(page),
                   walletAddress: address,
                   searchMyOrders: searchMyOrders,
+
+                  fromDate: searchFromDate,
+                  toDate: searchToDate,
+                  searchWithdrawDepositName: searchWithdrawDepositName,
                 }
               ),
             })
@@ -1695,6 +1710,10 @@ export default function Index({ params }: any) {
                 page: Number(page),
                 walletAddress: address,
                 searchMyOrders: searchMyOrders,
+
+                fromDate: searchFromDate,
+                toDate: searchToDate,
+                searchWithdrawDepositName: searchWithdrawDepositName,
               }
             ),
           })
@@ -1801,6 +1820,10 @@ export default function Index({ params }: any) {
                     page: Number(page),
                     walletAddress: address,
                     searchMyOrders: searchMyOrders,
+
+                    fromDate: searchFromDate,
+                    toDate: searchToDate,
+                    searchWithdrawDepositName: searchWithdrawDepositName,
                   }
                 ),
               })
@@ -1965,6 +1988,10 @@ export default function Index({ params }: any) {
               page: Number(page),
               walletAddress: address,
               searchMyOrders: searchMyOrders,
+
+              fromDate: searchFromDate,
+              toDate: searchToDate,
+              searchWithdrawDepositName: searchWithdrawDepositName,
             }
           ),
         })
@@ -2191,6 +2218,7 @@ export default function Index({ params }: any) {
     params.center,
     searchFromDate,
     searchToDate,
+    searchWithdrawDepositName,
 ]);
 
 
@@ -2724,6 +2752,8 @@ const [tradeSummary, setTradeSummary] = useState({
 
               fromDate: searchFromDate,
               toDate: searchToDate,
+
+              searchWithdrawDepositName: searchWithdrawDepositName,
             }
 
         ),
@@ -4306,7 +4336,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
                 {/* search depositName */}
-                {/*
+                
                 <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
 
                   <div className="flex flex-row items-center gap-2">
@@ -4314,11 +4344,11 @@ const [tradeSummary, setTradeSummary] = useState({
                       type="text"
                       value={searchWithdrawDepositName}
                       onChange={(e) => setSearchWithdrawDepositName(e.target.value)}
-                      placeholder="출금자명"
+                      placeholder="입금자명"
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     />
                   </div>
-
+                  {/*
                   <div className="
                     w-28  
                     flex flex-row items-center gap-2">
@@ -4351,9 +4381,10 @@ const [tradeSummary, setTradeSummary] = useState({
 
                     </button>
                   </div>
+                  */}
 
                 </div>
-                */}
+                
 
 
               </div>

@@ -69,7 +69,9 @@ export interface UserProps {
   totalPaymentConfirmedKrwAmount: number,
   totalPaymentConfirmedUsdtAmount: number,
 
-  escrowWallet: any
+  escrowWallet: any,
+
+  latestBuyOrder: any,
 }
 
 export interface ResultProps {
@@ -1617,7 +1619,10 @@ export async function insertBuyOrder(data: any) {
 
   const collection = client.db('georgia').collection('buyorders');
 
- 
+
+
+
+
   const result = await collection.insertOne(
 
     {
@@ -6521,6 +6526,10 @@ export async function getCollectOrdersForUser(
   console.log('getCollectOrdersForUser fromDate: ' + fromDate);
   console.log('getCollectOrdersForUser toDate: ' + toDate);
 
+  console.log('searchWithdrawDepositName: ' + searchWithdrawDepositName);
+
+
+
   //const fromDateValue = fromDate ? fromDate + 'T00:00:00Z' : '1970-01-01T00:00:00Z';
   // fromDate is korean date
   // then convert to UTC date
@@ -6597,6 +6606,14 @@ export async function getCollectOrdersForUser(
         operationTime: new Timestamp({ t: 1754661900, i: 1 })
         */
 
+
+        // check if store.bankInfo.accountHolder is exist and where searchWithdrawDepositName is store.bankInfo.accountHolder
+        ...(searchWithdrawDepositName && searchWithdrawDepositName.trim() !== '' ? {
+          $or: [
+            { 'store.bankInfo.accountHolder': { $regex: searchWithdrawDepositName, $options: 'i' } },
+            { 'buyer.depositName': { $regex: searchWithdrawDepositName, $options: 'i' } },
+          ],
+        } : {}),
 
 
       },
@@ -7301,7 +7318,7 @@ export async function getEscrowBalanceByStorecode(
     const latestEscrowDatePlusOne = 
       new Date(new Date(latestEscrowDate).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
-    console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
+    //console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
     // 2025-07-28T15:00:00.000Z
 
     const totalSettlement = await buyordersCollection.aggregate([
@@ -7333,8 +7350,8 @@ export async function getEscrowBalanceByStorecode(
       const totalFeeAmount = totalSettlement[0].totalFeeAmount || 0;
       const totalAgentFeeAmount = totalSettlement[0].totalAgentFeeAmount || 0;
 
-      console.log('getEscrowBalanceByStorecode totalFeeAmount: ' + totalFeeAmount);
-      console.log('getEscrowBalanceByStorecode totalAgentFeeAmount: ' + totalAgentFeeAmount);
+      //console.log('getEscrowBalanceByStorecode totalFeeAmount: ' + totalFeeAmount);
+      //console.log('getEscrowBalanceByStorecode totalAgentFeeAmount: ' + totalAgentFeeAmount);
 
       const todayMinusedEscrowAmount = totalFeeAmount + totalAgentFeeAmount;
       // calculate escrow balance

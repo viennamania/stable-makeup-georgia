@@ -2136,6 +2136,11 @@ export default function Index({ params }: any) {
     searchFromDate,
     searchToDate,
 
+    searchBuyer,
+    searchStoreBankAccountNumber,
+    searchDepositName,
+    
+
 ]);
 
 
@@ -3032,6 +3037,7 @@ const fetchBuyOrders = async () => {
 
 
               {/* 검색 버튼 */}
+              {/*
               <div className="
               w-32
               flex flex-row items-center gap-2">
@@ -3061,6 +3067,8 @@ const fetchBuyOrders = async () => {
 
                 </button>
               </div>
+              */}
+
             </div>
 
           </div>
