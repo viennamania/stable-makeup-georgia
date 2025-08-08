@@ -10,10 +10,12 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
+  const { storecode } = body;
 
-  const result = await getTotalNumberOfBuyOrders();
+  const result = await getTotalNumberOfBuyOrders({
+    storecode,
+  });
 
- 
   return NextResponse.json({
 
     result,

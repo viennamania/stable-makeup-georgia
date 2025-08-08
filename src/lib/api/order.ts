@@ -6815,24 +6815,50 @@ export async function updateBuyOrderSettlement(
 
 
 
+
 // getTotalNumberOfBuyOrders
-export async function getTotalNumberOfBuyOrders(): Promise<{ totalCount: number }> {
+export async function getTotalNumberOfBuyOrders(
+  {
+    storecode,
+  }: {
+    storecode: string;
+  }
+): Promise<{ totalCount: number; audioOnCount: number }> {
   const client = await clientPromise;
   const collection = client.db('georgia').collection('buyorders');
   // get total number of buy orders
   const totalCount = await collection.countDocuments(
     {
+      storecode: {
+        $regex: storecode || '', // if storecode is empty, it will match all
+        
+        $options: 'i',
+      },
       privateSale: { $ne: true },
       //status: 'paymentConfirmed',
       status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
     }
   );
 
+
+  // count of audioOn is true
+  const audioOnCount = await collection.countDocuments(
+    {
+      storecode: {
+        $regex: storecode || '', // if storecode is empty, it will match all
+        $options: 'i',
+      },
+      privateSale: { $ne: true },
+      status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
+      audioOn: true,
+    }
+  );
+
   return {
     totalCount: totalCount,
+    audioOnCount: audioOnCount,
   }
 }
-
 
 
 
@@ -6857,6 +6883,7 @@ export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: n
     totalCount: totalCount,
   }
 }
+
 
 
 
@@ -7035,7 +7062,7 @@ export async function withdrawEscrow(
 
   // get store.escrowAmountUSDT from storecode
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('stores');
+  const collection = client.db('georgia').collection('stores');
   const store = await collection.findOne<any>(
     { storecode: storecode },
     { projection: { escrowAmountUSDT: 1 } }

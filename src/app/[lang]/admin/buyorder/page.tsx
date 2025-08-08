@@ -3089,6 +3089,59 @@ const fetchBuyOrders = async () => {
 
 
 
+  // totalNumberOfClearanceOrders
+  const [loadingTotalNumberOfClearanceOrders, setLoadingTotalNumberOfClearanceOrders] = useState(false);
+  const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
+  useEffect(() => {
+    if (!address) {
+      setTotalNumberOfClearanceOrders(0);
+      return;
+    }
+
+    const fetchTotalClearanceOrders = async () => {
+      setLoadingTotalNumberOfClearanceOrders(true);
+      const response = await fetch('/api/order/getTotalNumberOfClearanceOrders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        }),
+      });
+      if (!response.ok) {
+        console.error('Failed to fetch total number of clearance orders');
+        return;
+      }
+      const data = await response.json();
+      //console.log('getTotalNumberOfClearanceOrders data', data);
+      setTotalNumberOfClearanceOrders(data.result.totalCount);
+
+      setLoadingTotalNumberOfClearanceOrders(false);
+    };
+
+    fetchTotalClearanceOrders();
+
+    const interval = setInterval(() => {
+      fetchTotalClearanceOrders();
+    }, 5000);
+    return () => clearInterval(interval);
+
+  }, [address]);
+
+  useEffect(() => {
+    if (totalNumberOfClearanceOrders > 0 && loadingTotalNumberOfClearanceOrders === false) {
+      const audio = new Audio('/notification.wav');
+      audio.play();
+    }
+  }, [totalNumberOfClearanceOrders, loadingTotalNumberOfClearanceOrders]);
+
+
+
+
+
+
+
+
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
@@ -3268,30 +3321,31 @@ const fetchBuyOrders = async () => {
 
 
           <div className="w-full flex flex-row items-center justify-end gap-2">
-              
-
-            {loadingTotalNumberOfBuyOrders && (
-              <Image
-                src="/loading.png"
-                alt="Loading"
-                width={20}
-                height={20}
-                className="w-6 h-6 animate-spin"
-              />
-            )}
 
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
             p-2 rounded-lg shadow-md
             backdrop-blur-md
             ">
-              <Image
-                src="/icon-buyorder.png"
-                alt="Buy Order"
-                width={35}
-                height={35}
-                className="w-6 h-6"
-              />
+              {loadingTotalNumberOfBuyOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-buyorder.png"
+                  alt="Buy Order"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+
               <p className="text-lg text-red-500 font-semibold">
                 {
                 totalNumberOfBuyOrders
@@ -3308,20 +3362,67 @@ const fetchBuyOrders = async () => {
                     className="w-15 h-15 object-cover"
                     
                   />
+                </div>
+              )}
+            </div>
+
+
+            {/* Clearance Orders */}
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+
+              {loadingTotalNumberOfClearanceOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              <p className="text-lg text-yellow-500 font-semibold">
+                {
+                totalNumberOfClearanceOrders
+                } 건
+              </p>
+
+              {totalNumberOfClearanceOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/buyorder');
+                      router.push('/' + params.lang + '/admin/clearance-history');
                     }}
                     className="flex items-center justify-center gap-2
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
                     <span className="text-sm">
-                      구매주문관리
+                      청산내역관리
                     </span>
                   </button>
                 </div>
               )}
             </div>
+
         
           </div>
 
