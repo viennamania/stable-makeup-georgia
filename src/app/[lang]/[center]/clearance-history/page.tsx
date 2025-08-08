@@ -2095,50 +2095,11 @@ export default function Index({ params }: any) {
 
       const data = await response.json();
 
-      //console.log('data', data);
-
-
-      // if data.result is different from buyOrders
-      // check neweset order is different from buyOrders
-      // then toasts message
-      //console.log('data.result.orders[0]', data.result.orders?.[0]);
-      //console.log('buyOrders[0]', buyOrders);
-
-
-      //console.log('buyOrders[0]', buyOrders?.[0]);
-
-      if (data.result.orders?.[0]?._id !== latestBuyOrder?._id) {
-
-        setLatestBuyOrder(data.result.orders?.[0] || null);
-
-   
-        
-        //toast.success(Newest_order_has_been_arrived);
-        toast.success('새로운 주문이 도착했습니다');
-
-
-
-
-        // <audio src="/racing.mp3" typeof="audio/mpeg" autoPlay={soundStatus} muted={!soundStatus} />
-        // audio play
-
-        //setSoundStatus(true);
-
-        // audio ding play
-
-        playSong();
-
-        // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
-
-
-      }
 
       setBuyOrders(data.result.orders);
 
       setTotalCount(data.result.totalCount);
       
-
-
     }
 
 
