@@ -15,10 +15,7 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import {
-  clientId,
-  client
-} from "../../../client";
+import { client } from "../../../client";
 
 
 
@@ -620,84 +617,6 @@ export default function Index({ params }: any) {
 
 
 
-  // get escrow wallet address and balance
-  
-  const [escrowBalance, setEscrowBalance] = useState(0);
-  const [escrowNativeBalance, setEscrowNativeBalance] = useState(0);
-
-  
-  useEffect(() => {
-
-    const getEscrowBalance = async () => {
-
-      if (!address) {
-        setEscrowBalance(0);
-        return;
-      }
-
-      if (!escrowWalletAddress || escrowWalletAddress === '') return;
-
-
-      
-      const result = await balanceOf({
-        contract,
-        address: escrowWalletAddress,
-      });
-
-      //console.log('escrowWalletAddress balance', result);
-
-  
-      setEscrowBalance( Number(result) / 10 ** 6 );
-          
-
-
-
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: params.center,
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-
-        ///console.log('getBalanceByWalletAddress data', data);
-
-
-        setEscrowNativeBalance(data.result?.displayValue);
-
-      });
-      
-
-
-
-    };
-
-    getEscrowBalance();
-
-    const interval = setInterval(() => {
-      getEscrowBalance();
-    } , 1000);
-
-    return () => clearInterval(interval);
-
-  } , [address, escrowWalletAddress, contract, params.center]);
-  
-
-  //console.log('escrowBalance', escrowBalance);
-
-
-
-
-
-
-
-  
 
 
   // get User by wallet address
@@ -1454,7 +1373,7 @@ export default function Index({ params }: any) {
     
     console.log('getBalanceOfWalletAddress', walletAddress, 'balance', balance);
 
-    toast.success(`잔액이 업데이트되었습니다. 잔액: ${(Number(balance) / 10 ** 6).toFixed(2)} USDT`);
+    toast.success(`잔액이 업데이트되었습니다. 잔액: ${(Number(balance) / 10 ** 6).toFixed(3)} USDT`);
 
     /*
     setAllUsers((prev) => {
@@ -1556,6 +1475,64 @@ export default function Index({ params }: any) {
 
 
  
+
+
+
+
+  const [escrowBalance, setEscrowBalance] = useState(0);
+  const [todayMinusedEscrowAmount, setTodayMinusedEscrowAmount] = useState(0);
+
+  useEffect(() => {
+
+    const fetchEscrowBalance = async () => {
+      if (!params.center) {
+        return;
+      }
+
+      const response = await fetch('/api/store/getEscrowBalance', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            {
+              storecode: params.center,
+            }
+        ),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+
+
+      const data = await response.json();
+
+      setEscrowBalance(data.result.escrowBalance);
+      setTodayMinusedEscrowAmount(data.result.todayMinusedEscrowAmount);
+
+    }
+
+
+    fetchEscrowBalance();
+
+    
+    
+    const interval = setInterval(() => {
+
+      fetchEscrowBalance();
+
+    }, 5000);
+
+    return () => clearInterval(interval);
+
+  } , [
+    params.center,
+  ]);
+
+
+
 
 
 
@@ -2012,40 +1989,14 @@ export default function Index({ params }: any) {
                       alt="Store"
                       width={35}
                       height={35}
-                      className="rounded-lg w-5 h-5"
+                      className="rounded-lg w-5 h-5 object-cover"
                   />
                   <span className="text-sm text-zinc-50">
                     {
                       store && store?.storeName + " (" + store?.storecode + ")"
                     }
                   </span>
-                  {address === storeAdminWalletAddress && (
-                    <div className="flex flex-row gap-2 items-center">
-                      <Image
-                        src="/icon-manager.png"
-                        alt="Store Admin"
-                        width={20}
-                        height={20}
-                      />
-                      <span className="text-sm text-zinc-50">
-                        가맹점 관리자
-                      </span>
-                    </div>
-                  )}
-                  {isAdmin && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                        src="/icon-admin.png"
-                        alt="Admin"
-                        width={20}
-                        height={20}
-                        className="rounded-lg w-5 h-5"
-                      />
-                      <span className="text-sm text-yellow-500">
-                        전체 관리자
-                      </span>
-                    </div>
-                  )}
+
                 </div>
 
               </button>
@@ -2100,48 +2051,36 @@ export default function Index({ params }: any) {
                 {address && !loadingUser && (
                     <div className="w-full flex flex-row items-center justify-end gap-2">
 
-                      <div className="hidden flex-row items-center justify-center gap-2">
-
-                          <button
-                              className="text-lg text-zinc-600 underline"
-                              onClick={() => {
-                                  navigator.clipboard.writeText(address);
-                                  toast.success(Copied_Wallet_Address);
-                              } }
-                          >
-                              {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                          </button>
-                          
-                          <Image
-                              src="/icon-shield.png"
-                              alt="Wallet"
-                              width={100}
-                              height={100}
-                              className="w-6 h-6"
-                          />
-
-                      </div>
-
-                      <div className="hidden flex-row items-center justify-end  gap-2">
-                          <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                              {Number(balance).toFixed(2)}
-                          </span>
-                          {' '}
-                          <span className="text-sm">USDT</span>
-                      </div>
-
-
                       <button
                         onClick={() => {
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
                         }}
                         className="
-                        w-32 h-10 items-center justify-center
-                        flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                        w-40
+                        items-center justify-center
+                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                       >
-                        {user?.nickname || "프로필"}
-                      </button>
+                        <div className="flex flex-col itmens-center justify-center gap-2">
+                          <span className="text-sm text-zinc-50">
+                            {user?.nickname || "프로필"}
+                          </span>
+                          {isAdmin && (
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <Image
+                                src="/icon-admin.png"
+                                alt="Admin"
+                                width={20}
+                                height={20}
+                                className="rounded-lg w-5 h-5"
+                              />
+                              <span className="text-sm text-yellow-500">
+                                가맹점 관리자
+                              </span>
+                            </div>
+                          )}
 
+                        </div>
+                      </button>
 
                       {/* logout button */}
                       <button
@@ -2212,18 +2151,105 @@ export default function Index({ params }: any) {
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-              {/* 가맹점 보유금 */}
+
+                {/* 가맹점 보유량 */}
+                <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+                bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
+
+                <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
+                  <div className="flex flex-row gap-2 items-center">
+                    <div className="flex flex-row gap-2 items-center">
+                      <Image
+                        src="/icon-escrow.png"
+                        alt="Escrow"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg font-semibold text-zinc-500">
+                        현재 보유량
+                      </span>
+                    </div>
+
+                    <div className="
+                      w-32
+                      flex flex-row gap-2 items-center justify-between
+                    ">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg text-green-600 font-semibold"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                          escrowBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 오늘 수수료 차감량 */}
+                  <div className="flex flex-row gap-2 items-center">
+                    <span className="text-sm text-zinc-500 font-semibold">
+                      오늘 수수료 차감량
+                    </span>
+                    <div className="
+                      w-32
+                      flex flex-row gap-2 items-center justify-between
+                    ">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg text-red-600 font-semibold"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                          todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0 ?
+                          todayMinusedEscrowAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') :
+                          '0.000'
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+
+
+                {/* 보유량 내역 */}
+                <button
+                  onClick={() => {
+                    router.push('/' + params.lang + '/' + params.center + '/escrow-history');
+                  }}
+                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80
+                  flex items-center justify-center gap-2
+                  border border-zinc-300 hover:border-[#3167b4]"
+                >
+                  보유량 내역
+                </button>
+
+              </div>
+
+
+              {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
-                    src="/icon-escrow.png"
-                    alt="Escrow"
+                    src="/icon-trade.png"
+                    alt="Trade"
                     width={20}
                     height={20}
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 보유금
+                    가맹점 거래
                   </span>
                 </div>
 
@@ -2239,16 +2265,8 @@ export default function Index({ params }: any) {
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
-                      //////(item.totalUsdtAmountClearanceBalance ? item.totalUsdtAmountClearanceBalance : 0)?.toLocaleString('us-US')
-                    
-
-                      //Number(item?.totalSettlementAmount - item?.totalUsdtAmountClearance || 0)
-                      // if minus is negative, show 0
-                      Number(store?.totalUsdtAmountClearance - store?.totalSettlementAmount || 0)
-                      < 0 ? 0 :
-                      Number(store?.totalUsdtAmountClearance - store?.totalSettlementAmount || 0)
-                      .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-
+                      Number(store?.totalUsdtAmount ? store?.totalUsdtAmount : 0)
+                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     }
                   </span>
                 </div>
@@ -2258,16 +2276,8 @@ export default function Index({ params }: any) {
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
-                      //Number(item.totalKrwAmountClearanceBalance ? item.totalKrwAmountClearanceBalance : 0)
-                      //  ?.toLocaleString('ko-KR')
-
-                      //Number(item?.totalSettlementAmountKRW - item?.totalKrwAmountClearance || 0)
-                      // if minus is negative, show 0
-                      Number(store?.totalKrwAmountClearance - store?.totalSettlementAmountKRW || 0) < 0 ? 0 :
-                      Number(store?.totalKrwAmountClearance - store?.totalSettlementAmountKRW || 0)
+                      Number(store?.totalKrwAmount ? store?.totalKrwAmount : 0)
                       .toLocaleString('ko-KR')
-
-
                     }
                   </span>
                   <span className="text-sm text-zinc-500">
@@ -2275,6 +2285,9 @@ export default function Index({ params }: any) {
                   </span>
                 </div>
               </div>
+
+
+
 
               {/* 가맹점 정산금 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
@@ -2287,7 +2300,7 @@ export default function Index({ params }: any) {
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 정산금
+                    가맹점 정산
                   </span>
                 </div>
 
@@ -2304,7 +2317,7 @@ export default function Index({ params }: any) {
                   >
                     {
                       Number(store?.totalSettlementAmount ? store?.totalSettlementAmount : 0)
-                      .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     }
                   </span>
                 </div>
@@ -2336,7 +2349,7 @@ export default function Index({ params }: any) {
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 판매금
+                    가맹점 판매
                   </span>
                 </div>
 
@@ -2353,7 +2366,7 @@ export default function Index({ params }: any) {
                   >
                     {
                       Number(store?.totalUsdtAmountClearance || 0)
-                      .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     }
                   </span>
                 </div>
@@ -2372,7 +2385,7 @@ export default function Index({ params }: any) {
                   </span>
                 </div>
 
-               </div> 
+                </div> 
 
             </div>
 
@@ -2440,7 +2453,16 @@ export default function Index({ params }: any) {
                       출금(회원)
                   </button>
 
-
+                  <button
+                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                      통계(일별)
+                  </button>
 
 
             </div>
@@ -2486,19 +2508,19 @@ export default function Index({ params }: any) {
                 <div className="flex flex-row items-center justify-start gap-2">
                   <button
                     onClick={() => {
-                      window.open(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`, '_blank');
+                      window.open(`${paymentUrl}/${params.lang}/${store?.storecode}/paymaster`, '_blank');
                     }}
                     className="text-sm text-zinc-500 underline"
                   >
-                    {paymentUrl + '/' + params.lang + '/' + clientId + '/' + store?.storecode + '/paymaster'}
+                    {paymentUrl + '/' + params.lang + '/' + store?.storecode + '/paymaster'}
                   </button>
 
                   {/* 복사 버튼 */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/center`);
+                      navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${store?.storecode}/center`);
                       toast.success('가맹점 홈페이지 링크가 복사되었습니다.');
-                    }}
+                    } }
                     className="bg-[#3167b4] text-sm text-[#f3f4f6] px-2 py-1 rounded-lg hover:bg-[#3167b4]/80"
                   >
                     복사
@@ -2507,7 +2529,6 @@ export default function Index({ params }: any) {
 
 
             </div>
-
 
 
 
@@ -2641,9 +2662,6 @@ export default function Index({ params }: any) {
                       <option value="농협" selected={userBankName === "농협"}>
                         농협
                       </option>
-                      <option value="신협" selected={userBankName === "신협"}>
-                        신협
-                      </option>
                       <option value="새마을금고" selected={userBankName === "새마을금고"}>
                         새마을금고
                       </option>
@@ -2682,6 +2700,9 @@ export default function Index({ params }: any) {
                       </option>
                       <option value="수협" selected={userBankName === "수협"}>
                         수협
+                      </option>
+                      <option value="신협" selected={userBankName === "신협"}>
+                        신협
                       </option>
                       <option value="씨티은행" selected={userBankName === "씨티은행"}>
                         씨티은행
@@ -2916,7 +2937,7 @@ export default function Index({ params }: any) {
                                 Number(item?.totalPaymentConfirmedUsdtAmount ?
                                   item?.totalPaymentConfirmedUsdtAmount
                                   : 0)
-                                  .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                  .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                 }
                                 </span>
                               </div>
@@ -2972,7 +2993,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
+                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/payment?'
                                       + 'storeUser=' + item.nickname
                                       + '&depositBankName='+ item?.buyer?.depositBankName
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
@@ -2996,7 +3017,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      `<script src="${paymentUrl}/${params.lang}/${clientId}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}">결제하기</script>`
+                                      `<script src="${paymentUrl}/${params.lang}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}">결제하기</script>`
                                     );
                                     toast.success('회원 결제페이지 스크립트가 복사되었습니다.');
                                   }}
@@ -3012,7 +3033,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     window.open(
-                                      paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
+                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/payment?'
                                       + 'storeUser=' + item.nickname
                                       + '&depositBankName=' + item?.buyer?.depositBankName
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
@@ -3100,7 +3121,7 @@ export default function Index({ params }: any) {
                                   style={{ fontFamily: 'monospace' }}
                                 >
                                   {usdtBalance[index] ?
-                                    usdtBalance[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00'}{' USDT'}
+                                    usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}{' USDT'}
                                 </span>
          
                               </div>
@@ -3120,7 +3141,7 @@ export default function Index({ params }: any) {
                                   //toast.success('잔액을 가져왔습니다.');
 
                                   // toast usdtBalance[index] is updated
-                                  //toast.success(`잔액을 가져왔습니다. 현재 잔액: ${usdtBalance[index] ? usdtBalance[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00'} USDT`);
+                                  //toast.success(`잔액을 가져왔습니다. 현재 잔액: ${usdtBalance[index] ? usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'} USDT`);
 
                                 }}
                                 className={`
@@ -3310,7 +3331,7 @@ const UserHomePage = (
       
       {/* iframe */}
       <iframe
-        src={`${paymentUrl}/ko/${clientId}/${selectedItem?.storecode}/payment?`
+        src={`${paymentUrl}/ko/${selectedItem?.storecode}/payment?`
           + 'storeUser=' + selectedItem?.nickname
           + '&depositBankName=' + selectedItem?.buyer?.depositBankName
           + '&depositBankAccountNumber=' + selectedItem?.buyer?.depositBankAccountNumber
@@ -3349,7 +3370,7 @@ const TradeDetail = (
 
     const [amount, setAmount] = useState(1000);
     const price = 91.17; // example price
-    const receiveAmount = (amount / price).toFixed(2);
+    const receiveAmount = (amount / price).toFixed(3);
     const commission = 0.01; // example commission
   
     return (

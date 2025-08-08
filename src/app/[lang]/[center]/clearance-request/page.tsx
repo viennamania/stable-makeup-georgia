@@ -77,6 +77,7 @@ import useSound from 'use-sound';
 
 
 import { useSearchParams } from 'next/navigation';
+import { it } from "node:test";
 
 
 
@@ -601,105 +602,6 @@ export default function Index({ params }: any) {
 
 
 
-  // get escrow wallet address and balance
-  
-  const [escrowBalance, setEscrowBalance] = useState(0);
-  const [escrowNativeBalance, setEscrowNativeBalance] = useState(0);
-
-  
-  useEffect(() => {
-
-    const getEscrowBalance = async () => {
-
-      if (!address) {
-        setEscrowBalance(0);
-        return;
-      }
-
-      if (!escrowWalletAddress || escrowWalletAddress === '') return;
-
-
-      
-      const result = await balanceOf({
-        contract,
-        address: escrowWalletAddress,
-      });
-
-      //console.log('escrowWalletAddress balance', result);
-
-  
-      setEscrowBalance( Number(result) / 10 ** 6 );
-            
-
-
-      /*
-      await fetch('/api/user/getUSDTBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: params.center,
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-        console.log('getUSDTBalanceByWalletAddress data.result.displayValue', data.result?.displayValue);
-
-        setEscrowBalance(data.result?.displayValue);
-
-      } );
-       */
-
-
-
-
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: params.center,
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-
-        ///console.log('getBalanceByWalletAddress data', data);
-
-
-        setEscrowNativeBalance(data.result?.displayValue);
-
-      });
-      
-
-
-
-    };
-
-    getEscrowBalance();
-
-    const interval = setInterval(() => {
-      getEscrowBalance();
-    } , 1000);
-
-    return () => clearInterval(interval);
-
-  } , [address, escrowWalletAddress, contract, params.center]);
-  
-
-  //console.log('escrowBalance', escrowBalance);
-
-
-
-
-
-
 
   
 
@@ -826,7 +728,7 @@ export default function Index({ params }: any) {
     setLoadingUser(false);
 
 
-  } , [address]);
+  } , [address, params.center]);
 
   
 
@@ -876,8 +778,15 @@ export default function Index({ params }: any) {
 
 
 
+
+
+  const fromDate = searchParams.get('fromDate') || '';
+  const toDate = searchParams.get('toDate') || '';
+
+
 // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState("");
+/*
+  const [searchFromDate, setSearchFromDate] = useState("");
   // set today's date in YYYY-MM-DD format
   // korean timezone
   useEffect(() => {
@@ -887,12 +796,22 @@ export default function Index({ params }: any) {
     today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
 
     const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchFormDate(formattedDate);
+    setSearchFromDate(formattedDate);
   }, []);
+  */
 
+  // get today's date in Korean timezone
+  const today = new Date();
+  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
 
+  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
 
+  const [searchFromDate, setSearchFromDate] = useState(fromDate || formattedDate);
+  useEffect(() => {
+    fromDate && setSearchFromDate(fromDate);
+  }, [fromDate]);
 
+  /*
   const [searchToDate, setSearchToDate] = useState("");
 
   // set today's date in YYYY-MM-DD format
@@ -903,6 +822,12 @@ export default function Index({ params }: any) {
     const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
     setSearchToDate(formattedDate);
   }, []);
+  */
+
+  const [searchToDate, setSearchToDate] = useState(toDate || formattedDate);
+  useEffect(() => {
+    toDate && setSearchToDate(toDate);
+  }, [toDate]);
 
 
 
@@ -1138,16 +1063,11 @@ export default function Index({ params }: any) {
     */
 
 
-
     const cancelTrade = async (orderId: string, index: number) => {
-
-
 
       if (cancellings[index]) {
         return;
       }
-
-
 
       setCancellings(
         cancellings.map((item, i) => i === index ? true : item)
@@ -1160,7 +1080,6 @@ export default function Index({ params }: any) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          lang: params.lang,
           storecode: params.center,
           orderId: orderId,
           walletAddress: address,
@@ -1371,7 +1290,7 @@ export default function Index({ params }: any) {
           /*
           const transactionResult = await waitForReceipt({
             client,
-            chain: arbitrum ,
+            arbitrum,
             maxBlocksWaitTime: 1,
             transactionHash: transactionHash,
           });
@@ -1804,29 +1723,40 @@ export default function Index({ params }: any) {
         // transfer my wallet to seller wallet address
 
         
-        const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
+        //const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
+        //const sellerWalletAddress = "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666"; // for test
+
+        //const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
+
+        const buyerWalletAddress = buyOrders[index].walletAddress;
+
+        //alert('sellerWalletAddress: ' + sellerWalletAddress);
+
+        console.log('buyerWalletAddress', buyerWalletAddress);
 
         const usdtAmount = buyOrders[index].usdtAmount;
 
         const transaction = transfer({
           contract,
-          to: sellerWalletAddress,
+          to: buyerWalletAddress,
           amount: usdtAmount,
         });
 
 
         try {
 
-          /*
+          
           const { transactionHash } = await sendTransaction({
             account: activeAccount as any,
             transaction,
           });
-          */
+          
+          /*
          const { transactionHash } = await sendAndConfirmTransaction({
             account: activeAccount as any,
             transaction,
           });
+          */
 
           console.log("transactionHash===", transactionHash);
 
@@ -1895,15 +1825,10 @@ export default function Index({ params }: any) {
 
         } catch (error) {
           console.error('Error:', error);
-          toast.error('결제확인이 실패했습니다.');
+          toast.error('결제확인이 실패했습니다.' + JSON.stringify(error));
         }
 
-
-
       }
-
-
-
 
 
 
@@ -1917,10 +1842,10 @@ export default function Index({ params }: any) {
       confirmingPayment.map((item, idx) => idx === index ? false : item)
     );
 
+    
     setConfirmPaymentCheck(
       confirmPaymentCheck.map((item, idx) => idx === index ? false : item)
     );
-  
 
   }
 
@@ -2143,7 +2068,7 @@ export default function Index({ params }: any) {
 
     const fetchBuyOrders = async () => {
 
-      //console.log('fetchBuyOrders===============>');
+      console.log('fetchBuyOrders===============>');
       //console.log("address=", address);
       //console.log("searchMyOrders=", searchMyOrders);
 
@@ -2210,43 +2135,6 @@ export default function Index({ params }: any) {
 
       const data = await response.json();
 
-      //console.log('data', data);
-
-
-      // if data.result is different from buyOrders
-      // check neweset order is different from buyOrders
-      // then toasts message
-      //console.log('data.result.orders[0]', data.result.orders?.[0]);
-      //console.log('buyOrders[0]', buyOrders);
-
-
-      //console.log('buyOrders[0]', buyOrders?.[0]);
-
-      if (data.result.orders?.[0]?._id !== latestBuyOrder?._id) {
-
-        setLatestBuyOrder(data.result.orders?.[0] || null);
-
-   
-        
-        //toast.success(Newest_order_has_been_arrived);
-        toast.success('새로운 주문이 도착했습니다');
-
-
-
-
-        // <audio src="/racing.mp3" typeof="audio/mpeg" autoPlay={soundStatus} muted={!soundStatus} />
-        // audio play
-
-        //setSoundStatus(true);
-
-        // audio ding play
-
-        playSong();
-
-        // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
-
-
-      }
 
       setBuyOrders(data.result.orders);
 
@@ -2264,22 +2152,14 @@ export default function Index({ params }: any) {
 
     fetchBuyOrders();
 
-    
-    
+
+    // interval to fetch latest buy order every 5 seconds
     const interval = setInterval(() => {
-
       fetchBuyOrders();
-
-
-    }, 3000);
-
-
+    }, 5000);
     return () => clearInterval(interval);
-    
-    
-    
-    
 
+    
 
   } , [
     limit,
@@ -2303,6 +2183,65 @@ export default function Index({ params }: any) {
     searchFromDate,
     searchToDate,
 ]);
+
+
+
+
+
+
+  const [escrowBalance, setEscrowBalance] = useState(0);
+  const [todayMinusedEscrowAmount, setTodayMinusedEscrowAmount] = useState(0);
+
+  useEffect(() => {
+
+    const fetchEscrowBalance = async () => {
+      if (!params.center) {
+        return;
+      }
+
+      const response = await fetch('/api/store/getEscrowBalance', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            {
+              storecode: params.center,
+            }
+        ),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+
+
+      const data = await response.json();
+
+      setEscrowBalance(data.result.escrowBalance);
+      setTodayMinusedEscrowAmount(data.result.todayMinusedEscrowAmount);
+
+    }
+
+
+    fetchEscrowBalance();
+
+    
+    
+    const interval = setInterval(() => {
+
+      fetchEscrowBalance();
+
+    }, 5000);
+
+    return () => clearInterval(interval);
+
+  } , [
+    params.center,
+  ]);
+
+
 
 
 
@@ -2380,6 +2319,10 @@ export default function Index({ params }: any) {
 
           setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
+          if (data.result?.adminWalletAddress === address) {
+            setIsAdmin(true);
+          }
+
           setSellerWalletAddress(data.result?.sellerWalletAddress || "");
 
         } else {
@@ -2407,13 +2350,6 @@ export default function Index({ params }: any) {
     }
 
     fetchData();
-
-    // interval to fetch store data every 10 seconds
-    const interval = setInterval(() => {
-      fetchData();
-    }
-    , 5000);
-    return () => clearInterval(interval);
 
   } , [params.center]);
 
@@ -2618,7 +2554,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
-
+  const [buyerWalletAddress, setBuyerWalletAddress] = useState('');
   const [buyerNickname, setBuyerNickname] = useState('');
   const [buyerDepositBankName, setBuyerDepositBankName] = useState('');
   const [buyerDepositBankAccountNumber, setBuyerDepositBankAccountNumber] = useState('');
@@ -2631,7 +2567,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
   const [usdtAmount, setUsdtAmount] = useState(0);
   const [krwAmount, setKrwAmount] = useState(0);
-  const [rate, setRate] = useState(1400);
+  const [rate, setRate] = useState(1380);
 
 
 
@@ -2663,7 +2599,7 @@ const [tradeSummary, setTradeSummary] = useState({
     let orderUsdtAmount = usdtAmount;
 
     if (checkInputKrwAmount) {
-      orderUsdtAmount = parseFloat(Number(krwAmount / rate).toFixed(2));
+      orderUsdtAmount = parseFloat(Number(krwAmount / rate).toFixed(3));
     }
     
 
@@ -2683,7 +2619,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
-        walletAddress: address,
+        walletAddress: buyerWalletAddress,
 
 
 
@@ -2714,7 +2650,8 @@ const [tradeSummary, setTradeSummary] = useState({
           nickname: buyerNickname,
           depositBankName: buyerDepositBankName,
           depositBankAccountNumber: buyerDepositBankAccountNumber,
-          depositName: buyerDepositName
+          depositName: buyerDepositName,
+          depositCompleted: false,
         },
 
         seller: {
@@ -2795,49 +2732,10 @@ const [tradeSummary, setTradeSummary] = useState({
 
       const data = await response.json();
 
-      //console.log('data', data);
-
-
-      // if data.result is different from buyOrders
-      // check neweset order is different from buyOrders
-      // then toasts message
-      //console.log('data.result.orders[0]', data.result.orders?.[0]);
-      //console.log('buyOrders[0]', buyOrders);
-
-
-      //console.log('buyOrders[0]', buyOrders?.[0]);
-
-      if (data.result.orders?.[0]?._id !== latestBuyOrder?._id) {
-
-        setLatestBuyOrder(data.result.orders?.[0] || null);
-
-   
-        
-        //toast.success(Newest_order_has_been_arrived);
-        toast.success('새로운 주문이 도착했습니다');
-
-
-
-
-        // <audio src="/racing.mp3" typeof="audio/mpeg" autoPlay={soundStatus} muted={!soundStatus} />
-        // audio play
-
-        //setSoundStatus(true);
-
-        // audio ding play
-
-        playSong();
-
-        // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
-
-
-      }
 
       setBuyOrders(data.result.orders);
 
       setTotalCount(data.result.totalCount);
-
-
 
 
 
@@ -3254,8 +3152,6 @@ const [tradeSummary, setTradeSummary] = useState({
         <div className="py-0 w-full">
 
        
-
-
           <div className={`w-full flex flex-col xl:flex-row items-center justify-between gap-2
             p-2 rounded-lg mb-4
             ${store?.backgroundColor ?
@@ -3284,33 +3180,7 @@ const [tradeSummary, setTradeSummary] = useState({
                       store && store?.storeName + " (" + store?.storecode + ")"
                     }
                   </span>
-                  {address === storeAdminWalletAddress && (
-                    <div className="flex flex-row gap-2 items-center">
-                      <Image
-                        src="/icon-manager.png"
-                        alt="Store Admin"
-                        width={20}
-                        height={20}
-                      />
-                      <span className="text-sm text-zinc-50">
-                        가맹점 관리자
-                      </span>
-                    </div>
-                  )}
-                  {isAdmin && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                        src="/icon-admin.png"
-                        alt="Admin"
-                        width={20}
-                        height={20}
-                        className="rounded-lg w-5 h-5"
-                      />
-                      <span className="text-sm text-yellow-500">
-                        전체 관리자
-                      </span>
-                    </div>
-                  )}
+
                 </div>
 
               </button>
@@ -3365,48 +3235,36 @@ const [tradeSummary, setTradeSummary] = useState({
                 {address && !loadingUser && (
                     <div className="w-full flex flex-row items-center justify-end gap-2">
 
-                      <div className="hidden flex-row items-center justify-center gap-2">
-
-                          <button
-                              className="text-lg text-zinc-600 underline"
-                              onClick={() => {
-                                  navigator.clipboard.writeText(address);
-                                  toast.success(Copied_Wallet_Address);
-                              } }
-                          >
-                              {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                          </button>
-                          
-                          <Image
-                              src="/icon-shield.png"
-                              alt="Wallet"
-                              width={100}
-                              height={100}
-                              className="w-6 h-6"
-                          />
-
-                      </div>
-
-                      <div className="hidden flex-row items-center justify-end  gap-2">
-                          <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                              {Number(balance).toFixed(2)}
-                          </span>
-                          {' '}
-                          <span className="text-sm">USDT</span>
-                      </div>
-
-
                       <button
                         onClick={() => {
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
                         }}
                         className="
-                        w-32 h-10 items-center justify-center
-                        flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                        w-40
+                        items-center justify-center
+                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                       >
-                        {user?.nickname || "프로필"}
-                      </button>
+                        <div className="flex flex-col itmens-center justify-center gap-2">
+                          <span className="text-sm text-zinc-50">
+                            {user?.nickname || "프로필"}
+                          </span>
+                          {isAdmin && (
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <Image
+                                src="/icon-admin.png"
+                                alt="Admin"
+                                width={20}
+                                height={20}
+                                className="rounded-lg w-5 h-5"
+                              />
+                              <span className="text-sm text-yellow-500">
+                                가맹점 관리자
+                              </span>
+                            </div>
+                          )}
 
+                        </div>
+                      </button>
 
                       {/* logout button */}
                       <button
@@ -3475,22 +3333,107 @@ const [tradeSummary, setTradeSummary] = useState({
             ></div>
 
 
-
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-              {/* 가맹점 보유금 */}
+                {/* 가맹점 보유량 */}
+                <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+                bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
+
+                <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
+                  <div className="flex flex-row gap-2 items-center">
+                    <div className="flex flex-row gap-2 items-center">
+                      <Image
+                        src="/icon-escrow.png"
+                        alt="Escrow"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg font-semibold text-zinc-500">
+                        현재 보유량
+                      </span>
+                    </div>
+
+                    <div className="
+                      w-32
+                      flex flex-row gap-2 items-center justify-between
+                    ">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg text-green-600 font-semibold"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                          escrowBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 오늘 수수료 차감량 */}
+                  <div className="flex flex-row gap-2 items-center">
+                    <span className="text-sm text-zinc-500 font-semibold">
+                      오늘 수수료 차감량
+                    </span>
+                    <div className="
+                      w-32
+                      flex flex-row gap-2 items-center justify-between
+                    ">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg text-red-600 font-semibold"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                          todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0 ?
+                          todayMinusedEscrowAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') :
+                          '0.000'
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+
+
+                {/* 보유량 내역 */}
+                <button
+                  onClick={() => {
+                    router.push('/' + params.lang + '/' + params.center + '/escrow-history');
+                  }}
+                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80
+                  flex items-center justify-center gap-2
+                  border border-zinc-300 hover:border-[#3167b4]"
+                >
+                  보유량 내역
+                </button>
+
+              </div>
+
+
+              {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
-                    src="/icon-escrow.png"
-                    alt="Escrow"
+                    src="/icon-trade.png"
+                    alt="Trade"
                     width={20}
                     height={20}
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 보유금
+                    가맹점 거래
                   </span>
                 </div>
 
@@ -3506,17 +3449,8 @@ const [tradeSummary, setTradeSummary] = useState({
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
-                      //////(item.totalUsdtAmountClearanceBalance ? item.totalUsdtAmountClearanceBalance : 0)?.toLocaleString('us-US')
-                    
-
-                      //Number(item?.totalSettlementAmount - item?.totalUsdtAmountClearance || 0)
-
-                      // if minus is negative, then return 0
-                      Number(store?.totalUsdtAmountClearance - store?.totalSettlementAmount || 0)
-                      < 0 ? 0 :
-                      Number(store?.totalUsdtAmountClearance - store?.totalSettlementAmount || 0)
-                      .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-
+                      Number(store?.totalUsdtAmount ? store?.totalUsdtAmount : 0)
+                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     }
                   </span>
                 </div>
@@ -3526,17 +3460,8 @@ const [tradeSummary, setTradeSummary] = useState({
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
-                      //Number(item.totalKrwAmountClearanceBalance ? item.totalKrwAmountClearanceBalance : 0)
-                      //  ?.toLocaleString('ko-KR')
-
-                      //Number(item?.totalSettlementAmountKRW - item?.totalKrwAmountClearance || 0)
-                      // if minus is negative, then return 0
-                      Number(store?.totalKrwAmountClearance - store?.totalSettlementAmountKRW || 0)
-                      < 0 ? 0 :
-                      Number(store?.totalKrwAmountClearance - store?.totalSettlementAmountKRW || 0)
+                      Number(store?.totalKrwAmount ? store?.totalKrwAmount : 0)
                       .toLocaleString('ko-KR')
-
-
                     }
                   </span>
                   <span className="text-sm text-zinc-500">
@@ -3544,6 +3469,9 @@ const [tradeSummary, setTradeSummary] = useState({
                   </span>
                 </div>
               </div>
+
+
+
 
               {/* 가맹점 정산금 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
@@ -3556,7 +3484,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 정산금
+                    가맹점 정산
                   </span>
                 </div>
 
@@ -3573,7 +3501,7 @@ const [tradeSummary, setTradeSummary] = useState({
                   >
                     {
                       Number(store?.totalSettlementAmount ? store?.totalSettlementAmount : 0)
-                      .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     }
                   </span>
                 </div>
@@ -3605,7 +3533,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 판매금
+                    가맹점 판매
                   </span>
                 </div>
 
@@ -3622,7 +3550,7 @@ const [tradeSummary, setTradeSummary] = useState({
                   >
                     {
                       Number(store?.totalUsdtAmountClearance || 0)
-                      .toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                     }
                   </span>
                 </div>
@@ -3641,9 +3569,10 @@ const [tradeSummary, setTradeSummary] = useState({
                   </span>
                 </div>
 
-               </div> 
+                </div> 
 
             </div>
+
 
 
 
@@ -3707,6 +3636,17 @@ const [tradeSummary, setTradeSummary] = useState({
                     출금(회원)
                   </div>
                 </div>
+
+                <button
+                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                    통계(일별)
+                </button>
 
 
             </div>
@@ -3886,7 +3826,7 @@ const [tradeSummary, setTradeSummary] = useState({
                               </span>
                               <span className="text-2xl xl:text-4xl font-semibold text-green-600">
                                   {
-                                    Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                    Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                   }
                               </span>
                               {' '}
@@ -4020,8 +3960,10 @@ const [tradeSummary, setTradeSummary] = useState({
                       allBuyer.map((buyer, index) => (
                         <div
                           key={index}
-                          className="flex flex-row items-center justify-between gap-2 p-2 hover:bg-zinc-100 cursor-pointer"
+                          className="flex flex-row items-center justify-between gap-2 p-2 hover:bg-zinc-100 cursor-pointer
+                          border-b border-zinc-200"
                           onClick={() => {
+                            setBuyerWalletAddress(buyer.walletAddress);
                             setBuyerNickname(buyer.nickname);
                             setBuyerDepositName(buyer.buyer.depositName);
                             setBuyerDepositBankName(buyer.buyer.depositBankName);
@@ -4033,6 +3975,18 @@ const [tradeSummary, setTradeSummary] = useState({
                           }}
                         >
                           <div className="flex flex-col">
+                            <div className="flex flex-row items-center gap-2">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Shield"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <span className="text-sm font-semibold text-zinc-800">
+                                {buyer.walletAddress.substring(0, 6) + '...' + buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
+                              </span>
+                            </div>
                             <span className="text-sm text-green-600">
                               {buyer.nickname}
                             </span>
@@ -4072,6 +4026,20 @@ const [tradeSummary, setTradeSummary] = useState({
                         <div className="flex flex-col gap-2 items-start">
 
                           {/* 선택된 회원 정보 */}
+                          {/* USDT 통장 주소 */}
+                          <div className="flex flex-row items-center gap-2">
+                            <Image
+                              src="/icon-shield.png"
+                              alt="Wallet"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            <span className="text-sm text-zinc-400">
+                              {buyerWalletAddress ? buyerWalletAddress.substring(0, 6) + '...' + buyerWalletAddress.substring(buyerWalletAddress.length - 4) : ''}
+                            </span>
+                          </div>
+
                           <div className="flex flex-row items-center gap-2">
                             <span className="text-lg font-semibold text-zinc-500">
                               {buyerNickname || '출금할 회원을 선택해주세요'}
@@ -4106,12 +4074,21 @@ const [tradeSummary, setTradeSummary] = useState({
                               </span>
 
                               <input 
+                                // disable mouse up down scroll
+                                //onWheel={(e) => e.preventDefault()}
+
+
+
+
                                 type="number"
                                 className="
                                   text-xl text-blue-500 font-bold
                                   w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 "
                                 placeholder={Price}
-                                value={krwAmount}
+                                value={
+                                  //Number(krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                  krwAmount
+                                }
                                 onChange={(e) => {
                                   // check number
                                   e.target.value = e.target.value.replace(/[^0-9.]/g, '');
@@ -4134,12 +4111,14 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                   parseFloat(e.target.value) > 100000000 ? setKrwAmount(1000) : setKrwAmount(parseFloat(e.target.value));
 
-                                  //setUsdtAmount(Number((krwAmount / rate).toFixed(2)));
+                                  //setUsdtAmount(Number((krwAmount / rate).toFixed(3)));
                                 
                                 
                                 } }
                               />
-
+                              <span className="text-xl text-zinc-400 font-bold">
+                                {krwAmount === 0 ? '0' : Number(krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
                               <span className="text-xl text-zinc-400 font-bold">
                                 원  
                               </span>
@@ -4157,7 +4136,7 @@ const [tradeSummary, setTradeSummary] = useState({
                               = {
                               krwAmount === 0 ? '0' :
                               
-                              (krwAmount / rate).toFixed(2) === 'NaN' ? '0' : (krwAmount / rate).toFixed(2)
+                              (krwAmount / rate).toFixed(3) === 'NaN' ? '0' : (krwAmount / rate).toFixed(3)
 
                               }{' '}USDT
                             </p>
@@ -4262,7 +4241,15 @@ const [tradeSummary, setTradeSummary] = useState({
                     <input
                       type="date"
                       value={searchFromDate}
-                      onChange={(e) => setSearchFormDate(e.target.value)}
+                      
+                      //onChange={(e) => setSearchFromDate(e.target.value)}
+                      // route to the date picker
+                      onChange={(e) => {
+                        router.push(
+                          '/' + params.lang + '/' + params.center + '/clearance-request?limit=' + limitValue + '&page=1' +
+                          '&fromDate=' + e.target.value + '&toDate=' + searchToDate
+                        );
+                      }}
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     />
                   </div>
@@ -4280,7 +4267,14 @@ const [tradeSummary, setTradeSummary] = useState({
                     <input
                       type="date"
                       value={searchToDate}
-                      onChange={(e) => setSearchToDate(e.target.value)}
+                      //onChange={(e) => setSearchToDate(e.target.value)}
+                      // route to the date picker
+                      onChange={(e) => {
+                        router.push(
+                          '/' + params.lang + '/' + params.center + '/clearance-request?limit=' + limitValue + '&page=1' +
+                          '&fromDate=' + searchFromDate + '&toDate=' + e.target.value
+                        );
+                      }}
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     />
                   </div>
@@ -4468,8 +4462,16 @@ const [tradeSummary, setTradeSummary] = useState({
                         }}
                       >
                         <tr>
-                          <th className="p-2">#{TID}</th>
-                          <th className="p-2">출금신청시간</th>
+                          <th className="p-2">
+                            <div className="flex flex-col items-center">
+                              <span className="text-sm">
+                                #{TID}
+                              </span>
+                              <span className="text-sm">
+                                신청시간
+                              </span>
+                            </div>
+                          </th>
 
                           <th className="p-2">{Buyer}</th>
 
@@ -4493,7 +4495,8 @@ const [tradeSummary, setTradeSummary] = useState({
 
                           <th className="p-2">{Seller} / {Status}</th>
                           <th className="p-2">거래취소</th>
-                          <th className="p-2">거래완료</th>
+                          <th className="p-2">USDT 전송</th>
+                          <th className="p-2">출금상태</th>
                         </tr>
                       </thead>
 
@@ -4515,67 +4518,86 @@ const [tradeSummary, setTradeSummary] = useState({
                           `}>
                           
 
-                            {/* monospace font for tradeId */}
-                            <td className="text-zinc-500
-                              text-sm font-semibold
-                              p-2"
-                              style={{ fontFamily: 'monospace' }}
-                            >
-                              
-                              {
-                                "#" + item.tradeId
-                              }
-                            </td>
-
-
                             <td className="p-2">
                               <div className="flex flex-col items-center gap-2">
+                                <span className="text-sm text-zinc-500">
+                                  #{item.tradeId}
+                                </span>
+                                <div className="flex flex-col items-center gap-2">
 
-                                {
-                                  new Date(item.createdAt).toLocaleDateString(params.lang, {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                  }) + ' ' +
-                                  new Date(item.createdAt).toLocaleTimeString(params.lang, {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                  })
-                                }
+                                  {
+                                    new Date(item.createdAt).toLocaleDateString(params.lang, {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                    }) + ' ' +
+                                    new Date(item.createdAt).toLocaleTimeString(params.lang, {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      second: '2-digit',
+                                    })
+                                  }
 
-                                <div className="text-sm text-zinc-500">
-                                  {params.lang === 'ko' ? (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }</p>
-                                  ) : (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }</p>
-                                  )}
+                                  <div className="text-sm text-zinc-500">
+                                    {params.lang === 'ko' ? (
+                                      <p>{
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                        ) :
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                        ) : (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                        )
+                                      }</p>
+                                    ) : (
+                                      <p>{
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                        ) :
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                        ) : (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                        )
+                                      }</p>
+                                    )}
+                                  </div>
                                 </div>
+
                               </div>
                             </td>
                             
                             <td className="p-2">
-                              <div className="flex flex-col items-center gap-2">
-
-                                <div className="flex flex-row gap-2 items-center justify-center">
+                              <div className="flex flex-row items-center gap-2">
+                                {/*
+                                <Image
+                                  src={item.avatar || "/profile-default.png"}
+                                  alt="Avatar"
+                                  width={20}
+                                  height={20}
+                                  priority={true} // Added priority property
+                                  className="rounded-full"
+                                  style={{
+                                      objectFit: 'cover',
+                                      width: '20px',
+                                      height: '20px',
+                                  }}
+                                />
+                                */}
+                                <div className="flex flex-col gap-2 items-center justify-center">
+                                  <div className="flex flex-row items-center gap-2">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-sm font-semibold text-zinc-800">
+                                      {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
+                                    </span>
+                                  </div>
 
                                   <div className="text-sm text-zinc-500">
                                     {
@@ -4595,15 +4617,6 @@ const [tradeSummary, setTradeSummary] = useState({
                                   </div>
 
                                 </div>
-
-                                {/* item.store.sellerWalletAddress */ }
-                                <div className="text-sm text-zinc-500">
-                                  {
-                                    item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
-                                  }
-                                </div>
-
-
                               </div>
                             </td>
 
@@ -4634,14 +4647,14 @@ const [tradeSummary, setTradeSummary] = useState({
                                   <span className="text-xl text-green-600 font-semibold"
                                     style={{ fontFamily: 'monospace' }}
                                   >
-                                    {item.usdtAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                    {item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                   </span>
                                 </div>
 
                                 <span className="text-sm text-zinc-500">
                                   {
                                     Number(item.rate)
-                                    //Number(item.krwAmount / item.usdtAmount).toFixed(2)
+                                    //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                                   }
                                 </span>
                               </div>
@@ -4731,7 +4744,7 @@ const [tradeSummary, setTradeSummary] = useState({
                               <div className="flex flex-row items-center gap-2 justify-center">
                                 {/* status */}
                                 {item.status === 'ordered' && (
-                                  <div className="text-sm text-yellow-500 font-semibold">
+                                  <div className="text-lg text-yellow-600 font-semibold">
                                     {Buy_Order_Opened}
                                   </div>
                                 )}
@@ -4760,16 +4773,14 @@ const [tradeSummary, setTradeSummary] = useState({
                                     
                                     <div className="text-sm text-zinc-500">
                                       {
-                                        item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                        //item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                        item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
                                       }
                                     </div>
-                                    
-                                    <div className="text-sm text-green-600">
+                                  
+                                    <div className="text-lg text-green-600 font-semibold">
                                       {/*Waiting_for_seller_to_deposit*/}
-
                                       결제요청
-
-
                                     </div>
 
 
@@ -4784,7 +4795,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                         {item.seller?.nickname}
                                       </span>
 
-                                      <div className="text-sm text-red-600">
+                                      <div className="text-lg text-red-600 font-semibold">
                                         {
                                           Cancelled_at
                                         }
@@ -4801,33 +4812,91 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                     <div className="text-sm text-zinc-500">
                                       {
-                                        item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                        ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                        item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
                                       }
                                     </div>
 
 
-                                    <span className="text-sm font-semibold text-yellow-500">
+                                    <span className="text-lg font-semibold text-yellow-600">
                                       {Completed}
                                     </span>
 
-                                    {/* noew window open */}
-                                    {/* polyscan explorer */}
-                                    <a
-                                      href={`https://arbiscan.io/tx/${item.transactionHash}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-blue-500 underline"
+                                    <button
+                                      className="text-sm text-blue-600 font-semibold
+                                        border border-blue-600 rounded-lg p-2
+                                        bg-blue-100
+                                        w-full text-center
+                                        hover:bg-blue-200
+                                        cursor-pointer
+                                        transition-all duration-200 ease-in-out
+                                        hover:scale-105
+                                        hover:shadow-lg
+                                        hover:shadow-blue-500/50
+                                      "
+                                      onClick={() => {
+                                        window.open(
+                                          `https://arbiscan.io/tx/${item.transactionHash}`,
+                                          '_blank'
+                                        );
+                                      }}
                                     >
-                                      폴리스캔에서 거래내역 보기
-                                    </a>
-                                      
+                                      <div className="flex flex-row gap-2 items-center justify-center">
+                                        <Image
+                                          src="/logo-arbitrum.png"
+                                          alt="Polygon"
+                                          width={20}
+                                          height={20}
+                                          className="w-5 h-5"
+                                        />
+                                        <span className="text-sm">
+                                          USDT 전송내역(가맹점)
+                                        </span>
+                                      </div>
+                                    </button>
 
+
+                                    {item?.settlement
+                                    && item?.settlement?.txid
+                                    && item?.settlement?.txid !== '0x'
+                                    && (
+                                      <button
+                                        className="text-sm text-blue-600 font-semibold
+                                          border border-blue-600 rounded-lg p-2
+                                          bg-blue-100
+                                          w-full text-center
+                                          hover:bg-blue-200
+                                          cursor-pointer
+                                          transition-all duration-200 ease-in-out
+                                          hover:scale-105
+                                          hover:shadow-lg
+                                          hover:shadow-blue-500/50
+                                        "
+                                        onClick={() => {
+                                          window.open(
+                                            `https://arbiscan.io/tx/${item.settlement.txid}`,
+                                            '_blank'
+                                          );
+                                        }}
+                                      >
+                                        <div className="flex flex-row gap-2 items-center justify-center">
+                                          <Image
+                                            src="/logo-arbitrum.png"
+                                            alt="Polygon"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                          />
+                                          <span className="text-sm">
+                                            USDT 전송내역(회원)
+                                          </span>
+                                        </div>
+                                      </button>
+                                    )}
+                      
 
                                   </div>
                                 )}
-
-
-
 
 
                                 {item.status === 'completed' && (
@@ -4846,7 +4915,9 @@ const [tradeSummary, setTradeSummary] = useState({
                               <div className="flex flex-row gap-2 items-start justify-start">
 
 
-                                {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
+                                {
+                                (item.status === 'accepted' || item.status === 'paymentRequested')
+                                && item.seller && item.seller.walletAddress === address && (
                                   
                                   <div className="flex flex-row items-center gap-2">
                                     <input
@@ -4900,7 +4971,9 @@ const [tradeSummary, setTradeSummary] = useState({
 
                               <div className="flex flex-row gap-2 items-start justify-start">
 
-                                {/*item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
+                                {/*
+                                (item.status === 'accepted' || item.status === 'paymentRequested')
+                                && item.seller && item.seller.walletAddress === address && (
                                   
                                   <div className="flex flex-row items-center gap-2">
                                     <input
@@ -5083,7 +5156,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                       <button
                                         disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
                                         className={`
-                                          w-24 h-8
+                                          w-32 h-8
                                           flex flex-row
                                           items-center justify-center
                                           gap-1 text-sm text-white px-2 py-1 rounded-md ${confirmingPayment[index] || !confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
@@ -5110,7 +5183,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                           />
                                         )}
                                         <span className="text-sm">
-                                          거래완료
+                                          USDT 전송
                                         </span>
 
                                       </button>
@@ -5187,7 +5260,31 @@ const [tradeSummary, setTradeSummary] = useState({
 
                             </td>
 
+                            {/* 출금상태: buyer.depositCompleted */}
+                            <td className="p-2">
 
+                              {item.status !== 'cancelled' && (
+                                <>   
+                                  {item?.buyer?.depositCompleted === false
+                                  ? (
+                                    <div className="text-sm text-red-600
+                                    flex flex-row items-center gap-2
+                                    border border-red-600
+                                    rounded-md px-2 py-1">
+                                      출금대기중
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm text-green-600
+                                    flex flex-row items-center gap-2
+                                    border border-green-600
+                                    rounded-md px-2 py-1">
+                                      출금완료
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            
+                            </td>
 
                           </tr>
 
@@ -5551,7 +5648,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                   </p>
                                   <p className="text-lg font-semibold text-zinc-500">{Rate}: {
 
-                                    Number(item.krwAmount / item.usdtAmount).toFixed(2)
+                                    Number(item.krwAmount / item.usdtAmount).toFixed(3)
 
                                     }</p>
                                 </div>
@@ -6151,8 +6248,10 @@ const [tradeSummary, setTradeSummary] = useState({
                   value={limit}
                   onChange={(e) =>
                     
-                    router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(e.target.value)}&page=${page}&wallet=${wallet}&searchMyOrders=${searchMyOrders}`)
+                    //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(e.target.value)}&page=${page}&wallet=${wallet}&searchMyOrders=${searchMyOrders}`)
 
+                    router.push('/' + params.lang + '/' + params.center + '/clearance-request?limit=' + Number(e.target.value) + '&page=1' +
+                    '&searchFromDate=' + searchFromDate + '&searchToDate=' + searchToDate)
                   }
 
                   className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
@@ -6170,10 +6269,11 @@ const [tradeSummary, setTradeSummary] = useState({
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
                   
-                  router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=1`);
+                  //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=1`);
 
-                }
-              }
+                  router.push('/' + params.lang + '/' + params.center + '/clearance-request?limit=' + Number(limit) + '&page=1' +
+                  '&searchFromDate=' + searchFromDate + '&searchToDate=' + searchToDate)
+                }}
               >
                 처음
               </button>
@@ -6184,8 +6284,10 @@ const [tradeSummary, setTradeSummary] = useState({
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
                   
-                  router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=${Number(page) - 1}`);
+                  //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=${Number(page) - 1}`);
 
+                  router.push('/' + params.lang + '/' + params.center + '/clearance-request?limit=' + Number(limit) + '&page=' + (Number(page) - 1) +
+                  '&searchFromDate=' + searchFromDate + '&searchToDate=' + searchToDate)
                 }}
               >
                 이전
@@ -6202,8 +6304,10 @@ const [tradeSummary, setTradeSummary] = useState({
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
                   
-                  router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=${Number(page) + 1}`);
+                  //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=${Number(page) + 1}`);
 
+                  router.push('/' + params.lang + '/' + params.center + '/clearance-request?limit=' + Number(limit) + '&page=' + (Number(page) + 1) +
+                  '&searchFromDate=' + searchFromDate + '&searchToDate=' + searchToDate)
                 }}
               >
                 다음
@@ -6215,8 +6319,9 @@ const [tradeSummary, setTradeSummary] = useState({
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
                   
-                  router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
-
+                  //router.push(`/${params.lang}/${params.center}/clearance-request?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
+                  router.push('/' + params.lang + '/' + params.center + '/clearance-request?limit=' + Number(limit) + '&page=' + Math.ceil(Number(totalCount) / Number(limit)) +
+                  '&searchFromDate=' + searchFromDate + '&searchToDate=' + searchToDate)
                 }}
               >
                 마지막
@@ -6303,7 +6408,7 @@ const UserPaymentPage = (
       
       {/* iframe */}
       <iframe
-        src={`https://cryptoss.beauty/ko/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
+        src={`https://cryptoss-runway.vercel.app/ko/${selectedItem?.storecode}/pay-usdt-reverse/${selectedItem?._id}`}
 
         
           
@@ -6345,7 +6450,7 @@ const TradeDetail = (
 
     const [amount, setAmount] = useState(1000);
     const price = 91.17; // example price
-    const receiveAmount = (amount / price).toFixed(2);
+    const receiveAmount = (amount / price).toFixed(3);
     const commission = 0.01; // example commission
   
     return (
