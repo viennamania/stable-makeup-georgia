@@ -15,7 +15,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
+import {
+  clientId,
+  client
+} from "../../../client";
 
 
 
@@ -2508,19 +2511,19 @@ export default function Index({ params }: any) {
                 <div className="flex flex-row items-center justify-start gap-2">
                   <button
                     onClick={() => {
-                      window.open(`${paymentUrl}/${params.lang}/${store?.storecode}/paymaster`, '_blank');
+                      window.open(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`, '_blank');
                     }}
                     className="text-sm text-zinc-500 underline"
                   >
-                    {paymentUrl + '/' + params.lang + '/' + store?.storecode + '/paymaster'}
+                    {paymentUrl + '/' + params.lang + '/' + clientId + '/' + store?.storecode + '/paymaster'}
                   </button>
 
                   {/* 복사 버튼 */}
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${store?.storecode}/center`);
+                      navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/center`);
                       toast.success('가맹점 홈페이지 링크가 복사되었습니다.');
-                    } }
+                    }}
                     className="bg-[#3167b4] text-sm text-[#f3f4f6] px-2 py-1 rounded-lg hover:bg-[#3167b4]/80"
                   >
                     복사
@@ -2993,7 +2996,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/payment?'
+                                      paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
                                       + 'storeUser=' + item.nickname
                                       + '&depositBankName='+ item?.buyer?.depositBankName
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
@@ -3033,7 +3036,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     window.open(
-                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/payment?'
+                                      paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
                                       + 'storeUser=' + item.nickname
                                       + '&depositBankName=' + item?.buyer?.depositBankName
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
