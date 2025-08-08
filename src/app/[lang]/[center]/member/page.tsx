@@ -2852,7 +2852,7 @@ export default function Index({ params }: any) {
                         <th className="p-2">등록일</th>
                         <th className="p-2">회원아이디</th>
                         <th className="p-2">회원 통장</th>
-                        <th className="p-2">구매건수</th>
+                        <th className="p-2">구매수(건)</th>
                         <th className="p-2">
                           구매금액(원)<br/>구매량(USDT)
                         </th>
@@ -2906,7 +2906,7 @@ export default function Index({ params }: any) {
                           </td>
 
                           <td className="p-2">
-                            <div className="flex flex-col items-end justify-center gap-1">
+                            <div className="w-20 flex flex-col items-end justify-center gap-1">
                               {item?.totalPaymentConfirmedCount || 0} 건
                             </div>
                           </td>
