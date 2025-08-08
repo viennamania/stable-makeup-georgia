@@ -2485,8 +2485,8 @@ export async function getBuyOrdersGroupByStorecodeDaily(
         totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
 
         // agentFeeAmount, agentFeeAmountKRW
-        totalAgentFeeAmount: { $sum: "$settlement.agentFeeAmount" },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.agentFeeAmountKRW" } },
+        totalAgentFeeAmount: { $sum: "$settlement.dealerAmount" },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.dealerAmountKRW" } },
 
         // feeAmount, feeAmountKRW
         totalFeeAmount: { $sum: "$settlement.feeAmount" },
@@ -2664,8 +2664,8 @@ export async function getBuyOrdersGroupByAgentcodeDaily(
         totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
 
         // agentFeeAmount, agentFeeAmountKRW
-        totalAgentFeeAmount: { $sum: "$settlement.agentFeeAmount" },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.agentFeeAmountKRW" } },
+        totalAgentFeeAmount: { $sum: "$settlement.dealerAmount" },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.dealerAmountKRW" } },
 
         // feeAmount, feeAmountKRW
         totalFeeAmount: { $sum: "$settlement.feeAmount" },
@@ -4582,8 +4582,8 @@ export async function getAllTradesByAdmin(
         totalFeeAmount: { $sum: { $toDouble: '$settlement.feeAmount' } },
         totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
 
-        totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
+        totalAgentFeeAmount: { $sum: '$settlement.dealerAmount' },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.dealerAmountKRW' } },
 
       }
     }
@@ -4843,8 +4843,8 @@ export async function getAllTradesByAdmin(
     {
       $group: {
         _id: null,
-        totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
+        totalAgentFeeAmount: { $sum: '$settlement.dealerAmount' },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.dealerAmountKRW' } },
       }
     }
   ]).toArray();
@@ -5532,7 +5532,7 @@ export async function getAllTradesForAgent(
       $group: {
         _id: null,
         //totalFeeAmount: { $sum: '$settlement.feeAmount' },
-        totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
+        totalAgentFeeAmount: { $sum: '$settlement.dealerAmount' },
       }
     }
   ]).toArray();
@@ -5554,7 +5554,7 @@ export async function getAllTradesForAgent(
       $group: {
         _id: null,
         //totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.dealerAmountKRW' } },
       }
     }
   ]).toArray();
