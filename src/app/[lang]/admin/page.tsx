@@ -2343,10 +2343,7 @@ export default function Index({ params }: any) {
 
                     </div>
 
-
                   )}
-
-
 
 
                   <div className="
