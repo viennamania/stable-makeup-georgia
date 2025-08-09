@@ -6248,70 +6248,93 @@ const fetchBuyOrders = async () => {
 
                               {item?.settlement ? (
 
+                                <div className="flex flex-row gap-2 items-center justify-center">
+                                  <button
+                                    className="
+                                    w-32
+                                    flex flex-col gap-2 items-center justify-center
+                                    bg-purple-500 text-white px-2 py-1 rounded-md hover:bg-purple-600
+                                    text-sm
+                                    transition duration-300 ease-in-out
+                                    transform hover:scale-105
+                                    hover:shadow-lg
+                                    hover:shadow-purple-500/50
+                                    hover:cursor-pointer
+                                    hover:transition-transform
+                                    hover:duration-300
+                                    hover:ease-in-out
 
-                                <button
-                                  className="
-                                  w-48
-                                  flex flex-col gap-2 items-center justify-center
-                                  bg-purple-500 text-white px-2 py-1 rounded-md hover:bg-purple-600
-                                  text-sm
-                                  transition duration-300 ease-in-out
-                                  transform hover:scale-105
-                                  hover:shadow-lg
-                                  hover:shadow-purple-500/50
-                                  hover:cursor-pointer
-                                  hover:transition-transform
-                                  hover:duration-300
-                                  hover:ease-in-out
+                                    "
 
-                                  "
-
-                                  onClick={() => {
-                                    window.open(
-                                      `https://arbiscan.io/tx/${item.settlement.txid}`,
-                                      '_blank'
-                                    );
-                                  }}
-                                >
-
-
-                                  <div className="flex flex-col gap-2 items-end justify-center"
-                                    style={{
-                                      fontFamily: 'monospace',
+                                    onClick={() => {
+                                      window.open(
+                                        `https://arbiscan.io/tx/${item.settlement.txid}`,
+                                        '_blank'
+                                      );
                                     }}
                                   >
 
-                                    <span>
-                                      {item?.settlement?.settlementAmount?.toLocaleString()}
-                                      {' '}
-                                      {
-                                        item?.settlement?.settlementWalletAddress &&
-                                      item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'}
-                                    </span>
-                                    {/*
-                                    <span>
-                                      {
-                                        item?.settlement?.agentFeeAmount ?
-                                        item?.settlement?.agentFeeAmount?.toLocaleString() + ' USDT'
-                                        : '0 USDT'
-                                      }
-                                      {' '}
-                                      {
-                                        item?.settlement?.agentFeeWalletAddress &&
-                                      item?.settlement?.agentFeeWalletAddress?.slice(0, 5) + '...'}
-                                    </span>
-                                    <span>
-                                      {item?.settlement?.feeAmount?.toLocaleString() + ' USDT'}
-                                      {' '}
-                                      {
-                                        item?.settlement?.feeWalletAddress &&
-                                      item?.settlement?.feeWalletAddress?.slice(0, 5) + '...'}
-                                    </span>
-                                    */}
 
+                                    <div className="flex flex-col gap-2 items-end justify-center"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}
+                                    >
+                                      <div className="flex flex-row gap-1 items-center justify-center">
+                                        <Image
+                                          src="/icon-tether.png"
+                                          alt="Settlement Tether"
+                                          width={20}
+                                          height={20}
+                                          className="w-5 h-5"
+                                        />
+                                        <span>
+                                          {Number(item?.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        </span>
+                                      </div>
+                                      {/*
+                                      <span>
+                                        {
+                                          item?.settlement?.agentFeeAmount ?
+                                          item?.settlement?.agentFeeAmount?.toLocaleString() + ' USDT'
+                                          : '0 USDT'
+                                        }
+                                        {' '}
+                                        {
+                                          item?.settlement?.agentFeeWalletAddress &&
+                                        item?.settlement?.agentFeeWalletAddress?.slice(0, 5) + '...'}
+                                      </span>
+                                      <span>
+                                        {item?.settlement?.feeAmount?.toLocaleString() + ' USDT'}
+                                        {' '}
+                                        {
+                                          item?.settlement?.feeWalletAddress &&
+                                        item?.settlement?.feeWalletAddress?.slice(0, 5) + '...'}
+                                      </span>
+                                      */}
+
+                                    </div>
+
+                                  </button>
+
+
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Settlement Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-zinc-500">
+                                        {
+                                          item?.settlement?.settlementWalletAddress &&
+                                          item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'
+                                        }
+                                    </span>
                                   </div>
 
-                                </button>
+                                </div>
 
                               ) : (
                                 <>
