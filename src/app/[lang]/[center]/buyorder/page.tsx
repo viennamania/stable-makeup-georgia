@@ -3335,92 +3335,6 @@ const fetchBuyOrders = async () => {
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-                {/* 가맹점 보유량 */}
-                <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
-                bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
-
-                <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
-                  <div className="flex flex-row gap-2 items-center">
-                    <div className="flex flex-row gap-2 items-center">
-                      <Image
-                        src="/icon-escrow.png"
-                        alt="Escrow"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-lg font-semibold text-zinc-500">
-                        현재 보유량
-                      </span>
-                    </div>
-
-                    <div className="
-                      w-32
-                      flex flex-row gap-2 items-center justify-between
-                    ">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-lg text-green-600 font-semibold"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrowBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 오늘 수수료 차감량 */}
-                  <div className="flex flex-row gap-2 items-center">
-                    <span className="text-sm text-zinc-500 font-semibold">
-                      오늘 수수료 차감량
-                    </span>
-                    <div className="
-                      w-32
-                      flex flex-row gap-2 items-center justify-between
-                    ">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-lg text-red-600 font-semibold"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0 ?
-                          todayMinusedEscrowAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') :
-                          '0.000'
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-
-
-                {/* 보유량 내역 */}
-                <button
-                  onClick={() => {
-                    router.push('/' + params.lang + '/' + params.center + '/escrow-history');
-                  }}
-                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80
-                  flex items-center justify-center gap-2
-                  border border-zinc-300 hover:border-[#3167b4]"
-                >
-                  보유량 내역
-                </button>
-
-              </div>
-
-
               {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
@@ -3715,6 +3629,97 @@ const fetchBuyOrders = async () => {
 
 
             <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-2 mt-4">
+
+
+
+              {/* 가맹점 보유량 */}
+              <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+                bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
+
+                  <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
+                    <div className="flex flex-row gap-2 items-center">
+                      <div className="flex flex-row gap-2 items-center">
+                        <Image
+                          src="/icon-escrow.png"
+                          alt="Escrow"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-lg font-semibold text-zinc-500">
+                          현재 보유량
+                        </span>
+                      </div>
+
+                      <div className="
+                        w-32
+                        flex flex-row gap-2 items-center justify-between
+                      ">
+                        <Image
+                          src="/icon-tether.png"
+                          alt="Tether"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-lg text-green-600 font-semibold"
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {
+                            escrowBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 오늘 수수료 차감량 */}
+                    <div className="flex flex-row gap-2 items-center">
+                      <span className="text-sm text-zinc-500 font-semibold">
+                        오늘 수수료 차감량
+                      </span>
+                      <div className="
+                        w-32
+                        flex flex-row gap-2 items-center justify-between
+                      ">
+                        <Image
+                          src="/icon-tether.png"
+                          alt="Tether"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-lg text-red-600 font-semibold"
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {
+                            todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0 ?
+                            todayMinusedEscrowAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') :
+                            '0.000'
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+
+
+                {/* 보유량 내역 */}
+                <button
+                  onClick={() => {
+                    router.push('/' + params.lang + '/' + params.center + '/escrow-history');
+                  }}
+                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80
+                  flex items-center justify-center gap-2
+                  border border-zinc-300 hover:border-[#3167b4]"
+                >
+                  보유량 내역
+                </button>
+
+              </div>
+
+
+
+
               <div className="flex flex-row items-center justify-center gap-2
               bg-white/80
               p-2 rounded-lg shadow-md
@@ -4244,8 +4249,9 @@ const fetchBuyOrders = async () => {
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
-                        (tradeSummary.totalFeeAmountKRW + tradeSummary.totalAgentFeeAmountKRW)
-                        .toLocaleString()
+                        Number(tradeSummary.totalFeeAmountKRW + tradeSummary.totalAgentFeeAmountKRW)
+                        .toFixed(0)
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                     </span>
                     <span className="text-sm text-zinc-500">원</span>
@@ -4348,7 +4354,7 @@ const fetchBuyOrders = async () => {
                       </th>
 
                       <th className="p-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="flex flex-col items-start justify-center gap-2">
                           <span>구매자 아이디</span>
                           <span>입금자</span>
                           <span>USDT통장</span>
@@ -4356,9 +4362,9 @@ const fetchBuyOrders = async () => {
                       </th>
                       
                       <th className="p-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <span>구매금액(원)</span>
+                        <div className="flex flex-col items-end justify-center gap-2">
                           <span>구매량(USDT)</span>
+                          <span>구매금액(원)</span>
                           <span>환율</span>
                         </div>
                       </th>
@@ -4368,8 +4374,14 @@ const fetchBuyOrders = async () => {
                       */}
 
                       <th className="p-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="flex flex-col items-start justify-center gap-2">
 
+                          <span className="text-sm text-zinc-50 font-semibold">
+                            판매자 아이디
+                          </span>
+                          <span className="text-sm text-zinc-50 font-semibold">
+                            USDT통장
+                          </span>
                           <div className="flex flex-row items-center justify-center gap-2">
                             <span>자동매칭</span>
                             <Image
@@ -4394,10 +4406,7 @@ const fetchBuyOrders = async () => {
                               거래상태
                             </span>
                           </div>
-                          {/* 판매자 USDT통장 */}
-                          <span className="text-sm text-zinc-50 font-semibold">
-                            판매자 USDT통장
-                          </span>
+
 
                         </div>
                       </th>
@@ -4569,16 +4578,22 @@ const fetchBuyOrders = async () => {
                               }
                               </span>
 
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {new Date(item.createdAt).toLocaleString('ko-KR', {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                })}
-                              </span>
+                              <div className="flex flex-col items-center justify-center gap-1">
+                                <span className="text-sm text-zinc-500">
+                                  {new Date(item.createdAt).toLocaleString('ko-KR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                  })}
+                                </span>
+                                <span className="text-sm text-zinc-500 font-semibold">
+                                  {new Date(item.createdAt).toLocaleString('ko-KR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                  })}
+                                </span>
+                              </div>
 
                               <span className="text-sm text-zinc-500 font-semibold">
                                 {params.lang === 'ko' ? (
@@ -4640,7 +4655,7 @@ const fetchBuyOrders = async () => {
                                   height={20}
                                   className="rounded-sm w-5 h-5"
                                 />                         
-                                <span className="text-lg text-blue-600 font-bold">
+                                <span className="text-lg text-zinc-500 font-semibold">
                                   {
                                     item?.nickname?.length > 10 ?
                                     item?.nickname?.substring(0, 10) + '...' :
@@ -4682,6 +4697,13 @@ const fetchBuyOrders = async () => {
 
                             {/* wallet address */}
                             <div className="flex flex-row items-center gap-2">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Shield"
+                                width={20}
+                                height={20}
+                                className="rounded-sm w-5 h-5"
+                              />
                               <button
                                 className="text-sm text-blue-600 font-semibold
                                 underline
@@ -4737,22 +4759,6 @@ const fetchBuyOrders = async () => {
                             w-28
                             flex flex-col gap-2 items-end justify-start">
 
-                            <div className="flex flex-row items-center justify-end gap-1">
-                              <span className="text-lg text-yellow-600 font-semibold"
-                                style={{
-                                  fontFamily: 'monospace',
-                                }}
-                              >
-                                {
-                                  item.krwAmount?.toLocaleString()
-                                }
-                              </span>
-                              <span className="text-sm text-zinc-500">
-                                원
-                              </span>
-                            </div>
-
-
                             <div className="flex flex-row items-center justify-end gap-2">
                               <Image
                                 src="/icon-tether.png"
@@ -4769,6 +4775,20 @@ const fetchBuyOrders = async () => {
                                 {item.usdtAmount
                                   && item.usdtAmount.toFixed(3)
                                   .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-row items-center justify-end gap-1">
+                              <span className="text-lg text-yellow-600 font-semibold"
+                                style={{
+                                  fontFamily: 'monospace',
+                                }}
+                              >
+                                {Number(item.krwAmount).toFixed(0)
+                                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                              </span>
+                              <span className="text-sm text-zinc-500">
+                                원
                               </span>
                             </div>
 
@@ -4841,8 +4861,9 @@ const fetchBuyOrders = async () => {
                         <td className="p-2">
 
                           <div className="
-                            w-52  
-                            flex flex-row items-center justify-center gap-2">
+                            w-52
+                            flex flex-row items-start justify-start gap-2">
+
                             {/* status */}
                             {item.status === 'ordered' && (
                               <div className="flex flex-col gap-2 items-center justify-center">
@@ -4906,22 +4927,7 @@ const fetchBuyOrders = async () => {
                               </span>
                             ) : (
 
-                              <div className="flex flex-col gap-2 items-center justify-center">
-
-                                <div className="flex flex-row items-center justify-center gap-2">
-
-                                  <Image
-                                    src="/icon-matching-completed.png"
-                                    alt="Matching Completed"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
-                                  />
-                                  <span className="text-sm text-zinc-500 font-semibold">
-                                    매칭완료
-                                  </span>
-                                </div>
-
+                              <div className="flex flex-col gap-2 items-start justify-start">
 
                                 <div className="flex flex-row items-center justify-center gap-2"> 
                                   <Image
@@ -4943,6 +4949,13 @@ const fetchBuyOrders = async () => {
 
                                 {/* wallet address */}
                                 <div className="flex flex-row items-center justify-center gap-2">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Shield"
+                                    width={20}
+                                    height={20}
+                                    className="rounded-sm w-5 h-5"
+                                  />
                                   <button
                                     className="text-sm text-blue-600 font-semibold
                                     underline
@@ -4955,24 +4968,22 @@ const fetchBuyOrders = async () => {
                                     {item.seller?.walletAddress && item.seller?.walletAddress.substring(0, 6) + '...' + item.seller?.walletAddress.substring(item.seller?.walletAddress.length - 4)}
                                   </button>
                                 </div>
-                                {/*
-                                <span className="text-sm text-zinc-500">
-                                  {
-                                    item.seller?.walletAddress &&
-                                    item.seller?.walletAddress.slice(0, 5) + '...' + item.seller?.walletAddress.slice(-5)
-                                  }
-                                </span>
-                                */}
 
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                  <Image
+                                    src="/icon-matching-completed.png"
+                                    alt="Matching Completed"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-sm text-zinc-500 font-semibold">
+                                    매칭완료
+                                  </span>
+                                </div>
 
                               </div>
                             )}
-
-
-                          
-
-
-
 
 
 
@@ -5045,21 +5056,6 @@ const fetchBuyOrders = async () => {
 
                               <div className="flex flex-col gap-2 items-start justify-start">
 
-
-
-                                {/*
-                                <div className="text-lg text-yellow-600 font-semibold
-                                  border border-yellow-600 rounded-lg p-2
-                                  bg-yellow-100
-                                  w-full text-center
-                                  ">
-                          
-
-                                  {Request_Payment}
-
-
-                                </div>
-                                */}
                                 <button
                                   className="text-sm text-yellow-600 font-semibold
                                     border border-yellow-600 rounded-lg p-2
@@ -5108,19 +5104,7 @@ const fetchBuyOrders = async () => {
                             )}
 
                             {item.status === 'cancelled' && (
-                              <div className="flex flex-col gap-2 items-start justify-start">
-
-                                  {/*
-                                  <div className="text-lg text-red-600 font-semibold
-                                    border border-red-600 rounded-lg p-2
-                                    bg-red-100
-                                    w-full text-center
-                                    ">
-                                    {
-                                      Cancelled_at
-                                    }
-                                  </div>
-                                  */}
+                                <div className="flex flex-col gap-2 items-start justify-start">
                                   <button
                                     className="text-sm text-red-600 font-semibold
                                       border border-red-600 rounded-lg p-2
@@ -5164,34 +5148,13 @@ const fetchBuyOrders = async () => {
                                       )
                                     }
                                   </div>
-
-                              </div>
+                                </div>
                             )}
 
 
                             {/* if status is accepted, show payment request button */}
                             {item.status === 'paymentConfirmed' && (
                               <div className="flex flex-col gap-2 items-start justify-start">
-
-                                {/*
-                                <span className="text-lg text-green-600 font-semibold
-                                  border border-green-600 rounded-lg p-2
-                                  bg-green-100
-                                  w-full text-center
-                                  ">
-
-
-                                  {Completed}
-                                </span>
-                                */}
-                                {/*
-                                <span className="text-sm font-semibold text-white">
-                                  {item.seller?.nickname}
-                                </span>
-                                */}
-
-
-
                                 <button
                                   className="text-sm text-green-600 font-semibold
                                     border border-green-600 rounded-lg p-2
@@ -5237,9 +5200,6 @@ const fetchBuyOrders = async () => {
                                 }</span>
                               </div>
                             )}
-
-
-
 
 
                             {item.status === 'completed' && (
