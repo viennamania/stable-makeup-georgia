@@ -6939,14 +6939,16 @@ export async function updateBuyOrderSettlement(
     // totalSettlementCount is count of all buyorders with settlement and storecode
     const totalSettlementCount = await collectionBuyorders.countDocuments({
         storecode: storecode,
-        settlement: {$exists: true}
+        settlement: {$exists: true},
+        privateSale: {$ne: true},
     });
     console.log("totalSettlementCount", totalSettlementCount);
     const totalSettlementAmountResult = await collectionBuyorders.aggregate([
         {
             $match: {
                 storecode: storecode,
-                settlement: {$exists: true}
+                settlement: {$exists: true},
+                privateSale: {$ne: true},
             }
         },
         {
