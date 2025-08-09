@@ -1137,15 +1137,15 @@ export default function Index({ params }: any) {
   // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
+  const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
+
   useEffect(() => {
-    if (!address) {
-      setTotalNumberOfBuyOrders(0);
-      return;
-    }
-
-    
-
-    const fetchTotalBuyOrders = async () => {
+    const fetchTotalBuyOrders = async (): Promise<void> => {
+      if (!address) {
+        setTotalNumberOfBuyOrders(0);
+        return;
+      }
+      
       setLoadingTotalNumberOfBuyOrders(true);
       const response = await fetch('/api/order/getTotalNumberOfBuyOrders', {
         method: 'POST',
@@ -1157,15 +1157,17 @@ export default function Index({ params }: any) {
       });
       if (!response.ok) {
         console.error('Failed to fetch total number of buy orders');
+        setLoadingTotalNumberOfBuyOrders(false);
         return;
       }
       const data = await response.json();
       //console.log('getTotalNumberOfBuyOrders data', data);
       setTotalNumberOfBuyOrders(data.result.totalCount);
+      setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
 
       setLoadingTotalNumberOfBuyOrders(false);
     };
-    
+
     fetchTotalBuyOrders();
 
     const interval = setInterval(() => {
@@ -1175,16 +1177,63 @@ export default function Index({ params }: any) {
 
   }, [address]);
 
-      
-  
   useEffect(() => {
-    if (totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
-      const audio = new Audio('/notification.wav'); 
+    if (totalNumberOfAudioOnBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
+      const audio = new Audio('/notification.wav');
       audio.play();
     }
-  }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
+  }, [totalNumberOfAudioOnBuyOrders, loadingTotalNumberOfBuyOrders]);
+
+  
 
 
+
+
+  // totalNumberOfClearanceOrders
+  const [loadingTotalNumberOfClearanceOrders, setLoadingTotalNumberOfClearanceOrders] = useState(false);
+  const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
+  useEffect(() => {
+    if (!address) {
+      setTotalNumberOfClearanceOrders(0);
+      return;
+    }
+
+    const fetchTotalClearanceOrders = async () => {
+      setLoadingTotalNumberOfClearanceOrders(true);
+      const response = await fetch('/api/order/getTotalNumberOfClearanceOrders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        }),
+      });
+      if (!response.ok) {
+        console.error('Failed to fetch total number of clearance orders');
+        return;
+      }
+      const data = await response.json();
+      //console.log('getTotalNumberOfClearanceOrders data', data);
+      setTotalNumberOfClearanceOrders(data.result.totalCount);
+
+      setLoadingTotalNumberOfClearanceOrders(false);
+    };
+
+    fetchTotalClearanceOrders();
+
+    const interval = setInterval(() => {
+      fetchTotalClearanceOrders();
+    }, 5000);
+    return () => clearInterval(interval);
+
+  }, [address]);
+
+  useEffect(() => {
+    if (totalNumberOfClearanceOrders > 0 && loadingTotalNumberOfClearanceOrders === false) {
+      const audio = new Audio('/notification.wav');
+      audio.play();
+    }
+  }, [totalNumberOfClearanceOrders, loadingTotalNumberOfClearanceOrders]);
 
   
 
@@ -1376,10 +1425,14 @@ export default function Index({ params }: any) {
 
 
 
-            <div className="w-full flex flex-row items-center justify-end gap-2">
-               
+          <div className="w-full flex flex-row items-center justify-end gap-2">
 
-              {loadingTotalNumberOfBuyOrders && (
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+              {loadingTotalNumberOfBuyOrders ? (
                 <Image
                   src="/loading.png"
                   alt="Loading"
@@ -1387,13 +1440,7 @@ export default function Index({ params }: any) {
                   height={20}
                   className="w-6 h-6 animate-spin"
                 />
-              )}
-
-              <div className="flex flex-row items-center justify-center gap-2
-              bg-white/80
-              p-2 rounded-lg shadow-md
-              backdrop-blur-md
-              ">
+              ) : (
                 <Image
                   src="/icon-buyorder.png"
                   alt="Buy Order"
@@ -1401,120 +1448,206 @@ export default function Index({ params }: any) {
                   height={35}
                   className="w-6 h-6"
                 />
-                <p className="text-lg text-red-500 font-semibold">
-                  {
-                  totalNumberOfBuyOrders
-                  } 건
-                </p>
+              )}
 
-                {totalNumberOfBuyOrders > 0 && (
-                  <div className="flex flex-row items-center justify-center gap-2">
-                    <Image
-                      src="/icon-notification.gif"
-                      alt="Notification"
-                      width={50}
-                      height={50}
-                      className="w-15 h-15 object-cover"
-                      
-                    />
-                    <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/admin/buyorder');
-                      }}
-                      className="flex items-center justify-center gap-2
-                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                    >
-                      <span className="text-sm">
-                        구매주문관리
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
-          
+
+              <p className="text-lg text-red-500 font-semibold">
+                {
+                totalNumberOfBuyOrders
+                } 건
+              </p>
+
+              {totalNumberOfBuyOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/buyorder');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      구매주문관리
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
 
 
+            {/* Clearance Orders */}
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
 
+              {loadingTotalNumberOfClearanceOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              <p className="text-lg text-yellow-500 font-semibold">
+                {
+                totalNumberOfClearanceOrders
+                } 건
+              </p>
+
+              {totalNumberOfClearanceOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/clearance-history');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      청산내역관리
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+        
+          </div>
 
 
             {/* 홈 / 가맹점관리 / 에이전트관리 / 회원관리 / 구매주문관리 */}
             {/* memnu buttons same width left side */}
             <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/store')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    가맹점관리
-                </button>       
-          
-          
-                <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                  <Image
-                    src="/icon-agent.png"
-                    alt="Agent"
-                    width={35}
-                    height={35}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-sm font-semibold">
-                    에이전트관리
-                  </div>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/store')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  가맹점관리
+              </button>
+
+              <div className='flex w-32 items-center justify-center gap-2
+              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                <Image
+                  src="/icon-agent.png"
+                  alt="Agent"
+                  width={35}
+                  height={35}
+                  className="w-4 h-4"
+                />
+                <div className="text-sm font-semibold">
+                  에이전트관리
                 </div>
+              </div>
 
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/member')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  회원관리
+              </button>
 
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  구매주문관리
+              </button>
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/member')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    회원관리
-                </button>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  거래내역
+              </button>
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    구매주문관리
-                </button>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  청산내역
+              </button>
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    거래내역
-                </button>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(가맹)
+              </button>
 
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(AG)
+              </button>
 
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    청산내역
-                </button>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  보유량내역
+              </button>
 
             </div>
 
@@ -2223,7 +2356,7 @@ const TradeDetail = (
 
     const [amount, setAmount] = useState(1000);
     const price = 91.17; // example price
-    const receiveAmount = (amount / price).toFixed(2);
+    const receiveAmount = (amount / price).toFixed(3);
     const commission = 0.01; // example commission
   
     return (
