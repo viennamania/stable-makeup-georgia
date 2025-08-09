@@ -6920,7 +6920,7 @@ export async function updateBuyOrderSettlement(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('ultraman').collection('buyorders');
+  const collection = client.db('georgia').collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -6935,12 +6935,12 @@ export async function updateBuyOrderSettlement(
   if (result.modifiedCount === 1) {
 
 
-    const collectionBuyorders = client.db('ultraman').collection('buyorders');
+    const collectionBuyorders = client.db('georgia').collection('buyorders');
 
     // update store with settlement data
     try {
 
-      const collectionStore = client.db('ultraman').collection('stores');
+      const collectionStore = client.db('georgia').collection('stores');
 
       // totalSettlementCount is count of all buyorders with settlement and storecode
       const totalSettlementCount = await collectionBuyorders.countDocuments({
@@ -7028,7 +7028,7 @@ export async function updateBuyOrderSettlement(
       }
       const agentcode = buyOrder.agentcode;
 
-      const collectionAgents = client.db('ultraman').collection('agents');
+      const collectionAgents = client.db('georgia').collection('agents');
 
       // totalSettlementCount is count of all buyorders with settlement and agentcode
       const totalSettlementCount = await collectionBuyorders.countDocuments({

@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         txid
         "0xfa087dc1f0c61324359670c9ca1602bd27e1266edef4bbf216b7a187c27adaf8"
         krwRate
-        1400
+        1380
         paymentAmount
         1500000
         settlementWalletAddress
@@ -255,6 +255,7 @@ export async function POST(request: NextRequest) {
 
     // updateBuyOrderSettlement
     const result = await updateBuyOrderSettlement({
+      updater: "system", // who updates the settlement, can be "system" or "admin"
       orderId: orderId,
       settlement: settlement,
       storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder

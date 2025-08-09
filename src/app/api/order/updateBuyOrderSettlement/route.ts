@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const {
+    updater, // who updates the settlement
     orderId,
     transactionHash,
     //settlement,
@@ -130,7 +131,7 @@ export async function POST(request: NextRequest) {
         txid
         "0xfa087dc1f0c61324359670c9ca1602bd27e1266edef4bbf216b7a187c27adaf8"
         krwRate
-        1400
+        1380
         paymentAmount
         1500000
         settlementWalletAddress
@@ -205,8 +206,25 @@ export async function POST(request: NextRequest) {
 
 
 
-    const settlementFeePercent = buyOrder.store.settlementFeePercent;
-    const agentFeePercent = buyOrder.store.agentFeePercent;
+    const settlementFeePercent = buyOrder.store.settlementFeePercent || 0.0; // Default to 0.0 if not set
+    if (settlementFeePercent < 0 || settlementFeePercent > 100) {
+      console.log("Invalid settlement fee percent:", settlementFeePercent);
+      return NextResponse.json({
+        result: null,
+      });
+    }
+
+    const agentFeePercent = buyOrder.store.agentFeePercent || 0.0; // Default to 0.0 if not set
+    if (agentFeePercent < 0 || agentFeePercent > 100) {
+      console.log("Invalid agent fee percent:", agentFeePercent);
+      return NextResponse.json({
+        result: null,
+      });
+    }
+
+
+
+    
 
     const settlementFeeAmountUSDT = parseFloat(Number(buyOrder.usdtAmount * settlementFeePercent * 0.01).toFixed(3)); // Calculate settlement fee amount in USDT
     const settlementFeeAmountKRW = (Number(settlementFeeAmountUSDT) * krwRate).toFixed(0); // Convert settlement fee amount to KRW
@@ -255,6 +273,7 @@ export async function POST(request: NextRequest) {
 
     // updateBuyOrderSettlement
     const result = await updateBuyOrderSettlement({
+      updater: updater, // who updates the settlement
       orderId: orderId,
       settlement: settlement,
       storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder
