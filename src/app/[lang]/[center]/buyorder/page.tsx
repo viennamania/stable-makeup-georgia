@@ -6079,6 +6079,22 @@ const fetchBuyOrders = async () => {
                           )}
 
 
+                          {!item?.transactionHash || item?.transactionHash === '0x' && (
+                            <div className="flex flex-row gap-2 items-center justify-center">
+                              <Image
+                                src="/loading.png"
+                                alt="Loading Icon"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5 animate-spin"
+                              />
+                              <span className="text-sm text-zinc-500">
+                                판매자가 구매자에게 판매코인(USDT)을 보내는 중...
+                              </span>
+                            </div>
+                          )}
+
+
                           {item?.escrowTransactionHash
                           && item?.escrowTransactionHash !== '0x'
                           && (
@@ -6268,7 +6284,14 @@ const fetchBuyOrders = async () => {
 
                                     onClick={() => {
                                       window.open(
-                                        `https://arbiscan.io/tx/${item.settlement.txid}`,
+                                        //`https://arbiscan.io/tx/${item.settlement.txid}`,
+
+                                        chain === 'ethereum' ? `https://etherscan.io/tx/${item.settlement.txid}`
+                                        : chain === 'polygon' ? `https://polygonscan.com/tx/${item.settlement.txid}`
+                                        : chain === 'arbitrum' ? `https://arbiscan.io/tx/${item.settlement.txid}`
+                                        : chain === 'bsc' ? `https://bscscan.com/tx/${item.settlement.txid}`
+                                        : `https://arbiscan.io/tx/${item.settlement.txid}`,
+
                                         '_blank'
                                       );
                                     }}
@@ -6318,6 +6341,7 @@ const fetchBuyOrders = async () => {
                                   </button>
 
 
+                                  {/* https://arbiscan.io/token/0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9?a=0x27819bb55cB09A6Bc1E1a82e7A085A340981039A */}
                                   <div className="flex flex-row items-center justify-center gap-1">
                                     <Image
                                       src="/icon-shield.png"
@@ -6326,12 +6350,32 @@ const fetchBuyOrders = async () => {
                                       height={20}
                                       className="w-5 h-5"
                                     />
-                                    <span className="text-sm text-zinc-500">
+                                    <button
+                                      className="
+                                        text-sm text-blue-600 underline font-semibold
+                                        hover:text-blue-800
+                                        hover:cursor-pointer
+                                        transition-all duration-200 ease-in-out
+                                        hover:scale-105
+                                        hover:shadow-lg
+                                        hover:shadow-blue-500/50
+                                      "
+                                      onClick={() => {
+                                        window.open(
+                                          chain === 'ethereum' ? `https://etherscan.io/token/${ethereumContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                          : chain === 'polygon' ? `https://polygonscan.com/token/${polygonContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                          : chain === 'arbitrum' ? `https://arbiscan.io/token/${arbitrumContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                          : chain === 'bsc' ? `https://bscscan.com/token/${bscContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                          : `https://arbiscan.io/token/${item?.settlement?.settlementWalletAddress}`,
+                                          '_blank'
+                                        );
+                                      }}
+                                    >
                                         {
                                           item?.settlement?.settlementWalletAddress &&
                                           item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'
                                         }
-                                    </span>
+                                    </button>
                                   </div>
 
                                 </div>
@@ -6379,15 +6423,22 @@ const fetchBuyOrders = async () => {
                                             </span>
                                           </div>
 
-                                          <span className="text-lg font-semibold text-green-600"
-                                            style={{
-                                              fontFamily: 'monospace',
-                                            }}
-                                          >
-                                            {item.usdtAmount}{' '}USDT
-                                          </span>
-
-
+                                          <div className="flex flex-row items-center justify-center gap-1">
+                                            <Image
+                                              src="/icon-tether.png"
+                                              alt="Settlement Tether"
+                                              width={20}
+                                              height={20}
+                                              className="w-5 h-5"
+                                            />
+                                            <span className="text-lg font-semibold text-green-600"
+                                              style={{
+                                                fontFamily: 'monospace',
+                                              }}
+                                            >
+                                              {Number(item.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                            </span>
+                                          </div>
 
                                         </div>
 
