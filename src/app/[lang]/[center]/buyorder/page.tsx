@@ -6089,7 +6089,7 @@ const fetchBuyOrders = async () => {
                                 className="w-5 h-5 animate-spin"
                               />
                               <span className="text-sm text-zinc-500">
-                                판매자가 구매자에게 판매코인(USDT)을 보내는 중...
+                                판매자가 판매한코인(USDT)을 구매자에게 보내는 중...
                               </span>
                             </div>
                           )}
@@ -6411,7 +6411,7 @@ const fetchBuyOrders = async () => {
                                             </span>
                                             */}
                                             <span className="text-sm font-semibold text-zinc-500">
-                                              구매자가 가맹점에 구매한코인(USDT)를 결제하는 중...
+                                              구매자가 구매한코인(USD)을 가맹점 결제하는 중...
                                             </span>
                                           </div>
 
