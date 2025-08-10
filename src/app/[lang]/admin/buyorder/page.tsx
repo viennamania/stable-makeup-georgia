@@ -4515,7 +4515,7 @@ const fetchBuyOrders = async () => {
                             }}
                           >
                             {
-                              Number(item.rate)
+                              Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                               //Number(item.krwAmount / item.usdtAmount).toFixed(2)
                             }
                           </span>
@@ -6035,22 +6035,18 @@ const fetchBuyOrders = async () => {
 
 
 
-
-
-
-
-
-
                         {item?.transactionHash
                         && item?.transactionHash !== '0x'
                         && (
                           <button
                             className="
+                              w-44
+                              xl:w-72
                               flex flex-row gap-2 items-center justify-between
                               text-sm text-blue-600 font-semibold
                               border border-blue-600 rounded-lg p-2
                               bg-blue-100
-                              w-full text-center
+                              text-center
                               hover:bg-blue-200
                               cursor-pointer
                               transition-all duration-200 ease-in-out
@@ -6075,14 +6071,32 @@ const fetchBuyOrders = async () => {
 
                             }}
                           >
-                            <div className="flex flex-row gap-2 items-center justify-start ml-2">
-                              <Image
-                                src={`/token-usdt-icon.png`}
-                                alt="USDT Logo"
-                                width={20}
-                                height={20}
-                                className="w-5 h-5"
-                              />
+                              <div className="flex flex-col gap-2 items-start justify-start ml-2">
+                                <div className="flex flex-col gap-1 items-start justify-start">
+                                  <span className="text-sm">
+                                    판매코인(USDT)
+                                  </span>
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <Image
+                                      src={`/token-usdt-icon.png`}
+                                      alt="USDT Logo"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-green-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}>
+                                      {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-zinc-500">
+                                    전송내역
+                                  </span>
+                                </div>
+                              </div>
+                              {/* chain logo */}
                               <Image
                                 src={`/logo-chain-${chain}.png`}
                                 alt={`${chain} Logo`}
@@ -6090,17 +6104,6 @@ const fetchBuyOrders = async () => {
                                 height={20}
                                 className="w-5 h-5"
                               />
-                              <span className="text-sm">
-                                판매코인(USDT) 전송내역
-                              </span>
-                            </div>
-                            <Image
-                              src="/icon-share.png"
-                              alt="Share Icon"
-                              width={20}
-                              height={20}
-                              className="w-5 h-5"
-                            />
                           </button>
                         )}
 
@@ -6255,22 +6258,23 @@ const fetchBuyOrders = async () => {
                           {item?.settlement && (
 
                             <div className="w-full flex flex-row gap-2 items-center justify-start">
-
                               <Image
-                                src="/icon-settlement-completed.png"
-                                alt="Settlement Completed"
-                                width={20}
-                                height={20}
-                                className="w-5 h-5"
+                                src={item?.store?.storeLogo || '/icon-store.png'}
+                                alt="Store Logo"
+                                width={30}
+                                height={30}
+                                className="w-6 h-6 rounded-lg"
                               />
                               <span className="text-sm font-semibold text-zinc-500">
-                                정산완료
+                                {item?.store?.storeName}
+                              </span>
+                              <span className="text-sm font-semibold text-zinc-500">
+                                가맹점 결제 및 정산완료
                               </span>
 
                             </div>
 
                           )}
-
 
 
                           <div className="flex flex-row gap-2 items-between justify-center">

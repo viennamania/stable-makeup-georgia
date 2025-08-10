@@ -6197,7 +6197,6 @@ const fetchBuyOrders = async () => {
                             )}
 
 
-
                             <div className="flex flex-row gap-2 items-between justify-center">
 
                               {item?.settlement && (
