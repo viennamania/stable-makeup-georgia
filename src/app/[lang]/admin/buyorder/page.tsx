@@ -4079,21 +4079,21 @@ const fetchBuyOrders = async () => {
                     <th className="p-2">
                       가맹점
                       <br/>
-                      {TID}
+                      P2P거래번호
                     </th>
 
-                    <th className="p-2">
+                    <th className="p-2 text-start">
                       구매자 아이디<br/>입금자<br/>USDT통장
                     </th>
                     
-                    <th className="p-2">
+                    <th className="p-2 text-end">
                       {Buy_Amount}(USDT)<br/>구매금액(원)<br/>단가(환율)
                     </th>
                     {/*
                     <th className="p-2">{Payment_Amount}</th>
                     */}
 
-                    <th className="p-2">
+                    <th className="p-2 text-start">
                       <div className="flex flex-col items-center justify-center gap-2">
 
                         <div className="flex flex-row items-center justify-center gap-2">
@@ -4271,7 +4271,7 @@ const fetchBuyOrders = async () => {
                         <div className="
 
                           w-36
-                          flex flex-col xl:flex-row items-start justify-start gap-2
+                          flex flex-col items-start justify-start gap-2
                           bg-zinc-100
                           rounded-lg
                           border border-zinc-800
@@ -4286,95 +4286,85 @@ const fetchBuyOrders = async () => {
 
                           "
                           onClick={() => {
-
                             // copy traideId to clipboard
                             navigator.clipboard.writeText(item.tradeId);
                             toast.success("거래번호가 복사되었습니다.");
-
-
-
                           }}
                         
                         >
 
-
-
-
-                          <div className=" flex flex-col gap-2 items-center justify-start">
-
-                            <div className="flex flex-row items-center justify-start gap-2">
-                              <Image
-                                src={item?.store?.storeLogo || "/icon-store.png"}
-                                alt="Store Logo"
-                                width={35}
-                                height={35}
-                                className="
-                                rounded-lg
-                                w-8 h-8 object-cover"
-                              />
-                              
-                              <div className="flex flex-col items-start justify-start">
-                                <span className="text-sm text-zinc-500 font-bold">
-                                  {
-                                    item?.store?.storeName?.length > 5 ?
-                                    item?.store?.storeName?.substring(0, 5) + '...' :
-                                    item?.store?.storeName
-                                  }
-                                </span>
-                                <span className="text-sm text-zinc-500">
-                                  {
-                                    item?.agent.agentName?.length > 5 ?
-                                    item?.agent.agentName?.substring(0, 5) + '...' :
-                                    item?.agent.agentName
-                                  }
-                                </span>
-                              </div>
+                          <div className="flex flex-row items-center justify-start gap-2">
+                            <Image
+                              src={item?.store?.storeLogo || "/icon-store.png"}
+                              alt="Store Logo"
+                              width={35}
+                              height={35}
+                              className="
+                              rounded-lg
+                              w-8 h-8 object-cover"
+                            />
+                            
+                            <div className="flex flex-col items-start justify-start">
+                              <span className="text-sm text-zinc-500 font-bold">
+                                {
+                                  item?.store?.storeName?.length > 5 ?
+                                  item?.store?.storeName?.substring(0, 5) + '...' :
+                                  item?.store?.storeName
+                                }
+                              </span>
+                              <span className="text-sm text-zinc-500">
+                                {
+                                  item?.agent.agentName?.length > 5 ?
+                                  item?.agent.agentName?.substring(0, 5) + '...' :
+                                  item?.agent.agentName
+                                }
+                              </span>
                             </div>
-
-
-                            <span className="text-sm text-zinc-500 font-semibold">
-                            {
-                              "#" + item.tradeId
-                            }
-                            </span>
-
-                            <span className="text-sm text-zinc-500 font-semibold">
-                              {params.lang === 'ko' ? (
-                                <p>{
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) :
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )
-                                }</p>
-                              ) : (
-                                <p>{
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) :
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )
-                                }</p>
-                              )}
-                            </span>
-
                           </div>
+
+
+                          <span className="text-sm text-zinc-500 font-semibold">
+                          {
+                            "#" + item.tradeId
+                          }
+                          </span>
+
+                          <span className="text-sm text-zinc-500 font-semibold">
+                            {params.lang === 'ko' ? (
+                              <p>{
+                                new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                ) :
+                                new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                ) : (
+                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                )
+                              }</p>
+                            ) : (
+                              <p>{
+                                new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                ) :
+                                new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                ) : (
+                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                )
+                              }</p>
+                            )}
+                          </span>
 
                         </div>
 
                       </td>
                       
                       <td className="p-2">
-                        <div className="flex flex-col items-start justify-start gap-2">
+                        <div className="
+                          w-32  
+                          flex flex-col items-start justify-start gap-2">
                           
-                          <div className="flex flex-col gap-2 items-center justify-center">
-
+                          <div className="flex flex-col gap-2 items-center justify-start">
 
                             <div className="flex flex-row items-center gap-2">
                               <Image
@@ -4397,7 +4387,7 @@ const fetchBuyOrders = async () => {
                             </div>
 
                             {item?.paymentMethod === 'bank' && (
-                              <div className="flex flex-row items-center gap-2">
+                              <div className="flex flex-row items-start justify-start gap-2">
                                 <span className="text-lg text-yellow-600 font-bold">
                                   {
                                     //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
@@ -4427,7 +4417,7 @@ const fetchBuyOrders = async () => {
                           </div>
 
                           {/* wallet address */}
-                          <div className="flex flex-row items-center gap-1">
+                          <div className="flex flex-row items-start justify-start gap-1">
                             <Image
                               src="/icon-shield.png"
                               alt="Wallet Address"
@@ -4483,7 +4473,7 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2">
                         <div className="
-                          w-40 
+                          w-32
                           flex flex-col gap-2 items-end justify-start">
 
                           <div className="flex flex-row items-center justify-end gap-2">
@@ -4617,15 +4607,11 @@ const fetchBuyOrders = async () => {
                       </td>
 
 
-
-
-
-
                       <td className="p-2">
 
                         <div className="
                           w-52
-                          flex flex-row items-center justify-center gap-2">
+                          flex flex-row items-start justify-start gap-2">
                           {/* status */}
                           {item.status === 'ordered' && (
                             <div className="flex flex-col gap-2 items-center justify-center">
@@ -4693,7 +4679,7 @@ const fetchBuyOrders = async () => {
                             </span>
                           ) : (
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="flex flex-col gap-2 items-start justify-start">
 
                               <div className="flex flex-row items-center justify-center gap-2">
                                 <Image
@@ -4756,21 +4742,13 @@ const fetchBuyOrders = async () => {
                               </span>
                               */}
 
-
                             </div>
                           )}
 
 
-                        
-
-
-
-
-
-
                           {item.status === 'accepted' && (
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="flex flex-col gap-2 items-start justify-start">
                               <button
                                 className="text-sm text-blue-600 font-semibold
                                   border border-blue-600 rounded-lg p-2
@@ -5045,11 +5023,11 @@ const fetchBuyOrders = async () => {
                         && item?.status === 'paymentConfirmed' && (
                           <div className="
                             w-32
-                            flex flex-col gap-2 items-center justify-center">
+                            flex flex-col gap-2 items-end justify-start">
                             
                             {item?.autoConfirmPayment === true ? (
                             
-                              <div className="flex flex-row gap-2 items-center justify-center">
+                              <div className="flex flex-row gap-2 items-center justify-end">
                                 <Image
                                   src="/icon-payaction.png"
                                   alt="Bank Check"
@@ -5064,7 +5042,7 @@ const fetchBuyOrders = async () => {
 
                             ) : (
 
-                              <div className="flex flex-row gap-2 items-center justify-center">
+                              <div className="flex flex-row gap-2 items-center justify-end">
                                 <Image
                                   src="/icon-bank-check.png"
                                   alt="Bank Check"
@@ -5080,7 +5058,7 @@ const fetchBuyOrders = async () => {
                             )}
 
                             {/* seller bank info */}
-                            <div className="flex flex-row gap-2 items-center justify-center">
+                            <div className="flex flex-row gap-2 items-center justify-end">
                               <span className="text-sm text-zinc-500">
                                 {/*item.seller?.bankInfo?.bankName*/}
                                 {item.store?.bankInfo?.bankName}
@@ -5092,7 +5070,7 @@ const fetchBuyOrders = async () => {
                             </div>
 
                             {/* paymentAmount */}
-                            <div className="flex flex-row items-center justify-center gap-1">
+                            <div className="flex flex-row gap-1 items-center justify-end">
                               <span className="text-xl text-yellow-600 font-semibold"
                                 style={{ fontFamily: 'monospace' }}>
                                 {
@@ -5111,12 +5089,10 @@ const fetchBuyOrders = async () => {
 
                           <div className="
                             w-32
-                            flex flex-col gap-2 items-center justify-center">
-
-
+                            flex flex-col gap-2 items-end justify-start">
 
                             {item?.paymentMethod === 'mkrw' ? (
-                              <div className="flex flex-row gap-2 items-center justify-center">
+                              <div className="flex flex-row gap-2 items-center justify-end">
                                 <Image
                                   src="/token-mkrw-icon.png"
                                   alt="MKRW"
@@ -5130,9 +5106,9 @@ const fetchBuyOrders = async () => {
                               </div>
                             ) : (
 
-                              <div className="flex flex-col gap-2 items-center justify-center">
+                              <div className="flex flex-col gap-2 items-end justify-center">
 
-                                <div className="flex flex-row gap-2 items-center justify-center">
+                                <div className="flex flex-row gap-2 items-center justify-end">
                                   <Image
                                     src="/icon-bank-auto.png"
                                     alt="Bank Auto"
@@ -5147,7 +5123,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                                <div className="flex flex-col items-center gap-2">
+                                <div className="flex flex-col gap-1 items-end justify-center">
                                   <div className="text-sm text-yellow-600 font-bold">
                                     {/*item.seller?.bankInfo?.bankName*/}
                                     {item.store?.bankInfo?.bankName}
@@ -5157,7 +5133,7 @@ const fetchBuyOrders = async () => {
                                     {item.store?.bankInfo?.accountHolder}
                                   </div>
                                 </div>
-                                <div className="text-sm text-zinc-500">
+                                <div className="flex flex-row items-end justify-start text-sm text-zinc-500">
                                   {/*item.seller?.bankInfo?.accountNumber*/}
                                   {item.store?.bankInfo?.accountNumber}
                                 </div>
