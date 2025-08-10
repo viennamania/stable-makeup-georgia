@@ -6803,7 +6803,7 @@ export async function getCollectOrdersForUser(
           _id: null,
 
           totalClearanceCount: { $sum: 1 },
-          totalClearanceAmount: { $sum: '$krwAmount' },
+          totalClearanceAmount: { $sum: '$usdtAmount' },
           totalClearanceAmountKRW: { $sum: { $toDouble: '$krwAmount' } }, // convert to double
 
         }
