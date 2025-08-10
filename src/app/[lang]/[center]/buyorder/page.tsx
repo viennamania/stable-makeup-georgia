@@ -4156,7 +4156,7 @@ const fetchBuyOrders = async () => {
               p-4 rounded-lg shadow-md
               ">
 
-              <div className="w-full xl:w-1/3 flex flex-row items-center justify-between gap-2 pl-4 pr-4">
+              <div className="w-full xl:w-1/3 flex flex-col xl:flex-row items-center justify-between gap-2 pl-4 pr-4">
                 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">거래수(건)</div>
@@ -4203,7 +4203,8 @@ const fetchBuyOrders = async () => {
               <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full xl:w-1/2
-                flex flex-row items-center justify-between gap-2 pl-4 pr-4">
+                flex flex-col xl:flex-row items-center justify-between gap-2 pl-4 pr-4">
+                
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">정산수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
@@ -4222,6 +4223,7 @@ const fetchBuyOrders = async () => {
                     <span className="text-sm text-zinc-500">원</span>
                   </div>
                 </div>
+
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">정산량(USDT)</div>
                   <div className="flex flex-row items-center gap-1">
@@ -4257,6 +4259,7 @@ const fetchBuyOrders = async () => {
                     <span className="text-sm text-zinc-500">원</span>
                   </div>
                 </div>
+
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">수수료량(USDT)</div>
                   <div className="flex flex-row items-center gap-1">
