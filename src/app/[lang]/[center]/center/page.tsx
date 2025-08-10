@@ -2136,32 +2136,15 @@ export default function Index({ params }: any) {
 
               <div className="flex flex-col xl:flex-row items-center justify-start gap-2">
 
-            
-                <span className="text-sm text-zinc-500">
-                  회원 홈페이지
-                </span>
                 <button
                   onClick={() => {
-                    window.open(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`, '_blank');
+                    window.open(`/${params.lang}/${params.center}/homepage`, '_blank');
                   }}
                   className="text-sm text-zinc-500 underline"
                 >
-                  {paymentUrl + '/' + params.lang + '/' + clientId + '/' + store?.storecode + '/paymaster'}
-
+                  회원 홈페이지 새창
                 </button>
-              
-              
-                {/* 복사 버튼 */}
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`);
-                    toast.success('가맹점 홈페이지 링크가 복사되었습니다.');
-                  }}
-                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-2 py-1 rounded-lg hover:bg-[#3167b4]/80"
-                >
-                  복사
-                </button>
-
+     
               </div>
 
           </div>
