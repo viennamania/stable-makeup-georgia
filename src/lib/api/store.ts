@@ -678,6 +678,8 @@ export async function getAllStores(
           agentName: { $ifNull: ['$agentInfo.agentName', null] },
           agentLogo: { $ifNull: ['$agentInfo.agentLogo', null] },
           agentFeeWalletAddress: { $ifNull: ['$agentInfo.agentFeeWalletAddress', null] },
+
+          escrowAmountUSDT: 1,
        
         },
       },
