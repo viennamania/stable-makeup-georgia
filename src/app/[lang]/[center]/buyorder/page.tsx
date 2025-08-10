@@ -6405,8 +6405,13 @@ const fetchBuyOrders = async () => {
                                               height={20}
                                               className="animate-spin"
                                             />
+                                            {/*
                                             <span className="text-sm font-semibold text-zinc-500">
                                               가맹점 결제 및 정산중...
+                                            </span>
+                                            */}
+                                            <span className="text-sm font-semibold text-zinc-500">
+                                              구매자가 가맹점에 구매한코인(USDT)를 결제하는 중...
                                             </span>
                                           </div>
 
