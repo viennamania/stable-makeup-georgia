@@ -4359,8 +4359,8 @@ const fetchBuyOrders = async () => {
                       <th className="p-2">
                         <div className="flex flex-col items-start justify-center gap-2">
                           <span>구매자 아이디</span>
-                          <span>입금자</span>
                           <span>USDT통장</span>
+                          <span>입금자</span>
                         </div>
                       </th>
                       
@@ -4667,6 +4667,30 @@ const fetchBuyOrders = async () => {
                                 </span>
                               </div>
 
+
+                              {/* wallet address */}
+                              <div className="flex flex-row items-center gap-2">
+                                <Image
+                                  src="/icon-shield.png"
+                                  alt="Shield"
+                                  width={20}
+                                  height={20}
+                                  className="rounded-sm w-5 h-5"
+                                />
+                                <button
+                                  className="text-sm text-blue-600 font-semibold
+                                  underline
+                                  "
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.walletAddress);
+                                    toast.success(Copied_Wallet_Address);
+                                  }}
+                                >
+                                  {item.walletAddress.substring(0, 6)}...{item.walletAddress.substring(item.walletAddress.length - 4)}
+                                </button>
+                              </div>
+
+
                               {/* buyer info */}
 
 
@@ -4695,29 +4719,6 @@ const fetchBuyOrders = async () => {
                                 </span>
                               </div>
 
-
-                            </div>
-
-                            {/* wallet address */}
-                            <div className="flex flex-row items-center gap-2">
-                              <Image
-                                src="/icon-shield.png"
-                                alt="Shield"
-                                width={20}
-                                height={20}
-                                className="rounded-sm w-5 h-5"
-                              />
-                              <button
-                                className="text-sm text-blue-600 font-semibold
-                                underline
-                                "
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item.walletAddress);
-                                  toast.success(Copied_Wallet_Address);
-                                }}
-                              >
-                                {item.walletAddress.substring(0, 6)}...{item.walletAddress.substring(item.walletAddress.length - 4)}
-                              </button>
                             </div>
 
 
@@ -5264,6 +5265,34 @@ const fetchBuyOrders = async () => {
                               </div>
                             
 
+                              <span className="text-sm text-purple-600 font-semibold">
+                                {params.lang === 'ko' ? (
+                                  <p>{
+                                    new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                    ) :
+                                    new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                    ) : (
+                                      ' ' + Math.floor((new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                    )
+                                  }</p>
+                                ) : (
+                                  <p>{
+                                    new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                    ) :
+                                    new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                    ) : (
+                                      ' ' + Math.floor((new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                    )
+                                  }</p>
+                                )}
+                              </span>
+
+
+
 
                             </div>
                           )}
@@ -5304,6 +5333,35 @@ const fetchBuyOrders = async () => {
                                 </div>
 
                               </div>
+
+
+
+                                <span className="text-sm text-purple-600 font-semibold">
+                                  {params.lang === 'ko' ? (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                      ) :
+                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                      )
+                                    }</p>
+                                  ) : (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                      ) :
+                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                      )
+                                    }</p>
+                                  )}
+                                </span>
+
 
 
                             </div>
@@ -5589,15 +5647,6 @@ const fetchBuyOrders = async () => {
 
                                 )}
                                 */}
-
-
-
-                                
-
-
-
-
-
 
 
                                 {
