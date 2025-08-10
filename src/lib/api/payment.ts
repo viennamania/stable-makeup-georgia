@@ -220,7 +220,7 @@ export async function getAllPaymentsByStorecode(
       'settlement.paymentAmount': 1,
       'settlement.settlementAmount': 1,
       'settlement.feeAmount': 1,
-      'settlement.dealerAmount': 1,
+      'settlement.agentFeeAmount': 1,
       'settlement.status': 1,
     })
     .sort({ createdAt: -1 })
