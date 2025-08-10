@@ -3652,7 +3652,7 @@ const fetchBuyOrders = async () => {
                       </div>
 
                       <div className="
-                        w-32
+                        w-40
                         flex flex-row gap-2 items-center justify-between
                       ">
                         <Image
@@ -3678,7 +3678,7 @@ const fetchBuyOrders = async () => {
                         오늘 수수료 차감량
                       </span>
                       <div className="
-                        w-32
+                        w-40
                         flex flex-row gap-2 items-center justify-between
                       ">
                         <Image
@@ -4348,7 +4348,7 @@ const fetchBuyOrders = async () => {
 
                       <th className="p-2">
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <span>거래번호</span>
+                          <span>P2P 거래번호</span>
                           <span>거래일시</span>
                         </div>
                       </th>
@@ -4861,7 +4861,7 @@ const fetchBuyOrders = async () => {
                         <td className="p-2">
 
                           <div className="
-                            w-52
+                            w-52     
                             flex flex-row items-start justify-start gap-2">
 
                             {/* status */}
@@ -5220,8 +5220,8 @@ const fetchBuyOrders = async () => {
 
                           {item?.status === 'paymentConfirmed' && (
                             <div className="
-                              w-32
-                              flex flex-col gap-2 items-center justify-center">
+                              w-28
+                              flex flex-col gap-2 items-end justify-center">
                               <div className="flex flex-row gap-2 items-center justify-center">
                                 <Image
                                   src="/icon-payaction.png"
@@ -5314,9 +5314,8 @@ const fetchBuyOrders = async () => {
 
 
                         <td className="p-2">
-                          <div className="w-full flex flex-col gap-2 items-center justify-center">
-
-
+                          <div className="
+                            w-40 flex flex-col gap-2 items-center justify-center">
                           {
                             user?.seller &&
                             item.status === 'ordered'  && (
@@ -5400,19 +5399,6 @@ const fetchBuyOrders = async () => {
                             </div>
 
                           )}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -6049,28 +6035,35 @@ const fetchBuyOrders = async () => {
 
                               }}
                             >
-                              <div className="flex flex-row gap-2 items-center justify-start ml-2">
-                                <Image
-                                  src={`/token-usdt-icon.png`}
-                                  alt="USDT Logo"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <Image
-                                  src={`/logo-chain-${chain}.png`}
-                                  alt={`${chain} Logo`}
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm">
-                                  판매코인(USDT) 전송내역
-                                </span>
+                              <div className="flex flex-col gap-2 items-start justify-start ml-2">
+                                <div className="flex flex-col gap-1 items-start justify-start">
+                                  <span className="text-sm">
+                                    판매코인(USDT)
+                                  </span>
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <Image
+                                      src={`/token-usdt-icon.png`}
+                                      alt="USDT Logo"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-green-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}>
+                                      {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-zinc-500">
+                                    전송내역
+                                  </span>
+                                </div>
                               </div>
+                              {/* chain logo */}
                               <Image
-                                src="/icon-share.png"
-                                alt="Share Icon"
+                                src={`/logo-chain-${chain}.png`}
+                                alt={`${chain} Logo`}
                                 width={20}
                                 height={20}
                                 className="w-5 h-5"
@@ -6154,9 +6147,10 @@ const fetchBuyOrders = async () => {
                                   }
                                 </span>
                               </div>
+                              {/* chain logo */}
                               <Image
-                                src="/icon-share.png"
-                                alt="Share Icon"
+                                src={`/logo-chain-${chain}.png`}
+                                alt={`${chain} Logo`}
                                 width={20}
                                 height={20}
                                 className="w-5 h-5"
@@ -6181,14 +6175,16 @@ const fetchBuyOrders = async () => {
                             {item?.settlement && (
 
                               <div className="w-full flex flex-row gap-2 items-center justify-start">
-
                                 <Image
-                                  src="/icon-settlement-completed.png"
-                                  alt="Settlement Completed"
+                                  src={item?.store?.storeLogo || '/icon-store.png'}
+                                  alt="Store Logo"
                                   width={30}
                                   height={30}
                                   className="w-6 h-6 rounded-lg"
                                 />
+                                <span className="text-sm font-semibold text-zinc-500">
+                                  {item?.store?.storeName}
+                                </span>
                                 <span className="text-sm font-semibold text-zinc-500">
                                   가맹점 결제 및 정산완료
                                 </span>
@@ -6206,11 +6202,6 @@ const fetchBuyOrders = async () => {
 
                                   <div className="w-full flex flex-row gap-2 items-center justify-center">
                                     <span className="
-                                    w-16
-                                    text-sm text-zinc-500">
-                                      가맹점
-                                    </span>
-                                    <span className="
                                     w-14 text-end
                                     text-sm text-zinc-500"
                                       style={{
@@ -6218,7 +6209,7 @@ const fetchBuyOrders = async () => {
                                       }}>
                                       {Number(
                                         100 - (item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0) - (item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3)
-                                      ).toFixed(3)
+                                      ).toFixed(2)
                                       }%
                                     </span>
                                   </div>
@@ -6265,117 +6256,143 @@ const fetchBuyOrders = async () => {
                               {item?.settlement ? (
 
                                 <div className="flex flex-row gap-2 items-center justify-center">
-                                  <button
-                                    className="
-                                    w-32
-                                    flex flex-col gap-2 items-center justify-center
-                                    bg-purple-500 text-white px-2 py-1 rounded-md hover:bg-purple-600
-                                    text-sm
-                                    transition duration-300 ease-in-out
-                                    transform hover:scale-105
-                                    hover:shadow-lg
-                                    hover:shadow-purple-500/50
-                                    hover:cursor-pointer
-                                    hover:transition-transform
-                                    hover:duration-300
-                                    hover:ease-in-out
-
-                                    "
-
-                                    onClick={() => {
-                                      window.open(
-                                        //`https://arbiscan.io/tx/${item.settlement.txid}`,
-
-                                        chain === 'ethereum' ? `https://etherscan.io/tx/${item.settlement.txid}`
-                                        : chain === 'polygon' ? `https://polygonscan.com/tx/${item.settlement.txid}`
-                                        : chain === 'arbitrum' ? `https://arbiscan.io/tx/${item.settlement.txid}`
-                                        : chain === 'bsc' ? `https://bscscan.com/tx/${item.settlement.txid}`
-                                        : `https://arbiscan.io/tx/${item.settlement.txid}`,
-
-                                        '_blank'
-                                      );
-                                    }}
-                                  >
-
-
-                                    <div className="flex flex-col gap-2 items-end justify-center"
-                                      style={{
-                                        fontFamily: 'monospace',
-                                      }}
-                                    >
-                                      <div className="flex flex-row gap-1 items-center justify-center">
-                                        <Image
-                                          src="/icon-tether.png"
-                                          alt="Settlement Tether"
-                                          width={20}
-                                          height={20}
-                                          className="w-5 h-5"
-                                        />
-                                        <span>
-                                          {Number(item?.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        </span>
-                                      </div>
-                                      {/*
-                                      <span>
-                                        {
-                                          item?.settlement?.agentFeeAmount ?
-                                          item?.settlement?.agentFeeAmount?.toLocaleString() + ' USDT'
-                                          : '0 USDT'
-                                        }
-                                        {' '}
-                                        {
-                                          item?.settlement?.agentFeeWalletAddress &&
-                                        item?.settlement?.agentFeeWalletAddress?.slice(0, 5) + '...'}
-                                      </span>
-                                      <span>
-                                        {item?.settlement?.feeAmount?.toLocaleString() + ' USDT'}
-                                        {' '}
-                                        {
-                                          item?.settlement?.feeWalletAddress &&
-                                        item?.settlement?.feeWalletAddress?.slice(0, 5) + '...'}
-                                      </span>
-                                      */}
-
-                                    </div>
-
-                                  </button>
-
-
-                                  {/* https://arbiscan.io/token/0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9?a=0x27819bb55cB09A6Bc1E1a82e7A085A340981039A */}
-                                  <div className="flex flex-row items-center justify-center gap-1">
-                                    <Image
-                                      src="/icon-shield.png"
-                                      alt="Settlement Shield"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5"
-                                    />
+                                  <div className="flex flex-col gap-2 items-center justify-center">
                                     <button
                                       className="
-                                        text-sm text-blue-600 underline font-semibold
-                                        hover:text-blue-800
-                                        hover:cursor-pointer
-                                        transition-all duration-200 ease-in-out
-                                        hover:scale-105
-                                        hover:shadow-lg
-                                        hover:shadow-blue-500/50
+                                      w-32
+                                      flex flex-col gap-2 items-center justify-center
+                                      bg-purple-500 text-white px-2 py-1 rounded-md hover:bg-purple-600
+                                      text-sm
+                                      transition duration-300 ease-in-out
+                                      transform hover:scale-105
+                                      hover:shadow-lg
+                                      hover:shadow-purple-500/50
+                                      hover:cursor-pointer
+                                      hover:transition-transform
+                                      hover:duration-300
+                                      hover:ease-in-out
+
                                       "
+
                                       onClick={() => {
                                         window.open(
-                                          chain === 'ethereum' ? `https://etherscan.io/token/${ethereumContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
-                                          : chain === 'polygon' ? `https://polygonscan.com/token/${polygonContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
-                                          : chain === 'arbitrum' ? `https://arbiscan.io/token/${arbitrumContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
-                                          : chain === 'bsc' ? `https://bscscan.com/token/${bscContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
-                                          : `https://arbiscan.io/token/${item?.settlement?.settlementWalletAddress}`,
+                                          //`https://arbiscan.io/tx/${item.settlement.txid}`,
+
+                                          chain === 'ethereum' ? `https://etherscan.io/tx/${item.settlement.txid}`
+                                          : chain === 'polygon' ? `https://polygonscan.com/tx/${item.settlement.txid}`
+                                          : chain === 'arbitrum' ? `https://arbiscan.io/tx/${item.settlement.txid}`
+                                          : chain === 'bsc' ? `https://bscscan.com/tx/${item.settlement.txid}`
+                                          : `https://arbiscan.io/tx/${item.settlement.txid}`,
+
                                           '_blank'
                                         );
                                       }}
                                     >
-                                        {
-                                          item?.settlement?.settlementWalletAddress &&
-                                          item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'
-                                        }
+
+
+                                      <div className="flex flex-col gap-2 items-end justify-center"
+                                        style={{
+                                          fontFamily: 'monospace',
+                                        }}
+                                      >
+                                        <div className="flex flex-row gap-1 items-center justify-center">
+                                          <Image
+                                            src="/icon-tether.png"
+                                            alt="Settlement Tether"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                          />
+                                          <span>
+                                            {Number(item?.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                          </span>
+                                        </div>
+                                        {/*
+                                        <span>
+                                          {
+                                            item?.settlement?.agentFeeAmount ?
+                                            item?.settlement?.agentFeeAmount?.toLocaleString() + ' USDT'
+                                            : '0 USDT'
+                                          }
+                                          {' '}
+                                          {
+                                            item?.settlement?.agentFeeWalletAddress &&
+                                          item?.settlement?.agentFeeWalletAddress?.slice(0, 5) + '...'}
+                                        </span>
+                                        <span>
+                                          {item?.settlement?.feeAmount?.toLocaleString() + ' USDT'}
+                                          {' '}
+                                          {
+                                            item?.settlement?.feeWalletAddress &&
+                                          item?.settlement?.feeWalletAddress?.slice(0, 5) + '...'}
+                                        </span>
+                                        */}
+
+                                      </div>
+
                                     </button>
+
+                                    {/* https://arbiscan.io/token/0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9?a=0x27819bb55cB09A6Bc1E1a82e7A085A340981039A */}
+                                    <div className="flex flex-row items-center justify-center gap-1">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Settlement Shield"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                      />
+                                      <button
+                                        className="
+                                          text-sm text-blue-600 underline font-semibold
+                                          hover:text-blue-800
+                                          hover:cursor-pointer
+                                          transition-all duration-200 ease-in-out
+                                          hover:scale-105
+                                          hover:shadow-lg
+                                          hover:shadow-blue-500/50
+                                        "
+                                        onClick={() => {
+                                          window.open(
+                                            chain === 'ethereum' ? `https://etherscan.io/token/${ethereumContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                            : chain === 'polygon' ? `https://polygonscan.com/token/${polygonContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                            : chain === 'arbitrum' ? `https://arbiscan.io/token/${arbitrumContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                            : chain === 'bsc' ? `https://bscscan.com/token/${bscContractAddressUSDT}?a=${item?.settlement?.settlementWalletAddress}`
+                                            : `https://arbiscan.io/token/${item?.settlement?.settlementWalletAddress}`,
+                                            '_blank'
+                                          );
+                                        }}
+                                      >
+                                          {
+                                            item?.settlement?.settlementWalletAddress &&
+                                            item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'
+                                          }
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="
+                                  w-40 
+                                  flex flex-col gap-2 items-end justify-center"
+                                  >
+                                    <div className="flex flex-row gap-1 items-center justify-center">
+                                      <Image
+                                        src="/icon-user.png"
+                                        alt="User Icon"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                      />
+                                      <span className="text-lg font-semibold text-blue-600">
+                                        {item.nickname}
+                                      </span>
+                                    </div>
+                                    <span className="text-sm text-blue-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}
+                                    >
+                                      {Number(item.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원 충전
+                                    </span>
                                   </div>
 
                                 </div>
