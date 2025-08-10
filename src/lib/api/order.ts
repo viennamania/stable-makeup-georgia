@@ -6639,7 +6639,7 @@ export async function getCollectOrdersForUser(
     searchWithdrawDepositName?: string;
   }
 
-): Promise<ResultProps> {
+): Promise<any> {
 
   console.log('getCollectOrdersForUser fromDate: ' + fromDate);
   console.log('getCollectOrdersForUser toDate: ' + toDate);
@@ -6684,8 +6684,18 @@ export async function getCollectOrdersForUser(
         //status: { $ne: 'paymentConfirmed' },
   
         storecode: storecode,
-
         privateSale: true,
+
+
+        // check buyer.depositName is exist and where searchWithdrawDepositName is store.buyer.depositName
+
+        //'buyer.depositName': { $regex: searchWithdrawDepositName, $options: 'i' },
+
+        // when 'buyer.depositName' is not '', then search by 'buyer.depositName'
+        'buyer.depositName': { $exists: true, $ne: '', $regex: searchWithdrawDepositName, $options: 'i' },
+  
+
+
 
         createdAt: { $gte: fromDateValue, $lt: toDateValue },
 
@@ -6726,12 +6736,14 @@ export async function getCollectOrdersForUser(
 
 
         // check if store.bankInfo.accountHolder is exist and where searchWithdrawDepositName is store.bankInfo.accountHolder
+        /*
         ...(searchWithdrawDepositName && searchWithdrawDepositName.trim() !== '' ? {
           $or: [
             { 'store.bankInfo.accountHolder': { $regex: searchWithdrawDepositName, $options: 'i' } },
             { 'buyer.depositName': { $regex: searchWithdrawDepositName, $options: 'i' } },
           ],
         } : {}),
+         */
 
 
       },
@@ -6739,6 +6751,11 @@ export async function getCollectOrdersForUser(
       //{ projection: { _id: 0, emailVerified: 0 } }
   
     ).sort({ createdAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
+
+
+    //console.log('getCollectOrdersForUser results: ' + JSON.stringify(results));
+
+
   
 
     const totalCount = await collection.countDocuments(
@@ -6747,6 +6764,8 @@ export async function getCollectOrdersForUser(
 
         storecode: storecode,
         privateSale: true,
+
+        'buyer.depositName': { $exists: true, $ne: '', $regex: searchWithdrawDepositName, $options: 'i' },
 
         // if store.bankInfo.accountHolder is exist, and searchWithdrawDepositName is not empty, then search by store.bankInfo.accountHolder
         // or buyer.depositName is exist, and searchWithdrawDepositName is not empty, then search by buyer.depositName
@@ -6764,8 +6783,45 @@ export async function getCollectOrdersForUser(
       }
     );
 
+    
+    // totalClearanceCount
+    // totalClearanceAmount
+    // totalClearanceAmountKRW
+
+    const totalClearance = await collection.aggregate([
+      {
+        $match: {
+          storecode: storecode,
+          privateSale: true,
+          status: 'paymentConfirmed',
+          'buyer.depositName': { $exists: true, $ne: '', $regex: searchWithdrawDepositName, $options: 'i' },
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: null,
+
+          totalClearanceCount: { $sum: 1 },
+          totalClearanceAmount: { $sum: '$krwAmount' },
+          totalClearanceAmountKRW: { $sum: { $toDouble: '$krwAmount' } }, // convert to double
+
+        }
+      }
+    ]).toArray();
+
+    const totalClearanceCount = totalClearance.length > 0 ? totalClearance[0].totalClearanceCount : 0;
+    const totalClearanceAmount = totalClearance.length > 0 ? totalClearance[0].totalClearanceAmount : 0;
+    const totalClearanceAmountKRW = totalClearance.length > 0 ? totalClearance[0].totalClearanceAmountKRW : 0;
+
+    
+
     return {
       totalCount: totalCount,
+      totalClearanceCount: totalClearanceCount,
+      totalClearanceAmount: totalClearanceAmount,
+      totalClearanceAmountKRW: totalClearanceAmountKRW,
+      //totalKrwAmount: totalKrwAmount
       orders: results,
     };
 
@@ -7584,7 +7640,7 @@ export async function getEscrowBalanceByStorecode(
     const latestEscrowDatePlusOne = 
       new Date(new Date(latestEscrowDate).getTime() + 24 * 60 * 60 * 1000).toISOString();
 
-    console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
+    ///console.log('getEscrowBalanceByStorecode latestEscrowDatePlusOne: ' + latestEscrowDatePlusOne);
     // 2025-07-28T15:00:00.000Z
     // getEscrowBalanceByStorecode latestEscrowDatePlusOne: 2025-08-08T15:00:00.000Z
 

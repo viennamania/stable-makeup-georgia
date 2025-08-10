@@ -119,6 +119,8 @@ interface BuyOrder {
   settlement: any;
 
   store: any;
+
+
 }
 
 
@@ -835,6 +837,10 @@ export default function Index({ params }: any) {
 
 
   const [totalCount, setTotalCount] = useState(0);
+
+  const [totalClearanceCount, setTotalClearanceCount] = useState(0);
+  const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
+  const [totalClearanceAmountKRW, setTotalClearanceAmountKRW] = useState(0);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
@@ -1009,6 +1015,10 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setTotalClearanceCount(data.result.totalClearanceCount);
+                setTotalClearanceAmount(data.result.totalClearanceAmount);
+                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
             })
 
 
@@ -1125,6 +1135,10 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setTotalClearanceCount(data.result.totalClearanceCount);
+            setTotalClearanceAmount(data.result.totalClearanceAmount);
+            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
           }
         });
 
@@ -1391,6 +1405,10 @@ export default function Index({ params }: any) {
                   setBuyOrders(data.result.orders);
 
                   setTotalCount(data.result.totalCount);
+
+                  setTotalClearanceCount(data.result.totalClearanceCount);
+                  setTotalClearanceAmount(data.result.totalClearanceAmount);
+                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
 
 
@@ -1499,6 +1517,10 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setTotalClearanceCount(data.result.totalClearanceCount);
+                setTotalClearanceAmount(data.result.totalClearanceAmount);
+                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
             })
 
 
@@ -1723,6 +1745,10 @@ export default function Index({ params }: any) {
               setBuyOrders(data.result.orders);
 
               setTotalCount(data.result.totalCount);
+
+              setTotalClearanceCount(data.result.totalClearanceCount);
+              setTotalClearanceAmount(data.result.totalClearanceAmount);
+              setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
           })
 
 
@@ -1833,6 +1859,10 @@ export default function Index({ params }: any) {
                   setBuyOrders(data.result.orders);
 
                   setTotalCount(data.result.totalCount);
+
+                  setTotalClearanceCount(data.result.totalClearanceCount);
+                  setTotalClearanceAmount(data.result.totalClearanceAmount);
+                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
 
               toast.success(Payment_has_been_confirmed);
@@ -2001,6 +2031,10 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setTotalClearanceCount(data.result.totalClearanceCount);
+            setTotalClearanceAmount(data.result.totalClearanceAmount);
+            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
         })
 
       }
@@ -2169,6 +2203,9 @@ export default function Index({ params }: any) {
 
     setTotalCount(data.result.totalCount);
     
+    setTotalClearanceCount(data.result.totalClearanceCount);
+    setTotalClearanceAmount(data.result.totalClearanceAmount);
+    setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
 
   }
@@ -2388,7 +2425,7 @@ export default function Index({ params }: any) {
 
     fetchData();
 
-  } , [params.center]);
+  } , [params.center, address]);
 
 
 
@@ -2417,7 +2454,7 @@ export default function Index({ params }: any) {
 
 
 
-
+/*
 const [tradeSummary, setTradeSummary] = useState({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -2512,7 +2549,7 @@ const [tradeSummary, setTradeSummary] = useState({
     };
   }, [address, store]);
     
-
+  */
 
 
 
@@ -2578,6 +2615,8 @@ const [tradeSummary, setTradeSummary] = useState({
 
     setAllBuyer(data.result.users);
     setTotalCount(data.result.totalCount);
+
+
 
     setFetchingAllBuyer(false);
 
@@ -3750,11 +3789,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                 <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-5">
 
-         
                   <div className="hidden flex-row items-start gap-3">
-
-
-
 
                     {address && !loadingUser && (
 
@@ -3927,6 +3962,43 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
                 </div>
+
+              {/* withdrawalBankInfo */}
+              {/* 가맹점 출금 통장 정보 */}
+              {address && store?.withdrawalBankInfo && (
+                <div className="mt-4 flex flex-col items-start gap-2 w-full">
+
+                  <div className="flex flex-row items-start gap-2">
+                    <Image
+                      src="/icon-bank.png"
+                      alt="Bank"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <div className="text-sm text-zinc-500">
+                      가맹점 출금 통장 정보
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row items-start gap-2 text-zinc-500">
+
+                    <span className="text-lg font-semibold text-zinc-500">
+                      {store.withdrawalBankInfo.bankName}
+                    </span>
+                    <span className="text-lg font-semibold text-zinc-500">
+                      {store.withdrawalBankInfo.accountNumber}
+                    </span>
+                    <span className="text-lg font-semibold text-zinc-500">
+                      {store.withdrawalBankInfo.accountHolder}
+                    </span>
+
+                  </div>
+
+                </div>
+              )}
+
+
 
 
               <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-5 mt-4">
@@ -4409,97 +4481,6 @@ const [tradeSummary, setTradeSummary] = useState({
                   p-4 rounded-lg shadow-md
                   ">
 
-                  {/*
-                  <div className="w-full xl:w-1/3 flex flex-row items-start justify-between gap-2 pl-4 pr-4">
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 거래수(건)</div>
-                      <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalCount?.toLocaleString()} 건
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 거래금액(원)</div>
-                      <div className="text-sm font-semibold text-zinc-500">
-                        <span className="text-xl text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {tradeSummary.totalKrwAmount?.toLocaleString()}
-                        </span>{' '}원
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 거래량(USDT)</div>
-                      <div className="text-sm font-semibold text-zinc-500">
-                        <span className="text-xl text-green-600"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {tradeSummary.totalUsdtAmount?.toLocaleString()}
-                        </span>{' '}
-                          USDT
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-                  <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
-                  */}
-
-                  <div className="w-full xl:w-1/3
-                    flex flex-row items-start justify-between gap-2 pl-4 pr-4">
-                    
-                    {/*
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 정산수(건)</div>
-                      <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalSettlementCount?.toLocaleString()} 건
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 정산금액(원)</div>
-                      <div className="text-sm font-semibold text-zinc-500">
-                        <span className="text-xl text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
-                        </span>{' '}
-                          원
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 정산량(USDT)</div>
-                      <div className="text-sm font-semibold text-zinc-500">
-                        <span className="text-xl text-green-600"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {tradeSummary.totalSettlementAmount?.toLocaleString()}
-                        </span>{' '}
-                          USDT
-                      </div>
-                    </div>
-                   
-
-
-                    
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 수수료금액(원)</div>
-                      <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalFeeAmountKRW?.toLocaleString()} 원
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 수수료수량(USDT)</div>
-                      <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalFeeAmount?.toLocaleString()} USDT
-                      </div>
-                    </div>
-                    */}
-                    
-
-                  </div>
-
 
                   {/* divider */}
                   
@@ -4511,7 +4492,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">총 판매주문수(건)</div>
                       <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalClearanceCount?.toLocaleString()} 건
+                        {totalClearanceCount?.toLocaleString()} 건
                       </div>
                     </div>
 
@@ -4521,7 +4502,7 @@ const [tradeSummary, setTradeSummary] = useState({
                         <span className="text-xl text-yellow-600"
                           style={{ fontFamily: 'monospace' }}
                         >
-                          {tradeSummary.totalClearanceAmount?.toLocaleString()}
+                          {totalClearanceAmountKRW?.toLocaleString()}
                         </span>{' '}
                           원
                       </div>
@@ -4532,7 +4513,7 @@ const [tradeSummary, setTradeSummary] = useState({
                         <span className="text-xl text-green-600"
                           style={{ fontFamily: 'monospace' }}
                         >
-                          {tradeSummary.totalClearanceAmountUSDT?.toLocaleString()}
+                          {totalClearanceAmount?.toLocaleString()}
                         </span>{' '}
                           USDT
                       </div>
