@@ -6532,7 +6532,7 @@ export async function getCollectOrdersForSeller(
     toDate?: string;
   }
 
-): Promise<ResultProps> {
+): Promise<any> {
 
   console.log('getCollectOrdersForSeller fromDate: ' + fromDate);
   console.log('getCollectOrdersForSeller toDate: ' + toDate);
@@ -6576,6 +6576,10 @@ export async function getCollectOrdersForSeller(
 
         privateSale: true,
 
+
+        'buyer.depositName': { $eq: '' },
+
+
         createdAt: { $gte: fromDateValue, $lt: toDateValue },
 
       },
@@ -6593,12 +6597,51 @@ export async function getCollectOrdersForSeller(
         storecode: storecode,
         privateSale: true,
 
+        'buyer.depositName': { $eq: '' },
+
         createdAt: { $gte: fromDateValue, $lt: toDateValue },
       }
     );
 
+
+    // totalClearanceCount
+    // totalclearanceAmount
+    // totalClearanceAmountKRW
+    const totalClearance = await collection.aggregate([
+      {
+        $match: {
+          storecode: storecode,
+          privateSale: true,
+          status: 'paymentConfirmed',
+
+          'buyer.depositName': { $eq: '' },
+
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: null,
+
+          totalClearanceCount: { $sum: 1 },
+          totalClearanceAmount: { $sum: '$usdtAmount' },
+          totalClearanceAmountKRW: { $sum: { $toDouble: '$krwAmount' } }, // convert to double
+
+        }
+      }
+    ]).toArray();
+
+    const totalClearanceCount = totalClearance.length > 0 ? totalClearance[0].totalClearanceCount : 0;
+    const totalClearanceAmount = totalClearance.length > 0 ? totalClearance[0].totalClearanceAmount : 0;
+    const totalClearanceAmountKRW = totalClearance.length > 0 ? totalClearance[0].totalClearanceAmountKRW : 0;
+
+    
+
     return {
       totalCount: totalCount,
+      totalClearanceCount: totalClearanceCount,
+      totalClearanceAmount: totalClearanceAmount,
+      totalClearanceAmountKRW: totalClearanceAmountKRW,
       orders: results,
     };
 
@@ -6641,10 +6684,10 @@ export async function getCollectOrdersForUser(
 
 ): Promise<any> {
 
-  console.log('getCollectOrdersForUser fromDate: ' + fromDate);
-  console.log('getCollectOrdersForUser toDate: ' + toDate);
+  //console.log('getCollectOrdersForUser fromDate: ' + fromDate);
+  //console.log('getCollectOrdersForUser toDate: ' + toDate);
 
-  console.log('searchWithdrawDepositName: ' + searchWithdrawDepositName);
+  //console.log('searchWithdrawDepositName: ' + searchWithdrawDepositName);
 
 
 

@@ -805,6 +805,11 @@ export default function Index({ params }: any) {
 
 
   const [totalCount, setTotalCount] = useState(0);
+
+  const [totalClearanceCount, setTotalClearanceCount] = useState(0);
+  const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
+  const [totalClearanceAmountKRW, setTotalClearanceAmountKRW] = useState(0);
+      
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
@@ -976,6 +981,10 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setTotalClearanceCount(data.result.totalClearanceCount);
+                setTotalClearanceAmount(data.result.totalClearanceAmount);
+                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
             })
 
 
@@ -1094,6 +1103,10 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setTotalClearanceCount(data.result.totalClearanceCount);
+            setTotalClearanceAmount(data.result.totalClearanceAmount);
+            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
           }
         });
 
@@ -1354,6 +1367,10 @@ export default function Index({ params }: any) {
                   setBuyOrders(data.result.orders);
 
                   setTotalCount(data.result.totalCount);
+
+                  setTotalClearanceCount(data.result.totalClearanceCount);
+                  setTotalClearanceAmount(data.result.totalClearanceAmount);
+                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
 
 
@@ -1458,6 +1475,10 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setTotalClearanceCount(data.result.totalClearanceCount);
+                setTotalClearanceAmount(data.result.totalClearanceAmount);
+                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
             })
 
 
@@ -1678,6 +1699,10 @@ export default function Index({ params }: any) {
               setBuyOrders(data.result.orders);
 
               setTotalCount(data.result.totalCount);
+
+              setTotalClearanceCount(data.result.totalClearanceCount);
+              setTotalClearanceAmount(data.result.totalClearanceAmount);
+              setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
           })
 
 
@@ -1765,6 +1790,10 @@ export default function Index({ params }: any) {
                   setBuyOrders(data.result.orders);
 
                   setTotalCount(data.result.totalCount);
+
+                  setTotalClearanceCount(data.result.totalClearanceCount);
+                  setTotalClearanceAmount(data.result.totalClearanceAmount);
+                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
 
               toast.success(Payment_has_been_confirmed);
@@ -1934,6 +1963,10 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setTotalClearanceCount(data.result.totalClearanceCount);
+            setTotalClearanceAmount(data.result.totalClearanceAmount);
+            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
         })
 
       }
@@ -2099,6 +2132,10 @@ export default function Index({ params }: any) {
       setBuyOrders(data.result.orders);
 
       setTotalCount(data.result.totalCount);
+
+      setTotalClearanceCount(data.result.totalClearanceCount);
+      setTotalClearanceAmount(data.result.totalClearanceAmount);
+      setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
       
     }
 
@@ -3778,7 +3815,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">총 판매주문수(건)</div>
                       <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalClearanceCount?.toLocaleString()} 건
+                        {totalClearanceCount?.toLocaleString()} 건
                       </div>
                     </div>
 
@@ -3788,7 +3825,7 @@ const [tradeSummary, setTradeSummary] = useState({
                         <span className="text-xl text-yellow-600"
                           style={{ fontFamily: 'monospace' }}
                         >
-                          {tradeSummary.totalClearanceAmount?.toLocaleString()}
+                          {totalClearanceAmountKRW?.toLocaleString()}
                         </span>{' '}
                           원
                       </div>
@@ -3799,7 +3836,7 @@ const [tradeSummary, setTradeSummary] = useState({
                         <span className="text-xl text-green-600"
                           style={{ fontFamily: 'monospace' }}
                         >
-                          {tradeSummary.totalClearanceAmountUSDT?.toLocaleString()}
+                          {totalClearanceAmount?.toLocaleString()}
                         </span>{' '}
                           USDT
                       </div>
