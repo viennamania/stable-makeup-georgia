@@ -4364,9 +4364,9 @@ const fetchBuyOrders = async () => {
                           w-32  
                           flex flex-col items-start justify-start gap-2">
                           
-                          <div className="flex flex-col gap-2 items-center justify-start">
+                          <div className="w-full flex flex-col gap-2 items-center justify-start">
 
-                            <div className="flex flex-row items-center gap-2">
+                            <div className="w-full flex flex-row items-center justify-start gap-2">
                               <Image
                                 src={item?.buyer?.avatar || "/icon-buyer.png"}
                                 alt="Avatar"
@@ -4387,7 +4387,7 @@ const fetchBuyOrders = async () => {
                             </div>
 
                             {item?.paymentMethod === 'bank' && (
-                              <div className="flex flex-row items-start justify-start gap-2">
+                              <div className="w-full flex flex-row items-center justify-start gap-2">
                                 <span className="text-lg text-yellow-600 font-bold">
                                   {
                                     //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
