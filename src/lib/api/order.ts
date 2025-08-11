@@ -7018,12 +7018,12 @@ export async function updateBuyOrderSettlement(
     updater,
     orderId,
     settlement,
-    storecode,
+    ///////////storecode,
   }: {
     updater: string; // who is updating the settlement
     orderId: string;
     settlement: any;
-    storecode: string;
+    ////////////storecode: string;
   }
 ): Promise<boolean> {
   const client = await clientPromise;
@@ -7040,6 +7040,18 @@ export async function updateBuyOrderSettlement(
 
 
   if (result.modifiedCount === 1) {
+
+    // get storecode from buyorder
+    const buyOrder = await collection.findOne<any>(
+      { _id: new ObjectId(orderId) },
+      { projection: { storecode: 1 } }
+    );
+    if (!buyOrder || !buyOrder.storecode) {
+      console.log('updateBuyOrderSettlement: storecode not found in buyorder');
+      return false;
+    }
+    const storecode = buyOrder.storecode;
+    console.log('updateBuyOrderSettlement: storecode found in buyorder: ' + storecode);
 
 
     const collectionBuyorders = client.db('georgia').collection('buyorders');
@@ -7085,7 +7097,7 @@ export async function updateBuyOrderSettlement(
       ]).toArray();
 
       const totalSettlementCount = totalSettlementAmountResult[0].totalSettlementCount;
-      
+
       const totalSettlementAmount = totalSettlementAmountResult[0].totalSettlementAmount;
       const totalSettlementAmountKRW = totalSettlementAmountResult[0].totalSettlementAmountKRW;
 

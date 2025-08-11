@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
       updater: updater, // who updates the settlement
       orderId: orderId,
       settlement: settlement,
-      storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder
+      /////////////storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder
     });
 
 
