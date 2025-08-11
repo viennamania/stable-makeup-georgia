@@ -7155,6 +7155,7 @@ export async function updateBuyOrderSettlement(
 
       const collectionAgents = client.db('georgia').collection('agents');
 
+      /*
       // totalSettlementCount is count of all buyorders with settlement and agentcode
       const totalSettlementCount = await collectionBuyorders.countDocuments({
         agentcode: agentcode,
@@ -7162,6 +7163,8 @@ export async function updateBuyOrderSettlement(
         privateSale: { $ne: true }, // exclude privateSale orders
       });
       console.log("updateBuyOrderSettlement totalSettlementCount", totalSettlementCount);
+      */
+
       const totalSettlementAmountResult = await collectionBuyorders.aggregate([
         {
           $match: {
@@ -7173,17 +7176,17 @@ export async function updateBuyOrderSettlement(
         {
           $group: {
             _id: null,
+            totalSettlementCount: { $sum: 1 },
+
             totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
-
             totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
-
             totalFeeAmount: { $sum: "$settlement.feeAmount" },
-
             totalFeeAmountKRW: { $sum: { $toDouble: "$settlement.feeAmountKRW" } },
           }
         }
       ]).toArray();
 
+      const totalSettlementCount = totalSettlementAmountResult[0].totalSettlementCount;
       const totalSettlementAmount = totalSettlementAmountResult[0].totalSettlementAmount;
       const totalSettlementAmountKRW = totalSettlementAmountResult[0].totalSettlementAmountKRW;
       const totalFeeAmount = totalSettlementAmountResult[0].totalFeeAmount;
