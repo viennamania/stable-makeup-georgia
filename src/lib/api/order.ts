@@ -3400,7 +3400,11 @@ export async function buyOrderConfirmPayment(data: any) {
         //  { walletAddress: order.walletAddress, storecode: order.storecode, status: 'paymentConfirmed' }
         //);
         const totalPaymentConfirmed = await collection.aggregate([
-          { $match: { walletAddress: walletAddress, storecode: storecode, status: 'paymentConfirmed' } },
+          { $match: {
+            walletAddress: walletAddress,
+            storecode: storecode,
+            status: 'paymentConfirmed'
+          } },
           { $group: {
             _id: null,
             totalPaymentConfirmedCount: { $sum: 1 },
@@ -3424,6 +3428,8 @@ export async function buyOrderConfirmPayment(data: any) {
             }
           }
         );
+
+
 
       }
 
@@ -3465,9 +3471,11 @@ export async function buyOrderConfirmPayment(data: any) {
       const store = await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
+          
           totalPaymentConfirmedCount: totalPaymentConfirmed[0]?.totalPaymentConfirmedCount || 0,
           totalKrwAmount: totalPaymentConfirmed[0]?.totalKrwAmount || 0,
           totalUsdtAmount: totalPaymentConfirmed[0]?.totalUsdtAmount || 0,
+
           totalPaymentConfirmedClearanceCount: totalPaymentConfirmedClearance[0]?.totalPaymentConfirmedClearanceCount || 0,
           totalKrwAmountClearance: totalPaymentConfirmedClearance[0]?.totalKrwAmountClearance || 0,
           totalUsdtAmountClearance: totalPaymentConfirmedClearance[0]?.totalUsdtAmountClearance || 0,
@@ -7042,12 +7050,15 @@ export async function updateBuyOrderSettlement(
       const collectionStore = client.db('georgia').collection('stores');
 
       // totalSettlementCount is count of all buyorders with settlement and storecode
+      /*
       const totalSettlementCount = await collectionBuyorders.countDocuments({
           storecode: storecode,
           settlement: {$exists: true},
           privateSale: { $ne: true }, // exclude privateSale orders
       });
-      console.log("totalSettlementCount", totalSettlementCount);
+      //console.log("totalSettlementCount", totalSettlementCount);
+      */
+
       const totalSettlementAmountResult = await collectionBuyorders.aggregate([
           {
               $match: {
@@ -7059,6 +7070,7 @@ export async function updateBuyOrderSettlement(
           {
               $group: {
                   _id: null,
+                  totalSettlementCount: { $sum: 1 },
                   totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
                   totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
 
@@ -7072,6 +7084,8 @@ export async function updateBuyOrderSettlement(
           }
       ]).toArray();
 
+      const totalSettlementCount = totalSettlementAmountResult[0].totalSettlementCount;
+      
       const totalSettlementAmount = totalSettlementAmountResult[0].totalSettlementAmount;
       const totalSettlementAmountKRW = totalSettlementAmountResult[0].totalSettlementAmountKRW;
 

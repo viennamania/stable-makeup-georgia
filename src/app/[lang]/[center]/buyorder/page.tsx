@@ -4350,7 +4350,7 @@ const fetchBuyOrders = async () => {
                     <tr>
 
                       <th className="p-2">
-                        <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="flex flex-col items-start justify-center gap-2">
                           <span>P2P 거래번호</span>
                           <span>거래일시</span>
                         </div>
