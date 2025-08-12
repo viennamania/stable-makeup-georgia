@@ -6123,6 +6123,19 @@ const fetchBuyOrders = async () => {
                           )}
 
 
+                          {item?.settlement &&
+                          (!item?.transactionHash || item?.transactionHash === '0x') && (
+                            <div className="flex flex-row gap-2 items-center justify-center">
+                              <span className="text-sm text-zinc-500">
+                                txid 저장이 누락되었습니다.
+                              </span>
+                            </div>
+                          )}
+
+
+
+
+
                           {item.status === 'paymentConfirmed' &&
                           !item?.settlement &&
                           (!item?.transactionHash || item?.transactionHash === '0x') && (
