@@ -6053,9 +6053,8 @@ const fetchBuyOrders = async () => {
 
 
 
-                          {item?.transactionHash
-                          && item?.transactionHash !== '0x'
-                          && (
+                          {
+                          (item?.transactionHash && item?.transactionHash !== '0x') && (
                             <button
                               className="
                                 flex flex-row gap-2 items-center justify-between
@@ -6124,7 +6123,9 @@ const fetchBuyOrders = async () => {
                           )}
 
 
-                          {!item?.transactionHash || item?.transactionHash === '0x' && (
+                          {item.status === 'paymentConfirmed' &&
+                          !item?.settlement &&
+                          (!item?.transactionHash || item?.transactionHash === '0x') && (
                             <div className="flex flex-row gap-2 items-center justify-center">
                               <Image
                                 src="/loading.png"
