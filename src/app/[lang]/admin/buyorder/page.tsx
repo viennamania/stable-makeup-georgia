@@ -5175,7 +5175,7 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 rounded-full"
                                 />
                                 <span className="text-sm font-semibold text-zinc-500">
-                                  MKRW 에스크로
+                                  MKRW
                                 </span>
                               </div>
                             ) : (
@@ -5238,14 +5238,9 @@ const fetchBuyOrders = async () => {
                                   )}
                                 </span>
 
-
-
-
                               </div>
                               
-                            
                             )}
-
 
                           </div>
 
