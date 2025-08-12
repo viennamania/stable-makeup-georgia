@@ -4575,7 +4575,7 @@ const fetchBuyOrders = async () => {
                                 : item.paymentMethod === 'cash' ? '현금'
                                 : item.paymentMethod === 'crypto' ? '암호화폐'
                                 : item.paymentMethod === 'giftcard' ? '기프트카드'
-                                : item.paymentMethod === 'mkrw' ? 'MKRW 에스크로' : '기타'
+                                : item.paymentMethod === 'mkrw' ? 'MKRW' : '기타'
                                 }
                               </span>
                             </div>
