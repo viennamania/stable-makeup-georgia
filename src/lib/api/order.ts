@@ -3320,50 +3320,58 @@ export async function buyOrderConfirmPayment(data: any) {
 
   let result = null;
 
-  if (autoConfirmPayment) {
 
-    result = await collection.updateOne(
-      
-      { _id: new ObjectId(data.orderId+'') },
+  try {
+
+    if (autoConfirmPayment) {
+
+      result = await collection.updateOne(
+        
+        { _id: new ObjectId(data.orderId+'') },
 
 
-      { $set: {
-        status: 'paymentConfirmed',
-        paymentAmount: paymentAmount,
-        queueId: data.queueId,
-        transactionHash: data.transactionHash,
-        paymentConfirmedAt: new Date().toISOString(),
+        { $set: {
+          status: 'paymentConfirmed',
+          paymentAmount: paymentAmount,
+          queueId: data.queueId,
+          transactionHash: data.transactionHash,
+          paymentConfirmedAt: new Date().toISOString(),
 
-        autoConfirmPayment: autoConfirmPayment,
+          autoConfirmPayment: autoConfirmPayment,
 
-        escrowTransactionHash: data.escrowTransactionHash,
-        escrowTransactionConfirmedAt: new Date().toISOString(),
+          escrowTransactionHash: data.escrowTransactionHash,
+          escrowTransactionConfirmedAt: new Date().toISOString(),
 
-      } }
-    );
+        } }
+      );
 
-  } else {
+    } else {
 
-    result = await collection.updateOne(
-      
-      { _id: new ObjectId(data.orderId+'') },
+      result = await collection.updateOne(
+        
+        { _id: new ObjectId(data.orderId+'') },
 
-      { $set: {
-        status: 'paymentConfirmed',
-        paymentAmount: paymentAmount,
-        queueId: data.queueId,
-        transactionHash: data.transactionHash,
-        paymentConfirmedAt: new Date().toISOString(),
+        { $set: {
+          status: 'paymentConfirmed',
+          paymentAmount: paymentAmount,
+          queueId: data.queueId,
+          transactionHash: data.transactionHash,
+          paymentConfirmedAt: new Date().toISOString(),
 
-        escrowTransactionHash: data.escrowTransactionHash,
-        escrowTransactionConfirmedAt: new Date().toISOString(),
+          escrowTransactionHash: data.escrowTransactionHash,
+          escrowTransactionConfirmedAt: new Date().toISOString(),
 
-      } }
-    );
+        } }
+      );
 
+    }
+
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    return null;
   }
 
-
+  console.log('buyOrderConfirmPayment result: ' + JSON.stringify(result));
 
 
   if (result) {
@@ -3413,7 +3421,7 @@ export async function buyOrderConfirmPayment(data: any) {
           }}
         ]).toArray();
 
-        console.log('confirmPayment totalPaymentConfirmed: ' + JSON.stringify(totalPaymentConfirmed));
+        //console.log('confirmPayment totalPaymentConfirmed: ' + JSON.stringify(totalPaymentConfirmed));
 
 
         await userCollection.updateOne(

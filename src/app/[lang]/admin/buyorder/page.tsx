@@ -2158,6 +2158,7 @@ export default function Index({ params }: any) {
         if (transactionHash) {
 
 
+          //alert('USDT 전송이 완료되었습니다.');
 
 
           const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
