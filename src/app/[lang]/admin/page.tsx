@@ -2243,17 +2243,21 @@ export default function Index({ params }: any) {
 
 
 
-                  <div className="mt-5 flex flex-row gap-2 justify-between items-center">
-                    <Image
-                      src="/token-usdt-icon.png"
-                      alt="USDT"
-                      width={35}
-                      height={35}
-                      className="rounded-lg w-6 h-6"
-                    />
-                    <span className="w-20 text-sm text-zinc-600">
-                      내 테더 잔액
-                    </span>
+                  <div className="w-full mt-5 flex flex-col gap-2 justify-between items-center
+                    bg-green-50 p-2 rounded-lg">
+                    <div className="flex flex-row gap-2 justify-center items-center">
+                      <Image
+                        src="/token-usdt-icon.png"
+                        alt="USDT"
+                        width={35}
+                        height={35}
+                        className="rounded-lg w-6 h-6"
+                      />
+                      <span className="text-sm text-zinc-600">
+                        내 테더 잔액(USDT)
+                      </span>
+                    </div>
+
                     <div className="
                     w-40 flex flex-col items-end justify-center
                     text-4xl font-semibold text-green-600"
@@ -2261,8 +2265,6 @@ export default function Index({ params }: any) {
                     >
                       {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </div>
-                    <p className="w-14 text-sm text-zinc-800">USDT</p>
-
 
                     <button
                       disabled={!address}
@@ -2273,7 +2275,8 @@ export default function Index({ params }: any) {
                         );
 
                       }}
-                      className="flex bg-[#3167b4]
+                      className="w-full flex items-center justify-center
+                      bg-[#3167b4]
                       text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                     >
                       <span className="text-sm text-gray-100">
@@ -2294,17 +2297,21 @@ export default function Index({ params }: any) {
                   {mkrwBalance > 0 && (
 
 
-                    <div className="flex flex-row gap-2 justify-center items-center">
-                      <Image
-                        src="/token-mkrw-icon.png"
-                        alt="MKRW"
-                        width={35}
-                        height={35}
-                        className="rounded-lg w-6 h-6"
-                      />
-                      <span className="w-20 text-sm text-zinc-600">
-                        내 포인트 잔액
-                      </span>
+                    <div className="w-full flex flex-col gap-2 justify-center items-center
+                      bg-yellow-50 p-2 rounded-lg mt-5">
+                      <div className="flex flex-row gap-2 items-center">
+                        <Image
+                          src="/token-mkrw-icon.png"
+                          alt="MKRW"
+                          width={35}
+                          height={35}
+                          className="rounded-lg w-6 h-6"
+                        />
+                        <span className="text-sm text-zinc-600">
+                          내 포인트 잔액(MKRW)
+                        </span>
+                      </div>
+
                       <div className="
                       w-40  flex flex-col items-end justify-center
                       text-4xl font-semibold text-yellow-600"
@@ -2312,7 +2319,6 @@ export default function Index({ params }: any) {
                       >
                         {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                       </div>
-                      <p className="w-14 text-sm text-zinc-800">MKRW</p>
 
 
                       <button
@@ -2324,7 +2330,8 @@ export default function Index({ params }: any) {
                           );
 
                         }}
-                        className="flex bg-[#3167b4]
+                        className="w-full flex items-center justify-center
+                        bg-[#3167b4]
                         text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                       >
 
