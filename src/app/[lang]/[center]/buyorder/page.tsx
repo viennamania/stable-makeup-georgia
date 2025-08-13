@@ -4808,7 +4808,7 @@ const fetchBuyOrders = async () => {
                               }}
                             >
                               {
-                                Number(item.rate)
+                                Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' 원'
                                 //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                               }
                             </span>
