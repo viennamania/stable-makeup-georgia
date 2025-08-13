@@ -671,7 +671,7 @@ export default function SendUsdt({ params }: any) {
             </div>
         )}
 
-        <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
+        <div className="w-full flex flex-col gap-2 items-center justify-start text-zinc-500 text-lg"
         >
             {/* go back button */}
             <div className="w-full flex justify-start items-center gap-2">
@@ -769,7 +769,7 @@ export default function SendUsdt({ params }: any) {
 
                     <div className="flex flex-row items-center justify-end  gap-2">
                         <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                            {Number(balance).toFixed(2)}
+                            {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </span>
                         {' '}
                         <span className="text-sm">USDT</span>
