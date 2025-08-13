@@ -1434,7 +1434,7 @@ const fetchBuyOrders = async () => {
               <p className="text-lg text-red-500 font-semibold">
                 {
                 totalNumberOfBuyOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfBuyOrders > 0 && (
@@ -1491,7 +1491,7 @@ const fetchBuyOrders = async () => {
               <p className="text-lg text-yellow-500 font-semibold">
                 {
                 totalNumberOfClearanceOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfClearanceOrders > 0 && (
@@ -1663,7 +1663,7 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 거래수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalCount?.toLocaleString()} 건
+                  {tradeSummary.totalCount?.toLocaleString()}
                 </div>
               </div>
 
@@ -1673,7 +1673,6 @@ const fetchBuyOrders = async () => {
                   <span className="text-xl font-semibold text-yellow-600">
                     {tradeSummary.totalKrwAmount?.toLocaleString()}
                   </span>
-                  <span className="text-sm text-zinc-500">원</span>
                 </div>
               </div>
 
@@ -1705,7 +1704,7 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 정산수(건)</div>
                   <span className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()} 건
+                    {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </span>
               </div>
 
@@ -1715,7 +1714,6 @@ const fetchBuyOrders = async () => {
                   <span className="text-xl font-semibold text-yellow-600">
                     {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
                   </span>
-                  <span className="text-sm text-zinc-500">원</span>
                 </div>
               </div>
               <div className="flex flex-col gap-2 items-center">
@@ -1748,7 +1746,6 @@ const fetchBuyOrders = async () => {
                           ? tradeSummary.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0'}
                       </span>
-                      <span className="text-sm text-zinc-500">원</span>
                     </div>
                   </div>
 
@@ -1780,7 +1777,6 @@ const fetchBuyOrders = async () => {
                           ? tradeSummary.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0'}
                       </span>
-                      <span className="text-sm text-zinc-500">원</span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 items-center">
@@ -1816,7 +1812,7 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 청산수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceCount?.toLocaleString()} 건
+                  {tradeSummary.totalClearanceCount?.toLocaleString()}
                 </div>
               </div>
 
@@ -1875,7 +1871,7 @@ const fetchBuyOrders = async () => {
                         </td>
                         {/* align right */}
                         <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                          {order.totalCount ? order.totalCount.toLocaleString() : 0} 건
+                          {order.totalCount ? order.totalCount.toLocaleString() : 0}
                         </td>
 
 
@@ -1892,9 +1888,9 @@ const fetchBuyOrders = async () => {
 
                         {/*
                         <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                          {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0} 건
+                          {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
                           {' / '}
-                          {(order.totalCount || 0) - (order.totalSettlementCount || 0)} 건
+                          {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
                         </td>
                         */}
 

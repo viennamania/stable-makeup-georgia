@@ -2608,7 +2608,7 @@ export default function Index({ params }: any) {
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">건수</div>
                       <div className="text-xl font-semibold text-zinc-400">
-                        {buyOrders.length.toLocaleString()} 건
+                        {buyOrders.length.toLocaleString()}
                       </div>
                     </div>
 

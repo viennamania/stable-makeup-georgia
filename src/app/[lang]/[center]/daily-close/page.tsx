@@ -1703,7 +1703,7 @@ export default function Index({ params }: any) {
                           </td>
                           {/* align right */}
                           <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                            {order.totalCount ? order.totalCount.toLocaleString() : 0} 건
+                            {order.totalCount ? order.totalCount.toLocaleString() : 0}
                           </td>
 
 
@@ -1720,9 +1720,9 @@ export default function Index({ params }: any) {
 
                           {/*
                           <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                            {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0} 건
+                            {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
                             {' / '}
-                            {(order.totalCount || 0) - (order.totalSettlementCount || 0)} 건
+                            {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
                           </td>
                           */}
 

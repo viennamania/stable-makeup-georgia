@@ -2006,7 +2006,7 @@ export default function Index({ params }: any) {
               <p className="text-lg text-red-500 font-semibold">
                 {
                 totalNumberOfBuyOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfBuyOrders > 0 && (
@@ -2063,7 +2063,7 @@ export default function Index({ params }: any) {
               <p className="text-lg text-yellow-500 font-semibold">
                 {
                 totalNumberOfClearanceOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfClearanceOrders > 0 && (
@@ -2724,7 +2724,7 @@ export default function Index({ params }: any) {
 
                               {item?.totalPaymentConfirmedCount ? (
                                 <div className="flex flex-row items-center justify-center gap-2">
-                                  {item?.totalPaymentConfirmedCount} 건
+                                  {item?.totalPaymentConfirmedCount}
                                 </div>
                               ) : (
                                 <div className="flex flex-row items-center justify-center gap-2">

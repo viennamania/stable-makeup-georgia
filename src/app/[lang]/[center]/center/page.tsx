@@ -2279,7 +2279,7 @@ export default function Index({ params }: any) {
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 구매주문수</h2>
                     <p className="text-lg text-zinc-500">
-                      {storeSummary.totalNumberOfOrders} 건
+                      {storeSummary.totalNumberOfOrders}
                     </p>
                   </div>
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -2445,7 +2445,7 @@ export default function Index({ params }: any) {
                     <div className="flex flex-col items-center justify-center gap-2">
                       <h2 className="text-lg font-semibold">총 거래수</h2>
                       <p className="text-lg text-zinc-500">
-                        {storeSummary.totalNumberOfTrades} 건
+                        {storeSummary.totalNumberOfTrades}
                       </p>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -2488,7 +2488,7 @@ export default function Index({ params }: any) {
                     <div className="flex flex-col items-center justify-center gap-2">
                       <h2 className="text-lg font-semibold">총 정산수</h2>
                       <p className="text-lg text-zinc-500">
-                        {storeSummary.totalSettlementCount} 건
+                        {storeSummary.totalSettlementCount}
                       </p>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -2657,7 +2657,7 @@ export default function Index({ params }: any) {
                     <div className="flex flex-col items-center justify-center gap-2">
                       <h2 className="text-lg font-semibold">총 판매주문수</h2>
                       <p className="text-lg text-zinc-500">
-                        {storeSummary.totalClearanceCount} 건
+                        {storeSummary.totalClearanceCount}
                       </p>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">

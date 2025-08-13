@@ -2237,7 +2237,7 @@ export default function Index({ params }: any) {
 
                               {item?.totalBuyCount ? (
                                 <div className="flex flex-row items-center justify-center gap-2">
-                                  {item?.totalPaymentConfirmedCount} 건
+                                  {item?.totalPaymentConfirmedCount}
                                 </div>
                               ) : (
                                 <div className="flex flex-row items-center justify-center gap-2">

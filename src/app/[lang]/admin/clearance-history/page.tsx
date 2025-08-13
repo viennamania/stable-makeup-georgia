@@ -2675,7 +2675,7 @@ const fetchBuyOrders = async () => {
               <p className="text-lg text-red-500 font-semibold">
                 {
                 totalNumberOfBuyOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfBuyOrders > 0 && (
@@ -2732,7 +2732,7 @@ const fetchBuyOrders = async () => {
               <p className="text-lg text-yellow-500 font-semibold">
                 {
                 totalNumberOfClearanceOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfClearanceOrders > 0 && (
@@ -3090,7 +3090,7 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 청산수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceCount?.toLocaleString()} 건
+                  {tradeSummary.totalClearanceCount?.toLocaleString()}
                 </div>
               </div>
 

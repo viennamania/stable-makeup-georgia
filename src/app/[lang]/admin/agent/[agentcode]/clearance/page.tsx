@@ -1720,21 +1720,21 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 거래수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalCount?.toLocaleString()} 건
+                    {tradeSummary.totalCount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 거래금액(원)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalKrwAmount?.toLocaleString()} 원
+                    {tradeSummary.totalKrwAmount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 거래량(USDT)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalUsdtAmount?.toLocaleString()} USDT
+                    {tradeSummary.totalUsdtAmount?.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -1747,20 +1747,20 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 정산수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()} 건
+                    {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 정산금액(원)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementAmountKRW?.toLocaleString()} 원
+                    {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 정산량(USDT)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementAmount?.toLocaleString()} USDT
+                    {tradeSummary.totalSettlementAmount?.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -1774,20 +1774,20 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 정산수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()} 건
+                    {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 수수료금액(원)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalFeeAmountKRW?.toLocaleString()} 원
+                    {tradeSummary.totalFeeAmountKRW?.toLocaleString()}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 수수료수량(USDT)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalFeeAmount?.toLocaleString()} USDT
+                    {tradeSummary.totalFeeAmount?.toLocaleString()}
                   </div>
                 </div>
               </div>

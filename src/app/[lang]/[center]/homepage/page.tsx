@@ -3231,7 +3231,7 @@ const fetchBuyOrders = async () => {
                           <p className="text-lg text-zinc-500">
                             {
                               storeTrades.totalCount
-                            } 건
+                            }
                           </p>
                         </div>
 
@@ -3269,7 +3269,7 @@ const fetchBuyOrders = async () => {
                         <div className="flex flex-col items-center justify-center gap-2">
                           <h2 className="text-lg">총 정산수</h2>
                           <p className="text-lg text-zinc-500">
-                            {storeTrades?.totalSettlementCount} 건
+                            {storeTrades?.totalSettlementCount}
                           </p>
                         </div>
 

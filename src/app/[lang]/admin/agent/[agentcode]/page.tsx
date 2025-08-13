@@ -2223,7 +2223,7 @@ export default function Index({ params }: any) {
                         <td className="px-4 py-2">
                           {store.totalBuyerCount > 0 ? Number(store.totalBuyerCount)?.toLocaleString() : 0} 명
                           <br/>
-                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0} 건
+                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0}
                         </td>
 
                         <td className="px-4 py-2
@@ -2416,7 +2416,7 @@ export default function Index({ params }: any) {
                   />
                   <h2 className="text-lg font-semibold">총 거래수</h2>
                   <p className="text-lg text-zinc-500">
-                    {totalSummary.totalNumberOfTrades} 건
+                    {totalSummary.totalNumberOfTrades}
                   </p>
                   {loadingSummary && (
                     <Image
@@ -2686,7 +2686,7 @@ export default function Index({ params }: any) {
                   />
                   <h2 className="text-lg font-semibold">총 구매주문수</h2>
                   <p className="text-lg text-zinc-500">
-                    {totalSummary.totalNumberOfBuyOrders} 건
+                    {totalSummary.totalNumberOfBuyOrders}
                   </p>
                   {loadingSummary && (
                     <Image

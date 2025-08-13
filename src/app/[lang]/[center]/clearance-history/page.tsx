@@ -3741,7 +3741,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">총 거래수(건)</div>
                       <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalCount?.toLocaleString()} 건
+                        {tradeSummary.totalCount?.toLocaleString()}
                       </div>
                     </div>
 
@@ -3777,7 +3777,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">총 정산수(건)</div>
                       <div className="text-xl font-semibold text-zinc-500">
-                        {tradeSummary.totalSettlementCount?.toLocaleString()} 건
+                        {tradeSummary.totalSettlementCount?.toLocaleString()}
                       </div>
                     </div>
 
@@ -3815,7 +3815,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">총 판매주문수(건)</div>
                       <div className="text-xl font-semibold text-zinc-500">
-                        {totalClearanceCount?.toLocaleString()} 건
+                        {totalClearanceCount?.toLocaleString()}
                       </div>
                     </div>
 

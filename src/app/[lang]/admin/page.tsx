@@ -1177,7 +1177,7 @@ export default function Index({ params }: any) {
                   />
                   <h2 className="text-lg font-semibold">구매주문</h2>
                   <p className="text-lg text-red-500 font-semibold">
-                    {totalSummary.totalNumberOfBuyOrders} 건
+                    {totalSummary.totalNumberOfBuyOrders}
                   </p>
                   {totalSummary.totalNumberOfBuyOrders > 0 && (
                     <Image
@@ -1349,7 +1349,7 @@ export default function Index({ params }: any) {
                   />
                   <h2 className="text-lg font-semibold">청산주문</h2>
                   <p className="text-lg text-zinc-500">
-                    {totalSummary.totalNumberOfSellOrders} 건
+                    {totalSummary.totalNumberOfSellOrders}
                   </p>
                   {loadingSummary && (
                     <Image
@@ -1580,7 +1580,7 @@ export default function Index({ params }: any) {
                     <div className="w-2 h-2 bg-[#3167b4] rounded-full"></div>
                     <h2 className="text-lg font-semibold">총 거래수</h2>
                     <p className="text-lg text-zinc-500">
-                      {totalSummary.totalNumberOfTrades} 건
+                      {totalSummary.totalNumberOfTrades}
                     </p>
                     {loadingSummary && (
                       <Image
@@ -1775,7 +1775,7 @@ export default function Index({ params }: any) {
                     <div className="w-2 h-2 bg-[#3167b4] rounded-full"></div>
                     <h2 className="text-lg font-semibold">총 거래수</h2>
                     <p className="text-lg text-zinc-500">
-                      {totalSummary.totalNumberOfClearances} 건
+                      {totalSummary.totalNumberOfClearances}
                     </p>
                     {loadingSummary && (
                       <Image
@@ -2029,7 +2029,7 @@ export default function Index({ params }: any) {
                         >
                           {store.totalBuyerCount > 0 ? Number(store.totalBuyerCount)?.toLocaleString() : 0} 명
                           <br/>
-                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0} 건
+                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0}
                         </td>
 
                         <td className="px-4 py-2">{

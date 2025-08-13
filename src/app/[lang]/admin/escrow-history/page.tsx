@@ -1295,7 +1295,7 @@ export default function Index({ params }: any) {
               <p className="text-lg text-red-500 font-semibold">
                 {
                 totalNumberOfBuyOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfBuyOrders > 0 && (
@@ -1352,7 +1352,7 @@ export default function Index({ params }: any) {
               <p className="text-lg text-yellow-500 font-semibold">
                 {
                 totalNumberOfClearanceOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfClearanceOrders > 0 && (

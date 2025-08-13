@@ -1878,7 +1878,7 @@ export default function Index({ params }: any) {
               <p className="text-lg text-red-500 font-semibold">
                 {
                 totalNumberOfBuyOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfBuyOrders > 0 && (
@@ -1935,7 +1935,7 @@ export default function Index({ params }: any) {
               <p className="text-lg text-yellow-500 font-semibold">
                 {
                 totalNumberOfClearanceOrders
-                } 건
+                }
               </p>
 
               {totalNumberOfClearanceOrders > 0 && (
@@ -2112,7 +2112,7 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 거래수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalCount?.toLocaleString()} 건
+                    {tradeSummary.totalCount?.toLocaleString()}
                   </div>
                 </div>
 
@@ -2150,7 +2150,7 @@ export default function Index({ params }: any) {
                 <div className="w-32 flex flex-col gap-2 items-center">
                   <div className="text-sm">총 정산수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()} 건
+                    {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </div>
                 </div>
 
@@ -2218,7 +2218,7 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 청산수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalClearanceCount?.toLocaleString()} 건
+                    {tradeSummary.totalClearanceCount?.toLocaleString()}
                   </div>
                 </div>
 

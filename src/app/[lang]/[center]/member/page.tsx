@@ -2913,7 +2913,7 @@ export default function Index({ params }: any) {
 
                           <td className="p-2">
                             <div className="w-20 flex flex-col items-end justify-center gap-1">
-                              {item?.totalPaymentConfirmedCount || 0} 건
+                              {item?.totalPaymentConfirmedCount || 0}
                             </div>
                           </td>
                           <td className="p-2">
