@@ -2348,6 +2348,36 @@ export default function Index({ params }: any) {
 
                       </button>
 
+
+                      <button
+                        disabled={!address}
+                        onClick={() => {
+                          // redirect to send USDT page
+                          router.push(
+                            "/" + params.lang + "/admin/burn-mkrw"
+                          );
+
+                        }}
+                        className="w-full flex items-center justify-center
+                        bg-[#3167b4]
+                        text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      >
+
+                        <span className="text-sm text-gray-100">
+                          환전하기
+                        </span>
+                        <Image
+                          src="/icon-currency-exchange.png"
+                          alt="Burn MKRW"
+                          width={20}
+                          height={20}
+                          className="ml-2"
+                        />
+
+                      </button>
+
+
+
                     </div>
 
                   )}

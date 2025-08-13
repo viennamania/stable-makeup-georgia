@@ -38,6 +38,7 @@ import {
 import {
   balanceOf,
   transfer,
+  burn,
 } from "thirdweb/extensions/erc20";
  
 
@@ -488,7 +489,7 @@ export default function SendUsdt({ params }: any) {
 
   
 
-
+  /*
   const [sending, setSending] = useState(false);
   const sendMkrw = async () => {
     if (sending) {
@@ -530,31 +531,6 @@ export default function SendUsdt({ params }: any) {
             amount: amount,
         });
         
-
-        /*
-        const transactionResult = await sendAndConfirmTransaction({
-
-            transaction: transaction,
-            
-            account: smartAccount as any,
-        });
-
-        console.log("transactionResult", transactionResult);
-        
-        if (transactionResult.status !== "success") {
-          toast.error(Failed_to_send_USDT);
-          return;
-        }
-        */
-
-        /*
-        const { transactionHash } = await sendTransaction({
-          
-          account: activeAccount as any,
-
-          transaction,
-        });
-        */
         // sendAndConfirmTransaction
         const { transactionHash } = await sendAndConfirmTransaction({
           transaction: transaction,
@@ -608,6 +584,60 @@ export default function SendUsdt({ params }: any) {
 
     setSending(false);
   };
+
+  */
+
+
+
+  const [exchangeRate, setExchangeRate] = useState(1380);
+
+  // burn token
+  const [burnAmount, setBurnAmount] = useState(0);
+  const [burning, setBurning] = useState(false);
+  const burnToken = async () => {
+    if (!address) return;
+
+
+    // confirm yes or no
+    if (!confirm("환전하시겠습니까?")) {
+      return;
+    }
+
+    try {
+
+      setBurning(true);
+      // erc20 burn
+      const transaction = burn({
+        contract: contractMKRW as any,
+        amount: BigInt(burnAmount) * 10n ** 18n
+      });
+
+      const result = await sendTransaction({
+        account: activeAccount as any,
+        transaction,
+      });
+
+      if (result) {
+        toast.success(`성공적으로 ${burnAmount} MKRW가 환전되었습니다.`);
+      } else {
+        toast.error("환전하기 실패");
+      }
+    } catch (error) {
+      console.error("error", error);
+      toast.error("환전하기 실패");
+    } finally {
+      setBurning(false);
+    }
+
+
+
+  };
+
+
+
+
+
+
 
 
 
@@ -885,8 +915,8 @@ export default function SendUsdt({ params }: any) {
 
               <div className='flex flex-row items-center space-x-2'>
                 <Image
-                  src="/icon-withdraw.png"
-                  alt="Withdraw"
+                  src="/icon-currency-exchange.png"
+                  alt="Currency Exchange"
                   width={50}
                   height={50}
                   className="w-8 h-8 rounded-lg"
@@ -894,7 +924,7 @@ export default function SendUsdt({ params }: any) {
               </div>
 
               <div className="text-xl font-semibold">
-                포인트 출금
+                포인트 환전
               </div>
 
             </div>
@@ -904,217 +934,79 @@ export default function SendUsdt({ params }: any) {
 
             <div className='w-full  flex flex-col gap-5 border border-gray-300 p-4 rounded-lg'>
 
+              <span className='text-sm text-gray-500'>
+                환전할 포인트 수량을 입력하세요.
+              </span>
 
-
-              <div className="text-lg">{Enter_the_amount_and_recipient_address}</div>
-
-
-              <div className='mb-5 flex flex-col gap-5 items-start justify-between'>
-
-                <input
-                  disabled={sending}
-                  type="number"
-                  //placeholder="Enter amount"
-                  className=" w-64 p-2 border border-gray-300 rounded text-black text-5xl font-semibold "
-                  
-                  value={amount}
-
-                  onChange={(e) => (
-
-                    // check if the value is a number
-
-
-                    // check if start 0, if so remove it
-
-                    //e.target.value = e.target.value.replace(/^0+/, ''),
+              <div className='mb-5 flex flex-row gap-5 items-start justify-between'>
 
 
 
-                    // check balance
-
-                    setAmount(e.target.value as any)
-
-                  )}
-                />
-           
-
-            
-            
-                {!wantToReceiveWalletAddress ? (
-                  <>
-                  <div className='w-full flex flex-row gap-5 items-center justify-between'>
-                    <select
-                      disabled={sending}
-
-                      className="
-                        
-                        w-56 p-2 border border-gray-300 rounded text-black text-2xl font-semibold "
-                        
-                      value={
-                        recipient?.nickname
+                  {/* input for burn amount */}
+                  <input
+                    type="number"
+                    value={burnAmount}
+                    onChange={(e) => {
+                      e.target.value = e.target.value.replace(/^0+/, '');
+                      setBurnAmount(Number(e.target.value));
+                    }}
+                    className={`border border-gray-300 rounded-lg px-4 py-2 ${burning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  />
+                  {/* button for burn */}
+                  <button
+                    disabled={burnAmount <= 0 || burning}
+                    onClick={async () => {
+                      try {
+                        await burnToken();
+                      } catch (error) {
+                        console.error("error", error);
+                        toast.error("환전하기 실패");
                       }
-
-
-                      onChange={(e) => {
-
-                        const selectedUser = users.find((user) => user.nickname === e.target.value) as any;
-
-                        console.log("selectedUser", selectedUser);
-
-                        setRecipient(selectedUser);
-
-                      } } 
-
-                    >
-                      <option value="">{Select_a_user}</option>
-                      
-
-                      {users.map((user) => (
-                        <option key={user.id} value={user.nickname}>{user.nickname}</option>
-                      ))}
-                    </select>
-
-                    {/* select user profile image */}
-
-                    <div className=" w-full flex flex-row gap-2 items-center justify-center">
-                      <Image
-                        src={recipient?.avatar || '/profile-default.png'}
-                        alt="profile"
-                        width={38}
-                        height={38}
-                        className="rounded-full"
-                        style={{
-                          objectFit: 'cover',
-                          width: '38px',
-                          height: '38px',
-                        }}
-                      />
-
-                      {recipient?.walletAddress && (
-                        <Image
-                          src="/verified.png"
-                          alt="check"
-                          width={28}
-                          height={28}
-                        />
-                      )}
-
-                    </div>
-
-                    
-
-
-                  </div>
-              
-
-                    {/* input wallet address */}
-                    
-                    <input
-                      disabled={true}
-                      type="text"
-                      placeholder={User_wallet_address}
-                      className=" w-80  xl:w-full p-2 border border-gray-300 rounded text-white text-xs xl:text-lg font-semibold"
-                      value={recipient?.walletAddress}
-                      onChange={(e) => {
-      
-                        
-                        
-                          getUserByWalletAddress(e.target.value)
-
-                          .then((data) => {
-
-                            //console.log("data", data);
-
-                            const checkUser = data;
-
-                            if (checkUser) {
-                              setRecipient(checkUser as any);
-                            } else {
-                              
-                              setRecipient({
-                                ...recipient,
-                                walletAddress: e.target.value,
-                              });
-                              
-                            }
-
-                          });
-
-                      } }
-                    />
-
-
-          
-
-
-                </>
-
-                ) : (
-
-                  <div className='flex flex-col gap-5 items-center justify-between'>
-                    <input
-                      disabled={sending}
-                      type="text"
-                      placeholder={User_wallet_address}
-                      className=" w-80 xl:w-96 p-2 border border-gray-300 rounded text-white bg-black text-sm xl:text-sm font-semibold"
-                      value={recipient.walletAddress}
-                      onChange={(e) => setRecipient({
-                        ...recipient,
-                        walletAddress: e.target.value,
-                      })}
-                    />
-
-                    {isWhateListedUser ? (
-                      <div className="flex flex-row gap-2 items-center justify-center">
-
-
-                        <Image
-                          src={recipient.avatar || '/profile-default.png'}
-                          alt="profile"
-                          width={30}
-                          height={30}
-                          className="rounded-full"
-                          style={{
-                            objectFit: 'cover',
-                            width: '38px',
-                            height: '38px',
-                          }}
-                        />
-                        <div className="text-white">{recipient?.nickname}</div>
-                        <Image
-                          src="/verified.png"
-                          alt="check"
-                          width={30}
-                          height={30}
-                        />
-                        
-                      </div>
-                    ) : (
-                      <>
-
-                      {recipient?.walletAddress && (
-                        <div className='flex flex-row gap-2 items-center justify-center'>
-                          {/* dot icon */}
-                          <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-
-                          <div className="text-red-500">
-                            {This_address_is_not_white_listed}<br />
-                            {If_you_are_sure_please_click_the_send_button}
-                          </div>
-                        </div>
-
-                      )}
-
-                      </>
-                    )}
-
-
-
-                  </div>
-
-                )} 
+                    }}
+                    className={`bg-red-500 text-white rounded-lg px-4 py-2 ${burning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {burning ? '환전 중...' : '환전'}
+                  </button>
 
               </div>
+
+
+              {/* burAmount * exchangeRate */}
+              <div className='flex flex-col gap-2 items-start justify-start'>
+                <div className='flex flex-row gap-2 items-center justify-start'>
+                  <Image
+                    src="/token-mkrw-icon.png"
+                    alt="MKRW"
+                    width={20}
+                    height={20}
+                    className="w-6 h-6"
+                  />
+                  <span className='text-sm text-gray-500'>
+                    환전할 포인트 수량(MKRW): {burnAmount.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  </span>
+                </div>
+
+                <span className='text-sm text-gray-500'>
+                  환전 비율: {exchangeRate.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                </span>
+
+                <div className='flex flex-row gap-2 items-center justify-start'>
+                  <Image
+                    src="/token-usdt-icon.png"
+                    alt="USDT"
+                    width={20}
+                    height={20}
+                    className="w-6 h-6"
+                  />
+                  <span className='text-sm text-gray-500'>
+                    환전 후 수량(USDT): {
+                    Number(burnAmount / exchangeRate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  </span>
+                </div>
+              </div>
+
+
+
 
               {/* otp verification */}
               {/*
@@ -1184,49 +1076,7 @@ export default function SendUsdt({ params }: any) {
               )}
                 */}
 
-              
-
-
-
-              <button
-                disabled={!address || !recipient?.walletAddress || !amount || sending || !verifiedOtp}
-                onClick={sendMkrw}
-                className={`mt-10 w-full p-2 rounded-lg text-xl font-semibold
-
-                    ${
-                    !address || !recipient?.walletAddress || !amount || sending || !verifiedOtp
-                    ?'bg-gray-300 text-gray-400'
-                    : 'bg-green-500 text-white'
-                    }
-                   
-                   `}
-              >
-                  MKRW 출금하기
-              </button>
-
-              <div className="w-full flex flex-row gap-2 text-xl font-semibold">
-
-                {/* sending rotate animation with white color*/}
-                {sending && (
-                  <div className="
-                    w-6 h-6
-                    border-2 border-zinc-800
-                    rounded-full
-                    animate-spin
-                  ">
-                    <Image
-                      src="/loading.png"
-                      alt="loading"
-                      width={24}
-                      height={24}
-                    />
-                  </div>
-                )}
-                <div className="text-zinc-800">
-                  {sending ? Sending : ''}
-                </div>
-
-              </div>
+            
 
             </div>
 
@@ -1245,7 +1095,7 @@ export default function SendUsdt({ params }: any) {
                           height={20}
                           className='rounded-full w-6 h-6'
                         />
-                        <h2 className="text-sm font-semibold">입출금 내역</h2>
+                        <h2 className="text-sm font-semibold">환전 내역</h2>
                         {loadingTransferListMKRW && (
                           <div className="flex items-center justify-center">
                             <Image
