@@ -999,8 +999,8 @@ export default function SendUsdt({ params }: any) {
                     className="w-6 h-6"
                   />
                   <span className='text-sm text-gray-500'>
-                    환전 후 수량(USDT): {
-                    Number(burnAmount / exchangeRate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    환전될 테더 수량(USDT): {
+                    Number(burnAmount / exchangeRate).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   </span>
                 </div>
               </div>
