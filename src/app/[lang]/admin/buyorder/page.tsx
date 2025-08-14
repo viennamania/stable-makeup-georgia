@@ -6258,13 +6258,6 @@ const fetchBuyOrders = async () => {
                                 height={20}
                                 className="w-5 h-5"
                               />
-                              <Image
-                                src={`/logo-chain-${chain}.png`}
-                                alt={`${chain} Logo`}
-                                width={20}
-                                height={20}
-                                className="w-5 h-5"
-                              />
                               <span className="text-sm">
                                 {item?.status === 'cancelled' ?
                                   '에스크로(MKRW) 회수내역'
@@ -6274,8 +6267,8 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
                             <Image
-                              src="/icon-share.png"
-                              alt="Share Icon"
+                              src={`/logo-chain-${chain}.png`}
+                              alt={`${chain} Logo`}
                               width={20}
                               height={20}
                               className="w-5 h-5"
