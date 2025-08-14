@@ -4447,12 +4447,9 @@ const fetchBuyOrders = async () => {
 
                             {item?.paymentMethod === 'bank' && (
                               <div className="w-full flex flex-row items-center justify-start gap-2">
-                                <span className="text-sm text-gray-800 font-bold">
+                                <span className="text-lg text-gray-800 font-bold">
                                   {
-                                    //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
-
                                     item?.buyer?.depositName
-
                                   }
                                 </span>
                                 <span className="
@@ -5103,7 +5100,7 @@ const fetchBuyOrders = async () => {
 
                             {/* seller bank info */}
                             <div className="flex flex-row gap-2 items-center justify-end">
-                              <span className="text-sm text-gray-800 font-bold">
+                              <span className="text-lg text-gray-800 font-bold">
                                 {/*item.seller?.bankInfo?.accountHolder*/}
                                 {item.store?.bankInfo?.accountHolder}
                               </span>
@@ -5191,7 +5188,7 @@ const fetchBuyOrders = async () => {
 
 
                                 <div className="flex flex-row gap-1 items-end justify-center">
-                                  <div className="text-sm text-gray-800 font-bold">
+                                  <div className="text-lg text-gray-800 font-bold">
                                     {/*item.seller?.bankInfo?.accountHolder*/}
                                     {item.store?.bankInfo?.accountHolder}
                                   </div>
