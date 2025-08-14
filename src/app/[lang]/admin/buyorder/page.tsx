@@ -6386,7 +6386,7 @@ const fetchBuyOrders = async () => {
                                   <span className="
                                   w-7   
                                   text-sm text-zinc-500">
-                                    가맹
+                                    결제
                                   </span>
                                   <span className="
                                   w-12 text-end
