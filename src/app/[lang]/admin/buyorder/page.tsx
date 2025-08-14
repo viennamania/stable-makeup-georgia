@@ -5197,7 +5197,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                                <div className="flex flex-row gap-1 items-end justify-center">
+                                <div className="flex flex-row gap-1 items-center justify-end">
                                   <div className="text-lg text-gray-800 font-bold">
                                     {/*item.seller?.bankInfo?.accountHolder*/}
                                     {item.store?.bankInfo?.accountHolder}
