@@ -4166,21 +4166,6 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">거래금액(원)</div>
-                  <div className="flex flex-row items-center gap-1">
-                    <span className="text-xl font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {
-                      Number(tradeSummary.totalKrwAmount)
-                      .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                      }
-                    </span>
-                    
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">거래량(USDT)</div>
                   <div className="flex flex-row items-center gap-1">
                     <Image
@@ -4199,6 +4184,23 @@ const fetchBuyOrders = async () => {
                     </span>
                   </div>
                 </div>
+
+
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">거래금액(원)</div>
+                  <div className="flex flex-row items-center gap-1">
+                    <span className="text-xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {
+                      Number(tradeSummary.totalKrwAmount)
+                      .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                    </span>
+                    
+                  </div>
+                </div>
+
               </div>
 
               {/* divider */}
@@ -4212,21 +4214,6 @@ const fetchBuyOrders = async () => {
                   <div className="text-sm">정산수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
                     {tradeSummary.totalSettlementCount?.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">정산금액(원)</div>
-                  <div className="flex flex-row items-center gap-1"> 
-                    <span className="text-xl font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {
-                      Number(tradeSummary.totalSettlementAmountKRW)
-                      .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                      }
-                    </span>
-                    
                   </div>
                 </div>
 
@@ -4251,15 +4238,14 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">수수료금액(원)</div>
-                  <div className="flex flex-row items-center gap-1">
+                  <div className="text-sm">정산금액(원)</div>
+                  <div className="flex flex-row items-center gap-1"> 
                     <span className="text-xl font-semibold text-yellow-600"
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
-                        Number(tradeSummary.totalFeeAmountKRW + tradeSummary.totalAgentFeeAmountKRW)
-                        .toFixed(0)
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      Number(tradeSummary.totalSettlementAmountKRW)
+                      .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                     </span>
                     
@@ -4287,6 +4273,23 @@ const fetchBuyOrders = async () => {
                     </span>
                   </div>
                 </div>
+
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">수수료금액(원)</div>
+                  <div className="flex flex-row items-center gap-1">
+                    <span className="text-xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {
+                        Number(tradeSummary.totalFeeAmountKRW + tradeSummary.totalAgentFeeAmountKRW)
+                        .toFixed(0)
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                    </span>
+                    
+                  </div>
+                </div>
+
               </div>
 
 
