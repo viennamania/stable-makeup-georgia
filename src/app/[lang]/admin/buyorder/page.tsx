@@ -4669,7 +4669,7 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 animate-spin"
                                 />
                                 <span className="text-sm text-zinc-500 font-semibold">
-                                  판매자 매칭중...
+                                  판매자 매칭중
                                 </span>
                               </div>
 
