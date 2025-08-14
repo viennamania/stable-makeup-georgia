@@ -5309,7 +5309,7 @@ const fetchBuyOrders = async () => {
                                   className="animate-spin"
                                 />
                                 <span className="text-sm font-semibold text-zinc-500">
-                                  입금 확인중...
+                                  자동입금확인중
                                 </span>
                               </div>
 
