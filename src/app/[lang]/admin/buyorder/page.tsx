@@ -5191,11 +5191,11 @@ const fetchBuyOrders = async () => {
 
 
                                 <div className="flex flex-row gap-1 items-end justify-center">
-                                  <div className="text-sm text-zinc-500">
+                                  <div className="text-sm text-gray-800 font-bold">
                                     {/*item.seller?.bankInfo?.accountHolder*/}
                                     {item.store?.bankInfo?.accountHolder}
                                   </div>
-                                  <div className="text-sm text-gray-800 font-bold">
+                                  <div className="text-sm text-zinc-500">
                                     {/*item.seller?.bankInfo?.bankName*/}
                                     {item.store?.bankInfo?.bankName}
                                   </div>
