@@ -4076,9 +4076,17 @@ const fetchBuyOrders = async () => {
                   <tr>
 
                     <th className="p-2 text-start">
-                      가맹점
-                      <br/>
-                      P2P거래번호
+                      <div className="flex flex-col items-start justify-center gap-2">
+                        <span className="text-sm text-zinc-50 font-semibold">
+                          가맹점
+                        </span>
+                        <span className="text-sm text-zinc-50 font-semibold">
+                          P2P거래번호
+                        </span>
+                        <span className="text-sm text-zinc-50 font-semibold">
+                          거래시작시간
+                        </span>
+                      </div>
                     </th>
 
                     <th className="p-2 text-start">
@@ -4350,6 +4358,14 @@ const fetchBuyOrders = async () => {
                           <div className="flex flex-row items-center justify-start gap-2">
 
                             <div className="flex flex-col items-start justify-start">
+
+                              <span className="text-sm text-zinc-800 font-semibold">
+                                {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                })}
+                              </span>
                               <span className="text-sm text-zinc-500">
                                 {new Date(item.createdAt).toLocaleDateString('ko-KR', {
                                   year: 'numeric',
@@ -4357,13 +4373,7 @@ const fetchBuyOrders = async () => {
                                   day: '2-digit',
                                 })}
                               </span>
-                              <span className="text-sm text-zinc-500">
-                                {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                })}
-                              </span>
+
                             </div>
                             <span className="text-sm text-zinc-500 font-semibold">
                               {params.lang === 'ko' ? (
