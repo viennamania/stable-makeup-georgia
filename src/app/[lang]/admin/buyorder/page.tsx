@@ -5443,31 +5443,25 @@ const fetchBuyOrders = async () => {
 
                           <div className="flex flex-col gap-2 items-center justify-center">
 
-                            {/*
-                            <div className="flex flex-col xl:flex-row gap-2 items-center justify-center">
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {item.store?.bankInfo?.bankName}
-                              </span>
-                              <span className="text-sm text-zinc-500 font-semibold">
 
-                                {item.store?.bankInfo?.accountNumber &&
-                                  item.store?.bankInfo?.accountNumber.substring(0, 3) + '...'
-                                }
-                              </span>
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {item.store?.bankInfo?.accountHolder}
-                              </span>
-                            </div>
+                              {item.status === 'paymentConfirmed' &&
+                              !item?.settlement &&
+                              (!item?.transactionHash || item?.transactionHash === '0x') && (
+                                <div className="flex flex-row gap-2 items-center justify-center">
+                                  <Image
+                                    src="/loading.png"
+                                    alt="Loading Icon"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5 animate-spin"
+                                  />
+                                  <span className="text-sm text-zinc-500">
+                                    판매자가 판매한코인(USDT)을 구매자에게 보내는 중
+                                  </span>
+                                </div>
+                              )}
 
-                            {item.status === 'cancelled' && (
-                              <div className="text-sm text-red-600">
-                                {item.cancelTradeReason ? item.cancelTradeReason :
-                                  "거래취소사유 없음"
-                                }
-                                
-                              </div>
-                            )}
-                            */}
+                            
                           </div>
 
                         ) : (
