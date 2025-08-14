@@ -6548,7 +6548,7 @@ const fetchBuyOrders = async () => {
                                             className="animate-spin"
                                           />
                                           <span className="text-sm font-semibold text-zinc-500">
-                                            가맹점 결제 및 정산중...
+                                            가맹점 결제 및 정산중
                                           </span>
                                         </div>
 
