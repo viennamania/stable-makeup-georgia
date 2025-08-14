@@ -4699,7 +4699,6 @@ const fetchBuyOrders = async () => {
 
                               {/* buyer info */}
 
-
                               <div className="flex flex-row items-center gap-2">
                                 <span className="text-lg text-gray-800 font-bold">
                                   {
@@ -5298,8 +5297,8 @@ const fetchBuyOrders = async () => {
                           {item?.status === 'paymentRequested' && (
 
                             <div className="
-                              w-32
-                              flex flex-col gap-2 items-center justify-center">
+                              w-28
+                              flex flex-col gap-2 items-end justify-center">
   
                               <div className="flex flex-row gap-2 items-center justify-center">
                                 <Image
@@ -5325,10 +5324,11 @@ const fetchBuyOrders = async () => {
                                     {item.store?.bankInfo?.bankName}
                                   </div>
                                 </div>
+                                {/*
                                 <div className="text-sm text-zinc-500">
-                                  {/*item.seller?.bankInfo?.accountNumber*/}
                                   {item.store?.bankInfo?.accountNumber}
                                 </div>
+                                */}
 
                               </div>
 
