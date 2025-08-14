@@ -5223,7 +5223,7 @@ const fetchBuyOrders = async () => {
 
                           {item?.status === 'paymentConfirmed' && (
                             <div className="
-                              w-28
+                              w-32  
                               flex flex-col gap-2 items-end justify-center">
                               <div className="flex flex-row gap-2 items-center justify-center">
                                 <Image
@@ -5297,7 +5297,7 @@ const fetchBuyOrders = async () => {
                           {item?.status === 'paymentRequested' && (
 
                             <div className="
-                              w-28
+                              w-32
                               flex flex-col gap-2 items-end justify-center">
   
                               <div className="flex flex-row gap-2 items-center justify-center">
