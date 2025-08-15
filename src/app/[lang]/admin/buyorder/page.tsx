@@ -4536,7 +4536,9 @@ const fetchBuyOrders = async () => {
                                 fontFamily: 'monospace',
                               }}
                             >
-                              {item.usdtAmount}
+                              {
+                              Number(item.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              }
                             </span>
                           </div>
 
@@ -4772,7 +4774,7 @@ const fetchBuyOrders = async () => {
                               </span>
                               */}
 
-                              <div className="flex flex-row items-center justify-center gap-2">
+                              <div className="mt-2 flex flex-row items-center justify-center gap-2">
                                 <Image
                                   src="/icon-matching-completed.png"
                                   alt="Matching Completed"
@@ -6175,7 +6177,7 @@ const fetchBuyOrders = async () => {
                                       height={20}
                                       className="w-5 h-5"
                                     />
-                                    <span className="text-sm text-green-600 font-semibold"
+                                    <span className="text-lg text-green-600 font-semibold"
                                       style={{
                                         fontFamily: 'monospace',
                                       }}>
@@ -6549,13 +6551,24 @@ const fetchBuyOrders = async () => {
                                           </span>
                                         </div>
 
-                                        <span className="text-lg font-semibold text-green-600"
-                                          style={{
-                                            fontFamily: 'monospace',
-                                          }}
-                                        >
-                                          {item.usdtAmount}{' '}USDT
-                                        </span>
+                                        <div className="flex flex-row gap-1 items-center justify-center">
+                                          <Image
+                                            src="/token-usdt-icon.png"
+                                            alt="USDT"
+                                            width={20}
+                                            height={20}
+                                            className="rounded-lg w-6 h-6"
+                                          />
+                                          <span className="text-lg font-semibold text-green-600"
+                                            style={{
+                                              fontFamily: 'monospace',
+                                            }}
+                                          >
+                                            {
+                                            Number(item.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                            }
+                                          </span>
+                                        </div>
 
                                         {/*
                                           if item.paymentConfirmedAt (2025-07-03T09:26:37.818Z)
