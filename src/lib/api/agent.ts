@@ -448,7 +448,7 @@ export async function getAllAgents(
   const query: any = {};
 
   if (search) {
-    query.agentName = { $regex: search, $options: 'i' };
+    query.agentName = { $regex: String(search), $options: 'i' };
   }
 
   const totalCount = await collection.countDocuments(query);

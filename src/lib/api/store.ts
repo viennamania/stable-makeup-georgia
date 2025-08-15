@@ -603,10 +603,10 @@ export async function getAllStores(
   const query: any = {};
 
   if (search) {
-    query.storeName = { $regex: search, $options: 'i' };
+    query.storeName = { $regex: String(search), $options: 'i' };
   }
   if (agentcode) {
-    query.agentcode = { $regex: agentcode, $options: 'i' };
+    query.agentcode = { $regex: String(agentcode), $options: 'i' };
   }
 
   const totalCount = await collection.countDocuments(query);

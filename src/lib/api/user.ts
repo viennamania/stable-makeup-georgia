@@ -856,7 +856,7 @@ export async function getAllUsers(
     .find<UserProps>(
       {
 
-        storecode: { $regex: storecode, $options: 'i' },
+        storecode: { $regex: String(storecode), $options: 'i' },
         walletAddress: { $exists: true, $ne: null},
         verified: true,
         
@@ -874,14 +874,14 @@ export async function getAllUsers(
 
   const totalCount = await collection.countDocuments(
     {
-      storecode: { $regex: storecode, $options: 'i' },
+      storecode: { $regex: String(storecode), $options: 'i' },
       walletAddress: { $exists: true, $ne: null },
     }
   );
 
   const totalResult = await collection.countDocuments(
     {
-      storecode: { $regex: storecode, $options: 'i' },
+      storecode: { $regex: String(storecode), $options: 'i' },
       walletAddress: { $exists: true, $ne: null },
       verified: true,
     },
@@ -933,9 +933,9 @@ export async function getAllBuyers(
   const users = await collection
     .find<UserProps>(
       {
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: search, $options: 'i' },
-        "buyer.depositName": { $regex: depositName, $options: 'i' },
+        storecode: { $regex: String(storecode), $options: 'i' },
+        nickname: { $regex: String(search), $options: 'i' },
+        "buyer.depositName": { $regex: String(depositName), $options: 'i' },
         walletAddress: { $exists: true, $ne: null },
         $or: [
           { verified: { $exists: false } },
@@ -971,9 +971,9 @@ export async function getAllBuyers(
   const totalCount = await collection.countDocuments(
     {
 
-      storecode: { $regex: storecode, $options: 'i' },
-      nickname: { $regex: search, $options: 'i' },
-      "buyer.depositName": { $regex: depositName, $options: 'i' },
+      storecode: { $regex: String(storecode), $options: 'i' },
+      nickname: { $regex: String(search), $options: 'i' },
+      "buyer.depositName": { $regex: String(depositName), $options: 'i' },
       walletAddress: { $exists: true, $ne: null },
       $or: [
         { verified: { $exists: false } },
@@ -1035,8 +1035,8 @@ export async function getAllBuyersForAgent(
     },
     {
       $match: {
-        'storecode': { $regex: storecode, $options: 'i' },
-        'storeInfo.agentcode': { $regex: agentcode, $options: 'i' },
+        'storecode': { $regex: String(storecode), $options: 'i' },
+        'storeInfo.agentcode': { $regex: String(agentcode), $options: 'i' },
         walletAddress: { $exists: true, $ne: null },
         $or: [
           { verified: { $exists: false } },
@@ -1113,7 +1113,7 @@ export async function getAllBuyersByStorecode(
     .find<UserProps>(
       {
 
-        storecode: { $regex: storecode, $options: 'i' },
+        storecode: { $regex: String(storecode), $options: 'i' },
         walletAddress: { $exists: true, $ne: null },
         
         $or: [
