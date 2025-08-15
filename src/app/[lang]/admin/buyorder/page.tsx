@@ -4774,7 +4774,7 @@ const fetchBuyOrders = async () => {
                               </span>
                               */}
 
-                              <div className="mt-2 flex flex-row items-center justify-center gap-2">
+                              <div className="h-14 flex flex-row items-center justify-center gap-2">
                                 <Image
                                   src="/icon-matching-completed.png"
                                   alt="Matching Completed"
@@ -4787,12 +4787,14 @@ const fetchBuyOrders = async () => {
                                 </span>
                               </div>
 
+                              {/*
                               <span className="text-sm text-zinc-500">
                                 {item?.seller?.userStats?.totalPaymentConfirmedCount
                                   ? item?.seller?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
                                   0 + ' 건'
                                 }
                               </span>
+                              */}
 
 
                             </div>
