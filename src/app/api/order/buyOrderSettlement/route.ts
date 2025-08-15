@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         txid
         "0xfa087dc1f0c61324359670c9ca1602bd27e1266edef4bbf216b7a187c27adaf8"
         krwRate
-        1380
+        1400
         paymentAmount
         1500000
         settlementWalletAddress

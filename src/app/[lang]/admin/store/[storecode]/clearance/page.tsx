@@ -14,12 +14,6 @@ import {
 } from "thirdweb";
 
 
-
-import {
-    polygon,
-    arbitrum,
-} from "thirdweb/chains";
-
 import {
     ConnectButton,
     useActiveAccount,
@@ -151,10 +145,25 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+//const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
+//const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
 
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
 
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 export default function Index({ params }: any) {
@@ -175,15 +184,45 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: chain === "ethereum" ? ethereum :
+           chain === "polygon" ? polygon :
+           chain === "arbitrum" ? arbitrum :
+           chain === "bsc" ? bsc : arbitrum,
+
+    // the contract's address
+    address: chain === "ethereum" ? bscContractAddressMKRW :
+            chain === "polygon" ? bscContractAddressMKRW :
+            chain === "arbitrum" ? bscContractAddressMKRW :
+            chain === "bsc" ? bscContractAddressMKRW : bscContractAddressMKRW,
 
     // OPTIONAL: the contract's abi
     //abi: [...],
@@ -573,9 +612,14 @@ export default function Index({ params }: any) {
           });
     
       
-          //console.log(result);
-      
-          setBalance( Number(result) / 10 ** 6 );
+          if (chain === 'bsc') {
+            setBalance( Number(result) / 10 ** 18 );
+          } else {
+            setBalance( Number(result) / 10 ** 6 );
+          }
+
+
+
         } catch (error) {
           console.error('Error:', error);
           setBalance(0);
@@ -587,7 +631,10 @@ export default function Index({ params }: any) {
         const result = await getWalletBalance({
           address: address,
           client: client,
-          chain: arbitrum,
+          chain: chain === "ethereum" ? ethereum :
+                 chain === "polygon" ? polygon :
+                 chain === "arbitrum" ? arbitrum :
+                 chain === "bsc" ? bsc : arbitrum,
         });
         //console.log("getWalletBalance", result);
         /*
@@ -614,105 +661,6 @@ export default function Index({ params }: any) {
   
   
     const [escrowWalletAddress, setEscrowWalletAddress] = useState('');
-    const [makeingEscrowWallet, setMakeingEscrowWallet] = useState(false);
-  
-    const makeEscrowWallet = async () => {
-        
-      if (!address) {
-        toast.error('Please connect your wallet');
-        return;
-      }
-  
-  
-      setMakeingEscrowWallet(true);
-  
-      fetch('/api/order/getEscrowWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          chain: params.storecode,
-          walletAddress: address,
-          isSmartAccount: false,
-        }),
-      })
-      .then(response => response.json())
-      .then(data => {
-          
-          //console.log('getEscrowWalletAddress data.result', data.result);
-  
-  
-          if (data.result) {
-            setEscrowWalletAddress(data.result.escrowWalletAddress);
-          } else {
-            toast.error('Escrow wallet address has been failed');
-          }
-      })
-      .finally(() => {
-        setMakeingEscrowWallet(false);
-      });
-  
-    }
-  
-   
-    
-    const [escrowBalance, setEscrowBalance] = useState(0);
-    const [escrowNativeBalance, setEscrowNativeBalance] = useState(0);
-    useEffect(() => {
-  
-      const getEscrowBalance = async () => {
-  
-        if (!address) {
-          setEscrowBalance(0);
-          return;
-        }
-  
-        if (!escrowWalletAddress || escrowWalletAddress === '') return;
-  
-  
-        const result = await balanceOf({
-          contract,
-          address: escrowWalletAddress,
-        });
-  
-    
-        setEscrowBalance( Number(result) / 10 ** 6 );
-  
-  
-  
-  
-        await fetch('/api/user/getBalanceByWalletAddress', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chain: params.storecode,
-            walletAddress: escrowWalletAddress,
-          }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            setEscrowNativeBalance(data.result?.displayValue);
-        });
-  
-      };
-  
-      getEscrowBalance();
-  
-      const interval = setInterval(() => {
-        getEscrowBalance();
-      } , 1000);
-  
-      return () => clearInterval(interval);
-  
-    } , [address, escrowWalletAddress, contract, params.storecode]);
-    
-  
-
-
 
 
 
@@ -1249,182 +1197,6 @@ export default function Index({ params }: any) {
 
 
 
-    const requestPayment = async (
-      index: number,
-      orderId: string,
-      tradeId: string,
-      amount: number,
-    ) => {
-      // check balance
-      // send payment request
-
-      if (balance < amount) {
-        toast.error(Insufficient_balance);
-        return;
-      }
-
-
-      // check all escrowing is false
-      if (escrowing.some((item) => item === true)) {
-        toast.error('Escrowing');
-        return;
-      }
-
-      // check all requestingPayment is false
-      if (requestingPayment.some((item) => item === true)) {
-        toast.error('Requesting Payment');
-        return;
-      }
-
-
-
-      setEscrowing(
-        escrowing.map((item, idx) => {
-          if (idx === index) {
-            return true;
-          }
-          return item;
-        })
-      );
-
-   
-      // get escrow wallet address
-
-      const recipientWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-
-
-
-      // send USDT
-      // Call the extension function to prepare the transaction
-      const transaction = transfer({
-        contract,
-        to: recipientWalletAddress,
-        amount: amount,
-      });
-      
-
-
-      try {
-
-
-        const transactionResult = await sendAndConfirmTransaction({
-            transaction: transaction,
-            
-            account: activeAccount as any,
-        });
-
-        //console.log("transactionResult===", transactionResult);
-
-
-        setEscrowing(
-          escrowing.map((item, idx) => {
-            if (idx === index) {
-              return false;
-            }
-            return item;
-          })
-        );
-
-
-
-        // send payment request
-
-        if (transactionResult) {
-
-          
-          setRequestingPayment(
-            requestingPayment.map((item, idx) => {
-              if (idx === index) {
-                return true;
-              }
-              return item;
-            })
-          );
-          
-          
-          
-
-
-        
-          const response = await fetch('/api/order/requestPayment', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              lang: params.lang,
-              chain: params.storecode,
-              orderId: orderId,
-              transactionHash: transactionResult.transactionHash,
-            })
-          });
-
-          const data = await response.json();
-
-          console.log('/api/order/requestPayment data====', data);
-
-
-          /*
-          setRequestingPayment(
-            requestingPayment.map((item, idx) => {
-              if (idx === index) {
-                return false;
-              }
-              return item;
-            })
-          );
-          */
-          
-
-
-          if (data.result) {
-
-            fetchBuyOrders();
-
-            // refresh balance
-
-            const result = await balanceOf({
-              contract,
-              address: address || "",
-            });
-
-            //console.log(result);
-
-            setBalance( Number(result) / 10 ** 6 );
-
-
-            toast.success(Payment_request_has_been_sent);
-
-          } else {
-            toast.error('Payment request has been failed');
-          }
-
-        }
-
-
-      } catch (error) {
-        console.error('Error:', error);
-
-        toast.error('Payment request has been failed');
-
-        setEscrowing(
-          escrowing.map((item, idx) => {
-            if (idx === index) {
-              return false;
-            }
-            return item;
-          })
-        );
-
-      }
-
-
-    }
-
-
-
-
-
 
   // array of confirmingPayment
 
@@ -1670,6 +1442,7 @@ export default function Index({ params }: any) {
     const [settlementWalletBalance, setSettlementWalletBalance] = useState(0);
 
     useEffect(() => {
+
       const getSettlementWalletBalance = async () => {
         if (!store || !store.settlementWalletAddress) {
           setSettlementWalletBalance(0);
@@ -1679,12 +1452,19 @@ export default function Index({ params }: any) {
           contract,
           address: store.settlementWalletAddress,
         });
-        //console.log('settlementWalletBalance result', result);
-        setSettlementWalletBalance(Number(result) / 10 ** 6);
+ 
+        if (chain === 'bsc') {
+          setSettlementWalletBalance( Number(result) / 10 ** 18 );
+        } else {
+          setSettlementWalletBalance( Number(result) / 10 ** 6 );
+        }
+
       };
+
       getSettlementWalletBalance();
-    }, [store, contract]);
-    
+    }, [store, contract, store?.settlementWalletAddress]);
+
+
 
 
     // adminWalletAddress USDT balance
@@ -1719,8 +1499,12 @@ export default function Index({ params }: any) {
           contract,
           address: store.sellerWalletAddress,
         });
-        //console.log('sellerWalletBalance result', result);
-        setSellerWalletBalance(Number(result) / 10 ** 6);
+
+        if (chain === 'bsc') {
+          setSellerWalletBalance(Number(result) / 10 ** 18);
+        } else {
+          setSellerWalletBalance(Number(result) / 10 ** 6);
+        }
       };
       getSellerWalletBalance();
     }, [store, contract]);
