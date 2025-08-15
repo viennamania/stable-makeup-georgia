@@ -4408,7 +4408,7 @@ const fetchBuyOrders = async () => {
                       
                       <td className="p-2">
                         <div className="
-                          w-32  
+                          w-36   
                           flex flex-col items-start justify-start gap-2">
                           
                           <div className="w-full flex flex-col gap-2 items-center justify-start">
@@ -5466,17 +5466,15 @@ const fetchBuyOrders = async () => {
 
                         ) : (
 
-
-
-
                           <div className={`
                             ${
-                            item.status === 'accepted' ? 'bg-blue-500/10'
-                            : item.status === 'paymentRequested' ? 'bg-blue-500/10'
-                            : item.status === 'paymentConfirmed' ? 'bg-blue-500/10'
-                            : item.status === 'cancelled' ? 'bg-red-500/10'
-                            : item.status === 'paymentConfirmed' ? 'bg-green-500/10'
-                            : 'bg-gray-500/10'
+                            //item.status === 'accepted' ? 'bg-blue-500/10'
+                            //: item.status === 'paymentRequested' ? 'bg-blue-500/10'
+                            //: item.status === 'paymentConfirmed' ? 'bg-blue-500/10'
+                            //: item.status === 'cancelled' ? 'bg-red-500/10'
+                            //: item.status === 'paymentConfirmed' ? 'bg-green-500/10'
+                            //: 'bg-gray-500/10'
+                            <></>
                             } 
 
                             rounded-md
@@ -6347,10 +6345,9 @@ const fetchBuyOrders = async () => {
                       */}
 
 
-                        {/* font monospace */}
-
                       <td className="p-2">
-                        <div className="w-full flex flex-col gap-2 items-center justify-center">
+                        <div className="w-full
+                          flex flex-col gap-2 items-center justify-center">
 
                           {item?.settlement && (
 
@@ -6381,9 +6378,9 @@ const fetchBuyOrders = async () => {
 
                                 <div className="w-full flex flex-row gap-2 items-center justify-center">
                                   <span className="
-                                  w-7   
-                                  text-sm text-zinc-500">
-                                    결제
+                                  w-14 
+                                  text-xs text-zinc-500">
+                                    가맹점 결제
                                   </span>
                                   <span className="
                                   w-12 text-end
@@ -6400,9 +6397,9 @@ const fetchBuyOrders = async () => {
 
                                 <div className="w-full flex flex-row gap-2 items-center justify-center">
                                   <span className="
-                                  w-7
-                                  text-sm text-zinc-500">
-                                    AG
+                                  w-14
+                                  text-xs text-zinc-500">
+                                    AG 정산
                                   </span>
                                   <span className="
                                   w-12 text-end
@@ -6416,9 +6413,9 @@ const fetchBuyOrders = async () => {
 
                                 <div className="w-full flex flex-row gap-2 items-center justify-center">
                                   <span className="
-                                  w-7
-                                  text-sm text-zinc-500">
-                                    PG
+                                  w-14
+                                  text-xs text-zinc-500">
+                                    PG 정산
                                   </span>
                                   <span className="
                                   w-12  text-end
