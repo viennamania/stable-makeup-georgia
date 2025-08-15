@@ -4,7 +4,6 @@ import {
 	getOneAgentMemo,
 } from '@lib/api/agent';
 
-
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
@@ -14,17 +13,13 @@ export async function POST(request: NextRequest) {
     agentcode,
   } = body;
 
-
   const result = await getOneAgentMemo({
     walletAddress,
     agentcode,
   });
-
  
   return NextResponse.json({
-
     result,
-    
   });
   
 }
