@@ -30,12 +30,6 @@ import {
 } from "thirdweb";
 
 
-
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
 import {
   ConnectButton,
   useActiveAccount,
@@ -87,6 +81,24 @@ import { useSearchParams } from 'next/navigation';
 
 import { paymentUrl } from "../../../config/payment";
 
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 interface BuyOrder {
@@ -175,10 +187,6 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
 
 
 export default function Index({ params }: any) {
@@ -198,7 +206,7 @@ export default function Index({ params }: any) {
 
 
 
-    const activeWallet = useActiveWallet();
+  const activeWallet = useActiveWallet();
     
 
   const contract = getContract({
@@ -207,15 +215,45 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: chain === "ethereum" ? ethereum :
+           chain === "polygon" ? polygon :
+           chain === "arbitrum" ? arbitrum :
+           chain === "bsc" ? bsc : arbitrum,
+
+    // the contract's address
+    address: chain === "ethereum" ? bscContractAddressMKRW :
+            chain === "polygon" ? bscContractAddressMKRW :
+            chain === "arbitrum" ? bscContractAddressMKRW :
+            chain === "bsc" ? bscContractAddressMKRW : bscContractAddressMKRW,
 
     // OPTIONAL: the contract's abi
     //abi: [...],
@@ -557,10 +595,12 @@ export default function Index({ params }: any) {
           address: address,
         });
 
-    
-        //console.log(result);
-    
-        setBalance( Number(result) / 10 ** 6 );
+        if (chain === 'bsc') {
+          setBalance( Number(result) / 10 ** 18 );
+        } else {
+          setBalance( Number(result) / 10 ** 6 );
+        }
+
         } catch (error) {
           console.log("getBalance error", error);
       }
@@ -570,7 +610,10 @@ export default function Index({ params }: any) {
       const result = await getWalletBalance({
         address: address || "",
         client: client,
-        chain: arbitrum,
+        chain: chain === "ethereum" ? ethereum :
+               chain === "polygon" ? polygon :
+               chain === "arbitrum" ? arbitrum :
+               chain === "bsc" ? bsc : arbitrum,
       });
       //console.log("getWalletBalance", result);
       /*
@@ -2934,13 +2977,36 @@ export default function Index({ params }: any) {
                         </div>
                       </div>
 
-                      <div className="flex flex-row gap-2 justify-center items-center">
+                    
+
+
+                      <div className="
+                      mt-5
+                      flex flex-row gap-2 justify-center items-center">
+                        <Image
+                          src={`/logo-chain-${chain}.png`}
+                          alt={`${chain} logo`}
+                          width={20}
+                          height={20}
+                          className="rounded-lg"
+                        />
+                        <span className="text-sm text-zinc-600">
+                          가스수량
+                        </span>
                         <div className="text-xl font-semibold text-zinc-800"
-                          style={{ fontFamily: 'monospace' }}>
+                          style={{ fontFamily: "monospace" }}
+                        >
                           {Number(nativeBalance).toFixed(8)}
                         </div>
-                        <p className="text-sm text-zinc-800">ETH</p>
+                        <p className="text-sm text-zinc-800">
+                          {chain === "ethereum" ? "ETH" :
+                          chain === "polygon" ? "POL" :
+                          chain === "arbitrum" ? "ETH" :
+                          chain === "bsc" ? "BNB" : ""}
+                        </p>
                       </div>
+
+
 
                       <div className="flex flex-row gap-2 justify-center items-center">
                         {/* if pol balance is 0, comment out the text */}
