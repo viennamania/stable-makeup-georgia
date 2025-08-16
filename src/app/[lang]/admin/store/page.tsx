@@ -1072,7 +1072,7 @@ export default function Index({ params }: any) {
   }
 
 
-  /*
+  
   useEffect(() => {
     if (!address) {
       setAllStore([]);
@@ -1080,9 +1080,8 @@ export default function Index({ params }: any) {
     }
     fetchAllStore();
   } , [address, limitValue, pageValue, paramAgentcode,
-    searchFromDate, searchToDate,
   ]);
-  */
+  
 
 
 

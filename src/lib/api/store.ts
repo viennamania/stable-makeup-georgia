@@ -576,8 +576,8 @@ export async function getAllStores(
     search,
     agentcode,
 
-    fromDate = "",
-    toDate = "",
+    fromDate = new Date(0).toISOString(),
+    toDate = new Date().toISOString(),
   }: {
     limit: number;
     page: number;
@@ -610,6 +610,8 @@ export async function getAllStores(
   }
 
   const totalCount = await collection.countDocuments(query);
+
+  //console.log('getAllStores totalCount', totalCount);
 
 
   try {

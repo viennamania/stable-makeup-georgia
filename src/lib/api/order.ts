@@ -6392,108 +6392,6 @@ export async function deleteStoreCode(
 }
 
 
-
-// getAllStores
-
-export async function getAllStores(
-  {
-    limit,
-    page,
-    search,
-  }: {
-    limit: number;
-    page: number;
-    search: string;
-  }
-
-): Promise<any> {
-
-  const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
-
-  // search storeCone, storeName, storeDescription
-
-  const results = await collection.find<any>(
-    {
-      $or: [
-        { storecode: { $regex: search, $options: 'i' } },
-        { storeName: { $regex: search, $options: 'i' } },
-        { storeDescription: { $regex: search, $options: 'i' } },
-      ],
-
-    },
-  ).sort({ createdAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
-
-
-
-  
-
- 
-  const totalCount = await collection.countDocuments(
-    {}
-  );
-
-  const searchCount = await collection.countDocuments(
-    {
-      $or: [
-        { storecode: { $regex: search, $options: 'i' } },
-        { storeName: { $regex: search, $options: 'i' } },
-        { storeDescription: { $regex: search, $options: 'i' } },
-      ],
-    }
-  );
-
-
-
-
-
-
-  return {
-    totalCount: totalCount,
-    searchCount: searchCount,
-    //totalKrwAmount: totalKrwAmount ? totalKrwAmount[0]?.totalKrwAmount : 0,
-    //totalUsdtAmount: totalUsdtAmount ? totalUsdtAmount[0]?.totalUsdtAmount : 0,
-    stores: results,
-  };
-
-}
-
-
-
-
-
-// getStoreByStorecode
-export async function getStoreByStorecode(
-  {
-    storecode,
-  }: {
-    storecode: string;
-  }
-
-): Promise<any> {
-
-  //console.log('getStoreByStorecode storecode: ' + storecode);
-
-  const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
-
-  const result = await collection.findOne<any>(
-    { storecode: storecode }
-  );
-
-  //console.log('getStoreByStorecode result: ' + JSON.stringify(result));
-
-  if (result) {
-    return result;
-  } else {
-    return null;
-  }
-
-}
-
-
-
-
 // getRandomStore
 export async function getRandomStore(): Promise<any> {
   const client = await clientPromise;
@@ -7298,7 +7196,7 @@ export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: n
     }
   );
 
-  console.log('getTotalNumberOfClearanceOrders totalCount: ' + totalCount);
+  ///console.log('getTotalNumberOfClearanceOrders totalCount: ' + totalCount);
 
   return {
     totalCount: totalCount,
