@@ -1461,6 +1461,63 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // resetPayactionKeys
+    const resetPayactionKeys = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+
+        setUpdatingPayactionKeys(true);
+
+        const payactionKey = {
+            payactionApiKey: '',
+            payactionWebhookKey: '',
+            payactionShopId: '',
+        };
+
+        const response = await fetch('/api/store/updatePayactionKeys', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.storecode,
+                payactionKey: payactionKey,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('PAYACTION API KEY가 초기화되었습니다');
+            setPayactionApiKey('');
+            setPayactionWebhookKey('');
+            setPayactionShopId('');
+
+            setStore({
+                ...store,
+                payactionKey: {
+                    payactionApiKey: payactionApiKey,
+                    payactionWebhookKey: payactionWebhookKey,
+                    payactionShopId: payactionShopId,
+                },
+            });
+
+            //fetchStore();
+        } else {
+            toast.error('PAYACTION API KEY 초기화에 실패하였습니다');
+        }
+
+        setUpdatingPayactionKeys(false);
+    }
+
+
+
+
+
+
+
 
     // update backgroundColor (000000 ~ ffffff)
     const [backgroundColor, setBackgroundColor] = useState("#ffffff");
@@ -3074,7 +3131,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg">
-                                        구매자 계좌이체용 원화통장 설정
+                                        구매자 결제(계좌이체)용 원화통장 설정
                                     </span>
                                 </div>
 
@@ -3298,6 +3355,27 @@ export default function SettingsPage({ params }: any) {
                                     >
                                         {updatingPayactionKeys ? '변경 중...' : '변경'}
                                     </button>
+
+                                    <div className='mt-2 w-full flex flex-col items-center justify-center gap-2'>
+                                        {/* button for reset update */}
+                                        <span className="text-sm text-red-500">
+                                            자동입금기능을 사용하지 않을 경우 <br />
+                                            아래 버튼을 눌러 초기화 해주세요.
+                                        </span>
+                                        <button
+                                            className={`w-full bg-red-500 text-zinc-100 rounded-lg p-2
+                                                ${updatingPayactionKeys
+                                                ? "opacity-50" : ""}`}
+                                            onClick={() => {
+                                                confirm(
+                                                    `정말 초기화하시겠습니까?`
+                                                ) && resetPayactionKeys();
+                                            }}
+                                        >
+                                            {updatingPayactionKeys ? '초기화 중...' : '초기화'}
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
