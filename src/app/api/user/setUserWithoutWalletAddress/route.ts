@@ -43,14 +43,6 @@ import {
  } from "thirdweb/wallets";
 
 
- if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-
 
 export async function POST(request: NextRequest) {
 
@@ -76,31 +68,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-
-
-
-    // https://store.otc.earth/Api/walletAddress?storecode=2000001&memberid=google@gmail.com
-
-    // {"result":1,"data":"0x8c1C4C15bd7e74A368E847C8278C0aB9F8182B25"}
-    
-    /*
-    const data = await fetch(`https://store.otc.earth/Api/walletAddress?storecode=${storecode}&memberid=${memberid}`);
-
-
-
-
-    const json = await data?.json();
-
-    if (!json?.data) {
-      throw new Error("No wallet address found");
-    }
-
-    const walletAddress = json?.data;
-
-
-
-    console.log("walletAddress", walletAddress);
-    */
 
 
 
@@ -135,56 +102,7 @@ export async function POST(request: NextRequest) {
 
 
 
-    const client = createThirdwebClient({
-      secretKey: process.env.THIRDWEB_SECRET_KEY || "",
-    });
-
-    if (!client) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const personalAccount = privateKeyToAccount({
-      client,
-      privateKey: userWalletPrivateKey,
-    });
-  
-
-    if (!personalAccount) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-    const wallet = smartWallet({
-      chain:  polygon ,
-      ///factoryAddress: "0x9Bb60d360932171292Ad2b80839080fb6F5aBD97", // your own deployed account factory address
-      sponsorGas: true,
-    });
-
-
-    // Connect the smart wallet
-    const account = await wallet.connect({
-      client: client,
-      personalAccount: personalAccount,
-    });
-
-    if (!account) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const userWalletAddress = account.address;
-
-
-
-
-
-
+    const userWalletAddress = ethers.Wallet.fromMnemonic(userWalletPrivateKey).address;
 
 
 

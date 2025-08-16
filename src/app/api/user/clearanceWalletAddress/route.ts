@@ -69,11 +69,6 @@ export async function POST(request: NextRequest) {
 
   const chainId = arbitrum.id;
 
-  //   const url = process.env.THIRDWEB_ENGINE_URL + "/backend-wallet/" + chainId + "/" + walletAddress + "/get-balance";
-
-  
-  //const url = process.env.THIRDWEB_ENGINE_URL + "/backend-wallet/" + chainId + "/" + walletAddress + "/get-balance";
-  //https://cors.redoc.ly/contract/{chain}/{contractAddress}/erc20/balance-of
 
   const contractAddressPolygon = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 

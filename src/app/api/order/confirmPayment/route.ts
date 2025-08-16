@@ -55,34 +55,11 @@ import {
   balanceOf,
 
 } from "thirdweb/extensions/erc20";
-import { stat } from "fs";
-
-
-
-
-if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-
 
 
 
 // nextjs-app
 export const maxDuration = 60; // This function can run for a maximum of 5 seconds
-
-//nextjs /pages/api
-/*
-export const config = {
-	//runtime: 'edge',
-	maxDuration: 120, // This function can run for a maximum of 60 seconds
-};
-*/
-
-
 
 
 
@@ -309,55 +286,7 @@ export async function POST(request: NextRequest) {
 
 
 
-      const chainId = arbitrum.id;
-      const url = process.env.THIRDWEB_ENGINE_URL + "/backend-wallet/" + chainId + "/transfer";
-
-      ///console.log("url", url);
-
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-          "x-backend-wallet-address": escrowWalletAddress,
-        },
-        body: JSON.stringify({
-          to: toAddressStore,
-          currencyAddress: tokenContractAddressUSDT,
-          amount: sendAmountToStore,
-
-          /*
-          txOverrides: {
-            gas: "530000",
-            maxFeePerGas: "1000000000",
-            maxPriorityFeePerGas: "1000000000",
-            value: "10000000000",
-          },
-          */
-         
-        }),
-      });
-          
-
-
-
-      if (!resp) {
-        return NextResponse.json({
-          result: null,
-        });
-      }
-
-      const responseJson = await resp.json();
-
-      console.log("responseJson", responseJson);
-
-      queueId = responseJson.result.queueId;
-
-      ///const hash = responseJson.result.transactionHash;
-
       transactionHashResult = "0x";
-
-
     }
 
 

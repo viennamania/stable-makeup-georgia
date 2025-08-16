@@ -57,40 +57,6 @@ import {
 
 
 
-if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-
-/*
-const engine = new Engine({
-  url: process.env.THIRDWEB_ENGINE_URL,
-  accessToken: process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-});
-*/
-
-
-
-// nextjs-app
-export const maxDuration = 60; // This function can run for a maximum of 5 seconds
-
-//nextjs /pages/api
-/*
-export const config = {
-	//runtime: 'edge',
-	maxDuration: 120, // This function can run for a maximum of 60 seconds
-};
-*/
-
-
-
-
-
-//const chain = polygon;
-
 
 // USDT Token (USDT)
 const tokenContractAddressUSDT = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F';
@@ -279,128 +245,10 @@ export async function POST(request: NextRequest) {
       console.log("isSmartAccount is false, toAddressStore", toAddressStore);
 
 
-      // /backend-wallet/{chain}/transfer
-      /*
-      {
-        "to": "0x152e208d08cd3ea1aa5d179b2e3eba7d1a733ef4",
-        "currencyAddress": "0x0000000000000000000000000000000000000000",
-        "amount": "string",
-        "txOverrides": {
-          "gas": "530000",
-          "maxFeePerGas": "1000000000",
-          "maxPriorityFeePerGas": "1000000000",
-          "value": "10000000000"
-        }
-      }
-      */
-      // if chain if "polygon" then chainId is 137
-      const chainId = arbitrum.id;
 
-      // https://cors.redoc.ly/contract/{chain}/{contractAddress}/erc20/transfer
-      /*
-      {
-        "toAddress": "0x3EcDBF3B911d0e9052b64850693888b008e18373",
-        "amount": "0.1"
-        }
-      */
-
-
-      /*
-      console.log("process.env.THIRDWEB_ENGINE_URL", process.env.THIRDWEB_ENGINE_URL);
-
-      const contractAccress = chain === "polygon" ? tokenContractAddressUSDT : contractAddressArbitrum;
-
-      const url = process.env.THIRDWEB_ENGINE_URL + "/contract/" + chainId + '/' + contractAccress + "/erc20/transfer";
-
-      console.log("url", url);
-
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-          "x-backend-wallet-address": escrowWalletAddress,
-        },
-        body: JSON.stringify({
-          toAddress: toAddressStore,
-          amount: sendAmountToStore,
-        }),
-      });
-      */
-
-
-      
-      const url = process.env.THIRDWEB_ENGINE_URL + "/backend-wallet/" + chainId + "/transfer";
-
-      ///console.log("url", url);
-
-      // replacement transaction underpriced
-
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-          "x-backend-wallet-address": escrowWalletAddress,
-        },
-        body: JSON.stringify({
-          to: toAddressStore,
-          currencyAddress: tokenContractAddressUSDT,
-          amount: sendAmountToStore,
-
-          /*
-          txOverrides: {
-            gas: "530000",
-            maxFeePerGas: "1000000000",
-            
-            //maxPriorityFeePerGas: "1000000000",
-            maxPriorityFeePerGas: "5000000000",
-
-            value: "10000000000",
-          },
-          */
-          // Base: 0.000000035 Gwei |Max: 30.00000005 Gwei |Max Priority: 30 Gwei
-
-          /*
-          txOverrides: {
-            gas: "830000",
-            maxFeePerGas: "5000000000",
-            maxPriorityFeePerGas: "5000000000",
-            value: "50000000000",
-          },
-          */
-
-        }),
-      });
-      
-          
-
-      /*
-      {
-        "result": {
-          "transactionHash": "string"
-        }
-      }
-      */
-
-      //console.log("resp", resp);
-
-
-      if (!resp) {
-        return NextResponse.json({
-          result: null,
-        });
-      }
-
-      const responseJson = await resp.json();
-
-      console.log("responseJson", responseJson);
-
-      queueId = responseJson.result.queueId;
-
-      ///const hash = responseJson.result.transactionHash;
 
       transactionHashResult = "0x";
+
 
     }
 

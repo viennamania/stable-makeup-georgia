@@ -318,51 +318,6 @@ export async function GET(request: NextRequest) {
     } else {
 
 
-      const chainId = arbitrum.id;
-      const url = process.env.THIRDWEB_ENGINE_URL + "/backend-wallet/" + chainId + "/transfer";
-
-      ///console.log("url", url);
-
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-          "x-backend-wallet-address": escrowWalletAddress,
-        },
-        body: JSON.stringify({
-          to: toAddressStore,
-          currencyAddress: tokenContractAddressUSDT,
-          amount: sendAmountToStore,
-
-          /*
-          txOverrides: {
-            gas: "530000",
-            maxFeePerGas: "1000000000",
-            maxPriorityFeePerGas: "1000000000",
-            value: "10000000000",
-          },
-          */
-         
-        }),
-      });
-          
-      if (!resp) {
-        return NextResponse.json({
-          orderId: orderId,
-          status: 400,
-          msg: "전송 실패",
-        });
-      }
-
-      const responseJson = await resp.json();
-
-      ///console.log("responseJson", responseJson);
-
-      queueId = responseJson.result.queueId;
-
-      ///const hash = responseJson.result.transactionHash;
-
       transactionHashResult = "0x";
 
 

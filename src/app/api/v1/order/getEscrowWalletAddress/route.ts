@@ -51,25 +51,6 @@ import {
 } from "thirdweb/extensions/erc20";
 
 
-//import { Engine } from "@thirdweb-dev/engine";
-
-if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-
-/*
-const engine = new Engine({
-  url: process.env.THIRDWEB_ENGINE_URL,
-  accessToken: process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-});
-*/
-
-
-
 
 export async function GET(request: NextRequest) {
 
@@ -117,85 +98,8 @@ export async function GET(request: NextRequest) {
     }
 
 
-    
-    const escrowWalletPrivateKey = ethers.Wallet.createRandom().privateKey;
-
-    console.log("escrowWalletPrivateKey", escrowWalletPrivateKey);
-
-
-    
-    if (!escrowWalletPrivateKey) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-
-    const client = createThirdwebClient({
-      secretKey: process.env.THIRDWEB_SECRET_KEY || "",
-    });
-
-    if (!client) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const personalAccount = privateKeyToAccount({
-      client,
-      privateKey: escrowWalletPrivateKey,
-    });
   
-
-    if (!personalAccount) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-    const wallet = smartWallet({
-
-      chain: arbitrum,
-
-      ///factoryAddress: "0x655934C0B4bD79f52A2f7e6E60714175D5dd319b", // your own deployed account factory address
-      sponsorGas: true,
-    });
-
-
-    // Connect the smart wallet
-    const account = await wallet.connect({
-      client: client,
-      personalAccount: personalAccount,
-    });
-
-    if (!account) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    escrowWalletAddress = account.address;
-
-
-
-    const result = await setEscrowWalletAddressByWalletAddress(
-      storecode,
-      walletAddress,
-      escrowWalletAddress,
-      escrowWalletPrivateKey,
-    );
-
-    //console.log("setEscrowWalletAddressByWalletAddress result", result);
-
-
-    if (!result) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
+    const escrowWalletPrivateKey = ethers.Wallet.createRandom().privateKey;
 
     return NextResponse.json({
       result: {

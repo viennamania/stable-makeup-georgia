@@ -40,16 +40,6 @@ import {
  } from "thirdweb/wallets";
 
 
- /*
-
- if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-*/
 
 export async function POST(request: NextRequest) {
 

@@ -44,15 +44,6 @@ import { ethers } from "ethers";
 
 
 
- if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-
-
 export async function POST(request: NextRequest) {
 
   const body = await request.json();

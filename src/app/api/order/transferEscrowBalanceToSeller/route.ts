@@ -55,8 +55,6 @@ import {
   balanceOf,
 
 } from "thirdweb/extensions/erc20";
-import { stat } from "fs";
-
 
 
 
@@ -71,18 +69,6 @@ const settings = {
 };
 
 const alchemy = new Alchemy(settings);
-
-
-
-
-if (!process.env.THIRDWEB_ENGINE_URL) {
-  throw new Error("THIRDWEB_ENGINE_URL is not defined");
-}
-
-if (!process.env.THIRDWEB_ENGINE_ACCESS_TOKEN) {
-  throw new Error("THIRDWEB_ENGINE_ACCESS_TOKEN is not defined");
-}
-
 
 
 
@@ -197,85 +183,6 @@ export async function POST(request: NextRequest) {
     let transactionHashResult = "";
     let queueId = "";
 
-
-
-      const chainId = arbitrum.id;
-      const url = process.env.THIRDWEB_ENGINE_URL + "/backend-wallet/" + chainId + "/transfer";
-
-      ///console.log("url", url);
-      /*
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-          "x-backend-wallet-address": escrowWalletAddress,
-        },
-        body: JSON.stringify({
-          to: toAddressStore,
-          currencyAddress: chain === "polygon" ? tokenContractAddressUSDT : contractAddressArbitrum,
-          amount: sendAmountToStore,
-          txOverrides: {
-            gas: "530000",
-            maxFeePerGas: "1000000000",
-            maxPriorityFeePerGas: "1000000000",
-            value: "10000000000",
-          },
-        }),
-      });
-      */
-      // =====>  queue error
-
-
-
-
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: "Bearer " + process.env.THIRDWEB_ENGINE_ACCESS_TOKEN,
-          "x-backend-wallet-address": escrowWalletAddress,
-        },
-        body: JSON.stringify({
-          to: toAddressStore,
-          currencyAddress: tokenContractAddressUSDT,
-          amount: sendAmountToStore,
-
-        }),
-      });
-
-
-
-
-          
-
-      ///console.log("resp", resp);
-
-
-      if (!resp) {
-        return NextResponse.json({
-          result: null,
-        });
-      }
-
-      const responseJson = await resp.json();
-
-      console.log("responseJson", responseJson);
-
-      queueId = responseJson.result.queueId;
-
-      ///const hash = responseJson.result.transactionHash;
-
-      transactionHashResult = "0x";
-
-
-
-
-
-
-
-
-    console.log("Sent successfully!");
 
 
   
