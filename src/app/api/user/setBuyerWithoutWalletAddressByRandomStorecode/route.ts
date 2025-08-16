@@ -6,10 +6,12 @@ import {
 } from '@lib/api/user';
 
 import {
-  getStoreByStorecode,
   getRandomStore,
 } from '@lib/api/order';
 
+import {
+  getStoreByStorecode,
+} from '@lib/api/store';
 
 
 //import { ethers } from "ethers";

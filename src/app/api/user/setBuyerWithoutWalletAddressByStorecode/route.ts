@@ -7,7 +7,7 @@ import {
 
 import {
   getStoreByStorecode,
-} from '@lib/api/order';
+} from '@lib/api/store';
 
 
 

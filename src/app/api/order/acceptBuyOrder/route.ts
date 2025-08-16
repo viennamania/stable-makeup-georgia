@@ -108,12 +108,8 @@ export async function POST(request: NextRequest) {
         console.error('Error creating Sendbird group channel:', error);
       }
 
-      */
-
-      
-
     }
-
+    */
 
 
 
