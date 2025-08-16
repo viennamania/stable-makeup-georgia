@@ -1046,6 +1046,31 @@ export default function SettingsPage({ params }: any) {
                     </div>
 
 
+                    {/* 회원코드(id) */}
+                    {userCode && (
+                        <div className='flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+                            <div className="flex flex-row items-center gap-2">
+                                {/* dot */}
+                                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                <span className="text-lg">
+                                    회원코드
+                                </span>
+                            </div>
+                            <span className="text-xl font-semibold text-zinc-500">
+                                {userCode}
+                            </span>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(userCode);
+                                    toast.success('회원코드가 복사되었습니다');
+                                }}
+                                className="p-2 bg-green-500 text-zinc-100 rounded-lg"
+                            >
+                                복사
+                            </button>
+                        </div>
+                    )}
+
 
 
                 
@@ -1094,33 +1119,6 @@ export default function SettingsPage({ params }: any) {
                                 
                             </div>
                         )}
-
-                        {/* 회원코드(id) */}
-                        {userCode && (
-                            <div className='flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-                                <div className="flex flex-row items-center gap-2">
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        회원코드
-                                    </span>
-                                </div>
-                                <span className="text-xl font-semibold text-zinc-500">
-                                    {userCode}
-                                </span>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(userCode);
-                                        toast.success('회원코드가 복사되었습니다');
-                                    }}
-                                    className="p-2 bg-green-500 text-zinc-100 rounded-lg"
-                                >
-                                    복사
-                                </button>
-                            </div>
-                        )}
-
-
 
 
                         { (address && (nicknameEdit || !userCode)) && (
