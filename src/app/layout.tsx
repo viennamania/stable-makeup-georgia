@@ -64,7 +64,7 @@ export default function RootLayout({
    */
 
 
-   const [showChain, setShowChain] = React.useState(true);
+   const [showChain, setShowChain] = React.useState(false);
 
 
   return (
