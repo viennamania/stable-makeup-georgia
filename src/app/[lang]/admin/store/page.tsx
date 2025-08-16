@@ -968,7 +968,7 @@ export default function Index({ params }: any) {
 
 
 
-
+  /*
   // search form date to date
   const [searchFromDate, setSearchFromDate] = useState("");
   // from date is not today, but today - 30 days
@@ -986,7 +986,7 @@ export default function Index({ params }: any) {
     const toDate = new Date(today.setDate(today.getDate() + 1)); // add 1 day to today
     setSearchToDate(toDate.toISOString().split('T')[0]); // YYYY-MM-DD format
   }, []);
-
+  */
 
 
 
@@ -1021,8 +1021,8 @@ export default function Index({ params }: any) {
           searchStore: searchStore,
           agentcode: paramAgentcode,
 
-          fromDate: searchFromDate,
-          toDate: searchToDate,
+          //fromDate: searchFromDate,
+          //toDate: searchToDate,
         }
       ),
     });
@@ -1072,7 +1072,7 @@ export default function Index({ params }: any) {
   }
 
 
-
+  /*
   useEffect(() => {
     if (!address) {
       setAllStore([]);
@@ -1082,7 +1082,7 @@ export default function Index({ params }: any) {
   } , [address, limitValue, pageValue, paramAgentcode,
     searchFromDate, searchToDate,
   ]);
-
+  */
 
 
 
@@ -1250,7 +1250,7 @@ export default function Index({ params }: any) {
 
 
 
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
       totalCount: 0,
       totalKrwAmount: 0,
@@ -1281,17 +1281,6 @@ export default function Index({ params }: any) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          /*
-          storecode: params.storecode,
-          walletAddress: address,
-          searchMyOrders: searchMyOrders,
-          searchOrderStatusCompleted: true,
-          //searchBuyer: searchBuyer,
-          //searchDepositName: searchDepositName,
-
-          //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-          */
 
           agentcode: paramAgentcode,
           storecode: "",
@@ -1351,7 +1340,7 @@ export default function Index({ params }: any) {
         searchFromDate, searchToDate,
     ]);
 
-
+    */
     
 
 
@@ -2101,7 +2090,7 @@ export default function Index({ params }: any) {
 
 
             {/* trade summary */}
-
+            {/*
             <div className="flex flex-col xl:flex-row items-center justify-between gap-2
               w-full
               bg-zinc-100/50
@@ -2140,7 +2129,6 @@ export default function Index({ params }: any) {
                 </div>
               </div>
 
-              {/* divider */}
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
               <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
@@ -2208,8 +2196,6 @@ export default function Index({ params }: any) {
 
               </div>
 
-
-              {/* divider */}
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
               <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
@@ -2248,7 +2234,7 @@ export default function Index({ params }: any) {
               </div>
               
             </div>
-
+            */}
 
 
 
@@ -2377,6 +2363,7 @@ export default function Index({ params }: any) {
 
                 {/* serach fromDate and toDate */}
                 {/* DatePicker for fromDate and toDate */}
+                {/*
                 <div className="flex flex-col xl:flex-row items-center gap-2">
                   <div className="flex flex-row items-center gap-2">
                     <Image
@@ -2410,6 +2397,7 @@ export default function Index({ params }: any) {
                     />
                   </div>
                 </div>
+                */}
 
 
 
