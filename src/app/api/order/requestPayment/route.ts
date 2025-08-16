@@ -74,26 +74,26 @@ export async function POST(request: NextRequest) {
   const depositName = buyer?.depositName;
 
 
-   // getPayactionKeys
-    const payactionKeys = await getPayactionKeys({
+  // getPayactionKeys
+  const payactionKeys = await getPayactionKeys({
+    storecode: buyOrder.storecode,
+  });
+  if (!payactionKeys) {
+    console.error("Payaction keys not found for storecode:", buyOrder.storecode);
+    return NextResponse.json({
+      error: "Payaction keys not found for storecode",
       storecode: buyOrder.storecode,
-    });
-    if (!payactionKeys) {
-      console.error("Payaction keys not found for storecode:", buyOrder.storecode);
-      return NextResponse.json({
-        error: "Payaction keys not found for storecode",
-        storecode: buyOrder.storecode,
-      }, { status: 400 });
-    }
-    const payactionApiKey = payactionKeys.payactionApiKey;
-    const payactionShopId = payactionKeys.payactionShopId;
+    }, { status: 400 });
+  }
+  const payactionApiKey = payactionKeys.payactionApiKey;
+  const payactionShopId = payactionKeys.payactionShopId;
 
 
 
   const payactionUrl = "https://api.payaction.app/order";
 
 
-
+  /*
   if (!payactionApiKey || !payactionShopId) {
 
     console.error("Payaction API key or Shop ID is not defined for storecode:", buyOrder.storecode);
@@ -102,48 +102,57 @@ export async function POST(request: NextRequest) {
       storecode: buyOrder.storecode,
     }, { status: 400 });
   }
+  */
 
 
-  const payactionBody = {
+  // if payactionApiKey and payactionShopId are defined
+  // then call api
+
+  if (payactionApiKey && payactionShopId) {
+
+    const payactionBody = {
+      
+      order_number: tradeId,
+
+      order_amount: krwAmount,
+      order_date: new Date().toISOString(),
+      billing_name: depositName,
+      orderer_name: depositName,
+      orderer_phone_number: mobile,
+      orderer_email: email,
+      trade_usage: "USDT구매",
+      identity_number: depositName,
+    };
+
+    const payactionHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-api-key": payactionApiKey,
+      "x-mall-id": payactionShopId,
+    };
+    const payactionOptions = {
+      method: "POST",
+      headers: payactionHeaders,
+      body: JSON.stringify(payactionBody),
+    };
+
+    try {
+      const payactionResponse = await fetch(payactionUrl, payactionOptions);
+
+      const payactionResult = await payactionResponse.json();
+      console.log("payactionResult", payactionResult);
+
+      if (payactionResponse.status !== 200) {
+        console.error("Payaction API error", payactionResult);
+        throw new Error("Payaction API error");
+      }
     
-    order_number: tradeId,
-
-    order_amount: krwAmount,
-    order_date: new Date().toISOString(),
-    billing_name: depositName,
-    orderer_name: depositName,
-    orderer_phone_number: mobile,
-    orderer_email: email,
-    trade_usage: "USDT구매",
-    identity_number: depositName,
-  };
-
-  const payactionHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
-    "x-api-key": payactionApiKey,
-    "x-mall-id": payactionShopId,
-  };
-  const payactionOptions = {
-    method: "POST",
-    headers: payactionHeaders,
-    body: JSON.stringify(payactionBody),
-  };
-
-  try {
-    const payactionResponse = await fetch(payactionUrl, payactionOptions);
-
-    const payactionResult = await payactionResponse.json();
-    console.log("payactionResult", payactionResult);
-
-    if (payactionResponse.status !== 200) {
-      console.error("Payaction API error", payactionResult);
-      throw new Error("Payaction API error");
+    } catch (error) {
+      console.error("Error calling Payaction API", error);
+      throw new Error("Error calling Payaction API");
     }
-  
-  } catch (error) {
-    console.error("Error calling Payaction API", error);
-    throw new Error("Error calling Payaction API");
+
   }
+
 
 
 

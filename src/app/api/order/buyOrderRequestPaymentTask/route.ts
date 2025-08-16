@@ -228,22 +228,6 @@ export async function POST(request: NextRequest) {
     const trade_usage = "USDT구매";
     const identity_number = buyOrder.walletAddress;
 
-
-    /*
-    console.log("order_number", order_number);
-    console.log("order_amount", order_amount);
-    console.log("order_date", order_date);
-    console.log("billing_name", billing_name);
-    console.log("orderer_name", orderer_name);
-    console.log("orderer_phone_number", orderer_phone_number);
-    console.log("orderer_email", orderer_email);
-    console.log("trade_usage", trade_usage);
-    console.log("identity_number", identity_number);
-
-    */
-
-
-
     
     const payactionUrl = "https://api.payaction.app/order";
     const payactionBody = {
@@ -309,11 +293,6 @@ export async function POST(request: NextRequest) {
 
         continue;
       }
-
-
-
-
-
       
 
       // updateBuyOrderPayactionResult
@@ -340,32 +319,17 @@ export async function POST(request: NextRequest) {
         console.log("trade_usage", trade_usage);
         console.log("identity_number", identity_number);
 
-        /*
-        order_number 51970415
-        order_amount 5000
-        order_date 2025-05-23T07:45:02.304Z
-        billing_name 이강식
-        orderer_name 이강식
-        orderer_phone_number +821012345678
-        orderer_email undefined
-        trade_usage USDT구매
-        identity_number 0xeA72dEC1946ec93dBe84Ab82F59021576062962d
-        */
-
-
-
-        //throw new Error("Payaction API error");
         continue;
       }
 
 
-    /*
-      { status: 'error', response: { message: '누락된 필드가 존재합니다.' } }
-      */
+      
+      //{ status: 'error', response: { message: '누락된 필드가 존재합니다.' } }
+      
 
-      /*
-      { status: 'success', response: {} }
-      */
+      
+      //{ status: 'success', response: {} }
+      
 
 
       if (payactionResult.status !== "success") {
