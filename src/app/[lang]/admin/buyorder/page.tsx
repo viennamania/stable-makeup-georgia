@@ -4408,7 +4408,7 @@ const fetchBuyOrders = async () => {
                       
                       <td className="p-2">
                         <div className="
-                          w-36   
+                          w-36     
                           flex flex-col items-start justify-start gap-2">
                           
                           <div className="w-full flex flex-col gap-2 items-center justify-start">

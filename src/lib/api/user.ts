@@ -261,7 +261,11 @@ export async function insertOneVerified(data: any) {
 
   //console.log('insertOne data: ' + JSON.stringify(data));
 
+
   if (!data.storecode || !data.walletAddress || !data.nickname ) {
+
+    console.log('insertOneVerified data: ' + JSON.stringify(data));
+
     return null;
   }
 
