@@ -4494,7 +4494,10 @@ const fetchBuyOrders = async () => {
                             </div>
 
 
-                            {item?.paymentMethod === 'bank' && (
+                            {
+                            item?.paymentMethod === 'mkrw' ? (
+                              <></>
+                            ) : (
                               <div className="w-full flex flex-row items-center justify-start gap-2">
                                 <span className="text-lg text-gray-800 font-bold">
                                   {
