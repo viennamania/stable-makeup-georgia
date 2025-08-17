@@ -4284,13 +4284,13 @@ const [tradeSummary, setTradeSummary] = useState({
                                         if (chain === "ethereum") {
                                           url = `https://etherscan.io/tx/${item.transactionHash}`;
                                         } else if (chain === "polygon") {
-                                          url = `https://polygonscan.com/tx/${item.escrowTransactionHash}`;
+                                          url = `https://polygonscan.com/tx/${item.transactionHash}`;
                                         } else if (chain === "arbitrum") {
-                                          url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
                                         } else if (chain === "bsc") {
-                                          url = `https://bscscan.com/tx/${item.escrowTransactionHash}`;
+                                          url = `https://bscscan.com/tx/${item.transactionHash}`;
                                         } else {
-                                          url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
                                         }
                                         window.open(url, '_blank');
 
