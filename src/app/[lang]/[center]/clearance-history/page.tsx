@@ -30,11 +30,6 @@ import {
 
 
 import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
-import {
   ConnectButton,
   useActiveAccount,
   useActiveWallet,
@@ -77,6 +72,25 @@ import useSound from 'use-sound';
 
 
 import { useSearchParams } from 'next/navigation';
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
+
 
 
 interface BuyOrder {
@@ -165,11 +179,6 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
-
 
 export default function Index({ params }: any) {
 
@@ -191,15 +200,45 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: chain === "ethereum" ? ethereum :
+           chain === "polygon" ? polygon :
+           chain === "arbitrum" ? arbitrum :
+           chain === "bsc" ? bsc : arbitrum,
+
+    // the contract's address
+    address: chain === "ethereum" ? bscContractAddressMKRW :
+            chain === "polygon" ? bscContractAddressMKRW :
+            chain === "arbitrum" ? bscContractAddressMKRW :
+            chain === "bsc" ? bscContractAddressMKRW : bscContractAddressMKRW,
 
     // OPTIONAL: the contract's abi
     //abi: [...],
@@ -499,9 +538,11 @@ export default function Index({ params }: any) {
       });
 
   
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
       /*
@@ -4237,17 +4278,29 @@ const [tradeSummary, setTradeSummary] = useState({
                                         hover:shadow-lg
                                         hover:shadow-blue-500/50
                                       "
+
                                       onClick={() => {
-                                        window.open(
-                                          `https://arbiscan.io/tx/${item.transactionHash}`,
-                                          '_blank'
-                                        );
+                                        let url = '';
+                                        if (chain === "ethereum") {
+                                          url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                        } else if (chain === "polygon") {
+                                          url = `https://polygonscan.com/tx/${item.escrowTransactionHash}`;
+                                        } else if (chain === "arbitrum") {
+                                          url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                                        } else if (chain === "bsc") {
+                                          url = `https://bscscan.com/tx/${item.escrowTransactionHash}`;
+                                        } else {
+                                          url = `https://arbiscan.io/tx/${item.escrowTransactionHash}`;
+                                        }
+                                        window.open(url, '_blank');
+
                                       }}
+
                                     >
                                       <div className="flex flex-row gap-2 items-center justify-center">
                                         <Image
-                                          src="/logo-arbitrum.png"
-                                          alt="Polygon"
+                                          src={`/logo-chain-${chain}.png`}
+                                          alt="Chain"
                                           width={20}
                                           height={20}
                                           className="w-5 h-5"
@@ -4275,17 +4328,30 @@ const [tradeSummary, setTradeSummary] = useState({
                                           hover:shadow-lg
                                           hover:shadow-blue-500/50
                                         "
+
                                         onClick={() => {
-                                          window.open(
-                                            `https://arbiscan.io/tx/${item.settlement.txid}`,
-                                            '_blank'
-                                          );
+                                          let url = '';
+                                          if (chain === "ethereum") {
+                                            url = `https://etherscan.io/tx/${item.settlement.txid}`;
+                                          } else if (chain === "polygon") {
+                                            url = `https://polygonscan.com/tx/${item.settlement.txid}`;
+                                          } else if (chain === "arbitrum") {
+                                            url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                          } else if (chain === "bsc") {
+                                            url = `https://bscscan.com/tx/${item.settlement.txid}`;
+                                          } else {
+                                            url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                          }
+                                          window.open(url, '_blank');
+
                                         }}
+
+
                                       >
                                         <div className="flex flex-row gap-2 items-center justify-center">
                                           <Image
-                                            src="/logo-arbitrum.png"
-                                            alt="Polygon"
+                                            src={`/logo-chain-${chain}.png`}
+                                            alt="Chain"
                                             width={20}
                                             height={20}
                                             className="w-5 h-5"
