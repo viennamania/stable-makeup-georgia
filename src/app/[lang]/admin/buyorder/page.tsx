@@ -5239,7 +5239,7 @@ const fetchBuyOrders = async () => {
                                     </span>
                                   ) : (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      수동입금확인중
+                                      자동입금확인중
                                     </span>
                                   )}
 
