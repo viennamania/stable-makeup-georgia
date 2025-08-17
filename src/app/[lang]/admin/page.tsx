@@ -1366,9 +1366,9 @@ export default function Index({ params }: any) {
                           <td className="px-4 py-2">
                             {trade?.seller?.nickname.length > 10 ? trade?.seller?.nickname.slice(0, 10) + "..." : trade?.seller?.nickname}
                             <br/>
-                            {trade?.seller?.bankInfo?.bankName}
+                            {trade?.store?.bankInfo?.bankName}
                             <br/>
-                            {trade?.seller?.bankInfo?.accountHolder}
+                            {trade?.store?.bankInfo?.accountHolder}
                           </td>
 
                         </tr>
@@ -1723,7 +1723,7 @@ export default function Index({ params }: any) {
                       {totalSummary.latestTrades.map((trade, index) => (
                         <tr key={index} className="border-b">
                           <td className="px-4 py-2">
-                            #{trade.tradeId.slice(0, 3) + "..."}
+                            #{trade.tradeId}
                             <br/>
                             {
                               new Date().getTime() - new Date(trade.paymentConfirmedAt).getTime() < 1000 * 60 ? (
@@ -1739,9 +1739,11 @@ export default function Index({ params }: any) {
                           <td className="
                             hidden xl:block
                             px-4 py-2">
-                            {trade?.buyer?.depositName}
-                            <br/>
-                            {trade?.store?.storeName}
+                            <div className="flex flex-col items-start">
+                              {trade.nickname}({trade?.buyer?.depositName})
+                              <br />
+                              {trade?.store?.storeName}
+                            </div>
                           </td>
 
                           <td className="px-4 py-2">
@@ -1795,9 +1797,9 @@ export default function Index({ params }: any) {
                             px-4 py-2">
                             {trade?.seller?.nickname.length > 10 ? trade?.seller?.nickname.slice(0, 10) + "..." : trade?.seller?.nickname}
                             <br/>
-                            {trade?.seller?.bankInfo?.bankName}
+                            {trade?.store?.bankInfo?.bankName}
                             <br/>
-                            {trade?.seller?.bankInfo?.accountHolder}
+                            {trade?.store?.bankInfo?.accountHolder}
                           </td>
 
                           {/*}
