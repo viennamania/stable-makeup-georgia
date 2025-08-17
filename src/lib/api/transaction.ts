@@ -1,5 +1,6 @@
 import clientPromise from '../mongodb';
 
+import { dbName } from '../mongodb';
 
 export interface UserProps {
   /*
@@ -59,7 +60,7 @@ export async function insertOne(data: any) {
 
   // get user mobile number by wallet address
 
-  const userCollection = client.db('georgia').collection('users');
+  const userCollection = client.db(dbName).collection('users');
 
 
   const fromUser = await userCollection.findOne<UserProps>(
@@ -91,7 +92,7 @@ export async function insertOne(data: any) {
 
 
 
-  const collection = client.db('georgia').collection('transactions');
+  const collection = client.db(dbName).collection('transactions');
 
  
   const result = await collection.insertOne(
@@ -129,7 +130,7 @@ export async function getSendTransactionsByWalletAddress(
 ): Promise<any> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('transactions');
+  const collection = client.db(dbName).collection('transactions');
 
   const results = await collection.find(
     {
@@ -148,7 +149,7 @@ export async function getReceiveTransactionsByWalletAddress(
 ): Promise<any> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('transactions');
+  const collection = client.db(dbName).collection('transactions');
 
   const results = await collection.find(
     {
@@ -166,7 +167,7 @@ export async function getReceiveTransactionsByWalletAddress(
 
 export async function updateOne(data: any) {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('users');
+  const collection = client.db(dbName).collection('users');
 
 
   // update and return updated user
@@ -212,7 +213,7 @@ export async function getAllUsers(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('users');
+  const collection = client.db(dbName).collection('users');
 
 
   console.log('limit: ' + limit);

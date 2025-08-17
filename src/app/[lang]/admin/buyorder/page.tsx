@@ -155,6 +155,16 @@ interface BuyOrder {
 
   userStats: any;
 
+
+  settlementUpdatedAt: string;
+  settlementUpdatedBy: string; // who updates the settlement
+
+  transactionHashFail: boolean; // if the transaction failed, set this to true
+
+  audioOn: boolean; // default true, used for audio notification in trade history page
+
+
+
   paymentMethod: string;
 
   escrowWallet: {
@@ -4295,8 +4305,7 @@ const fetchBuyOrders = async () => {
                       >
 
                         <div className="
-
-                          w-44   
+                          w-36 
                           flex flex-col items-start justify-start gap-2
                           bg-zinc-100
                           rounded-lg
@@ -4366,6 +4375,7 @@ const fetchBuyOrders = async () => {
                                   second: '2-digit',
                                 })}
                               </span>
+                              {/*
                               <span className="text-sm text-zinc-500">
                                 {new Date(item.createdAt).toLocaleDateString('ko-KR', {
                                   year: 'numeric',
@@ -4373,8 +4383,36 @@ const fetchBuyOrders = async () => {
                                   day: '2-digit',
                                 })}
                               </span>
+                              */}
+
+                              <span className="text-sm text-zinc-500 font-semibold">
+                                {params.lang === 'ko' ? (
+                                  <p>{
+                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                    ) :
+                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                    ) : (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                    )
+                                  }</p>
+                                ) : (
+                                  <p>{
+                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                    ) :
+                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                    ) : (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                    )
+                                  }</p>
+                                )}
+                              </span>
 
                             </div>
+                            {/*
                             <span className="text-sm text-zinc-500 font-semibold">
                               {params.lang === 'ko' ? (
                                 <p>{
@@ -4400,6 +4438,7 @@ const fetchBuyOrders = async () => {
                                 }</p>
                               )}
                             </span>
+                            */}
                           </div>
 
                         </div>
@@ -4408,7 +4447,7 @@ const fetchBuyOrders = async () => {
                       
                       <td className="p-2">
                         <div className="
-                          w-36     
+                          w-32     
                           flex flex-col items-start justify-start gap-2">
                           
                           <div className="w-full flex flex-col gap-2 items-center justify-start">
@@ -4656,7 +4695,7 @@ const fetchBuyOrders = async () => {
                       <td className="p-2">
 
                         <div className="
-                          w-52
+                          w-52  
                           flex flex-row items-start justify-start gap-2">
                           {/* status */}
                           {item.status === 'ordered' && (
@@ -5261,7 +5300,9 @@ const fetchBuyOrders = async () => {
 
 
                       <td className="p-2">
-                        <div className="w-full flex flex-col gap-2 items-center justify-center">
+                        <div className="
+                        w-56   
+                        flex flex-col gap-2 items-center justify-center">
 
 
                         {
@@ -5272,13 +5313,7 @@ const fetchBuyOrders = async () => {
                           <div className="bg-gray-500/10
                             rounded-md
                             p-2
-
-                            w-44
-                            xl:w-64
-                            flex flex-col xl:flex-row gap-2 items-sart justify-start">
-
-
-                          
+                            flex flex-col xl:flex-row gap-2 items-start justify-start">
                             <div className="
                               w-full
                               flex flex-col gap-2 items-end justify-center">
@@ -5489,11 +5524,8 @@ const fetchBuyOrders = async () => {
                             } 
 
                             rounded-md
-                            p-2
-
-                            w-44
-                            xl:w-72  
-                            flex flex-col xl:flex-row gap-2 items-sart justify-start
+                            p-2 
+                            flex flex-col xl:flex-row gap-2 items-start justify-start
                             `}>
 
 
@@ -5578,23 +5610,22 @@ const fetchBuyOrders = async () => {
 
                               )}
 
+                              {/*
                               {item.status === 'cancelled' && (
 
-                                <div className="flex flex-col gap-2 items-center justify-center">
-                                  <div className="
-                                  flex flex-col gap-2 items-center justify-center
-                                  text-sm text-red-600">
+                                <div className="w-full flex flex-col gap-2 items-center justify-center">
+                                  <span className="text-sm text-red-600">
                                     {item.cancelTradeReason ? item.cancelTradeReason :
                                       "거래취소사유 없음"
                                     }
-                                  </div>
-
+                                  </span>
                                 </div>
+
                               )}
+                              */}
+
                             </div>
                             
-
-
 
                             <div className="
                             w-full
@@ -5748,24 +5779,19 @@ const fetchBuyOrders = async () => {
                                     <div className="flex flex-col gap-2 items-center justify-center">
                                       <div className="flex flex-row gap-2 items-center justify-center">
                                         <span className="text-sm text-zinc-500">
-                                          
-                                          {/*item.seller?.bankInfo?.bankName*/}
-                                          {item.store?.bankInfo?.bankName}
-
-
-                                        </span>
-                                        <span className="text-sm text-zinc-500">
-                                          {/*item.seller?.bankInfo?.accountHolder*/}
                                           {item.store?.bankInfo?.accountHolder}
                                         </span>
-
+                                        <span className="text-sm text-zinc-500">
+                                          {item.store?.bankInfo?.bankName}
+                                        </span>
                                       </div>
 
                                       <span className="text-sm text-zinc-500">
-                                        {/*
-                                          item.seller?.bankInfo?.accountNumber
-                                        */}
-                                        {item.store?.bankInfo?.accountNumber}
+                                        {
+                                          item.store?.bankInfo?.accountNumber &&
+                                          item.store?.bankInfo?.accountNumber.length > 5 &&
+                                          item.store?.bankInfo?.accountNumber.substring(0, 5) + '...'
+                                        }
                                       </span>
 
                                     </div>
@@ -6121,16 +6147,22 @@ const fetchBuyOrders = async () => {
                               )}
 
 
-
-
-
-
-
-
                             </div>
 
 
+                          </div>
 
+                        )}
+
+
+                        {item.status === 'cancelled' && (
+
+                          <div className="w-full flex flex-col gap-2 items-center justify-center">
+                            <span className="text-sm text-red-600">
+                              {item.cancelTradeReason ? item.cancelTradeReason :
+                                "거래취소사유 없음"
+                              }
+                            </span>
                           </div>
 
                         )}
@@ -6142,8 +6174,6 @@ const fetchBuyOrders = async () => {
                         && (
                           <button
                             className="
-                              w-44
-                              xl:w-72
                               flex flex-row gap-2 items-center justify-between
                               text-sm text-blue-600 font-semibold
                               border border-blue-600 rounded-lg p-2
@@ -6226,8 +6256,6 @@ const fetchBuyOrders = async () => {
                         && (
                           <button
                             className={`
-                              w-44
-                              xl:w-72
                               ${item.status === 'cancelled' ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'}
                               flex flex-row gap-2 items-center justify-between
                               text-sm font-semibold
@@ -6442,7 +6470,7 @@ const fetchBuyOrders = async () => {
                             )}
 
 
-
+                            {/*
                             {item?.settlement ? (
 
 
@@ -6579,6 +6607,244 @@ const fetchBuyOrders = async () => {
                                           </span>
                                         </div>
 
+                                        {item.transactionHash &&
+                                          new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() > 1000 * 5 * 60 && (
+
+                                          <div className="flex flex-row gap-2 items-center justify-center">
+                                            <input
+                                              disabled={loadingSettlement[index]}
+                                              type="checkbox"
+                                              checked={settlementCheck[index]}
+                                              onChange={(e) => {
+                                                setSettlementCheck(
+                                                  settlementCheck.map((item, idx) => {
+                                                    if (idx === index) {
+                                                      return e.target.checked;
+                                                    }
+                                                    return item;
+                                                  })
+                                                );
+                                              }}
+                                              className="w-5 h-5
+                                              rounded-md"
+
+                                            />
+
+                                            <button
+                                              disabled={
+                                                !settlementCheck[index]
+                                                || loadingSettlement[index]
+                                              }
+                                              className={`
+                                                ${settlementCheck[index] ? 'bg-blue-500' : 'bg-gray-500'}
+                                                w-full
+                                                flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md
+                                                hover:bg-blue-600
+                                                hover:shadow-lg
+                                                hover:shadow-blue-500/50
+                                                transition-all duration-200 ease-in-out
+                                                ${!settlementCheck[index] || loadingSettlement[index]
+                                                ? 'cursor-not-allowed' : 'cursor-pointer'}
+                                              `}
+
+                                              onClick={() => {
+                                              
+                                                settlementRequest(
+                                                  index,
+                                                  item._id,
+                                                );
+                                                
+
+                                              }}
+                                            >
+                                              <div className="flex flex-row gap-2 items-center justify-center">
+                                                {loadingSettlement[index] ? (
+                                                  <span className="text-sm">
+                                                    정산중...
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-sm">
+                                                    수동으로 정산하기
+                                                  </span>
+                                                )}
+                                              </div>
+
+                                            </button>
+                                          </div>
+                                        )}
+
+
+
+                                      </div>
+
+                                    )}
+
+
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            */}
+
+
+                            {item?.settlement && item?.settlement?.settlementAmount ? (
+
+                              <div className="flex flex-row gap-2 items-center justify-center">
+
+                                <button
+                                  className="
+                                  w-44        
+                                  flex flex-col gap-2 items-center justify-center
+                                  bg-purple-500 text-white px-2 py-1 rounded-md hover:bg-purple-600
+                                  text-sm
+                                  transition duration-300 ease-in-out
+                                  transform hover:scale-105
+                                  hover:shadow-lg
+                                  hover:shadow-purple-500/50
+                                  hover:cursor-pointer
+                                  hover:transition-transform
+                                  hover:duration-300
+                                  hover:ease-in-out
+
+                                  "
+
+                                  onClick={() => {
+                                    if (item.settlement.txid === "0x" || !item.settlement.txid) {
+                                      alert("트랙젝션 해시가 없습니다.");
+                                      return;
+                                    } else {
+                                      window.open(
+                                        `https://arbiscan.io/tx/${item.settlement.txid}`,
+                                        '_blank'
+                                      );
+                                    }
+                                  }}
+                                >
+
+
+                                  <div className="flex flex-col gap-2 items-end justify-center"
+                                    style={{
+                                      fontFamily: 'monospace',
+                                    }}
+                                  >
+              
+                                    <span>
+                                      {item?.settlement?.settlementAmount?.toLocaleString()}
+                                      {' '}
+                                      {
+                                        item?.settlement?.settlementWalletAddress &&
+                                      item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'}
+                                    </span>
+                                    <span>
+                                      {
+                                        item?.settlement?.agentFeeAmount ?
+                                        item?.settlement?.agentFeeAmount?.toLocaleString()
+                                        : '0'
+                                      }
+                                      {' '}
+                                      {
+                                        item?.settlement?.agentFeeWalletAddress &&
+                                      item?.settlement?.agentFeeWalletAddress?.slice(0, 5) + '...'}
+                                    </span>
+                                    <span>
+                                      {item?.settlement?.feeAmount?.toLocaleString()}
+                                      {' '}
+                                      {
+                                        item?.settlement?.feeWalletAddress &&
+                                      item?.settlement?.feeWalletAddress?.slice(0, 5) + '...'}
+                                    </span>
+
+                                  </div>
+
+                                </button>
+
+
+
+                              
+                                <div className="  
+                                w-24 
+                                flex flex-col gap-2 items-end justify-center"
+                                >
+                                  <div className="flex flex-col gap-1 items-center justify-center">
+                                    <Image
+                                      src="/icon-user.png"
+                                      alt="User Icon"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-lg font-semibold text-blue-600">
+                                      {item.nickname.slice(0, 6)}...
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-zinc-500">
+                                    충전금액(원)
+                                  </span>
+                                  <span className="text-sm text-blue-600 font-semibold"
+                                    style={{
+                                      fontFamily: 'monospace',
+                                    }}
+                                  >
+                                    {Number(item.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                  </span>
+                                </div>
+
+
+
+                              </div>
+
+                            ) : (
+                              <>
+                                {item.status === 'paymentConfirmed'
+                                && item?.transactionHash !== '0x'
+                                && item?.transactionHashFail !== true
+                                && (
+                                  <div className="flex flex-row gap-2 items-center justify-center">
+
+                                    {item.storecode === 'admin' ? (
+
+                                      <div className="flex flex-row gap-2 items-center justify-center">
+                                        일반 회원 구매
+                                      </div>
+
+                                    ) : (
+                                    
+                                      <div className="flex flex-col gap-2 items-center justify-center">
+
+                                        <div className="flex flex-row gap-2 items-center justify-center">
+                                          <Image
+                                            src="/icon-settlement.png"
+                                            alt="Settlement"
+                                            width={20}
+                                            height={20}
+                                            className="animate-spin"
+                                          />
+                                          <span className="text-sm font-semibold text-zinc-500">
+                                            가맹점 결제 및 정산중
+                                          </span>
+                                        </div>
+
+                                        <div className="flex flex-row gap-2 items-center justify-center">
+                                          <Image
+                                            src={item.store?.storeLogo || '/icon-store.png'}
+                                            alt="Store Logo"
+                                            width={20}
+                                            height={20}
+                                            className="rounded-lg w-6 h-6 object-cover"
+                                          />
+                                          <span className="text-sm font-semibold text-zinc-500">
+                                            {item.store?.storeName}
+                                          </span>
+                                        </div>
+
+                                        <span className="text-lg font-semibold text-green-600"
+                                          style={{
+                                            fontFamily: 'monospace',
+                                          }}
+                                        >
+                                          {item.usdtAmount}{' '}USDT
+                                        </span>
+
                                         {/*
                                           if item.paymentConfirmedAt (2025-07-03T09:26:37.818Z)
                                             is last 1 hour, show button to settlement
@@ -6662,6 +6928,10 @@ const fetchBuyOrders = async () => {
                                 )}
                               </>
                             )}
+
+
+
+
 
 
                           </div>

@@ -1,6 +1,8 @@
 import { transfer } from 'thirdweb/extensions/erc20';
 import clientPromise from '../mongodb';
 
+import { dbName } from '../mongodb';
+
 /*
   console.log("transactionHash", transactionHash, "transactionIndex", transactionIndex,
     "fromAddress", fromAddress, "toAddress", toAddress, "value", value,
@@ -39,11 +41,11 @@ export async function insertOne(data: any) {
     // if toAddress is user wallet address, then insert into userTransfers collection
 
 
-    const collectionUsers = client.db('georgia').collection('users');
+    const collectionUsers = client.db(dbName).collection('users');
 
-    const collectionUserTransfers = client.db('georgia').collection('userTransfers');
+    const collectionUserTransfers = client.db(dbName).collection('userTransfers');
 
-    const collection = client.db('georgia').collection('transfers');
+    const collection = client.db(dbName).collection('transfers');
 
 
     
@@ -123,7 +125,7 @@ export async function insertOne(data: any) {
                 ///const message = "You have received " + Number(amount).toFixed(6) + " USDT";
                 const message = Number(amount).toFixed(6) + " USDT 를 받았습니다";
 
-                const collectionTelegramMessages = client.db('georgia').collection('telegramMessages');
+                const collectionTelegramMessages = client.db(dbName).collection('telegramMessages');
 
                 await collectionTelegramMessages.insertOne(
                 {

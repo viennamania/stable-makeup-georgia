@@ -4226,7 +4226,7 @@ const fetchBuyOrders = async () => {
 
                               w-44
                               xl:w-64
-                              flex flex-col xl:flex-row gap-2 items-sart justify-start">
+                              flex flex-col xl:flex-row gap-2 items-start justify-start">
 
 
                             
@@ -4365,7 +4365,7 @@ const fetchBuyOrders = async () => {
 
                               w-44
                               xl:w-64
-                              flex flex-col xl:flex-row gap-2 items-sart justify-start
+                              flex flex-col xl:flex-row gap-2 items-start justify-start
                               `}>
 
                               

@@ -5377,7 +5377,7 @@ const fetchBuyOrders = async () => {
 
                         <td className="p-2">
                           <div className="
-                            w-40 flex flex-col gap-2 items-center justify-center">
+                            w-64 flex flex-col gap-2 items-center justify-center">
                           {
                             user?.seller &&
                             item.status === 'ordered'  && (
@@ -5386,10 +5386,7 @@ const fetchBuyOrders = async () => {
                             <div className="bg-gray-500/10
                               rounded-md
                               p-2
-
-                              w-44
-                              xl:w-64
-                              flex flex-col xl:flex-row gap-2 items-sart justify-start">
+                              flex flex-col xl:flex-row gap-2 items-start justify-start">
 
 
                             
@@ -5515,7 +5512,7 @@ const fetchBuyOrders = async () => {
 
                               w-44
                               xl:w-64
-                              flex flex-col xl:flex-row gap-2 items-sart justify-start
+                              flex flex-col xl:flex-row gap-2 items-start justify-start
                               `}>
 
                               

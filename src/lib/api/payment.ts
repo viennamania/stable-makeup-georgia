@@ -1,6 +1,6 @@
 import clientPromise from '../mongodb';
 
-
+import { dbName } from '../mongodb';
 
 // payments collection
 /*
@@ -197,7 +197,7 @@ export async function getAllPaymentsByStorecode(
 }): Promise<any[]> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('payments');
+  const collection = client.db(dbName).collection('payments');
 
   // get all payments by storecode
   const payments = await collection

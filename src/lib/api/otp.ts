@@ -1,5 +1,8 @@
 import clientPromise from '../mongodb';
 
+import { dbName } from '../mongodb';
+
+
 export interface UserProps {
   walletAddress: string;
   otp: number;
@@ -16,7 +19,7 @@ export async function insertOne(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('opts');
+  const collection = client.db(dbName).collection('opts');
 
 
 
@@ -83,7 +86,7 @@ export async function findOne(data: any) {
   }
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('opts');
+  const collection = client.db(dbName).collection('opts');
 
   const result = await collection.findOne<UserProps>(
     {

@@ -1,10 +1,12 @@
 import { use } from 'react';
 import clientPromise from '../mongodb';
 
+import { dbName } from '../mongodb';
+
+
 // object id
 import { ObjectId } from 'mongodb';
-import { create } from 'domain';
-import { stat } from 'fs';
+
 
 
 export interface UserProps {
@@ -90,7 +92,7 @@ export async function getUsdtPrice(data: any) {
   }
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('setup');
+  const collection = client.db(dbName).collection('setup');
 
   const result = await collection.findOne<UserProps>(
     { $and: [ { walletAddress: data.walletAddress }, { usdtPrice: { $exists: true } } ] }
@@ -128,7 +130,7 @@ export async function updatePrice(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('setup');
+  const collection = client.db(dbName).collection('setup');
 
   // update and return update, or if not exists, insert and return insert
 
@@ -189,7 +191,7 @@ export async function insertSellOrder(data: any) {
 
   // get user mobile number by wallet address
 
-  const userCollection = client.db('georgia').collection('users');
+  const userCollection = client.db(dbName).collection('users');
 
 
   const user = await userCollection.findOne<UserProps>(
@@ -215,7 +217,7 @@ export async function insertSellOrder(data: any) {
 
 
 
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
  
   const result = await collection.insertOne(
@@ -261,7 +263,7 @@ export async function getOrderById(orderId: string): Promise<UserProps | null> {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   
   // check orderId is valid ObjectId
@@ -292,7 +294,7 @@ export async function getOrderById(orderId: string): Promise<UserProps | null> {
 export async function getOpenOrdersCount(): Promise<number> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   const result = await collection.countDocuments(
     { status: 'ordered', createdAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() } }
@@ -328,7 +330,7 @@ export async function getSellOrders(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -407,7 +409,7 @@ export async function getAllSellOrders(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -492,7 +494,7 @@ export async function getOneSellOrder(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -554,7 +556,7 @@ export async function deleteSellOrder(
 ): Promise<boolean> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -603,7 +605,7 @@ export async function cancelTradeByBuyer(
   console.log('cancelTradeByBuyer orderId: ' + orderId);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -670,7 +672,7 @@ export async function cancelTradeByBuyer(
 export async function cancelTradeByAdmin() {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   // status is 'accepted'
   // acceptedAt is more than 1 hour ago
@@ -713,7 +715,7 @@ export async function getSellOrdersForBuyer(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // status is not 'paymentConfirmed'
@@ -787,7 +789,7 @@ export async function getSellOrdersByWalletAddress(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   const results = await collection.find<UserProps>(
@@ -828,7 +830,7 @@ export async function acceptSellOrder(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   // random number for tradeId
   // 100000 ~ 999999 string
@@ -953,7 +955,7 @@ export async function requestPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   const result = await collection.updateOne(
@@ -1003,7 +1005,7 @@ export async function confirmPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   const result = await collection.updateOne(
@@ -1071,7 +1073,7 @@ export async function confirmPayment(data: any) {
 
 
       // update store collection
-      const storeCollection = client.db('georgia').collection('stores');
+      const storeCollection = client.db(dbName).collection('stores');
       const store = await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
@@ -1115,7 +1117,7 @@ export async function confirmPayment(data: any) {
 
 
       // update agent collection
-      const agentCollection = client.db('georgia').collection('agents');
+      const agentCollection = client.db(dbName).collection('agents');
       const agent = await agentCollection.updateOne(
         { agentcode: agentcode },
         { $set: {
@@ -1179,7 +1181,7 @@ export async function getTradesByWalletAddress(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1226,7 +1228,7 @@ export async function getTradesByWalletAddressProcessing(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1275,7 +1277,7 @@ export async function getSellTradesByWalletAddress(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1318,7 +1320,7 @@ export async function getSellTradesByWalletAddressProcessing(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   // get orders by buyer.walletAddress = walletAddress 
@@ -1358,7 +1360,7 @@ export async function getPaymentRequestedUsdtAmountByWalletAddress(
 ): Promise<any> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
   const results = await collection.aggregate([
     {
@@ -1393,7 +1395,7 @@ export async function getPaymentRequestedUsdtAmountByWalletAddress(
 
 export async function updateOne(data: any) {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('users');
+  const collection = client.db(dbName).collection('users');
 
 
   // update and return updated user
@@ -1439,7 +1441,7 @@ export async function sellOrderRollbackPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('orders');
+  const collection = client.db(dbName).collection('orders');
 
 
   const result = await collection.updateOne(
@@ -1497,7 +1499,7 @@ export async function insertBuyOrder(data: any) {
   const client = await clientPromise;
 
 
-  const storeCollection = client.db('georgia').collection('stores');
+  const storeCollection = client.db(dbName).collection('stores');
   const store = await storeCollection.findOne<any>(
     { storecode: data.storecode },
     { projection:
@@ -1531,7 +1533,7 @@ export async function insertBuyOrder(data: any) {
   }
 
 
-  const userCollection = client.db('georgia').collection('users');
+  const userCollection = client.db(dbName).collection('users');
 
 
 
@@ -1590,7 +1592,7 @@ export async function insertBuyOrder(data: any) {
   }
 
 
-  const agentCollection = client.db('georgia').collection('agents');
+  const agentCollection = client.db(dbName).collection('agents');
   const agent = await agentCollection.findOne<any>(
     { agentcode: agentcode },
   );
@@ -1617,7 +1619,7 @@ export async function insertBuyOrder(data: any) {
 
 
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
 
@@ -1743,7 +1745,7 @@ export async function insertBuyOrderForClearance(data: any) {
   const client = await clientPromise;
 
 
-  const storeCollection = client.db('georgia').collection('stores');
+  const storeCollection = client.db(dbName).collection('stores');
   const store = await storeCollection.findOne<any>(
     { storecode: data.storecode },
     { projection:
@@ -1782,7 +1784,7 @@ export async function insertBuyOrderForClearance(data: any) {
   // clearance user's storecode is 'admin'
   const clearanceStorecode = 'admin';
 
-  const userCollection = client.db('georgia').collection('users');
+  const userCollection = client.db(dbName).collection('users');
 
 
   const user = await userCollection.findOne<UserProps>(
@@ -1809,7 +1811,7 @@ export async function insertBuyOrderForClearance(data: any) {
   }
 
 
-  const agentCollection = client.db('georgia').collection('agents');
+  const agentCollection = client.db(dbName).collection('agents');
   const agent = await agentCollection.findOne<any>(
     { agentcode: agentcode },
   );
@@ -1836,7 +1838,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
 
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
  
   const result = await collection.insertOne(
@@ -1952,7 +1954,7 @@ export async function insertBuyOrderForUser(data: any) {
   const client = await clientPromise;
 
 
-  const storeCollection = client.db('georgia').collection('stores');
+  const storeCollection = client.db(dbName).collection('stores');
   const store = await storeCollection.findOne<any>(
     { storecode: data.storecode },
     { projection:
@@ -1998,7 +2000,7 @@ export async function insertBuyOrderForUser(data: any) {
   }
 
 
-  const agentCollection = client.db('georgia').collection('agents');
+  const agentCollection = client.db(dbName).collection('agents');
   const agent = await agentCollection.findOne<any>(
     { agentcode: agentcode },
   );
@@ -2016,7 +2018,7 @@ export async function insertBuyOrderForUser(data: any) {
 
 
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   const mobile = '';
   const avatar = '';
@@ -2161,7 +2163,7 @@ export async function getBuyOrders(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -2421,7 +2423,7 @@ export async function getBuyOrdersGroupByStorecodeDaily(
   console.log('getBuyOrdersGroupByStorecodeDaily toDate: ' + toDate);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   // fromDate format: YYYY-MM-DD
   // toDate format: YYYY-MM-DD
@@ -2508,7 +2510,7 @@ export async function getBuyOrdersGroupByStorecodeDaily(
   // aggregate with escrows collection when escrows date is same as buyorders date
   // escrows date is '2024-01-01'
 
-  const escrowCollection = client.db('georgia').collection('escrows');
+  const escrowCollection = client.db(dbName).collection('escrows');
   const escrowPipeline = [
     {
       $match: {
@@ -2610,7 +2612,7 @@ export async function getBuyOrdersGroupByAgentcodeDaily(
   console.log('getBuyOrdersGroupByAgentcodeDaily toDate: ' + toDate);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   // fromDate format: YYYY-MM-DD
   // toDate format: YYYY-MM-DD
@@ -2682,7 +2684,7 @@ export async function getBuyOrdersGroupByAgentcodeDaily(
   //console.log('getBuyOrdersGroupByAgentcodeDaily results: ' + JSON.stringify(results));
   // aggregate with escrows collection when escrows date is same as buyorders date
   // escrows date is '2024-01-01'
-  const escrowCollection = client.db('georgia').collection('escrows');
+  const escrowCollection = client.db(dbName).collection('escrows');
   const escrowPipeline = [
     {
       $match: {
@@ -2767,7 +2769,7 @@ export async function deleteBuyOrder(
 ): Promise<boolean> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -2828,7 +2830,7 @@ export async function getBuyOrdersForSeller(
 
   const client = await clientPromise;
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -3027,7 +3029,7 @@ export async function acceptBuyOrder(data: any) {
 
   // check validation of storecode
 
-  const storeCollection = client.db('georgia').collection('stores');
+  const storeCollection = client.db(dbName).collection('stores');
   const stores = await storeCollection.findOne<any>(
     {
       storecode: data.storecode,
@@ -3051,7 +3053,7 @@ export async function acceptBuyOrder(data: any) {
 
 
   // if privateSale is false, then get user by storecode and walletAddress
-  const order = await client.db('georgia')
+  const order = await client.db(dbName)
     .collection('buyorders')
     .findOne<any>(
       { _id: new ObjectId(data.orderId + '')},
@@ -3062,7 +3064,7 @@ export async function acceptBuyOrder(data: any) {
   if (order && order?.privateSale === false) {
     
 
-    const userCollection = client.db('georgia').collection('users');
+    const userCollection = client.db(dbName).collection('users');
     user = await userCollection.findOne<UserProps>(
       {
         walletAddress: data.sellerWalletAddress,
@@ -3104,7 +3106,7 @@ export async function acceptBuyOrder(data: any) {
 
 
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
 
@@ -3209,7 +3211,7 @@ export async function buyOrderRequestPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   let result = null;
@@ -3267,7 +3269,7 @@ export async function buyOrderRequestPayment(data: any) {
     if (order) {
 
       // update user collection buyOrderStatus to "paymentRequested"
-      const userCollection = client.db('georgia').collection('users');
+      const userCollection = client.db(dbName).collection('users');
       await userCollection.updateOne(
         {
           walletAddress: order.walletAddress,
@@ -3316,7 +3318,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   let result = null;
 
@@ -3400,7 +3402,7 @@ export async function buyOrderConfirmPayment(data: any) {
       const walletAddress = order.walletAddress;
 
       // update user collection buyOrderStatus to "paymentConfirmed"
-      const userCollection = client.db('georgia').collection('users');
+      const userCollection = client.db(dbName).collection('users');
 
       if (userCollection) {
 
@@ -3475,7 +3477,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
       //console.log('confirmPayment totalPaymentConfirmedClearance: ' + JSON.stringify(totalPaymentConfirmedClearance));
       // update store collection
-      const storeCollection = client.db('georgia').collection('stores');
+      const storeCollection = client.db(dbName).collection('stores');
       const store = await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
@@ -3533,7 +3535,7 @@ export async function buyOrderConfirmPayment(data: any) {
       
       //console.log('confirmPayment totalPaymentConfirmedClearance: ' + JSON.stringify(totalPaymentConfirmedClearance));
       // update agent collection
-      const agentCollection = client.db('georgia').collection('agents');
+      const agentCollection = client.db(dbName).collection('agents');
       const agent = await agentCollection.updateOne(
         { agentcode: agentcode },
         { $set: {
@@ -3596,7 +3598,7 @@ export async function buyOrderRollbackPayment(data: any) {
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   const result = await collection.updateOne(
@@ -3626,7 +3628,7 @@ export async function buyOrderRollbackPayment(data: any) {
     if (order) {
       
       // update user collection buyOrderStatus to "cancelled"
-      const userCollection = client.db('georgia').collection('users');
+      const userCollection = client.db(dbName).collection('users');
       await userCollection.updateOne(
         {
           walletAddress: order.walletAddress,
@@ -3660,7 +3662,7 @@ export async function buyOrderRollbackPayment(data: any) {
 export async function buyOrderGetOrderById(orderId: string): Promise<UserProps | null> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   const result = await collection.findOne<UserProps>(
     { _id: new ObjectId(orderId) }
@@ -3709,7 +3711,7 @@ export async function cancelTradeBySeller(
 
 
   // check validation of storecode
-  const storeCollection = client.db('georgia').collection('stores');
+  const storeCollection = client.db(dbName).collection('stores');
   const stores = await storeCollection.findOne<any>(
     {
       storecode: storecode,
@@ -3724,7 +3726,7 @@ export async function cancelTradeBySeller(
 
 
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   // check orderId is valid ObjectId
   if (!ObjectId.isValid(orderId)) {
@@ -3772,7 +3774,7 @@ export async function cancelTradeBySeller(
 
 
     // update user status to 'cancelled'
-    const userCollection = client.db('georgia').collection('users');
+    const userCollection = client.db(dbName).collection('users');
 
     await userCollection.updateOne(
       {
@@ -3825,7 +3827,7 @@ export async function getOneBuyOrder(
 ): Promise<ResultProps> {
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -3880,7 +3882,7 @@ export async function getOneBuyOrderByTradeId(
   }
 ): Promise<any | null> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const result = await collection.findOne<UserProps>(
     {
       tradeId: tradeId,
@@ -3911,7 +3913,7 @@ export async function getOneBuyOrderByNicknameAndStorecode(
   }
 ): Promise<UserProps | null> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const result = await collection.findOne<UserProps>(
     {
       nickname: nickname,
@@ -3939,7 +3941,7 @@ export async function updateBuyOrderByQueueId(data: any) {
   }
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   const result = await collection.updateOne(
     { queueId: data.queueId },
@@ -3999,7 +4001,7 @@ export async function getAllBuyOrdersBySeller(
   //console.log('getAllBuyOrdersBySeller endDateTime: ' + endDateTime);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   const results = await collection.find<UserProps>(
@@ -4128,7 +4130,7 @@ export async function getDailyBuyOrder(
   */
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
 
@@ -4205,7 +4207,7 @@ export async function getDailyBuyOrderBySeller(
   */
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   // sum of krwAmount by day
   /*
@@ -4291,7 +4293,7 @@ export async function getAllBuyOrdersByStorecode(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       storecode: storecode,
@@ -4465,7 +4467,7 @@ export async function getAllTradesByAdmin(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
 
@@ -4985,7 +4987,7 @@ export async function getAllTradesByAdmin(
   console.log('getAllClearancesByAdmin searchStoreBankAccountNumber: ' + searchStoreBankAccountNumber);
   */
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   const results = await collection.find<UserProps>(
@@ -5401,7 +5403,7 @@ export async function getAllTradesForAgent(
   //console.log('getAllTradesForAgent startDate: ' + startDate);
   //console.log('getAllTradesForAgent endDate: ' + endDate);
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       privateSale: { $ne: true },
@@ -5636,7 +5638,7 @@ export async function getAllBuyOrdersForAgent(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       agentcode: { $regex: agentcode, $options: 'i' },
@@ -5763,7 +5765,7 @@ export async function getAllTradesByStorecode(
   //console.log('getAllTradesByStorecode startDate: ' + startDate);
   //console.log('getAllTradesByStorecode endDate: ' + endDate);
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
 
@@ -6076,7 +6078,7 @@ export async function getAllBuyOrdersByAdmin(
     endDate = new Date().toISOString();
   }
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<UserProps>(
     {
 
@@ -6241,7 +6243,7 @@ export async function getAllBuyOrdersForMatching(
 
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<UserProps>(
     {
       
@@ -6314,7 +6316,7 @@ export async function insertStore(data: any) {
     return null;
   }
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
+  const collection = client.db(dbName).collection('stores');
   // check storecode is unique
   const stores = await collection.findOne<UserProps>(
     {
@@ -6378,7 +6380,7 @@ export async function deleteStoreCode(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
+  const collection = client.db(dbName).collection('stores');
 
   // delete storecode
   const result = await collection.deleteOne(
@@ -6395,7 +6397,7 @@ export async function deleteStoreCode(
 // getRandomStore
 export async function getRandomStore(): Promise<any> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
+  const collection = client.db(dbName).collection('stores');
 
   const result = await collection.aggregate<any>([
     { $sample: { size: 1 } }
@@ -6460,7 +6462,7 @@ export async function getCollectOrdersForSeller(
 
   const client = await clientPromise;
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -6617,7 +6619,7 @@ export async function getCollectOrdersForUser(
 
   const client = await clientPromise;
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
 
   // status is not 'paymentConfirmed'
@@ -6806,7 +6808,7 @@ export async function getAllBuyOrdersForRequestPayment(
 
   const client = await clientPromise;
 
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
 
   const results = await collection.find<UserProps>(
     {
@@ -6868,7 +6870,7 @@ export async function updateBuyOrderPayactionResult(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -6896,7 +6898,7 @@ export async function getTradeId(
   }
 ): Promise<string | null> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // get tradeId
   const result = await collection.findOne<any>(
     { _id: new ObjectId(orderId) },
@@ -6933,7 +6935,7 @@ export async function updateBuyOrderSettlement(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -6960,12 +6962,12 @@ export async function updateBuyOrderSettlement(
     console.log('updateBuyOrderSettlement: storecode found in buyorder: ' + storecode);
 
 
-    const collectionBuyorders = client.db('georgia').collection('buyorders');
+    const collectionBuyorders = client.db(dbName).collection('buyorders');
 
     // update store with settlement data
     try {
 
-      const collectionStore = client.db('georgia').collection('stores');
+      const collectionStore = client.db(dbName).collection('stores');
 
       // totalSettlementCount is count of all buyorders with settlement and storecode
       /*
@@ -7059,7 +7061,7 @@ export async function updateBuyOrderSettlement(
       }
       const agentcode = buyOrder.agentcode;
 
-      const collectionAgents = client.db('georgia').collection('agents');
+      const collectionAgents = client.db(dbName).collection('agents');
 
       /*
       // totalSettlementCount is count of all buyorders with settlement and agentcode
@@ -7144,7 +7146,7 @@ export async function getTotalNumberOfBuyOrders(
   }
 ): Promise<{ totalCount: number; audioOnCount: number }> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // get total number of buy orders
   const totalCount = await collection.countDocuments(
     {
@@ -7185,7 +7187,7 @@ export async function getTotalNumberOfBuyOrders(
 // getTotalNumberOfClearanceOrders
 export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: number }> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // get total number of buy orders
   const totalCount = await collection.countDocuments(
     {
@@ -7223,7 +7225,7 @@ export async function buyOrderWebhook(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -7252,7 +7254,7 @@ export async function getBuyOrderByEscrowWalletAddress(
   console.log('getBuyOrderByEscrowWalletAddress escrowWalletAddress: ' + escrowWalletAddress);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // get buyorder by escrow wallet address
   const result = await collection.findOne<any>(
     { 'escrowWallet.address': escrowWalletAddress },
@@ -7281,7 +7283,7 @@ export async function updateBuyOrderEscrowBalance(
   console.log('updateBuyOrderEscrowBalance escrowBalance: ' + escrowBalance);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -7323,7 +7325,7 @@ export async function depositEscrow(
 
   // get store.escrowAmountUSDT from storecode
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
+  const collection = client.db(dbName).collection('stores');
   const store = await collection.findOne<any>(
     { storecode: storecode },
     { projection: { escrowAmountUSDT: 1 } }
@@ -7338,7 +7340,7 @@ export async function depositEscrow(
   const storeEscrowAmountUSDT = store.escrowAmountUSDT || 0;
 
   // insert escrow record
-  const escrowCollection = client.db('georgia').collection('escrows');
+  const escrowCollection = client.db(dbName).collection('escrows');
   const result = await escrowCollection.insertOne(
     {
       storecode: storecode,
@@ -7381,7 +7383,7 @@ export async function withdrawEscrow(
 
   // get store.escrowAmountUSDT from storecode
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
+  const collection = client.db(dbName).collection('stores');
   const store = await collection.findOne<any>(
     { storecode: storecode },
     { projection: { escrowAmountUSDT: 1 } }
@@ -7400,7 +7402,7 @@ export async function withdrawEscrow(
   }
 
   // insert escrow record
-  const escrowCollection = client.db('georgia').collection('escrows');
+  const escrowCollection = client.db(dbName).collection('escrows');
   const result = await escrowCollection.insertOne(
     {
       storecode: storecode,
@@ -7445,7 +7447,7 @@ export async function getEscrowHistory(
   }
 ): Promise<any> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('escrows');
+  const collection = client.db(dbName).collection('escrows');
   
   const results = await collection.find<any>(
     { storecode: storecode },
@@ -7487,7 +7489,7 @@ export async function updateBuyOrderDepositCompleted(
   console.log('updateBuyOrderDepositCompleted orderId: ' + orderId);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('buyorders');
+  const collection = client.db(dbName).collection('buyorders');
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -7523,7 +7525,7 @@ export async function getEscrowBalanceByStorecode(
   }
 ): Promise<any> {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('stores');
+  const collection = client.db(dbName).collection('stores');
   const store = await collection.findOne<any>(
     { storecode: storecode },
     { projection: { escrowAmountUSDT: 1 } }
@@ -7542,8 +7544,8 @@ export async function getEscrowBalanceByStorecode(
   // get latest date from escrows collection with withdrawAmount > 0
   // if no escrows found, return 0
  
-  const escrowCollection = client.db('georgia').collection('escrows');
-  const buyordersCollection = client.db('georgia').collection('buyorders');
+  const escrowCollection = client.db(dbName).collection('escrows');
+  const buyordersCollection = client.db(dbName).collection('buyorders');
 
 
 

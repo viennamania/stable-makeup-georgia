@@ -2398,7 +2398,7 @@ export default function Index({ params }: any) {
                     text-4xl font-semibold text-green-600"
                     style={{ fontFamily: "monospace" }}
                     >
-                      {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </div>
 
                     <button

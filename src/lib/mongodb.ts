@@ -34,3 +34,8 @@ const clientPromise = Singleton.instance;
 // Export a module-scoped MongoClient promise. By doing this in a
 // separate module, the client can be shared across functions.
 export default clientPromise;
+
+
+
+
+export const dbName = process.env.MONGODB_DB_NAME || 'georgia';

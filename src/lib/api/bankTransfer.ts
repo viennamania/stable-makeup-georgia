@@ -1,13 +1,13 @@
 import clientPromise from '../mongodb';
 
-
+import { dbName } from '../mongodb';
 
 
 
 // getOne by vactId
 export async function getOne(vactId: string) {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('bankTransfers');
+  const collection = client.db(dbName).collection('bankTransfers');
   return collection.findOne({ vactId: vactId });
 }
 
@@ -23,7 +23,7 @@ export async function insertOne(data: any) {
 
   const client = await clientPromise;
 
-  const collection = client.db('georgia').collection('bankTransfers');
+  const collection = client.db(dbName).collection('bankTransfers');
 
   // check duplicate vactId
 
@@ -79,7 +79,7 @@ export async function insertOne(data: any) {
 // Get all bank transfers
 export async function findAll() {
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('bankTransfers');
+  const collection = client.db(dbName).collection('bankTransfers');
   return collection.find({}).toArray();
 }
 
@@ -109,7 +109,7 @@ export async function findByAccount(virtualAccount: string) {
   console.log('findByAccount virtualAccount: ' + virtualAccount);
 
   const client = await clientPromise;
-  const collection = client.db('georgia').collection('bankTransfers');
+  const collection = client.db(dbName).collection('bankTransfers');
   return collection.find({ account: virtualAccount }).toArray();
 }
 
