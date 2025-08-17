@@ -1249,7 +1249,7 @@ export default function Index({ params }: any) {
                           구매자<br/>가맹점
                         </th>
                         <th className="px-4 py-2 text-right">
-                          구매량(USDT)<br/>구매금액(원)
+                          구매량(USDT)<br/>구매금액(원)<br/>구매단가(원)
                         </th>
                         <th className="px-4 py-2 text-center">
                           상태
@@ -1289,15 +1289,25 @@ export default function Index({ params }: any) {
                                   width={16}
                                   height={16}
                                 />
-                                <span className="text-green-600 font-semibold">
-                                  {Number(trade.usdtAmount)?.toLocaleString()}
+                                <span className="text-lg text-green-600 font-semibold"
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  {
+                                  Number(trade.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                  }
                                 </span>
                               </div>
-                              <span className="text-yellow-600 font-semibold">
-                                {Number(trade.krwAmount)?.toLocaleString()}
+                              <span className="text-lg text-yellow-600 font-semibold"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                {Number(trade.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                              </span>
+                              <span className="text-lg text-zinc-600 font-semibold"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                {Number(trade.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                               </span>
                             </div>
-
                           </td>
 
                           <td className="px-4 py-2">
