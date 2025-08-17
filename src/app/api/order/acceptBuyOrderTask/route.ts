@@ -15,12 +15,6 @@ import {
 } from '@lib/api/user';
 
 
-
-// Download the helper library from https://www.twilio.com/docs/node/install
-import twilio from "twilio";
-import { idCounter } from "thirdweb/extensions/farcaster/idRegistry";
-
-
 export async function POST(request: NextRequest) {
 
 

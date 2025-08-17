@@ -5194,9 +5194,16 @@ const fetchBuyOrders = async () => {
                                     height={20}
                                     className="animate-spin"
                                   />
-                                  <span className="text-sm font-semibold text-zinc-500">
-                                    자동입금확인중
-                                  </span>
+                                  {item?.autoConfirmPayment === true ? (
+                                    <span className="text-sm font-semibold text-zinc-500">
+                                      자동입금확인중
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm font-semibold text-zinc-500">
+                                      수동입금확인중
+                                    </span>
+                                  )}
+
                                 </div>
 
 

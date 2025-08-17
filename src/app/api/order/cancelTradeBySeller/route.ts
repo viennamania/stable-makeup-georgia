@@ -88,103 +88,107 @@ export async function POST(request: NextRequest) {
   // 결제요청한 정보가 자동입금(payaction)인 경우 주문-메칭 제외처리
   if (buyOrder.status === "paymentRequested") {
 
-    const tradeId = buyOrder.tradeId;
-
 
     // getPayactionKeys
     const payactionKeys = await getPayactionKeys({
       storecode: buyOrder.storecode,
     });
-    if (!payactionKeys) {
-      console.error("Payaction keys not found for storecode:", buyOrder.storecode);
-      return NextResponse.json({
-        error: "Payaction keys not found for storecode",
-        storecode: buyOrder.storecode,
-      }, { status: 400 });
-    }
-    const payactionApiKey = payactionKeys.payactionApiKey;
-    const payactionShopId = payactionKeys.payactionShopId;
+
+
+    if (payactionKeys && payactionKeys.payactionApiKey && payactionKeys.payactionShopId) {
+
+   
+      const tradeId = buyOrder.tradeId;
+
+
+ 
+      if (!payactionKeys) {
+        console.error("Payaction keys not found for storecode:", buyOrder.storecode);
+        return NextResponse.json({
+          error: "Payaction keys not found for storecode",
+          storecode: buyOrder.storecode,
+        }, { status: 400 });
+      }
+      const payactionApiKey = payactionKeys.payactionApiKey;
+      const payactionShopId = payactionKeys.payactionShopId;
 
 
 
 
 
-    const payactionUrl = "https://api.payaction.app/order-exclude";
+      const payactionUrl = "https://api.payaction.app/order-exclude";
 
 
 
-    if (!payactionApiKey || !payactionShopId) {
-      console.error("Payaction API key or Shop ID is not defined for storecode:", buyOrder.storecode);
-      return NextResponse.json({
-        error: "Payaction API key or Shop ID is not defined",
-        storecode: buyOrder.storecode,
-      }, { status: 400 });
-    }
+      if (!payactionApiKey || !payactionShopId) {
+        console.error("Payaction API key or Shop ID is not defined for storecode:", buyOrder.storecode);
+        return NextResponse.json({
+          error: "Payaction API key or Shop ID is not defined",
+          storecode: buyOrder.storecode,
+        }, { status: 400 });
+      }
 
-    
-    const headers = {
-      "Content-Type": "application/json",
-      "x-api-key": payactionApiKey,
-      "x-mall-id": payactionShopId,
-    };
-    const body = {
-      order_number: tradeId,
-    };
-    const options = {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify(body),
-    };
-
-    try {
-      const response = await fetch(payactionUrl, options);
-
-      const result = await response.json();
       
+      const headers = {
+        "Content-Type": "application/json",
+        "x-api-key": payactionApiKey,
+        "x-mall-id": payactionShopId,
+      };
+      const body = {
+        order_number: tradeId,
+      };
+      const options = {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(body),
+      };
+
+      try {
+        const response = await fetch(payactionUrl, options);
+
+        const result = await response.json();
+        
+        
+        console.log("payactionResult", result);
+        // updateBuyOrderPayactionResult
+        await updateBuyOrderPayactionResult({
+          orderId: orderId,
+          api: "/api/order/cancelTradeBySeller",
+          payactionResult: result,
+        });
+
+        /*
+        {
+          status: 'NOT_RUN',
+          message: "The condition for the workflow order-exclude-v2 is not met. Workflow won't run"
+        }
+          */
+
+
+        if (response.status !== 200) {
+          console.error("Payaction API error", result);
+          throw new Error("Payaction API error");
+        }
+
+        if (result.status !== "success") {
+          console.error("Payaction API error", result);
+
+          throw new Error("Payaction API error");
+        }
+
+        //console.log("Payaction API result", result);
+
       
-      console.log("payactionResult", result);
-      // updateBuyOrderPayactionResult
-      await updateBuyOrderPayactionResult({
-        orderId: orderId,
-        api: "/api/order/cancelTradeBySeller",
-        payactionResult: result,
-      });
-
-      /*
-      {
-        status: 'NOT_RUN',
-        message: "The condition for the workflow order-exclude-v2 is not met. Workflow won't run"
-      }
-        */
-
-
-      if (response.status !== 200) {
-        console.error("Payaction API error", result);
-        throw new Error("Payaction API error");
+      } catch (error) {
+        console.error("Error calling Payaction API", error);
+        throw new Error("Error calling Payaction API");
       }
 
-      if (result.status !== "success") {
-        console.error("Payaction API error", result);
 
-
-        // update order payactionResult
-
-
-
-
-
-
-
-        throw new Error("Payaction API error");
-      }
-
-      //console.log("Payaction API result", result);
-
-    
-    } catch (error) {
-      console.error("Error calling Payaction API", error);
-      throw new Error("Error calling Payaction API");
+    } else {
+      console.log("Payaction keys not found for storecode:", buyOrder.storecode);
     }
+
 
 
     const resultCancelTradeBySeller = await cancelTradeBySeller({

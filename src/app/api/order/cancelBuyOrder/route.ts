@@ -5,9 +5,6 @@ import {
 	deleteBuyOrder,
 } from '@lib/api/order';
 
-// Download the helper library from https://www.twilio.com/docs/node/install
-import twilio from "twilio";
-
 
 export async function POST(request: NextRequest) {
 
