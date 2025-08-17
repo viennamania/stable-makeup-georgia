@@ -3,8 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	getAllSellersByStorecode,
 } from '@lib/api/user';
-import { get } from "http";
-
 
 
 export async function POST(request: NextRequest) {

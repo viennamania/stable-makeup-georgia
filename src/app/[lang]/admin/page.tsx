@@ -1242,19 +1242,26 @@ export default function Index({ params }: any) {
                     >
                       <tr>
                         
-                        <th className="px-4 py-2 text-left">거래번호<br/>거래시간</th>
                         <th className="px-4 py-2 text-left">
-                          가맹점<br/>구매자
+                          거래번호<br/>거래시간
                         </th>
-                        <th className="px-4 py-2 text-left">구매금액(원)<br/>구매량(USDT)</th>
-                        <th className="px-4 py-2 text-left">상태</th>
+                        <th className="px-4 py-2 text-left">
+                          구매자<br/>가맹점
+                        </th>
+                        <th className="px-4 py-2 text-right">
+                          구매량(USDT)<br/>구매금액(원)
+                        </th>
+                        <th className="px-4 py-2 text-center">
+                          상태
+                        </th>
+                        <th className="px-4 py-2 text-left">판매자</th>
                       </tr>
                     </thead>
                     <tbody>
                       {totalSummary.latestBuyOrders.map((trade, index) => (
                         <tr key={index} className="border-b">
                           <td className="px-4 py-2">
-                            #{trade.tradeId.slice(0, 3) + "..."}
+                            #{trade.tradeId}
                             <br/>
                             {
                               new Date().getTime() - new Date(trade.createdAt).getTime() < 1000 * 60 ? (
@@ -1269,58 +1276,85 @@ export default function Index({ params }: any) {
                           </td>
 
                           <td className="px-4 py-2">
+                            {trade?.nickname}({trade?.buyer?.depositName})
+                            <br/>
                             {trade?.store?.storeName}
-                            <br/>
-                            {trade?.buyer?.depositName}
                           </td>
-                          <td className="px-4 py-2">
-                            {Number(trade.krwAmount)?.toLocaleString()} 원
-                            <br/>
-                            {Number(trade.usdtAmount)?.toLocaleString()} USDT
+                          <td className="px-4 py-2 text-right">
+                            <div className="flex flex-col items-end">
+                              <div className="flex flex-row items-center justify-end gap-1">
+                                <Image
+                                  src="/token-usdt-icon.png"
+                                  alt="USDT"
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="text-green-600 font-semibold">
+                                  {Number(trade.usdtAmount)?.toLocaleString()}
+                                </span>
+                              </div>
+                              <span className="text-yellow-600 font-semibold">
+                                {Number(trade.krwAmount)?.toLocaleString()}
+                              </span>
+                            </div>
+
                           </td>
 
                           <td className="px-4 py-2">
                             {/* "orderded", "accepted", "paymentRequested" */}
 
-                            <button
-                              onClick={() => {
-                                //router.push('/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade.tradeId);
-                                // new window open
-                                window.open(
-                                  '/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade._id,
-                                  '_blank'
-                                );
-                              }}
-                              className={`
-                                text-sm font-semibold
-                                bg-[#3167b4] text-white
-                                px-2 py-1 rounded-lg
-                                hover:bg-[#3167b4]/80
-                                ${trade.status === "ordered" ? "bg-red-500" : ""}
-                                ${trade.status === "accepted" ? "bg-green-500" : ""}
-                                ${trade.status === "paymentRequested" ? "bg-yellow-500" : ""}
-                              `}
-                            >
+                            <div className="flex items-center justify-center">
 
-                              {trade.status === "ordered" ? (
-                                <span className="text-white font-semibold">
-                                  구매주문
-                                </span>
-                              ) : trade.status === "accepted" ? (
-                                <span className="text-white font-semibold">
-                                  거래시작
-                                </span>
-                              ) : trade.status === "paymentRequested" ? (
-                                <span className="text-white font-semibold">
-                                  결제요청
-                                </span>
-                              ) : (
-                                <span className="text-white font-semibold">
-                                  {trade.status}
-                                </span>
-                              )}
+                              <button
+                                onClick={() => {
+                                  //router.push('/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade.tradeId);
+                                  // new window open
+                                  window.open(
+                                    '/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade._id,
+                                    '_blank'
+                                  );
+                                }}
+                                className={`
+                                  text-sm font-semibold
+                                  bg-[#3167b4] text-white
+                                  px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80
+                                  ${trade.status === "ordered" ? "bg-red-500" : ""}
+                                  ${trade.status === "accepted" ? "bg-green-500" : ""}
+                                  ${trade.status === "paymentRequested" ? "bg-yellow-500" : ""}
+                                `}
+                              >
 
-                            </button>
+                                {trade.status === "ordered" ? (
+                                  <span className="text-white font-semibold">
+                                    구매주문
+                                  </span>
+                                ) : trade.status === "accepted" ? (
+                                  <span className="text-white font-semibold">
+                                    거래시작
+                                  </span>
+                                ) : trade.status === "paymentRequested" ? (
+                                  <span className="text-white font-semibold">
+                                    결제요청
+                                  </span>
+                                ) : (
+                                  <span className="text-white font-semibold">
+                                    {trade.status}
+                                  </span>
+                                )}
+
+                              </button>
+                          
+                            </div>
+                          
+                          </td>
+
+                          <td className="px-4 py-2">
+                            {trade?.seller?.nickname.length > 10 ? trade?.seller?.nickname.slice(0, 10) + "..." : trade?.seller?.nickname}
+                            <br/>
+                            {trade?.seller?.bankInfo?.bankName}
+                            <br/>
+                            {trade?.seller?.bankInfo?.accountHolder}
                           </td>
 
                         </tr>
