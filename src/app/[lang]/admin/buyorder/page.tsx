@@ -5113,8 +5113,8 @@ const fetchBuyOrders = async () => {
                       <td className="p-2">
 
                         {
-                        !item?.escrowTransactionHash
-                        && item?.status === 'paymentConfirmed' && (
+                        //!item?.escrowTransactionHash &&
+                        item?.status === 'paymentConfirmed' && (
                           <div className="
                             w-32
                             flex flex-col gap-2 items-end justify-start">
