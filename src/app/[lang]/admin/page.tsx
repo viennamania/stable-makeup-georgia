@@ -5,8 +5,11 @@ import { useState, useEffect, use } from "react";
 import Image from "next/image";
 
 
+import {
+  clientId,
+  client
+} from "../../client";
 
-import { client } from "../../client";
 
 import { createThirdwebClient } from "thirdweb";
 
@@ -91,6 +94,9 @@ import {
 
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
+
+import { paymentUrl } from "../../config/payment";
+
 
 
 
@@ -1224,7 +1230,7 @@ export default function Index({ params }: any) {
                     <h2 className="text-lg font-semibold">최근 구매주문</h2>
                   </div>
 
-                  <table className="min-w-full
+                  <table className="min-w-full min-h-[400px] align-top
                     border-collapse
                     border border-gray-300
                     rounded-lg
@@ -1261,9 +1267,9 @@ export default function Index({ params }: any) {
                         </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="align-top">
                       {totalSummary.latestBuyOrders.map((trade, index) => (
-                        <tr key={index} className="border-b">
+                        <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                           <td className="px-4 py-2">
                             #{trade.tradeId}
                             <br/>
@@ -1323,8 +1329,9 @@ export default function Index({ params }: any) {
                                 onClick={() => {
                                   //router.push('/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade.tradeId);
                                   // new window open
+                                  // href={`${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
                                   window.open(
-                                    '/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade._id,
+                                    `${paymentUrl}/${params.lang}/${clientId}/${trade.storecode}/pay-usdt-reverse/${trade._id}`,
                                     '_blank'
                                   );
                                 }}
