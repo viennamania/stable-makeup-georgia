@@ -2480,7 +2480,9 @@ export async function getBuyOrdersGroupByStorecodeDaily(
         totalSettlementCount: { $sum: { $cond: [{ $ifNull: ["$settlement", false] }, 1, 0] } },
 
         // sum of settlement.settlementAmount
-        totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
+        /////totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
+        totalSettlementAmount: { $sum: { $toDouble: "$settlement.settlementAmount" } },
+
 
         // sum of settlement.settlementAmountKRW
         // convert settlement.settlementAmountKRW to double
