@@ -1254,7 +1254,11 @@ export default function Index({ params }: any) {
                         <th className="px-4 py-2 text-center">
                           상태
                         </th>
-                        <th className="px-4 py-2 text-left">판매자</th>
+                        <th className="px-4 py-2 text-left">
+                          판매자
+                          <br/>
+                          결제방법
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1579,16 +1583,31 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 거래금액(원)</h2>
-                    <p className="text-lg text-zinc-500">
-                      {Number(totalSummary.totalBuyAmountKrw)?.toLocaleString()} 원
+                    <p className="text-lg text-yellow-600 font-semibold"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      {
+                        Number(totalSummary.totalBuyAmountKrw).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
                     </p>
                   </div>
 
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 거래량(USDT)</h2>
-                    <p className="text-lg text-zinc-500">
-                      {Number(totalSummary.totalUsdtAmount)?.toLocaleString()} USDT
-                    </p>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                        src="/token-usdt-icon.png"
+                        alt="USDT"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg text-green-600 font-semibold"
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {Number(totalSummary.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -1599,15 +1618,32 @@ export default function Index({ params }: any) {
                 
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 정산금액(원)</h2>
-                    <p className="text-lg text-zinc-500">
-                      {Number(totalSummary.totalSettlementAmountKRW)?.toLocaleString()} 원
+                    <p className="text-lg text-yellow-600 font-semibold"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      {
+                        Number(totalSummary.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
                     </p>
                   </div>
                   <div className="flex flex-col items-center justify-center gap-2">
                     <h2 className="text-lg font-semibold">총 정산량(USDT)</h2>
-                    <p className="text-lg text-zinc-500">
-                      {Number(totalSummary.totalSettlementAmount)?.toLocaleString()} USDT
-                    </p>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                        src="/token-usdt-icon.png"
+                        alt="USDT"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg text-green-600 font-semibold"
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {
+                          Number(totalSummary.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        }
+                      </span>
+                    </div>
                   </div>
 
                 </div>
@@ -1661,11 +1697,23 @@ export default function Index({ params }: any) {
                           px-4 py-2 text-left">
                           구매자<br/>가맹점
                         </th>
-                        <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                        <th className="px-4 py-2 text-left">정산금액(원)<br/>정산량(USDT)</th>
+                        <th className="px-4 py-2 text-right">
+                          거래량(USDT)
+                          <br/>
+                          거래금액(원)
+                        </th>
+                        <th className="px-4 py-2 text-right">
+                          정산량(USDT)
+                          <br/>
+                          정산금액(원)
+                        </th>
                     
                         <th className="hidden xl:block
-                          px-4 py-2 text-left">판매자</th>
+                          px-4 py-2 text-left">
+                            판매자
+                            <br/>
+                            결제방법
+                          </th>
                         {/*
                         <th className="px-4 py-2 text-left">거래일시</th>
                         */}
@@ -1697,14 +1745,48 @@ export default function Index({ params }: any) {
                           </td>
 
                           <td className="px-4 py-2">
-                            {Number(trade.krwAmount)?.toLocaleString()} 원
-                            <br/>
-                            {Number(trade.usdtAmount)?.toLocaleString()} USDT
+                            <div className="flex flex-col items-end">
+                              <div className="flex flex-row items-center justify-end gap-1">
+                                <Image
+                                  src="/token-usdt-icon.png"
+                                  alt="USDT"
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="text-lg text-green-600 font-semibold"
+                                style={{ fontFamily: "monospace" }}
+                                >
+                                  {Number(trade.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                </span>
+                              </div>
+                              <span className="text-lg text-yellow-600 font-semibold"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                {Number(trade.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-4 py-2">
-                            {trade?.settlement?.settlementAmountKRW > 0 ? Number(trade.settlement.settlementAmountKRW)?.toLocaleString() : 0} 원
-                            <br/>
-                            {trade?.settlement?.settlementAmount > 0 ? Number(trade.settlement.settlementAmount)?.toLocaleString() : 0} USDT
+                            <div className="flex flex-col items-end">
+                              <div className="flex flex-row items-center justify-end gap-1">
+                                <Image
+                                  src="/token-usdt-icon.png"
+                                  alt="USDT"
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="text-lg text-green-600 font-semibold"
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  {Number(trade.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                </span>
+                              </div>
+                              <span className="text-lg text-yellow-600 font-semibold"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                {Number(trade.settlement?.settlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                              </span>
+                            </div>
                           </td>
 
 
