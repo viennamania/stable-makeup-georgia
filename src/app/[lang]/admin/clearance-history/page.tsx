@@ -3302,7 +3302,7 @@ const fetchBuyOrders = async () => {
                           <td className="text-zinc-500 p-2">
                             
 
-                            <div className="flex flex-col gap-2 items-center justify-start">
+                            <div className="flex flex-col gap-2 items-start justify-start">
                               
                               <Image
                                 src={item?.store?.storeLogo || "/icon-store.png"}
