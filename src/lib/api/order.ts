@@ -7490,8 +7490,38 @@ export async function updateBuyOrderDepositCompleted(
 
   console.log('updateBuyOrderDepositCompleted orderId: ' + orderId);
 
+
+
+
   const client = await clientPromise;
+
   const collection = client.db(dbName).collection('buyorders');
+
+
+  /*
+  // get buyer from order
+  const order = await collection.findOne<any>(
+    { _id: new ObjectId(orderId) },
+    { projection: { buyer: 1 } }
+  );
+
+  if (!order) {
+    console.log('order not found for orderId: ' + orderId);
+    return false;
+  }
+
+  // get buyer walletAddress from order
+  const buyerWalletAddress = order.walletAddress;
+
+  // update user total buy amount 
+  const collectionUsers = client.db(dbName).collection('users');
+  const resultUser = await collectionUsers.updateOne(
+    { walletAddress: buyerWalletAddress },
+    { $inc: { 'buyer.totalBuyAmount': order.totalAmount } }
+  );
+  */
+
+
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -7501,7 +7531,10 @@ export async function updateBuyOrderDepositCompleted(
     } }
   );
 
-  console.log('updateBuyOrderDepositCompleted result: ' + JSON.stringify(result));
+
+
+
+  ////console.log('updateBuyOrderDepositCompleted result: ' + JSON.stringify(result));
 
   if (result.modifiedCount === 1) {
     return true;
