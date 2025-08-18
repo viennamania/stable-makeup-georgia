@@ -5426,7 +5426,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                               {item.status !== 'cancelled' && (
                                 <>   
-                                  {item?.buyer?.depositCompleted === false
+                                  {item?.buyer?.depositCompleted !== true
                                   ? (
                                     <div className="text-sm text-red-600
                                     flex flex-row items-center gap-2

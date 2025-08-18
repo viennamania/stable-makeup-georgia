@@ -4029,7 +4029,7 @@ const fetchBuyOrders = async () => {
                             item.transactionHash && item.transactionHash !== '0x' && (
                               <>
 
-                              {item?.buyer?.depositCompleted === false
+                              {item?.buyer?.depositCompleted !== true
                               ? (
                                 <div className="flex flex-col items-center justify-center gap-1">
                                   <span className="text-sm text-red-600

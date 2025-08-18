@@ -3861,27 +3861,27 @@ const [tradeSummary, setTradeSummary] = useState({
                     </div>
 
                     <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 판매금액(원)</div>
-                      <div className="text-sm font-semibold text-zinc-500">
-                        <span className="text-xl text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {totalClearanceAmountKRW?.toLocaleString()}
-                        </span>{' '}
-                          원
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">총 판매량(USDT)</div>
                       <div className="text-sm font-semibold text-zinc-500">
                         <span className="text-xl text-green-600"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {totalClearanceAmount?.toLocaleString()}
-                        </span>{' '}
-                          USDT
+                        </span>
                       </div>
                     </div>
+
+                    <div className="flex flex-col gap-2 items-center">
+                      <div className="text-sm">총 판매금액(원)</div>
+                      <div className="text-sm font-semibold text-zinc-500">
+                        <span className="text-xl text-yellow-600"
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {totalClearanceAmountKRW?.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
                   </div>
                   
                 </div>
@@ -3917,18 +3917,20 @@ const [tradeSummary, setTradeSummary] = useState({
                             </div>
                           </th>
 
-                          <th className="p-2">{Buyer}</th>
+                          <th className="p-2">
+                            {Buyer}
+                          </th>
 
                           <th className="p-2">
-                            <div className="flex flex-col items-center">
-                              <span>
-                                판매금액(원)
-                              </span>
+                            <div className="flex flex-col items-end">
                               <span>
                                 판매량(USDT)
                               </span>
                               <span>
-                                환율
+                                판매금액(원)
+                              </span>
+                              <span>
+                                환율(원)
                               </span>
                             </div>
                           </th>
@@ -4030,6 +4032,23 @@ const [tradeSummary, setTradeSummary] = useState({
                                 />
                                 */}
                                 <div className="flex flex-col gap-2 items-center justify-center">
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src={item.avatar || "/icon-buyer.png"}
+                                      alt="Avatar"
+                                      width={20}
+                                      height={20}
+                                      className="rounded-full"
+                                    />
+                                    <span className="text-lg font-semibold text-zinc-500">
+                                      {
+                                        //item.walletAddress === address ? 'Me' :
+                                        item?.nickname
+                                      }
+                                    </span>
+                                  </div>
+
                                   <div className="flex flex-row items-center gap-2">
                                     <Image
                                       src="/icon-shield.png"
@@ -4053,12 +4072,6 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                     }
                                   </div>
-                                  <div className="text-sm font-semibold text-zinc-500">
-                                    {
-                                      //item.walletAddress === address ? 'Me' :
-                                      item?.nickname
-                                    }
-                                  </div>
 
                                 </div>
                               </div>
@@ -4068,17 +4081,6 @@ const [tradeSummary, setTradeSummary] = useState({
 
                             <td className="p-2">
                               <div className="flex flex-col gap-2 items-end justify-start">
-
-                                <div className="flex flex-row items-center gap-1">
-                                  <span className="text-xl text-yellow-600 font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {Number(item.krwAmount)?.toLocaleString()}
-                                  </span>
-                                  <span className="text-sm text-zinc-500">
-                                    원
-                                  </span>
-                                </div>
 
                                 <div className="flex flex-row gap-2 items-center justify-center">
                                   <Image
@@ -4095,9 +4097,20 @@ const [tradeSummary, setTradeSummary] = useState({
                                   </span>
                                 </div>
 
-                                <span className="text-sm text-zinc-500">
+
+                                <div className="flex flex-row items-center gap-1">
+                                  <span className="text-xl text-yellow-600 font-semibold"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {Number(item.krwAmount)?.toLocaleString()}
+                                  </span>
+                                </div>
+
+                                <span className="text-sm text-zinc-500"
+                                  style={{ fontFamily: 'monospace' }}
+                                >
                                   {
-                                    Number(item.rate)
+                                    Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                     //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                                   }
                                 </span>
@@ -4188,7 +4201,9 @@ const [tradeSummary, setTradeSummary] = useState({
                               <div className="flex flex-row items-center gap-2 justify-center">
                                 {/* status */}
                                 {item.status === 'ordered' && (
-                                  <div className="text-sm text-yellow-500 font-semibold">
+                                  <div className="text-sm text-yellow-500 font-semibold
+                                    border border-yellow-500 rounded-lg p-2
+                                  ">
                                     {Buy_Order_Opened}
                                   </div>
                                 )}
@@ -4198,11 +4213,15 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                   <div className="flex flex-row gap-2 items-center justify-center">
                                     
-                                    <div className="text-sm text-zinc-500">
+                                    <div className="text-sm text-zinc-500
+                                      border border-zinc-500 rounded-lg p-2
+                                      ">
                                       {item.seller?.nickname}
                                     </div>
 
-                                    <div className="text-sm text-green-600">
+                                    <div className="text-sm text-green-600
+                                      border border-green-600 rounded-lg p-2
+                                      ">
                                       {Trade_Started}
                                     </div>
 
@@ -4219,7 +4238,9 @@ const [tradeSummary, setTradeSummary] = useState({
                                       {item.seller?.nickname}
                                     </div>
                                     
-                                    <div className="text-sm text-green-600">
+                                    <div className="text-sm text-green-600
+                                      border border-green-600 rounded-lg p-2
+                                      ">
                                       {/*Waiting_for_seller_to_deposit*/}
 
                                       결제요청
@@ -4239,7 +4260,9 @@ const [tradeSummary, setTradeSummary] = useState({
                                         {item.seller?.nickname}
                                       </span>
 
-                                      <div className="text-sm text-red-600">
+                                      <div className="text-sm text-red-600
+                                        border border-red-600 rounded-lg p-2
+                                      ">
                                         {
                                           Cancelled_at
                                         }
@@ -4369,7 +4392,9 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
                                 {item.status === 'completed' && (
-                                  <div className="text-sm text-green-600">
+                                  <div className="text-sm text-green-600
+                                    border border-green-600 rounded-lg p-2
+                                    ">
                                     {Completed_at}
                                   </div>
                                 )}
@@ -4621,7 +4646,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                       <button
                                         disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
                                         className={`
-                                          w-24 h-8
+                                          w-28 
                                           flex flex-row
                                           items-center justify-center
                                           gap-1 text-sm text-white px-2 py-1 rounded-md ${confirmingPayment[index] || !confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
@@ -4649,6 +4674,8 @@ const [tradeSummary, setTradeSummary] = useState({
                                         )}
                                         <span className="text-sm">
                                           거래완료
+                                          <br />
+                                          USDT 전송
                                         </span>
 
                                       </button>
@@ -4731,7 +4758,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                               {item.status !== 'cancelled' && (
                                 <>   
-                                  {item?.buyer?.depositCompleted === false
+                                  {item?.buyer?.depositCompleted !== true
                                   ? (
                                     <div className="text-sm text-red-600
                                     flex flex-row items-center gap-2

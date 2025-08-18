@@ -664,7 +664,7 @@ export default function Index({ params }: any) {
 
 
     const [nickname, setNickname] = useState("");
-    const [avatar, setAvatar] = useState("/profile-default.png");
+    const [avatar, setAvatar] = useState("/icon-user.png");
     const [userCode, setUserCode] = useState("");
   
   
@@ -1299,9 +1299,88 @@ export default function Index({ params }: any) {
       })
     );
 
+  }
+
+
+
+
+
+
+
+
+  // buyOrderDepositCompleted
+  const [loadingDeposit, setLoadingDeposit] = useState([] as boolean[]);
+  for (let i = 0; i < 100; i++) {
+    loadingDeposit.push(false);
+  }
+
+  const buyOrderDepositCompleted = async (index: number, orderId: string) => {
+    // call API to set deposit completed
+    // update the state to reflect the change
+
+    if (loadingDeposit[index]) {
+      return;
+    }
+
+    setLoadingDeposit(
+      loadingDeposit.map((item, idx) => idx === index ? true : item)
+    );
+
+
+
+    const response = await fetch('/api/order/buyOrderDepositCompleted', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderId: orderId,
+        walletAddress: address,
+      }),
+    });
+    
+
+    setLoadingDeposit(
+      loadingDeposit.map((item, idx) => idx === index ? false : item)
+    );
+
+
+    await fetch('/api/order/getAllBuyOrders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        lang: params.lang,
+        
+        storecode: params.storecode,
+        //storecode: "admin",
+
+        walletAddress: address,
+        searchMyOrders: searchMyOrders,
+
+        privateSale: true,
+
+
+      })
+    }).then(async (response) => {
+      const data = await response.json();
+      //console.log('data', data);
+      if (data.result) {
+        setBuyOrders(data.result.orders);
+      }
+    });
 
 
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -1594,9 +1673,20 @@ export default function Index({ params }: any) {
             {address && !loadingUser && (
                   <div className="w-full flex flex-row items-center justify-end gap-2">
 
-                    <span className="text-sm text-zinc-500">
-                      {user?.nickname || "프로필"}
-                    </span>
+                    <div className="flex flex-row items-center justify-center gap-2
+                      bg-zinc-100 border border-zinc-200 rounded-full p-1
+                      ">
+                      <Image
+                        src={user?.avatar || avatar || "/icon-user.png"}
+                        alt="User"
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                      <span className="text-sm text-zinc-600">
+                        {user?.nickname || "프로필"}
+                      </span>
+                    </div>
 
                 </div>
               )}
@@ -1604,7 +1694,8 @@ export default function Index({ params }: any) {
         </div>
 
 
-          <div className="w-full flex flex-col items-start justify-center space-y-4">
+          <div className="mt-4
+            w-full flex flex-col items-start justify-center gap-4">
 
             <div className='flex flex-row items-center space-x-4'>
                   <Image
@@ -2232,7 +2323,7 @@ export default function Index({ params }: any) {
                                 <div className="flex flex-row items-center gap-2">
 
                                   <span className="text-xl text-blue-500 font-bold ">
-                                    지급금액
+                                    매입금액
                                   </span>
 
                                   <input 
@@ -2287,7 +2378,7 @@ export default function Index({ params }: any) {
                                   = {
                                   krwAmount === 0 ? '0' :
                                   
-                                  (krwAmount / rate).toFixed(2) === 'NaN' ? '0' : (krwAmount / rate).toFixed(2)
+                                  (krwAmount / rate).toFixed(3) === 'NaN' ? '0' : (krwAmount / rate).toFixed(3)
 
                                   }{' '}USDT
                                 </p>
@@ -2410,7 +2501,7 @@ export default function Index({ params }: any) {
                         <div className="flex flex-row items-center justify-center gap-2">
                           <div className="flex flex-col items-center">
                               <span className="text-sm text-zinc-500">
-                                  총 지급금액(원)
+                                  총 매입금액(원)
                               </span>
                               <div className="flex flex-row items-center justify-center gap-2">
                                 <span className="text-xl xl:text-2xl font-semibold text-yellow-600">
@@ -2473,24 +2564,26 @@ export default function Index({ params }: any) {
 
                           <th className="p-2 text-left">#신청번호</th>
 
-                          <th className="p-2 text-left ">신청시간</th>
+                          <th className="p-2 text-center">신청시간</th>
 
+                          <th className="p-2 text-left">판매자 정보</th>
                           
                           <th className="p-2 text-left">구매자정보</th>
 
                           <th className="p-2 text-left">
-                            <div className="flex flex-col gap-1">
-                              <span>지급금액(원)</span>
+                            <div className="flex flex-col items-end justify-center gap-1">
                               <span>매입수량(USDT)</span>
-                              <span>{Rate}</span>
+                              <span>매입금액(원)</span>
+                              <span>{Rate}(원)</span>
                             </div>
                           </th>
 
 
-                          <th className="p-2 text-left">{Payment}</th>
-                          <th className="p-2 text-left">{Payment_Amount}</th>
+                          <th className="p-2 text-left">결제방법</th>
+                          <th className="p-2 text-left">결제금액(원)</th>
                           
-                          <th className="p-2 text-left">{Status}</th>
+                          <th className="p-2 text-center">거래상태</th>
+                          <th className="p-2 text-left">출금상태</th>
 
                           
                       </tr>
@@ -2536,16 +2629,68 @@ export default function Index({ params }: any) {
                                   </span>
                                 </div>
                               </td>
-                              
 
                               <td className="p-2">
-                                <div className="flex flex-col gap-1">
-                                  <span className="text-lg text-zinc-600">
-                                    {item.nickname || '익명'}
-                                  </span>
-                                  <span className="text-lg text-zinc-400 font-semibold">
-                                    {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
-                                  </span>
+                                <div className="flex flex-col items-start justify-center gap-1">
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-seller.png"
+                                      alt="Seller"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-600">
+                                      {item?.seller?.nickname || '익명'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-400 font-semibold">
+                                      {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
+                                    </span>
+                                  </div>
+
+                                </div>
+                              </td>
+                           
+
+                              <td className="p-2">
+                                <div className="flex flex-col items-start justify-center gap-1">
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-buyer.png"
+                                      alt="Buyer"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-600">
+                                      {item.nickname || '익명'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-400 font-semibold">
+                                      {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
+                                    </span>
+                                  </div>
 
                                 </div>
                               </td>
@@ -2553,13 +2698,7 @@ export default function Index({ params }: any) {
 
                               <td>
                                 <div className="flex flex-col items-end justify-center gap-1 mr-5">
-                                  <span className="text-xl text-yellow-600 font-semibold"
-                                    style={{
-                                      fontFamily: 'monospace',
-                                    }}
-                                  >
-                                    {Number(item.krwAmount)?.toLocaleString() + ' 원'}
-                                  </span>
+
                                 
                                   <div className="flex flex-row items-center gap-1">
                                     <Image
@@ -2574,21 +2713,29 @@ export default function Index({ params }: any) {
                                         fontFamily: 'monospace',
                                       }}
                                     >
-                                      {item.usdtAmount && item.usdtAmount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                      {item.usdtAmount && item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                     </span>
                                   </div>
 
+                                  <span className="text-xl text-yellow-600 font-semibold"
+                                    style={{
+                                      fontFamily: 'monospace',
+                                    }}
+                                  >
+                                    {Number(item.krwAmount)?.toLocaleString()}
+                                  </span>
+
+
                                   <span className="text-lg text-zinc-400 font-semibold">
-                                    {Number(item.rate)}
+                                    {Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                     </span>
                                 </div>
                               </td>
 
                            
                               <td>
-
                                 {item?.buyer?.nickname ? (
-                                  <div className="flex flex-col items-start justify-center gap-1">
+                                  <div className="w-36 flex flex-col items-start justify-center gap-1">
 
                                   {/* 
                                     nickname
@@ -2601,34 +2748,33 @@ export default function Index({ params }: any) {
                                     "허경수"
                                     */}
 
-                                    <span className="text-sm text-zinc-400">
+                                    <span className="text-sm text-zinc-600">
                                       {item.buyer?.nickname}
                                     </span>
-                                    <span className="text-sm text-zinc-400">
+                                    <span className="text-sm text-zinc-600">
                                       {item.buyer?.depositBankName}
                                     </span>
-                                    <span className="text-sm text-zinc-400">
+                                    <span className="text-sm text-zinc-600">
                                       {item.buyer?.depositBankAccountNumber}
                                     </span>
-                                    <span className="text-sm text-zinc-400">
+                                    <span className="text-sm text-zinc-600">
                                       {item.buyer?.depositName}
                                     </span>
 
                                   </div>
                                 ) : (
-                                <div className="flex flex-col items-start justify-center gap-1">
-                                  <span className="text-sm text-zinc-400">
-                                    {item.seller?.bankInfo?.bankName}
-                                  </span>
-                                  <span className="text-sm text-zinc-400">
-                                    {item.seller?.bankInfo?.accountNumber}
+                                  <div className="w-36 flex flex-col items-start justify-center gap-1">
+                                    <span className="text-sm text-zinc-600">
+                                      {item.seller?.bankInfo?.bankName}
                                     </span>
-                                  <span className="text-sm text-zinc-400">
-                                    {item.seller?.bankInfo?.accountHolder}
-                                    </span>
-                                </div>
-                              )}
-
+                                    <span className="text-sm text-zinc-600">
+                                      {item.seller?.bankInfo?.accountNumber}
+                                      </span>
+                                    <span className="text-sm text-zinc-600">
+                                      {item.seller?.bankInfo?.accountHolder}
+                                      </span>
+                                  </div>
+                                )}
 
                               </td>
 
@@ -2638,7 +2784,7 @@ export default function Index({ params }: any) {
                                 {item.status === 'paymentConfirmed' && (
                                   <span className="text-xl text-yellow-600 font-semibold">
                                     
-                                    {Number(item.krwAmount)?.toLocaleString() + ' 원'}
+                                    {Number(item.krwAmount)?.toLocaleString()}
                                   </span>
                                 )}
 
@@ -2682,9 +2828,9 @@ export default function Index({ params }: any) {
                                 )}
                               </td>
                               
-                              <td>
 
-                                <div className="flex flex-row gap-1 items-center">
+                              <td className="p-2">
+                                <div className="flex flex-row items-center justify-center gap-2">
 
                                 {(item.status === 'ordered'
                                   || item.status === 'accepted'
@@ -2727,25 +2873,74 @@ export default function Index({ params }: any) {
 
                                     </>
 
-                                  )}
+                                )}
 
 
 
                                 {item.status === 'paymentConfirmed' && (
-                                  <div className="flex flex-col gap-1">
+                                  <div className="flex flex-col items-center justify-center gap-2">
+
                                     <span className="text-lg font-semibold text-green-600">
                                       {Completed}
                                     </span>
                                     <span>{
                                       item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
                                     }</span>
+
+                                    <button
+                                      className="text-sm text-blue-600 font-semibold
+                                        border border-blue-600 rounded-lg p-2
+                                        bg-blue-100
+                                        w-full text-center
+                                        hover:bg-blue-200
+                                        cursor-pointer
+                                        transition-all duration-200 ease-in-out
+                                        hover:scale-105
+                                        hover:shadow-lg
+                                        hover:shadow-blue-500/50
+                                      "
+
+                                      onClick={() => {
+                                        let url = '';
+                                        if (chain === "ethereum") {
+                                          url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                        } else if (chain === "polygon") {
+                                          url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                        } else if (chain === "arbitrum") {
+                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                        } else if (chain === "bsc") {
+                                          url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                        } else {
+                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                        }
+                                        window.open(url, '_blank');
+
+                                      }}
+
+                                    >
+                                      <div className="flex flex-row gap-2 items-center justify-center">
+                                        <Image
+                                          src={`/logo-chain-${chain}.png`}
+                                          alt="Chain"
+                                          width={20}
+                                          height={20}
+                                          className="w-5 h-5"
+                                        />
+                                        <span className="text-sm">
+                                          USDT 전송내역
+                                        </span>
+                                      </div>
+                                    </button>
+
+
+
                                   </div>
                                 )}
 
                                 {item.status === 'accepted' && (
                                   <div className="flex flex-row gap-1">
 
-                                    <span className="text-lg font-semibold text-yellow-500">
+                                    <span className="text-lg font-semibold text-yellow-600">
                                       주문접수
                                     </span>
 
@@ -2893,6 +3088,79 @@ export default function Index({ params }: any) {
                                 </div>
 
                               </td>
+
+
+                              {/* 출금상태: buyer.depositCompleted */}
+                              <td className="p-2
+                                flex items-center justify-center
+                                text-center
+                                ">
+
+                                {
+                                item.transactionHash && item.transactionHash !== '0x' && (
+                                  <>
+
+                                  {item?.buyer?.depositCompleted !== true
+                                  ? (
+                                    <div className="flex flex-col items-center justify-center gap-1">
+                                      <span className="text-sm text-red-600
+                                        border border-red-600
+                                        rounded-md px-2 py-1">
+                                        출금대기중
+                                      </span>
+                                      {/* 출금완료 버튼 */}
+                                      <button
+                                        disabled={loadingDeposit[index]}
+                                        className={`
+                                          w-40 h-8
+                                          text-sm text-white px-2 py-1 rounded-md
+                                          bg-green-500 hover:bg-green-600
+                                          transition-all duration-200 ease-in-out
+                                          ${loadingDeposit[index] ? 'opacity-50 cursor-not-allowed' : ''}
+                                        `}
+
+                                        onClick={async () => {
+
+                                          if ( !confirm('정말로 출금을 완료하시겠습니까?')) {
+                                            return;
+                                          }    
+
+                                          // buyOrderDepositCompleted
+                                          buyOrderDepositCompleted(index, item._id)
+
+                                          
+                                        }}
+                                      >
+                                        {loadingDeposit[index] && (
+                                          <Image
+                                            src="/loading.png"
+                                            alt="Loading"
+                                            width={20}
+                                            height={20}
+                                            className="animate-spin"
+                                          />
+                                        )}
+                                        출금완료하기
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-green-600
+                                      border border-green-600
+                                      rounded-md px-2 py-1">
+                                      출금완료
+                                    </span>
+                                  )}
+
+                                  </>
+
+                                )}
+                              
+                              </td>
+
+
+
+
+
 
                           </tr>
                       ))}
