@@ -150,6 +150,15 @@ interface BuyOrder {
   agentcode: string;
 
   userStats: any;
+
+  paymentMethod: string;
+
+  escrowWallet: {
+    address: string;
+    balance: number;
+    transactionHash: string;
+  };
+
 }
 
 
@@ -1903,6 +1912,173 @@ export default function Index({ params }: any) {
   
 
   }
+
+
+
+
+
+
+  // send payment
+  const sendPayment = async (
+
+    index: number,
+    orderId: string,
+    //paymentAmount: number,
+    krwAmount: number,
+    //paymentAmountUsdt: number,
+    usdtAmount: number,
+
+    buyerWalletAddress: string,
+
+  ) => {
+    // confirm payment
+    // send usdt to buyer wallet address
+
+
+    // if escrowWalletAddress balance is less than paymentAmount, then return
+
+    //console.log('escrowBalance', escrowBalance);
+    //console.log('paymentAmountUsdt', paymentAmountUsdt);
+    
+
+    // check balance
+    // if balance is less than paymentAmount, then return
+    if (balance < usdtAmount) {
+      toast.error(Insufficient_balance);
+      return;
+    }
+
+    const storecode = "admin";
+
+
+    if (confirmingPayment[index]) {
+      return;
+    }
+
+    setConfirmingPayment(
+      confirmingPayment.map((item, idx) =>  idx === index ? true : item)
+    );
+
+      try {
+
+
+        const transaction = transfer({
+          contract,
+          to: buyerWalletAddress,
+          amount: usdtAmount,
+        });
+
+
+
+        //const { transactionHash } = await sendAndConfirmTransaction({
+        const { transactionHash } = await sendTransaction({
+          transaction: transaction,
+          account: activeAccount as any,
+        });
+
+        console.log("transactionHash===", transactionHash);
+
+
+
+        if (transactionHash) {
+
+
+          //alert('USDT 전송이 완료되었습니다.');
+
+
+          const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              lang: params.lang,
+              storecode: params.center,
+              orderId: orderId,
+              paymentAmount: krwAmount,
+              transactionHash: transactionHash,
+              ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
+              isSmartAccount: false,
+            })
+          });
+
+          const data = await response.json();
+
+          //console.log('data', data);
+
+
+            // fetch Buy Orders
+            await fetch('/api/order/getAllBuyOrders', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(
+                {
+                  storecode: params.center,
+                  limit: Number(limitValue),
+                  page: Number(pageValue),
+                  walletAddress: address,
+                  searchMyOrders: searchMyOrders,
+
+                  searchOrderStatusCancelled: searchOrderStatusCancelled,
+                  searchOrderStatusCompleted: searchOrderStatusCompleted,
+
+                  searchBuyer: searchBuyer,
+                  searchDepositName: searchDepositName,
+
+                  searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+
+
+                  fromDate: searchFromDate,
+                  toDate: searchToDate,
+                }
+              ),
+            })
+            .then(response => response.json())
+            .then(data => {
+                ///console.log('data', data);
+                setBuyOrders(data.result.orders);
+
+                setTotalCount(data.result.totalCount);
+            })
+
+          toast.success(Payment_has_been_confirmed);
+          playSong();
+
+
+        } else {
+          toast.error('결제확인이 실패했습니다.');
+        }
+
+    } catch (error) {
+      console.error('Error:', error);
+      //toast.error('결제확인이 실패했습니다.');
+    }
+
+
+
+    setConfirmingPayment(
+      confirmingPayment.map((item, idx) => idx === index ? false : item)
+    );
+
+    setConfirmPaymentCheck(
+      confirmPaymentCheck.map((item, idx) => idx === index ? false : item)
+    );
+  
+
+  }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -4804,10 +4980,102 @@ const fetchBuyOrders = async () => {
                               }}
                             >
                               {
-                                Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") + ' 원'
+                                Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                 //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                               }
                             </span>
+
+
+
+
+                          {/* paymentMethod */}
+                          <div className="flex flex-col items-end justify-end gap-2">
+                            
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              <span className="text-sm text-zinc-500">
+                                결제방법
+                              </span>
+                              <span className="text-sm text-zinc-500">
+                                {item.paymentMethod === 'bank' ? '은행'
+                                : item.paymentMethod === 'card' ? '카드'
+                                : item.paymentMethod === 'pg' ? 'PG'
+                                : item.paymentMethod === 'cash' ? '현금'
+                                : item.paymentMethod === 'crypto' ? '암호화폐'
+                                : item.paymentMethod === 'giftcard' ? '기프트카드'
+                                : item.paymentMethod === 'mkrw' ? 'MKRW' : '기타'
+                                }
+                              </span>
+                            </div>
+
+                            {item.paymentMethod === 'mkrw' && item?.escrowWallet?.address && (
+                              <div className="flex flex-col items-end justify-center gap-2">
+
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Escrow Wallet"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <button
+                                    className="text-sm text-blue-600 font-semibold underline"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(item?.escrowWallet.address);
+                                      toast.success(Copied_Wallet_Address);
+                                    }}
+                                  >
+                                      {item?.escrowWallet.address.substring(0, 6)}...{item?.escrowWallet.address.substring(item?.escrowWallet.address.length - 4)}
+                                  </button>
+                                </div>
+
+                                {/* balance */}
+                                {item?.escrowWallet?.balance ? (
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/token-mkrw-icon.png"
+                                      alt="MKRW Token"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-yellow-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}
+                                    >
+                                      {
+                                        item?.escrowWallet?.balance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                      }
+                                    </span>
+                                  </div>
+
+                                ) : (
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/loading.png"
+                                      alt="Loading"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 animate-spin"
+                                    />
+                                    <span className="text-sm text-zinc-500">
+                                      에스크로 진행중...
+                                    </span>
+                                  </div>
+                                )}
+
+                              </div>
+
+                            )}
+       
+                          </div>
+
+
+
+
+
+
                           </div>
                         </td>
 
@@ -5465,55 +5733,45 @@ const fetchBuyOrders = async () => {
 
                             <div className="flex flex-col gap-2 items-center justify-center">
 
-                              {/*
-                              <div className="flex flex-col xl:flex-row gap-2 items-center justify-center">
-                                <span className="text-sm text-zinc-500 font-semibold">
-                                  {item.store?.bankInfo?.bankName}
-                                </span>
-                                <span className="text-sm text-zinc-500 font-semibold">
 
-                                  {item.store?.bankInfo?.accountNumber &&
-                                    item.store?.bankInfo?.accountNumber.substring(0, 3) + '...'
-                                  }
-                                </span>
-                                <span className="text-sm text-zinc-500 font-semibold">
-                                  {item.store?.bankInfo?.accountHolder}
-                                </span>
-                              </div>
+                                {item.status === 'paymentConfirmed' &&
+                                !item?.settlement &&
+                                (!item?.transactionHash || item?.transactionHash === '0x') && (
+                                  <div className="flex flex-row gap-2 items-center justify-center">
+                                    <Image
+                                      src="/loading.png"
+                                      alt="Loading Icon"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 animate-spin"
+                                    />
+                                    <span className="text-sm text-zinc-500">
+                                      판매자가 판매한코인(USDT)을 구매자에게 보내는 중
+                                    </span>
+                                  </div>
+                                )}
 
-                              {item.status === 'cancelled' && (
-                                <div className="text-sm text-red-600">
-                                  {item.cancelTradeReason ? item.cancelTradeReason :
-                                    "거래취소사유 없음"
-                                  }
-                                  
-                                </div>
-                              )}
-                              */}
+                              
                             </div>
 
                           ) : (
 
-  
-
-
                             <div className={`
                               ${
-                              item.status === 'accepted' ? 'bg-blue-500/10'
-                              : item.status === 'paymentRequested' ? 'bg-blue-500/10'
-                              : item.status === 'paymentConfirmed' ? 'bg-blue-500/10'
-                              : item.status === 'cancelled' ? 'bg-red-500/10'
-                              : item.status === 'paymentConfirmed' ? 'bg-green-500/10'
-                              : 'bg-gray-500/10'
+                              //item.status === 'accepted' ? 'bg-blue-500/10'
+                              //: item.status === 'paymentRequested' ? 'bg-blue-500/10'
+                              //: item.status === 'paymentConfirmed' ? 'bg-blue-500/10'
+                              //: item.status === 'cancelled' ? 'bg-red-500/10'
+                              //: item.status === 'paymentConfirmed' ? 'bg-green-500/10'
+                              //: 'bg-gray-500/10'
+                              <></>
                               } 
 
                               rounded-md
-                              p-2
-
-                              w-44
-                              xl:w-64
+                              p-2 
                               flex flex-col xl:flex-row gap-2 items-start justify-start
                               `}>
+
 
                               
                               <div className="
@@ -5584,6 +5842,11 @@ const fetchBuyOrders = async () => {
                                       className="w-full h-8
                                       text-center rounded-md text-sm text-zinc-500 font-semibold bg-zinc-100 border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
+                                    {/* warning message */}
+                                    {/* 취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다. */}
+                                    <div className="text-xs text-red-500">
+                                      취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다.
+                                    </div>
 
 
 
@@ -5591,22 +5854,26 @@ const fetchBuyOrders = async () => {
 
                                 )}
 
+                                {/*
                                 {item.status === 'cancelled' && (
-                                  <div className="text-sm text-red-600">
-                                    {item.cancelTradeReason ? item.cancelTradeReason :
-                                      "거래취소사유 없음"
-                                    }
-                                    
-                                  </div>
-                                )}
 
+                                  <div className="w-full flex flex-col gap-2 items-center justify-center">
+                                    <span className="text-sm text-red-600">
+                                      {item.cancelTradeReason ? item.cancelTradeReason :
+                                        "거래취소사유 없음"
+                                      }
+                                    </span>
+                                  </div>
+
+                                )}
+                                */}
 
                               </div>
                               
 
-
-
-                              <div className="w-full flex flex-col gap-2 items-start justify-start">
+                              <div className="
+                              w-full
+                              flex flex-col gap-2 items-start justify-start">
 
                                 {/*
                                 {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
@@ -5647,6 +5914,15 @@ const fetchBuyOrders = async () => {
 
                                 )}
                                 */}
+
+
+
+                                
+
+
+
+
+
 
 
                                 {
@@ -5741,34 +6017,31 @@ const fetchBuyOrders = async () => {
                                     
 
                                     {/* seller bank info */}
-                                    <div className="flex flex-col gap-2 items-center justify-center">
-                                      <div className="flex flex-row gap-2 items-center justify-center">
-                                        <span className="text-sm text-zinc-500">
-                                          
-                                          {/*item.seller?.bankInfo?.bankName*/}
-                                          {item.store?.bankInfo?.bankName}
 
+                                    {item?.paymentMethod === 'bank' && (
 
-                                        </span>
+                                      <div className="flex flex-col gap-2 items-center justify-center">
+                                        <div className="flex flex-row gap-2 items-center justify-center">
+                                          <span className="text-sm text-zinc-500">
+                                            {item.store?.bankInfo?.accountHolder}
+                                          </span>
+                                          <span className="text-sm text-zinc-500">
+                                            {item.store?.bankInfo?.bankName}
+                                          </span>
+                                        </div>
+
                                         <span className="text-sm text-zinc-500">
-                                          {/*item.seller?.bankInfo?.accountHolder*/}
-                                          {item.store?.bankInfo?.accountHolder}
+                                          {
+                                            item.store?.bankInfo?.accountNumber &&
+                                            item.store?.bankInfo?.accountNumber.length > 5 &&
+                                            item.store?.bankInfo?.accountNumber.substring(0, 5) + '...'
+                                          }
                                         </span>
 
                                       </div>
 
-                                      <span className="text-sm text-zinc-500">
-                                        {/*
-                                          item.seller?.bankInfo?.accountNumber
-                                        */}
-                                        {item.store?.bankInfo?.accountNumber}
-                                      </span>
-
-                                    </div>
-
-                                    
-
-
+                                    )}
+          
                                   </div>
                                 )}
 
@@ -5777,12 +6050,14 @@ const fetchBuyOrders = async () => {
                                 {item.seller
                                 && item.seller.walletAddress === address
                                 && item.status === 'paymentRequested'
-                                && item?.autoConfirmPayment
+                                
+                                ///////////////&& item?.autoConfirmPayment
+
                                 && (
 
                                   <div className="
                                     w-full
-                                    flex flex-col gap-2 items-end justify-center">
+                                    flex flex-col gap-2 items-center justify-center">
                                     
                                     <div className="flex flex-row gap-2">
 
@@ -5816,14 +6091,37 @@ const fetchBuyOrders = async () => {
                                           hover:shadow-lg
                                           hover:shadow-green-500/50
                                         "
+
+                                        /*
+                                          confirmPayment(
+                                              index,
+                                              item._id,
+                                              
+                                              //paymentAmounts[index],
+                                              item.krwAmount,
+
+                                              //paymentAmountsUsdt[index],
+                                              item.usdtAmount,
+
+
+                                              item.walletAddress,
+                                            );
+                                            */
+
                                         
                                         onClick={() => {
                                           confirmPayment(
                                             index,
                                             item._id,
-                                            paymentAmounts[index],
-                                            paymentAmountsUsdt[index],
-                                            //item.storecode,
+                                            //paymentAmounts[index],
+                                            //paymentAmountsUsdt[index],
+
+                                            item.krwAmount,
+                                            item.usdtAmount,
+                                            
+                                            item.walletAddress,
+
+                                            item.paymentMethod,
                                           );
                                         }}
 
@@ -5954,7 +6252,10 @@ const fetchBuyOrders = async () => {
                                 {/* paymentConfirmed */}
                                 {/* paymentAmount */}
                                 {item.status === 'paymentConfirmed' && (
-                                  <div className="flex flex-col gap-2 items-center justify-center">
+
+                                  <div className="
+                                    w-40
+                                    flex flex-col gap-2 items-center justify-center">
 
 
 
@@ -5963,15 +6264,14 @@ const fetchBuyOrders = async () => {
                                     {/* 자동입금처리일경우 */}
                                     {/* 수동으로 결제완료처리 버튼 */}
                                   
-                                    {
-                                    item.seller.walletAddress === address &&
+                                    { !item?.settlement &&
 
                                     item?.autoConfirmPayment
                                     && (item?.transactionHash === '0x' || item?.transactionHash === undefined)
                                     && (
 
 
-                                      <div className="flex flex-row gap-2">
+                                      <div className="w-full flex flex-row items-center justify-center gap-2">
 
                                         <input
                                           disabled={confirmingPayment[index]}
@@ -5987,12 +6287,45 @@ const fetchBuyOrders = async () => {
                                               })
                                             );
                                           }}
+                                          className="w-5 h-5 rounded-md border border-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                         />
 
                                         <button
-                                          disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
+                                          disabled={
+                                            confirmingPayment[index]
+                                            || !confirmPaymentCheck[index]
                                           
-                                          className="text-sm text-green-600 font-semibold
+                                          }
+
+                                          className={`
+                                            w-full
+                                          flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md
+                                          border border-green-600
+                                          hover:border-green-700
+                                          hover:shadow-lg
+                                          hover:shadow-green-500/50
+                                          transition-all duration-200 ease-in-out
+
+                                          ${confirmingPayment[index] ? 'bg-red-500' : 'bg-green-500'}
+                                          
+
+                                          ${!confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}
+                                          
+                                          `}
+
+                                          
+
+                                          /*
+                                          className={`
+                                            ${confirmingPayment[index] ? 'bg-gray-500' : 'bg-green-500'}
+                                          
+
+                                            
+
+                                          
+                                          
+                                          
+                                          "text-sm text-green-600 font-semibold
                                             border border-green-600 rounded-lg p-2
                                             bg-green-100
                                             w-full text-center
@@ -6003,30 +6336,43 @@ const fetchBuyOrders = async () => {
                                             hover:shadow-lg
                                             hover:shadow-green-500/50
                                           "
+                                          */
                                           
+
+
+
                                           onClick={() => {
-                                            confirmPayment(
+                                            //confirmPayment(
+                                            sendPayment(
+
                                               index,
                                               item._id,
-                                              paymentAmounts[index],
-                                              paymentAmountsUsdt[index],
-                                              //item.storecode,
+                                              
+                                              //paymentAmounts[index],
+                                              item.krwAmount,
+
+                                              //paymentAmountsUsdt[index],
+                                              item.usdtAmount,
+
+
+                                              item.walletAddress,
                                             );
                                           }}
+
 
                                         >
 
                                           <div className="flex flex-row gap-2 items-center justify-center">
-                                            { confirmingPayment[index] && (
-                                                <Image
-                                                  src="/loading.png"
-                                                  alt="Loading"
-                                                  width={20}
-                                                  height={20}
-                                                  className="w-5 h-5
-                                                  animate-spin"
-                                                />
-                                            )}    
+                                            <Image
+                                              src="/icon-transfer.png"
+                                              alt="Transfer"
+                                              width={20}
+                                              height={20}
+                                              className={`
+                                              ${confirmingPayment[index] ? 'animate-spin' : 'animate-pulse'}
+                                                w-5 h-5
+                                              `}
+                                            />
                                             <span className="text-sm">
                                               USDT 전송
                                             </span>
@@ -6044,12 +6390,26 @@ const fetchBuyOrders = async () => {
                                   </div>
                                 )}
 
+
                               </div>
+
 
                             </div>
 
                           )}
 
+
+                        {item.status === 'cancelled' && (
+
+                          <div className="w-full flex flex-col gap-2 items-center justify-center">
+                            <span className="text-sm text-red-600">
+                              {item.cancelTradeReason ? item.cancelTradeReason :
+                                "거래취소사유 없음"
+                              }
+                            </span>
+                          </div>
+
+                        )}
 
 
 
