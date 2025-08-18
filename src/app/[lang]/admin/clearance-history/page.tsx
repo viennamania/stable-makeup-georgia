@@ -4037,6 +4037,27 @@ const fetchBuyOrders = async () => {
                                     rounded-md px-2 py-1">
                                     출금대기중
                                   </span>
+
+                                  {/* 출금계좌번호 */}
+                                  {/*
+                                  <span className="text-sm text-zinc-500">
+                                    {item?.buyer?.nickname ?
+                                    <>
+                                    {item?.buyer?.depositName}
+                                    <br />{item?.buyer?.depositBankAccountNumber}
+                                    <br />{item?.buyer?.depositBankName}
+                                    </> :
+                                    <>
+                                    {item.store?.bankInfo?.accountHolder}
+                                    <br /> {item.store?.bankInfo?.accountNumber}
+                                    <br /> {item.store?.bankInfo?.bankName}
+                                    </>
+                                    }
+                                  </span>
+                                  */}
+
+
+
                                   {/* 출금완료 버튼 */}
                                   <button
                                     disabled={loadingDeposit[index]}
@@ -4071,6 +4092,8 @@ const fetchBuyOrders = async () => {
                                     )}
                                     출금완료하기
                                   </button>
+
+
                                 </div>
                               ) : (
                                 <span className="text-sm text-green-600
