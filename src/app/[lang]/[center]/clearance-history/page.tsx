@@ -4332,7 +4332,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                           className="w-5 h-5"
                                         />
                                         <span className="text-sm">
-                                          USDT 전송내역(가맹점)
+                                          USDT 전송내역(구매자)
                                         </span>
                                       </div>
                                     </button>
