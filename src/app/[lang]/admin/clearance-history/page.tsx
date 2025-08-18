@@ -3423,7 +3423,7 @@ const fetchBuyOrders = async () => {
                                   </span>
 
                                   <button
-                                    className="text-lg text-zinc-400 font-semibold hover:text-blue-500"
+                                    className="text-lg text-zinc-400 font-semibold hover:text-blue-500 underline"
                                     onClick={() => {
                                       navigator.clipboard.writeText(item.buyer?.depositBankAccountNumber);
                                       alert('계좌번호가 클립보드에 복사되었습니다.');
