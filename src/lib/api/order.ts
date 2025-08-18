@@ -6452,8 +6452,8 @@ export async function getCollectOrdersForSeller(
 
 ): Promise<any> {
 
-  console.log('getCollectOrdersForSeller fromDate: ' + fromDate);
-  console.log('getCollectOrdersForSeller toDate: ' + toDate);
+  //console.log('getCollectOrdersForSeller fromDate: ' + fromDate);
+  //console.log('getCollectOrdersForSeller toDate: ' + toDate);
 
   //const fromDateValue = fromDate ? fromDate + 'T00:00:00Z' : '1970-01-01T00:00:00Z';
   const fromDateValue = fromDate ? new Date(fromDate + 'T00:00:00+09:00').toISOString() : '1970-01-01T00:00:00Z';
@@ -7709,4 +7709,26 @@ export async function getEscrowBalanceByStorecode(
   }
 
 
+}
+
+
+
+
+// getPaymentRequestedCount
+export async function getPaymentRequestedCount(storecode: string, walletAddress: string) {
+  
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+
+  // get count of paymentRequested orders
+  const count = await collection.countDocuments(
+    {
+      privateSale: true,
+      storecode: storecode,
+      walletAddress: walletAddress,
+      status: 'paymentRequested',
+    }
+  );
+
+  return count;
 }

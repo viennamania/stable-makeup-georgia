@@ -6351,17 +6351,17 @@ const fetchBuyOrders = async () => {
                           )}
 
 
-                        {item.status === 'cancelled' && (
+                          {item.status === 'cancelled' && (
 
-                          <div className="w-full flex flex-col gap-2 items-center justify-center">
-                            <span className="text-sm text-red-600">
-                              {item.cancelTradeReason ? item.cancelTradeReason :
-                                "거래취소사유 없음"
-                              }
-                            </span>
-                          </div>
+                            <div className="w-full flex flex-col gap-2 items-center justify-center">
+                              <span className="text-sm text-red-600">
+                                {item.cancelTradeReason ? item.cancelTradeReason :
+                                  "거래취소사유 없음"
+                                }
+                              </span>
+                            </div>
 
-                        )}
+                          )}
 
 
 
@@ -6447,7 +6447,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+                          {/*
                           {item.status === 'paymentConfirmed' &&
                           !item?.settlement &&
                           (!item?.transactionHash || item?.transactionHash === '0x') && (
@@ -6464,6 +6464,7 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
                           )}
+                            */}
 
 
                           {item?.escrowTransactionHash
