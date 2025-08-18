@@ -3866,7 +3866,10 @@ const [tradeSummary, setTradeSummary] = useState({
                         <span className="text-xl text-green-600"
                           style={{ fontFamily: 'monospace' }}
                         >
-                          {totalClearanceAmount?.toLocaleString()}
+                          {
+                          totalClearanceAmount &&
+                          totalClearanceAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          }
                         </span>
                       </div>
                     </div>
