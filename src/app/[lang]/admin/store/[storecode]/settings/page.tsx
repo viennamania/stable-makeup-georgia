@@ -2924,7 +2924,7 @@ export default function SettingsPage({ params }: any) {
                                             ('가맹점 에스크로용 USDT통장을 선택하세요.');
                                         return;
                                         }
-                                        if (selectedSellerWalletAddress === store?.settlementWalletAddress) {
+                                        if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
                                         toast.error('현재 가맹점 에스크로용 USDT통장과 동일합니다.');
                                         return;
                                         }
