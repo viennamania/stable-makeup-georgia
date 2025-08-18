@@ -2901,12 +2901,12 @@ export default function SettingsPage({ params }: any) {
                                 <div className="w-full flex flex-row items-center justify-center gap-2">
                                     {/* select list of all users */}
                                     <select
-                                    value={selectedSettlementWalletAddress}
+                                    value={selectedSellerWalletAddress}
                                     //value={store?.settlementWalletAddress}
-                                    onChange={(e) => setSelectedSettlementWalletAddress(e.target.value)}
+                                    onChange={(e) => setSelectedSellerWalletAddress(e.target.value)}
                                     className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
                                         bg-white text-zinc-500 text-sm"
-                                    disabled={updatingSettlementWalletAddress}
+                                    disabled={updatingSellerWalletAddress}
                                     >
                                     <option value="">가맹점 에스크로용 USDT통장 변경</option>
                                     {allStoreSellers.map((user) => (
@@ -2919,23 +2919,23 @@ export default function SettingsPage({ params }: any) {
                                     </select>
                                     <button
                                     onClick={() => {
-                                        if (!selectedSettlementWalletAddress) {
+                                        if (!selectedSellerWalletAddress) {
                                         toast.error
                                             ('가맹점 에스크로용 USDT통장을 선택하세요.');
                                         return;
                                         }
-                                        if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
+                                        if (selectedSellerWalletAddress === store?.settlementWalletAddress) {
                                         toast.error('현재 가맹점 에스크로용 USDT통장과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 에스크로용 USDT통장을 변경하시겠습니까?`
-                                        ) && updateSettlementWalletAddress();
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT통장을 변경하시겠습니까?`
+                                        ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
-                                        ${updatingSettlementWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        ${updatingSellerWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
-                                    {updatingSettlementWalletAddress ? '변경 중...' : '변경'}
+                                    {updatingSellerWalletAddress ? '변경 중...' : '변경'}
                                     </button>
                                 </div>
                                 ) : (
