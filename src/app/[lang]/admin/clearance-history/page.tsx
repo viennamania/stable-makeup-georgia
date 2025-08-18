@@ -26,13 +26,6 @@ import {
   waitForReceipt,
 } from "thirdweb";
 
-
-
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
 import {
   ConnectButton,
   useActiveAccount,
@@ -59,8 +52,6 @@ import { getUserPhoneNumber } from "thirdweb/wallets/in-app";
 
 
 import { balanceOf, transfer } from "thirdweb/extensions/erc20";
-import { add } from "thirdweb/extensions/farcaster/keyGateway";
- 
 
 
 import AppBarComponent from "@/components/Appbar/AppBar";
@@ -70,8 +61,7 @@ import { ClassNames } from "@emotion/react";
 
 
 import useSound from 'use-sound';
-import { it } from "node:test";
-import { get } from "http";
+
 
 
 import { useSearchParams } from 'next/navigation';
@@ -165,9 +155,23 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
 
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -187,21 +191,52 @@ export default function Index({ params }: any) {
   const searchParamsStorecode = searchParams.get('storecode') || "";
   
 
+
   const contract = getContract({
     // the client you have created via `createThirdwebClient()`
     client,
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: chain === "ethereum" ? ethereum :
+           chain === "polygon" ? polygon :
+           chain === "arbitrum" ? arbitrum :
+           chain === "bsc" ? bsc : arbitrum,
+
+    // the contract's address
+    address: chain === "ethereum" ? bscContractAddressMKRW :
+            chain === "polygon" ? bscContractAddressMKRW :
+            chain === "arbitrum" ? bscContractAddressMKRW :
+            chain === "bsc" ? bscContractAddressMKRW : bscContractAddressMKRW,
 
     // OPTIONAL: the contract's abi
     //abi: [...],
@@ -527,10 +562,12 @@ export default function Index({ params }: any) {
         address: address || "",
       });
 
-  
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
+      
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
       /*
@@ -3097,11 +3134,10 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 청산금액(원)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
-                  <div className="text-xl font-semibold text-yellow-600">
+                  <div className="text-xl font-semibold text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}
+                  >
                     {tradeSummary.totalClearanceAmount?.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-zinc-500">
-                    원
                   </div>
                 </div>
               </div>
@@ -3115,7 +3151,9 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-green-600"
+                    style={{ fontFamily: 'monospace' }}
+                  >
                     {tradeSummary.totalClearanceAmountUSDT?.toLocaleString()}
                   </div>
                 </div>
@@ -3367,7 +3405,7 @@ const fetchBuyOrders = async () => {
                                 }}
                               >
                                 {
-                                  Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' 원/USDT'
+                                  Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                   //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                                 }
                               </span>
@@ -3627,12 +3665,22 @@ const fetchBuyOrders = async () => {
                                     hover:shadow-lg
                                     hover:shadow-blue-500/50
                                   "
-                                  onClick={() => {
-                                    window.open(
-                                      `https://arbiscan.io/tx/${item.transactionHash}`,
-                                      '_blank'
-                                    );
-                                  }}
+                                      onClick={() => {
+                                        let url = '';
+                                        if (chain === "ethereum") {
+                                          url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                        } else if (chain === "polygon") {
+                                          url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                        } else if (chain === "arbitrum") {
+                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                        } else if (chain === "bsc") {
+                                          url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                        } else {
+                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                        }
+                                        window.open(url, '_blank');
+
+                                      }}
                                 >
                                   <div className="flex flex-row gap-2 items-center justify-center">
                                     <Image

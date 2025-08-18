@@ -56,14 +56,9 @@ import {
   useSearchParams,
 }from "next//navigation";
 
-import { it } from "node:test";
 
 
-import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../../../dictionaries";
-import { IncomingPhoneNumberContextImpl } from "twilio/lib/rest/api/v2010/account/incomingPhoneNumber";
-import { add } from "thirdweb/extensions/farcaster/keyGateway";
-
 
 
 interface BuyOrder {
