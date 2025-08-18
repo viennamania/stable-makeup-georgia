@@ -1663,13 +1663,18 @@ export default function Index({ params }: any) {
 
 
 
-  // confirm payment
   const confirmPayment = async (
 
     index: number,
     orderId: string,
-    paymentAmount: number,
-    paymentAmountUsdt: number,
+    //paymentAmount: number,
+    krwAmount: number,
+    //paymentAmountUsdt: number,
+    usdtAmount: number,
+
+    buyerWalletAddress: string,
+
+    paymentMethod: string, // 'bank' or 'mkrw' or 'usdt'
 
   ) => {
     // confirm payment
@@ -1708,79 +1713,7 @@ export default function Index({ params }: any) {
     try {
 
       
-      if (!isWithoutEscrow) {
-      
-        const response = await fetch('/api/order/buyOrderConfirmPayment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            lang: params.lang,
-            storecode: params.center,
-            orderId: orderId,
-            paymentAmount: paymentAmount,
-            ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-            isSmartAccount: false,
-          })
-        });
 
-        const data = await response.json();
-
-        //console.log('data', data);
-
-        if (data.result) {
-          
-          ///fetchBuyOrders();
-
-          // fetch Buy Orders
-          await fetch('/api/order/getAllBuyOrders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-              {
-                storecode: params.center,
-                limit: Number(limitValue),
-                page: Number(pageValue),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-
-                searchOrderStatusCancelled: searchOrderStatusCancelled,
-                searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                searchBuyer: searchBuyer,
-                searchDepositName: searchDepositName,
-
-                searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-
-                fromDate: searchFromDate,
-                toDate: searchToDate,
-              }
-            ),
-          })
-          .then(response => response.json())
-          .then(data => {
-              ///console.log('data', data);
-              setBuyOrders(data.result.orders);
-
-              setTotalCount(data.result.totalCount);
-          })
-
-
-
-          toast.success(Payment_has_been_confirmed);
-
-          playSong();
-
-
-        } else {
-          toast.error('결제확인이 실패했습니다.');
-        }
-
-      } else {
 
 
         // transfer my wallet to buyer wallet address
@@ -1811,27 +1744,53 @@ export default function Index({ params }: any) {
 
           if (transactionHash) {
 
-            const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.center,
-                orderId: orderId,
-                paymentAmount: paymentAmount,
-                transactionHash: transactionHash,
-                ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-                isSmartAccount: false,
-              })
-            });
+            if (paymentMethod === 'mkrw') {
 
-            const data = await response.json();
+              const response = await fetch('/api/order/buyOrderConfirmPaymentWithEscrow', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  lang: params.lang,
+                  storecode: params.center,
+                  orderId: orderId,
+                  paymentAmount: krwAmount,
+                  transactionHash: transactionHash,
+                  ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
+                  isSmartAccount: false,
+                })
+              });
 
-            //console.log('data', data);
+              const data = await response.json();
 
-            if (data.result) {
+
+
+            } else {
+
+              const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  lang: params.lang,
+                  storecode: params.center,
+                  orderId: orderId,
+                  paymentAmount: krwAmount,
+                  transactionHash: transactionHash,
+                  ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
+                  isSmartAccount: false,
+                })
+              });
+
+              const data = await response.json();
+
+              //console.log('data', data);
+
+            }
+
+
               
               ///fetchBuyOrders();
 
@@ -1873,9 +1832,7 @@ export default function Index({ params }: any) {
 
               toast.success(Payment_has_been_confirmed);
               playSong();
-            } else {
-              toast.error('결제확인이 실패했습니다.');
-            }
+
 
 
           } else {
@@ -1886,11 +1843,6 @@ export default function Index({ params }: any) {
           console.error('Error:', error);
           toast.error('결제확인이 실패했습니다.');
         }
-
-
-
-      }
-
 
 
 
