@@ -3191,7 +3191,7 @@ const fetchBuyOrders = async () => {
                         <th className="p-2">구매자정보</th>
 
                         <th className="p-2">
-                          <div className="flex flex-col items-center justify-center">
+                          <div className="flex flex-col items-end justify-center">
                             <span className="text-sm">{Buy_Amount}(USDT)</span>
                             <span className="text-sm">{Price}(원)</span>
                             <span className="text-sm">{Rate}</span>
@@ -3491,7 +3491,9 @@ const fetchBuyOrders = async () => {
 
                           <td className="p-2">
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="
+                            w-56  
+                            flex flex-col gap-2 items-center justify-center">
 
                               <div className="flex flex-row items-center gap-2">
                                 {/* status */}
@@ -3691,7 +3693,7 @@ const fetchBuyOrders = async () => {
                                       className="w-5 h-5"
                                     />
                                     <span className="text-sm">
-                                      USDT 전송내역
+                                      구매자에게 USDT 전송한 내역
                                     </span>
                                   </div>
                                 </button>
