@@ -2290,6 +2290,8 @@ const fetchBuyOrders = async () => {
 
         */
 
+        privateSale: true,
+
         agentcode: params.agentcode,
         storecode: searchStorecode,
         walletAddress: address,

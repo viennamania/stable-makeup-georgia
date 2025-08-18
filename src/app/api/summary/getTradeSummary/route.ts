@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const {
+    privateSale = false,
     limit = 1,
     page = 1,
     startDate = "",
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
 
 
   const trades = await getAllTradesByAdmin({
+
+    privateSale: privateSale,
+
     limit : limit,
     page : page,
     
@@ -85,7 +89,6 @@ export async function POST(request: NextRequest) {
     searchBuyer: searchBuyer,
     searchDepositName: searchDepositName,
     searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-    privateSale: false, // false for normal trades
 
     fromDate: fromDate,
     toDate: toDate,
