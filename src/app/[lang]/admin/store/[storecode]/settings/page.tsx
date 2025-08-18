@@ -838,7 +838,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-    // fetch all buyer user 
+    // fetch all seller 
     const [fetchingAllAdminSellers, setFetchingAllAdminSellers] = useState(false);
     const [allAdminSellers, setAllAdminSellers] = useState([] as any[]);
 
@@ -2518,6 +2518,7 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                 </div>
                                 )}
+
                             </div>
                         </div>
 
@@ -2664,6 +2665,7 @@ export default function SettingsPage({ params }: any) {
 
 
                                     )}
+
                                 </div>
                             </div>
 
@@ -2830,7 +2832,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                                
+                                {/*
                                 {!fetchingAllAdminSellers && allAdminSellers && allAdminSellers.length > 0 ? (
                                 
                                 <div className="w-full flex flex-row items-center justify-center gap-2">
@@ -2887,7 +2889,86 @@ export default function SettingsPage({ params }: any) {
                                     회원가입 후 가맹점 에스크로용 USDT통장을 설정하세요.
                                     </span>
                                 </div>
+                                )}*/}
+
+
+
+
+
+
+                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                
+                                <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    {/* select list of all users */}
+                                    <select
+                                    value={selectedSettlementWalletAddress}
+                                    //value={store?.settlementWalletAddress}
+                                    onChange={(e) => setSelectedSettlementWalletAddress(e.target.value)}
+                                    className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                        bg-white text-zinc-500 text-sm"
+                                    disabled={updatingSettlementWalletAddress}
+                                    >
+                                    <option value="">가맹점 에스크로용 USDT통장 변경</option>
+                                    {allStoreSellers.map((user) => (
+                                        <option key={user._id} value={user.walletAddress}>
+                                        {user.nickname}
+                                        {' '}
+                                        ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                        </option>
+                                    ))}
+                                    </select>
+                                    <button
+                                    onClick={() => {
+                                        if (!selectedSettlementWalletAddress) {
+                                        toast.error
+                                            ('가맹점 에스크로용 USDT통장을 선택하세요.');
+                                        return;
+                                        }
+                                        if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
+                                        toast.error('현재 가맹점 에스크로용 USDT통장과 동일합니다.');
+                                        return;
+                                        }
+                                        confirm(
+                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 에스크로용 USDT통장을 변경하시겠습니까?`
+                                        ) && updateSettlementWalletAddress();
+                                    }}
+                                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                        ${updatingSettlementWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                    {updatingSettlementWalletAddress ? '변경 중...' : '변경'}
+                                    </button>
+                                </div>
+                                ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 회원이 없습니다.
+                                    <br />
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 에스크로용 USDT통장을 설정하세요.
+                                    </span>
+                                </div>
                                 )}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                               
 
                             </div>
 

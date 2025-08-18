@@ -140,7 +140,6 @@ interface BuyOrder {
 }
 
 
-/*
 const wallets = [
   inAppWallet({
     auth: {
@@ -168,7 +167,10 @@ const wallets = [
   createWallet("com.okex.wallet"),
 
 ];
-*/
+
+
+
+/*
 const wallets = [
     inAppWallet({
       auth: {
@@ -178,6 +180,7 @@ const wallets = [
       },
     }),
   ];
+*/
   
 
 
