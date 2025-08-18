@@ -4588,20 +4588,28 @@ const [tradeSummary, setTradeSummary] = useState({
                             </div>
                           </th>
 
-                          <th className="p-2">{Buyer}</th>
-
-                           <th className="p-2">회원통장</th>
+                          <th className="p-2">
+                            <div className="flex flex-col items-end">
+                              {Buyer}
+                            </div>
+                          </th>
 
                           <th className="p-2">
-                            <div className="flex flex-col items-center">
-                              <span>
-                                판매금액(원)
-                              </span>
+                            <div className="flex flex-col items-start">
+                              구매자 통장
+                            </div>
+                          </th>
+
+                          <th className="p-2">
+                            <div className="flex flex-col items-end">
                               <span>
                                 판매량(USDT)
                               </span>
                               <span>
-                                환율
+                                판매금액(원)
+                              </span>
+                              <span>
+                                환율(원)
                               </span>
                             </div>
                           </th>
@@ -4698,22 +4706,26 @@ const [tradeSummary, setTradeSummary] = useState({
                             </td>
                             
                             <td className="p-2">
-                              <div className="flex flex-row items-center gap-2">
-                                {/*
-                                <Image
-                                  src={item.avatar || "/profile-default.png"}
-                                  alt="Avatar"
-                                  width={20}
-                                  height={20}
-                                  priority={true} // Added priority property
-                                  className="rounded-full"
-                                  style={{
-                                      objectFit: 'cover',
-                                      width: '20px',
-                                      height: '20px',
-                                  }}
-                                />
-                                */}
+                              <div className="flex flex-col items-end">
+
+                                <div className="flex flex-row items-center gap-1">
+
+                                  <Image
+                                    src={item?.buyer?.avatar || "/icon-user.png"}
+                                    alt="Avatar"
+                                    width={20}
+                                    height={20}
+                                    priority={true} // Added priority property
+                                    className="rounded-full"
+                                  />
+                                  <span className="text-lg font-semibold text-yellow-600">
+                                    {
+                                      item?.buyer?.nickname ? item?.buyer?.nickname : item?.nickname
+                                    }
+                                  </span>
+
+                                </div>
+
                                 <div className="flex flex-col gap-2 items-center justify-center">
                                   <div className="flex flex-row items-center gap-2">
                                     <Image
@@ -4739,11 +4751,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                     }
                                   </div>
                                   */}
-                                  <div className="text-lg font-semibold text-yellow-600">
-                                    {
-                                      item?.buyer?.nickname ? item?.buyer?.nickname : item?.nickname
-                                    }
-                                  </div>
+
 
                                 </div>
                               </div>
@@ -4754,30 +4762,22 @@ const [tradeSummary, setTradeSummary] = useState({
 
                               {item?.buyer?.nickname ? (
 
-                                <div className="flex flex-row items-center gap-2 justify-center">
-
-                                  {/*
-                                  <div className="text-lg font-semibold text-yellow-600">
-                                    {item.buyer?.nickname}
+                                <div className="flex flex-col gap-2 items-start">
+                                  <div className="text-lg font-semibold text-zinc-500">
+                                    {item.buyer?.depositBankName}
                                   </div>
-                                  */}
-
-                                  <div className="flex flex-col gap-2 items-center justify-center">
-                                    <div className="text-lg font-semibold text-zinc-500">
-                                      {item.buyer?.depositBankName}
-                                    </div>
-                                    <div className="text-lg font-semibold text-zinc-500">
-                                      {item.buyer?.depositBankAccountNumber}
-                                    </div>
-                                    <div className="text-lg font-semibold text-zinc-500">
-                                      {item.buyer?.depositName}
-                                    </div>
+                                  <div className="text-lg font-semibold text-zinc-500">
+                                    {item.buyer?.depositBankAccountNumber}
+                                  </div>
+                                  <div className="text-lg font-semibold text-zinc-500">
+                                    {item.buyer?.depositName}
                                   </div>
                                 </div>
 
+
                               ) : (
 
-                                <div className="flex flex-col gap-2 items-center justify-center">
+                                <div className="flex flex-col gap-2 items-start">
                                   <div className="text-lg font-semibold text-zinc-500">
                                     {item.seller?.bankInfo?.bankName}
                                   </div>
@@ -4797,17 +4797,6 @@ const [tradeSummary, setTradeSummary] = useState({
                             <td className="p-2">
                               <div className="flex flex-col gap-2 items-end justify-start">
 
-                                <div className="flex flex-row items-center gap-1">
-                                  <span className="text-xl text-yellow-600 font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {Number(item.krwAmount)?.toLocaleString()}
-                                  </span>
-                                  <span className="text-sm text-zinc-500">
-                                    원
-                                  </span>
-                                </div>
-
                                 <div className="flex flex-row gap-2 items-center justify-center">
                                   <Image
                                     src="/icon-tether.png"
@@ -4823,9 +4812,19 @@ const [tradeSummary, setTradeSummary] = useState({
                                   </span>
                                 </div>
 
+                                <div className="flex flex-row items-center gap-1">
+                                  <span className="text-xl text-yellow-600 font-semibold"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {Number(item.krwAmount)?.toLocaleString()}
+                                  </span>
+                                </div>
+
+
+
                                 <span className="text-sm text-zinc-500">
                                   {
-                                    Number(item.rate)
+                                    Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                     //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                                   }
                                 </span>
@@ -4872,7 +4871,9 @@ const [tradeSummary, setTradeSummary] = useState({
                             */}
 
                             <td className="p-2">
-                              <div className="flex flex-row items-center gap-2 justify-center">
+                              <div className="
+                              w-52 
+                              flex flex-row items-center gap-2 justify-center">
                                 {/* status */}
                                 {item.status === 'ordered' && (
                                   <div className="text-lg text-yellow-600 font-semibold">
@@ -4991,7 +4992,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                           className="w-5 h-5"
                                         />
                                         <span className="text-sm">
-                                          USDT 전송내역
+                                          USDT 전송내역(구매자)
                                         </span>
                                       </div>
                                     </button>
