@@ -3154,8 +3154,8 @@ const fetchBuyOrders = async () => {
 
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center">
-                            <span className="text-sm">{Price}(원)</span>
                             <span className="text-sm">{Buy_Amount}(USDT)</span>
+                            <span className="text-sm">{Price}(원)</span>
                             <span className="text-sm">{Rate}</span>
                           </div>
                         </th>
@@ -3331,18 +3331,6 @@ const fetchBuyOrders = async () => {
                             <div className="flex flex-col gap-2 items-end justify-center">
 
                               <div className="flex flex-col gap-2 items-end justify-center">
-                                <div className="flex flex-row items-center gap-1">
-                                  <span className="text-lg text-yellow-600 font-semibold"
-                                    style={{
-                                      fontFamily: 'monospace',
-                                    }}
-                                  >
-                                    {Number(item.krwAmount)?.toLocaleString()}
-                                  </span>
-                                  <span className="text-sm text-zinc-500 font-semibold">
-                                    원
-                                  </span>
-                                </div>
 
                                 <div className="flex flex-row items-center gap-1">
                                   <Image
@@ -3360,6 +3348,17 @@ const fetchBuyOrders = async () => {
                                     {item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                   </span>
                                 </div>
+                                
+                                <div className="flex flex-row items-center gap-1">
+                                  <span className="text-lg text-yellow-600 font-semibold"
+                                    style={{
+                                      fontFamily: 'monospace',
+                                    }}
+                                  >
+                                    {Number(item.krwAmount)?.toLocaleString()}
+                                  </span>
+                                </div>
+
 
                               </div>
                               <span className="text-sm text-zinc-500 font-semibold"
@@ -3368,7 +3367,7 @@ const fetchBuyOrders = async () => {
                                 }}
                               >
                                 {
-                                  Number(item.rate)
+                                  Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' 원/USDT'
                                   //Number(item.krwAmount / item.usdtAmount).toFixed(3)
                                 }
                               </span>
@@ -3448,9 +3447,6 @@ const fetchBuyOrders = async () => {
                                       item?.paymentAmount?.toLocaleString()
                                     }
                                   </div>
-                                  <span className="text-sm text-zinc-500 font-semibold">
-                                    원
-                                  </span>
                                 </div>
                             </div>
                           </td>
