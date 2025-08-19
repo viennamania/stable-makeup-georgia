@@ -6127,7 +6127,7 @@ const fetchBuyOrders = async () => {
                                             `}
                                           />
                                           <span className="text-sm">
-                                            USDT 전송
+                                            구매자에게 USDT 전송
                                           </span>
                                         </div>
 

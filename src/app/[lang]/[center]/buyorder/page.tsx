@@ -6806,7 +6806,7 @@ const fetchBuyOrders = async () => {
                                             </span>
                                             */}
                                             <span className="text-sm font-semibold text-zinc-500">
-                                              구매자가 구매한코인(USD)을 가맹점 결제하는 중
+                                              회원({item.nickname})이 구매한 테더(USDT)를 가맹점 결제하는 중
                                             </span>
                                           </div>
 
