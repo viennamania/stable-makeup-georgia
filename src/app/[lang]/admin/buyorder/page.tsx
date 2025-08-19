@@ -6227,7 +6227,7 @@ const fetchBuyOrders = async () => {
                                     </span>
                                   </div>
                                   <span className="text-sm text-zinc-500">
-                                    구매자에게 테더(USDT) 전송내역
+                                    테더(USDT) 전송내역
                                   </span>
                                 </div>
                               </div>

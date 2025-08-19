@@ -5698,7 +5698,7 @@ const fetchBuyOrders = async () => {
                                       className="w-5 h-5 animate-spin"
                                     />
                                     <span className="text-sm text-zinc-500">
-                                      판매자가 판매한코인(USDT)을 구매자에게 보내는 중
+                                      판매자가 판매한 테더(USDT)를 구매자에게 보내는 중
                                     </span>
                                   </div>
                                 )}
@@ -6326,7 +6326,7 @@ const fetchBuyOrders = async () => {
                                               `}
                                             />
                                             <span className="text-sm">
-                                              USDT 전송
+                                              구매자에게 USDT 전송
                                             </span>
                                           </div>
 
@@ -6401,7 +6401,7 @@ const fetchBuyOrders = async () => {
                               <div className="flex flex-col gap-2 items-start justify-start ml-2">
                                 <div className="flex flex-col gap-1 items-start justify-start">
                                   <span className="text-sm">
-                                    판매코인(USDT)
+                                    구매자에게 판매한 테더(USDT)
                                   </span>
                                   <div className="flex flex-row gap-1 items-center justify-start">
                                     <Image
@@ -6419,7 +6419,7 @@ const fetchBuyOrders = async () => {
                                     </span>
                                   </div>
                                   <span className="text-sm text-zinc-500">
-                                    전송내역
+                                    스캔에서 전송내역 확인하기
                                   </span>
                                 </div>
                               </div>

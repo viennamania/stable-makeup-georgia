@@ -513,7 +513,7 @@ export default function Index({ params }: any) {
   
 
 
-    const [rate, setRate] = useState(1400);
+    const [rate, setRate] = useState(1380);
 
 
     /*
@@ -719,9 +719,10 @@ export default function Index({ params }: any) {
     }, [address]);
 
 
+    const [totalClearanceCount, setTotalClearanceCount] = useState(0);
+    const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
+    const [totalClearanceAmountKRW, setTotalClearanceAmountKRW] = useState(0);
 
-
-    
     const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
     const [searchMyOrders, setSearchMyOrders] = useState(false);
@@ -738,7 +739,10 @@ export default function Index({ params }: any) {
       setLoadingFetchBuyOrders(true);
 
       // api call
-      const response = await fetch('/api/order/getAllBuyOrders', {
+      //const response = await fetch('/api/order/getAllBuyOrders', {
+      const response = await fetch('/api/order/getAllCollectOrdersForSeller', {
+
+
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -762,6 +766,13 @@ export default function Index({ params }: any) {
 
       if (data.result) {
         setBuyOrders(data.result.orders);
+
+
+        setTotalClearanceCount(data.result.totalClearanceCount);
+        setTotalClearanceAmount(data.result.totalClearanceAmount);
+        setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+        
+
       }
 
       setLoadingFetchBuyOrders(false);
@@ -2494,22 +2505,16 @@ export default function Index({ params }: any) {
                         {/* totalClearanceAmount */}
                         {/* totalClearanceAmountUSDT */}
                         <div className="flex flex-row items-center justify-center gap-2">
+                          
                           <div className="flex flex-col items-center">
-                              <span className="text-sm text-zinc-500">
-                                  총 매입금액(원)
-                              </span>
-                              <div className="flex flex-row items-center justify-center gap-2">
-                                <span className="text-xl xl:text-2xl font-semibold text-yellow-600">
-                                    {
-                                      (Number(tradeSummary.totalClearanceAmount).toFixed(0))
-                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                    }
-                                </span>
-                                <span className="text-sm text-zinc-500">
-                                    원
-                                </span>
-                              </div>
+                            <span className="text-sm text-zinc-500">
+                              총 매입주문수(건)
+                            </span>
+                            <span className="text-xl xl:text-2xl font-semibold text-green-600">
+                              {totalClearanceCount.toLocaleString()}
+                            </span>
                           </div>
+
                           <div className="flex flex-col items-center">
                               <span className="text-sm text-zinc-500">
                                   총 매입수량(USDT)
@@ -2517,15 +2522,27 @@ export default function Index({ params }: any) {
                               <div className="flex flex-row items-center justify-center gap-2">
                                 <span className="text-xl xl:text-2xl font-semibold text-green-600">
                                     {
-                                      (Number(tradeSummary.totalClearanceAmountUSDT).toFixed(2))
+                                      (Number(totalClearanceAmount).toFixed(3))
                                       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                     }
                                 </span>
-                                <span className="text-sm text-zinc-500">
-                                    USDT
+                              </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-center">
+                              <span className="text-sm text-zinc-500">
+                                  총 매입금액(원)
+                              </span>
+                              <div className="flex flex-row items-center justify-center gap-2">
+                                <span className="text-xl xl:text-2xl font-semibold text-yellow-600">
+                                    {
+                                      (Number(totalClearanceAmountKRW).toFixed(0))
+                                      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                    }
                                 </span>
                               </div>
                           </div>
+
                         </div>
 
                       </div>
@@ -2669,9 +2686,19 @@ export default function Index({ params }: any) {
                                       height={20}
                                       className="w-5 h-5 rounded-full"
                                     />
-                                    <span className="text-lg text-zinc-600">
-                                      {item.nickname || '익명'}
-                                    </span>
+
+
+                                    {item?.buyer?.nickname ? (
+                                      <span className="text-lg text-zinc-600">
+                                        {item.buyer?.nickname}
+                                      </span>
+                                    ) : (
+                                      <span className="text-lg text-zinc-600">
+                                        {item.nickname || '익명'}
+                                      </span>
+                                    )}
+
+
                                   </div>
 
                                   <div className="flex flex-row items-center gap-1">
@@ -2743,9 +2770,7 @@ export default function Index({ params }: any) {
                                     "허경수"
                                     */}
 
-                                    <span className="text-sm text-zinc-600">
-                                      {item.buyer?.nickname}
-                                    </span>
+
                                     <span className="text-sm text-zinc-600">
                                       {item.buyer?.depositBankName}
                                     </span>

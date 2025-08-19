@@ -2832,7 +2832,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                                {/*
+                                
                                 {!fetchingAllAdminSellers && allAdminSellers && allAdminSellers.length > 0 ? (
                                 
                                 <div className="w-full flex flex-row items-center justify-center gap-2">
@@ -2889,17 +2889,16 @@ export default function SettingsPage({ params }: any) {
                                     회원가입 후 가맹점 에스크로용 USDT통장을 설정하세요.
                                     </span>
                                 </div>
-                                )}*/}
+                                )}
 
 
 
 
 
-
+                                {/*
                                 {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
                                 
                                 <div className="w-full flex flex-row items-center justify-center gap-2">
-                                    {/* select list of all users */}
                                     <select
                                     value={selectedSellerWalletAddress}
                                     //value={store?.settlementWalletAddress}
@@ -2954,7 +2953,7 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                 </div>
                                 )}
-
+                                */}
                                
 
                             </div>

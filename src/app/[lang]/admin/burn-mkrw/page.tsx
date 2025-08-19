@@ -589,7 +589,7 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  const [exchangeRate, setExchangeRate] = useState(1400);
+  const [exchangeRate, setExchangeRate] = useState(1380);
 
   // burn token
   const [burnAmount, setBurnAmount] = useState(0);
