@@ -6460,7 +6460,7 @@ const fetchBuyOrders = async () => {
                                 className="w-5 h-5 animate-spin"
                               />
                               <span className="text-sm text-zinc-500">
-                                판매자가 판매한코인(USDT)을 구매자에게 보내는 중
+                                판매자가 판매한 테더(USDT)를 구매자에게 보내는 중
                               </span>
                             </div>
                           )}
