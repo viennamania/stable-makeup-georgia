@@ -976,7 +976,8 @@ export default function Index({ params }: any) {
      
 
 
-        await fetch('/api/order/getAllBuyOrders', {
+        //await fetch('/api/order/getAllBuyOrders', {
+        await fetch('/api/order/getAllCollectOrdersForSeller', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -999,6 +1000,11 @@ export default function Index({ params }: any) {
           //console.log('data', data);
           if (data.result) {
             setBuyOrders(data.result.orders);
+
+            setTotalClearanceCount(data.result.totalClearanceCount);
+            setTotalClearanceAmount(data.result.totalClearanceAmount);
+            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
           }
         });
 
@@ -1116,7 +1122,9 @@ export default function Index({ params }: any) {
       if (data.result) {
         toast.success(Order_has_been_cancelled);
 
-        await fetch('/api/order/getAllBuyOrders', {
+        //await fetch('/api/order/getAllBuyOrders', {
+        await fetch('/api/order/getAllCollectOrdersForSeller', {
+
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -1136,6 +1144,10 @@ export default function Index({ params }: any) {
           //console.log('data', data);
           if (data.result) {
             setBuyOrders(data.result.orders);
+
+            setTotalClearanceCount(data.result.totalClearanceCount);
+            setTotalClearanceAmount(data.result.totalClearanceAmount);
+            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
           }
         });
 
@@ -1351,7 +1363,8 @@ export default function Index({ params }: any) {
     );
 
 
-    await fetch('/api/order/getAllBuyOrders', {
+    //await fetch('/api/order/getAllBuyOrders', {
+    await fetch('/api/order/getAllCollectOrdersForSeller', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -1374,6 +1387,10 @@ export default function Index({ params }: any) {
       //console.log('data', data);
       if (data.result) {
         setBuyOrders(data.result.orders);
+
+        setTotalClearanceCount(data.result.totalClearanceCount);
+        setTotalClearanceAmount(data.result.totalClearanceAmount);
+        setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
       }
     });
 
