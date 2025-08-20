@@ -1739,7 +1739,7 @@ export default function Index({ params }: any) {
               <div className="w-full flex flex-col xl:flex-row items-start justify-between gap-4">
 
 
-
+                {/*
                 <div className="flex flex-col items-start justify-start space-y-2">
 
                   <div className="flex flex-row items-center justify-start gap-2">
@@ -1796,6 +1796,74 @@ export default function Index({ params }: any) {
                   </div>
 
                 </div>
+                */}
+
+
+
+
+                <div className="flex flex-col items-start justify-start space-y-2">
+
+                  <div className="flex flex-row items-center justify-start gap-2">
+                      <Image
+                          src="/icon-dot-green.png"
+                          alt="dot"
+                          width={20}
+                          height={20}
+                          className="w-4 h-4"
+                      />
+                      <span className="text-sm text-zinc-500">
+                        나의 USDT통장
+                      </span>
+                  </div>
+                  
+                  <div className="flex flex-row items-center justify-center gap-2">
+
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                          src="/icon-shield.png"
+                          alt="Wallet"
+                          width={100}
+                          height={100}
+                          className="w-6 h-6"
+                      />
+                      <button
+                          className="text-lg text-zinc-600 underline"
+                          onClick={() => {
+                              navigator.clipboard.writeText(address || "");
+                              toast.success(Copied_Wallet_Address);
+                          } }
+                      >
+                          {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
+                      </button>
+                    </div>
+
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                        src="/token-usdt-icon.png"
+                        alt="USDT"
+                        width={30}
+                        height={30}
+                        className="w-6 h-6"
+                      />
+                      <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                        style={{ fontFamily: "monospace" }}>
+                          {
+                            (Number(balance || 0).toFixed(3))
+                            .toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                          }
+                      </span>
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+
+
+
+
+
 
 
               </div>
@@ -2537,7 +2605,8 @@ export default function Index({ params }: any) {
                                   총 매입수량(USDT)
                               </span>
                               <div className="flex flex-row items-center justify-center gap-2">
-                                <span className="text-xl xl:text-2xl font-semibold text-green-600">
+                                <span className="text-xl xl:text-2xl font-semibold text-green-600"
+                                  style={{ fontFamily: "monospace" }}>
                                     {
                                       (Number(totalClearanceAmount).toFixed(3))
                                       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -2551,7 +2620,8 @@ export default function Index({ params }: any) {
                                   총 매입금액(원)
                               </span>
                               <div className="flex flex-row items-center justify-center gap-2">
-                                <span className="text-xl xl:text-2xl font-semibold text-yellow-600">
+                                <span className="text-xl xl:text-2xl font-semibold text-yellow-600"
+                                  style={{ fontFamily: "monospace" }}>
                                     {
                                       (Number(totalClearanceAmountKRW).toFixed(0))
                                       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -2595,9 +2665,10 @@ export default function Index({ params }: any) {
 
                           <th className="p-2 text-center">신청시간</th>
 
-                          <th className="p-2 text-left">판매자 정보</th>
-                          
                           <th className="p-2 text-left">구매자정보</th>
+
+                          <th className="p-2 text-left">판매자 정보</th>
+
 
                           <th className="p-2 text-left">
                             <div className="flex flex-col items-end justify-center gap-1">
@@ -2659,37 +2730,6 @@ export default function Index({ params }: any) {
                                 </div>
                               </td>
 
-                              <td className="p-2">
-                                <div className="flex flex-col items-start justify-center gap-1">
-
-                                  <div className="flex flex-row items-center gap-1">
-                                    <Image
-                                      src="/icon-seller.png"
-                                      alt="Seller"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5 rounded-full"
-                                    />
-                                    <span className="text-lg text-zinc-600">
-                                      {item?.seller?.nickname || '익명'}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex flex-row items-center gap-1">
-                                    <Image
-                                      src="/icon-shield.png"
-                                      alt="Shield"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5 rounded-full"
-                                    />
-                                    <span className="text-lg text-zinc-400 font-semibold">
-                                      {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
-                                    </span>
-                                  </div>
-
-                                </div>
-                              </td>
                            
 
                               <td className="p-2">
@@ -2735,6 +2775,40 @@ export default function Index({ params }: any) {
                               </td>
 
 
+                              <td className="p-2">
+                                <div className="flex flex-col items-start justify-center gap-1">
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-seller.png"
+                                      alt="Seller"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-600">
+                                      {item?.seller?.nickname || '익명'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-400 font-semibold">
+                                      {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
+                                    </span>
+                                  </div>
+
+                                </div>
+                              </td>
+
+
+
                               <td>
                                 <div className="flex flex-col items-end justify-center gap-1 mr-5">
 
@@ -2765,7 +2839,11 @@ export default function Index({ params }: any) {
                                   </span>
 
 
-                                  <span className="text-lg text-zinc-400 font-semibold">
+                                  <span className="text-lg text-zinc-400 font-semibold"
+                                    style={{
+                                      fontFamily: 'monospace',
+                                    }}
+                                  >
                                     {Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                     </span>
                                 </div>
@@ -3149,7 +3227,7 @@ export default function Index({ params }: any) {
                                       <button
                                         disabled={loadingDeposit[index]}
                                         className={`
-                                          w-40 h-8
+                                          w-44 h-8 flex flex-row items-center justify-center
                                           text-sm text-white px-2 py-1 rounded-md
                                           bg-green-500 hover:bg-green-600
                                           transition-all duration-200 ease-in-out
@@ -3177,7 +3255,7 @@ export default function Index({ params }: any) {
                                             className="animate-spin"
                                           />
                                         )}
-                                        출금완료하기
+                                        <span className="text-sm">출금완료하기</span>
                                       </button>
                                     </div>
                                   ) : (

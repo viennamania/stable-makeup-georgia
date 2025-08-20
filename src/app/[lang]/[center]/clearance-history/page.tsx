@@ -2535,10 +2535,11 @@ const [tradeSummary, setTradeSummary] = useState({
     
   // get count of status is 'paymentRequested' from api
   const [paymentRequestedCount, setPaymentRequestedCount] = useState(0);
+  const [loadingPaymentRequestedCount, setLoadingPaymentRequestedCount] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-
+      setLoadingPaymentRequestedCount(true);
       try {
         const response = await fetch('/api/order/getCountOfPaymentRequested', {
           method: 'POST',
@@ -2552,12 +2553,13 @@ const [tradeSummary, setTradeSummary] = useState({
         });
         if (response.ok) {
           const data = await response.json();
-          setPaymentRequestedCount(data.count);
+          setPaymentRequestedCount(data.count || 0);
         }
       } catch (error) {
         console.error("Error fetching payment requested count: ", error);
       }
 
+      setLoadingPaymentRequestedCount(false);
     };
     fetchData();
 
@@ -2565,8 +2567,18 @@ const [tradeSummary, setTradeSummary] = useState({
       fetchData();
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [address, params.center]);
   
+
+  useEffect(() => {
+    if (paymentRequestedCount > 0) {
+      const audio = new Audio('/notification.wav'); 
+      audio.play();
+    }
+  }, [paymentRequestedCount]);
+
+
+
 
 
 
@@ -3658,6 +3670,69 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
+              <div className="w-full flex flex-row items-center justify-end gap-2 mt-4">
+                
+                <div className="flex flex-row items-center justify-center gap-2
+                bg-white/80
+                p-2 rounded-lg shadow-md
+                backdrop-blur-md
+                ">
+                  <button
+                    className={`
+                      ${paymentRequestedCount > 0 ? 'bg-red-500 text-white' : 'bg-gray-300 text-gray-500'}
+                      text-sm px-4 py-2 rounded-lg hover:bg-red-600
+                    `}
+                    onClick={() => {
+                      router.push('/' + params.lang + '/' + params.center + '/clearance-history');
+                    }}
+                  >
+                    판매(거래소)
+                  </button>
+                  {loadingPaymentRequestedCount ? (
+                    <Image
+                      src="/loading.png"
+                      alt="Loading"
+                      width={20}
+                      height={20}
+                      className="w-6 h-6 animate-spin"
+                    />
+                  ) : (
+                    <Image
+                      src="/icon-buyorder.png"
+                      alt="Buy Order"
+                      width={35}
+                      height={35}
+                      className="w-6 h-6"
+                    />
+                  )}
+
+
+                  <p className="text-lg text-red-500 font-semibold">
+                    {
+                      paymentRequestedCount > 0 ? (
+                        <span>{paymentRequestedCount.toLocaleString()}</span>
+                      ) : (
+                        <span>0</span>
+                      )}
+                  </p>
+
+                  {paymentRequestedCount > 0 && (
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <Image
+                        src="/icon-notification.gif"
+                        alt="Notification"
+                        width={50}
+                        height={50}
+                        className="w-15 h-15 object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+
+
 
             <div className="mt-5 selection:w-full flex flex-col xl:flex-row items-between justify-between gap-3">
 
@@ -3846,6 +3921,10 @@ const [tradeSummary, setTradeSummary] = useState({
               </div>
 
 
+
+
+
+
               {/* table view is horizontal scroll */}
               {tableView ? (
 
@@ -3874,7 +3953,11 @@ const [tradeSummary, setTradeSummary] = useState({
                         </th>
 
                         <th className="p-2">
-                          {Buyer}
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm">
+                              {Buyer}
+                            </span>
+                          </div>
                         </th>
 
                         <th className="p-2">
@@ -3971,23 +4054,8 @@ const [tradeSummary, setTradeSummary] = useState({
                           </td>
                           
                           <td className="p-2">
-                            <div className="flex flex-row items-center gap-2">
-                              {/*
-                              <Image
-                                src={item.avatar || "/profile-default.png"}
-                                alt="Avatar"
-                                width={20}
-                                height={20}
-                                priority={true} // Added priority property
-                                className="rounded-full"
-                                style={{
-                                    objectFit: 'cover',
-                                    width: '20px',
-                                    height: '20px',
-                                }}
-                              />
-                              */}
-                              <div className="flex flex-col gap-2 items-center justify-center">
+
+                              <div className="flex flex-col gap-2 items-start justify-center">
 
                                 <div className="flex flex-row items-center gap-1">
                                   <Image
@@ -4030,7 +4098,6 @@ const [tradeSummary, setTradeSummary] = useState({
                                 </div>
 
                               </div>
-                            </div>
                           </td>
 
 

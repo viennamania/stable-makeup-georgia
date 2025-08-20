@@ -4432,11 +4432,11 @@ export async function getAllTradesByAdmin(
   const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
 
 
-  console.log('getAllTradesByAdmin fromDateValue: ' + fromDateValue);
-  console.log('getAllTradesByAdmin toDateValue: ' + toDateValue);
+  //console.log('getAllTradesByAdmin fromDateValue: ' + fromDateValue);
+  //console.log('getAllTradesByAdmin toDateValue: ' + toDateValue);
   
 
-  console.log('privateSale: ' + privateSale);
+  //console.log('privateSale: ' + privateSale);
 
 
 
@@ -7716,7 +7716,10 @@ export async function getEscrowBalanceByStorecode(
 
 // getPaymentRequestedCount
 export async function getPaymentRequestedCount(storecode: string, walletAddress: string) {
-  
+
+  console.log('getPaymentRequestedCount storecode: ' + storecode);
+  console.log('getPaymentRequestedCount walletAddress: ' + walletAddress);
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
 
@@ -7725,7 +7728,7 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
     {
       privateSale: true,
       storecode: storecode,
-      walletAddress: walletAddress,
+      'seller.walletAddress': walletAddress,
       status: 'paymentRequested',
     }
   );
