@@ -123,7 +123,10 @@ export async function POST(request: NextRequest) {
     }
 
 
-    const sellerStorecode = "admin";
+    //const sellerStorecode = "admin";
+    const sellerStorecode = storecode; // use the same storecode as the buyer's store
+
+
 
     let sellerMemo = "";
 
@@ -136,7 +139,27 @@ export async function POST(request: NextRequest) {
           sellerWalletAddress
         );
 
+        if (!userSeller) {
+          console.log("error");
+          console.log("userSeller is null");
+          console.log("userSeller", userSeller);
 
+          await cancelTradeBySeller({
+            storecode: sellerStorecode,
+            orderId: buyorder._id,
+            walletAddress: sellerWalletAddress,
+            cancelTradeReason: "등록된 판매자 정보가 없습니다.",
+          });
+
+          console.log("order cancelled");
+
+          continue;
+        }
+
+
+        
+
+        /*
         if (!userSeller
           || !userSeller.seller
           || !userSeller.seller.bankInfo
@@ -148,24 +171,6 @@ export async function POST(request: NextRequest) {
           console.log("userSeller is null");
           console.log("userSeller", userSeller);
 
-          // delete order
-          //await collectionOrders.deleteOne({ _id: order._id });
-
-          //console.log("order deleted");
-          /*
-
-            // update order set status = "cancelled"
-            await collectionOrders.updateOne(
-              { _id: orderId },
-              { $set: {
-                statusUpdater: "acceptBuyOrderTask",
-                status: "cancelled",
-                cancelledAt: new Date(),
-                cancelTradeReason: "판매자 정보가 없습니다.",
-
-              } }
-            );
-            */
 
           await cancelTradeBySeller({
             storecode: sellerStorecode,
@@ -182,7 +187,7 @@ export async function POST(request: NextRequest) {
 
 
         sellerMemo = userSeller?.seller?.bankInfo?.bankName + " " + userSeller?.seller?.bankInfo?.accountNumber + " " + userSeller?.seller?.bankInfo?.accountHolder;
-
+        */
   
 
     } 
@@ -259,7 +264,9 @@ export async function POST(request: NextRequest) {
         }
         */
 
+
         /*
+
         const tradeId = buyorder.tradeId;
         const orderId = buyorder._id;
         const buyerWalletAddress = buyorder.walletAddress;
