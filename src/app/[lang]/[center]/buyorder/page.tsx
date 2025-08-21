@@ -3822,6 +3822,7 @@ const fetchBuyOrders = async () => {
 
 
               {/* 가맹점 보유량 */}
+              {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
                 bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
@@ -3905,6 +3906,7 @@ const fetchBuyOrders = async () => {
                 </button>
 
               </div>
+              )}
 
 
 

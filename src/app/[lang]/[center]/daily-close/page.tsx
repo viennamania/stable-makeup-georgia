@@ -79,6 +79,8 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+import { version } from "../../../config/version";
+
 
 
 /*
@@ -1233,8 +1235,9 @@ export default function Index({ params }: any) {
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-                {/* 가맹점 보유량 */}
-                <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+              {/* 가맹점 보유량 */}
+              {version !== 'bangbang' && (
+              <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
                 bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
                 <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
@@ -1317,7 +1320,7 @@ export default function Index({ params }: any) {
                 </button>
 
               </div>
-
+            )}  
 
               {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
