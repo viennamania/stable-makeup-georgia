@@ -259,7 +259,7 @@ export async function POST(request: NextRequest) {
         }
         */
 
-        /*
+        
         const tradeId = buyorder.tradeId;
         const orderId = buyorder._id;
         const buyerWalletAddress = buyorder.walletAddress;
@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
           console.error('Error creating Sendbird group channel:', error);
         }
 
-        */
+        
 
 
 

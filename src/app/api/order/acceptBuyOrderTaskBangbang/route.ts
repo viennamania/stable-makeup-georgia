@@ -131,6 +131,8 @@ export async function POST(request: NextRequest) {
     let sellerMemo = "";
 
 
+    
+
     // 프라이빗 세일이 아닌 경우, 판매자의 은행 정보가 있는지 확인한다.
     if (!buyorder.privateSale) {
     
@@ -157,7 +159,7 @@ export async function POST(request: NextRequest) {
         }
 
 
-        
+
 
         /*
         if (!userSeller
