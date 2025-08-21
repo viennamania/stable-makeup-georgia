@@ -80,7 +80,7 @@ import { getAllUsersForSettlementOfStore } from "@/lib/api/user";
 
 
 import { paymentUrl } from "../../../config/payment";
-
+import { version } from "../../../config/version";
 
 
 import {
@@ -3393,7 +3393,8 @@ const fetchBuyOrders = async () => {
                   거래내역
               </button>
 
-              <button
+              {version !== 'bangbang' && (
+                <button
                   onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
                   hover:bg-[#3167b4]/80
@@ -3403,6 +3404,7 @@ const fetchBuyOrders = async () => {
                   ">
                   청산관리
               </button>
+              )}
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
@@ -3426,16 +3428,18 @@ const fetchBuyOrders = async () => {
                   통계(AG)
               </button>
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
+              {version !== 'bangbang' && (
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
                   보유량내역
-              </button>
+                </button>
+              )}
 
           </div>
 
