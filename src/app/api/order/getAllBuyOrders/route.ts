@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
   } = body;
 
 
-  console.log("getAllBuyOrders fromDate", fromDate);
-  console.log("getAllBuyOrders toDate", toDate);
+  //console.log("getAllBuyOrders fromDate", fromDate);
+  //console.log("getAllBuyOrders toDate", toDate);
 
 
 

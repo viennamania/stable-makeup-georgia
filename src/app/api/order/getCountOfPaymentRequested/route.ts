@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
 
   const result = await getPaymentRequestedCount( storecode, walletAddress );
 
-  console.log("getCountOfPaymentRequested result: ", result);
+  //console.log("getCountOfPaymentRequested result: ", result);
 
  
   return NextResponse.json({

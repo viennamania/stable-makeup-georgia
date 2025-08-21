@@ -2142,10 +2142,10 @@ export async function getBuyOrders(
 ): Promise<ResultProps> {
 
 
-  console.log('getBuyOrders fromDate: ' + fromDate);
-  console.log('getBuyOrders toDate: ' + toDate);
+  //console.log('getBuyOrders fromDate: ' + fromDate);
+  //console.log('getBuyOrders toDate: ' + toDate);
 
-  console.log('getBuyOrders agentcode: ==========>' + agentcode);
+  //console.log('getBuyOrders agentcode: ==========>' + agentcode);
 
   /*
   getBuyOrders fromDate: 2025-04-04
@@ -2270,8 +2270,8 @@ export async function getBuyOrders(
 
     
     
-    console.log('getBuyOrders fromDateValue: ' + fromDateValue);
-    console.log('getBuyOrders toDateValue: ' + toDateValue);
+    //console.log('getBuyOrders fromDateValue: ' + fromDateValue);
+    //console.log('getBuyOrders toDateValue: ' + toDateValue);
 
 
     const results = await collection.find<UserProps>(
@@ -3257,6 +3257,7 @@ export async function buyOrderRequestPayment(data: any) {
   }
   
 
+  console.log('buyOrderRequestPayment result: ' + JSON.stringify(result));
 
 
 
@@ -7334,7 +7335,7 @@ export async function depositEscrow(
   );
 
   if (!store) {
-    console.log('store not found for storecode: ' + storecode);
+    //console.log('store not found for storecode: ' + storecode);
     return false;
   }
 
@@ -7392,7 +7393,7 @@ export async function withdrawEscrow(
   );
 
   if (!store) {
-    console.log('store not found for storecode: ' + storecode);
+    //console.log('store not found for storecode: ' + storecode);
     return false;
   }
 
@@ -7567,7 +7568,7 @@ export async function getEscrowBalanceByStorecode(
   );
 
   if (!store) {
-    console.log('store not found for storecode: ' + storecode);
+    //console.log('store not found for storecode: ' + storecode);
     return {
       escrowBalance: 0,
     };
@@ -7717,8 +7718,8 @@ export async function getEscrowBalanceByStorecode(
 // getPaymentRequestedCount
 export async function getPaymentRequestedCount(storecode: string, walletAddress: string) {
 
-  console.log('getPaymentRequestedCount storecode: ' + storecode);
-  console.log('getPaymentRequestedCount walletAddress: ' + walletAddress);
+  //console.log('getPaymentRequestedCount storecode: ' + storecode);
+  //console.log('getPaymentRequestedCount walletAddress: ' + walletAddress);
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');

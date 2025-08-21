@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
   */
 
   const {
-    lang,
-    chain,
     orderId,
     transactionHash,
     bankInfo,
@@ -68,11 +66,13 @@ export async function POST(request: NextRequest) {
     }, { status: 404 });
   }
 
+  console.log("buyOrderRequestPayment buyOrder.storecode=", buyOrder.storecode);
 
-  
+
+
   const payactionKeys = await getPayactionKeys({
     storecode: buyOrder.storecode,
-  } );
+  });
 
 
   if (payactionKeys.payactionApiKey && payactionKeys.payactionShopId) {

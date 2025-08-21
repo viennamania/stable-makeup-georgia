@@ -1327,6 +1327,7 @@ export default function Index({ params }: any) {
 
 
             {/* Clearance Orders */}
+            {version !== 'bangbang' && (
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
             p-2 rounded-lg shadow-md
@@ -1381,6 +1382,7 @@ export default function Index({ params }: any) {
                 </div>
               )}
             </div>
+            )}
 
         
           </div>

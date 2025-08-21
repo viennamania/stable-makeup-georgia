@@ -1366,8 +1366,8 @@ export default function Index({ params }: any) {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              lang: params.lang,
-              storecode: storecode,
+              //lang: params.lang,
+              //storecode: storecode,
               orderId: orderId,
               //transactionHash: transactionResult.transactionHash,
               transactionHash: transactionHash,
@@ -1498,8 +1498,8 @@ export default function Index({ params }: any) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            lang: params.lang,
-            storecode: storecode,
+            //lang: params.lang,
+            //storecode: storecode,
             orderId: orderId,
             //transactionHash: transactionResult.transactionHash,
             transactionHash: transactionHash,
