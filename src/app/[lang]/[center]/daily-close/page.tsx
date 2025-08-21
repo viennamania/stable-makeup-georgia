@@ -1423,6 +1423,7 @@ export default function Index({ params }: any) {
 
 
               {/* 가맹점 판매금 */}
+              {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -1469,7 +1470,8 @@ export default function Index({ params }: any) {
                   </span>
                 </div>
 
-                </div> 
+              </div>
+              )}
 
             </div>
 

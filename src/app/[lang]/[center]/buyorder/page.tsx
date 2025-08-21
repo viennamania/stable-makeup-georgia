@@ -3955,64 +3955,64 @@ const fetchBuyOrders = async () => {
                 )}
               </div>
 
+              {version !== 'bangbang' && (
+              <div className="flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+              ">
+                <button
+                  className={`
+                    ${paymentRequestedCount > 0 ? 'bg-red-500 text-white' : 'bg-gray-300 text-gray-500'}
+                    text-sm px-4 py-2 rounded-lg hover:bg-red-600
+                  `}
+                  onClick={() => {
+                    router.push('/' + params.lang + '/' + params.center + '/clearance-history');
+                  }}
+                >
+                  판매(거래소)
+                </button>
+                {loadingPaymentRequestedCount ? (
+                  <Image
+                    src="/loading.png"
+                    alt="Loading"
+                    width={20}
+                    height={20}
+                    className="w-6 h-6 animate-spin"
+                  />
+                ) : (
+                  <Image
+                    src="/icon-buyorder.png"
+                    alt="Buy Order"
+                    width={35}
+                    height={35}
+                    className="w-6 h-6"
+                  />
+                )}
 
-                <div className="flex flex-row items-center justify-center gap-2
-                bg-white/80
-                p-2 rounded-lg shadow-md
-                backdrop-blur-md
-                ">
-                  <button
-                    className={`
-                      ${paymentRequestedCount > 0 ? 'bg-red-500 text-white' : 'bg-gray-300 text-gray-500'}
-                      text-sm px-4 py-2 rounded-lg hover:bg-red-600
-                    `}
-                    onClick={() => {
-                      router.push('/' + params.lang + '/' + params.center + '/clearance-history');
-                    }}
-                  >
-                    판매(거래소)
-                  </button>
-                  {loadingPaymentRequestedCount ? (
+
+                <p className="text-lg text-red-500 font-semibold">
+                  {
+                    paymentRequestedCount > 0 ? (
+                      <span>{paymentRequestedCount.toLocaleString()}</span>
+                    ) : (
+                      <span>0</span>
+                    )}
+                </p>
+
+                {paymentRequestedCount > 0 && (
+                  <div className="flex flex-row items-center justify-center gap-2">
                     <Image
-                      src="/loading.png"
-                      alt="Loading"
-                      width={20}
-                      height={20}
-                      className="w-6 h-6 animate-spin"
+                      src="/icon-notification.gif"
+                      alt="Notification"
+                      width={50}
+                      height={50}
+                      className="w-15 h-15 object-cover"
                     />
-                  ) : (
-                    <Image
-                      src="/icon-buyorder.png"
-                      alt="Buy Order"
-                      width={35}
-                      height={35}
-                      className="w-6 h-6"
-                    />
-                  )}
-
-
-                  <p className="text-lg text-red-500 font-semibold">
-                    {
-                      paymentRequestedCount > 0 ? (
-                        <span>{paymentRequestedCount.toLocaleString()}</span>
-                      ) : (
-                        <span>0</span>
-                      )}
-                  </p>
-
-                  {paymentRequestedCount > 0 && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                        src="/icon-notification.gif"
-                        alt="Notification"
-                        width={50}
-                        height={50}
-                        className="w-15 h-15 object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-
+                  </div>
+                )}
+              </div>
+              )}
 
             </div>
 
