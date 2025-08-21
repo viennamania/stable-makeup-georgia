@@ -6834,13 +6834,22 @@ const fetchBuyOrders = async () => {
                                           </span>
                                         </div>
 
-                                        <span className="text-lg font-semibold text-green-600"
-                                          style={{
-                                            fontFamily: 'monospace',
-                                          }}
-                                        >
-                                          {item.usdtAmount}{' '}USDT
-                                        </span>
+                                        <div className="flex flex-row gap-1 items-center justify-center">
+                                          <Image
+                                            src="/token-usdt-icon.png"
+                                            alt="USDT"
+                                            width={20}
+                                            height={20}
+                                            className="rounded-lg w-6 h-6 object-cover"
+                                          />
+                                          <span className="text-lg font-semibold text-green-600"
+                                            style={{
+                                              fontFamily: 'monospace',
+                                            }}
+                                          >
+                                            {Number(item.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                          </span>
+                                        </div>
 
                                         {/*
                                           if item.paymentConfirmedAt (2025-07-03T09:26:37.818Z)
