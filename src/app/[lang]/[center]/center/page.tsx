@@ -2940,7 +2940,7 @@ export default function Index({ params }: any) {
                     <>
                       <div className="mt-5 flex flex-row gap-2 justify-center items-center">
                         <span className="text-sm text-zinc-600">
-                          내 USDT통장
+                          내 USDT지갑
                         </span>
                         <button
                           className="text-lg text-zinc-800 underline"

@@ -1902,12 +1902,12 @@ export default function Index({ params }: any) {
 
                 <div className='flex flex-row gap-2 items-center justify-center'>
                   <span className="text-sm text-zinc-100">
-                    USDT통장:{' '}
+                    USDT지갑:{' '}
                   </span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(address);
-                      toast.success("USDT통장번호가 복사되었습니다.");
+                      toast.success("USDT지갑주소가 복사되었습니다.");
                     }}
                     className="text-sm underline text-zinc-100 hover:text-zinc-200"
                   >
@@ -3257,7 +3257,7 @@ export default function Index({ params }: any) {
                                         <button
                                             onClick={() => {
                                                 navigator.clipboard.writeText(address);
-                                                toast.success('USDT통장번호가 복사되었습니다.');
+                                                toast.success('USDT지갑주소가 복사되었습니다.');
                                             }}
                                           className="text-xs bg-green-500 text-zinc-500 px-2 py-1 rounded-md">
                                           복사

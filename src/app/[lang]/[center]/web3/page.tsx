@@ -1076,8 +1076,8 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                         onClick={() => {
                                             navigator.clipboard.writeText(address);
-                                            //toast.success('USDT통장번호가 복사되었습니다.');
-                                            alert('USDT통장번호가 복사되었습니다.');
+                                            //toast.success('USDT지갑주소가 복사되었습니다.');
+                                            alert('USDT지갑주소가 복사되었습니다.');
                                         }}
                                         className="p-2 bg-blue-500 text-zinc-100 rounded"
                                     >
@@ -1244,7 +1244,7 @@ export default function SettingsPage({ params }: any) {
 
                                     <div className="text-sm">
 
-                                        보낼 금액과 받을 사람의 USDT통장번호를 입력하세요
+                                        보낼 금액과 받을 사람의 USDT지갑주소를 입력하세요
 
                                     </div>
 
@@ -1316,7 +1316,7 @@ export default function SettingsPage({ params }: any) {
                                             <input
                                             disabled={sending}
                                             type="text"
-                                            placeholder="받을 사람의 USDT통장번호"
+                                            placeholder="받을 사람의 USDT지갑주소"
                                             className=" w-80 xl:w-96 p-2 border border-gray-300 rounded text-white bg-black text-sm xl:text-sm "
                                             value={recipient.walletAddress}
                                             onChange={(e) => setRecipient({

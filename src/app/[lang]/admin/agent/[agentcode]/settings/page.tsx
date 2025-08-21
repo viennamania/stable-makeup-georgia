@@ -1541,7 +1541,7 @@ export default function SettingsPage({ params }: any) {
                                         <div className='w-full flex flex-row items-center justify-start gap-2'>
                                             <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                             <span className="text-lg">
-                                                에이전트 수수료 수납용 USDT통장
+                                                에이전트 수수료 수납용 USDT지갑
                                             </span>
                                         </div>
 
@@ -1559,7 +1559,7 @@ export default function SettingsPage({ params }: any) {
                                                         {agent.agentFeeWalletAddress.substring(0, 6)}...{agent.agentFeeWalletAddress.substring(agent.agentFeeWalletAddress.length - 4)}
                                                     </button>
                                                 )
-                                                : "에이전 수수료 수납용 USDT통장이 설정되지 않았습니다."
+                                                : "에이전 수수료 수납용 USDT지갑이 설정되지 않았습니다."
                                             }
 
                                         </span>

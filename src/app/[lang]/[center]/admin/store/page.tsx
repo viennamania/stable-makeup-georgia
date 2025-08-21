@@ -1724,9 +1724,9 @@ export default function Index({ params }: any) {
                         <th className="p-2">회원 입금자명</th>
                         <th className="p-2">회원 은행명</th>
                         <th className="p-2">결제 URL</th>
-                        <th className="p-2">USDT통장번호</th>
+                        <th className="p-2">USDT지갑주소</th>
                         {/*<th className="p-2">지갑 잔액</th>*/}
-                        {/*<th className="p-2">USDT통장번호</th>*/}
+                        {/*<th className="p-2">USDT지갑주소</th>*/}
                       </tr>
                     </thead>
 

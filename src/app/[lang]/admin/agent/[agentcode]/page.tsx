@@ -2949,7 +2949,7 @@ export default function Index({ params }: any) {
                   <div className="mt-5 flex flex-row gap-2 justify-center items-center">
 
                     <span className="text-sm text-zinc-600">
-                      내 USDT통장
+                      내 USDT지갑
                     </span>
                     <button
                       className="text-lg text-zinc-800 underline"
@@ -3008,7 +3008,7 @@ export default function Index({ params }: any) {
                 <div className="mt-5 flex flex-row gap-2 justify-center items-center">
                   {/* 로그인하고 나의 자산을 확인하세요 */}
                   <span className="text-sm text-zinc-600">
-                    로그인하고 나의 USDT통장에서 자산을 확인하세요
+                    로그인하고 나의 USDT지갑에서 자산을 확인하세요
                   </span>
                 </div>
 

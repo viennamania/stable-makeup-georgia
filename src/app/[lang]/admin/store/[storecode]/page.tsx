@@ -1873,7 +1873,7 @@ export default function Index({ params }: any) {
                         <th className="
                           hidden lg:table-cell
                           p-2">
-                          회원 USDT통장번호
+                          회원 USDT지갑주소
                         </th>
                       </tr>
                     </thead>

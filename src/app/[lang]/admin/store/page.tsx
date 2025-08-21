@@ -2506,7 +2506,7 @@ export default function Index({ params }: any) {
                               판매자 원화통장
                             </span>
                             <span className="text-center">
-                              판매자 USDT통장
+                              판매자 USDT지갑
                             </span>
 
                           </div>
@@ -2586,17 +2586,17 @@ export default function Index({ params }: any) {
                           </div>
                         </th>
 
-                        {/* USDT통장 잔고 */}
+                        {/* USDT지갑 잔고 */}
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
                               전일 보유금(USDT)
                             </span>
                             <span className="text-center">
-                              관리자 USDT통장
+                              관리자 USDT지갑
                             </span>
                             <span className="text-center">
-                              관리자 USDT통장 잔고
+                              관리자 USDT지갑 잔고
                             </span>
 
                           </div>
@@ -2907,7 +2907,7 @@ export default function Index({ params }: any) {
                                     </button>
                                   ) : (
                                     <span className="text-sm text-red-500">
-                                      판매자 USDT통장 없음
+                                      판매자 USDT지갑 없음
                                     </span>
                                   )
                                 }
@@ -3029,7 +3029,7 @@ export default function Index({ params }: any) {
 
                                   ) : (
                                     <span className="text-sm text-red-500">
-                                      가맹점 수수료 USDT통장 없음
+                                      가맹점 수수료 USDT지갑 없음
                                     </span>
                                   )}
                                 </div>
@@ -3053,7 +3053,7 @@ export default function Index({ params }: any) {
                                     </button>
                                   ) : (
                                     <span className="text-sm text-red-500">
-                                      에이전트 USDT통장 없음
+                                      에이전트 USDT지갑 없음
                                     </span>
                                   )}
 
@@ -3339,7 +3339,7 @@ export default function Index({ params }: any) {
                                     </button>
                                   ) : (
                                     <span className="text-sm text-red-500">
-                                      관리자 USDT통장 없음
+                                      관리자 USDT지갑 없음
                                     </span>
                                   )}
                                 </span>

@@ -1163,7 +1163,7 @@ export default function Index({ params }: any) {
                   <>
                     <div className="mt-5 flex flex-row gap-2">
                       <span className="text-sm text-zinc-600">
-                        USDT통장
+                        USDT지갑
                       </span>
                       <button
                         className="text-lg text-zinc-800 underline"

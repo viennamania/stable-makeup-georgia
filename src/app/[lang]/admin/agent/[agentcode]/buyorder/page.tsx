@@ -2969,7 +2969,7 @@ const fetchBuyOrders = async () => {
                             className="w-6 h-6"
                         />
                         <span className="text-sm text-zinc-500">
-                          USDT통장
+                          USDT지갑
                         </span>
                         <button
                             className="text-lg text-zinc-600 underline"
@@ -3294,7 +3294,7 @@ const fetchBuyOrders = async () => {
                       </th>
 
                       <th className="p-2">
-                        구매자 아이디<br/>입금자<br/>USDT통장
+                        구매자 아이디<br/>입금자<br/>USDT지갑
                       </th>
                       
                       <th className="p-2">

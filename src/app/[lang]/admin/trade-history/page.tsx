@@ -3278,7 +3278,7 @@ const fetchBuyOrders = async () => {
                           구매자 아이디
                         </span>
                         <span className="text-sm text-white">
-                          구매자 USDT통장
+                          구매자 USDT지갑
                         </span>
                       </div>
                     </th>
@@ -3306,7 +3306,7 @@ const fetchBuyOrders = async () => {
                           판매자 아이디
                         </span>
                         <span className="text-sm text-white">
-                          판매자 USDT통장
+                          판매자 USDT지갑
                         </span>
                       </div>
                     </th>

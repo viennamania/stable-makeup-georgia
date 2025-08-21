@@ -1751,7 +1751,7 @@ export default function Index({ params }: any) {
                           className="w-4 h-4"
                       />
                       <span className="text-sm text-zinc-500">
-                        판매자 USDT통장
+                        판매자 USDT지갑
                       </span>
                   </div>
                   
@@ -1812,7 +1812,7 @@ export default function Index({ params }: any) {
                           className="w-4 h-4"
                       />
                       <span className="text-sm text-zinc-500">
-                        나의 USDT통장
+                        나의 USDT지갑
                       </span>
                   </div>
                   
@@ -1940,7 +1940,7 @@ export default function Index({ params }: any) {
                               className="w-4 h-4"
                             />
                             <span className="text-sm text-zinc-500">
-                              가맹점 정산용 USDT통장
+                              가맹점 정산용 USDT지갑
                             </span>
                         </div>
 

@@ -1703,12 +1703,12 @@ export default function Index({ params }: any) {
 
                 <div className='flex flex-row gap-2 items-center justify-center'>
                   <span className="text-sm text-zinc-100">
-                    USDT통장:{' '}
+                    USDT지갑:{' '}
                   </span>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(address);
-                      toast.success("USDT통장번호가 복사되었습니다.");
+                      toast.success("USDT지갑주소가 복사되었습니다.");
                     }}
                     className="text-sm underline text-zinc-100 hover:text-zinc-200"
                   >
@@ -3294,7 +3294,7 @@ export default function Index({ params }: any) {
                                           <span className="text-sm text-zinc-500">
                                             판매자가 입금은행을 선택했습니다.
                                             {' '}
-                                            입금이 완료되면 USDT가 구매자 USDT통장으로 이체됩니다.
+                                            입금이 완료되면 USDT가 구매자 USDT지갑으로 이체됩니다.
                                             {' '}
                                             입금자명을 정확하게 입력하고 입금을 완료해주세요.
                                           </span>

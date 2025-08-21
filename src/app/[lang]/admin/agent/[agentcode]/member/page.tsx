@@ -2168,7 +2168,7 @@ export default function Index({ params }: any) {
 
                         <th className="
                           p-2">
-                          USDT통장
+                          USDT지갑
                         </th>
                         <th className="p-2">충전금액</th>
                         <th className="p-2">결제페이지</th>

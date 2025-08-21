@@ -2100,7 +2100,7 @@ export default function Index({ params }: any) {
                                   </button>
                                 ) : (
                                   <span className="text-sm text-red-500">
-                                    에이전트 USDT통장 없음
+                                    에이전트 USDT지갑 없음
                                   </span>
                                 )}
 

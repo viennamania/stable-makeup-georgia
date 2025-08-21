@@ -1819,8 +1819,8 @@ export default function Index({ params }: any) {
                         <th className="p-2">에이전트</th>
 
                         <th className="p-2">
-                          관리자 USDT통장 주소<br/>
-                          수수료 수납용 USDT통장 주소
+                          관리자 USDT지갑 주소<br/>
+                          수수료 수납용 USDT지갑 주소
                         </th>
                         
                         <th className="p-2">관리자 홈페이지</th>
@@ -1937,7 +1937,7 @@ export default function Index({ params }: any) {
                                   <button
                                     onClick={() => {
                                       navigator.clipboard.writeText(item.adminWalletAddress || '');
-                                      toast.success('관리자 USDT통장 주소가 복사되었습니다.');
+                                      toast.success('관리자 USDT지갑 주소가 복사되었습니다.');
                                     }}
                                     className="text-sm text-gray-500 hover:text-blue-500
                                     hover:underline"
@@ -1947,7 +1947,7 @@ export default function Index({ params }: any) {
                                   </button>
                                 ) : (
                                   <span className="text-red-500">
-                                    관리자 USDT통장 주소가 없습니다.
+                                    관리자 USDT지갑 주소가 없습니다.
                                   </span>
                                 )}
                               
@@ -1955,7 +1955,7 @@ export default function Index({ params }: any) {
                                   <button
                                     onClick={() => {
                                       navigator.clipboard.writeText(item?.agentFeeWalletAddress || '');
-                                      toast.success('수수료 수납용 USDT통장 주소가 복사되었습니다.');
+                                      toast.success('수수료 수납용 USDT지갑 주소가 복사되었습니다.');
                                     }}
                                     className="text-sm text-gray-500 hover:text-blue-500
                                     hover:underline"
@@ -1967,7 +1967,7 @@ export default function Index({ params }: any) {
 
 
                                   <span className="text-red-500">
-                                    수수료 수납용 USDT통장 주소가 없습니다.
+                                    수수료 수납용 USDT지갑 주소가 없습니다.
                                   </span>
                                 )}
                                 

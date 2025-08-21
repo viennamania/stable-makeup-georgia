@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       walletAddress: walletAddress,
       status: 400,
-      msg: "USDT통장번호가 없습니다.",
+      msg: "USDT지갑주소가 없습니다.",
     });
   }
   if (usdtAmount === null) {
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       walletAddress: walletAddress,
       status: 400,
-      msg: "에스크로 USDT통장번호가 없습니다.",
+      msg: "에스크로 USDT지갑주소가 없습니다.",
     });
   }
 

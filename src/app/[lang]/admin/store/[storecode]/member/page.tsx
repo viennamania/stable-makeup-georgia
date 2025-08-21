@@ -1915,7 +1915,7 @@ export default function Index({ params }: any) {
                         <th className="
                           hidden xl:table-cell
                           p-2">
-                          USDT통장
+                          USDT지갑
                         </th>
 
                         <th className="p-2">결제링크</th>

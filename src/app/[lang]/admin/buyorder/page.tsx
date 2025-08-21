@@ -4105,7 +4105,7 @@ const fetchBuyOrders = async () => {
                           구매자 아이디
                         </span>
                         <span className="text-sm text-zinc-50 font-semibold">
-                          USDT통장
+                          USDT지갑
                         </span>
                         <span className="text-sm text-zinc-50 font-semibold">
                           입금자
@@ -4138,7 +4138,7 @@ const fetchBuyOrders = async () => {
                               판매자 아이디
                             </span>
                             <span className="text-sm text-zinc-50 font-semibold">
-                              USDT통장
+                              USDT지갑
                             </span>
                         </div>
 

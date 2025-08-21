@@ -925,20 +925,20 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
         setUpdatingSettlementWalletAddress(false);
-        toast.error('가맹점 정산 USDT통장 변경에 실패했습니다.');
+        toast.error('가맹점 정산 USDT지갑 변경에 실패했습니다.');
         return;
         }
 
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-        toast.success('가맹점 정산 USDT통장이 변경되었습니다.');
+        toast.success('가맹점 정산 USDT지갑이 변경되었습니다.');
         setSelectedSettlementWalletAddress('');
 
         fetchStore();
 
         } else {
-        toast.error('가맹점 정산 USDT통장 변경에 실패했습니다.');
+        toast.error('가맹점 정산 USDT지갑 변경에 실패했습니다.');
         }
 
         setUpdatingSettlementWalletAddress(false);
@@ -1536,7 +1536,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                 />
                                 <span className="text-lg text-zinc-500">
-                                    가맹점 정산 USDT통장 설정
+                                    가맹점 정산 USDT지갑 설정
                                 </span>
                             </div>
                             <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
@@ -1562,7 +1562,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-lg text-red-500">
-                                    {store && store.storeName}의 가맹점 정산 USDT통장이 설정되지 않았습니다.
+                                    {store && store.storeName}의 가맹점 정산 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -1588,7 +1588,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSettlementWalletAddress}
                                     >
-                                    <option value="">가맹점 정산 USDT통장 변경</option>
+                                    <option value="">가맹점 정산 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -1601,15 +1601,15 @@ export default function SettingsPage({ params }: any) {
                                     onClick={() => {
                                         if (!selectedSettlementWalletAddress) {
                                         toast.error
-                                            ('가맹점 정산 USDT통장을 선택하세요.');
+                                            ('가맹점 정산 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
-                                        toast.error('현재 가맹점 정산 USDT통장과 동일합니다.');
+                                        toast.error('현재 가맹점 정산 USDT지갑과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 정산 USDT통장을 변경하시겠습니까?`
+                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 정산 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSettlementWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -1630,7 +1630,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-lg text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 정산 USDT통장을 설정하세요.
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 정산 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -1658,7 +1658,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        가맹점 수수료 USDT통장 설정
+                                        가맹점 수수료 USDT지갑 설정
                                     </span>
                                 </div>
                                 <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2">
@@ -1682,7 +1682,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                         />
                                         <span className="text-sm text-red-500">
-                                        {store && store.storeName}의 가맹점 수수료 USDT통장 설정되지 않았습니다.
+                                        {store && store.storeName}의 가맹점 수수료 USDT지갑 설정되지 않았습니다.
                                         </span>
                                     </div>
                                     )}
@@ -1708,7 +1708,7 @@ export default function SettingsPage({ params }: any) {
                                             bg-white text-zinc-500 text-sm"
                                         disabled={updatingSettlementFeeWalletAddress}
                                         >
-                                        <option value="">가맹점 수수료 USDT통장 변경</option>
+                                        <option value="">가맹점 수수료 USDT지갑 변경</option>
                                         {allAdminSellers.map((user) => (
                                             <option key={user._id} value={user.walletAddress}>
                                             {user.nickname}
@@ -1720,15 +1720,15 @@ export default function SettingsPage({ params }: any) {
                                         <button
                                         onClick={() => {
                                             if (!selectedSettlementFeeWalletAddress) {
-                                            toast.error('가맹점 수수료 USDT통장을 선택하세요.');
+                                            toast.error('가맹점 수수료 USDT지갑을 선택하세요.');
                                             return;
                                             }
                                             if (selectedSettlementFeeWalletAddress === store?.settlementFeeWalletAddress) {
-                                            toast.error('현재 가맹점 수수료 USDT통장과 동일합니다.');
+                                            toast.error('현재 가맹점 수수료 USDT지갑과 동일합니다.');
                                             return;
                                             }
                                             confirm(
-                                            `정말 ${selectedSettlementFeeWalletAddress}로 가맹점 수수료 USDT통장을 변경하시겠습니까?`
+                                            `정말 ${selectedSettlementFeeWalletAddress}로 가맹점 수수료 USDT지갑을 변경하시겠습니까?`
                                             ) && updateSettlementFeeWalletAddress();
                                         }}
                                         className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -1749,7 +1749,7 @@ export default function SettingsPage({ params }: any) {
                                         <span className="text-sm text-red-500">
                                         {store && store.storeName}의 회원이 없습니다.
                                         <br />
-                                        가맹점 홈페이지에서 회원가입 후 가맹점 수수료 USDT통장을 설정하세요.
+                                        가맹점 홈페이지에서 회원가입 후 가맹점 수수료 USDT지갑을 설정하세요.
                                         </span>
                                     </div>
                                     )}
@@ -1878,7 +1878,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                 />
                                 <span className="text-lg text-zinc-500">
-                                    가맹점 판매자 USDT통장 설정
+                                    가맹점 판매자 USDT지갑 설정
                                 </span>
                             </div>
 
@@ -1908,7 +1908,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 판매자 USDT통장이 설정되지 않았습니다.
+                                    {store && store.storeName}의 가맹점 판매자 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -1937,7 +1937,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 판매자 USDT통장 변경</option>
+                                    <option value="">가맹점 판매자 USDT지갑 변경</option>
                                     {allAdminSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -1949,16 +1949,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
-                                        toast.error('가맹점 판매자 USDT통장을 선택하세요.');
+                                        toast.error('가맹점 판매자 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 판매자 USDT통장과 동일합니다.');
+                                        toast.error('현재 가맹점 판매자 USDT지갑과 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자 USDT통장을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -1979,7 +1979,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    회원가입 후 가맹점 USDT통장을 설정하세요.
+                                    회원가입 후 가맹점 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -1996,7 +1996,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 판매자 USDT통장 변경</option>
+                                    <option value="">가맹점 판매자 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2008,16 +2008,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
-                                        toast.error('가맹점 판매자 USDT통장을 선택하세요.');
+                                        toast.error('가맹점 판매자 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 판매자 USDT통장과 동일합니다.');
+                                        toast.error('현재 가맹점 판매자 USDT지갑과 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자 USDT통장을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2038,7 +2038,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    회원가입 후 가맹점 USDT통장을 설정하세요.
+                                    회원가입 후 가맹점 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}

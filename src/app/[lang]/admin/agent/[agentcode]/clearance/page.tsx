@@ -1675,7 +1675,7 @@ export default function Index({ params }: any) {
                                     className="w-6 h-6"
                                 />
                                 <span className="text-sm text-zinc-500">
-                                  USDT통장
+                                  USDT지갑
                                 </span>
                                 <button
                                     className="text-lg text-zinc-600 underline"

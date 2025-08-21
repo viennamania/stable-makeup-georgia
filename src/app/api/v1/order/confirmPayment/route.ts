@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         orderId: orderId,
         status: 400,
-        msg: "판매자 USDT통장번호가 없습니다.",
+        msg: "판매자 USDT지갑주소가 없습니다.",
       });
     }
 
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         orderId: orderId,
         status: 400,
-        msg: "에스크로 USDT통장번호가 없습니다.",
+        msg: "에스크로 USDT지갑주소가 없습니다.",
       });
     }
 
@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         orderId: orderId,
         status: 400,
-        msg: "구매자 USDT통장번호가 없습니다.",
+        msg: "구매자 USDT지갑주소가 없습니다.",
       });
     }
 

@@ -2271,7 +2271,7 @@ export default function Index({ params }: any) {
                           onChange={(e) => setIsMyWalletAddress(e.target.checked)}
                         />
                         <span className="text-lg text-white">
-                          내 USDT통장번호
+                          내 USDT지갑주소
                         </span>
                       </div>
 
@@ -2300,7 +2300,7 @@ export default function Index({ params }: any) {
                             onClick={setUserWalletAddress}
                             className="text-lg bg-green-500 text-white px-4 py-2 rounded-md"
                           >
-                            USDT통장번호 설정
+                            USDT지갑주소 설정
                           </button>
 
                         </div>

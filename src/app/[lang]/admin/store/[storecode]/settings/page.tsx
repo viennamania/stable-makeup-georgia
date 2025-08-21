@@ -1029,14 +1029,14 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
         setUpdatingSettlementWalletAddress(false);
-        toast.error('가맹점 정산용 USDT통장 변경에 실패했습니다.');
+        toast.error('가맹점 정산용 USDT지갑 변경에 실패했습니다.');
         return;
         }
 
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-        toast.success('가맹점 정산용 USDT통장이 변경되었습니다.');
+        toast.success('가맹점 정산용 USDT지갑이 변경되었습니다.');
         //setSelectedSettlementWalletAddress('');
 
         //fetchStore();
@@ -1046,7 +1046,7 @@ export default function SettingsPage({ params }: any) {
         });
 
         } else {
-        toast.error('가맹점 정산용 USDT통장 변경에 실패했습니다.');
+        toast.error('가맹점 정산용 USDT지갑 변경에 실패했습니다.');
         }
 
         setUpdatingSettlementWalletAddress(false);
@@ -1079,13 +1079,13 @@ export default function SettingsPage({ params }: any) {
         });
         if (!response.ok) {
             setUpdatingSettlementFeeWalletAddress(false);
-            toast.error('가맹점 수수료 수납용 USDT통장 변경에 실패했습니다.');
+            toast.error('가맹점 수수료 수납용 USDT지갑 변경에 실패했습니다.');
             return;
         }
         const data = await response.json();
         //console.log('data', data);
         if (data.result) {
-            toast.success('가맹점 수수료 수납용 USDT통장이 변경되었습니다.');
+            toast.success('가맹점 수수료 수납용 USDT지갑이 변경되었습니다.');
             ////setSelectedSettlementFeeWalletAddress('');
 
             //fetchStore();
@@ -1097,7 +1097,7 @@ export default function SettingsPage({ params }: any) {
 
 
         } else {
-            toast.error('가맹점 수수료 수납용 USDT통장 변경에 실패했습니다.');
+            toast.error('가맹점 수수료 수납용 USDT지갑 변경에 실패했습니다.');
         }
         setUpdatingSettlementFeeWalletAddress(false);
         return data.result;
@@ -2285,7 +2285,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        관리자용 USDT통장
+                                        관리자용 USDT지갑
                                     </span>
                                 </div>
 
@@ -2346,7 +2346,7 @@ export default function SettingsPage({ params }: any) {
                                             bg-white text-zinc-500 text-sm"
                                         disabled={updatingAdminWalletAddress}
                                         >
-                                        <option value="">가맹점 관리자용 USDT통장 변경</option>
+                                        <option value="">가맹점 관리자용 USDT지갑 변경</option>
                                         {allStoreSellers.map((user) => (
                                             <option key={user._id} value={user.walletAddress}>
                                             {user.nickname}
@@ -2409,7 +2409,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        정산용 USDT통장
+                                        정산용 USDT지갑
                                     </span>
                                 </div>
 
@@ -2445,7 +2445,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 정산용 USDT통장이 설정되지 않았습니다.
+                                    {store && store.storeName}의 가맹점 정산용 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -2472,7 +2472,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSettlementWalletAddress}
                                     >
-                                    <option value="">가맹점 정산용 USDT통장 변경</option>
+                                    <option value="">가맹점 정산용 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2485,15 +2485,15 @@ export default function SettingsPage({ params }: any) {
                                     onClick={() => {
                                         if (!selectedSettlementWalletAddress) {
                                         toast.error
-                                            ('가맹점 정산용 USDT통장을 선택하세요.');
+                                            ('가맹점 정산용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
-                                        toast.error('현재 가맹점 정산용 USDT통장과 동일합니다.');
+                                        toast.error('현재 가맹점 정산용 USDT지갑과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 정산용 USDT통장을 변경하시겠습니까?`
+                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 정산용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSettlementWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2514,7 +2514,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 정산용 USDT통장을 설정하세요.
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 정산용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -2554,7 +2554,7 @@ export default function SettingsPage({ params }: any) {
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            PG 수수료 수납용 USDT통장
+                                            PG 수수료 수납용 USDT지갑
                                         </span>
                                     </div>
 
@@ -2591,7 +2591,7 @@ export default function SettingsPage({ params }: any) {
                                             className="w-5 h-5"
                                             />
                                             <span className="text-sm text-red-500">
-                                            {store && store.storeName}의 가맹점 PG 수수료 수납용 USDT통장이 설정되지 않았습니다.
+                                            {store && store.storeName}의 가맹점 PG 수수료 수납용 USDT지갑이 설정되지 않았습니다.
                                             </span>
                                         </div>
                                     )}
@@ -2618,7 +2618,7 @@ export default function SettingsPage({ params }: any) {
                                                 bg-white text-zinc-500 text-sm"
                                             disabled={updatingSettlementFeeWalletAddress}
                                             >
-                                            <option value="">가맹점 PG 수수료 수납용 USDT통장 변경</option>
+                                            <option value="">가맹점 PG 수수료 수납용 USDT지갑 변경</option>
                                             {allAdminSellers.map((user) => (
                                                 <option key={user._id} value={user.walletAddress}>
                                                 {user.nickname}
@@ -2630,15 +2630,15 @@ export default function SettingsPage({ params }: any) {
                                             <button
                                             onClick={() => {
                                                 if (!selectedSettlementFeeWalletAddress) {
-                                                toast.error('가맹점 PG 수수료 수납용 USDT통장을 선택하세요.');
+                                                toast.error('가맹점 PG 수수료 수납용 USDT지갑을 선택하세요.');
                                                 return;
                                                 }
                                                 if (selectedSettlementFeeWalletAddress === store?.settlementFeeWalletAddress) {
-                                                toast.error('현재 가맹점 PG 수수료 수납용 USDT통장과 동일합니다.');
+                                                toast.error('현재 가맹점 PG 수수료 수납용 USDT지갑과 동일합니다.');
                                                 return;
                                                 }
                                                 confirm(
-                                                `정말 ${selectedSettlementFeeWalletAddress}로 가맹점 PG 수수료 수납용 USDT통장을 변경하시겠습니까?`
+                                                `정말 ${selectedSettlementFeeWalletAddress}로 가맹점 PG 수수료 수납용 USDT지갑을 변경하시겠습니까?`
                                                 ) && updateSettlementFeeWalletAddress();
                                             }}
                                             className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2659,7 +2659,7 @@ export default function SettingsPage({ params }: any) {
                                             <span className="text-sm text-red-500">
                                             {store && store.storeName}의 회원이 없습니다.
                                             <br />
-                                            가맹점 홈페이지에서 회원가입 후 가맹점 PG 수수료 수납용 USDT통장을 설정하세요.
+                                            가맹점 홈페이지에서 회원가입 후 가맹점 PG 수수료 수납용 USDT지갑을 설정하세요.
                                             </span>
                                         </div>
 
@@ -2778,7 +2778,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        에스크로용 USDT통장
+                                        에스크로용 USDT지갑
                                     </span>
                                 </div>
 
@@ -2814,7 +2814,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 에스크로용 USDT통장이 설정되지 않았습니다.
+                                    {store && store.storeName}의 가맹점 에스크로용 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -2844,7 +2844,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 에스크로용 USDT통장 변경</option>
+                                    <option value="">가맹점 에스크로용 USDT지갑 변경</option>
                                     {allAdminSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2856,16 +2856,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
-                                        toast.error('가맹점 에스크로용 USDT통장을 선택하세요.');
+                                        toast.error('가맹점 에스크로용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 에스크로용 USDT통장과 동일합니다.');
+                                        toast.error('현재 가맹점 에스크로용 USDT지갑과 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT통장을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2886,7 +2886,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    회원가입 후 가맹점 에스크로용 USDT통장을 설정하세요.
+                                    회원가입 후 가맹점 에스크로용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -2907,7 +2907,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 에스크로용 USDT통장 변경</option>
+                                    <option value="">가맹점 에스크로용 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2920,15 +2920,15 @@ export default function SettingsPage({ params }: any) {
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
                                         toast.error
-                                            ('가맹점 에스크로용 USDT통장을 선택하세요.');
+                                            ('가맹점 에스크로용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 에스크로용 USDT통장과 동일합니다.');
+                                        toast.error('현재 가맹점 에스크로용 USDT지갑과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT통장을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2949,7 +2949,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 에스크로용 USDT통장을 설정하세요.
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 에스크로용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -3000,7 +3000,7 @@ export default function SettingsPage({ params }: any) {
                                     <input
                                         disabled={!address}
                                         className="bg-[#1f2937] text-zinc-100 rounded-lg p-2 text-sm"
-                                        placeholder="에스크로용 USDT통장 수량을 입력하세요"
+                                        placeholder="에스크로용 USDT지갑 수량을 입력하세요"
                                         value={escrowAmountUSDT}
                                         type='number'
                                         onChange={(e) => {
