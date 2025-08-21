@@ -1079,8 +1079,7 @@ export default function Index({ params }: any) {
       return;
     }
     fetchAllStore();
-  } , [address, limitValue, pageValue, paramAgentcode,
-  ]);
+  } , [address, limitValue, pageValue, paramAgentcode, ]);
   
 
 
@@ -1944,7 +1943,7 @@ export default function Index({ params }: any) {
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
                     <span className="text-sm">
-                      청산내역관리
+                      청산관리
                     </span>
                   </button>
                 </div>
@@ -2029,7 +2028,7 @@ export default function Index({ params }: any) {
                     hover:scale-105
                     transition-transform duration-200 ease-in-out
                     ">
-                    청산내역
+                    청산관리
                 </button>
 
               <button

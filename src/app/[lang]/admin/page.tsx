@@ -1859,7 +1859,7 @@ export default function Index({ params }: any) {
                     height={35}
                     className="w-6 h-6"
                   />
-                  <h2 className="text-lg font-semibold">청산내역</h2>
+                  <h2 className="text-lg font-semibold">청산관리</h2>
                 </div>
 
                 <div className="w-full flex flex-row items-center justify-end gap-2">
@@ -1869,7 +1869,7 @@ export default function Index({ params }: any) {
                     }}
                     className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
-                    청산내역관리
+                    청산관리
                   </button>
                 </div>
 

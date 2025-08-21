@@ -1564,7 +1564,7 @@ export default function Index({ params }: any) {
                       <div className="text-xl font-semibold">
                       가맹점{' '}{
                           store && store.storeName + " (" + store.storecode + ")"
-                      }{' '}청산내역
+                      }{' '}청산관리
                       </div>
                   </div>
 

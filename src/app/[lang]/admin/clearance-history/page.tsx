@@ -2863,7 +2863,7 @@ const fetchBuyOrders = async () => {
                   className="w-4 h-4"
                 />
                 <div className="text-sm font-semibold">
-                  청산내역
+                  청산관리
                 </div>
               </div>
 
@@ -2914,7 +2914,7 @@ const fetchBuyOrders = async () => {
               />
 
               <div className="text-xl font-semibold">
-                청산내역
+                청산관리
               </div>
 
           </div>
