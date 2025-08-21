@@ -7729,7 +7729,13 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
     {
       privateSale: true,
       storecode: storecode,
-      'seller.walletAddress': walletAddress,
+      
+      
+      //'seller.walletAddress': walletAddress,
+
+      'buyer.depositName': { $eq: '' },
+
+
       status: 'paymentRequested',
     }
   );
