@@ -451,6 +451,11 @@ export async function getAllAgents(
     query.agentName = { $regex: String(search), $options: 'i' };
   }
 
+  // exclude agentcode is "head"
+  query.agentcode = { $ne: 'head' };
+
+  
+
   const totalCount = await collection.countDocuments(query);
 
   const agents = await collection

@@ -7724,6 +7724,25 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
 
+
+  // get all of the paymentRequested orders
+  // project tradeId
+  const paymentRequestedOrders = await collection.find(
+    {
+      privateSale: true,
+      storecode: storecode,
+      'buyer.depositName': { $eq: '' },
+      status: 'paymentRequested',
+    },
+    {
+      projection: {
+        tradeId: 1,
+      },
+    }
+  ).toArray();
+
+  ////console.log('getPaymentRequestedCount paymentRequestedOrders: ' + JSON.stringify(paymentRequestedOrders));
+
   // get count of paymentRequested orders
   const count = await collection.countDocuments(
     {
