@@ -609,6 +609,13 @@ export async function getAllStores(
     query.agentcode = { $regex: String(agentcode), $options: 'i' };
   }
 
+
+  // exclude if stroecode is 'admin' or 'agent'
+
+  query.storecode = { $nin: ['admin', 'agent'] };
+
+  
+
   const totalCount = await collection.countDocuments(query);
 
   //console.log('getAllStores totalCount', totalCount);

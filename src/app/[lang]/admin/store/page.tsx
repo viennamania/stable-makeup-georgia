@@ -1080,7 +1080,7 @@ export default function Index({ params }: any) {
     //console.log('getAllStores data', data);
 
 
-    setAllStore(data.result.stores);
+    setAllStore(data.result.stores);    
     setTotalCount(data.result.totalCount);
     setSearchCount(data.result.searchCount);
 
@@ -2622,7 +2622,8 @@ export default function Index({ params }: any) {
 
 
                         {/* 청산건수<br/>청산금액(원)<br/>청산수량(USDT) */}
-                        <th className="p-2">
+                        {version !== 'bangbang' && (
+                          <th className="p-2">
 
                           <div className="flex flex-col items-center justify-center gap-2">
                             <div className="flex flex-row items-center justify-center gap-2">   
@@ -2641,8 +2642,11 @@ export default function Index({ params }: any) {
 
                           </div>
                         </th>
+                        )}
+
 
                         {/* USDT지갑 잔고 */}
+                        {version !== 'bangbang' && (
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
@@ -2657,6 +2661,7 @@ export default function Index({ params }: any) {
 
                           </div>
                         </th>
+                        )}
 
 
 
@@ -2734,11 +2739,21 @@ export default function Index({ params }: any) {
                                 {/* settings button */}
                                 <button
                                   disabled={!isAdmin || insertingStore}
+                                  
                                   onClick={() => {
-                                    router.push(
-                                      '/' + params.lang + '/admin/store/' + item.storecode + '/settings'
-                                    );
+
+                                    if (version === 'bangbang') {
+                                      router.push(
+                                        '/' + params.lang + '/admin/store/' + item.storecode + '/settings-bangbang'
+                                      );
+                                    } else {
+                                      router.push(
+                                        '/' + params.lang + '/admin/store/' + item.storecode + '/settings'
+                                      );
+                                    }
+
                                   }}
+
                                   className={`
                                     ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
                                     w-full
@@ -3267,7 +3282,7 @@ export default function Index({ params }: any) {
                           </td>
 
 
-
+                          {version !== 'bangbang' && (
                           <td className="p-2">
 
                             <div className="w-44 h-56
@@ -3350,8 +3365,10 @@ export default function Index({ params }: any) {
 
 
                           </td>
+                          )}
 
                           {/* USDT 잔액 */}
+                          {version !== 'bangbang' && (
                           <td className="p-2">
                             <div className="w-44
                               h-56
@@ -3449,6 +3466,7 @@ export default function Index({ params }: any) {
 
                             </div>
                           </td>
+                          )}
 
 
                         </tr>
