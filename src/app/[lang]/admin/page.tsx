@@ -97,6 +97,7 @@ import {
 
 import { paymentUrl } from "../../config/payment";
 
+import { version } from "../../config/version";
 
 
 
@@ -1390,6 +1391,8 @@ export default function Index({ params }: any) {
             </div>
 
 
+            
+            {version !== 'bangbang' && (
             <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
 
               <div className="w-full flex flex-col xl:flex-row items-center justify-start gap-2">
@@ -1551,7 +1554,7 @@ export default function Index({ params }: any) {
               </div>
 
             </div>
-
+            )}
 
 
 
@@ -1847,6 +1850,7 @@ export default function Index({ params }: any) {
 
 
             {/* total number of trades, total buy amount krw, total usdt amount */}
+            {version !== 'bangbang' && (
             <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
 
               <div className="w-full flex flex-col xl:flex-row items-center justify-start gap-2">
@@ -2036,7 +2040,7 @@ export default function Index({ params }: any) {
               */}
 
             </div>
-
+            )}
 
 
 

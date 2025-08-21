@@ -81,14 +81,9 @@ import { useSearchParams } from 'next/navigation';
 
 
 
-/*
-    {
-      date: '2025-07-25',
-      storecode: 'repruuqp',
-      totalUsdtAmount: 19339.14,
-      totalKrwAmount: 26688000
-    },
-    */
+import { version } from "../../../config/version";
+
+
 
 interface BuyOrder {
 
@@ -1466,6 +1461,7 @@ export default function Index({ params }: any) {
                   거래내역
               </button>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1476,6 +1472,7 @@ export default function Index({ params }: any) {
                   ">
                   청산관리
               </button>
+              )}
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
@@ -1502,6 +1499,7 @@ export default function Index({ params }: any) {
                 </div>
               </div>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1512,6 +1510,7 @@ export default function Index({ params }: any) {
                   ">
                   보유량내역
               </button>
+              )}
 
           </div>
 

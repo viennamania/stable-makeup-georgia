@@ -15,9 +15,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
-
-
+import {
+  clientId,
+  client
+} from "../../../client";
 
 import {
   getContract,
@@ -27,11 +28,6 @@ import {
 } from "thirdweb";
 
 
-
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
 
 import {
   ConnectButton,
@@ -83,6 +79,8 @@ import { useSearchParams } from 'next/navigation';
 
 // import datePicker
 import DatePicker from "react-datepicker";
+
+import { version } from "../../../config/version";
 
 
 interface BuyOrder {
@@ -164,8 +162,23 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -193,25 +206,52 @@ export default function Index({ params }: any) {
   
 
 
+
   const contract = getContract({
     // the client you have created via `createThirdwebClient()`
     client,
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
+
+
+
+
+  const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: bsc,
+
+    // the contract's address
+    address: bscContractAddressMKRW,
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
 
 
    useEffect(() => {
@@ -535,7 +575,11 @@ export default function Index({ params }: any) {
   
       //console.log(result);
   
-      setBalance( Number(result) / 10 ** 6 );
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
       /*
@@ -566,7 +610,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       if (address) getBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 
@@ -717,7 +761,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       getEscrowBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 
@@ -1367,12 +1411,20 @@ export default function Index({ params }: any) {
       }
 
       try {
+
         const balance = await balanceOf({
           contract,
           address: walletAddress,
         });
 
-        return Number(balance) / 10 ** 6; // Convert to USDT
+
+        ///return Number(balance) / 10 ** 6; // Convert to USDT
+        if (chain === 'bsc') {
+          return Number(balance) / 10 ** 18; // Convert to BSC
+        } else {
+          return Number(balance) / 10 ** 6; // Convert to USDT
+        }
+
       } catch (error) {
         console.error('Error fetching wallet balance:', error);
         return 0;
@@ -2019,7 +2071,7 @@ export default function Index({ params }: any) {
                     거래내역
                 </button>
 
-
+                {version !== 'bangbang' && (
                 <button
                     onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
                     className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -2030,6 +2082,7 @@ export default function Index({ params }: any) {
                     ">
                     청산관리
                 </button>
+                )}
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
@@ -2053,6 +2106,7 @@ export default function Index({ params }: any) {
                   통계(AG)
               </button>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -2063,6 +2117,7 @@ export default function Index({ params }: any) {
                   ">
                   보유량내역
               </button>
+              )}
 
             </div>
 

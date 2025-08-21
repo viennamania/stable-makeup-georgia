@@ -381,7 +381,7 @@ export default function SettingsPage({ params }: any) {
   
       const interval = setInterval(() => {
         if (address) getBalance();
-      } , 1000);
+      } , 5000);
   
       return () => clearInterval(interval);
   
@@ -846,7 +846,7 @@ export default function SettingsPage({ params }: any) {
 
     const interval = setInterval(() => {
         getEscrowBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 

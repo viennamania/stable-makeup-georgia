@@ -85,6 +85,9 @@ import { useSearchParams } from 'next/navigation';
 
 // import config/payment.ts
 import { paymentUrl } from "@/app/config/payment";
+import { version } from "../../../config/version";
+
+
 
 interface BuyOrder {
   _id: string;
@@ -580,7 +583,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       if (address) getBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 
@@ -731,7 +734,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       getEscrowBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 
@@ -1427,7 +1430,7 @@ export default function Index({ params }: any) {
     // interval
     const interval = setInterval(() => {
       fetchAllUsers();
-    } , 1000);
+    } , 5000);
     return () => clearInterval(interval);
   } , [address]);
   //console.log('allUsers', allUsers);
@@ -2162,16 +2165,18 @@ export default function Index({ params }: any) {
                   거래내역
               </button>
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover: scale-105
-                  transition-all duration-200 ease-in-out
-                  ">
-                  청산관리
-              </button>
+              {version !== 'bangbang' && (
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover: scale-105
+                    transition-all duration-200 ease-in-out
+                    ">
+                    청산관리
+                </button>
+              )}
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
@@ -2195,16 +2200,18 @@ export default function Index({ params }: any) {
                   통계(AG)
               </button>
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
+              { version !== 'bangbang' && (
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
                   보유량내역
-              </button>
+                </button>
+              )}
 
           </div>
 

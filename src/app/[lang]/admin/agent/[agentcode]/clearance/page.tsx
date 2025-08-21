@@ -604,7 +604,7 @@ export default function Index({ params }: any) {
   
       const interval = setInterval(() => {
         if (address) getBalance();
-      } , 1000);
+      } , 5000);
   
       return () => clearInterval(interval);
   
@@ -703,7 +703,7 @@ export default function Index({ params }: any) {
   
       const interval = setInterval(() => {
         getEscrowBalance();
-      } , 1000);
+      } , 5000);
   
       return () => clearInterval(interval);
   

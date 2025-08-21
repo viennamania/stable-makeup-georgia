@@ -80,6 +80,8 @@ import { get } from "http";
 import { useSearchParams } from 'next/navigation';
 
 
+import { version } from "../../../config/version";
+
 
 /*
     {
@@ -1632,8 +1634,6 @@ const fetchBuyOrders = async () => {
                   구매주문관리
               </button>
 
-
-
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1645,6 +1645,7 @@ const fetchBuyOrders = async () => {
                   거래내역
               </button>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1655,6 +1656,7 @@ const fetchBuyOrders = async () => {
                   ">
                   청산관리
               </button>
+              )}
 
 
               <div className='flex w-32 items-center justify-center gap-2
@@ -1682,6 +1684,7 @@ const fetchBuyOrders = async () => {
                   통계(AG)
               </button>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1692,6 +1695,7 @@ const fetchBuyOrders = async () => {
                   ">
                   보유량내역
               </button>
+              )}
 
           </div>
 

@@ -79,6 +79,7 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+import { version } from "../../../config/version";
 
 
 
@@ -560,7 +561,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       if (address) getBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 
@@ -711,7 +712,7 @@ export default function Index({ params }: any) {
 
     const interval = setInterval(() => {
       getEscrowBalance();
-    } , 1000);
+    } , 5000);
 
     return () => clearInterval(interval);
 
@@ -1605,6 +1606,7 @@ export default function Index({ params }: any) {
                   거래내역
               </button>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1615,6 +1617,7 @@ export default function Index({ params }: any) {
                   ">
                   청산관리
               </button>
+              )}
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
@@ -1638,6 +1641,7 @@ export default function Index({ params }: any) {
                   통계(AG)
               </button>
 
+              {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1648,6 +1652,7 @@ export default function Index({ params }: any) {
                   ">
                   보유량내역
               </button>
+              )}
 
             </div>
 

@@ -180,7 +180,7 @@ export default function SendUsdt() {
 
     const interval = setInterval(() => {
       if (address) getBalance();
-    } , 1000);
+    } , 5000);
 
   } , [address]);
 
