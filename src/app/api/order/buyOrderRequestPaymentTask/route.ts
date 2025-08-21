@@ -211,78 +211,85 @@ export async function POST(request: NextRequest) {
     const payactionWebhookKey = store?.payactionKey?.payactionWebhookKey;
     const payactionShopId = store?.payactionKey?.payactionShopId;
 
-    if (!payactionApiKey || !payactionShopId) {
-      console.error("Payaction API key or Shop ID is missing for storecode:", storecode);
-
-      continue;
-    }
+    if (payactionApiKey && payactionShopId) {
 
 
-    const order_number = buyOrder.tradeId;
-    const order_amount = buyOrder.krwAmount;
-    const order_date = new Date().toISOString();
-    const billing_name = buyOrder.buyer.depositName;
-    const orderer_name = buyOrder.buyer.depositName;
-    const orderer_phone_number = buyOrder?.mobile;
-    const orderer_email = buyOrder.buyer?.email;
-    const trade_usage = "USDT구매";
-    const identity_number = buyOrder.walletAddress;
+      const order_number = buyOrder.tradeId;
+      const order_amount = buyOrder.krwAmount;
+      const order_date = new Date().toISOString();
+      const billing_name = buyOrder.buyer.depositName;
+      const orderer_name = buyOrder.buyer.depositName;
+      const orderer_phone_number = buyOrder?.mobile;
+      const orderer_email = buyOrder.buyer?.email;
+      const trade_usage = "USDT구매";
+      const identity_number = buyOrder.walletAddress;
 
-    
-    const payactionUrl = "https://api.payaction.app/order";
-    const payactionBody = {
-      order_number: order_number,
-      order_amount: order_amount,
-      order_date: order_date,
-      billing_name: billing_name,
-      orderer_name: orderer_name,
-      orderer_phone_number: orderer_phone_number,
-      orderer_email: orderer_email,
-      trade_usage: trade_usage,
-      identity_number: identity_number,
-    };
-
-
-
-    const payactionHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-      "x-api-key": payactionApiKey,
       
-      "x-mall-id": payactionShopId,
+      const payactionUrl = "https://api.payaction.app/order";
+      const payactionBody = {
+        order_number: order_number,
+        order_amount: order_amount,
+        order_date: order_date,
+        billing_name: billing_name,
+        orderer_name: orderer_name,
+        orderer_phone_number: orderer_phone_number,
+        orderer_email: orderer_email,
+        trade_usage: trade_usage,
+        identity_number: identity_number,
+      };
 
-    };
-    const payactionOptions = {
-      method: "POST",
-      headers: payactionHeaders,
-      body: JSON.stringify(payactionBody),
-    };
 
-    try {
 
-      const payactionResponse = await fetch(payactionUrl, payactionOptions);
-
-      if (!payactionResponse.ok) {
-        console.error("Payaction API response error", payactionResponse.status, payactionResponse.statusText);
+      const payactionHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+        "x-api-key": payactionApiKey,
         
-        continue;
-      }
+        "x-mall-id": payactionShopId,
 
-      const payactionResult = await payactionResponse.json();
+      };
+      const payactionOptions = {
+        method: "POST",
+        headers: payactionHeaders,
+        body: JSON.stringify(payactionBody),
+      };
 
-      console.log("payactionResult", payactionResult);
-      /*
-      payactionResult { status: 'error', response: { message: '이미 해당 주문번호의 주문이 존재합니다.' } }
-      */
+      try {
+
+        const payactionResponse = await fetch(payactionUrl, payactionOptions);
+
+        if (!payactionResponse.ok) {
+          console.error("Payaction API response error", payactionResponse.status, payactionResponse.statusText);
+          
+          continue;
+        }
+
+        const payactionResult = await payactionResponse.json();
+
+        console.log("payactionResult", payactionResult);
+        /*
+        payactionResult { status: 'error', response: { message: '이미 해당 주문번호의 주문이 존재합니다.' } }
+        */
 
 
-      if (!payactionResult || typeof payactionResult !== "object") {
-        console.error("Payaction API response is not valid JSON", payactionResult);
-        continue;
-      }
+        if (!payactionResult || typeof payactionResult !== "object") {
+          console.error("Payaction API response is not valid JSON", payactionResult);
+          continue;
+        }
 
-      if (payactionResult.status !== "success") {
-        console.error("Payaction API error", payactionResult);
+        if (payactionResult.status !== "success") {
+          console.error("Payaction API error", payactionResult);
 
+
+          // updateBuyOrderPayactionResult
+          await updateBuyOrderPayactionResult({
+            orderId: buyOrder._id,
+            api: "/api/order/buyOrderRequestPaymentTask",
+            payactionResult: payactionResult,
+          });
+
+          continue;
+        }
+        
 
         // updateBuyOrderPayactionResult
         await updateBuyOrderPayactionResult({
@@ -290,86 +297,75 @@ export async function POST(request: NextRequest) {
           api: "/api/order/buyOrderRequestPaymentTask",
           payactionResult: payactionResult,
         });
+    
+    
 
-        continue;
-      }
-      
+        if (payactionResponse.status !== 200) {
+          
+          console.error("Payaction API error", payactionResult);
 
-      // updateBuyOrderPayactionResult
-      await updateBuyOrderPayactionResult({
-        orderId: buyOrder._id,
-        api: "/api/order/buyOrderRequestPaymentTask",
-        payactionResult: payactionResult,
-      });
-   
-  
 
-      if (payactionResponse.status !== 200) {
+          console.log("order_number", order_number);
+          console.log("order_amount", order_amount);
+          console.log("order_date", order_date);
+          console.log("billing_name", billing_name);
+          console.log("orderer_name", orderer_name);
+          console.log("orderer_phone_number", orderer_phone_number);
+          console.log("orderer_email", orderer_email);
+          console.log("trade_usage", trade_usage);
+          console.log("identity_number", identity_number);
+
+          continue;
+        }
+
+
         
-        console.error("Payaction API error", payactionResult);
+        //{ status: 'error', response: { message: '누락된 필드가 존재합니다.' } }
+        
+
+        
+        //{ status: 'success', response: {} }
+        
 
 
-        console.log("order_number", order_number);
-        console.log("order_amount", order_amount);
-        console.log("order_date", order_date);
-        console.log("billing_name", billing_name);
-        console.log("orderer_name", orderer_name);
-        console.log("orderer_phone_number", orderer_phone_number);
-        console.log("orderer_email", orderer_email);
-        console.log("trade_usage", trade_usage);
-        console.log("identity_number", identity_number);
+        if (payactionResult.status !== "success") {
 
+          console.error("Payaction API error", payactionResult);
+
+
+          console.log("order_number", order_number);
+          console.log("order_amount", order_amount);
+          console.log("order_date", order_date);
+          console.log("billing_name", billing_name);
+          console.log("orderer_name", orderer_name);
+          console.log("orderer_phone_number", orderer_phone_number);
+          console.log("orderer_email", orderer_email);
+          console.log("trade_usage", trade_usage);
+          console.log("identity_number", identity_number);
+
+
+          // {
+          //    status: 'NOT_RUN',
+          //    message: "The condition for the workflow order-v2 is not met. Workflow won't run"
+          //}
+
+          // { status: 'error', response: { message: '이미 해당 주문번호의 주문이 존재합니다.' } }
+
+
+          //throw new Error("Payaction API error");
+          continue;
+        }
+
+        
+      
+      } catch (error) {
+        console.error("Error calling Payaction API", error);
+        //throw new Error("Error calling Payaction API");
         continue;
       }
-
-
-      
-      //{ status: 'error', response: { message: '누락된 필드가 존재합니다.' } }
-      
-
-      
-      //{ status: 'success', response: {} }
-      
-
-
-      if (payactionResult.status !== "success") {
-
-        console.error("Payaction API error", payactionResult);
-
-
-        console.log("order_number", order_number);
-        console.log("order_amount", order_amount);
-        console.log("order_date", order_date);
-        console.log("billing_name", billing_name);
-        console.log("orderer_name", orderer_name);
-        console.log("orderer_phone_number", orderer_phone_number);
-        console.log("orderer_email", orderer_email);
-        console.log("trade_usage", trade_usage);
-        console.log("identity_number", identity_number);
-
-
-        // {
-        //    status: 'NOT_RUN',
-        //    message: "The condition for the workflow order-v2 is not met. Workflow won't run"
-         //}
-
-        // { status: 'error', response: { message: '이미 해당 주문번호의 주문이 존재합니다.' } }
-
-
-        //throw new Error("Payaction API error");
-        continue;
-      }
-
-      
     
-    } catch (error) {
-      console.error("Error calling Payaction API", error);
-      //throw new Error("Error calling Payaction API");
-      continue;
+
     }
-    
-
-
 
 
     /*
