@@ -79,6 +79,7 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+import { version } from "../../../config/version";
 
 
 
@@ -3030,8 +3031,9 @@ const fetchBuyOrders = async () => {
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-                {/* 가맹점 보유량 */}
-                <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+              {/* 가맹점 보유량 */}
+              {version !== 'bangbang' && (
+              <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
                 bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
                 <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
@@ -3114,7 +3116,7 @@ const fetchBuyOrders = async () => {
                 </button>
 
               </div>
-
+              )}
 
               {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
@@ -3217,6 +3219,7 @@ const fetchBuyOrders = async () => {
 
 
               {/* 가맹점 판매금 */}
+              {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -3263,7 +3266,8 @@ const fetchBuyOrders = async () => {
                   </span>
                 </div>
 
-                </div> 
+              </div>
+              )}
 
             </div>
 
@@ -3310,7 +3314,7 @@ const fetchBuyOrders = async () => {
                     </div>
                   </div>
 
-
+                {version !== 'bangbang' && (
                 <button
                     onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
                     className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -3321,7 +3325,9 @@ const fetchBuyOrders = async () => {
                     ">
                     판매(거래소)
                 </button>
+                )}
 
+                {version !== 'bangbang' && (
                 <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -3332,6 +3338,7 @@ const fetchBuyOrders = async () => {
                   ">
                     출금(회원)
                 </button>
+                )}
 
                 <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}

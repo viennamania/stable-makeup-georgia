@@ -87,6 +87,9 @@ import { useSearchParams } from 'next/navigation';
 
 import { paymentUrl } from "../../../config/payment";
 
+import { version } from "../../../config/version";
+
+
 
 import {
   chain,
@@ -3616,6 +3619,7 @@ const fetchBuyOrders = async () => {
 
 
               {/* 가맹점 판매금 */}
+              {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -3662,7 +3666,8 @@ const fetchBuyOrders = async () => {
                   </span>
                 </div>
 
-                </div> 
+              </div> 
+              )}
 
             </div>
 
@@ -3708,6 +3713,7 @@ const fetchBuyOrders = async () => {
                 </button>
 
 
+                {version !== 'bangbang' && (
                 <button
                     onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
                     className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -3718,7 +3724,9 @@ const fetchBuyOrders = async () => {
                     ">
                     판매(거래소)
                 </button>
+                )}
 
+                {version !== 'bangbang' && (
                 <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -3729,6 +3737,7 @@ const fetchBuyOrders = async () => {
                   ">
                     출금(회원)
                 </button>
+                )}
 
                 <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}

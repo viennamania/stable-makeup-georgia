@@ -81,6 +81,9 @@ import { useSearchParams } from 'next/navigation';
 
 import { paymentUrl } from "../../../config/payment";
 
+import { version } from "../../../config/version";
+
+
 
 
 import {
@@ -1928,9 +1931,10 @@ export default function Index({ params }: any) {
 
 
           <div className="w-full flex flex-col items-end justify-end gap-2
-          border-b border-zinc-300 pb-2">
+            border-b border-zinc-300 pb-2">
 
             {/* 가맹점 보유량 */}
+            {version !== 'bangbang' && (
             <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
             bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
@@ -2014,6 +2018,7 @@ export default function Index({ params }: any) {
               </button>
 
             </div>
+            )}
 
 
             {/* 가맹점 거래 */}
@@ -2117,6 +2122,7 @@ export default function Index({ params }: any) {
 
 
             {/* 가맹점 판매금 */}
+            {version !== 'bangbang' && (
             <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
               <div className="flex flex-row gap-2 items-center">
                 <Image
@@ -2163,7 +2169,10 @@ export default function Index({ params }: any) {
                 </span>
               </div>
 
-              </div> 
+            </div> 
+            )}
+
+
 
           </div>
 
@@ -2658,6 +2667,7 @@ export default function Index({ params }: any) {
 
 
               {/* 최근 판매내역(거래소) */}
+              {version !== 'bangbang' && (
               <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
                   
                 <div className="w-full flex flex-row items-center justify-between gap-2">
@@ -2854,7 +2864,7 @@ export default function Index({ params }: any) {
 
 
               </div>
-
+              )}
 
 
 

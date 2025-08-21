@@ -83,6 +83,9 @@ import { useSearchParams } from 'next/navigation';
 
 import { paymentUrl } from "../../../config/payment";
 
+import { version } from "../../../config/version";
+
+
 
 interface BuyOrder {
   _id: string;
@@ -2155,8 +2158,9 @@ export default function Index({ params }: any) {
             border-b border-zinc-300 pb-2">
 
 
-                {/* 가맹점 보유량 */}
-                <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+              {/* 가맹점 보유량 */}
+              {version !== 'bangbang' && (
+              <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
                 bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
                 <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
@@ -2239,6 +2243,7 @@ export default function Index({ params }: any) {
                 </button>
 
               </div>
+              )}
 
 
               {/* 가맹점 거래 */}
@@ -2342,6 +2347,7 @@ export default function Index({ params }: any) {
 
 
               {/* 가맹점 판매금 */}
+              {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -2388,7 +2394,8 @@ export default function Index({ params }: any) {
                   </span>
                 </div>
 
-                </div> 
+              </div> 
+              )}
 
             </div>
 
@@ -2433,7 +2440,7 @@ export default function Index({ params }: any) {
                       거래내역
                   </button>
 
-
+                  {version !== 'bangbang' && (
                   <button
                       onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
                       className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -2444,7 +2451,9 @@ export default function Index({ params }: any) {
                       ">
                       판매(거래소)
                   </button>
+                  )}
 
+                  {version !== 'bangbang' && (
                   <button
                     onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
                     className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -2455,6 +2464,7 @@ export default function Index({ params }: any) {
                     ">
                       출금(회원)
                   </button>
+                  )}
 
                   <button
                     onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
