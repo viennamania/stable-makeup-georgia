@@ -1712,18 +1712,20 @@ export default function Index({ params }: any) {
                           <br/>
                           거래금액(원)
                         </th>
+
+                        <th className="hidden xl:block
+                          px-4 py-2 text-left">
+                          판매자
+                          <br/>
+                          결제방법
+                        </th>
+
                         <th className="px-4 py-2 text-right">
                           정산량(USDT)
                           <br/>
                           정산금액(원)
                         </th>
                     
-                        <th className="hidden xl:block
-                          px-4 py-2 text-left">
-                            판매자
-                            <br/>
-                            결제방법
-                          </th>
                         {/*
                         <th className="px-4 py-2 text-left">거래일시</th>
                         */}
@@ -1778,6 +1780,17 @@ export default function Index({ params }: any) {
                               </span>
                             </div>
                           </td>
+
+                          <td className="
+                            hidden xl:block
+                            px-4 py-2">
+                            {trade?.seller?.nickname.length > 10 ? trade?.seller?.nickname.slice(0, 10) + "..." : trade?.seller?.nickname}
+                            <br/>
+                            {trade?.store?.bankInfo?.bankName}
+                            <br/>
+                            {trade?.store?.bankInfo?.accountHolder}
+                          </td>
+
                           <td className="px-4 py-2">
                             <div className="flex flex-col items-end">
                               <div className="flex flex-row items-center justify-end gap-1">
@@ -1799,17 +1812,6 @@ export default function Index({ params }: any) {
                                 {Number(trade.settlement?.settlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                               </span>
                             </div>
-                          </td>
-
-
-                          <td className="
-                            hidden xl:block
-                            px-4 py-2">
-                            {trade?.seller?.nickname.length > 10 ? trade?.seller?.nickname.slice(0, 10) + "..." : trade?.seller?.nickname}
-                            <br/>
-                            {trade?.store?.bankInfo?.bankName}
-                            <br/>
-                            {trade?.store?.bankInfo?.accountHolder}
                           </td>
 
                           {/*}
