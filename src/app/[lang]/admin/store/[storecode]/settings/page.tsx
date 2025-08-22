@@ -2778,7 +2778,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        에스크로용 USDT지갑
+                                        판매자용 USDT지갑
                                     </span>
                                 </div>
 
@@ -2814,7 +2814,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 에스크로용 USDT지갑이 설정되지 않았습니다.
+                                    {store && store.storeName}의 가맹점 판매자용 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -2844,7 +2844,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 에스크로용 USDT지갑 변경</option>
+                                    <option value="">가맹점 판매자용 USDT지갑 변경</option>
                                     {allAdminSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2856,16 +2856,16 @@ export default function SettingsPage({ params }: any) {
                                     <button
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
-                                        toast.error('가맹점 에스크로용 USDT지갑을 선택하세요.');
+                                        toast.error('가맹점 판매자용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 에스크로용 USDT지갑과 동일합니다.');
+                                        toast.error('현재 가맹점 판매자용 USDT지갑과 동일합니다.');
                                         return;
                                         }
 
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT지갑을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2886,7 +2886,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    회원가입 후 가맹점 에스크로용 USDT지갑을 설정하세요.
+                                    회원가입 후 가맹점 판매자용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -2907,7 +2907,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 에스크로용 USDT지갑 변경</option>
+                                    <option value="">가맹점 판매자용 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2920,15 +2920,15 @@ export default function SettingsPage({ params }: any) {
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
                                         toast.error
-                                            ('가맹점 에스크로용 USDT지갑을 선택하세요.');
+                                            ('가맹점 판매자용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 에스크로용 USDT지갑과 동일합니다.');
+                                        toast.error('현재 가맹점 판매자용 USDT지갑과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 에스크로용 USDT지갑을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2949,7 +2949,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 에스크로용 USDT지갑을 설정하세요.
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 판매자용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
@@ -2959,14 +2959,14 @@ export default function SettingsPage({ params }: any) {
                             </div>
 
                             {/* store escrowAmountUSDT */}
-                            {/* 에스크로용 USDT 수량 */}
+                            {/* 판매자용 USDT 수량 */}
                             <div className='w-full flex flex-col items-start justify-center gap-2'>
 
                                 <div className='w-full flex flex-row items-center justify-start gap-2'>
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg text-zinc-500">
-                                        에스크로용 보유금 수량(USDT)
+                                        판매자용 보유금 수량(USDT)
                                     </span>
                                 </div>
 
@@ -3000,7 +3000,7 @@ export default function SettingsPage({ params }: any) {
                                     <input
                                         disabled={!address}
                                         className="bg-[#1f2937] text-zinc-100 rounded-lg p-2 text-sm"
-                                        placeholder="에스크로용 USDT지갑 수량을 입력하세요"
+                                        placeholder="판매자용 USDT지갑 수량을 입력하세요"
                                         value={escrowAmountUSDT}
                                         type='number'
                                         onChange={(e) => {
@@ -3024,7 +3024,7 @@ export default function SettingsPage({ params }: any) {
                                         onClick={() => {
 
                                             confirm(
-                                                `정말 ${escrowAmountUSDT}로 가맹점 에스크로용 USDT 수량을 변경하시겠습니까?`
+                                                `정말 ${escrowAmountUSDT}로 가맹점 판매자용 USDT 수량을 변경하시겠습니까?`
                                             ) && updateEscrowAmountUSDT();
                                         }}
                                     >
