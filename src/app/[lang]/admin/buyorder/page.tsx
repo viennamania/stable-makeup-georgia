@@ -3911,9 +3911,11 @@ const fetchBuyOrders = async () => {
                     {/* 오늘, 어제 */}
                     <button
                       onClick={() => {
-                        const today = new Date().toISOString().split("T")[0];
-                        setSearchFormDate(today);
-                        setSearchToDate(today);
+                        // korea time
+                        const today = new Date();
+                        today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                        setSearchFormDate(today.toISOString().split("T")[0]);
+                        setSearchToDate(today.toISOString().split("T")[0]);
                       }}
                       className="text-sm text-zinc-500 underline"
                     >
@@ -3921,18 +3923,20 @@ const fetchBuyOrders = async () => {
                     </button>
                     <button
                       onClick={() => {
-                        const yesterday = new Date(Date.now() - 86400000)
-                          .toISOString()
-                          .split("T")[0];
-                        setSearchFormDate(yesterday);
-                        setSearchToDate(yesterday);
+                        // korea time yesterday
+                        const today = new Date();
+                        today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        setSearchFormDate(yesterday.toISOString().split("T")[0]);
+                        setSearchToDate(yesterday.toISOString().split("T")[0]);
                       }}
                       className="text-sm text-zinc-500 underline"
                     >
                       어제
                     </button>
-                </div>
-                
+                  </div>
+
               </div>
 
 
