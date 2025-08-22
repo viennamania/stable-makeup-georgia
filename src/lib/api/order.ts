@@ -5987,7 +5987,7 @@ export async function getAllTradesByStorecode(
     {
       $group: {
         _id: null,
-        totalSettlementAmount: { $sum: '$settlement.settlementAmount' },
+        totalSettlementAmount: { $sum: { $toDouble: '$settlement.settlementAmount' } },
       }
     }
   ]).toArray();

@@ -2344,9 +2344,6 @@ export default function Index({ params }: any) {
                         style={{ fontFamily: 'monospace' }}>
                         {Number(storeSummary.totalBuyKrwAmount)?.toLocaleString()}
                       </p>
-                      <span className="text-lg text-zinc-500">
-                        원
-                      </span>
                     </div>
                   </div>
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -2393,9 +2390,6 @@ export default function Index({ params }: any) {
                               <span className="text-lg text-yellow-600"
                                 style={{ fontFamily: 'monospace' }}>
                                 {Number(order.krwAmount)?.toLocaleString()}
-                              </span>
-                              <span className="text-lg text-zinc-500">
-                                원
                               </span>
                             </div>
                           </td>
@@ -2510,9 +2504,6 @@ export default function Index({ params }: any) {
                           style={{ fontFamily: 'monospace' }}>
                           {Number(storeSummary.totalTradeKrwAmount)?.toLocaleString()}
                         </p>
-                        <span className="text-lg text-zinc-500">
-                          원
-                        </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -2553,9 +2544,6 @@ export default function Index({ params }: any) {
                           style={{ fontFamily: 'monospace' }}>
                           {Number(storeSummary.totalSettlementAmountKRW)?.toLocaleString()}
                         </p>
-                        <span className="text-lg text-zinc-500">
-                          원
-                        </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -2619,9 +2607,6 @@ export default function Index({ params }: any) {
                                 <span className="text-lg text-yellow-600"
                                   style={{ fontFamily: 'monospace' }}>
                                   {Number(trade.krwAmount)?.toLocaleString()}
-                                </span>
-                                <span className="text-sm text-zinc-500">
-                                  원
                                 </span>
                               </div>
                             </td>

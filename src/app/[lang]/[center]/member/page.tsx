@@ -2872,8 +2872,10 @@ export default function Index({ params }: any) {
                         <th className="p-2">회원아이디</th>
                         <th className="p-2">회원 통장</th>
                         <th className="p-2">구매수(건)</th>
-                        <th className="p-2">
-                          구매금액(원)<br/>구매량(USDT)
+                        <th className="p-2 text-right">
+                          구매량(USDT)
+                          <br />
+                          구매금액(원)
                         </th>
                         <th className="p-2">충전금액</th>
                         <th className="p-2">회원 결제페이지</th>
@@ -2934,16 +2936,7 @@ export default function Index({ params }: any) {
                               mr-5
                               w-48
                               flex flex-col items-end justify-center gap-1">
-                              <div className="w-full flex flex-row items-center justify-end gap-1">
-                                <span className="text-lg text-yellow-600 font-semibold"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
-                                {item?.totalPaymentConfirmedKrwAmount && item?.totalPaymentConfirmedKrwAmount.toLocaleString('ko-KR') || 0}
-                                </span>
-                                <span className="text-sm text-zinc-500">
-                                  원
-                                </span>
-                              </div>
+
                               <div className="w-full flex flex-row items-center justify-end gap-1">
                                 <Image
                                   src="/icon-tether.png"
@@ -2963,6 +2956,14 @@ export default function Index({ params }: any) {
                                 }
                                 </span>
                               </div>
+                              <div className="w-full flex flex-row items-center justify-end gap-1">
+                                <span className="text-lg text-yellow-600 font-semibold"
+                                  style={{ fontFamily: 'monospace' }}
+                                >
+                                {item?.totalPaymentConfirmedKrwAmount && item?.totalPaymentConfirmedKrwAmount.toLocaleString('ko-KR') || 0}
+                                </span>
+                              </div>
+
                             </div>
                           </td>
 
