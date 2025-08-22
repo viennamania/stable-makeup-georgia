@@ -1036,7 +1036,65 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // update usdtKRWRate
+    // 1300 - 1500
+    const [updatingUsdtKRWRate, setUpdatingUsdtKRWRate] = useState(false);
+    const [usdtKRWRate, setUsdtKRWRate] = useState(agent?.usdtKRWRate || 0.0);
 
+    const updateUsdtKRWRate = async () => {
+        if (updatingUsdtKRWRate) {
+            return;
+        }
+
+        if (!usdtKRWRate) {
+            toast.error("USDT-KRW 환율을 입력하세요");
+            return;
+        }
+        if (usdtKRWRate < 1300 || usdtKRWRate > 1500) {
+            toast.error("USDT-KRW 환율은 1300 ~ 1500으로 설정하세요");
+            return;
+        }
+        if (usdtKRWRate === agent?.usdtKRWRate) {
+            toast.error('현재 USDT-KRW 환율과 동일합니다.');
+            return;
+        }
+
+        setUpdatingUsdtKRWRate(true);
+        const response = await fetch('/api/agent/updateAgentUsdtKRWRate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                {
+                    agentcode: params.agentcode,
+                    usdtKRWRate: usdtKRWRate,
+                }
+            ),
+        });
+        if (!response.ok) {
+            setUpdatingUsdtKRWRate(false);
+            toast.error('USDT-KRW 환율 변경에 실패했습니다.');
+            return;
+        }
+        const data = await response.json();
+        //console.log('data', data);
+        if (data.result) {
+            toast.success('USDT-KRW 환율이 변경되었습니다.');
+            //setUsdtKRWRate(0);
+
+            //fetchStore();
+            setAgent({
+                ...agent,
+                usdtKRWRate: usdtKRWRate,
+            });
+
+        } else {
+            toast.error('USDT-KRW 환율 변경에 실패했습니다.');
+        }
+        setUpdatingUsdtKRWRate(false);
+        return data.result;
+    }
 
 
 
@@ -1600,9 +1658,73 @@ export default function SettingsPage({ params }: any) {
                             </div>
 
 
+                            {/* agent usdtKRWRate */}
+                            <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-300 p-4 rounded-lg">
+                                
 
+                                <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src="/icon-exchange-rate.png"
+                                        alt="Exchange Rate"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-zinc-500 font-semibold">
+                                        환율 설정
+                                    </span>
+                                </div>
 
+                                <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                    {/* dot */}
+                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                    <span className="text-lg text-zinc-500 font-semibold">
+                                        USDT-KRW 환율
+                                    </span>
+                                    <span className="text-xl text-blue-500 font-semibold">
+                                        {
+                                        agent?.usdtKRWRate.toLocaleString()
+                                        || "없음"
+                                        }
+                                    </span>
+                                </div>
 
+                                {/* updateUsdtKRWRate */}
+                                {/* 1300 - 1500 */}
+                                {/* step 1 */}
+                                <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                    <input
+                                        disabled={!address || updatingUsdtKRWRate}
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm"
+                                        placeholder="USDT-KRW 환율을 입력하세요 (1300 ~ 1500)"
+                                        value={usdtKRWRate}
+                                        type='number'
+                                        min={1300}
+                                        max={1500}
+                                        step={1}
+                                        onChange={(e) => {
+                                            if (e.target.value === '') {
+                                                setUsdtKRWRate('');
+                                                return;
+                                            }
+                                            setUsdtKRWRate(parseFloat(e.target.value));
+                                        }}
+                                    />
+                                    <button
+                                        disabled={!address || !usdtKRWRate || updatingUsdtKRWRate}
+                                        className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!usdtKRWRate || updatingUsdtKRWRate ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                            confirm(
+                                                `정말 ${usdtKRWRate}으로 USDT-KRW 환율을 변경하시겠습니까?`
+                                            ) && updateUsdtKRWRate();
+                                        }}
+                                    >
+                                        {updatingUsdtKRWRate ? "수정 중..." : "수정"}
+                                    </button>
+                                </div>
+
+                            </div>
 
                         {/*
                         <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-300 p-4 rounded-lg">

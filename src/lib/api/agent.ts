@@ -467,6 +467,8 @@ export async function getAllAgents(
       adminWalletAddress: 1,
       agentFeeWalletAddress: 1,
 
+      usdtKRWRate: 1,
+
       totalStoreCount: 1,
       totalTradeCount: 1,
       totalTradeAmount: 1,
@@ -654,4 +656,63 @@ export async function updateAgentFeePercent(
   } else {
     return false;
   }
+}
+
+
+// updateUsdtKRWRate
+export async function updateUsdtKRWRate(
+  {
+    agentcode,
+    usdtKRWRate,
+  }: {
+    agentcode: string;
+    usdtKRWRate: number;
+  }
+): Promise<boolean> {
+
+  console.log('updateUsdtKRWRate', agentcode, usdtKRWRate);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('agents');
+
+  // update agentcode
+  const result = await collection.updateOne(
+    { agentcode: agentcode },
+    { $set: { usdtKRWRate: usdtKRWRate } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+// getUsdtKRWRate
+export async function getUsdtKRWRate(
+  {
+    agentcode,
+  }: {
+    agentcode: string;
+  }
+): Promise<number | null> {
+
+  console.log('getUsdtKRWRate agentcode: ' + agentcode);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('agents');
+
+  const result = await collection.findOne<any>(
+    { agentcode: agentcode }
+  );
+
+  //console.log('getUsdtKRWRate result: ' + JSON.stringify(result));
+
+  if (result) {
+    return result.usdtKRWRate;
+  } else {
+    return null;
+  }
+
 }
