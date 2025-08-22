@@ -586,7 +586,10 @@ export async function deleteSellOrder(
 }
 
 
-// cancel sell order by orderId from buyer
+
+
+
+// cancel buy order by orderId from buyer
 export async function cancelTradeByBuyer(
 
   {
@@ -641,7 +644,7 @@ export async function cancelTradeByBuyer(
   );
 
 
-  console.log('cancelTradeByBuyer result: ' + JSON.stringify(result));
+  ///console.log('cancelTradeByBuyer result: ' + JSON.stringify(result));
   /*
   cancelTradeByBuyer result: {"acknowledged":true,"modifiedCount":0,"upsertedId":null,"upsertedCount":0,"matchedCount":0}
   */

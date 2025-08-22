@@ -1104,14 +1104,19 @@ export default function Index({ params }: any) {
 
       setCancellings(cancellings.map((item, i) => i === index ? true : item));
 
-      const response = await fetch('/api/order/cancelTradeByBuyer', {
+      //const response = await fetch('/api/order/cancelTradeByBuyer', {
+
+      const response = await fetch('/api/order/cancelTradeBySeller', {
+
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           orderId: orderId,
-          walletAddress: address
+          storecode: params.storecode,
+          walletAddress: address,
+          cancelTradeReason: "cancelled by seller",
         })
       });
 
@@ -3134,7 +3139,11 @@ export default function Index({ params }: any) {
                                         alt="loading"
                                         width={16}
                                         height={16}
-                                        className={cancellings[index] ? 'animate-spin' : 'hidden'}
+                                        className={`
+                                          ${cancellings[index] ? 'animate-spin' : 'hidden'}
+                                          w-4 h-4
+                                        `}
+
                                       />
                                       <span>{Cancel_My_Order}</span>
                                     </button>
