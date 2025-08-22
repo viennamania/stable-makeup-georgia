@@ -704,7 +704,12 @@ export async function getUsdtKRWRate(
   const collection = client.db(dbName).collection('agents');
 
   const result = await collection.findOne<any>(
-    { agentcode: agentcode }
+    { agentcode: agentcode },
+    {
+      projection: {
+        usdtKRWRate: 1,
+      },
+    }
   );
 
   //console.log('getUsdtKRWRate result: ' + JSON.stringify(result));
