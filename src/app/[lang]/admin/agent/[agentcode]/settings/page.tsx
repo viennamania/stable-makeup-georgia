@@ -1683,8 +1683,9 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                     <span className="text-xl text-blue-500 font-semibold">
                                         {
-                                        agent?.usdtKRWRate.toLocaleString()
-                                        || "없음"
+                                        agent?.usdtKRWRate && agent?.usdtKRWRate > 0
+                                        ? agent?.usdtKRWRate.toLocaleString()
+                                        : "없음"
                                         }
                                     </span>
                                 </div>
