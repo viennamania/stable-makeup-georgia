@@ -4263,6 +4263,34 @@ const fetchBuyOrders = async () => {
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     />
                   </div>
+
+                  <div className="flex flex-row items-center gap-2">
+                      {/* 오늘, 어제 */}
+                      <button
+                        onClick={() => {
+                          const today = new Date().toISOString().split("T")[0];
+                          setSearchFormDate(today);
+                          setSearchToDate(today);
+                        }}
+                        className="text-sm text-zinc-500 underline"
+                      >
+                        오늘
+                      </button>
+                      <button
+                        onClick={() => {
+                          const yesterday = new Date(Date.now() - 86400000)
+                            .toISOString()
+                            .split("T")[0];
+                          setSearchFormDate(yesterday);
+                          setSearchToDate(yesterday);
+                        }}
+                        className="text-sm text-zinc-500 underline"
+                      >
+                        어제
+                      </button>
+                  </div>
+
+
                 </div>
 
 
