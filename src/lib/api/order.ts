@@ -2821,6 +2821,8 @@ export async function getBuyOrdersForSeller(
     searchMyOrders,
     searchOrderStatusCancelled,
     searchOrderStatusCompleted,
+    fromDate,
+    toDate,
   }: {
     storecode: string;
     limit: number;
@@ -2829,6 +2831,8 @@ export async function getBuyOrdersForSeller(
     searchMyOrders: boolean;
     searchOrderStatusCancelled: boolean;
     searchOrderStatusCompleted: boolean;
+    fromDate: string;
+    toDate: string;
   }
 
 ): Promise<ResultProps> {
@@ -2840,9 +2844,9 @@ export async function getBuyOrdersForSeller(
 
   // status is not 'paymentConfirmed'
 
-  console.log('getBuyOrdersForSeller storecode: ' + storecode);
-  console.log('getBuyOrdersForSeller limit: ' + limit);
-  console.log('getBuyOrdersForSeller page: ' + page);
+  //console.log('getBuyOrdersForSeller storecode: ' + storecode);
+  //console.log('getBuyOrdersForSeller limit: ' + limit);
+  //console.log('getBuyOrdersForSeller page: ' + page);
 
 
 
@@ -2870,22 +2874,27 @@ export async function getBuyOrdersForSeller(
 
       },
       */
+      // createdAt is fromDate to toDate
 
-      
       {
+
         storecode:  storecode,
         walletAddress: walletAddress,
         privateSale: { $ne: true },
+
+        createdAt: {
+          $gte: new Date(fromDate),
+          $lte: new Date(toDate)
+        },
 
         status: (searchOrderStatusCancelled && searchOrderStatusCompleted ? { $in: ['cancelled', 'paymentConfirmed'] }
           : (searchOrderStatusCancelled ? 'cancelled'
           : (searchOrderStatusCompleted ? 'paymentConfirmed'
           : { $ne: 'nothing' }))),
+
       }
-    
+      // createdAt is fromDate to toDate
 
-
-      
       //{ projection: { _id: 0, emailVerified: 0 } }
 
     ).sort({ createdAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
@@ -2898,10 +2907,16 @@ export async function getBuyOrdersForSeller(
 
         privateSale: { $ne: true },
 
+        createdAt: {
+          $gte: new Date(fromDate),
+          $lte: new Date(toDate)
+        },
+
         status: (searchOrderStatusCancelled && searchOrderStatusCompleted ? { $in: ['cancelled', 'paymentConfirmed'] }
           : (searchOrderStatusCancelled ? 'cancelled'
           : (searchOrderStatusCompleted ? 'paymentConfirmed'
           : { $ne: 'nothing' }))),
+
       }
     );
 
@@ -2925,6 +2940,11 @@ export async function getBuyOrdersForSeller(
         // exclude private sale
         privateSale: { $ne: true },
 
+        createdAt: {
+          $gte: new Date(fromDate),
+          $lte: new Date(toDate)
+        },
+
         status: (searchOrderStatusCancelled && searchOrderStatusCompleted ? { $in: ['cancelled', 'paymentConfirmed'] }
           : (searchOrderStatusCancelled ? 'cancelled'
           : (searchOrderStatusCompleted ? 'paymentConfirmed'
@@ -2941,6 +2961,11 @@ export async function getBuyOrdersForSeller(
       {
         storecode: storecode,
         privateSale: { $ne: true },
+
+        createdAt: {
+          $gte: new Date(fromDate),
+          $lte: new Date(toDate)
+        },
 
         status: (searchOrderStatusCancelled && searchOrderStatusCompleted ? { $in: ['cancelled', 'paymentConfirmed'] }
           : (searchOrderStatusCancelled ? 'cancelled'

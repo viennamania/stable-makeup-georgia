@@ -723,9 +723,39 @@ export default function Index({ params }: any) {
     const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
     const [totalClearanceAmountKRW, setTotalClearanceAmountKRW] = useState(0);
 
+    const [totalCount, setTotalCount] = useState(0);
     const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
     const [searchMyOrders, setSearchMyOrders] = useState(false);
+
+
+    const [limitValue, setLimitValue] = useState(20);
+    useEffect(() => {
+      const limit = searchParams.get('limit') || 20;
+      setLimitValue(Number(limit));
+    }, [searchParams]);
+
+
+
+    const [pageValue, setPageValue] = useState(1);
+    useEffect(() => {
+      const page = searchParams.get('page') || 1;
+      setPageValue(Number(page));
+    }, [searchParams]);
+
+
+
+    const today = new Date();
+    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+    // search form date to date
+    const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+    const [searchToDate, setSearchToDate] = useState(formattedDate);
+
+
+
+
 
 
     const [loadingFetchBuyOrders, setLoadingFetchBuyOrders] = useState(false);
@@ -750,10 +780,13 @@ export default function Index({ params }: any) {
         body: JSON.stringify({
           lang: params.lang,
           storecode: params.storecode,
-          //storecode: "admin",
+          limit: Number(limitValue),
+          page: Number(pageValue),
           walletAddress: address,
           searchMyOrders: searchMyOrders,
           privateSale: true,
+          fromDate: searchFromDate,
+          toDate: searchToDate,
         })
       });
 
@@ -766,7 +799,7 @@ export default function Index({ params }: any) {
 
       if (data.result) {
         setBuyOrders(data.result.orders);
-
+        setTotalCount(data.result.totalCount);
 
         setTotalClearanceCount(data.result.totalClearanceCount);
         setTotalClearanceAmount(data.result.totalClearanceAmount);
@@ -801,9 +834,9 @@ export default function Index({ params }: any) {
         }, 10000);
 
         return () => clearInterval(interval);
-      
-  
-    }, [address, searchMyOrders, params.lang, params.storecode]);
+
+
+    }, [address, searchMyOrders, params.lang, params.storecode, limitValue, pageValue, searchFromDate, searchToDate]);
 
 
 
@@ -984,7 +1017,8 @@ export default function Index({ params }: any) {
           },
           body: JSON.stringify({
             lang: params.lang,
-            
+            limit: Number(limitValue),
+            page: Number(pageValue),
             storecode: params.storecode,
             //storecode: "admin",
 
@@ -992,7 +1026,8 @@ export default function Index({ params }: any) {
             searchMyOrders: searchMyOrders,
 
             privateSale: true,
-
+            fromDate: searchFromDate,
+            toDate: searchToDate
 
           })
         }).then(async (response) => {
@@ -1000,6 +1035,7 @@ export default function Index({ params }: any) {
           //console.log('data', data);
           if (data.result) {
             setBuyOrders(data.result.orders);
+            setTotalCount(data.result.totalCount);
 
             setTotalClearanceCount(data.result.totalClearanceCount);
             setTotalClearanceAmount(data.result.totalClearanceAmount);
@@ -1136,12 +1172,16 @@ export default function Index({ params }: any) {
           },
           body: JSON.stringify({
             body: JSON.stringify({
-            lang: params.lang,
-            storecode: params.storecode,
-            //storecode: "admin",
-            walletAddress: address,
-            searchMyOrders: searchMyOrders,
-            privateSale: true,
+              lang: params.lang,
+              limit: Number(limitValue),
+              page: Number(pageValue),
+              storecode: params.storecode,
+              //storecode: "admin",
+              walletAddress: address,
+              searchMyOrders: searchMyOrders,
+              privateSale: true,
+              fromDate: searchFromDate,
+              toDate: searchToDate
         })
           })
         }).then(async (response) => {
@@ -1149,7 +1189,7 @@ export default function Index({ params }: any) {
           //console.log('data', data);
           if (data.result) {
             setBuyOrders(data.result.orders);
-
+            setTotalCount(data.result.totalCount);
             setTotalClearanceCount(data.result.totalClearanceCount);
             setTotalClearanceAmount(data.result.totalClearanceAmount);
             setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
@@ -1376,15 +1416,14 @@ export default function Index({ params }: any) {
       },
       body: JSON.stringify({
         lang: params.lang,
-        
+        limit: Number(limitValue),
+        page: Number(pageValue),
         storecode: params.storecode,
-        //storecode: "admin",
-
         walletAddress: address,
         searchMyOrders: searchMyOrders,
-
         privateSale: true,
-
+        fromDate: searchFromDate,
+        toDate: searchToDate,
 
       })
     }).then(async (response) => {
@@ -1392,7 +1431,7 @@ export default function Index({ params }: any) {
       //console.log('data', data);
       if (data.result) {
         setBuyOrders(data.result.orders);
-
+        setTotalCount(data.result.totalCount);
         setTotalClearanceCount(data.result.totalClearanceCount);
         setTotalClearanceAmount(data.result.totalClearanceAmount);
         setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
@@ -2569,18 +2608,59 @@ export default function Index({ params }: any) {
                   </div>
 
          
+
+
                   <div className="mt-10 w-full flex flex-row items-center justify-between gap-4">
 
-                 
 
 
+                    {/* serach fromDate and toDate */}
+                    {/* DatePicker for fromDate and toDate */}
+                    <div className="flex flex-col xl:flex-row items-center gap-2">
+                      <div className="flex flex-row items-center gap-2">
+                        <Image
+                          src="/icon-calendar.png"
+                          alt="Calendar"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-5 h-5"
+                        />
+                        <input
+                          type="date"
+                          value={searchFromDate}
+                          onChange={(e) => setSearchFormDate(e.target.value)}
+                          className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                        />
+                      </div>
+
+                      <span className="text-sm text-gray-500">~</span>
+
+                      <div className="flex flex-row items-center gap-2">
+                        <Image
+                          src="/icon-calendar.png"
+                          alt="Calendar"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-5 h-5"
+                        />
+                        <input
+                          type="date"
+                          value={searchToDate}
+                          onChange={(e) => setSearchToDate(e.target.value)}
+                          className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                        />
+                      </div>
+                    </div>
+
+
+                    {/*
                     <div className="flex flex-col gap-2 items-center">
                       <div className="text-sm">건수</div>
                       <div className="text-xl font-semibold text-zinc-400">
                         {buyOrders.length.toLocaleString()}
                       </div>
                     </div>
-
+                    */}
 
 
 
@@ -3895,6 +3975,119 @@ export default function Index({ params }: any) {
                 )}
 
             </div>
+
+
+
+
+
+          {/* pagination */}
+          {/* url query string */}
+          {/* 1 2 3 4 5 6 7 8 9 10 */}
+          {/* ?limit=10&page=1 */}
+          {/* submit button */}
+          {/* totalPage = Math.ceil(totalCount / limit) */}
+          <div className="mt-4 flex flex-row items-center justify-center gap-4">
+
+
+            <div className="flex flex-row items-center gap-2">
+              <select
+                value={limitValue}
+                onChange={(e) =>
+
+                  router.push(`/${params.lang}/admin/store/${params.storecode}/clearance?limit=${e.target.value}&page=1`)
+
+                }
+
+                className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            {/* 처음 페이지로 이동 */}
+            <button
+              disabled={Number(pageValue) <= 1}
+              className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              onClick={() => {
+
+                router.push(`/${params.lang}/admin/store/${params.storecode}/clearance?limit=${limitValue}&page=1`);
+
+              }}
+            >
+              처음
+            </button>
+
+
+            <button
+              disabled={Number(pageValue) <= 1}
+              className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              onClick={() => {
+
+                router.push(`/${params.lang}/admin/store/${params.storecode}/clearance?limit=${limitValue}&page=${Number(pageValue) - 1}`);
+
+              }}
+            >
+              이전
+            </button>
+
+
+            <span className="text-sm text-zinc-500">
+              {pageValue} / {Math.ceil(Number(totalCount) / Number(limitValue))}
+            </span>
+
+
+            <button
+              disabled={Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue))}
+              className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              onClick={() => {
+
+                router.push(`/${params.lang}/admin/store/${params.storecode}/clearance?limit=${limitValue}&page=${Number(pageValue) + 1}`);
+
+              }}
+            >
+              다음
+            </button>
+
+            {/* 마지막 페이지로 이동 */}
+            <button
+              disabled={Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue))}
+              className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              onClick={() => {
+
+                router.push(`/${params.lang}/admin/store/${params.storecode}/clearance?limit=${limitValue}&page=${Math.ceil(Number(totalCount) / Number(limitValue))}`);
+
+              }}
+            >
+              마지막
+            </button>
+
+          </div>
+
+
+
+          <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
+            <div className="text-sm text-zinc-600">
+              © 2024 Stable Makeup. All rights reserved.
+            </div>
+            <div className="text-sm text-zinc-600">
+              <a href={`/${params.lang}/terms-of-service`} className="text-blue-500 hover:underline">
+                이용약관
+              </a>
+              {' | '}
+              <a href={`/${params.lang}/privacy-policy`} className="text-blue-500 hover:underline">
+                개인정보처리방침
+              </a>
+              {' | '}
+              <a href={`/${params.lang}/contact`} className="text-blue-500 hover:underline">
+                고객센터
+              </a>
+            </div>
+          </div> 
+
+
 
             
           </div>

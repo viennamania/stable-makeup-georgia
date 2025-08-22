@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     toDate,
   });
 
- 
+  ///console.log('getCollectOrdersForSeller result: ' + JSON.stringify(result));
+
   return NextResponse.json({
 
     result,

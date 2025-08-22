@@ -795,13 +795,6 @@ export default function Index({ params }: any) {
 
 
 
-  // limit number
-  //const [limitValue, setLimitValue] = useState(searchParams.get('limit') || 20);
-  /*
-  useEffect(() => {
-    setLimitValue(limit || 20);
-  }, [limit]);
-  */
 
   const [limitValue, setLimitValue] = useState(20);
   useEffect(() => {
@@ -810,13 +803,6 @@ export default function Index({ params }: any) {
   }, [searchParams]);
 
 
-  // page number
-  //const [pageValue, setPageValue] = useState(searchParams.get('page') || 1);
-  /*
-  useEffect(() => {
-    setPageValue(page || 1);
-  }, [page]);
-  */
 
   const [pageValue, setPageValue] = useState(1);
   useEffect(() => {

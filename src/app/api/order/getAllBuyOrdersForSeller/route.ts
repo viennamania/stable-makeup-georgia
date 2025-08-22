@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
     searchMyOrders,
     searchOrderStatusCancelled,
     searchOrderStatusCompleted,
+    fromDate,
+    toDate,
   } = body;
 
 
@@ -30,9 +32,14 @@ export async function POST(request: NextRequest) {
     searchMyOrders,
     searchOrderStatusCancelled,
     searchOrderStatusCompleted,
+    fromDate,
+    toDate,
   });
 
- 
+
+
+  ///console.log('getBuyOrdersForSeller result: ' + JSON.stringify(result));
+
   return NextResponse.json({
 
     result,
