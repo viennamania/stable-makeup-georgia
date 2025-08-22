@@ -215,7 +215,7 @@ export default function Index({ params }: any) {
 
 
   // limit, page number params
-
+  /*
   const limit = searchParams.get('limit') || 20;
   const page = searchParams.get('page') || 1;
 
@@ -227,6 +227,11 @@ export default function Index({ params }: any) {
       setPageValue(searchParams.get('page') || 1);
     }
   }, [searchParams]);
+  */
+
+
+ 
+
 
 
 
@@ -923,7 +928,7 @@ export default function Index({ params }: any) {
 
 
 
-
+  /*
   // search form date to date
   const [searchFormDate, setSearchFormDate] = useState("");
   // from date is not today, but today - 30 days
@@ -943,22 +948,78 @@ export default function Index({ params }: any) {
     const toDate = new Date(today.setDate(today.getDate() + 1)); // add 1 day to today
     setSearchToDate(toDate.toISOString().split('T')[0]); // YYYY-MM-DD format
   }, []);
+  */
 
 
 
-
-
+  /*
   // limit number
   const [limitValue, setLimitValue] = useState(limit || 20);
 
   // page number
   const [pageValue, setPageValue] = useState(page || 1);
+  */
+
+ const [limitValue, setLimitValue] = useState(20);
+  useEffect(() => {
+    const limit = searchParams.get('limit') || 20;
+    setLimitValue(Number(limit));
+  }, [searchParams]);
 
 
 
-  const [totalCount, setTotalCount] = useState(0);
+  const [pageValue, setPageValue] = useState(1);
+  useEffect(() => {
+    const page = searchParams.get('page') || 1;
+    setPageValue(Number(page));
+  }, [searchParams]);
+
+
+
+  const today = new Date();
+  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+  // search form date to date
+  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+  const [searchToDate, setSearchToDate] = useState(formattedDate);
+
+
+
+
+
+  //const [totalCount, setTotalCount] = useState(0);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+
+
+  /*
+  getAllBuyOrders result totalCount 367
+getAllBuyOrders result totalKrwAmount 91645000
+getAllBuyOrders result totalUsdtAmount 66409.36
+getAllBuyOrders result totalSettlementCount 367
+getAllBuyOrders result totalSettlementAmount 66021.883
+getAllBuyOrders result totalSettlementAmountKRW 91110233
+getAllBuyOrders result totalFeeAmount 387.477
+getAllBuyOrders result totalFeeAmountKRW 534718.74
+getAllBuyOrders result totalAgentFeeAmount 0
+getAllBuyOrders result totalAgentFeeAmountKRW 0
+*/
+
+  const [buyOrderStats, setBuyOrderStats] = useState({
+    totalCount: 0,
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+  });
+
+
 
 
   //console.log('buyOrders', buyOrders);
@@ -1111,7 +1172,7 @@ export default function Index({ params }: any) {
 
                     searchStoreName: searchStoreName,
 
-                    fromDate: searchFormDate,
+                    fromDate: searchFromDate,
                     toDate: searchToDate,
 
                   }
@@ -1122,7 +1183,21 @@ export default function Index({ params }: any) {
                 ///console.log('data', data);
                 setBuyOrders(data.result.orders);
 
-                setTotalCount(data.result.totalCount);
+                //setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
             })
 
 
@@ -1250,7 +1325,7 @@ export default function Index({ params }: any) {
 
               searchStoreName: searchStoreName,
 
-              fromDate: searchFormDate,
+              fromDate: searchFromDate,
               toDate: searchToDate,
             }
           )
@@ -1260,7 +1335,21 @@ export default function Index({ params }: any) {
           if (data.result) {
             setBuyOrders(data.result.orders);
 
-            setTotalCount(data.result.totalCount);
+            ////setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
           }
         });
 
@@ -1332,7 +1421,7 @@ export default function Index({ params }: any) {
 
               searchStoreName: searchStoreName,
 
-              fromDate: searchFormDate,
+              fromDate: searchFromDate,
               toDate: searchToDate,
             }
           )
@@ -1342,7 +1431,22 @@ export default function Index({ params }: any) {
           if (data.result) {
             setBuyOrders(data.result.orders);
 
-            setTotalCount(data.result.totalCount);
+            //setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
+
           }
         });
 
@@ -1621,7 +1725,7 @@ export default function Index({ params }: any) {
                   searchStoreName: searchStoreName,
 
 
-                  fromDate: searchFormDate,
+                  fromDate: searchFromDate,
                   toDate: searchToDate,
                 }
               )
@@ -1631,7 +1735,21 @@ export default function Index({ params }: any) {
               if (data.result) {
                 setBuyOrders(data.result.orders);
     
-                setTotalCount(data.result.totalCount);
+                //setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
               }
             });
 
@@ -1736,7 +1854,7 @@ export default function Index({ params }: any) {
 
                 searchStoreName: searchStoreName,
 
-                fromDate: searchFormDate,
+                fromDate: searchFromDate,
                 toDate: searchToDate,
               }
             )
@@ -1746,7 +1864,21 @@ export default function Index({ params }: any) {
             if (data.result) {
               setBuyOrders(data.result.orders);
   
-              setTotalCount(data.result.totalCount);
+              //setTotalCount(data.result.totalCount);
+
+              setBuyOrderStats({
+                totalCount: data.result.totalCount,
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+              });
+
             }
           });
 
@@ -2052,7 +2184,7 @@ export default function Index({ params }: any) {
 
                   searchStoreName: searchStoreName,
 
-                  fromDate: searchFormDate,
+                  fromDate: searchFromDate,
                   toDate: searchToDate,
                 }
               )
@@ -2062,7 +2194,22 @@ export default function Index({ params }: any) {
               if (data.result) {
                 setBuyOrders(data.result.orders);
     
-                setTotalCount(data.result.totalCount);
+                //setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
+
               }
             });
 
@@ -2209,7 +2356,7 @@ export default function Index({ params }: any) {
 
                 searchStoreName: searchStoreName,
 
-                fromDate: searchFormDate,
+                fromDate: searchFromDate,
                 toDate: searchToDate,
               }
             )
@@ -2219,7 +2366,22 @@ export default function Index({ params }: any) {
             if (data.result) {
               setBuyOrders(data.result.orders);
   
-              setTotalCount(data.result.totalCount);
+              //setTotalCount(data.result.totalCount);
+
+
+              setBuyOrderStats({
+                totalCount: data.result.totalCount,
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+              });
+
             }
           });
 
@@ -2374,7 +2536,7 @@ export default function Index({ params }: any) {
 
               searchStoreName: searchStoreName,
 
-              fromDate: searchFormDate,
+              fromDate: searchFromDate,
               toDate: searchToDate,
             }
           ),
@@ -2384,7 +2546,21 @@ export default function Index({ params }: any) {
             ///console.log('data', data);
             setBuyOrders(data.result.orders);
 
-            setTotalCount(data.result.totalCount);
+            //setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
         })
 
       }
@@ -2475,7 +2651,7 @@ export default function Index({ params }: any) {
 
               searchStoreName: searchStoreName,
 
-              fromDate: searchFormDate,
+              fromDate: searchFromDate,
               toDate: searchToDate,
             }
           ),
@@ -2485,7 +2661,21 @@ export default function Index({ params }: any) {
             ///console.log('data', data);
             setBuyOrders(data.result.orders);
 
-            setTotalCount(data.result.totalCount);
+            //setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
         })
 
       } else {
@@ -2585,7 +2775,7 @@ export default function Index({ params }: any) {
 
 
 
-  const [latestBuyOrder, setLatestBuyOrder] = useState<BuyOrder | null>(null);
+  //const [latestBuyOrder, setLatestBuyOrder] = useState<BuyOrder | null>(null);
 
 
   useEffect(() => {
@@ -2644,7 +2834,7 @@ export default function Index({ params }: any) {
 
               searchStoreName: searchStoreName,
 
-              fromDate: searchFormDate,
+              fromDate: searchFromDate,
               toDate: searchToDate,
             }
 
@@ -2699,10 +2889,24 @@ export default function Index({ params }: any) {
       }
       */
 
+
+
       setBuyOrders(data.result.orders);
 
-      setTotalCount(data.result.totalCount);
-      
+      //setTotalCount(data.result.totalCount);
+
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+      });
 
 
     }
@@ -2738,7 +2942,7 @@ export default function Index({ params }: any) {
     confirmPaymentCheck,
     rollbackPaymentCheck,
 
-    latestBuyOrder,
+    ///latestBuyOrder,
     searchOrderStatusCancelled,
     searchOrderStatusCompleted,
     
@@ -2748,6 +2952,8 @@ export default function Index({ params }: any) {
     limitValue,
     pageValue,
     searchStorecode,
+    searchFromDate,
+    searchToDate
 ]);
 
 
@@ -2777,7 +2983,7 @@ const fetchBuyOrders = async () => {
 
         searchStoreName: searchStoreName,
 
-        fromDate: searchFormDate,
+        fromDate: searchFromDate,
         toDate: searchToDate,
       }
 
@@ -2793,7 +2999,7 @@ const fetchBuyOrders = async () => {
   //console.log('data', data);
 
   setBuyOrders(data.result.orders);
-  setTotalCount(data.result.totalCount);
+  //setTotalCount(data.result.totalCount);
   setFetchingBuyOrders(false);
 
   return data.result.orders;
@@ -2886,7 +3092,7 @@ const fetchBuyOrders = async () => {
 
 
   
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
       totalCount: 0,
       totalKrwAmount: 0,
@@ -2921,17 +3127,6 @@ const fetchBuyOrders = async () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          /*
-          storecode: params.storecode,
-          walletAddress: address,
-          searchMyOrders: searchMyOrders,
-          searchOrderStatusCompleted: true,
-          //searchBuyer: searchBuyer,
-          //searchDepositName: searchDepositName,
-
-          //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-          */
 
           agentcode: params.agentcode,
           storecode: searchStorecode,
@@ -2972,7 +3167,6 @@ const fetchBuyOrders = async () => {
 
 
 
-
     useEffect(() => {
 
       if (!address) {
@@ -2989,7 +3183,7 @@ const fetchBuyOrders = async () => {
 
 
     } , [address, searchMyOrders, searchStorecode, searchOrderStatusCancelled, searchOrderStatusCompleted, ]);
-
+    */
 
 
 
@@ -3505,24 +3699,6 @@ const fetchBuyOrders = async () => {
                     </span>
                   </div>
 
-                  {/* mkrwBalance */}
-                  { mkrwBalance && mkrwBalance > 0 && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                          src="/icon-krw.png"
-                          alt="KRW"
-                          width={50}
-                          height={50}
-                          className="w-6 h-6"
-                      />
-                      <span className="text-2xl xl:text-4xl font-semibold text-green-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                          {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      </span>
-                    </div>
-                  )}
-
               </div>
           )}
 
@@ -3531,58 +3707,6 @@ const fetchBuyOrders = async () => {
           <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-5">
 
             <div className="flex flex-col xl:flex-row items-center gap-2">
-
-              {/* search bar */}
-              {/* searchStorecode */}
-              {/*
-              <div className="flex flex-col xl:flex-row items-center gap-2">
-                <input
-                  type="text"
-                  value={searchStoreName}
-                  onChange={(e) => setSearchStoreName(e.target.value)}
-                  placeholder="가맹점 이름"
-                  className="p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-
-                <button
-                  onClick={() => {
-                    setPageValue(1);
-                    fetchBuyOrders();
-                  }}
-                  //className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  className={
-                    `${fetchingBuyOrders ? 'bg-zinc-500' : 'bg-[#3167b4]'}
-                    w-32
-                    flex flex-row items-center justify-center gap-2
-                    text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80`
-                  }
-                >
-                  {fetchingBuyOrders ? (
-                    <Image
-                      src="/loading.png"
-                      alt="Loading"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5 animate-spin"
-                    />
-                  ) : (
-                    <Image
-                      src="/icon-search.png"
-                      alt="Search"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                  )}
-                  <span className="text-sm">
-                    {fetchingBuyOrders ? '검색중...' : '검색'}
-                  </span>
-                  
-                </button>
-
-              </div>
-              */}
-
 
 
               {/* select storecode */}
@@ -3683,6 +3807,46 @@ const fetchBuyOrders = async () => {
               </div>
 
 
+                {/* serach fromDate and toDate */}
+                {/* DatePicker for fromDate and toDate */}
+                <div className="flex flex-col xl:flex-row items-center gap-2">
+                  <div className="flex flex-row items-center gap-2">
+                    <Image
+                      src="/icon-calendar.png"
+                      alt="Calendar"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <input
+                      type="date"
+                      value={searchFromDate}
+                      onChange={(e) => setSearchFormDate(e.target.value)}
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+                  </div>
+
+                  <span className="text-sm text-gray-500">~</span>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <Image
+                      src="/icon-calendar.png"
+                      alt="Calendar"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <input
+                      type="date"
+                      value={searchToDate}
+                      onChange={(e) => setSearchToDate(e.target.value)}
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+                  </div>
+                </div>
+
+
+
             </div>
 
 
@@ -3754,20 +3918,11 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 거래수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalCount?.toLocaleString()}
+                  {buyOrderStats.totalCount?.toLocaleString()}
                 </div>
               </div>
 
               <div className="flex flex-row items-center justify-center gap-2">
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래금액(원)</div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <span className="text-xl font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {tradeSummary.totalKrwAmount?.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 거래량(USDT)</div>
@@ -3781,12 +3936,23 @@ const fetchBuyOrders = async () => {
                     />
                     <span className="text-xl font-semibold text-green-600"
                       style={{ fontFamily: 'monospace' }}>
-                      {tradeSummary.totalUsdtAmount
-                        ? tradeSummary.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.00'}
+                      {buyOrderStats.totalUsdtAmount
+                        ? buyOrderStats.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
                     </span>
                   </div>
                 </div>
+
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">총 거래금액(원)</div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalKrwAmount?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
               </div>
 
             </div>
@@ -3803,20 +3969,11 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 정산수(건)</div>
                     <span className="text-xl font-semibold text-zinc-500">
-                      {tradeSummary.totalSettlementCount?.toLocaleString()}
+                      {buyOrderStats.totalSettlementCount?.toLocaleString()}
                     </span>
                 </div>
 
                 <div className="flex flex-row items-center justify-center gap-2">
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 정산금액(원)</div>
-                    <div className="flex flex-row items-center justify-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
 
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">총 정산량(USDT)</div>
@@ -3830,12 +3987,23 @@ const fetchBuyOrders = async () => {
                       />
                       <span className="text-xl font-semibold text-green-600"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalSettlementAmount
-                          ? tradeSummary.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.00'}
+                        {buyOrderStats.totalSettlementAmount
+                          ? buyOrderStats.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.000'}
                       </span>
                     </div>
                   </div>
+
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">총 정산금액(원)</div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <span className="text-xl font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalSettlementAmountKRW?.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -3844,18 +4012,6 @@ const fetchBuyOrders = async () => {
 
                 <div className="flex flex-row gap-2 items-center
                   border-b border-zinc-300 pb-2">
-                  
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 PG 수수료(원)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalFeeAmountKRW
-                          ? tradeSummary.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0'}
-                      </span>
-                    </div>
-                  </div>
 
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">총 PG 수수료(USDT)</div>
@@ -3869,9 +4025,21 @@ const fetchBuyOrders = async () => {
                       />
                       <span className="text-xl font-semibold text-green-600"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalFeeAmount
-                          ? tradeSummary.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.00'}
+                        {buyOrderStats.totalFeeAmount
+                          ? buyOrderStats.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.000'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">총 PG 수수료(원)</div>
+                    <div className="w-full flex flex-row items-center justify-end gap-1">
+                      <span className="text-xl font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalFeeAmountKRW
+                          ? buyOrderStats.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0'}
                       </span>
                     </div>
                   </div>
@@ -3881,17 +4049,6 @@ const fetchBuyOrders = async () => {
 
                 <div className="flex flex-row gap-2 items-center">
 
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 AG 수수료(원)</div>
-                    <div className="w-full flex flex-row items-cneter justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalAgentFeeAmountKRW
-                          ? tradeSummary.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0'}
-                      </span>
-                    </div>
-                  </div>
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">총 AG 수수료(USDT)</div>
                     <div className="w-full flex flex-row items-center justify-end gap-1">
@@ -3904,9 +4061,21 @@ const fetchBuyOrders = async () => {
                       />
                       <span className="text-xl font-semibold text-green-600"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalAgentFeeAmount
-                          ? tradeSummary.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.00'}
+                        {buyOrderStats.totalAgentFeeAmount
+                          ? buyOrderStats.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.000'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">총 AG 수수료(원)</div>
+                    <div className="w-full flex flex-row items-cneter justify-end gap-1">
+                      <span className="text-xl font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalAgentFeeAmountKRW
+                          ? buyOrderStats.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0'}
                       </span>
                     </div>
                   </div>
@@ -4054,25 +4223,8 @@ const fetchBuyOrders = async () => {
               )}
             </div>
             )}
-
         
           </div>
-
-
-
-
-
-          {/* totalCount */}
-          <div className="w-full flex flex-row items-center justify-end gap-2 mt-4">
-            
-            <div className="flex flex-col items-start">
-              <span className="text-sm text-zinc-500">
-                검색결과: {totalCount || 0}
-              </span>
-            </div>
-
-          </div>
-
 
 
           {/* table view is horizontal scroll */}
@@ -7961,10 +8113,9 @@ const fetchBuyOrders = async () => {
 
           <div className="flex flex-row items-center gap-2">
             <select
-              value={limit}
+              value={limitValue}
               onChange={(e) =>
-                
-                router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${page}`)
+                router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${pageValue}`)
               }
 
               className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
@@ -7978,10 +8129,10 @@ const fetchBuyOrders = async () => {
 
           {/* 처음으로 */}
           <button
-            disabled={Number(page) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            disabled={Number(pageValue) <= 1}
+            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limit)}&page=1`)
+              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=1`)
             }}
           >
             처음으로
@@ -7989,11 +8140,11 @@ const fetchBuyOrders = async () => {
 
 
           <button
-            disabled={Number(page) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            disabled={Number(pageValue) <= 1}
+            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) - 1}`)
+
+              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=${Number(pageValue) - 1}`)
 
 
             }}
@@ -8003,16 +8154,16 @@ const fetchBuyOrders = async () => {
 
 
           <span className="text-sm text-zinc-500">
-            {page} / {Math.ceil(Number(totalCount) / Number(limit))}
+            {pageValue} / {Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}
           </span>
 
 
           <button
-            disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            disabled={Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}
+            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) + 1}`)
+
+              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=${Number(pageValue) + 1}`)
 
             }}
           >
@@ -8021,11 +8172,11 @@ const fetchBuyOrders = async () => {
 
           {/* 마지막으로 */}
           <button
-            disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            disabled={Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}
+            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`)
+
+              router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=${Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}`)
 
             }}
           >

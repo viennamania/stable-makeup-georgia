@@ -88,13 +88,18 @@ export async function POST(request: NextRequest) {
 
   });
 
-
-  //console.log("getAllBuyOrders result", result);
-
-
-
-
-
+  /*
+  console.log("getAllBuyOrders result totalCount", result.totalCount);
+  console.log("getAllBuyOrders result totalKrwAmount", result.totalKrwAmount);
+  console.log("getAllBuyOrders result totalUsdtAmount", result.totalUsdtAmount);
+  console.log("getAllBuyOrders result totalSettlementCount", result.totalSettlementCount);
+  console.log("getAllBuyOrders result totalSettlementAmount", result.totalSettlementAmount);
+  console.log("getAllBuyOrders result totalSettlementAmountKRW", result.totalSettlementAmountKRW);
+  console.log("getAllBuyOrders result totalFeeAmount", result.totalFeeAmount);
+  console.log("getAllBuyOrders result totalFeeAmountKRW", result.totalFeeAmountKRW);
+  console.log("getAllBuyOrders result totalAgentFeeAmount", result.totalAgentFeeAmount);
+  console.log("getAllBuyOrders result totalAgentFeeAmountKRW", result.totalAgentFeeAmountKRW);
+  */
  
   return NextResponse.json({
 
