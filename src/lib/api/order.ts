@@ -1664,6 +1664,8 @@ export async function insertBuyOrder(data: any) {
       tradeId: tradeId,
 
       escrowWallet: data.escrowWallet || '', // optional, can be empty
+
+      audioOn: true, // default true
     }
   );
 
@@ -7913,4 +7915,31 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
   );
 
   return count;
+}
+
+
+
+// updateAudioNotification
+export async function updateAudioNotification(data: any) {
+
+  if (!data.orderId || data.audioOn === undefined) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+
+  const result = await collection.updateOne(
+    { _id: new ObjectId(data.orderId) },
+    { $set: { audioOn: data.audioOn } }
+  );
+  
+  if (result.modifiedCount === 1) {
+    const updated = await collection.findOne<UserProps>(
+      { _id: new ObjectId(data.orderId) }
+    );
+    return updated;
+  } else {
+    return null;
+  }
 }

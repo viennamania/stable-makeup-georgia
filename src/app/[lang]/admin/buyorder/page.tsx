@@ -3245,6 +3245,9 @@ const fetchBuyOrders = async () => {
   // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
+  const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
+
+
   // Move fetchTotalBuyOrders outside of useEffect to avoid self-reference error
   const fetchTotalBuyOrders = async (): Promise<void> => {
     setLoadingTotalNumberOfBuyOrders(true);
@@ -3263,6 +3266,7 @@ const fetchBuyOrders = async () => {
     const data = await response.json();
     //console.log('getTotalNumberOfBuyOrders data', data);
     setTotalNumberOfBuyOrders(data.result.totalCount);
+    setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
 
     setLoadingTotalNumberOfBuyOrders(false);
   };
@@ -3283,13 +3287,23 @@ const fetchBuyOrders = async () => {
   }, [address]);
 
       
-
+  /*
   useEffect(() => {
     if (totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
       const audio = new Audio('/notification.wav'); 
       audio.play();
     }
   }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
+  */
+
+  useEffect(() => {
+    if (totalNumberOfAudioOnBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
+      const audio = new Audio('/notification.wav');
+      audio.play();
+    }
+  }, [totalNumberOfAudioOnBuyOrders, loadingTotalNumberOfBuyOrders]);
+
+
 
 
 
@@ -3342,6 +3356,55 @@ const fetchBuyOrders = async () => {
 
 
 
+
+    // audio notification state
+  const [audioNotification, setAudioNotification] = useState<boolean[]>([]);
+  
+  // keep audioNotification in sync with buyOrders
+  useEffect(() => {
+    setAudioNotification(
+      buyOrders.map((item) => !!item.audioOn)
+    );
+  }, [buyOrders]);
+  
+  // handleAudioToggle
+  const handleAudioToggle = (index: number, orderId: string) => {
+    // api call
+    fetch('/api/order/toggleAudioNotification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderId: orderId,
+        audioOn: !audioNotification[index],
+        walletAddress: address,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      
+      //console.log('toggleAudioNotification data', data);
+      //alert('toggleAudioNotification data: ' + JSON.stringify(data));
+      /*
+      {"success":true,"message":"Audio notification setting updated successfully"}
+      */
+
+      if (data.success) {
+        // update local state for immediate UI feedback
+        setAudioNotification((prev) =>
+          prev.map((v, i) => (i === index ? !v : v))
+        );
+        toast.success('오디오 알림 설정이 변경되었습니다.');
+      } else {
+        toast.error('오디오 알림 설정 변경에 실패했습니다.');
+      }
+    })
+    .catch(error => {
+      console.error('Error toggling audio notification:', error);
+      toast.error('오디오 알림 설정 변경에 실패했습니다.' + error.message);
+    });
+  };
 
 
 
@@ -4543,31 +4606,53 @@ const fetchBuyOrders = async () => {
                               </span>
                               */}
 
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {params.lang === 'ko' ? (
-                                  <p>{
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) :
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }</p>
-                                ) : (
-                                  <p>{
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) :
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }</p>
+                              <div className="flex flex-row items-center justify-start gap-1">
+                                <span className="text-sm text-zinc-500 font-semibold">
+                                  {params.lang === 'ko' ? (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }</p>
+                                  ) : (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }</p>
+                                  )}
+                                </span>
+                                {/* audioOn */}
+                                {item.status === 'ordered' || item.status === 'paymentRequested' && (
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <span className="text-xl text-zinc-500 font-semibold">
+                                      {item.audioOn ? (
+                                        '🔊'
+                                      ) : '🔇'}
+                                    </span>
+                                    {/* audioOn off button */}
+                                    <button
+                                      className="text-sm text-blue-600 font-semibold underline"
+                                      onClick={() => handleAudioToggle(
+                                        index,
+                                        item._id
+                                      )}
+                                    >
+                                      {item.audioOn ? '꺼기' : '켜기'}
+                                    </button>
+                                  </div>
                                 )}
-                              </span>
+                              </div>
 
                             </div>
                             {/*
@@ -6397,10 +6482,54 @@ const fetchBuyOrders = async () => {
 
                         {item?.settlement &&
                         (!item?.transactionHash || item?.transactionHash === '0x') && (
-                          <div className="flex flex-row gap-2 items-center justify-center">
-                            <span className="text-sm text-zinc-500">
-                              txid 저장이 누락되었습니다.
-                            </span>
+                          <div
+                            className="
+                              flex flex-row gap-2 items-center justify-between
+                              text-sm text-blue-600 font-semibold
+                              border border-blue-600 rounded-lg p-2
+                              bg-blue-100
+                              text-center
+                              hover:bg-blue-200
+                              cursor-pointer
+                              transition-all duration-200 ease-in-out
+                              hover:scale-105
+                              hover:shadow-lg
+                              hover:shadow-blue-500/50
+                            "
+                          >
+                              <div className="flex flex-col gap-2 items-start justify-start ml-2">
+                                <div className="flex flex-col gap-1 items-start justify-start">
+                                  <span className="text-sm">
+                                    판매한 테더(USDT) 수량
+                                  </span>
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <Image
+                                      src={`/token-usdt-icon.png`}
+                                      alt="USDT Logo"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-green-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}>
+                                      {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-zinc-500">
+                                    TXID 저장누락
+                                  </span>
+                                </div>
+                              </div>
+                              {/* chain logo */}
+                              <Image
+                                src={`/logo-chain-${chain}.png`}
+                                alt={`${chain} Logo`}
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
                           </div>
                         )}
 
