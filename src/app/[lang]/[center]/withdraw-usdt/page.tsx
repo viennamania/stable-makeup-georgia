@@ -1,11 +1,15 @@
-// send USDT
 'use client';
 
 
 import React, { use, useEffect, useState } from 'react';
 
 import { toast } from 'react-hot-toast';
-import { client } from '../../../client';
+
+
+import {
+  clientId,
+  client
+} from "../../../client";
 
 import {
     //ThirdwebProvider,
@@ -26,10 +30,7 @@ import {
     
 } from "thirdweb/react";
 
-import {
-    polygon,
-    arbitrum,
-} from "thirdweb/chains";
+
 
 import {
     getContract,
@@ -65,12 +66,22 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
 
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
 
-
-
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 /*
@@ -85,12 +96,6 @@ import {
   useRouter,
   useSearchParams
 } from "next//navigation";
-
-import { Select } from '@mui/material';
-import { Sen } from 'next/font/google';
-import { Router } from 'next/router';
-import path from 'path';
-
 
 
 
@@ -111,14 +116,21 @@ export default function SendUsdt({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum ,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -263,28 +275,11 @@ export default function SendUsdt({ params }: any) {
       });
 
   
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: params.center,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
     };
@@ -297,7 +292,7 @@ export default function SendUsdt({ params }: any) {
 
     return () => clearInterval(interval);
 
-  } , [address, contract, params.center]);
+  } , [address, contract]);
 
 
 

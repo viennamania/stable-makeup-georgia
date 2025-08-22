@@ -31,14 +31,6 @@ import {
 } from "thirdweb";
 
 
-
-import {
-  ethereum,
-  polygon,
-  arbitrum,
-  bsc,
-} from "thirdweb/chains";
-
 import {
   ConnectButton,
   useActiveAccount,
@@ -90,6 +82,13 @@ import { paymentUrl } from "../../../config/payment";
 import { version } from "../../../config/version";
 
 
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
 
 import {
   chain,
