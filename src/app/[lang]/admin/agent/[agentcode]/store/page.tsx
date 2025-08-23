@@ -79,6 +79,7 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+import { version } from "../../../../../config/version";
 
 
 
@@ -1981,7 +1982,13 @@ export default function Index({ params }: any) {
                               <div className="w-full flex flex-row items-center justify-center gap-2">
                                 <button
                                   onClick={() => {
-                                    router.push('/' + params.lang + '/admin/store/' + item.storecode + '/settings');
+                                    
+                                    if (version  === 'bangbang') {
+                                      router.push('/' + params.lang + '/admin/' + params.agentcode + '/' + item.storecode + '/settings-bangbang');
+                                    } else {
+                                      router.push('/' + params.lang + '/admin/' + params.agentcode + '/' + item.storecode + '/settings');
+                                    }
+
                                   }}
                                   className="w-full
                                   bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
