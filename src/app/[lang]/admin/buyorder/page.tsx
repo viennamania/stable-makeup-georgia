@@ -6753,7 +6753,7 @@ const fetchBuyOrders = async () => {
                                   <span className="
                                   w-14
                                   text-xs text-zinc-500">
-                                    AG 정산
+                                    AG 수수료
                                   </span>
                                   <span className="
                                   w-12 text-end
@@ -6769,7 +6769,7 @@ const fetchBuyOrders = async () => {
                                   <span className="
                                   w-14
                                   text-xs text-zinc-500">
-                                    PG 정산
+                                    PG 수수료
                                   </span>
                                   <span className="
                                   w-12  text-end
