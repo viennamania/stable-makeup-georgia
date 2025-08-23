@@ -2185,43 +2185,7 @@ export default function Index({ params }: any) {
 
       const data = await response.json();
 
-      //console.log('data', data);
 
-
-      // if data.result is different from buyOrders
-      // check neweset order is different from buyOrders
-      // then toasts message
-      //console.log('data.result.orders[0]', data.result.orders?.[0]);
-      //console.log('buyOrders[0]', buyOrders);
-
-
-      //console.log('buyOrders[0]', buyOrders?.[0]);
-
-      if (data.result.orders?.[0]?._id !== latestBuyOrder?._id) {
-
-        setLatestBuyOrder(data.result.orders?.[0] || null);
-
-   
-        
-        //toast.success(Newest_order_has_been_arrived);
-        toast.success('새로운 주문이 도착했습니다');
-
-
-
-
-        // <audio src="/racing.mp3" typeof="audio/mpeg" autoPlay={soundStatus} muted={!soundStatus} />
-        // audio play
-
-        //setSoundStatus(true);
-
-        // audio ding play
-
-        playSong();
-
-        // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
-
-
-      }
 
       setBuyOrders(data.result.orders);
 
@@ -4973,110 +4937,10 @@ const fetchBuyOrders = async () => {
                         </td>
 
 
-
-                        
-
-
-                        <td className="
-                          p-2">
-                          <div className="flex flex-col gap-2 items-end justify-center">
-
-                            <div className="w-full flex flex-row gap-2 items-center justify-center">
-                              <span className="
-                              w-14
-                              text-sm text-zinc-500">
-                                가맹점
-                              </span>
-                              <span className="
-                              w-14 text-end
-                              text-sm text-zinc-500"
-                                style={{
-                                  fontFamily: 'monospace',
-                                }}>
-                                {Number(
-                                  100 - (item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0) - (item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3)
-                                ).toFixed(2)
-                                }%
-                              </span>
-                            </div>
-
-                            <div className="w-full flex flex-row gap-2 items-center justify-center">
-                              <span className="
-                              w-14
-                              text-sm text-zinc-500">
-                                에이전트
-                              </span>
-                              <span className="
-                              w-14 text-end
-                              text-sm text-zinc-500"
-                                style={{
-                                  fontFamily: 'monospace',
-                                }}>
-                                {Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(2)}%
-                              </span>
-                            </div>
-
-                            <div className="w-full flex flex-row gap-2 items-center justify-center">
-                              <span className="
-                              w-14
-                              text-sm text-zinc-500">
-                                센터
-                              </span>
-                              <span className="
-                              w-14  text-end
-                              text-sm text-zinc-500"
-                                style={{
-                                  fontFamily: 'monospace',
-                                }}>
-                                {Number(item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3).toFixed(2)}%
-                              </span>
-                            </div>
-
-
-                            {/*
-                            <span className="text-sm text-zinc-500"
-                              style={{
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              가맹점:{' '}
-                              { //  settlementFeePercent
-                                // dealerFeePercent
-                                Number(
-                                  100 - (item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0) - (item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3)
-                                ).toFixed(2)
-
-                              }%
-                            </span>
-                            <span className="text-sm text-zinc-500"
-                              style={{
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              에이전트:{' '}
-                              {
-                                Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(2)
-                              }%
-                            </span>
-                            <span className="text-sm text-zinc-500"
-                              style={{
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              센터:{' '}
-                              {
-                                Number(item.store.settlementFeePercent ? item.store.settlementFeePercent : 0.3).toFixed(2)
-                              }%
-                            </span>
-                            */}
-
-
-                          </div>
-                        </td>
-
-
                         <td className="p-2">
-                          <div className="w-full flex flex-col gap-2 items-center justify-center">
+                          <div className="w-full flex flex-col gap-2 items-center justify-center
+                          bg-zinc-50
+                          p-4 rounded-lg shadow-sm">
 
                             {item?.settlement && (
 

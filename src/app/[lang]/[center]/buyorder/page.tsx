@@ -164,8 +164,6 @@ interface BuyOrder {
 }
 
 
-
-/*
 const wallets = [
   inAppWallet({
     auth: {
@@ -174,8 +172,8 @@ const wallets = [
         "discord",
         "email",
         "x",
-        "passkey",
-        "phone",
+        //"passkey",
+        //"phone",
         "facebook",
         "line",
         "apple",
@@ -193,17 +191,7 @@ const wallets = [
   createWallet("com.okex.wallet"),
 
 ];
-*/
 
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: [
-        "google",
-      ],
-    },
-  }),
-];
 
 
 
@@ -3755,14 +3743,14 @@ const fetchBuyOrders = async () => {
 
             </div>
 
-            {/* 판매자 지갑주소 */}
+            {/* 판매용 USDT지갑 */}
             {/* storeInfo.walletAddress */}
-            <div className="flex flex-col items-start xl:items-end gap-1">
+            <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
               <div className="flex flex-row gap-2 items-center">
                 {/* dot */}
                 <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
                 <span className="text-sm text-zinc-500">
-                  가맹점 판매자 지갑주소
+                  가맹점 판매용 USDT지갑
                 </span>
               </div>
               <div className="flex flex-row items-center justify-center gap-2">
@@ -3781,6 +3769,35 @@ const fetchBuyOrders = async () => {
                 </span>
               </div>
             </div>
+
+            {/* 결제용 USDT지갑 */}
+            {/* store.settlementWalletAddress */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
+              <div className="flex flex-row gap-2 items-center">
+                {/* dot */}
+                <div className="w-1 h-1 rounded-full bg-zinc-500" />
+                <span className="text-sm text-zinc-500">
+                  가맹점 결제용 USDT지갑
+                </span>
+              </div>
+              <div className="flex flex-row items-center justify-center gap-2">
+                <Image
+                  src="/icon-shield.png"
+                  alt="Shield"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5"
+                />
+                <span className="text-sm text-zinc-500">
+                  {
+                  store?.settlementWalletAddress
+                  && store?.settlementWalletAddress.slice(0, 6) + "..." + store?.settlementWalletAddress.slice(-4)
+                  }
+                </span>
+              </div>
+            </div>
+
+
 
             {address && (
                 <div className="mt-4 w-full flex flex-col xl:flex-row items-center justify-end gap-2">
@@ -6712,7 +6729,8 @@ const fetchBuyOrders = async () => {
 
 
                         <td className="p-2">
-                          <div className="w-full flex flex-col gap-2 items-center justify-center">
+                          <div className="w-full flex flex-col gap-2 items-center justify-center
+                            bg-zinc-50 p-4 rounded-lg shadow-sm">
 
                             {item?.settlement && (
 
