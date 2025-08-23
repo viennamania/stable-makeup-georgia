@@ -122,8 +122,6 @@ interface BuyOrder {
   agentcode: string;
 }
 
-
-/*
 const wallets = [
   inAppWallet({
     auth: {
@@ -132,8 +130,8 @@ const wallets = [
         "discord",
         "email",
         "x",
-        "passkey",
-        "phone",
+        //"passkey",
+        //"phone",
         "facebook",
         "line",
         "apple",
@@ -151,16 +149,6 @@ const wallets = [
   createWallet("com.okex.wallet"),
 
 ];
-*/
-const wallets = [
-    inAppWallet({
-      auth: {
-        options: [
-          "google",
-        ],
-      },
-    }),
-  ];
   
 
 
