@@ -2285,7 +2285,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        관리자용 USDT지갑
+                                        관리자용 지갑주소
                                     </span>
                                 </div>
 
@@ -2346,7 +2346,7 @@ export default function SettingsPage({ params }: any) {
                                             bg-white text-zinc-500 text-sm"
                                         disabled={updatingAdminWalletAddress}
                                         >
-                                        <option value="">가맹점 관리자용 USDT지갑 변경</option>
+                                        <option value="">가맹점 관리자용 지갑주소 변경</option>
                                         {allStoreSellers.map((user) => (
                                             <option key={user._id} value={user.walletAddress}>
                                             {user.nickname}

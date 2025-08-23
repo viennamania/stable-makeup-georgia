@@ -2140,6 +2140,46 @@ export default function SettingsPage({ params }: any) {
                                 
                                 </div>
                                 */}
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+                                    <div className="w-full flex flex-row items-center justify-start gap-2">
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg">
+                                            에이전트 수수료율
+                                        </span>
+                                        <span className="text-xl text-blue-500 font-semibold">
+                                            {store?.agentFeePercent || "없음"}%
+                                        </span>
+                                    </div>
+
+                                    <div className='flex flex-row gap-2 items-center justify-between'>
+                                        <input
+                                            disabled={!address || updatingAgentFeePercent}
+                                            className="bg-white text-zinc-500 rounded-lg p-2 text-sm"
+                                            placeholder="에이전트 수수료율을 입력하세요 (0.01 ~ 5.00)"
+                                            value={agentFeePercent}
+                                            type='number'
+                                            min={0.01}
+                                            max={5.00}
+                                            step={0.01}
+                                            onChange={(e) => {
+                                                setAgentFeePercent(parseFloat(e.target.value));
+                                            } }
+                                        />
+                                        <button
+                                            disabled={!address || !agentFeePercent || updatingAgentFeePercent}
+                                            className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                                ${!agentFeePercent || updatingAgentFeePercent ? "opacity-50" : ""}`}
+                                            onClick={() => {
+                                                confirm(
+                                                    `정말 ${agentFeePercent}으로 에이전트 수수료율을 변경하시겠습니까?`
+                                                ) && updateAgentFeePercent();
+                                            }}
+                                        >
+                                            {updatingAgentFeePercent ? "수정 중..." : "수정"}
+                                        </button>
+                                    </div>
+                                </div>
                                 
                             </div>
 
@@ -2193,7 +2233,7 @@ export default function SettingsPage({ params }: any) {
                             
                             
                             
-                            
+                            {/*
                             <div className='w-full flex flex-col items-center justify-center gap-2'>
                                 <div className="w-full flex flex-row items-center justify-start gap-2">
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
@@ -2206,6 +2246,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
 
                             </div>
+                            */}
          
 
                         </div>
@@ -2258,7 +2299,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        관리자용 USDT지갑
+                                        관리자용 지갑주소
                                     </span>
                                 </div>
 
@@ -2296,6 +2337,80 @@ export default function SettingsPage({ params }: any) {
                                     {store && store.storeName}의 가맹점 관리자 설정이 되어 있지 않습니다.
                                     </span>
                                 </div>
+                                )}
+
+
+                                {fetchingStore && (
+                                <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                />
+                                )}
+
+                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                
+                                    <div className="w-full flex flex-row items-center justify-center gap-2">
+                                        <select
+                                        value={selectedAdminWalletAddress}
+                                        //value={store?.adminWalletAddress}
+                                        onChange={(e) => setSelectedAdminWalletAddress(e.target.value)}
+                                        className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                            bg-white text-zinc-500 text-sm"
+                                        disabled={updatingAdminWalletAddress}
+                                        >
+                                        <option value="">가맹점 관리자용 지갑주소 변경</option>
+                                        {allStoreSellers.map((user) => (
+                                            <option key={user._id} value={user.walletAddress}>
+                                            {user.nickname}
+                                            {' '}
+                                            ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                            </option>
+                                        ))}
+                                        </select>
+                                        <button
+                                        onClick={() => {
+                                            if (!selectedAdminWalletAddress) {
+                                            toast.error('가맹점 관리자를 선택하세요.');
+                                            return;
+                                            }
+                                            if (selectedAdminWalletAddress === store?.adminWalletAddress) {
+                                            toast.error('현재 가맹점 관리자와 동일합니다.');
+                                            return;
+                                            }
+
+                                            confirm(
+                                            `정말 ${selectedAdminWalletAddress}로 가맹점 관리자를 변경하시겠습니까?`
+                                            ) && updateAdminWalletAddress();
+                                        }}
+                                        className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                            ${updatingAdminWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                        {updatingAdminWalletAddress ? '변경 중...' : '변경'}
+                                        </button> 
+                                    </div>
+                                ) : (
+                                    <div className='flex flex-col items-center justify-center gap-2'>
+                                        <div className="flex flex-row items-center justify-center gap-2">
+                                            <Image
+                                            src="/icon-warning.png"
+                                            alt="Warning"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                            />
+                                            <span className="text-sm text-red-500">
+                                            {store && store.storeName}의 회원이 없습니다.
+                                            <br />
+                                            가맹점 홈페이지에서 회원가입 후 가맹점 관리자를 설정하세요.
+                                            </span>
+                                        </div>
+
+
+
+                                    </div>
                                 )}
 
                             </div>
@@ -2349,127 +2464,79 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 )}
 
-                            </div>
-                        </div>
 
+                                {fetchingAllStoreSellers && (
+                                <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                />
+                                )}
 
-
-
-
-                        
-                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-400 p-4 rounded-lg">
-                            
-
-                            {/* store settlementFeeWalletAddress */}
-
-                            <div className='w-full flex flex-col items-start justify-center gap-2'>
-
-                                <div className='w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2'>
+                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                
+                                <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    {/* select list of all users */}
+                                    <select
+                                    value={selectedSettlementWalletAddress}
+                                    //value={store?.settlementWalletAddress}
+                                    onChange={(e) => setSelectedSettlementWalletAddress(e.target.value)}
+                                    className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                        bg-white text-zinc-500 text-sm"
+                                    disabled={updatingSettlementWalletAddress}
+                                    >
+                                    <option value="">가맹점 정산용 USDT지갑 변경</option>
+                                    {allStoreSellers.map((user) => (
+                                        <option key={user._id} value={user.walletAddress}>
+                                        {user.nickname}
+                                        {' '}
+                                        ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                        </option>
+                                    ))}
+                                    </select>
+                                    <button
+                                    onClick={() => {
+                                        if (!selectedSettlementWalletAddress) {
+                                        toast.error
+                                            ('가맹점 정산용 USDT지갑을 선택하세요.');
+                                        return;
+                                        }
+                                        if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
+                                        toast.error('현재 가맹점 정산용 USDT지갑과 동일합니다.');
+                                        return;
+                                        }
+                                        confirm(
+                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 정산용 USDT지갑을 변경하시겠습니까?`
+                                        ) && updateSettlementWalletAddress();
+                                    }}
+                                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                        ${updatingSettlementWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                    {updatingSettlementWalletAddress ? '변경 중...' : '변경'}
+                                    </button>
+                                </div>
+                                ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
                                     <Image
-                                        src="/icon-settlement.png"
-                                        alt="Settlement"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
                                     />
-                                    <span className="text-lg text-zinc-500">
-                                        가맹점 PG 수수료 설정
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 회원이 없습니다.
+                                    <br />
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 정산용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
-
-                                <div className="w-full flex flex-col items-center justify-center gap-2">
-
-                                    <div className="w-full flex flex-row items-center justify-start gap-2">
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            PG 수수료 수납용 USDT지갑
-                                        </span>
-                                    </div>
-
-
-
-                                    {!fetchingStore && store && store.settlementFeeWalletAddress ? (
-                                        <button
-                                            onClick={() => {
-                                            navigator.clipboard.writeText(store.settlementFeeWalletAddress);
-                                            toast.success(Copied_Wallet_Address);
-                                            } }
-                                            className="text-lg text-zinc-500 underline"
-                                        >
-                                            <div className='flex flex-row items-center justify-start gap-2'>
-                                                <Image
-                                                    src="/icon-shield.png"
-                                                    alt="Shield"
-                                                    width={20}
-                                                    height={20}
-                                                    className="w-5 h-5"
-                                                />
-                                                <span className="text-lg text-zinc-500">
-                                                    {store && store.settlementFeeWalletAddress.substring(0, 6)}...{store && store.settlementFeeWalletAddress.substring(store.settlementFeeWalletAddress.length - 4)}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ) : (
-                                        <div className="flex flex-row items-center justify-start gap-2">
-                                            <Image
-                                            src="/icon-warning.png"
-                                            alt="Warning"
-                                            width={20}
-                                            height={20}
-                                            className="w-5 h-5"
-                                            />
-                                            <span className="text-sm text-red-500">
-                                            {store && store.storeName}의 가맹점 PG 수수료 수납용 USDT지갑이 설정되지 않았습니다.
-                                            </span>
-                                        </div>
-                                    )}
-
-                                </div>
-                            </div>
-
-
-
-
-                            <div className='w-full flex flex-col items-start justify-center gap-2'>
-
-                                <div className='w-full flex flex-col gap-2 items-center justify-between'>
-                                    {/* store.settlementFeePercent */}
-                                    <div className="w-full flex flex-row items-center justify-start gap-2">
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            가맹점 PG 수수료율(%)
-                                        </span>
-                                    </div>
-                                    <div className='w-full flex flex-row items-center justify-center gap-2'>
-
-                                        <span className="text-lg text-zinc-500">
-                                            {store && store.settlementFeePercent || 0}%
-                                        </span>
-
-                                    </div>
-
-
-                                </div>
-                                <div className='flex flex-row gap-2 items-center justify-between'>
-                                    <Image
-                                        src="/icon-info.png"
-                                        alt="Info"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className='text-sm font-semibold'>
-                                        가맹점 PG 수수료율은 0.01 ~ 5.00%로 설정하세요
-                                    </span>
-                                </div>
+                                )}
 
 
 
                             </div>
-
                         </div>
 
 
