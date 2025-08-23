@@ -526,7 +526,7 @@ export default function Index({ params }: any) {
   
 
 
-  const [nativeBalance, setNativeBalance] = useState(0);
+
   const [balance, setBalance] = useState(0);
   useEffect(() => {
 

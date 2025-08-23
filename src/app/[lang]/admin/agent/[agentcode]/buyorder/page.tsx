@@ -30,12 +30,6 @@ import {
 } from "thirdweb";
 
 
-
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
 import {
   ConnectButton,
   useActiveAccount,
@@ -80,7 +74,22 @@ import { get } from "http";
 import { useSearchParams } from 'next/navigation';
 
 
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
 
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 interface BuyOrder {
@@ -166,16 +175,6 @@ const wallets = [
 ];
 
 
-// get escrow wallet address
-
-//const escrowWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
 
 
 export default function Index({ params }: any) {
@@ -213,19 +212,27 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
+
 
 
 
@@ -519,7 +526,6 @@ export default function Index({ params }: any) {
   
 
 
-  const [nativeBalance, setNativeBalance] = useState(0);
   const [balance, setBalance] = useState(0);
   useEffect(() => {
 
@@ -535,30 +541,11 @@ export default function Index({ params }: any) {
       });
 
   
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: "admin",
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
     };
@@ -570,11 +557,9 @@ export default function Index({ params }: any) {
       if (address) getBalance();
     } , 5000);
 
-
     return () => clearInterval(interval);
 
-  } , [address]);
-
+  } , [address, contract]);
 
 
 
@@ -2961,6 +2946,10 @@ const fetchBuyOrders = async () => {
 
 
                     <div className="flex flex-row items-center justify-center gap-2">
+                        <span className="text-sm text-zinc-500">
+                          나의 USDT지갑
+                        </span>
+
                         <Image
                             src="/icon-shield.png"
                             alt="Wallet"
@@ -2968,9 +2957,6 @@ const fetchBuyOrders = async () => {
                             height={100}
                             className="w-6 h-6"
                         />
-                        <span className="text-sm text-zinc-500">
-                          USDT지갑
-                        </span>
                         <button
                             className="text-lg text-zinc-600 underline"
                             onClick={() => {
@@ -2984,14 +2970,9 @@ const fetchBuyOrders = async () => {
                     </div>
 
                     <div className="flex flex-row items-center justify-center  gap-2">
-                        <span className="text-sm text-zinc-500">
-                            잔액
-                        </span>
                         <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                            {Number(balance).toFixed(2)}
+                            {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </span>
-                        {' '}
-                        <span className="text-sm">USDT</span>
                     </div>
 
                 </div>
@@ -4921,12 +4902,13 @@ const fetchBuyOrders = async () => {
 
 
 
-                          {/* polygonscan */}
-                          {item?.transactionHash
-                          && item?.transactionHash !== '0x'
-                          && (
+
+                          {
+                          (item?.transactionHash && item?.transactionHash !== '0x') && (
                             <button
-                              className="text-sm text-blue-600 font-semibold
+                              className="
+                                flex flex-row gap-2 items-center justify-between
+                                text-sm text-blue-600 font-semibold
                                 border border-blue-600 rounded-lg p-2
                                 bg-blue-100
                                 w-full text-center
@@ -4938,29 +4920,57 @@ const fetchBuyOrders = async () => {
                                 hover:shadow-blue-500/50
                               "
                               onClick={() => {
-                                window.open(
-                                  `https://arbiscan.io/tx/${item.transactionHash}`,
-                                  '_blank'
-                                );
+                                let url = '';
+                                if (chain === "ethereum") {
+                                  url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                } else if (chain === "polygon") {
+                                  url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                } else if (chain === "arbitrum") {
+                                  url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                } else if (chain === "bsc") {
+                                  url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                } else {
+                                  url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                }
+                                window.open(url, '_blank');
+
                               }}
                             >
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                <Image
-                                  src="/logo-arbitrum.png"
-                                  alt="Polygon"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm">
-                                  USDT 전송내역
-                                </span>
+                              <div className="flex flex-col gap-2 items-start justify-start ml-2">
+                                <div className="flex flex-col gap-1 items-start justify-start">
+                                  <span className="text-sm">
+                                    구매자에게 전송한 테더(USDT)
+                                  </span>
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <Image
+                                      src={`/token-usdt-icon.png`}
+                                      alt="USDT Logo"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-green-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}>
+                                      {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-zinc-500">
+                                    스캔에서 전송내역 확인하기
+                                  </span>
+                                </div>
                               </div>
+                              {/* chain logo */}
+                              <Image
+                                src={`/logo-chain-${chain}.png`}
+                                alt={`${chain} Logo`}
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
                             </button>
                           )}
-
-
-
 
 
                           </div>
