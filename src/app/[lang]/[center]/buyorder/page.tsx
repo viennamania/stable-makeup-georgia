@@ -3753,8 +3753,32 @@ const fetchBuyOrders = async () => {
 
             </div>
 
-
-
+            {/* 판매자 지갑주소 */}
+            {/* storeInfo.walletAddress */}
+            <div className="flex flex-col items-start xl:items-end gap-1">
+              <div className="flex flex-row gap-2 items-center">
+                {/* dot */}
+                <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
+                <span className="text-sm text-zinc-500">
+                  가맹점 판매자 지갑주소
+                </span>
+              </div>
+              <div className="flex flex-row items-center justify-center gap-2">
+                <Image
+                  src="/icon-Shield.png"
+                  alt="Shield"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5"
+                />
+                <span className="text-sm text-zinc-500">
+                  {
+                  store?.sellerWalletAddress
+                  && store?.sellerWalletAddress.slice(0, 6) + "..." + store?.sellerWalletAddress.slice(-4)
+                  }
+                </span>
+              </div>
+            </div>
 
             {address && (
                 <div className="mt-4 w-full flex flex-col xl:flex-row items-center justify-end gap-2">
@@ -3769,7 +3793,7 @@ const fetchBuyOrders = async () => {
                             className="w-6 h-6"
                         />
                         <span className="text-sm text-zinc-500">
-                          USDT지갑
+                          나의 USDT지갑
                         </span>
                         <button
                             className="text-lg text-zinc-600 underline"
