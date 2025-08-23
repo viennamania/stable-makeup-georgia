@@ -29,11 +29,6 @@ import {
 
 
 import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
-
-import {
   ConnectButton,
   useActiveAccount,
   useActiveWallet,
@@ -80,6 +75,24 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -158,10 +171,6 @@ const wallets = [
 
 
 
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
 
 
 export default function Index({ params }: any) {
@@ -184,28 +193,34 @@ export default function Index({ params }: any) {
     const activeWallet = useActiveWallet();
     
 
+
+
   const contract = getContract({
     // the client you have created via `createThirdwebClient()`
     client,
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
-
-
- 
 
 
 
@@ -509,19 +524,20 @@ export default function Index({ params }: any) {
   
 
 
-  const [nativeBalance, setNativeBalance] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [nativeBalance, setNativeBalance] = useState(0);
+
   useEffect(() => {
 
+    if (!address) return;
     // get the balance
+
+
+    if (!contract) {
+      return;
+    }
+
     const getBalance = async () => {
-
-      ///console.log('getBalance address', address);
-
-      if (!address) {
-        setBalance(0);
-        return;
-      }
 
       try {
         const result = await balanceOf({
@@ -529,46 +545,47 @@ export default function Index({ params }: any) {
           address: address,
         });
 
-    
-        //console.log(result);
-    
-        setBalance( Number(result) / 10 ** 6 );
-        } catch (error) {
-          console.log("getBalance error", error);
+        if (chain === 'bsc') {
+          setBalance( Number(result) / 10 ** 18 );
+        } else {
+          setBalance( Number(result) / 10 ** 6 );
+        }
+
+      } catch (error) {
+        console.error("Error getting balance", error);
       }
 
 
       // getWalletBalance
       const result = await getWalletBalance({
-        address: address || "",
+        address: address,
         client: client,
-        chain: arbitrum,
+        chain: chain === "ethereum" ? ethereum :
+                chain === "polygon" ? polygon :
+                chain === "arbitrum" ? arbitrum :
+                chain === "bsc" ? bsc : arbitrum,
       });
-      //console.log("getWalletBalance", result);
-      /*
-      {value: 193243898588330546n, decimals: 18, displayValue: '0.193243898588330546', symbol: 'ETH', name: 'ETH'}
-      */
+
       if (result) {
         setNativeBalance(Number(result.value) / 10 ** result.decimals);
       }
 
-     
-
-
+      
 
     };
 
-
     if (address) getBalance();
+
+    // get the balance in the interval
 
     const interval = setInterval(() => {
       if (address) getBalance();
-    } , 5000);
+    }, 5000);
+
 
     return () => clearInterval(interval);
 
   } , [address, contract]);
-
 
 
 
@@ -2937,7 +2954,7 @@ export default function Index({ params }: any) {
                   <div className="mt-5 flex flex-row gap-2 justify-center items-center">
 
                     <span className="text-sm text-zinc-600">
-                      내 USDT지갑
+                      내 지갑주소
                     </span>
                     <button
                       className="text-lg text-zinc-800 underline"
@@ -2960,29 +2977,175 @@ export default function Index({ params }: any) {
 
 
 
-                  <div className="mt-5 flex flex-row gap-2 justify-center items-center">
-                    <span className="text-sm text-zinc-600">
-                      내 USDT 보증금
-                    </span>
-                    <div className="text-4xl font-semibold text-zinc-800">
-                      {Number(balance).toFixed(2)}
+                  <div className="w-full mt-5 flex flex-col gap-2 justify-between items-center
+                    bg-green-50 p-2 rounded-lg">
+                    <div className="flex flex-row gap-2 justify-center items-center">
+                      <Image
+                        src="/token-usdt-icon.png"
+                        alt="USDT"
+                        width={35}
+                        height={35}
+                        className="rounded-lg w-6 h-6"
+                      />
+                      <span className="text-sm text-zinc-600">
+                        내 테더 잔액(USDT)
+                      </span>
                     </div>
-                    <p className="text-sm text-zinc-800">USDT</p>
+
+                    <div className="
+                    w-40 flex flex-col items-end justify-center
+                    text-4xl font-semibold text-green-600"
+                    style={{ fontFamily: "monospace" }}
+                    >
+                      {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    </div>
+
+                    <button
+                      disabled={!address}
+                      onClick={() => {
+                        // redirect to send USDT page
+                        router.push(
+                          "/" + params.lang + "/admin/withdraw-usdt"
+                        );
+
+                      }}
+                      className="w-full flex items-center justify-center
+                      bg-[#3167b4]
+                      text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    >
+                      <span className="text-sm text-gray-100">
+                        출금하기
+                      </span>
+                      <Image
+                        src="/icon-share.png"
+                        alt="Withdraw USDT"
+                        width={20}
+                        height={20}
+                        className="ml-2"
+                      />
+
+                    </button>
+
                   </div>
 
-                  <div className="flex flex-row gap-2 justify-center items-center">
-                    <span className="text-sm text-zinc-600">
-                      가스비용
-                    </span>
-                    <div className="text-xl font-semibold text-zinc-800">
-                      {Number(nativeBalance).toFixed(2)}
+                  {mkrwBalance > 0 && (
+
+
+                    <div className="w-full flex flex-col gap-2 justify-center items-center
+                      bg-yellow-50 p-2 rounded-lg mt-5">
+                      <div className="flex flex-row gap-2 items-center">
+                        <Image
+                          src="/token-mkrw-icon.png"
+                          alt="MKRW"
+                          width={35}
+                          height={35}
+                          className="rounded-lg w-6 h-6"
+                        />
+                        <span className="text-sm text-zinc-600">
+                          내 포인트 잔액(MKRW)
+                        </span>
+                      </div>
+
+                      <div className="
+                      w-40  flex flex-col items-end justify-center
+                      text-4xl font-semibold text-yellow-600"
+                      style={{ fontFamily: "monospace" }}
+                      >
+                        {Number(mkrwBalance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                      </div>
+
+
+                      <button
+                        disabled={!address}
+                        onClick={() => {
+                          // redirect to send USDT page
+                          router.push(
+                            "/" + params.lang + "/admin/withdraw-mkrw"
+                          );
+
+                        }}
+                        className="w-full flex items-center justify-center
+                        bg-[#3167b4]
+                        text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      >
+
+                        <span className="text-sm text-gray-100">
+                          출금하기
+                        </span>
+                        <Image
+                          src="/icon-share.png"
+                          alt="Withdraw MKRW"
+                          width={20}
+                          height={20}
+                          className="ml-2"
+                        />
+
+                      </button>
+
+
+                      <button
+                        disabled={!address}
+                        onClick={() => {
+                          // redirect to send USDT page
+                          router.push(
+                            "/" + params.lang + "/admin/burn-mkrw"
+                          );
+
+                        }}
+                        className="w-full flex items-center justify-center
+                        bg-[#3167b4]
+                        text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                      >
+
+                        <span className="text-sm text-gray-100">
+                          환전하기
+                        </span>
+                        <Image
+                          src="/icon-currency-exchange.png"
+                          alt="Burn MKRW"
+                          width={20}
+                          height={20}
+                          className="ml-2"
+                        />
+
+                      </button>
+
+
+
                     </div>
-                    <p className="text-sm text-zinc-800">ETH</p>
+
+                  )}
+
+
+                  <div className="
+                  mt-5
+                  flex flex-row gap-2 justify-center items-center">
+                    <Image
+                      src={`/logo-chain-${chain}.png`}
+                      alt={`${chain} logo`}
+                      width={20}
+                      height={20}
+                      className="rounded-lg"
+                    />
+                    <span className="text-sm text-zinc-600">
+                      가스수량
+                    </span>
+                    <div className="text-xl font-semibold text-zinc-800"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      {Number(nativeBalance).toFixed(8)}
+                    </div>
+                    <p className="text-sm text-zinc-800">
+                      {chain === "ethereum" ? "ETH" :
+                      chain === "polygon" ? "POL" :
+                      chain === "arbitrum" ? "ETH" :
+                      chain === "bsc" ? "BNB" : ""}
+                    </p>
                   </div>
 
                   <div className="flex flex-row gap-2 justify-center items-center">
                     {/* if pol balance is 0, comment out the text */}
-                    {nativeBalance < 0.01 && (
+                    {nativeBalance < 0.0001 && (
                       <p className="text-sm text-red-500">
                         가스비용이 부족합니다.<br/>가스비용이 부족하면 입금은 가능하지만 출금은 불가능합니다.
                       </p>
@@ -2996,50 +3159,12 @@ export default function Index({ params }: any) {
                 <div className="mt-5 flex flex-row gap-2 justify-center items-center">
                   {/* 로그인하고 나의 자산을 확인하세요 */}
                   <span className="text-sm text-zinc-600">
-                    로그인하고 나의 USDT지갑에서 자산을 확인하세요
+                    로그인하고 나의 지갑주소에서 자산을 확인하세요
                   </span>
                 </div>
 
               )}
 
-
-
-              {/* send button */}
-              <div className="w-full flex flex-row gap-2 justify-between items-center mt-5">
-                <button
-                  //disabled={!address}
-                  onClick={() => {
-                    // send USDT
-                    //console.log("send USDT");
-
-                    //if (!address) {
-                    //  toast.error(Please_connect_your_wallet_first);
-                    //  return;
-                  // }
-
-                    // redirect to send USDT page
-                    router.push(
-                      "/" + params.lang + "/admin/withdraw-usdt"
-                    );
-
-                  }}
-                  className=" w-full flex bg-[#3167b4] text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-                >
-                  <Image
-                    src="/icon-mobile-money-transfer.png"
-                    alt="Buy"
-                    width={20}
-                    height={20}
-                    className="mr-2"
-                  />
-                  {Withdraw_USDT}
-
-
-                </button>
-
-
-                
-              </div>
 
               {/* Go Buy USDT */}
               {/*
