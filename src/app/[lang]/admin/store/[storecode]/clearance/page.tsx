@@ -1984,7 +1984,7 @@ export default function Index({ params }: any) {
                               className="w-4 h-4"
                             />
                             <span className="text-sm text-zinc-500">
-                              가맹점 정산용 USDT지갑
+                              가맹점 결제용 USDT지갑
                             </span>
                         </div>
 
