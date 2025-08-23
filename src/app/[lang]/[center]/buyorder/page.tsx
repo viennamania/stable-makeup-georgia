@@ -3767,7 +3767,7 @@ const fetchBuyOrders = async () => {
               </div>
               <div className="flex flex-row items-center justify-center gap-2">
                 <Image
-                  src="/icon-Shield.png"
+                  src="/icon-shield.png"
                   alt="Shield"
                   width={20}
                   height={20}
