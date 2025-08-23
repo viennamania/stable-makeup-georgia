@@ -1826,7 +1826,7 @@ export default function Index({ params }: any) {
                         <th className="p-2">에이전트</th>
 
                         <th className="p-2">
-                          관리자 USDT지갑 주소<br/>
+                          관리자 지갑주소<br/>
                           수수료 수납용 USDT지갑 주소
                         </th>
                         
@@ -1944,7 +1944,7 @@ export default function Index({ params }: any) {
                                   <button
                                     onClick={() => {
                                       navigator.clipboard.writeText(item.adminWalletAddress || '');
-                                      toast.success('관리자 USDT지갑 주소가 복사되었습니다.');
+                                      toast.success('관리자 지갑주소가 복사되었습니다.');
                                     }}
                                     className="text-sm text-gray-500 hover:text-blue-500
                                     hover:underline"
@@ -1954,7 +1954,7 @@ export default function Index({ params }: any) {
                                   </button>
                                 ) : (
                                   <span className="text-red-500">
-                                    관리자 USDT지갑 주소가 없습니다.
+                                    관리자 지갑주소가 없습니다.
                                   </span>
                                 )}
                               
