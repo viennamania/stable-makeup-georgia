@@ -2728,6 +2728,95 @@ export default function SettingsPage({ params }: any) {
                                     </div>
                                 </div>
 
+
+                                {/* divider */}
+                                <div className='w-full h-[1px] bg-zinc-300'></div>
+
+
+
+                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
+                                    
+                                    <select
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        value={bankName}
+                                        onChange={(e) => setBankName(e.target.value)}
+                                    >
+                                        <option value="">은행이름 선택</option>
+                                        <option value="카카오뱅크">카카오뱅크</option>
+                                        <option value="케이뱅크">케이뱅크</option>
+                                        <option value="토스뱅크">토스뱅크</option>
+                                        <option value="국민은행">국민은행</option>
+                                        <option value="우리은행">우리은행</option>
+                                        <option value="신한은행">신한은행</option>
+                                        <option value="농협">농협</option>
+                                        <option value="기업은행">기업은행</option>
+                                        <option value="하나은행">하나은행</option>
+                                        <option value="외환은행">외환은행</option>
+                                        <option value="부산은행">부산은행</option>
+                                        <option value="대구은행">대구은행</option>
+                                        <option value="전북은행">전북은행</option>
+                                        <option value="경북은행">경북은행</option>
+                                        <option value="광주은행">광주은행</option>
+                                        <option value="수협">수협</option>
+                                        <option value="신협">신협</option>
+                                        <option value="씨티은행">씨티은행</option>
+                                        <option value="대신은행">대신은행</option>
+                                        <option value="동양종합금융">동양종합금융</option>
+                                    </select>
+
+
+
+                                    <input
+                                        type="number"
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        placeholder="계좌번호"
+                                        value={accountNumber}
+                                        onChange={(e) => setAccountNumber(e.target.value)}
+                                        // hide up and down arrow
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                                e.preventDefault();
+                                            }
+                                        }}
+                                        onWheel={(e) => e.currentTarget.blur()}
+
+                                    />
+                                    <input
+                                        type="text"
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        placeholder="예금주"
+                                        value={accountHolder}
+                                        onChange={(e) => setAccountHolder(e.target.value)}
+                                    />
+
+                                    <button
+                                        disabled={!address || !bankName || !accountNumber || !accountHolder
+                                            || writingStoreBankInfo
+                                        }
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!bankName || !accountNumber || !accountHolder || writingStoreBankInfo
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                            if (!bankName || !accountNumber || !accountHolder) {
+                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${bankName} ${accountNumber} ${accountHolder}로 가맹점 결제용 통장을 변경하시겠습니까?`
+                                            ) && writeStoreBankInfo();
+                                        }}
+                                    >
+                                        {writingStoreBankInfo ? '변경 중...' : '변경'}
+                                    </button>
+
+                                </div>
+
+
+
+
+
+
                             </div>
 
                         </div>
