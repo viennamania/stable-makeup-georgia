@@ -1387,17 +1387,17 @@ export default function Index({ params }: any) {
 
 
   useEffect(() => {
-  // Dynamically load the Binance widget script
-  const script = document.createElement("script");
-  script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-  script.async = true;
-  document.body.appendChild(script);
+    // Dynamically load the Binance widget script
+    const script = document.createElement("script");
+    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
+    script.async = true;
+    document.body.appendChild(script);
 
-  return () => {
-    // Cleanup the script when the component unmounts
-    document.body.removeChild(script);
-  };
-}, [!fetchingAgent && agent]); // Only run this effect when fetchingAgent is false
+    return () => {
+      // Cleanup the script when the component unmounts
+      document.body.removeChild(script);
+    };
+  }, [!fetchingAgent && agent]); // Only run this effect when fetchingAgent is false
 
 
 
@@ -1413,7 +1413,7 @@ export default function Index({ params }: any) {
               alt="Loading"
               width={100}
               height={100}
-              className="rounded-lg w-20 h-20"
+              className="rounded-lg w-40 h-40"
             />
             <span className="text-lg text-gray-500 ml-2">
               에이전트 정보를 불러오는 중...
@@ -1551,7 +1551,7 @@ export default function Index({ params }: any) {
                     alt="logo"
                     width={50}
                     height={50}
-                    className="rounded-lg w-12 h-12"
+                    className="rounded-lg w-16 h-16"
                   />
                   <div className="flex flex-col items-start justify-start">
                     <span className="text-sm text-[#3167b4] font-bold">
@@ -1562,6 +1562,7 @@ export default function Index({ params }: any) {
                     </span>
                   </div>
                 </div>
+
                 {address && address === agentAdminWalletAddress && (
                   <div className="text-sm text-[#3167b4] font-bold">
                     {agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
@@ -1572,6 +1573,7 @@ export default function Index({ params }: any) {
                     {agent?.agentName + " (" + agent?.agentcode + ")"}
                   </div>
                 )}
+
               </div>
 
 
@@ -1788,16 +1790,13 @@ export default function Index({ params }: any) {
             }`}>
 
 
-    
-
-
             <div className="w-full flex flex-row items-center justify-start gap-2">
               <Image
                 src={agent?.agentLogo || "/logo.png"}
                 alt="logo"
                 width={50}
                 height={50}
-                className="rounded-lg w-12 h-12"
+                className="rounded-lg w-16 h-16"
               />
               <div className="flex flex-col items-start justify-start">
                 <span className="text-sm text-[#3167b4] font-bold">
@@ -1940,9 +1939,9 @@ export default function Index({ params }: any) {
               <Image
                 src={agent?.agentLogo || "/logo.png"}
                 alt="logo"
-                width={35}
-                height={35}
-                className="rounded-lg w-6 h-6"
+                width={50}
+                height={50}
+                className="rounded-lg w-16 h-16"
               />
               {address && address === agentAdminWalletAddress && (
                 <div className="text-sm text-[#3167b4] font-bold">

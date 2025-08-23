@@ -2730,7 +2730,7 @@ export default function SettingsPage({ params }: any) {
 
 
                                 {/* divider */}
-                                {/*
+                                
                                 <div className='w-full h-[1px] bg-zinc-300'></div>
 
 
@@ -2812,10 +2812,6 @@ export default function SettingsPage({ params }: any) {
                                     </button>
 
                                 </div>
-
-                            
-                                */}
-
 
 
                             </div>
