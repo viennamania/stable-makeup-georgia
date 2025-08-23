@@ -1984,9 +1984,9 @@ export default function Index({ params }: any) {
                                   onClick={() => {
                                     
                                     if (version  === 'bangbang') {
-                                      router.push('/' + params.lang + '/admin/' + params.agentcode + '/' + item.storecode + '/settings-bangbang');
+                                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/' + item.storecode + '/settings-bangbang');
                                     } else {
-                                      router.push('/' + params.lang + '/admin/' + params.agentcode + '/' + item.storecode + '/settings');
+                                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/' + item.storecode + '/settings');
                                     }
 
                                   }}
