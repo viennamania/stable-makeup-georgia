@@ -2532,13 +2532,13 @@ export default function Index({ params }: any) {
                   {/* total settlement count, total settlement amount krw, total usdt amount */}
                   <div className="w-full flex flex-row items-center justify-center gap-2">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <h2 className="text-lg font-semibold">총 정산수</h2>
+                      <h2 className="text-lg font-semibold">총 결제수</h2>
                       <p className="text-lg text-zinc-500">
                         {storeSummary.totalSettlementCount}
                       </p>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <h2 className="text-lg font-semibold">총 정산금액(원)</h2>
+                      <h2 className="text-lg font-semibold">총 결제금액(원)</h2>
                       <div className="flex flex-row items-center justify-end gap-2">
                         <p className="text-lg text-yellow-600"
                           style={{ fontFamily: 'monospace' }}>
@@ -2547,7 +2547,7 @@ export default function Index({ params }: any) {
                       </div>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <h2 className="text-lg font-semibold">총 정산량(USDT)</h2>
+                      <h2 className="text-lg font-semibold">총 결제량(USDT)</h2>
                       <div className="flex flex-row items-center justify-center gap-2">
                         <Image
                           src="/icon-tether.png"

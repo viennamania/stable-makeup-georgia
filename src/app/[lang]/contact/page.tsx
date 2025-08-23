@@ -3104,7 +3104,7 @@ const fetchBuyOrders = async () => {
                       <div className="w-full flex flex-row items-between justify-center gap-2">
 
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <h2 className="text-lg">총 정산수</h2>
+                          <h2 className="text-lg">총 결제수</h2>
                           <p className="text-lg text-zinc-500">
                             {storeTrades?.totalSettlementCount}
                           </p>
@@ -3119,7 +3119,7 @@ const fetchBuyOrders = async () => {
 
 
                         <div className="flex flex-col items-center justify-center gap-2">
-                          <h2 className="text-lg">총 정산량</h2>
+                          <h2 className="text-lg">총 결제량</h2>
                           <p className="text-lg text-zinc-500">
                             {Number(storeTrades?.totalSettlementAmount)?.toLocaleString()} USDT
                           </p>

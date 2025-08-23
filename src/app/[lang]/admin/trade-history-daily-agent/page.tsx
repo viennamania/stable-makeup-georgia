@@ -1797,7 +1797,7 @@ export default function Index({ params }: any) {
               
 
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 정산수(건)</div>
+                <div className="text-sm">총 결제수(건)</div>
                   <span className="text-xl font-semibold text-zinc-500">
                     {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </span>
@@ -1805,7 +1805,7 @@ export default function Index({ params }: any) {
 
               {/*
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 정산금액(원)</div>
+                <div className="text-sm">총 결제금액(원)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
                   <span className="text-xl font-semibold text-yellow-600">
                     {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
@@ -1817,7 +1817,7 @@ export default function Index({ params }: any) {
 
               {/*
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 정산량(USDT)</div>
+                <div className="text-sm">총 결제량(USDT)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
                   <Image
                     src="/icon-tether.png"
@@ -1955,7 +1955,7 @@ export default function Index({ params }: any) {
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">거래금액(원)</th>
 
                       {/*
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">정산수(건)/미정산수(건)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
                       */}
                       
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG수수료량(USDT)</th>
@@ -1965,8 +1965,8 @@ export default function Index({ params }: any) {
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG수수료량(USDT)</th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG수수료금액(원)</th>
 
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">정산량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">정산금액(원)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
                       */}
 
 

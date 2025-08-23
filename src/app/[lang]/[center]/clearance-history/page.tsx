@@ -3847,14 +3847,14 @@ const [tradeSummary, setTradeSummary] = useState({
                 <div className="w-full xl:w-1/3
                   flex flex-row items-start justify-between gap-2 pl-4 pr-4">
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 정산수(건)</div>
+                    <div className="text-sm">총 결제수(건)</div>
                     <div className="text-xl font-semibold text-zinc-500">
                       {tradeSummary.totalSettlementCount?.toLocaleString()}
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 정산금액(원)</div>
+                    <div className="text-sm">총 결제금액(원)</div>
                     <div className="text-sm font-semibold text-zinc-500">
                       <span className="text-xl text-yellow-600"
                         style={{ fontFamily: 'monospace' }}
@@ -3865,7 +3865,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 정산량(USDT)</div>
+                    <div className="text-sm">총 결제량(USDT)</div>
                     <div className="text-sm font-semibold text-zinc-500">
                       <span className="text-xl text-green-600"
                         style={{ fontFamily: 'monospace' }}

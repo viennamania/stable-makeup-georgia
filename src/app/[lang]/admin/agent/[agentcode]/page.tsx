@@ -2231,7 +2231,7 @@ export default function Index({ params }: any) {
                           거래수
                       </th>
                       <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                      <th className="px-4 py-2 text-left">정산금액(원)<br/>정산량(USDT)</th>
+                      <th className="px-4 py-2 text-left">결제금액(원)<br/>결제량(USDT)</th>
                       <th className="px-4 py-2 text-left">수수료금액(원)<br/>수수료수량(USDT)</th>
 
                       {/*
@@ -2540,13 +2540,13 @@ export default function Index({ params }: any) {
                   <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
                   
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <h2 className="text-lg font-semibold">총 정산금액(원)</h2>
+                      <h2 className="text-lg font-semibold">총 결제금액(원)</h2>
                       <p className="text-lg text-zinc-500">
                         {Number(totalSummary.totalSettlementAmountKRW)?.toLocaleString()} 원
                       </p>
                     </div>
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <h2 className="text-lg font-semibold">총 정산량(USDT)</h2>
+                      <h2 className="text-lg font-semibold">총 결제량(USDT)</h2>
                       <p className="text-lg text-zinc-500">
                         {Number(totalSummary.totalSettlementAmount)?.toLocaleString()} USDT
                       </p>
@@ -2614,7 +2614,7 @@ export default function Index({ params }: any) {
                           가맹점<br/>구매자
                         </th>
                         <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                        <th className="px-4 py-2 text-left">정산금액(원)<br/>정산량(USDT)</th>
+                        <th className="px-4 py-2 text-left">결제금액(원)<br/>결제량(USDT)</th>
                         <th className="px-4 py-2 text-left">수수료금액(원)<br/>수수료량(USDT)</th>
                     
                         {/*

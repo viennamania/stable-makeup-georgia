@@ -1842,7 +1842,7 @@ export default function Index({ params }: any) {
                         */}
                         <th className="p-2">거래수<br/>금액(원)<br/>거래수량(USDT)</th>
 
-                        <th className="p-2">정산수<br/>정산수수료(원)<br/>정산수수료수량(USDT)</th>
+                        <th className="p-2">결제수<br/>결제수수료(원)<br/>결제수수료수량(USDT)</th>
                         {/*
                         <th className="p-2">
                           청산건수<br/>청산금액(원)<br/>청산수량(USDT)

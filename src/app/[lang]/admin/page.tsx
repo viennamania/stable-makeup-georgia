@@ -1627,7 +1627,7 @@ export default function Index({ params }: any) {
                 <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
                 
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <h2 className="text-lg font-semibold">총 정산금액(원)</h2>
+                    <h2 className="text-lg font-semibold">총 결제금액(원)</h2>
                     <p className="text-lg text-yellow-600 font-semibold"
                       style={{ fontFamily: "monospace" }}
                     >
@@ -1637,7 +1637,7 @@ export default function Index({ params }: any) {
                     </p>
                   </div>
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <h2 className="text-lg font-semibold">총 정산량(USDT)</h2>
+                    <h2 className="text-lg font-semibold">총 결제량(USDT)</h2>
                     <div className="flex flex-row items-center justify-center gap-1">
                       <Image
                         src="/token-usdt-icon.png"
@@ -1721,9 +1721,9 @@ export default function Index({ params }: any) {
                         </th>
 
                         <th className="px-4 py-2 text-right">
-                          정산량(USDT)
+                          결제량(USDT)
                           <br/>
-                          정산금액(원)
+                          결제금액(원)
                         </th>
                     
                         {/*
@@ -1954,7 +1954,7 @@ export default function Index({ params }: any) {
                           구매자<br/>가맹점
                         </th>
                         <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                        <th className="px-4 py-2 text-left">정산금액(원)<br/>정산량(USDT)</th>
+                        <th className="px-4 py-2 text-left">결제금액(원)<br/>결제량(USDT)</th>
                     
                         <th className="hidden xl:block
                           px-4 py-2 text-left">판매자</th>
@@ -2128,7 +2128,7 @@ export default function Index({ params }: any) {
                           거래수
                       </th>
                       <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                      <th className="px-4 py-2 text-left">정산금액(원)<br/>정산량(USDT)</th>
+                      <th className="px-4 py-2 text-left">결제금액(원)<br/>결제량(USDT)</th>
 
                       {/*
                       <th className="px-4 py-2 text-left">가입일</th>
