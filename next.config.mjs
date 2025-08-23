@@ -26,10 +26,11 @@ const nextConfig = {
     appDir: true,
   },
 
+  /*
   eslint: {
     ignoreDuringBuilds: true,
   },
-
+  */
 
   async redirects() {
     return [
