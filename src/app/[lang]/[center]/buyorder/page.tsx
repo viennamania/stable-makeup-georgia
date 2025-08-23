@@ -3499,11 +3499,12 @@ const fetchBuyOrders = async () => {
 
 
 
+            {version !== 'bangbang' && (
+
 
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-              {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -3603,8 +3604,7 @@ const fetchBuyOrders = async () => {
               </div>
 
 
-              {/* 가맹점 판매금 */}
-              {version !== 'bangbang' && (
+
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -3652,9 +3652,11 @@ const fetchBuyOrders = async () => {
                 </div>
 
               </div> 
-              )}
+  
 
             </div>
+
+            )}
 
 
 
@@ -4502,14 +4504,14 @@ const fetchBuyOrders = async () => {
                 flex flex-col xl:flex-row items-center justify-between gap-2 pl-4 pr-4">
                 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">정산수(건)</div>
+                  <div className="text-sm">결제수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
                     {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">정산량(USDT)</div>
+                  <div className="text-sm">결제량(USDT)</div>
                   <div className="flex flex-row items-center gap-1">
                     <Image
                       src="/icon-tether.png"
@@ -4529,7 +4531,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">정산금액(원)</div>
+                  <div className="text-sm">결제금액(원)</div>
                   <div className="flex flex-row items-center gap-1"> 
                     <span className="text-xl font-semibold text-yellow-600"
                       style={{ fontFamily: 'monospace' }}
@@ -6963,11 +6965,6 @@ const fetchBuyOrders = async () => {
                                               height={20}
                                               className="animate-spin"
                                             />
-                                            {/*
-                                            <span className="text-sm font-semibold text-zinc-500">
-                                              가맹점 결제 및 정산중...
-                                            </span>
-                                            */}
                                             <span className="text-sm font-semibold text-zinc-500">
                                               회원({item.nickname})이 구매한 테더(USDT)를 가맹점 결제하는 중
                                             </span>
