@@ -79,6 +79,10 @@ import { get } from "http";
 
 import { useSearchParams } from 'next/navigation';
 
+
+import { paymentUrl } from "../../../../../config/payment";
+
+
 import { version } from "../../../../../config/version";
 
 
@@ -2026,7 +2030,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      'https://cryptoss.beauty/' + params.lang + '/' + item.storecode
+                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/homepage
                                     );
                                     toast.success('복사되었습니다');
                                   }
@@ -2037,7 +2041,7 @@ export default function Index({ params }: any) {
                                 </button>
                                 <a
                                   href={
-                                    'https://cryptoss.beauty/' + params.lang + '/' + item.storecode + '/paymaster'
+                                    paymentUrl + '/' + params.lang + '/' + item.storecode + '/homepage'
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -2060,7 +2064,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      'https://cryptoss.beauty/' + params.lang + '/' + item.storecode + '/center'
+                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/center'
                                     );
                                     toast.success('복사되었습니다');
                                   }
@@ -2071,7 +2075,7 @@ export default function Index({ params }: any) {
                                 </button>
                                 <a
                                   href={
-                                    'https://cryptoss.beauty/' + params.lang + '/' + item.storecode + '/center'
+                                    paymentUrl + '/' + params.lang + '/' + item.storecode + '/center'
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"
