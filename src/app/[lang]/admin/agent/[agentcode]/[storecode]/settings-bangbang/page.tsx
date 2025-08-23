@@ -2609,6 +2609,70 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 )}
 
+
+
+                                
+                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                
+                                <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    <select
+                                    value={selectedSellerWalletAddress}
+                                    //value={store?.settlementWalletAddress}
+                                    onChange={(e) => setSelectedSellerWalletAddress(e.target.value)}
+                                    className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                        bg-white text-zinc-500 text-sm"
+                                    disabled={updatingSellerWalletAddress}
+                                    >
+                                    <option value="">가맹점 판매자용 USDT지갑 변경</option>
+                                    {allStoreSellers.map((user) => (
+                                        <option key={user._id} value={user.walletAddress}>
+                                        {user.nickname}
+                                        {' '}
+                                        ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                        </option>
+                                    ))}
+                                    </select>
+                                    <button
+                                    onClick={() => {
+                                        if (!selectedSellerWalletAddress) {
+                                        toast.error
+                                            ('가맹점 판매자용 USDT지갑을 선택하세요.');
+                                        return;
+                                        }
+                                        if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
+                                        toast.error('현재 가맹점 판매자용 USDT지갑과 동일합니다.');
+                                        return;
+                                        }
+                                        confirm(
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매자용 USDT지갑을 변경하시겠습니까?`
+                                        ) && updateSellerWalletAddress();
+                                    }}
+                                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                        ${updatingSellerWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                    {updatingSellerWalletAddress ? '변경 중...' : '변경'}
+                                    </button>
+                                </div>
+                                ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 회원이 없습니다.
+                                    <br />
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 판매자용 USDT지갑을 설정하세요.
+                                    </span>
+                                </div>
+                                )}
+                                
+
+
+
                             </div>
 
                         </div>
