@@ -223,6 +223,20 @@ export default function Index({ params }: any) {
   });
 
 
+    const contractMKRW = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+
+    // the chain the contract is deployed on
+    chain: bsc,
+
+    // the contract's address
+    address: bscContractAddressMKRW,
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
 
 
 
@@ -590,6 +604,29 @@ export default function Index({ params }: any) {
 
 
 
+  // balance of MKRW
+  const [mkrwBalance, setMkrwBalance] = useState(0);
+  useEffect(() => {
+    if (!address) {
+      return;
+    }
+    // get the balance
+    const getMkrwBalance = async () => {
+      const result = await balanceOf({
+        contract: contractMKRW,
+        address: address,
+      });
+  
+      setMkrwBalance( Number(result) / 10 ** 18 );
+
+  
+    };
+    if (address) getMkrwBalance();
+    const interval = setInterval(() => {
+      if (address) getMkrwBalance();
+    } , 5000);
+    return () => clearInterval(interval);
+  }, [address, contractMKRW]);
 
 
 

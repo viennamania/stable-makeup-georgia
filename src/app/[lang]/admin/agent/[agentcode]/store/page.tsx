@@ -2030,7 +2030,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/homepage
+                                      paymentUrl + '/' + params.lang + '/' + item.storecode + '/homepage'
                                     );
                                     toast.success('복사되었습니다');
                                   }
