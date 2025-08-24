@@ -1957,6 +1957,27 @@ export default function Index({ params }: any) {
             </div>
 
 
+              {/* 가맹점 설정 */}
+              {
+              address === agent?.adminWalletAddress && (
+                <div className="
+                  w-full
+                  flex flex-row items-center gap-2">
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/my-settings');
+                    }}
+                    className="
+                      items-center justify-center
+                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm text-zinc-50">에이전트 설정</span>
+                  </button>
+                </div>
+              )}
+
+
+
             {address && !loadingUser && (
 
 
