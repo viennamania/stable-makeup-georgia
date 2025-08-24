@@ -3025,7 +3025,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg">
-                                        구매자 결제(계좌이체)용 원화통장 설정
+                                        구매자 계좌송금용 원화통장 설정
                                     </span>
                                 </div>
 

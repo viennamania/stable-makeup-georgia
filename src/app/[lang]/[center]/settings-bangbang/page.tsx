@@ -1778,12 +1778,12 @@ export default function SettingsPage({ params }: any) {
                                     <Image
                                         src="/icon-store.png"
                                         alt="Manager"
-                                        width={20}
-                                        height={20}
-                                        className="w-6 h-6"
+                                        width={50}
+                                        height={50}
+                                        className="w-12 h-12"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        가맹점 기본정보 설정
+                                        가맹점 기본정보
                                     </span>
                                 </div>
 
@@ -2012,9 +2012,9 @@ export default function SettingsPage({ params }: any) {
                                 <Image
                                     src="/icon-agent.png"
                                     alt="Agent"
-                                    width={20}
-                                    height={20}
-                                    className="w-6 h-6"
+                                    width={50}
+                                    height={50}
+                                    className="w-12 h-12"
                                 />
                                 <span className="text-lg text-zinc-500">
                                     에이전트 정보
@@ -2050,6 +2050,266 @@ export default function SettingsPage({ params }: any) {
                         </div>
 
 
+                        {/* store sellerWalletAddress */}
+                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-400 p-4 rounded-lg">
+                            
+
+                            <div className='w-full flex flex-row items-center justify-start gap-2
+                                border-b border-gray-300 pb-2'>
+                                <Image
+                                    src="/icon-seller.png"
+                                    alt="Seller"
+                                    width={50}
+                                    height={50}
+                                    className="w-12 h-12"
+                                />
+                                <span className="text-lg text-zinc-500">
+                                    가맹점 판매자
+                                </span>
+                            </div>
+
+
+
+                            <div className="w-full flex flex-col items-center justify-center gap-2">
+                    
+
+                                <div className="w-full flex flex-row items-center justify-start gap-2">
+                                    {/* dot */}
+                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                    <span className="text-lg">
+                                        판매용 USDT지갑
+                                    </span>
+                                </div>
+
+                                {/* 설명:판매용 USDT지갑 주소입니다. */}
+                                <div className='w-full flex flex-col items-start justify-center gap-2'>
+                                    <span className="text-sm text-zinc-500">
+                                        구매자의 구매주문을 우선적으로 매칭하는 판매용 USDT지갑 주소입니다.
+                                    </span>
+                                </div>
+
+                                {!fetchingStore && store && store.sellerWalletAddress ? (
+                                <button
+                                    onClick={() => {
+                                    navigator.clipboard.writeText(store.sellerWalletAddress);
+                                    toast.success(Copied_Wallet_Address);
+                                    } }
+                                    className="text-lg text-zinc-500 underline"
+                                >
+                                <div className='flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-zinc-500">
+                                    {store && store.sellerWalletAddress.substring(0, 6)}...{store && store.sellerWalletAddress.substring(store.sellerWalletAddress.length - 4)}
+                                    </span>
+                                </div>
+                                </button>
+                                ) : (
+                                <div className="flex flex-row items-center justify-start gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 가맹점 판매용 USDT지갑이 설정되지 않았습니다.
+                                    </span>
+                                </div>
+                                )}
+
+                                {fetchingStore && (
+                                <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                />
+                                )}
+
+
+
+
+                                {/*
+                                {!fetchingAllAdminSellers && allAdminSellers && allAdminSellers.length > 0 ? (
+                                
+                                <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    <select
+                                    value={selectedSellerWalletAddress}
+                                    ///value={store?.sellerWalletAddress}
+                                    onChange={(e) => setSelectedSellerWalletAddress(e.target.value)}
+                                    className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                        bg-white text-zinc-500 text-sm"
+                                    disabled={updatingSellerWalletAddress}
+                                    >
+                                    <option value="">가맹점 판매용 USDT지갑 변경</option>
+                                    {allAdminSellers.map((user) => (
+                                        <option key={user._id} value={user.walletAddress}>
+                                        {user.nickname}
+                                        {' '}
+                                        ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                        </option>
+                                    ))}
+                                    </select>
+                                    <button
+                                    onClick={() => {
+                                        if (!selectedSellerWalletAddress) {
+                                        toast.error('가맹점 판매용 USDT지갑을 선택하세요.');
+                                        return;
+                                        }
+                                        if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
+                                        toast.error('현재 가맹점 판매용 USDT지갑과 동일합니다.');
+                                        return;
+                                        }
+
+                                        confirm(
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매용 USDT지갑을 변경하시겠습니까?`
+                                        ) && updateSellerWalletAddress();
+                                    }}
+                                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                        ${updatingSellerWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                    {updatingSellerWalletAddress ? '변경 중...' : '변경'}
+                                    </button> 
+                                </div>
+                                ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 회원이 없습니다.
+                                    <br />
+                                    회원가입 후 가맹점 판매용 USDT지갑을 설정하세요.
+                                    </span>
+                                </div>
+                                )}
+
+                                */}
+
+
+
+                                
+                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                
+                                <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    <select
+                                    value={selectedSellerWalletAddress}
+                                    //value={store?.settlementWalletAddress}
+                                    onChange={(e) => setSelectedSellerWalletAddress(e.target.value)}
+                                    className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                        bg-white text-zinc-500 text-sm"
+                                    disabled={updatingSellerWalletAddress}
+                                    >
+                                    <option value="">가맹점 판매용 USDT지갑 변경</option>
+                                    {allStoreSellers.map((user) => (
+                                        <option key={user._id} value={user.walletAddress}>
+                                        {user.nickname}
+                                        {' '}
+                                        ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                        </option>
+                                    ))}
+                                    </select>
+                                    <button
+                                    onClick={() => {
+                                        if (!selectedSellerWalletAddress) {
+                                        toast.error
+                                            ('가맹점 판매용 USDT지갑을 선택하세요.');
+                                        return;
+                                        }
+                                        if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
+                                        toast.error('현재 가맹점 판매용 USDT지갑과 동일합니다.');
+                                        return;
+                                        }
+                                        confirm(
+                                        `정말 ${selectedSellerWalletAddress}로 가맹점 판매용 USDT지갑을 변경하시겠습니까?`
+                                        ) && updateSellerWalletAddress();
+                                    }}
+                                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                        ${updatingSellerWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                    {updatingSellerWalletAddress ? '변경 중...' : '변경'}
+                                    </button>
+                                </div>
+                                ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 회원이 없습니다.
+                                    <br />
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 판매용 USDT지갑을 설정하세요.
+                                    </span>
+                                </div>
+                                )}
+                                
+                               
+
+                            </div>
+
+                            {/* store escrowAmountUSDT */}
+                            {/* 판매자용 USDT 수량 */}
+                            {/*
+                            <div className='w-full flex flex-col items-start justify-center gap-2'>
+
+                                <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                    <span className="text-lg text-zinc-500">
+                                        판매자용 보유금 수량(USDT)
+                                    </span>
+                                </div>
+
+                                <div className='w-full flex flex-row items-center justify-center gap-2'>
+
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        <Image
+                                            src="/icon-tether.png"
+                                            alt="Tether"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                        />
+                                        <span className="text-xl text-green-600 font-semibold">
+                                            {store && store.escrowAmountUSDT &&
+                                            store.escrowAmountUSDT.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                            || 0.00}
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        onClick={() => router.push(`/${params.lang}/admin/store/${params.storecode}/daily-close`)}
+                                        className="bg-[#3167b4] text-zinc-100 rounded-lg p-2 text-sm"
+                                        disabled={!address}
+                                    >
+                                        일일 마감 페이지로 이동
+                                    </button>
+
+                                </div>
+
+                            </div>
+                            */}
+
+                        </div>
+
+
+
+
                         {/* store bankInfo settings */}
                         {/* 가맹점 결제용 통장 설정 */}
                         <div className='w-full flex flex-col items-start justify-center gap-2
@@ -2063,12 +2323,12 @@ export default function SettingsPage({ params }: any) {
                                     <Image
                                         src="/icon-bank.png"
                                         alt="Bank"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
+                                        width={50}
+                                        height={50}
+                                        className="w-12 h-12"
                                     />
                                     <span className="text-lg">
-                                        구매자 결제(계좌이체)용 원화통장 설정
+                                        구매자 계좌송금용 원화통장
                                     </span>
                                 </div>
 
@@ -2182,6 +2442,158 @@ export default function SettingsPage({ params }: any) {
                             </div>
 
                         </div>
+
+
+
+
+                        
+                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-400 p-4 rounded-lg">
+                            
+
+                            <div className='w-full flex flex-row items-center justify-start gap-2
+                                border-b border-gray-300 pb-2'>
+                                <Image
+                                    src="/icon-payment.png"
+                                    alt="Payment"
+                                    width={50}
+                                    height={50}
+                                    className="w-12 h-12"
+                                />
+                                <span className="text-lg text-zinc-500">
+                                    가맹점 결제정보
+                                </span>
+                            </div>
+
+                            <div className="w-full flex flex-col items-center justify-start gap-2">
+
+                                <div className="w-full flex flex-row items-center justify-start gap-2">
+                                    {/* dot */}
+                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                    <span className="text-lg">
+                                        자동결제용 USDT지갑
+                                    </span>
+                                </div>
+
+                                {/* 설명:
+                                구매자가 구매한 테더를 결제를 위해서 자동 또는 수동으로 해당 지갑으로 전송합니다.
+                                */}
+                                <span className="w-full flex flex-row items-center justify-start gap-2 text-sm text-zinc-500">
+                                    구매자가 구매한 테더를 가맹점 결제를 위해서 자동 또는 수동으로 해당 지갑으로 전송합니다.
+                                </span>
+
+
+                                {!fetchingStore && store && store.settlementWalletAddress ? (
+                                <button
+                                    onClick={() => {
+                                    navigator.clipboard.writeText(store.settlementWalletAddress);
+                                    toast.success(Copied_Wallet_Address);
+                                    } }
+                                    className="text-lg text-zinc-500 underline"
+                                >
+                                    <div className='flex flex-row items-center justify-start gap-2'>
+                                        <Image
+                                            src="/icon-shield.png"
+                                            alt="Shield"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                        />
+                                        <span className="text-lg text-zinc-500">
+                                            {store && store.settlementWalletAddress.substring(0, 6)}...{store && store.settlementWalletAddress.substring(store.settlementWalletAddress.length - 4)}
+                                        </span>
+                                    </div>
+                                </button>
+                                ) : (
+                                <div className="flex flex-row items-center justify-start gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 가맹점 자동결제용 USDT지갑이 설정되지 않았습니다.
+                                    </span>
+                                </div>
+                                )}
+
+                                {fetchingAllStoreSellers && (
+                                <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                />
+                                )}
+
+                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                
+                                <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    {/* select list of all users */}
+                                    <select
+                                    value={selectedSettlementWalletAddress}
+                                    //value={store?.settlementWalletAddress}
+                                    onChange={(e) => setSelectedSettlementWalletAddress(e.target.value)}
+                                    className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500
+                                        bg-white text-zinc-500 text-sm"
+                                    disabled={updatingSettlementWalletAddress}
+                                    >
+                                    <option value="">가맹점 자동결제용 USDT지갑 변경</option>
+                                    {allStoreSellers.map((user) => (
+                                        <option key={user._id} value={user.walletAddress}>
+                                        {user.nickname}
+                                        {' '}
+                                        ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
+                                        </option>
+                                    ))}
+                                    </select>
+                                    <button
+                                    onClick={() => {
+                                        if (!selectedSettlementWalletAddress) {
+                                        toast.error
+                                            ('가맹점 자동결제용 USDT지갑을 선택하세요.');
+                                        return;
+                                        }
+                                        if (selectedSettlementWalletAddress === store?.settlementWalletAddress) {
+                                        toast.error('현재 가맹점 자동결제용 USDT지갑과 동일합니다.');
+                                        return;
+                                        }
+                                        confirm(
+                                        `정말 ${selectedSettlementWalletAddress}로 가맹점 자동결제용 USDT지갑을 변경하시겠습니까?`
+                                        ) && updateSettlementWalletAddress();
+                                    }}
+                                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                        ${updatingSettlementWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                    {updatingSettlementWalletAddress ? '변경 중...' : '변경'}
+                                    </button>
+                                </div>
+                                ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                    <Image
+                                    src="/icon-warning.png"
+                                    alt="Warning"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                    />
+                                    <span className="text-sm text-red-500">
+                                    {store && store.storeName}의 회원이 없습니다.
+                                    <br />
+                                    가맹점 홈페이지에서 회원가입 후 가맹점 자동결제용 USDT지갑을 설정하세요.
+                                    </span>
+                                </div>
+                                )}
+
+                            </div>
+                        </div>
+
+
+
+
+
 
 
 
