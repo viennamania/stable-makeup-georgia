@@ -7039,7 +7039,7 @@ const fetchBuyOrders = async () => {
                                                 fontFamily: 'monospace',
                                               }}
                                             >
-                                              {Number(item?.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                              {Number(item.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                             </span>
                                           </div>
 
