@@ -4841,6 +4841,14 @@ const fetchBuyOrders = async () => {
                         p-2">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <div className="flex flex-row items-center justify-center gap-2">
+                            {/* storeLogo */}
+                            <Image
+                              src={store?.storeLogo || "/icon-store.png"}
+                              alt="Store"
+                              width={30}
+                              height={30}
+                              className="rounded-lg w-8 h-8 object-cover"
+                            />
                             <span>
                               가맹점 자동결제 및 정산(USDT)
                             </span>
