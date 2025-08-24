@@ -4758,7 +4758,7 @@ export async function getAllTradesByAdmin(
         totalFeeAmount: { $sum: { $toDouble: '$settlement.feeAmount' } },
         totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
 
-        totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
+        totalAgentFeeAmount: { $sum: { $toDouble: '$settlement.agentFeeAmount' } },
         totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
 
       }

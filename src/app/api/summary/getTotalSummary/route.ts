@@ -131,6 +131,11 @@ export async function POST(request: NextRequest) {
 
   const latestTrades = orders?.orders || [];
 
+
+
+  //console.log("totalAgentFeeAmount", totalAgentFeeAmount);
+  //console.log("totalAgentFeeAmountKRW", totalAgentFeeAmountKRW);
+
   //console.log("getTotal Summary latestTrades", latestTrades);
 
 

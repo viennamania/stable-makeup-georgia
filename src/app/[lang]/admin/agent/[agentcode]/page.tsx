@@ -2223,15 +2223,24 @@ export default function Index({ params }: any) {
                     "
                   >
                     <tr>
-                      <th className="px-4 py-2 text-left">가맹점이름</th>
-                      <th className="px-4 py-2 text-left">
-                          회원수
-                          <br/>
-                          거래수
+                      <th className="px-4 py-2 text-left">가맹점</th>
+                      <th className="px-4 py-2 text-right">
+                        AG수수료(%)
                       </th>
-                      <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                      <th className="px-4 py-2 text-left">결제금액(원)<br/>결제량(USDT)</th>
-                      <th className="px-4 py-2 text-left">수수료금액(원)<br/>수수료수량(USDT)</th>
+                      <th className="px-4 py-2 text-right">
+                          회원수(명)
+                          <br/>
+                          거래수(건)
+                      </th>
+                      <th className="px-4 py-2 text-right">
+                        거래량(USDT)<br/>거래금액(원)
+                      </th>
+                      <th className="px-4 py-2 text-right">
+                        결제량(USDT)<br/>결제금액(원)
+                      </th>
+                      <th className="px-4 py-2 text-right">
+                        수수료수량(USDT)<br/>수수료금액(원)
+                      </th>
 
                       {/*
                       <th className="px-4 py-2 text-left">가입일</th>
@@ -2243,7 +2252,7 @@ export default function Index({ params }: any) {
                       <tr key={index} className="border-b">
                         <td className="
                           px-4 py-2">
-                            <div className="flex flex-col xl:flex-row items-center justify-start gap-2">
+                            <div className="flex flex-col items-center justify-start gap-2">
                               <Image
                                 src={store.storeLogo || "/icon-store.png"}
                                 alt="Store Logo"
@@ -2261,30 +2270,41 @@ export default function Index({ params }: any) {
                               </button>
                           </div>
                         </td>
-                        <td className="px-4 py-2">
-                          {store.totalBuyerCount > 0 ? Number(store.totalBuyerCount)?.toLocaleString() : 0} 명
-                          <br/>
-                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0}
+
+                        <td className="px-4 py-2
+                        text-right
+                        ">
+                          {store.agentFeePercent}
                         </td>
 
                         <td className="px-4 py-2
-                        text-right">{
-                          store.totalKrwAmount > 0 ? Number(store.totalKrwAmount)?.toLocaleString() : 0} 원
+                        text-right
+                        ">
+                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0}
                           <br/>
-                          {store.totalUsdtAmount > 0 ? Number(store.totalUsdtAmount)?.toLocaleString() : 0} USDT
+                          {store.totalBuyerCount > 0 ? Number(store.totalBuyerCount)?.toLocaleString() : 0}
+                          
                         </td>
+
                         <td className="px-4 py-2
                         text-right">
-                          {store.totalSettlementAmountKRW > 0 ? Number(store.totalSettlementAmountKRW)?.toLocaleString() : 0} 원
+                          {store.totalUsdtAmount > 0 ? Number(store.totalUsdtAmount)?.toLocaleString() : 0}
                           <br/>
-                          {store.totalSettlementAmount > 0 ? Number(store.totalSettlementAmount)?.toLocaleString() : 0} USDT
+                          {store.totalKrwAmount > 0 ? Number(store.totalKrwAmount)?.toLocaleString() : 0}
+                        </td>
+
+                        <td className="px-4 py-2
+                        text-right">
+                          {store.totalSettlementAmount > 0 ? Number(store.totalSettlementAmount)?.toLocaleString() : 0}
+                          <br/>
+                          {store.totalSettlementAmountKRW > 0 ? Number(store.totalSettlementAmountKRW)?.toLocaleString() : 0}
                         </td>
                         <td className="px-4 py-2
                         text-right
                         ">
-                          {store.totalAgentFeeAmountKRW > 0 ? Number(store.totalAgentFeeAmountKRW)?.toLocaleString() : 0} 원
+                          {store.totalAgentFeeAmount > 0 ? Number(store.totalAgentFeeAmount)?.toLocaleString() : 0}
                           <br/>
-                          {store.totalAgentFeeAmount > 0 ? Number(store.totalAgentFeeAmount)?.toLocaleString() : 0} USDT
+                          {store.totalAgentFeeAmountKRW > 0 ? Number(store.totalAgentFeeAmountKRW)?.toLocaleString() : 0}
                         </td>
                         {/*
                         <td className="px-4 py-2">{new Date(store.createdAt).toLocaleDateString()}</td>
