@@ -3745,6 +3745,41 @@ const fetchBuyOrders = async () => {
 
             <div className="w-full flex flex-col items-end gap-4">
 
+              {/* 가맹점 판매용 입금통장 */}
+              <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
+                <div className="flex flex-row gap-2 items-center">
+                  {/* dot */}
+                  <div className="w-1 h-1 rounded-full bg-zinc-500" />
+                  <span className="text-sm text-zinc-500">
+                    가맹점 판매용 입금통장
+                  </span>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-bank.png"
+                    alt="Bank"
+                    width={20}
+                    height={20}
+                    className="rounded-lg"
+                  />
+                  <span className="text-sm text-zinc-500">
+
+                      {store?.bankInfo?.accountNumber.length > 5 ? (
+                        <>
+                          {store?.bankInfo?.bankName + " " + store?.bankInfo?.accountHolder
+                          + " " + store?.bankInfo?.accountNumber.slice(0, 5) + "..."}
+                        </>
+                      ) : (
+                        <>
+                          {store?.bankInfo?.bankName + " " + store?.bankInfo?.accountHolder
+                          + " " + store?.bankInfo?.accountNumber}
+                        </>
+                      )}
+
+                  </span>
+                </div>
+              </div>
+
               {/* 판매용 USDT지갑 */}
               {/* storeInfo.walletAddress */}
               <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
