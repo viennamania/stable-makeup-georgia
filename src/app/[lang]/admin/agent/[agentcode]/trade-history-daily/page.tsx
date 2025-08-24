@@ -145,10 +145,11 @@ export default function Index({ params }: any) {
   const searchParamsAgentcode = searchParams.get('agentcode') || "";
 
   const [searchAgentcode, setSearchAgentcode] = useState(params.agentcode || "");
+  /*
   useEffect(() => {
     setSearchAgentcode(searchParamsAgentcode || "");
   }, [searchParamsAgentcode]);
-
+  */
 
 
 
@@ -832,114 +833,6 @@ export default function Index({ params }: any) {
 
 
 
-  const [tradeSummary, setTradeSummary] = useState({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-    orders: [] as BuyOrder[],
-
-    totalClearanceCount: 0,
-    totalClearanceAmount: 0,
-    totalClearanceAmountUSDT: 0,
-  });
-  const [loadingTradeSummary, setLoadingTradeSummary] = useState(false);
-
-
-  const getTradeSummary = async () => {
-    if (!address || !searchAgentcode) {
-      return;
-    }
-
-    setLoadingTradeSummary(true);
-    const response = await fetch('/api/summary/getTradeSummary', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        /*
-        storecode: params.storecode,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-        //searchBuyer: searchBuyer,
-        //searchDepositName: searchDepositName,
-
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        */
-
-        agentcode: searchAgentcode,
-      
-
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-        
-        //searchBuyer: searchBuyer,
-        searchBuyer: '',
-        //searchDepositName: searchDepositName,
-        searchDepositName: '',
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-        searchStoreBankAccountNumber: '',
-
-
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-
-
-
-      })
-    });
-    if (!response.ok) {
-      setLoadingTradeSummary(false);
-      toast.error('Failed to fetch trade summary');
-      return;
-    }
-    const data = await response.json();
-
-    //console.log('getTradeSummary data', data);
-
-
-    setTradeSummary(data.result);
-    setLoadingTradeSummary(false);
-    return data.result;
-  }
-
-
-
-
-  useEffect(() => {
-
-    if (!address || !searchFromDate || !searchToDate) {
-      return;
-    }
-
-    getTradeSummary();
-
-    // fetch trade summary every 10 seconds
-    const interval = setInterval(() => {
-      getTradeSummary();
-    }, 10000);
-    return () => clearInterval(interval);
-
-
-  } , [address, searchMyOrders, searchAgentcode,
-    searchFromDate, searchToDate,
-  ]);
-
-
-
-  
-
   useEffect(() => {
     // Dynamically load the Binance widget script
     const script = document.createElement("script");
@@ -1102,163 +995,173 @@ export default function Index({ params }: any) {
 
 
 
+    return (
+
+      <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
 
 
-  return (
-
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+        <div className="py-0 w-full">
 
 
-      <div className="py-0 w-full">
-
-        <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-            
-          <div className="w-full flex flex-row items-center justify-start gap-2">
-            <button
-              onClick={() => router.push('/' + params.lang + '/admin')}
-              className="flex items-center justify-center gap-2
-              rounded-lg p-2
-              hover:bg-black/20
-              hover:cursor-pointer
-              hover:scale-105
-              transition-transform duration-200 ease-in-out"
-
-            >
-              <Image
-                src="/logo.png"
-                alt="logo"
-                width={100}
-                height={100}
-                className="h-10 w-10 rounded-full"
-              />
-            </button>
-          </div>
-
-
-          {address && !loadingUser && (
-
-
-            <div className="w-full flex flex-row items-center justify-end gap-2">
-              <button
-                onClick={() => {
-                  router.push('/' + params.lang + '/admin/profile-settings');
-                }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <div className="flex flex-row items-center justify-center gap-2">
-                  {isAdmin && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                        src="/icon-admin.png"
-                        alt="Admin"
-                        width={20}
-                        height={20}
-                        className="rounded-lg w-5 h-5"
-                      />
-                      <span className="text-sm text-yellow-500">
-                        전체 관리자
-                      </span>
-                    </div>
-                  )}
-                  <span className="text-sm text-[#f3f4f6]">
-                    {user?.nickname || "프로필"}
-                  </span>
-
-                </div>
-              </button>
-
-
-              {/* logout button */}
-              <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
+          <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
+            <div className="w-full flex flex-row items-center justify-start gap-2">
+
+              <button
+                onClick={() => router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/')}
+                className="flex items-center justify-center gap-2
+                  rounded-lg p-2
+                  hover:bg-black/20
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out"
+
+              >
+                  <Image
+                    src={agent?.agentLogo || "/logo.png"}
+                    alt="logo"
+                    width={35}
+                    height={35}
+                    className="rounded-lg w-6 h-6"
+                  />
+              </button>
+
+                {address && address === agentAdminWalletAddress && (
+                  <div className="text-sm text-[#3167b4] font-bold">
+                    {agent && agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
+                  </div>
+                )}
+                {address && address !== agentAdminWalletAddress && (
+                  <div className="text-sm text-[#3167b4] font-bold">
+                    {agent && agent?.agentName + " (" + agent?.agentcode + ")"}
+                  </div>
+                )}
+
             </div>
 
 
-          )}
+            {address && !loadingUser && (
 
 
-          {!address && (
-            <ConnectButton
-              client={client}
-              wallets={wallets}
+              <div className="w-full flex flex-row items-center justify-end gap-2">
+                
+                <button
+                  onClick={() => {
+                    router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/profile-settings');
+                  }}
+                  className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                >
+                  <div className="flex flex-row items-center justify-center gap-2">
 
-              /*
-              accountAbstraction={{
-                chain: arbitrum,
-                sponsorGas: true
-              }}
-              */
-              
-              theme={"light"}
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <Image
+                          src="/icon-agent.png"
+                          alt="Agent"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-5 h-5"
+                        />
+                        <span className="text-sm text-yellow-500">
+                          에이전트 관리자
+                        </span>
+                      </div>
 
-              // button color is dark skyblue convert (49, 103, 180) to hex
-              connectButton={{
-                style: {
-                  backgroundColor: "#3167b4", // dark skyblue
+                    <span className="text-sm text-[#f3f4f6]">
+                      {user?.nickname || "프로필"}
+                    </span>
 
-                  color: "#f3f4f6", // gray-300 
-                  padding: "2px 2px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  //width: "40px",
-                  height: "38px",
-                },
-                label: "원클릭 로그인",
-              }}
-
-              connectModal={{
-                size: "wide", 
-                //size: "compact",
-                titleIcon: "https://www.stable.makeup/logo.png",                           
-                showThirdwebBranding: false,
-              }}
-
-              locale={"ko_KR"}
-              //locale={"en_US"}
-            />
-
-          )}
+                  </div>
+                </button>
 
 
+                {/* logout button */}
+                <button
+                    onClick={() => {
+                        confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                        .then(() => {
+
+                            toast.success('로그아웃 되었습니다');
+
+                            //router.push(
+                            //    "/admin/" + params.center
+                            //);
+                        });
+                    } }
+
+                    className="flex items-center justify-center gap-2
+                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                >
+                  <Image
+                    src="/icon-logout.webp"
+                    alt="Logout"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <span className="text-sm">
+                    로그아웃
+                  </span>
+                </button>
+              </div>
 
 
-        </div>
+            )}
 
 
-          <div className="flex flex-col items-start justify-center gap-2">
+            {!address && (
+              <ConnectButton
+                client={client}
+                wallets={wallets}
 
+                /*
+                accountAbstraction={{
+                  chain: arbitrum,
+                  sponsorGas: true
+                }}
+                */
+                
+                theme={"light"}
+
+                // button color is dark skyblue convert (49, 103, 180) to hex
+                connectButton={{
+                  style: {
+                    backgroundColor: "#3167b4", // dark skyblue
+
+                    color: "#f3f4f6", // gray-300 
+                    padding: "2px 2px",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                    //width: "40px",
+                    height: "38px",
+                  },
+                  label: "원클릭 로그인",
+                }}
+
+                connectModal={{
+                  size: "wide", 
+                  //size: "compact",
+                  titleIcon: "https://www.stable.makeup/logo.png",                           
+                  showThirdwebBranding: false,
+                }}
+
+                locale={"ko_KR"}
+                //locale={"en_US"}
+              />
+
+            )}
+
+          </div>
+
+
+ 
+ 
+
+
+          <div className="flex flex-col items-start justify-center gap-2 mt-4">
             
-
             {/* USDT 가격 binance market price */}
             <div
               className="
-              h-20
                 w-full flex
                 binance-widget-marquee
               flex-row items-center justify-center gap-2
@@ -1274,279 +1177,90 @@ export default function Index({ params }: any) {
               //data-powered-by="Powered by OneClick USDT"
               //data-disclaimer="Disclaimer"
             ></div>
+ 
+            {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
+            {/* memnu buttons same width left side */}
+            <div className="w-full flex flex-row itmes-start justify-start gap-2 mb-4">
+              <div className="grid grid-cols-3 xl:grid-cols-4 gap-2 mb-4">
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/store')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    가맹점관리
+                </button>
 
 
 
-          <div className="w-full flex flex-row items-center justify-end gap-2">
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/member')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    회원관리
+                </button>
 
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
-            ">
-              {loadingTotalNumberOfBuyOrders ? (
-                <Image
-                  src="/loading.png"
-                  alt="Loading"
-                  width={20}
-                  height={20}
-                  className="w-6 h-6 animate-spin"
-                />
-              ) : (
-                <Image
-                  src="/icon-buyorder.png"
-                  alt="Buy Order"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
-                />
-              )}
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/buyorder')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    구매주문관리
+                </button>
 
+                <button
+                    onClick={() => router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/trade-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover: scale-105
+                    transition-all duration-200 ease-in-out
+                    ">
+                    거래내역
+                </button>
 
-              <p className="text-lg text-red-500 font-semibold">
-                {
-                totalNumberOfBuyOrders
-                }
-              </p>
-
-              {totalNumberOfBuyOrders > 0 && (
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <Image
-                    src="/icon-notification.gif"
-                    alt="Notification"
-                    width={50}
-                    height={50}
-                    className="w-15 h-15 object-cover"
-                    
-                  />
-                  <button
-                    onClick={() => {
-                      router.push('/' + params.lang + '/admin/buyorder');
-                    }}
-                    className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  >
-                    <span className="text-sm">
-                      구매주문관리
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-
-            {/* Clearance Orders */}
-            {version !== 'bangbang' && (
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
-            ">
-
-              {loadingTotalNumberOfClearanceOrders ? (
-                <Image
-                  src="/loading.png"
-                  alt="Loading"
-                  width={20}
-                  height={20}
-                  className="w-6 h-6 animate-spin"
-                />
-              ) : (
-                <Image
-                  src="/icon-clearance.png"
-                  alt="Clearance"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
-                />
-              )}
-
-              <p className="text-lg text-yellow-500 font-semibold">
-                {
-                totalNumberOfClearanceOrders
-                }
-              </p>
-
-              {totalNumberOfClearanceOrders > 0 && (
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <Image
-                    src="/icon-notification.gif"
-                    alt="Notification"
-                    width={50}
-                    height={50}
-                    className="w-15 h-15 object-cover"
-                    
-                  />
-                  <button
-                    onClick={() => {
-                      router.push('/' + params.lang + '/admin/clearance-history');
-                    }}
-                    className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  >
-                    <span className="text-sm">
-                      청산관리
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-            )}
-
-        
-          </div>
-
-
-
-
-
-          {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-          {/* memnu buttons same width left side */}
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
-
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/store')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  가맹점관리
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  에이전트관리
-              </button>
-
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  회원관리
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  구매주문관리
-              </button>
-
-
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  거래내역
-              </button>
-
-              {version !== 'bangbang' && (
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  청산관리
-              </button>
-              )}
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  통계(가맹)
-              </button>
-
-              <div className='flex w-32 items-center justify-center gap-2
+                <div className='flex w-32 items-center justify-center gap-2
                 bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                <Image
-                  src="/icon-statistics.png"
-                  alt="Trade"
-                  width={35}
-                  height={35}
-                  className="w-4 h-4"
-                />
-                <div className="text-sm font-semibold">
-                  통계(AG)
-                </div>
-              </div>
-
-              {version !== 'bangbang' && (
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  보유량내역
-              </button>
-              )}
-
-          </div>
-
-
-
-
-
-
-
-              <div className='flex flex-row items-center space-x-4'>
                   <Image
                     src="/icon-statistics.png"
                     alt="Statistics"
                     width={35}
                     height={35}
-                    className="w-6 h-6"
+                    className="w-4 h-4"
                   />
-
-                  <div className="text-xl font-semibold">
-                    통계(AG)
+                  <div className="text-sm font-semibold">
+                    통계(월별)
                   </div>
-
-                  
-                  <Image
-                    src="/loading.png"
-                    alt="Loading"
-                    width={35}
-                    height={35}
-                    className={`w-6 h-6 ${loadingBuyOrders ? 'animate-spin' : 'hidden'}`}
-                  />
+                </div>
+                
 
               </div>
+            </div>
 
 
+            <div className='flex flex-row items-center space-x-4'>
+                <Image
+                  src="/icon-trade.png"
+                  alt="Trade"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+
+                <div className="text-xl font-semibold">
+                  통계(일별)
+                </div>
+
+            </div>
 
 
 
@@ -1745,201 +1459,6 @@ export default function Index({ params }: any) {
 
 
 
-          {/* trade summary */}
-
-          <div className="flex flex-col xl:flex-row items-center justify-between gap-2
-            w-full
-            bg-zinc-100/50
-            p-4 rounded-lg shadow-md
-            ">
-
-            <div className="xl:w-1/4 flex flex-row items-center justify-between gap-2">
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래수(건)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalCount?.toLocaleString()}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래금액(원)</div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-xl font-semibold text-yellow-600">
-                    {tradeSummary.totalKrwAmount?.toLocaleString()}
-                  </span>
-                  
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래량(USDT)</div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-xl font-semibold text-green-600">
-                    {tradeSummary.totalUsdtAmount
-                      ? tradeSummary.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* divider */}
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-            <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
-
-            <div className="xl:w-1/2
-              flex flex-row items-center justify-between gap-2">
-              
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 결제수(건)</div>
-                  <span className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()}
-                  </span>
-              </div>
-
-              {/*
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 결제금액(원)</div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-xl font-semibold text-yellow-600">
-                    {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
-                  </span>
-                  
-                </div>
-              </div>
-              */}
-
-              {/*
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 결제량(USDT)</div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-xl font-semibold text-green-600">
-                    {tradeSummary.totalSettlementAmount
-                      ? tradeSummary.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'}
-                  </span>
-                </div>
-              </div>
-              */}
-
-
-              <div className="flex flex-col gap-2 items-center">
-
-                {/*
-                <div className="flex flex-row gap-2 items-center">
-                  
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 PG 수수료(원)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600">
-                        {tradeSummary.totalFeeAmountKRW
-                          ? tradeSummary.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0'}
-                      </span>
-                      
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 PG 수수료(USDT)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-green-600">
-                        {tradeSummary.totalFeeAmount
-                          ? tradeSummary.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.000'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                */}
-
-                <div className="flex flex-row gap-2 items-center">
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 AG 수수료(원)</div>
-                    <div className="w-full flex flex-row items-cneter justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600">
-                        {tradeSummary.totalAgentFeeAmountKRW
-                          ? tradeSummary.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0'}
-                      </span>
-                      
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 AG 수수료(USDT)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-green-600">
-                        {tradeSummary.totalAgentFeeAmount
-                          ? tradeSummary.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.000'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-
-            
-            {/* divider */}
-            {/*}
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-            <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
-
-            <div className="xl:w-1/4 flex flex-row items-center justify-center gap-2">
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 청산수(건)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceCount?.toLocaleString()}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 청산금액(원)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceAmount?.toLocaleString()} 원
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 청산수량(USDT)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceAmountUSDT?.toLocaleString()} USDT
-                </div>
-              </div>
-            </div>
-            */}
-            
-          </div>
 
 
               <div className="w-full overflow-x-auto">
