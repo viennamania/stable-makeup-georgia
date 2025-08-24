@@ -3743,106 +3743,133 @@ const fetchBuyOrders = async () => {
 
             </div>
 
-            {/* 판매용 USDT지갑 */}
-            {/* storeInfo.walletAddress */}
-            <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
-              <div className="flex flex-row gap-2 items-center">
-                {/* dot */}
-                <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
-                <span className="text-sm text-zinc-500">
-                  가맹점 판매용 USDT지갑
-                </span>
+            <div className="w-full flex flex-col items-end gap-4">
+
+              {/* 판매용 USDT지갑 */}
+              {/* storeInfo.walletAddress */}
+              <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
+                <div className="flex flex-row gap-2 items-center">
+                  {/* dot */}
+                  <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
+                  <span className="text-sm text-zinc-500">
+                    가맹점 판매용 USDT지갑
+                  </span>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-shield.png"
+                    alt="Shield"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  <span className="text-sm text-zinc-500">
+                    {
+                    store?.sellerWalletAddress
+                    && store?.sellerWalletAddress.slice(0, 6) + "..." + store?.sellerWalletAddress.slice(-4)
+                    }
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Image
-                  src="/icon-shield.png"
-                  alt="Shield"
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
-                />
-                <span className="text-sm text-zinc-500">
-                  {
-                  store?.sellerWalletAddress
-                  && store?.sellerWalletAddress.slice(0, 6) + "..." + store?.sellerWalletAddress.slice(-4)
-                  }
-                </span>
+
+              {/* 결제용 USDT지갑 */}
+              {/* store.settlementWalletAddress */}
+              <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
+                <div className="flex flex-row gap-2 items-center">
+                  {/* dot */}
+                  <div className="w-1 h-1 rounded-full bg-zinc-500" />
+                  <span className="text-sm text-zinc-500">
+                    가맹점 결제용 USDT지갑
+                  </span>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-shield.png"
+                    alt="Shield"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  <span className="text-sm text-zinc-500">
+                    {
+                    store?.settlementWalletAddress
+                    && store?.settlementWalletAddress.slice(0, 6) + "..." + store?.settlementWalletAddress.slice(-4)
+                    }
+                  </span>
+                </div>
               </div>
-            </div>
-
-            {/* 결제용 USDT지갑 */}
-            {/* store.settlementWalletAddress */}
-            <div className="flex flex-col xl:flex-row items-start xl:items-end gap-1">
-              <div className="flex flex-row gap-2 items-center">
-                {/* dot */}
-                <div className="w-1 h-1 rounded-full bg-zinc-500" />
-                <span className="text-sm text-zinc-500">
-                  가맹점 결제용 USDT지갑
-                </span>
-              </div>
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Image
-                  src="/icon-shield.png"
-                  alt="Shield"
-                  width={20}
-                  height={20}
-                  className="w-5 h-5"
-                />
-                <span className="text-sm text-zinc-500">
-                  {
-                  store?.settlementWalletAddress
-                  && store?.settlementWalletAddress.slice(0, 6) + "..." + store?.settlementWalletAddress.slice(-4)
-                  }
-                </span>
-              </div>
-            </div>
 
 
+              {address && (
+                  <div className={`
+                    ${address === store?.sellerWalletAddress ? 'bg-green-100' : 'bg-white'}
+                    p-4 rounded-lg shadow-md
+                    flex flex-col items-end
+                  `}>
 
-            {address && (
-                <div className="mt-4 w-full flex flex-col xl:flex-row items-center justify-end gap-2">
+                      <div className="flex flex-row items-center justify-center gap-2">
 
+                          <div className="flex flex-row gap-2 items-center">
+                            {/* dot */}
+                            <div className="w-1 h-1 rounded-full bg-zinc-500" />
+                            <span className="text-sm text-zinc-500">
+                              나의 USDT지갑
+                            </span>
+                          </div>
 
-                    <div className="flex flex-row items-center justify-center gap-2">
-                        <Image
-                            src="/icon-shield.png"
-                            alt="Wallet"
-                            width={100}
-                            height={100}
-                            className="w-6 h-6"
-                        />
-                        <span className="text-sm text-zinc-500">
-                          나의 USDT지갑
-                        </span>
-                        <button
-                            className="text-lg text-zinc-600 underline"
-                            onClick={() => {
-                                navigator.clipboard.writeText(address);
-                                toast.success(Copied_Wallet_Address);
-                            } }
-                        >
-                            {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                        </button>
+                          <Image
+                              src="/icon-shield.png"
+                              alt="Wallet"
+                              width={100}
+                              height={100}
+                              className="w-6 h-6"
+                          />
+                          <button
+                              className="text-lg text-zinc-600 underline"
+                              onClick={() => {
+                                  navigator.clipboard.writeText(address);
+                                  toast.success(Copied_Wallet_Address);
+                              } }
+                          >
+                              {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                          </button>
 
-                    </div>
-
-                    <div className="flex flex-row items-center justify-center gap-1">
-                        <Image
-                            src="/icon-tether.png"
-                            alt="Tether"
+                      </div>
+                      <div className="flex flex-row items-center justify-center gap-1">
+                          <Image
+                              src="/icon-tether.png"
+                              alt="Tether"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                          />
+                          <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                              style={{ fontFamily: 'monospace' }}
+                          >
+                              {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          </span>
+                      </div>
+                      
+                      {address === store?.sellerWalletAddress && (
+                        <div className="flex flex-row gap-2 items-center">
+                          <Image
+                            src="/icon-info.png"
+                            alt="Information"
                             width={20}
                             height={20}
                             className="w-5 h-5"
-                        />
-                        <span className="text-2xl xl:text-4xl font-semibold text-green-600"
-                            style={{ fontFamily: 'monospace' }}
-                        >
-                            {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </span>
-                    </div>
+                          />
+                          <span className="text-sm text-zinc-500">
+                            이 지갑은 판매자 지갑입니다.
+                          </span>
+                        </div>
+                      )}
 
-                </div>
-            )}
+                  </div>
+              )}
+
+            </div>
+
 
 
             <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-2 mt-4">
