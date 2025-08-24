@@ -1707,11 +1707,11 @@ export default function Index({ params }: any) {
                       alt="Store"
                       width={35}
                       height={35}
-                      className="rounded-lg w-5 h-5 object-cover"
+                      className="rounded-lg w-12 h-12 object-cover"
                   />
                   <span className="text-sm text-zinc-50">
                     {
-                      store && store?.storeName + " (" + store?.storecode + ")"
+                      store && store?.storeName + " (" + store?.storecode + ")" + " 가맹점"
                     }
                   </span>
 
@@ -2578,8 +2578,8 @@ export default function Index({ params }: any) {
                           hidden xl:table-cell
                           px-4 py-2 text-left">거래번호</th>
                           <th className="px-4 py-2 text-left">구매자</th>
-                          <th className="px-4 py-2 text-left">거래금액(원)</th>
-                          <th className="px-4 py-2 text-left">거래량(USDT)</th>
+                          <th className="px-4 py-2 text-right">거래금액(원)</th>
+                          <th className="px-4 py-2 text-right">거래량(USDT)</th>
                           <th className="
                           hidden xl:table-cell
                           px-4 py-2 text-left">거래일시</th>
@@ -2602,7 +2602,7 @@ export default function Index({ params }: any) {
                             </td>
                             <td className="px-4 py-2">
                               <div className="
-                                w-20
+                                w-full
                                 flex flex-row items-center justify-end gap-2">
                                 <span className="text-lg text-yellow-600"
                                   style={{ fontFamily: 'monospace' }}>
@@ -2612,7 +2612,7 @@ export default function Index({ params }: any) {
                             </td>
                             
                             <td className="px-4 py-2">
-                              <div className="w-20 flex flex-row items-center justify-between gap-2">
+                              <div className="w-full flex flex-row items-center justify-end gap-1">
                                 <Image
                                   src="/icon-tether.png"
                                   alt="Tether"
@@ -2934,9 +2934,19 @@ export default function Index({ params }: any) {
 
                     <>
                       <div className="mt-5 flex flex-row gap-2 justify-center items-center">
+                        {/* dot */}
+                        <div className="w-2 h-2 bg-zinc-600 rounded-full"></div>
                         <span className="text-sm text-zinc-600">
                           내 USDT지갑
                         </span>
+
+                        <Image
+                          src="/icon-shield.png"
+                          alt="Shield"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-4 h-4"
+                        />
                         <button
                           className="text-lg text-zinc-800 underline"
                           onClick={() => {
@@ -2946,12 +2956,6 @@ export default function Index({ params }: any) {
                         >
                           {address.substring(0, 6)}...{address.substring(address.length - 4)}
                         </button>
-                        <Image
-                          src="/icon-shield.png"
-                          alt="Shield"
-                          width={35}
-                          height={35}
-                        />
 
                       </div>
                 
@@ -2959,8 +2963,10 @@ export default function Index({ params }: any) {
 
 
                       <div className="mt-5 flex flex-row gap-2 justify-center items-center">
+                        {/* dot */}
+                        <div className="w-2 h-2 bg-zinc-600 rounded-full"></div>
                         <span className="text-sm text-zinc-600">
-                          {My_Balance}(USDT)
+                          {My_Balance} (USDT)
                         </span>
                         <Image
                           src="/icon-tether.png"
@@ -2981,6 +2987,17 @@ export default function Index({ params }: any) {
                       <div className="
                       mt-5
                       flex flex-row gap-2 justify-center items-center">
+                        {/* dot */}
+                        <div className="w-2 h-2 bg-zinc-600 rounded-full"></div>
+                        <span className="text-sm text-zinc-600">
+                          가스수량
+                        </span>
+                        <span className="text-sm text-zinc-600">
+                          {chain === "ethereum" ? "(ETH)" :
+                          chain === "polygon" ? "(POL)" :
+                          chain === "arbitrum" ? "(ETH)" :
+                          chain === "bsc" ? "(BNB)" : ""}
+                        </span>
                         <Image
                           src={`/logo-chain-${chain}.png`}
                           alt={`${chain} logo`}
@@ -2988,20 +3005,12 @@ export default function Index({ params }: any) {
                           height={20}
                           className="rounded-lg"
                         />
-                        <span className="text-sm text-zinc-600">
-                          가스수량
-                        </span>
                         <div className="text-xl font-semibold text-zinc-800"
                           style={{ fontFamily: "monospace" }}
                         >
                           {Number(nativeBalance).toFixed(8)}
                         </div>
-                        <p className="text-sm text-zinc-800">
-                          {chain === "ethereum" ? "ETH" :
-                          chain === "polygon" ? "POL" :
-                          chain === "arbitrum" ? "ETH" :
-                          chain === "bsc" ? "BNB" : ""}
-                        </p>
+
                       </div>
 
 
