@@ -3860,7 +3860,7 @@ const fetchBuyOrders = async () => {
                             className="w-5 h-5"
                           />
                           <span className="text-sm text-zinc-500">
-                            이 지갑은 판매자 지갑입니다.
+                            이 지갑은 판매용 지갑입니다.
                           </span>
                         </div>
                       )}
