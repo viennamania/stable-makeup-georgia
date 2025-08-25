@@ -108,6 +108,15 @@ export async function POST(request: NextRequest) {
     }
     */
 
+
+
+    /*
+    if buyOrder?.mobile has 국가번호, then remove 국가번호
+    if buyOrder?.mobile has - then remove -
+    */
+    const mobile = buyOrder?.mobile?.replace(/^\+82/, "0").replace(/-/g, "");
+
+
     if (payactionApiKey && payactionShopId) {
 
       const tradeId = buyOrder.tradeId;
@@ -119,7 +128,7 @@ export async function POST(request: NextRequest) {
         order_date: new Date().toISOString(),
         billing_name: buyOrder.buyer.depositName,
         orderer_name: buyOrder.buyer.depositName,
-        orderer_phone_number: buyOrder?.mobile,
+        orderer_phone_number: mobile,
         orderer_email: buyOrder.buyer?.email,
         trade_usage: "USDT구매",
         identity_number: buyOrder.walletAddress,

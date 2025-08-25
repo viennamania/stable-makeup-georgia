@@ -221,7 +221,14 @@ export async function POST(request: NextRequest) {
       const order_date = new Date().toISOString();
       const billing_name = buyOrder.buyer.depositName;
       const orderer_name = buyOrder.buyer.depositName;
-      const orderer_phone_number = buyOrder?.mobile;
+      
+      /*
+      if buyOrder?.mobile has 국가번호, then remove 국가번호
+      if buyOrder?.mobile has - then remove -
+      */
+      const orderer_phone_number = buyOrder?.mobile?.replace(/^\+82/, "0").replace(/-/g, "");
+
+
       const orderer_email = buyOrder.buyer?.email;
       const trade_usage = "USDT구매";
       const identity_number = buyOrder.walletAddress;
