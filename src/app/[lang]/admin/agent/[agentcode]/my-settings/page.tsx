@@ -1451,7 +1451,7 @@ export default function SettingsPage({ params }: any) {
                                     <div className='w-full flex flex-row items-center justify-start gap-2'>
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            에이전트 관리자 지갑주소
+                                            에이전트 관리자 지갑주소(EOA)
                                         </span>
                                     </div>
                         
@@ -1504,7 +1504,7 @@ export default function SettingsPage({ params }: any) {
                                         <div className='w-full flex flex-row items-center justify-start gap-2'>
                                             <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                             <span className="text-lg">
-                                                에이전트 수수료 수납용 USDT지갑
+                                                에이전트 수수료 수납용 USDT지갑주소(EOA)
                                             </span>
                                         </div>
 
@@ -1576,7 +1576,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500 font-semibold">
-                                        환율
+                                        기준환율
                                     </span>
                                 </div>
 
@@ -1584,7 +1584,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg text-zinc-500 font-semibold">
-                                        USDT-KRW 환율
+                                        USDT-KRW 환율(원)
                                     </span>
                                     <span className="text-xl text-blue-500 font-semibold">
                                         {

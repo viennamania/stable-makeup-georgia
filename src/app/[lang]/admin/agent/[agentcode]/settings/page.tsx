@@ -1477,7 +1477,7 @@ export default function SettingsPage({ params }: any) {
                                     <div className='w-full flex flex-row items-center justify-start gap-2'>
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            에이전트 관리자 지갑주소
+                                            에이전트 관리자 지갑주소(EOA)
                                         </span>
                                     </div>
                         
@@ -1599,7 +1599,7 @@ export default function SettingsPage({ params }: any) {
                                         <div className='w-full flex flex-row items-center justify-start gap-2'>
                                             <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                             <span className="text-lg">
-                                                에이전트 수수료 수납용 USDT지갑
+                                                에이전트 수수료 수납용 USDT지갑주소(EOA)
                                             </span>
                                         </div>
 

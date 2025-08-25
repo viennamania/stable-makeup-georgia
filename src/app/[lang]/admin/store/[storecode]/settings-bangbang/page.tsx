@@ -1223,12 +1223,9 @@ export default function SettingsPage({ params }: any) {
             return;
         }
 
-        if (!agentFeePercent) {
-            toast.error("가맹점 에이전트 수수료율을 입력하세요");
-            return;
-        }
-        if (agentFeePercent < 0.01 || agentFeePercent > 5.00) {
-            toast.error("가맹점 에이전트 수수료율은 0.01 ~ 5.00%로 설정하세요");
+
+        if (agentFeePercent < 0 || agentFeePercent > 5.00) {
+            toast.error("가맹점 에이전트 수수료율은 0 ~ 5.00%로 설정하세요");
             return;
         }
         if (agentFeePercent === store?.agentFeePercent) {
@@ -1275,7 +1272,45 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // resetAgentFeePercent
+    const [resettingAgentFeePercent, setResettingAgentFeePercent] = useState(false);
+    const resetAgentFeePercent = async () => {
+        if (resettingAgentFeePercent) {
+            return;
+        }
+        setResettingAgentFeePercent(true);
+        const response = await fetch('/api/store/updateStoreAgentFeePercent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                {
+                    storecode: params.storecode,
+                    agentFeePercent: 0,
+                }
+            ),
+        });
+        if (!response.ok) {
+            setResettingAgentFeePercent(false);
+            toast.error('가맹점 에이전트 수수료 비율 리셋에 실패했습니다.');
+            return;
+        }
+        const data = await response.json();
+        //console.log('data', data);
+        if (data.result) {
+            toast.success('가맹점 에이전트 수수료 비율이 리셋되었습니다.');
+            setStore({
+                ...store,
+                agentFeePercent: 0,
+            });
 
+        } else {
+            toast.error('가맹점 에이전트 수수료 비율 리셋에 실패했습니다.');
+        }
+        setResettingAgentFeePercent(false);
+        return data.result;
+    }
 
 
 
@@ -2198,10 +2233,10 @@ export default function SettingsPage({ params }: any) {
                                 <div className="w-full flex flex-row items-center justify-start gap-2">
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        에이전트 수수료율
+                                        에이전트 수수료율(%)
                                     </span>
                                     <span className="text-xl text-blue-500 font-semibold">
-                                        {store?.agentFeePercent || "없음"}%
+                                        {store?.agentFeePercent || "없음"}
                                     </span>
                                 </div>
 
@@ -2232,6 +2267,22 @@ export default function SettingsPage({ params }: any) {
                                         {updatingAgentFeePercent ? "수정 중..." : "수정"}
                                     </button>
                                 </div>
+
+                                {/* 수수료율 리셋 버튼 */}
+                                {/* resetAgentFeePercent() */}
+                                <button
+                                    disabled={!address || resettingAgentFeePercent}
+                                    className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                        ${!address || resettingAgentFeePercent ? "opacity-50" : ""}`}
+                                    onClick={() => {
+                                        confirm(
+                                            `정말 에이전트 수수료율을 0%로 리셋하시겠습니까?`
+                                        ) && resetAgentFeePercent();
+                                    }}
+                                >
+                                    {resettingAgentFeePercent ? "리셋 중..." : "리셋하기"}
+                                </button>
+
                             </div>
          
 
