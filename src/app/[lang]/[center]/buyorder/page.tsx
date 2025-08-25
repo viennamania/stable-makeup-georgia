@@ -6802,6 +6802,58 @@ const fetchBuyOrders = async () => {
                           <div className="w-full flex flex-col gap-2 items-center justify-center
                             bg-zinc-50 p-4 rounded-lg shadow-sm">
 
+
+                            {item.status !== "paymentConfirmed" && !item?.settlement && (
+                              <div className="flex flex-col gap-2">
+                                {/* 자동결제 지갑주소 */}
+
+                                <div className="w-full flex flex-row gap-2 items-center justify-start">
+                                  <Image
+                                    src={item?.store?.storeLogo || '/icon-store.png'}
+                                    alt="Store Logo"
+                                    width={30}
+                                    height={30}
+                                    className="w-6 h-6 rounded-lg object-cover"
+                                  />
+                                  <span className="text-sm font-semibold text-zinc-500">
+                                    {item?.store?.storeName}{' '}가맹점 자동결제 지갑주소
+                                  </span>
+                                </div>
+
+
+                                <div className="flex flex-row gap-1 items-center">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Wallet Icon"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4 rounded-lg object-cover"
+                                  />
+                                  <span className="text-sm font-semibold text-zinc-500">
+                                    {item.store?.settlementWalletAddress ?
+                                      item.store.settlementWalletAddress.slice(0, 5) + '...' + item.store.settlementWalletAddress.slice(-4)
+                                      : '없음'}
+                                  </span>
+                                </div>
+
+                                {/* info P2P 거래완료후 자동으로 결제와 정산을 진행합니다. */}
+                                <div className="flex flex-row gap-1 items-center">
+                                  <Image
+                                    src="/icon-info.png"
+                                    alt="Info Icon"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4 rounded-lg object-cover"
+                                  />
+                                  <span className="text-sm font-semibold text-zinc-500">
+                                    P2P 거래완료후 자동으로 결제와 정산을 진행합니다.
+                                  </span>
+                                </div>
+
+                              </div>
+                            )}
+
+
                             {item?.settlement && (
 
                               <div className="w-full flex flex-row gap-2 items-center justify-start">
