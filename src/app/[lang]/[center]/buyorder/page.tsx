@@ -6803,7 +6803,7 @@ const fetchBuyOrders = async () => {
                             bg-zinc-50 p-4 rounded-lg shadow-sm">
 
 
-                            {item.status !== "paymentConfirmed" && !item?.settlement && (
+                            {item.status !== "cancelled" && item.status !== "paymentConfirmed" && !item?.settlement && (
                               <div className="flex flex-col gap-2">
                                 {/* 자동결제 지갑주소 */}
 

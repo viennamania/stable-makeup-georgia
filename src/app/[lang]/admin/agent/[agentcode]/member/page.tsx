@@ -1983,10 +1983,11 @@ export default function Index({ params }: any) {
                         </th>
 
                         <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="flex flex-row items-center justify-between gap-2">
                             <span>결제건수(건)</span>
-                            <span>결제금액(원)</span>
                             <span>구매량(USDT)</span>
+                            <span>구매금액(원)</span>
+
                           </div>
                         </th>
 
@@ -1994,9 +1995,13 @@ export default function Index({ params }: any) {
                           p-2">
                           USDT지갑
                         </th>
+                        {/*
                         <th className="p-2">충전금액</th>
                         <th className="p-2">결제페이지</th>
+                        */}
+                        {/*
                         <th className="p-2">주문상태</th>
+                        */}
 
                       </tr>
                     </thead>
@@ -2050,14 +2055,24 @@ export default function Index({ params }: any) {
                             <div className="flex flex-col xl:flex-row items-start justify-center gap-2">
                               <span>{item?.buyer?.depositBankName}</span>
                               
-                              <span>{item?.buyer?.depositBankAccountNumber}</span>
+                              <span>
+                                {item?.buyer?.depositBankAccountNumber
+                                && item?.buyer?.depositBankAccountNumber.length > 5
+                                  ? item?.buyer?.depositBankAccountNumber.substring(0, 3) + '****' + item?.buyer?.depositBankAccountNumber.substring(item?.buyer?.depositBankAccountNumber.length - 2)
+                                  : '****'}
+                              </span>
                               
-                              <span>{item?.buyer?.depositName}</span>
+                              <span>
+                                {item?.buyer?.depositName
+                                && item?.buyer?.depositName.length > 1
+                                  ? item?.buyer?.depositName.substring(0, 1) + '****'
+                                  : '****'}
+                              </span>
                             </div>
                           </td>
 
                           <td className="p-2">
-                            <div className="flex flex-col items-end mr-2 justify-center gap-2">
+                            <div className="flex flex-row items-center mr-2 justify-between gap-2">
 
                               {item?.totalBuyCount ? (
                                 <div className="flex flex-row items-center justify-center gap-2">
@@ -2070,28 +2085,29 @@ export default function Index({ params }: any) {
                               )}
                                 
 
-                              {item?.totalPaymentConfirmedKrwAmount ? (
-
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  {Number(item?.buyer?.depositAmount)?.toLocaleString('ko-KR')}
-                                  {' '}원
-                                </div>
-                              ) : (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  0 원
-                                </div>
-                              )}
 
                               {item?.totalPaymentConfirmedUsdtAmount ? (
                                 <div className="flex flex-row items-center justify-center gap-2">
                                   {Number(item?.totalPaymentConfirmedUsdtAmount)?.toLocaleString('ko-KR')}
-                                  {' '}USDT
                                 </div>
                               ) : (
                                 <div className="flex flex-row items-center justify-center gap-2">
-                                  0 USDT
+                                  0
                                 </div>
                               )}
+
+
+                              {item?.totalPaymentConfirmedKrwAmount ? (
+
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                  {Number(item?.totalPaymentConfirmedKrwAmount)?.toLocaleString('ko-KR')}
+                                </div>
+                              ) : (
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                  0
+                                </div>
+                              )}
+
 
                             </div>
                             
@@ -2099,22 +2115,31 @@ export default function Index({ params }: any) {
 
                           <td className="
                             p-2">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item?.walletAddress);
-                                toast.success(Copied_Wallet_Address);
-                              } }
-                              className="text-sm text-zinc-500 underline"
-                            >
-                            {
-                                item?.walletAddress && (
-                                  item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
-                                )
-                              }
-                            </button>
+
+                            <div className="flex flex-row items-center gap-1">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Shield Icon"
+                                width={20}
+                                height={20}
+                              />
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item?.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                } }
+                                className="text-sm text-zinc-500 underline"
+                              >
+                              {
+                                  item?.walletAddress && (
+                                    item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
+                                  )
+                                }
+                              </button>
+                            </div>
                           </td>
 
-                          {/* depositAmountKrw input */}
+                          {/*
                           <td className="p-2">
                             <div className="flex flex-col xl:flex-row items-start justify-center gap-2">
                               <input
@@ -2137,25 +2162,6 @@ export default function Index({ params }: any) {
                           <td className="p-2">
 
                             <div className="flex flex-col xl:flex-row items-start justify-center gap-2">
-
-                              {/*}
-                              <button
-                                onClick={() => {
-                                  window.open(
-                                    'https://cryptoss.beauty/' + params.lang + '/' + item.storecode + '/payment?'
-                                    + 'storeUser=' + item.nickname + '&depositBankName=' + item?.buyer?.depositBankName + '&depositName=' + item?.buyer?.depositName,
-                                    '_blank'
-                                  );
-                                  toast.success('회원 홈페이지를 새창으로 열었습니다.');
-                                }}
-                                className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                              >
-                                보기
-                              </button>
-                              */}
-
-                              {/* Modal open */}
                               <button
                                 onClick={() => {
                                   
@@ -2172,10 +2178,6 @@ export default function Index({ params }: any) {
                                 보기
                               </button>
 
-
-
-
-                              {/* 복사 버튼 */}
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText(
@@ -2196,8 +2198,9 @@ export default function Index({ params }: any) {
                             </div>
 
                           </td>
+                          */}
 
-
+                          {/*
                           <td className="p-2">
                             <div className="flex flex-col xl:flex-row items-start justify-center gap-2">
                               <span className="text-sm text-zinc-500">
@@ -2228,6 +2231,7 @@ export default function Index({ params }: any) {
                               </span>
                             </div>
                           </td>
+                          */}
 
 
  

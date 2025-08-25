@@ -6704,7 +6704,7 @@ const fetchBuyOrders = async () => {
                           flex flex-col gap-2 items-center justify-center
                           border border-dashed border-zinc-300 rounded-lg p-2">
 
-                          {item.status !== "paymentConfirmed" && !item?.settlement && (
+                          {item.status !== "cancelled" && item.status !== "paymentConfirmed" && !item?.settlement && (
                             <div className="flex flex-col gap-2">
                               {/* 자동결제 지갑주소 */}
 

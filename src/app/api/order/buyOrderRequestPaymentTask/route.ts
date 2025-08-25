@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     if (payactionApiKey && payactionShopId) {
 
-      /*
+      
 
 
       const order_number = buyOrder.tradeId;
@@ -364,7 +364,7 @@ export async function POST(request: NextRequest) {
         //throw new Error("Error calling Payaction API");
         continue;
       }
-      */
+
 
     }
 
