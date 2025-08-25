@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
 
   const { storecode, walletAddress, nickname, mobile, email } = body;
 
+  
+
 
   ///console.log("setUserVerified =====  body", body);
 

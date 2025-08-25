@@ -298,7 +298,7 @@ export async function insertOneVerified(data: any) {
     { projection: { _id: 0, emailVerified: 0 } }
   );
   if (checkNickname) {
-    //console.log('insertOneVerified nickname exists: ' + JSON.stringify(checkNickname));
+    ////console.log('insertOneVerified nickname exists: ' + JSON.stringify(checkNickname));
     return null;
   }
 
@@ -313,7 +313,7 @@ export async function insertOneVerified(data: any) {
 
   if (checkUser) {
 
-    ////console.log('insertOneVerified exists: ' + JSON.stringify(checkUser));
+    ///console.log('insertOneVerified exists: ' + JSON.stringify(checkUser));
     
     return null;
   }

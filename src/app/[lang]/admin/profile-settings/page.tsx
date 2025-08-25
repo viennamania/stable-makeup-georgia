@@ -927,10 +927,10 @@ export default function SettingsPage({ params }: any) {
                     </div>
                 )}
         
-                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
+                <div className="w-full flex flex-row gap-2 items-center justify-between text-zinc-500 text-lg"
                 >
                     {/* go back button */}
-                    <div className="w-full flex justify-start items-center gap-2">
+                    <div className="flex justify-start items-center gap-2">
                         <button
                             onClick={() => window.history.back()}
                             className="flex items-center justify-center bg-gray-200 rounded-full p-2">
@@ -992,7 +992,7 @@ export default function SettingsPage({ params }: any) {
                     */}
 
                     {address && (
-                        <div className="flex items-center justify-center bg-gray-200 rounded-full p-2">
+                        <div className="flex flex-row items-center justify-center gap-2">
                             <Image
                                 src="/icon-shield.png"
                                 alt="Check"
@@ -1005,8 +1005,10 @@ export default function SettingsPage({ params }: any) {
                                     navigator.clipboard.writeText(address as string);
                                     toast.success(Copied_Wallet_Address);
                                 }}
-                                className="ml-2 text-sm text-gray-500 font-semibold
-                                hover:text-gray-700 transition duration-200"
+                                className="
+                                text-sm text-gray-500 font-semibold
+                                hover:text-gray-700 transition duration-200
+                                underline underline-offset-4"
                             >
                                 <span className="text-lg text-gray-500 font-semibold">
                                     {address.slice(0, 6)}...{address.slice(-4)}
@@ -1021,11 +1023,11 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                <div className="flex flex-col items-start justify-center space-y-4">
+                <div className="mt-5 flex flex-col items-start justify-center space-y-4">
 
                     <div className='flex flex-row items-center space-x-4'>
                         <Image
-                            src={"/profile-default.png"}
+                            src={"/icon-user.png"}
                             alt="Avatar"
                             width={20}
                             height={20}
