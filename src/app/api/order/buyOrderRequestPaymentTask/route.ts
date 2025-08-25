@@ -213,6 +213,8 @@ export async function POST(request: NextRequest) {
 
     if (payactionApiKey && payactionShopId) {
 
+      /*
+
 
       const order_number = buyOrder.tradeId;
       const order_amount = buyOrder.krwAmount;
@@ -257,6 +259,7 @@ export async function POST(request: NextRequest) {
 
         const payactionResponse = await fetch(payactionUrl, payactionOptions);
 
+
         if (!payactionResponse.ok) {
           console.error("Payaction API response error", payactionResponse.status, payactionResponse.statusText);
           
@@ -266,9 +269,7 @@ export async function POST(request: NextRequest) {
         const payactionResult = await payactionResponse.json();
 
         console.log("payactionResult", payactionResult);
-        /*
-        payactionResult { status: 'error', response: { message: '이미 해당 주문번호의 주문이 존재합니다.' } }
-        */
+
 
 
         if (!payactionResult || typeof payactionResult !== "object") {
@@ -363,9 +364,12 @@ export async function POST(request: NextRequest) {
         //throw new Error("Error calling Payaction API");
         continue;
       }
-    
+      */
 
     }
+
+
+
 
 
     /*
