@@ -2625,21 +2625,21 @@ const fetchBuyOrders = async () => {
 
               <div className="w-full flex flex-row items-center justify-center gap-2">
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래수(건)</div>
+                  <div className="text-sm">총 P2P 거래수(건)</div>
                   <div className="text-xl font-semibold text-zinc-500">
                     {tradeSummary.totalCount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래금액(원)</div>
+                  <div className="text-sm">총 P2P 거래금액(원)</div>
                   <div className="text-xl font-semibold text-yellow-600">
                     {tradeSummary.totalKrwAmount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래량(USDT)</div>
+                  <div className="text-sm">총 P2P 거래량(USDT)</div>
                   <div className="text-xl font-semibold text-green-600">
                     {tradeSummary.totalUsdtAmount?.toLocaleString()}
                   </div>

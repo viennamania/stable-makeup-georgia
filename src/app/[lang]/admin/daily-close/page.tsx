@@ -1666,14 +1666,14 @@ const fetchBuyOrders = async () => {
 
             <div className="xl:w-1/4 flex flex-row items-center justify-between gap-2">
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래수(건)</div>
+                <div className="text-sm">총 P2P 거래수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
                   {tradeSummary.totalCount?.toLocaleString()}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래금액(원)</div>
+                <div className="text-sm">총 P2P 거래금액(원)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
                   <span className="text-xl font-semibold text-yellow-600">
                     {tradeSummary.totalKrwAmount?.toLocaleString()}
@@ -1682,7 +1682,7 @@ const fetchBuyOrders = async () => {
               </div>
 
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래량(USDT)</div>
+                <div className="text-sm">총 P2P 거래량(USDT)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
                   <Image
                     src="/icon-tether.png"
@@ -1776,7 +1776,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-row gap-2 items-center">
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">총 AG 수수료(원)</div>
-                    <div className="w-full flex flex-row items-cneter justify-end gap-1">
+                    <div className="w-full flex flex-row items-center justify-end gap-1">
                       <span className="text-xl font-semibold text-yellow-600">
                         {tradeSummary.totalAgentFeeAmountKRW
                           ? tradeSummary.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -1849,18 +1849,18 @@ const fetchBuyOrders = async () => {
                         날짜
                       </th>
                       {/* align right */}
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">거래수(건)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">거래량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">거래금액(원)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래량(USDT)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
 
                       {/*
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
                       */}
                       
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG수수료량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG수수료금액(원)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
 
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG수수료량(USDT)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG수수료금액(원)</th>
 
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>

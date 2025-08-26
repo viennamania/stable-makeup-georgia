@@ -3074,14 +3074,14 @@ const fetchBuyOrders = async () => {
 
             <div className="xl:w-1/4 flex flex-row items-center justify-between gap-2">
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래수(건)</div>
+                <div className="text-sm">총 P2P 거래수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
                   {tradeSummary.totalCount?.toLocaleString()}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래금액(원)</div>
+                <div className="text-sm">총 P2P 거래금액(원)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
                   <span className="text-xl font-semibold text-yellow-600">
                     {tradeSummary.totalKrwAmount?.toLocaleString()}
@@ -3091,7 +3091,7 @@ const fetchBuyOrders = async () => {
               </div>
 
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 거래량(USDT)</div>
+                <div className="text-sm">총 P2P 거래량(USDT)</div>
                 <div className="flex flex-row items-center justify-center gap-1">
                   <Image
                     src="/icon-tether.png"
@@ -3187,7 +3187,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-row gap-2 items-center">
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">총 AG 수수료(원)</div>
-                    <div className="w-full flex flex-row items-cneter justify-end gap-1">
+                    <div className="w-full flex flex-row items-center justify-end gap-1">
                       <span className="text-xl font-semibold text-yellow-600">
                         {tradeSummary.totalAgentFeeAmountKRW
                           ? tradeSummary.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
