@@ -100,7 +100,7 @@ export default function RootLayout({
 
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>OneClick USDT</title>
+        <title>OneClick Stable</title>
         <meta name="description" content="Gate for Crypto OTC." />
         <link rel="icon" href="/favicon.ico" />
 

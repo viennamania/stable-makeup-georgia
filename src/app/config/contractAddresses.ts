@@ -9,7 +9,7 @@ export const chain = process.env.NEXT_PUBLIC_CHAIN;
 
 
 
-export const ethereumContractAddressUSDT = "0xdac17f958d2ee523a2206206994597c13d831ec7"; // USDT on Ethereum
+export const ethereumContractAddressUSDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; // USDT on Ethereum
 
 export const polygonContractAddressUSDT = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 
