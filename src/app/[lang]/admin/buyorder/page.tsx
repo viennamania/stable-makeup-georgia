@@ -4972,7 +4972,7 @@ const fetchBuyOrders = async () => {
                       <td className="p-2">
 
                         <div className="
-                          w-52  
+                          w-52
                           flex flex-row items-start justify-start gap-2">
                           {/* status */}
                           {item.status === 'ordered' && (
@@ -6704,7 +6704,10 @@ const fetchBuyOrders = async () => {
                           flex flex-col gap-2 items-center justify-center
                           border border-dashed border-zinc-300 rounded-lg p-2">
 
-                          {item.status !== "cancelled" && item.status !== "paymentConfirmed" && !item?.settlement && (
+                          {item.status === "paymentConfirmed" &&
+                            (!item?.transactionHash || item?.transactionHash === '0x') &&
+                            !item?.settlement && (
+                            
                             <div className="flex flex-col gap-2">
                               {/* 자동결제 지갑주소 */}
 

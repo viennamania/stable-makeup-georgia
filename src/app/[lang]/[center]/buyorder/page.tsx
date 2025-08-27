@@ -5339,7 +5339,7 @@ const fetchBuyOrders = async () => {
                         <td className="p-2">
 
                           <div className="
-                            w-56 
+                            w-56  
                             flex flex-row items-start justify-start gap-5">
 
                             {/* status */}
@@ -5456,7 +5456,7 @@ const fetchBuyOrders = async () => {
                                     className="w-5 h-5"
                                   />
                                   <span className="text-sm text-zinc-500 font-semibold">
-                                    매칭완료
+                                    자동매칭
                                   </span>
                                 </div>
 
@@ -6803,7 +6803,10 @@ const fetchBuyOrders = async () => {
                             bg-zinc-50 p-4 rounded-lg shadow-sm">
 
 
-                            {item.status !== "cancelled" && item.status !== "paymentConfirmed" && !item?.settlement && (
+                            {item.status === "paymentConfirmed" &&
+                              (!item?.transactionHash || item?.transactionHash === '0x') &&
+                              !item?.settlement && (
+
                               <div className="flex flex-col gap-2">
                                 {/* 자동결제 지갑주소 */}
 
