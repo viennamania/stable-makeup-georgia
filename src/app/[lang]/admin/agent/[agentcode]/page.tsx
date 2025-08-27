@@ -1739,6 +1739,7 @@ export default function Index({ params }: any) {
 
 
         {/* USDT 가격 binance market price */}
+        {/*
         <div
           className="binance-widget-marquee
           w-full flex flex-row items-center justify-center gap-2
@@ -1754,6 +1755,7 @@ export default function Index({ params }: any) {
           //data-powered-by="Powered by OneClick USDT"
           //data-disclaimer="Disclaimer"
         ></div>
+        */}
 
       </div>
 
@@ -2117,6 +2119,7 @@ export default function Index({ params }: any) {
 
 
         {/* USDT 가격 binance market price */}
+        {/*
         <div
           className="binance-widget-marquee
           w-full flex flex-row items-center justify-center gap-2
@@ -2132,6 +2135,7 @@ export default function Index({ params }: any) {
           //data-powered-by="Powered by OneClick USDT"
           //data-disclaimer="Disclaimer"
         ></div>
+        */}
 
 
 

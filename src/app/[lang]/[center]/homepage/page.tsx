@@ -2699,6 +2699,7 @@ const fetchBuyOrders = async () => {
 
 
               {/* USDT 가격 binance market price */}
+              {/*
               <div
               className="
                 w-full flex
@@ -2716,6 +2717,7 @@ const fetchBuyOrders = async () => {
               //data-powered-by="Powered by OneClick USDT"
               //data-disclaimer="Disclaimer"
               ></div>
+              */}
 
 
 

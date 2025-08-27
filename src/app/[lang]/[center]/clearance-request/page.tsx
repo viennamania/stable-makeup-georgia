@@ -3428,6 +3428,7 @@ const [tradeSummary, setTradeSummary] = useState({
             
 
             {/* USDT 가격 binance market price */}
+            {/*
             <div
               className="
               h-20
@@ -3446,6 +3447,7 @@ const [tradeSummary, setTradeSummary] = useState({
               //data-powered-by="Powered by OneClick USDT"
               //data-disclaimer="Disclaimer"
             ></div>
+            */}
 
 
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">

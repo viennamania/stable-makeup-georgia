@@ -1247,6 +1247,7 @@ export default function Index({ params }: any) {
 
 
             {/* USDT 가격 binance market price */}
+            {/*
             <div
               className="
               h-20
@@ -1265,6 +1266,7 @@ export default function Index({ params }: any) {
               //data-powered-by="Powered by OneClick USDT"
               //data-disclaimer="Disclaimer"
             ></div>
+            */}
 
 
 

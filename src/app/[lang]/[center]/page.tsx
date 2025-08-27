@@ -972,6 +972,7 @@ export default function Index({ params }: any) {
 
 
           {/* USDT 가격 binance market price */}
+          {/*
               <div
               className="
                 w-full flex
@@ -989,6 +990,7 @@ export default function Index({ params }: any) {
               //data-powered-by="Powered by OneClick USDT"
               //data-disclaimer="Disclaimer"
             ></div>
+            */}
 
 
         <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">

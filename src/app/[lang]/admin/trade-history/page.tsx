@@ -2656,6 +2656,7 @@ const fetchBuyOrders = async () => {
         <div className="flex flex-col items-start justify-center gap-2 mt-4">
           
           {/* USDT 가격 binance market price */}
+          {/*
           <div
             className="
             h-20
@@ -2674,6 +2675,7 @@ const fetchBuyOrders = async () => {
             //data-powered-by="Powered by OneClick USDT"
             //data-disclaimer="Disclaimer"
           ></div>
+          */}
 
 
 

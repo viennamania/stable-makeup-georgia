@@ -1160,6 +1160,7 @@ export default function Index({ params }: any) {
           <div className="flex flex-col items-start justify-center gap-2 mt-4">
             
             {/* USDT 가격 binance market price */}
+            {/*
             <div
               className="
                 w-full flex
@@ -1177,6 +1178,7 @@ export default function Index({ params }: any) {
               //data-powered-by="Powered by OneClick USDT"
               //data-disclaimer="Disclaimer"
             ></div>
+            */}
  
             {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
             {/* memnu buttons same width left side */}
