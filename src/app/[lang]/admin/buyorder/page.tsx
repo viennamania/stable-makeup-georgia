@@ -7141,7 +7141,13 @@ const fetchBuyOrders = async () => {
                                       return;
                                     } else {
                                       window.open(
-                                        `https://arbiscan.io/tx/${item.settlement.txid}`,
+                                        
+                                        chain === 'ethereum' ? `https://etherscan.io/tx/${item.settlement.txid}`
+                                        : chain === 'polygon' ? `https://polygonscan.com/tx/${item.settlement.txid}`
+                                        : chain === 'arbitrum' ? `https://arbiscan.io/tx/${item.settlement.txid}`
+                                        : chain === 'bsc' ? `https://bscscan.com/tx/${item.settlement.txid}`
+                                        : `https://arbiscan.io/tx/${item.settlement.txid}`,
+
                                         '_blank'
                                       );
                                     }
