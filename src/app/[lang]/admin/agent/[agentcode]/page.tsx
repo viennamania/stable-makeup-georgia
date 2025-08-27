@@ -2246,7 +2246,7 @@ export default function Index({ params }: any) {
                     <tr>
                       <th className="px-4 py-2 text-left">가맹점</th>
                       <th className="px-4 py-2 text-right">
-                        AG수수료(%)
+                        AG 수수료율(%)
                       </th>
                       <th className="px-4 py-2 text-right">
                           회원수(명)

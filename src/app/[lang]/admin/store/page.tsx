@@ -3041,7 +3041,7 @@ export default function Index({ params }: any) {
 
                                 </div>
 
-                                {/* 구매주문관리 버튼 */}
+
                                 <button
                                   onClick={() => {
                                     router.push(
@@ -3053,7 +3053,7 @@ export default function Index({ params }: any) {
                                   bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
                                   hover:bg-[#3167b4]/80"
                                 >
-                                  거래내역
+                                  P2P 거래내역
                                 </button>
 
                             </div>
@@ -3269,7 +3269,7 @@ export default function Index({ params }: any) {
                                   bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
                                   hover:bg-[#3167b4]/80"
                                 >
-                                  정산내역
+                                  결제 및 정산내역
                                 </button>
 
 
