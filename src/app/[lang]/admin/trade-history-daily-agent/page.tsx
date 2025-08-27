@@ -1112,10 +1112,12 @@ export default function Index({ params }: any) {
           <ConnectButton
             client={client}
             wallets={wallets}
+            /*
             chain={chain === "ethereum" ? ethereum :
                     chain === "polygon" ? polygon :
                     chain === "arbitrum" ? arbitrum :
                     chain === "bsc" ? bsc : arbitrum}
+            */
             
             theme={"light"}
 
