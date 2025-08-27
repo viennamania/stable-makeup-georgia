@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
   }
 
   const wallet = smartWallet({
-    chain: bsc,
+    chain: chain === 'ethereum' ? ethereum : chain === 'polygon' ? polygon : chain === 'arbitrum' ? arbitrum : chain === 'bsc' ? bsc : ethereum,
     sponsorGas: true,
   });
 

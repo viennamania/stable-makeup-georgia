@@ -4,12 +4,15 @@ import {
 	insertBuyOrderForClearance,
 } from '@lib/api/order';
 
-/*
 import {
-  getAgentByStorecode,
-} from '@lib/api/agent';
-*/
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
 
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 export async function POST(request: NextRequest) {
 
@@ -20,7 +23,8 @@ export async function POST(request: NextRequest) {
 
   const result = await insertBuyOrderForClearance({
    
-
+    chain: chain,
+    
     storecode: storecode,
     
     walletAddress: walletAddress,

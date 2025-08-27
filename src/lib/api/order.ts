@@ -1552,6 +1552,8 @@ export async function insertBuyOrder(data: any) {
     console.log('insertBuyOrder user is null: ' + JSON.stringify(user));
     // inser user if not exists
     await userCollection.insertOne({
+      chain: data.chain,
+
       storecode: data.storecode,
       walletAddress: data.walletAddress,
       nickname: nickname,
@@ -1631,9 +1633,10 @@ export async function insertBuyOrder(data: any) {
   const result = await collection.insertOne(
 
     {
-      lang: data.lang,
       chain: data.chain,
-      
+      lang: data.lang,
+
+
       agentcode: agentcode,
       agent: agent,
       storecode: data.storecode,
@@ -1851,7 +1854,9 @@ export async function insertBuyOrderForClearance(data: any) {
   const result = await collection.insertOne(
 
     {
+      chain: data.chain,
       lang: data.lang,
+
       agentcode: agentcode,
       agent: agent,
       storecode: data.storecode,
