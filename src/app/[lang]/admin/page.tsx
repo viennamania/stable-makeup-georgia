@@ -993,7 +993,7 @@ export default function Index({ params }: any) {
   }
 
 
-  if (address && !isAdmin) {
+  if (address && !loadingUser && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center">
 

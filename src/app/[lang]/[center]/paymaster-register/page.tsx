@@ -774,7 +774,7 @@ export default function Index({ params }: any) {
 
 
 
-    const [loadingUser, setLoadingUser] = useState(false);
+    const [loadingUser, setLoadingUser] = useState(true);
     const [user, setUser] = useState<any>(null);
 
 

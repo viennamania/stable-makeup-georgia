@@ -669,7 +669,7 @@ export default function Index({ params }: any) {
     const [seller, setSeller] = useState(null) as any;
   
 
-    const [loadingUser, setLoadingUser] = useState(false);
+    const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {

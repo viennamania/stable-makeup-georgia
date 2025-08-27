@@ -781,7 +781,7 @@ export default function Index({ params }: any) {
   // get User by wallet address
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [loadingUser, setLoadingUser] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
 
 
 
@@ -1753,7 +1753,7 @@ export default function Index({ params }: any) {
   }
 
 
-  if (address && !isAdmin) {
+  if (address && !loadingUser && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center">
 

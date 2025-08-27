@@ -399,7 +399,7 @@ export default function SettingsPage({ params }: any) {
 
     const [user, setUser] = useState(null) as any;
 
-    const [loadingUser, setLoadingUser] = useState(false);
+    const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {

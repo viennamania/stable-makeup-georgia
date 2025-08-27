@@ -688,7 +688,7 @@ export default function Index({ params }: any) {
     // get User by wallet address
 
     const [user, setUser] = useState<any>(null);
-    const [loadingUser, setLoadingUser] = useState(false);
+    const [loadingUser, setLoadingUser] = useState(true);
     useEffect(() => {
 
         if (!address) {

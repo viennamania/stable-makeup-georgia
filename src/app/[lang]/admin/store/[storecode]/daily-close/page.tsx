@@ -511,7 +511,7 @@ export default function Index({ params }: any) {
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [loadingUser, setLoadingUser] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
 
 
   useEffect(() => {
