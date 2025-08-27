@@ -41,6 +41,15 @@ import {
  } from "thirdweb/wallets";
 
 
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -148,6 +157,8 @@ export async function POST(request: NextRequest) {
 
 
   const result = await insertBuyOrder({
+    chain: chain,
+    
     //agentcode: agentcode,
     storecode: storecode,
     

@@ -1632,6 +1632,8 @@ export async function insertBuyOrder(data: any) {
 
     {
       lang: data.lang,
+      chain: data.chain,
+      
       agentcode: agentcode,
       agent: agent,
       storecode: data.storecode,
