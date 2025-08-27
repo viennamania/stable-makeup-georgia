@@ -5,7 +5,22 @@ import { getPayUserByWalletAddress } from "@/lib/api/user";
 
 import { getStoreByStorecode } from "@/lib/api/store";
 
-import { polygon, arbitrum } from "thirdweb/chains";
+import {
+    ethereum,
+    polygon,
+    arbitrum,
+    bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 
 
@@ -67,12 +82,16 @@ export async function POST(request: NextRequest) {
 
 
 
-  const chainId = arbitrum.id;
+  //const chainId = arbitrum.id;
 
+  const chainId = chain === 'ethereum' ? ethereum.id :
+                  chain === 'polygon' ? polygon.id :
+                  chain === 'arbitrum' ? arbitrum.id :
+                  chain === 'bsc' ? bsc.id : arbitrum.id;
 
-  const contractAddressPolygon = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
+  //const contractAddressPolygon = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 
-  const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+  //const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
 
 
   try {
@@ -141,7 +160,13 @@ export async function POST(request: NextRequest) {
     }
 
     const wallet = smartWallet({
-        chain: arbitrum,
+        
+        //chain: arbitrum,
+        chain: chain === 'ethereum' ? ethereum :
+               chain === 'polygon' ? polygon :
+               chain === 'arbitrum' ? arbitrum :
+               chain === 'bsc' ? bsc : arbitrum,
+
         ///factoryAddress: "0x655934C0B4bD79f52A2f7e6E60714175D5dd319b", // your own deployed account factory address
         sponsorGas: true,
     });
@@ -167,8 +192,19 @@ export async function POST(request: NextRequest) {
     const balance = await balanceOf({
         contract: getContract({
             client: thirdwebClient,
-            chain: arbitrum,
-            address: contractAddressArbitrum,
+
+            //chain: arbitrum,
+            chain: chain === 'ethereum' ? ethereum :
+                   chain === 'polygon' ? polygon :
+                   chain === 'arbitrum' ? arbitrum :
+                   chain === 'bsc' ? bsc : arbitrum,
+
+            //address: contractAddressArbitrum,
+            address: chain === 'ethereum' ? ethereumContractAddressUSDT :
+                     chain === 'polygon' ? polygonContractAddressUSDT :
+                     chain === 'arbitrum' ? arbitrumContractAddressUSDT :
+                     chain === 'bsc' ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
+
         }),
         address: walletAddress,
     });
@@ -179,7 +215,14 @@ export async function POST(request: NextRequest) {
             error: "Balance not found"
         });
     }
-    const clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
+    
+    //const clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
+    // if bsc, 18 decimal
+
+    let clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
+    if (chain === 'bsc') {
+        clearanceUSDTBalance = Number(balance) / 10 ** 18; // BSC has 18 decimals
+    }
 
     console.log("clearanceUSDTBalance", clearanceUSDTBalance);
 
@@ -203,8 +246,17 @@ export async function POST(request: NextRequest) {
     const transactionSendToStore = transfer({
         contract: getContract({
             client: thirdwebClient,
-            chain: arbitrum,
-            address: contractAddressArbitrum,
+            //chain: arbitrum,
+            chain: chain === 'ethereum' ? ethereum :
+                   chain === 'polygon' ? polygon :
+                   chain === 'arbitrum' ? arbitrum :
+                   chain === 'bsc' ? bsc : arbitrum,
+
+            address: chain === 'ethereum' ? ethereumContractAddressUSDT :
+                     chain === 'polygon' ? polygonContractAddressUSDT :
+                     chain === 'arbitrum' ? arbitrumContractAddressUSDT :
+                     chain === 'bsc' ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
+
         }),
         to: sellerWalletAddress,
         amount: clearanceUSDTBalance,
@@ -230,6 +282,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
 
       result: "success",
+      chain: chain,
       transactionHash: result.transactionHash,
       clearanceUSDTBalance: clearanceUSDTBalance,
       storecode: storecode,
