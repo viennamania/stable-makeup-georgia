@@ -2156,11 +2156,11 @@ export default function Index({ params }: any) {
             */}
 
 
+
+            {/*
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
-
-              {/* 가맹점 보유량 */}
               {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
                 bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
@@ -2201,7 +2201,6 @@ export default function Index({ params }: any) {
                     </div>
                   </div>
 
-                  {/* 오늘 수수료 차감량 */}
                   <div className="flex flex-row gap-2 items-center">
                     <span className="text-sm text-zinc-500 font-semibold">
                       오늘 수수료 차감량
@@ -2231,8 +2230,6 @@ export default function Index({ params }: any) {
 
                 </div>
 
-
-                {/* 보유량 내역 */}
                 <button
                   onClick={() => {
                     router.push('/' + params.lang + '/' + params.center + '/escrow-history');
@@ -2247,8 +2244,6 @@ export default function Index({ params }: any) {
               </div>
               )}
 
-
-              {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -2296,10 +2291,6 @@ export default function Index({ params }: any) {
                 </div>
               </div>
 
-
-
-
-              {/* 가맹점 정산금 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -2347,8 +2338,6 @@ export default function Index({ params }: any) {
                 </div>
               </div>
 
-
-              {/* 가맹점 판매금 */}
               {version !== 'bangbang' && (
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
@@ -2400,6 +2389,9 @@ export default function Index({ params }: any) {
               )}
 
             </div>
+            */}
+
+
 
 
 

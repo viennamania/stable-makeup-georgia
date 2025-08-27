@@ -1234,6 +1234,103 @@ export default function Index({ params }: any) {
 
 
 
+
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">
+
+                <button
+                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    회원관리
+                </button>
+
+                <button
+                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/buyorder')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    구매주문관리
+                </button>
+
+                <button
+                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    거래내역
+                </button>
+
+                {version !== 'bangbang' && (
+                <button
+                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    판매(거래소)
+                </button>
+                )}
+
+                {version !== 'bangbang' && (
+                <button
+                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                    출금(회원)
+                </button>
+                )}
+
+                <div className='flex w-32 items-center justify-center gap-2
+                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                  <Image
+                    src="/icon-statistics.png"
+                    alt="Trade"
+                    width={35}
+                    height={35}
+                    className="w-4 h-4"
+                  />
+                  <div className="text-sm font-semibold">
+                    통계(일별)
+                  </div>
+                </div>
+
+            </div>
+
+
+            <div className='flex flex-row items-center space-x-4'>
+                <Image
+                  src="/icon-statistics.png"
+                  alt="Statistics"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+
+                <div className="text-xl font-semibold">
+                  통계(일별)
+                </div>
+
+            </div>
+
+
+
+
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
 
@@ -1322,7 +1419,7 @@ export default function Index({ params }: any) {
                 </button>
 
               </div>
-            )}  
+              )}  
 
               {/* 가맹점 거래 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
@@ -1476,103 +1573,6 @@ export default function Index({ params }: any) {
               )}
 
             </div>
-
-
-
-
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    회원관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/buyorder')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    구매주문관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    거래내역
-                </button>
-
-                {version !== 'bangbang' && (
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    판매(거래소)
-                </button>
-                )}
-
-                {version !== 'bangbang' && (
-                <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                    출금(회원)
-                </button>
-                )}
-
-                <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                  <Image
-                    src="/icon-statistics.png"
-                    alt="Trade"
-                    width={35}
-                    height={35}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-sm font-semibold">
-                    통계(일별)
-                  </div>
-                </div>
-
-            </div>
-
-
-            <div className='flex flex-row items-center space-x-4'>
-                <Image
-                  src="/icon-statistics.png"
-                  alt="Statistics"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
-                />
-
-                <div className="text-xl font-semibold">
-                  통계(일별)
-                </div>
-
-            </div>
-
 
 
 

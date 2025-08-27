@@ -3407,6 +3407,25 @@ const fetchBuyOrders = async () => {
   }
 
 
+  if (address && loadingUser) {
+    return (
+      <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+        <div className="py-0 w-full flex flex-col items-center justify-center gap-4">
+
+          <Image
+            src="/banner-loading.gif"
+            alt="Loading"
+            width={200}
+            height={200}
+          />
+
+          <div className="text-lg text-gray-500">회원 정보를 불러오는 중</div>
+        </div>
+      </main>
+    );
+  }
+
+
   if (address && !loadingUser && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center">

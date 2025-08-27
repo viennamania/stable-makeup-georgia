@@ -3489,8 +3489,8 @@ const fetchBuyOrders = async () => {
 
 
 
-            {version !== 'bangbang' && (
-
+            
+            {/*version !== 'bangbang' && (
 
             <div className="w-full flex flex-col items-end justify-end gap-2
             border-b border-zinc-300 pb-2">
@@ -3542,10 +3542,6 @@ const fetchBuyOrders = async () => {
                 </div>
               </div>
 
-
-
-
-              {/* 가맹점 정산금 */}
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -3592,8 +3588,6 @@ const fetchBuyOrders = async () => {
                   </span>
                 </div>
               </div>
-
-
 
               <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
@@ -3646,9 +3640,7 @@ const fetchBuyOrders = async () => {
 
             </div>
 
-            )}
-
-
+            )*/}
 
 
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">
