@@ -2410,10 +2410,6 @@ const fetchBuyOrders = async () => {
 
 
 
-
-
-
-
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
