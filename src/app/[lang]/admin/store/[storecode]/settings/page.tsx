@@ -2284,7 +2284,7 @@ export default function SettingsPage({ params }: any) {
                                         ) && resetAgentFeePercent();
                                     }}
                                 >
-                                    {resettingAgentFeePercent ? "리셋 중..." : "리셋하기"}
+                                    {resettingAgentFeePercent ? "0%로 리셋 중..." : "0%로 리셋하기"}
                                 </button>
 
 
