@@ -142,17 +142,130 @@ export default function RootLayout({
                 </span>
               </div>
 
+              {/* horizontally listing all chain */}
+              {/* Ethereum, Polygon, BSC, Arbitrum */}
+              {/* and delected chain is current chaing */}
+
+
+              <div className="flex flex-col items-center justify-center">
+
+                {/* current chain */}
+                <span className="text-sm text-gray-600">Current Chain:</span>
+
+                <div className="flex flex-row items-center justify-center gap-4 mb-4">
+                  
+                  <div className={`
+                    w-24 h-24
+                    flex flex-col items-center justify-center gap-1 ${chain === 'ethereum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                    <Image
+                      src={`/logo-chain-ethereum.png`}
+                      alt={`Chain logo for Ethereum`}
+                      width={25}
+                      height={25}
+                      className="h-6 w-6 rounded-full"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <span className={`
+                      ${chain === 'ethereum' ? 'text-blue-500' : 'text-gray-600'}
+                      hover:text-blue-500
+                    `}>
+                      Ethereum
+                    </span>
+                  </div>
+
+                  <div className={`
+                    w-24 h-24
+                    flex flex-col items-center justify-center gap-1 ${chain === 'polygon' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                    <Image
+                      src={`/logo-chain-polygon.png`}
+                      alt={`Chain logo for Polygon`}
+                      width={25}
+                      height={25}
+                      className="h-6 w-6 rounded-full"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <span className={`
+                      ${chain === 'polygon' ? 'text-blue-500' : 'text-gray-600'}
+                      hover:text-blue-500
+                    `}>
+                      Polygon
+                    </span>
+                  </div>
+
+                  <div className={`
+                    w-24 h-24
+                    flex flex-col items-center justify-center gap-1 ${chain === 'bsc' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                    <Image
+                      src={`/logo-chain-bsc.png`}
+                      alt={`Chain logo for BSC`}
+                      width={25}
+                      height={25}
+                      className="h-6 w-6 rounded-full"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <span className={`
+                      ${chain === 'bsc' ? 'text-blue-500' : 'text-gray-600'}
+                      hover:text-blue-500
+                    `}>
+                      BSC
+                    </span>
+                  </div>
+
+                  <div className={`
+                    w-24 h-24
+                    flex flex-col items-center justify-center gap-1 ${chain === 'arbitrum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                    <Image
+                      src={`/logo-chain-arbitrum.png`}
+                      alt={`Chain logo for Arbitrum`}
+                      width={25}
+                      height={25}
+                      className="h-6 w-6 rounded-full"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <span className={`
+                      ${chain === 'arbitrum' ? 'text-blue-500' : 'text-gray-600'}
+                      hover:text-blue-500
+                    `}>
+                      Arbitrum
+                    </span>
+                  </div>
+
+
+                </div>
+
+
+              </div>
+
+
+
+
+
+
+
+
+
+
+
               {/* Display the current chain name */}
               {/* Use the chain variable to determine which chain is currently selected */}
               {/* Assuming you have a variable named 'chain' that holds the current chain name */}
+              {/*
               <h1 className="text-lg font-semibold text-gray-800 mb-2">
                 Current Chain
               </h1>
+              */}
               {/* Display the chain logo */}
               {/* Use the chain variable to determine which logo to display */}
               {/* Assuming you have images named logo-chain-ethereum.png, logo-chain-polygon.png, etc. in the public directory */}
               {/* Adjust the path as necessary based on your project structure */}
 
+
+
+              {/*
               <Image
                 src={`/logo-chain-${chain}.png`}
                 alt={`Chain logo for ${chain}`}
@@ -167,7 +280,11 @@ export default function RootLayout({
                 chain.charAt(0).toUpperCase() + chain.slice(1)
                 }
               </span>
+              */}
+
+
             </div>
+
 
             
           {children}
