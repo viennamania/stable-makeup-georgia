@@ -4607,6 +4607,52 @@ const fetchBuyOrders = async () => {
 
 
 
+              <div className="flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+              ">
+                {loadingTotalNumberOfBuyOrders ? (
+                  <Image
+                    src="/loading.png"
+                    alt="Loading"
+                    width={20}
+                    height={20}
+                    className="w-6 h-6 animate-spin"
+                  />
+                ) : (
+                  <Image
+                    src="/icon-buyorder.png"
+                    alt="Buy Order"
+                    width={35}
+                    height={35}
+                    className="w-6 h-6"
+                  />
+                )}
+
+
+                <p className="text-lg text-red-500 font-semibold">
+                  {
+                  totalNumberOfBuyOrders
+                  }
+                </p>
+
+                {totalNumberOfBuyOrders > 0 && (
+                  <div className="flex flex-row items-center justify-center gap-2">
+                    <Image
+                      src="/icon-notification.gif"
+                      alt="Notification"
+                      width={50}
+                      height={50}
+                      className="w-15 h-15 object-cover"
+                      
+                    />
+                  </div>
+                )}
+              </div>
+
+
+
               {version !== 'bangbang' && (
               <div className="flex flex-row items-center justify-center gap-2
               bg-white/80
@@ -4665,52 +4711,6 @@ const fetchBuyOrders = async () => {
                 )}
               </div>
               )}
-
-
-              <div className="flex flex-row items-center justify-center gap-2
-              bg-white/80
-              p-2 rounded-lg shadow-md
-              backdrop-blur-md
-              ">
-                {loadingTotalNumberOfBuyOrders ? (
-                  <Image
-                    src="/loading.png"
-                    alt="Loading"
-                    width={20}
-                    height={20}
-                    className="w-6 h-6 animate-spin"
-                  />
-                ) : (
-                  <Image
-                    src="/icon-buyorder.png"
-                    alt="Buy Order"
-                    width={35}
-                    height={35}
-                    className="w-6 h-6"
-                  />
-                )}
-
-
-                <p className="text-lg text-red-500 font-semibold">
-                  {
-                  totalNumberOfBuyOrders
-                  }
-                </p>
-
-                {totalNumberOfBuyOrders > 0 && (
-                  <div className="flex flex-row items-center justify-center gap-2">
-                    <Image
-                      src="/icon-notification.gif"
-                      alt="Notification"
-                      width={50}
-                      height={50}
-                      className="w-15 h-15 object-cover"
-                      
-                    />
-                  </div>
-                )}
-              </div>
-
 
 
 
