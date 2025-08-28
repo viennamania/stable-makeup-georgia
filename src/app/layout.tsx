@@ -237,7 +237,7 @@ export default function RootLayout({
                 {/* and delected chain is current chaing */}
 
 
-                <div className="flex flex-row items-center justify-center gap-4 border-b border-gray-200 pb-4 mb-4">
+                <div className="flex flex-col items-center justify-center gap-4 border-b border-gray-200 pb-4 mb-4">
 
                   {/* current chain */}
                   <div className="flex flex-col items-center justify-center">
