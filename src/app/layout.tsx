@@ -254,7 +254,7 @@ export default function RootLayout({
                   <div className="flex flex-row items-center justify-center gap-4 mb-4">
                     
                     <div className={`
-                      w-12 h-12 
+                      w-20 h-20
                       flex flex-col items-center justify-center gap-1 ${chain === 'ethereum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
@@ -274,7 +274,7 @@ export default function RootLayout({
                     </div>
 
                     <div className={`
-                      w-12 h-12
+                      w-20 h-20
                       flex flex-col items-center justify-center gap-1 ${chain === 'polygon' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
@@ -294,7 +294,7 @@ export default function RootLayout({
                     </div>
 
                     <div className={`
-                      w-12 h-12
+                      w-20 h-20
                       flex flex-col items-center justify-center gap-1 ${chain === 'bsc' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
@@ -314,7 +314,7 @@ export default function RootLayout({
                     </div>
 
                     <div className={`
-                      w-12 h-12
+                      w-20 h-20
                       flex flex-col items-center justify-center gap-1 ${chain === 'arbitrum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
@@ -333,22 +333,16 @@ export default function RootLayout({
                       </span>
                     </div>
 
-
                   </div>
-
 
                 </div>
 
 
-
-
                 {/* my wallet */}
-                <div className="mt-4">
-                  <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                <div className="mt-1 flex flex-col items-center justify-center">
+                  <h2 className="text-sm font-semibold text-gray-800">
                     My Wallet
                   </h2>
-
-
 
                   <StabilityConsole />
 

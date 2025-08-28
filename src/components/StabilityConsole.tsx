@@ -306,12 +306,12 @@ const StabilityConsole = () => {
 
 
       {/* address balance */}
-      <div className="mt-4">
+      <div className="flex flex-col gap-2 justify-between items-center">
 
         {address ? (
 
           <>
-            <div className="mt-5 flex flex-row gap-2 justify-center items-center">
+            <div className="flex flex-row gap-2 justify-center items-center">
 
 
               <div className="flex flex-row gap-2 justify-center items-center">
@@ -325,8 +325,8 @@ const StabilityConsole = () => {
               <Image
                 src="/icon-shield.png"
                 alt="Shield"
-                width={35}
-                height={35}
+                width={25}
+                height={25}
               />
               <button
                 className="text-lg text-zinc-800 underline"
@@ -344,7 +344,7 @@ const StabilityConsole = () => {
 
 
 
-            <div className="w-full mt-5 flex flex-col gap-2 justify-between items-center
+            <div className="w-full flex flex-col gap-2 justify-between items-center
               bg-green-50 p-2 rounded-lg">
               <div className="flex flex-row gap-2 justify-center items-center">
                 <Image
@@ -361,7 +361,7 @@ const StabilityConsole = () => {
 
               <div className="
               w-40 flex flex-col items-end justify-center
-              text-4xl font-semibold text-green-600"
+              text-xl font-semibold text-green-600"
               style={{ fontFamily: "monospace" }}
               >
                 {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -398,9 +398,7 @@ const StabilityConsole = () => {
 
             </div>
 
-            <div className="
-            mt-5
-            flex flex-row gap-2 justify-center items-center">
+            <div className="flex flex-row gap-2 justify-center items-center">
               <Image
                 src={`/logo-chain-${chain}.png`}
                 alt={`${chain} logo`}
