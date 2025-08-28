@@ -3829,7 +3829,7 @@ const fetchBuyOrders = async () => {
               </div>
 
 
-              {address && (
+              {/*address && (
                   <div className={`
                     ${address === store?.sellerWalletAddress ? 'bg-green-100' : 'bg-white'}
                     p-4 rounded-lg shadow-md
@@ -3839,7 +3839,6 @@ const fetchBuyOrders = async () => {
                       <div className="flex flex-row items-center justify-center gap-2">
 
                           <div className="flex flex-row gap-2 items-center">
-                            {/* dot */}
                             <div className="w-1 h-1 rounded-full bg-zinc-500" />
                             <span className="text-sm text-zinc-500">
                               나의 USDT지갑
@@ -3896,6 +3895,7 @@ const fetchBuyOrders = async () => {
 
                   </div>
               )}
+              */}
 
             </div>
 
