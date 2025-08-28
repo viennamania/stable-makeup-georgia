@@ -1973,7 +1973,7 @@ export default function Index({ params }: any) {
                   </div>
 
                   <div className="
-                    w-32
+                    w-48 
                     flex flex-row gap-2 items-center justify-between
                   ">
                     <Image
@@ -1999,7 +1999,7 @@ export default function Index({ params }: any) {
                     오늘 수수료 차감량
                   </span>
                   <div className="
-                    w-32
+                    w-48
                     flex flex-row gap-2 items-center justify-between
                   ">
                     <Image
