@@ -3009,7 +3009,7 @@ export default function Index({ params }: any) {
                         {/* dot */}
                         <div className="w-2 h-2 bg-zinc-600 rounded-full"></div>
                         <span className="text-sm text-zinc-600">
-                          가스수량
+                          가스보유량
                         </span>
                         <span className="text-sm text-zinc-600">
                           {chain === "ethereum" ? "(ETH)" :

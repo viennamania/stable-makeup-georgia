@@ -2625,7 +2625,7 @@ export default function Index({ params }: any) {
                       className="rounded-lg"
                     />
                     <span className="text-sm text-zinc-600">
-                      가스수량
+                      가스보유량
                     </span>
                     <div className="text-xl font-semibold text-zinc-800"
                       style={{ fontFamily: "monospace" }}
