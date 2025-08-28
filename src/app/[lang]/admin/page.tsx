@@ -995,11 +995,27 @@ export default function Index({ params }: any) {
 
   if (address && !loadingUser && !isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center gap-4 p-4">
 
         <h1 className="text-2xl font-bold">접근이 거부되었습니다</h1>
         <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
         <div className="text-lg text-gray-500">{address}</div>
+
+
+            {/* 회원가입한후 가맹점 관리자 등록신청을 하세요 */}
+            {/* 회원가입하러 가기 */}
+            <div className="flex flex-row items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  router.push('/' + params.lang + '/admin/profile-settings');
+                }}
+                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+              >
+                회원가입하러 가기
+              </button>
+            </div>
+
+
 
               {/* logout button */}
               <button
@@ -1029,6 +1045,10 @@ export default function Index({ params }: any) {
                   로그아웃
                 </span>
               </button>
+
+
+              
+
 
 
       </div>
