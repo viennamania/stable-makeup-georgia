@@ -7119,6 +7119,7 @@ const fetchBuyOrders = async () => {
                               <div className="flex flex-row gap-2 items-center justify-center">
 
                                 <button
+                                  /*
                                   className="
                                   w-44        
                                   flex flex-col gap-2 items-center justify-center
@@ -7134,6 +7135,22 @@ const fetchBuyOrders = async () => {
                                   hover:ease-in-out
 
                                   "
+                                  */
+                                  disabled={item.settlement.txid === "0x" || !item.settlement.txid}
+
+                                  className={`
+                                    ${item.settlement.txid === "0x" || !item.settlement.txid ? "bg-gray-500 cursor-not-allowed" : "bg-purple-500 hover:bg-purple-600"}
+                                    text-sm
+                                    text-white px-2 py-1 rounded-md
+                                    transition duration-300 ease-in-out
+                                    transform hover:scale-105
+                                    hover:shadow-lg
+                                    hover:shadow-purple-500/50
+                                    hover:cursor-pointer
+                                    hover:transition-transform
+                                    hover:duration-300
+                                    hover:ease-in-out
+                                  `}
 
                                   onClick={() => {
                                     if (item.settlement.txid === "0x" || !item.settlement.txid) {
