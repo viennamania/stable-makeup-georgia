@@ -163,7 +163,7 @@ export default function RootLayout({
           <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4">
 
             {/* fixed position vertically top */}
-            <div className="fixed top-2 right-2 z-50 flex flex-col items-center justify-center">
+            <div className="fixed top-2 right-2 z-50 flex flex-col items-end justify-center">
 
 
               {/* Display the current chain */}
