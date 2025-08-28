@@ -7,9 +7,9 @@ import { ThirdwebProvider } from "thirdweb/react";
 
 import { Toaster } from "react-hot-toast";
 
+import { useState, useEffect } from "react";
 
 
-import React, { useEffect } from "react";
 import Script from "next/script";
 
 import { Analytics } from '@vercel/analytics/next';
@@ -20,9 +20,41 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import localFont from "next/font/local";
 
-import { clientId } from "./client";
-import { chain } from "@/app/config/contractAddresses";
+
+
 import Image from "next/image";
+
+
+
+// import components
+import StabilityConsole from '@/components/StabilityConsole';
+
+
+import {
+  clientId,
+  client,
+} from "./client";
+
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
+
 
 
 const pretendard = localFont({
@@ -46,11 +78,14 @@ export const metadata: Metadata = {
 
 
 
+
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
 
 
   /*
@@ -64,7 +99,9 @@ export default function RootLayout({
    */
 
 
-   const [showChain, setShowChain] = React.useState(false);
+  const [showChain, setShowChain] = useState(false);
+
+
 
 
   return (
@@ -297,45 +334,17 @@ export default function RootLayout({
 
 
 
+                {/* my wallet */}
+                <div className="mt-4">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                    My Wallet
+                  </h2>
 
 
 
+                  <StabilityConsole />
 
-
-
-
-                {/* Display the current chain name */}
-                {/* Use the chain variable to determine which chain is currently selected */}
-                {/* Assuming you have a variable named 'chain' that holds the current chain name */}
-                {/*
-                <h1 className="text-lg font-semibold text-gray-800 mb-2">
-                  Current Chain
-                </h1>
-                */}
-                {/* Display the chain logo */}
-                {/* Use the chain variable to determine which logo to display */}
-                {/* Assuming you have images named logo-chain-ethereum.png, logo-chain-polygon.png, etc. in the public directory */}
-                {/* Adjust the path as necessary based on your project structure */}
-
-
-
-                {/*
-                <Image
-                  src={`/logo-chain-${chain}.png`}
-                  alt={`Chain logo for ${chain}`}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full"
-                  style={{ objectFit: "cover" }}
-                />
-                <span className="text-sm text-gray-600">
-                  {
-                  chain &&
-                  chain.charAt(0).toUpperCase() + chain.slice(1)
-                  }
-                </span>
-                */}
-
+                </div>
 
               </div>
 

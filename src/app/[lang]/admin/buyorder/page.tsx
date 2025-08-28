@@ -3791,7 +3791,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+          {/*
           {address && (
               <div className="w-full flex flex-col items-end justify-center gap-4">
 
@@ -3832,6 +3832,7 @@ const fetchBuyOrders = async () => {
 
               </div>
           )}
+          */}
 
 
 
