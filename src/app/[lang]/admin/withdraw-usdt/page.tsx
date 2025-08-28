@@ -769,7 +769,7 @@ export default function SendUsdt({ params }: any) {
 
                     <div className="flex flex-row items-center justify-end  gap-2">
                         <span className="text-2xl xl:text-4xl font-semibold text-green-600">
-                            {Number(balance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </span>
                         {' '}
                         <span className="text-sm">USDT</span>
