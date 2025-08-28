@@ -3788,7 +3788,7 @@ const fetchBuyOrders = async () => {
                                 >
                                   <div className="flex flex-row gap-2 items-center justify-center">
                                     <Image
-                                      src="/logo-arbitrum.png"
+                                      src={`/logo-chain-${chain}.png`}
                                       alt="Polygon"
                                       width={20}
                                       height={20}
@@ -3835,7 +3835,7 @@ const fetchBuyOrders = async () => {
                                 >
                                   <div className="flex flex-row gap-2 items-center justify-center">
                                     <Image
-                                      src="/logo-arbitrum.png"
+                                      src={`/logo-chain-${chain}.png`}
                                       alt="Polygon"
                                       width={20}
                                       height={20}
