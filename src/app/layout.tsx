@@ -217,7 +217,7 @@ export default function RootLayout({
                       height={25}
                       className="h-6 w-6 rounded-full object-cover"
                     />
-                    <span className="text-lg font-semibold text-gray-800">
+                    <span className="text-sm xl:text-lg font-semibold text-gray-800">
                       {clientId}
                     </span>
                   </div>
