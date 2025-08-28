@@ -307,7 +307,7 @@ const StabilityConsole = () => {
 
       {/* address balance */}
       <div className="mt-4">
-        
+
         {address ? (
 
           <>
@@ -394,6 +394,7 @@ const StabilityConsole = () => {
                 />
 
               </button>
+              */}
 
             </div>
 
