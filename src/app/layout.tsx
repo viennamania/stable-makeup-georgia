@@ -222,6 +222,14 @@ export default function RootLayout({
                     </span>
                   </div>
 
+
+                  {/* Stablecoins deliver multiple valuable advantages to people who wish to maintain control over their cryptocurrencies */}
+                  <span className="text-sm text-gray-600
+                    w-64 xl:w-72 flex flex-col items-center justify-center mt-2
+                    ">
+                    Stablecoins deliver multiple valuable advantages to people who wish to maintain control over their cryptocurrencies
+                  </span>
+
                 </div>
 
                 {/* horizontally listing all chain */}
