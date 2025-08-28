@@ -2495,9 +2495,13 @@ const fetchBuyOrders = async () => {
 
 
 
+
+  const [agentList, setAgentList] = useState([] as any[]);
+
+
   const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
 
-  const [fetchingAgent, setFetchingAgent] = useState(false);
+  const [fetchingAgent, setFetchingAgent] = useState(true);
   const [agent, setAgent] = useState(null) as any;
 
   useEffect(() => {
@@ -2525,14 +2529,47 @@ const fetchBuyOrders = async () => {
 
           setAgentAdminWalletAddress(data.result?.adminWalletAddress);
 
+          if (data.result?.adminWalletAddress === address) {
+            setIsAdmin(true);
+          }
+
+
+        } else {
+          console.error("Agent not found for agentcode:", params.agentcode);
+          setAgent(null);
+          setAgentAdminWalletAddress("");
+
+          toast.error("에이전트 정보를 찾을 수 없습니다.");
+
+          // get agent list
+          const agentListResponse = await fetch("/api/agent/getAllAgents", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              limit: 100,
+              page: 1,
+            }),
+          });
+          const agentListData = await agentListResponse.json();
+          if (agentListData.result) {
+            setAgentList(agentListData.result.agents);
+          } else {
+            console.error("Failed to fetch agent list");
+            setAgentList([]);
+          }
         }
 
         setFetchingAgent(false);
     };
 
-    fetchData();
+    params.agentcode && fetchData();
 
   } , [params.agentcode]);
+
+
+
 
 
 
@@ -2550,6 +2587,509 @@ const fetchBuyOrders = async () => {
       };
     }, [!fetchingAgent && agent]);
   
+
+
+
+
+
+
+
+
+
+  // if loadinAgent is true, show loading
+  if (fetchingAgent) {
+    return (
+      <main className="w-full p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+        <div className="py-0 w-full">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Image
+              src="/banner-loading.gif"
+              alt="Loading"
+              width={100}
+              height={100}
+              className="rounded-lg w-40 h-40"
+            />
+            <span className="text-lg text-gray-500 ml-2">
+              에이전트 정보를 불러오는 중...
+            </span>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+
+  if (!fetchingAgent && !agent) {
+    return (
+      <main className="w-full p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+        <div className="py-0 w-full">
+          
+          
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Image
+              src="/banner-404.gif"
+              alt="Error"
+              width={100}
+              height={100}
+              className="rounded-lg w-20 h-20"
+            />
+            <div className="flex flex-row items-center justify-center gap-2">
+              <span className="text-lg text-gray-500 ml-2">
+                에이전트 정보를 찾을 수 없습니다.
+              </span>   
+            </div> 
+          </div>
+
+          {/* agent list */}
+          {/* table view */}
+          <div className="mt-8">
+            
+            <div className="flex flex-row items-center justify-start mb-4">
+              <Image
+                src="/icon-agent.png"
+                alt="Agent Icon"
+                width={50}
+                height={50}
+                className="rounded-lg w-10 h-10"
+              />
+              <span className="text-xl font-bold">에이전트 목록</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 border">에이전트 로고</th>
+                    <th className="px-4 py-2 border">에이전트 이름</th>
+                    <th className="px-4 py-2 border">에이전트 코드</th>
+                    <th className="px-4 py-2 border">에이전트 타입</th>
+                    <th className="px-4 py-2 border">에이전트 URL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agentList.map((agent) => (
+                    <tr key={agent.agentcode}>
+
+                      <td className="px-4 py-2 border">
+                        <Image
+                          src={agent.agentLogo || "/logo.png"}
+                          alt="Agent Logo"
+                          width={50}
+                          height={50}
+                          className="rounded-lg w-10 h-10"
+                        />
+                      </td>
+                      <td className="px-4 py-2 border">{agent.agentName}</td>
+                      <td className="px-4 py-2 border">{agent.agentcode}</td>
+                      <td className="px-4 py-2 border">{agent.agentType}</td>
+                      <td className="px-4 py-2 border">
+                        <a
+                          href={`/${params.lang}/admin/agent/${agent.agentcode}`}
+                          className="text-blue-500 hover:underline"
+                        >
+                          이동하기
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex flex-row items-center justify-between mt-4">
+              <Image
+                src="/icon-info.png"
+                alt="Info Icon"
+                width={30}
+                height={30}
+                className="rounded-lg w-6 h-6"
+              />
+              <span className="text-sm text-gray-500">
+                에이전트 목록을 확인하고, 원하는 에이전트를 선택하여 거래를 시작하세요.
+              </span>
+            </div>
+
+          </div>
+
+
+        </div>
+      </main>
+    );
+  }
+
+
+
+
+
+
+
+  if (!address) {
+    return (
+   <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+
+      <div className="py-0 w-full">
+
+
+
+
+        {params.agentcode && (
+          <div className={`w-full flex flex-col xl:flex-row items-center justify-start gap-2
+            p-2 rounded-lg mb-4
+              "bg-black/10"
+            }`}>
+                
+              <div className="w-full flex flex-row items-center justify-start gap-2">
+                <div className="flex flex-row items-center justify-start gap-2">
+                  <Image
+                    src={agent?.agentLogo || "/logo.png"}
+                    alt="logo"
+                    width={50}
+                    height={50}
+                    className="rounded-lg w-16 h-16"
+                  />
+                  <div className="flex flex-col items-start justify-start">
+                    <span className="text-sm text-[#3167b4] font-bold">
+                      {agent?.agentName || "에이전트 이름"}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {agent?.agentcode || "에이전트 코드"}
+                    </span>
+                  </div>
+                </div>
+
+                {address && address === agentAdminWalletAddress && (
+                  <div className="text-sm text-[#3167b4] font-bold">
+                    {agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
+                  </div>
+                )}
+                {address && address !== agentAdminWalletAddress && (
+                  <div className="text-sm text-[#3167b4] font-bold">
+                    {agent?.agentName + " (" + agent?.agentcode + ")"}
+                  </div>
+                )}
+
+              </div>
+
+
+              {address && !loadingUser && (
+
+
+                <div className="w-full flex flex-row items-center justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/profile-settings');
+                    }}
+                    className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    {user?.nickname || "프로필"}
+                  </button>
+
+
+                  {/* logout button */}
+                  <button
+                      onClick={() => {
+                          confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                          .then(() => {
+
+                              toast.success('로그아웃 되었습니다');
+
+                              //router.push(
+                              //    "/admin/" + params.agentcode
+                              //);
+                          });
+                      } }
+
+                      className="flex items-center justify-center gap-2
+                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <Image
+                      src="/icon-logout.webp"
+                      alt="Logout"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <span className="text-sm">
+                      로그아웃
+                    </span>
+                  </button>
+
+                </div>
+
+
+              )}
+
+
+              {!address && (
+                <ConnectButton
+                  client={client}
+                  wallets={wallets}
+
+                  /*
+                  accountAbstraction={{
+                    chain: arbitrum,
+                    sponsorGas: true
+                  }}
+                  */
+                  
+                  theme={"light"}
+
+                  // button color is dark skyblue convert (49, 103, 180) to hex
+                  connectButton={{
+                      style: {
+                          backgroundColor: "#3167b4", // dark skyblue
+                          color: "#f3f4f6", // gray-300
+                          padding: "2px 10px",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          width: "60x",
+                          height: "38px",
+                      },
+                      label: "원클릭 로그인",
+                  }}
+
+                  connectModal={{
+                    size: "wide", 
+                    //size: "compact",
+                    titleIcon: "https://www.stable.makeup/logo.png",                           
+                    showThirdwebBranding: false,
+                  }}
+
+                  locale={"ko_KR"}
+                  //locale={"en_US"}
+                />
+              )}
+
+
+
+
+            </div>
+        )}
+
+
+        <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">
+   
+
+          <div className="w-full flex flex-row gap-2 justify-end items-center">
+
+
+          {/* right space */}
+          {/* background transparent */}
+          <select
+            //className="p-2 text-sm bg-zinc-800 text-white rounded"
+
+
+            className="p-2 text-sm bg-transparent text-zinc-800 rounded"
+
+            onChange={(e) => {
+              const lang = e.target.value;
+              router.push(
+                "/" + lang + "/" + params.agentcode + "/center"
+              );
+            }}
+          >
+            <option
+              value="en"
+              selected={params.lang === "en"}
+            >
+              English(US)
+            </option>
+            <option
+              value="ko"
+              selected={params.lang === "ko"}
+            >
+              한국어(KR)
+            </option>
+            <option
+              value="zh"
+              selected={params.lang === "zh"}
+            >
+              中文(ZH)
+            </option>
+            <option
+              value="ja"
+              selected={params.lang === "ja"}
+            >
+              日本語(JP)
+            </option>
+          </select>
+
+          {/* icon-language */}
+          {/* color is tone down */}
+          <Image
+            src="/icon-language.png"
+            alt="Language"
+            width={20}
+            height={20}
+            className="rounded-lg w-6 h-6
+              opacity-50
+              "
+          />
+
+          </div>
+
+        </div>
+
+
+
+        {/* USDT 가격 binance market price */}
+        {/*
+        <div
+          className="binance-widget-marquee
+          w-full flex flex-row items-center justify-center gap-2
+          p-2
+          "
+
+
+          data-cmc-ids="1,1027,52,5426,3408,74,20947,5994,24478,13502,35336,825"
+          data-theme="dark"
+          data-transparent="true"
+          data-locale="ko"
+          data-fiat="KRW"
+          //data-powered-by="Powered by OneClick USDT"
+          //data-disclaimer="Disclaimer"
+        ></div>
+        */}
+
+      </div>
+
+    </main>
+
+
+    );
+  }
+
+
+
+
+
+  // if agent.adminWalletAddress is same as address, return "에이전트 관리자" else return "에이전트"
+  // if user?.role is not "admin", return "에이전트"
+
+  if (
+    (address
+    && agent
+    //&&  address !== agent.adminWalletAddress)
+    && !isAdmin)
+    
+
+  ) {
+    return (
+      <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+        <div className="py-0 w-full">
+
+          <div className={`w-full flex flex-col xl:flex-row items-center justify-start gap-2
+            p-2 rounded-lg mb-4
+            ${agent?.backgroundColor ?
+              "bg-[#"+agent?.backgroundColor+"]" :
+              "bg-black/10"
+            }`}>
+
+
+            <div className="w-full flex flex-row items-center justify-start gap-2">
+              <Image
+                src={agent?.agentLogo || "/logo.png"}
+                alt="logo"
+                width={50}
+                height={50}
+                className="rounded-lg w-16 h-16"
+              />
+              <div className="flex flex-col items-start justify-start">
+                <span className="text-sm text-[#3167b4] font-bold">
+                  {agent?.agentName || "에이전트 이름"}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {agent?.agentcode || "에이전트 코드"}
+                </span>
+              </div>
+            </div>
+              
+
+
+        
+
+            {/* 로그아웃 버튼 */}
+            <div className="w-full flex flex-row items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                  .then(() => {
+
+                      toast.success('로그아웃 되었습니다');
+
+                      //router.push(
+                      //    "/admin/" + params.agentcode
+                      //);
+                  });
+                } }
+
+                className="flex items-center justify-center gap-2
+                  bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+              >
+                <Image
+                  src="/icon-logout.webp"
+                  alt="Logout"
+                  width={20}
+                  height={20}
+                  className="rounded-lg w-5 h-5"
+                />
+                <span className="text-sm">
+                  로그아웃
+                </span>
+              </button>
+            </div>
+
+
+
+
+          </div>
+
+
+
+          {/* 에이전트 관리자가 아닙니다. 회원가입한후 센터에 문의하세요. */}
+          <div className="w-full flex flex-col items-center justify-center gap-4 mt-8">
+            <Image
+              src="/banner-404.gif"
+              alt="Error"
+              width={100}
+              height={100}
+              className="rounded-lg w-20 h-20"
+            />
+            <span className="text-lg text-gray-500 ml-2">
+              에이전트 관리자가 아닙니다. 회원가입한후 센터에 문의하세요.
+            </span>
+
+
+            {/* 회원가입하러 가기 */}
+            <div className="flex flex-row items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/profile-settings');
+                  //router.push('/' + params.lang + '/' + params.agentcode + '/profile-settings');
+                }}
+                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+              >
+                회원가입하러 가기
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+    );
+
+  }
+
+
+
+
+
+
+
+
 
 
 

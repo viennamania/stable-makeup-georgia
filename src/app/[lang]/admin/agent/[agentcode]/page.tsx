@@ -1167,6 +1167,11 @@ export default function Index({ params }: any) {
 
           setAgentAdminWalletAddress(data.result?.adminWalletAddress);
 
+          if (data.result?.adminWalletAddress === address) {
+            setIsAdmin(true);
+          }
+
+
         } else {
           console.error("Agent not found for agentcode:", params.agentcode);
           setAgent(null);
@@ -1775,7 +1780,8 @@ export default function Index({ params }: any) {
   if (
     (address
     && agent
-    &&  address !== agent.adminWalletAddress)
+    //&&  address !== agent.adminWalletAddress)
+    && !isAdmin)
     
 
   ) {
@@ -1961,7 +1967,8 @@ export default function Index({ params }: any) {
 
               {/* 가맹점 설정 */}
               {
-              address === agent?.adminWalletAddress && (
+              ///address === agent?.adminWalletAddress && (
+              isAdmin && (
                 <div className="
                   w-full
                   flex flex-row items-center gap-2">
