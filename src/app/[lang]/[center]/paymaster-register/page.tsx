@@ -2612,7 +2612,7 @@ export default function Index({ params }: any) {
                                 />
 
                                 <Image
-                                  src='/icon-buyer.png'
+                                  src='/icon-user.png'
                                   alt='Best Buyer'
                                   width={24}
                                   height={24}

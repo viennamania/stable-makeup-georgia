@@ -1507,7 +1507,7 @@ export default function Index({ params }: any) {
 
             <div className='flex flex-row items-center space-x-4'>
                 <Image
-                  src={store?.storeLogo || "/icon-buyer.png"}
+                  src={store?.storeLogo || "/icon-user.png"}
                   alt="Store Logo"
                   width={35}
                   height={35}

@@ -2822,7 +2822,7 @@ export default function Index({ params }: any) {
 
                                   <div className="flex flex-row items-center gap-1">
                                     <Image
-                                      src="/icon-buyer.png"
+                                      src="/icon-user.png"
                                       alt="Buyer"
                                       width={20}
                                       height={20}

@@ -3903,7 +3903,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                 <div className="flex flex-row items-center gap-1">
                                   <Image
-                                    src={item.avatar || "/icon-buyer.png"}
+                                    src={item.avatar || "/icon-user.png"}
                                     alt="Avatar"
                                     width={20}
                                     height={20}

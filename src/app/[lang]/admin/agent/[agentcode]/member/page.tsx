@@ -1675,7 +1675,7 @@ export default function Index({ params }: any) {
                   <div className='flex w-32 items-center justify-center gap-2
                   bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
                     <Image
-                      src="/icon-buyer.png"
+                      src="/icon-user.png"
                       alt="Buyer"
                       width={35}
                       height={35}
@@ -1728,7 +1728,7 @@ export default function Index({ params }: any) {
  
             <div className='flex flex-row items-center space-x-4'>
                 <Image
-                  src="/icon-buyer.png"
+                  src="/icon-user.png"
                   alt="Buyer"
                   width={35}
                   height={35}

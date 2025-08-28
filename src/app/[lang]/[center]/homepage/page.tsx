@@ -5510,7 +5510,7 @@ const fetchBuyOrders = async () => {
                                 <p className="mt-2 mb-2 flex items-center gap-2">
 
                                   <Image
-                                      src={item.avatar || '/icon-buyer.png'}
+                                      src={item.avatar || '/icon-user.png'}
                                       alt="Avatar"
                                       width={32}
                                       height={32}

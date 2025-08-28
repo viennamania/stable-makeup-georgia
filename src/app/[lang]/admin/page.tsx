@@ -2294,7 +2294,7 @@ export default function Index({ params }: any) {
 
                 <div className="w-full flex flex-row items-center justify-start gap-2">                
                   <Image
-                    src="/icon-buyer.png"
+                    src="/icon-user.png"
                     alt="Buyer"
                     width={35}
                     height={35}

@@ -5049,7 +5049,7 @@ const fetchBuyOrders = async () => {
 
                               <div className="flex flex-row items-center gap-2">     
                                 <Image
-                                  src={item?.buyer?.avatar || "/icon-buyer.png"}
+                                  src={item?.buyer?.avatar || "/icon-user.png"}
                                   alt="Avatar"
                                   width={20}
                                   height={20}
