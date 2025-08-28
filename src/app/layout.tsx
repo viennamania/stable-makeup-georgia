@@ -251,7 +251,7 @@ export default function RootLayout({
                     <span className="text-sm text-gray-600">BLOCKCHAIN ID</span>
                   </div>
 
-                  <div className="flex flex-col xl:flex-row items-center justify-center gap-4 mb-4">
+                  <div className="flex flex-row items-center justify-center gap-4 mb-4">
                     
                     <div className={`
                       w-24 h-24
@@ -274,7 +274,7 @@ export default function RootLayout({
                     </div>
 
                     <div className={`
-                      w-24 h-24
+                      w-20 h-20 
                       flex flex-col items-center justify-center gap-1 ${chain === 'polygon' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
@@ -294,7 +294,7 @@ export default function RootLayout({
                     </div>
 
                     <div className={`
-                      w-24 h-24
+                      w-20 h-20
                       flex flex-col items-center justify-center gap-1 ${chain === 'bsc' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
@@ -314,7 +314,7 @@ export default function RootLayout({
                     </div>
 
                     <div className={`
-                      w-24 h-24
+                      w-20 h-20
                       flex flex-col items-center justify-center gap-1 ${chain === 'arbitrum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
                       hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
                       <Image
