@@ -243,7 +243,7 @@ export default function RootLayout({
                     <span className="text-sm text-gray-600">BLOCKCHAIN ID</span>
                   </div>
 
-                  <div className="flex flex-row items-center justify-center gap-4 mb-4">
+                  <div className="flex flex-col xl:flex-row items-center justify-center gap-4 mb-4">
                     
                     <div className={`
                       w-24 h-24
