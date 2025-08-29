@@ -145,6 +145,10 @@ interface BuyOrder {
 
   autoConfirmPayment: boolean;
 
+  userStats: any;
+  
+  paymentMethod: string;
+
 }
 
 
