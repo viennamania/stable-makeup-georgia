@@ -4864,48 +4864,50 @@ const fetchBuyOrders = async () => {
                               </div>
                             )}
 
-
                           </div>
 
 
-                          
-                          {/* userStats */}
-                          {/* userStats.totalPaymentConfirmedCount */}
-                          {/* userStats.totalPaymentConfirmedKrwAmount */}
-                          <div className="flex flex-row items-center justify-center gap-2">
-                            <span className="text-sm text-zinc-500">
-                              {
-                                item?.userStats?.totalPaymentConfirmedCount
-                                ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
-                                0 + ' 건'
-                              }
-                            </span>
+                          {item?.userStats?.totalPaymentConfirmedCount ? (
+                            
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              
+                              <span className="text-sm text-zinc-500">
+                                {
+                                  item?.userStats?.totalPaymentConfirmedCount
+                                  ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
+                                  0 + ' 건'
+                                }
+                              </span>
 
-                            <div className="flex flex-col items-end justify-center gap-1">
-                              <div className="flex flex-row items-center justify-center gap-1">
-                                <Image
-                                  src="/icon-tether.png"
-                                  alt="Tether"
-                                  width={20}
-                                  height={20}
-                                  className="w-3 h-3"
-                                />
+                              <div className="flex flex-col items-end justify-center gap-1">
+                                <div className="flex flex-row items-center justify-center gap-1">
+                                  <Image
+                                    src="/icon-tether.png"
+                                    alt="Tether"
+                                    width={20}
+                                    height={20}
+                                    className="w-3 h-3"
+                                  />
+                                  <span className="text-sm text-zinc-500">
+                                    {
+                                      item?.userStats?.totalPaymentConfirmedUsdtAmount &&
+                                      Number(item?.userStats?.totalPaymentConfirmedUsdtAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                    }
+                                  </span>
+                                </div>
                                 <span className="text-sm text-zinc-500">
                                   {
-                                    item?.userStats?.totalPaymentConfirmedUsdtAmount &&
-                                    Number(item?.userStats?.totalPaymentConfirmedUsdtAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                    item?.userStats?.totalPaymentConfirmedKrwAmount &&
+                                    Number(item?.userStats?.totalPaymentConfirmedKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                   }
                                 </span>
                               </div>
-                              <span className="text-sm text-zinc-500">
-                                {
-                                  item?.userStats?.totalPaymentConfirmedKrwAmount &&
-                                  Number(item?.userStats?.totalPaymentConfirmedKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                }
-                              </span>
+
                             </div>
 
-                            {!item?.userStats?.totalPaymentConfirmedCount && (
+                          ) : (
+
+                            <div className="flex flex-row items-center justify-center gap-2">
                               <Image
                                 src="/icon-new-user.png"
                                 alt="New User"
@@ -4913,8 +4915,9 @@ const fetchBuyOrders = async () => {
                                 height={50}
                                 className="w-10 h-10"
                               />
-                            )}
-                          </div>
+                            </div>
+
+                          )}
 
                         </div>
 
@@ -5074,7 +5077,7 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 animate-spin"
                                 />
                                 <span className="text-sm text-zinc-500 font-semibold">
-                                  판매자 매칭중
+                                  판매자 매칭중입니다.
                                 </span>
                               </div>
 
