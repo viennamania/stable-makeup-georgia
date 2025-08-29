@@ -3352,7 +3352,7 @@ const [tradeSummary, setTradeSummary] = useState({
                 </div>
 
 
-
+                {/*
                 {address && (
                     <div className="flex
                     mt-4 mb-2
@@ -3407,6 +3407,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                     </div>
                 )}
+                */}
 
 
 
