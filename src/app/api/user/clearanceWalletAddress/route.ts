@@ -219,9 +219,14 @@ export async function POST(request: NextRequest) {
     //const clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
     // if bsc, 18 decimal
 
-    let clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
+    //let clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
+
+    let clearanceUSDTBalance = 0;
+
     if (chain === 'bsc') {
-        clearanceUSDTBalance = Number(balance) / 10 ** 18; // BSC has 18 decimals
+        clearanceUSDTBalance = Number((Number(balance) / 10 ** 18).toFixed(6));
+    } else {
+        clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
     }
 
     console.log("clearanceUSDTBalance", clearanceUSDTBalance);
