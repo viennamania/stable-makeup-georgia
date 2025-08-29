@@ -131,6 +131,9 @@ interface BuyOrder {
   storecode: string;
   store: any;
 
+  agentcode: string;
+  agent: any;
+
   settlement: any;
 
   agentFeeRate: number;
@@ -3794,7 +3797,7 @@ const fetchBuyOrders = async () => {
                       </th>
 
                       <th className="p-2">
-                        구매자 아이디<br/>입금자<br/>USDT지갑
+                        구매자 아이디<br/>USDT지갑<br/>입금자
                       </th>
                       
                       <th className="p-2">
@@ -4021,44 +4024,63 @@ const fetchBuyOrders = async () => {
 
                         </td>
                         
-                        <td className="p-2">
-                          <div className="flex flex-col items-start justify-start gap-2">
-                            {/*
-                            <Image
-                              src={item.avatar || "/profile-default.png"}
-                              alt="Avatar"
-                              width={20}
-                              height={20}
-                              priority={true} // Added priority property
-                              className="rounded-full"
-                              style={{
+                      <td className="p-2">
+                        <div className="
+                          w-32     
+                          flex flex-col items-start justify-start gap-2">
+                          
+                          <div className="w-full flex flex-col gap-2 items-center justify-start">
+
+                            <div className="w-full flex flex-row items-center justify-start gap-2">
+                              <Image
+                                src={item?.buyer?.avatar || "/icon-user.png"}
+                                alt="Avatar"
+                                width={20}
+                                height={20}
+                                className="rounded-full w-5 h-5"
+                                style={{
                                   objectFit: 'cover',
-                                  width: '20px',
-                                  height: '20px',
-                              }}
-                            />
-                            */}
-                            
-                            <div className="flex flex-col gap-2 items-center justify-center">
-
-
-
-                              <span className="text-lg text-blue-600 font-bold">
+                                }}
+                              />
+                              <span className="text-lg text-zinc-500 font-semibold">
                                 {
                                   item?.nickname?.length > 10 ?
                                   item?.nickname?.substring(0, 10) + '...' :
                                   item?.nickname
                                 }
                               </span>
+                            </div>
+
+                            {/* wallet address */}
+                            <div className="w-full flex flex-row items-start justify-start gap-1">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Wallet Address"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <button
+                                className="text-sm text-blue-600 font-semibold underline
+                                "
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                }}
+                              >
+                                {item.walletAddress.substring(0, 6)}...{item.walletAddress.substring(item.walletAddress.length - 4)}
+                              </button>
+                            </div>
 
 
-                              <div className="flex flex-row items-center gap-2">
-                                <span className="text-sm text-yellow-600 font-semibold">
+                            {
+                            item?.paymentMethod === 'mkrw' ? (
+                              <></>
+                            ) : (
+                              <div className="w-full flex flex-row items-center justify-start gap-2">
+                                <span className="text-lg text-gray-800 font-bold">
                                   {
-                                    //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
-
                                     item?.buyer?.depositName
-
                                   }
                                 </span>
                                 <span className="
@@ -4076,37 +4098,63 @@ const fetchBuyOrders = async () => {
                                   }
                                 </span>
                               </div>
+                            )}
 
-
-                            </div>
-
-                            {/* wallet address */}
-                            <div className="flex flex-row items-center gap-2">
-                              <button
-                                className="text-sm text-blue-600 font-semibold
-                                  border border-blue-600 rounded-lg p-2
-                                  bg-blue-100
-                                  w-full text-center
-                                  hover:bg-blue-200
-                                  cursor-pointer
-                                  transition-all duration-200 ease-in-out
-                                  hover:scale-105
-                                  hover:shadow-lg
-                                  hover:shadow-blue-500/50
-                                "
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item.walletAddress);
-                                  toast.success(Copied_Wallet_Address);
-                                }}
-                              >
-                                {item.walletAddress.substring(0, 6)}...{item.walletAddress.substring(item.walletAddress.length - 4)}
-                              </button>
-                            </div>
 
                           </div>
 
-                        </td>
 
+                          
+                          {/* userStats */}
+                          {/* userStats.totalPaymentConfirmedCount */}
+                          {/* userStats.totalPaymentConfirmedKrwAmount */}
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            <span className="text-sm text-zinc-500">
+                              {
+                                item?.userStats?.totalPaymentConfirmedCount
+                                ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
+                                0 + ' 건'
+                              }
+                            </span>
+
+                            <div className="flex flex-col items-end justify-center gap-1">
+                              <div className="flex flex-row items-center justify-center gap-1">
+                                <Image
+                                  src="/icon-tether.png"
+                                  alt="Tether"
+                                  width={20}
+                                  height={20}
+                                  className="w-3 h-3"
+                                />
+                                <span className="text-sm text-zinc-500">
+                                  {
+                                    item?.userStats?.totalPaymentConfirmedUsdtAmount &&
+                                    Number(item?.userStats?.totalPaymentConfirmedUsdtAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                  }
+                                </span>
+                              </div>
+                              <span className="text-sm text-zinc-500">
+                                {
+                                  item?.userStats?.totalPaymentConfirmedKrwAmount &&
+                                  Number(item?.userStats?.totalPaymentConfirmedKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                }
+                              </span>
+                            </div>
+
+                            {!item?.userStats?.totalPaymentConfirmedCount && (
+                              <Image
+                                src="/icon-new-user.png"
+                                alt="New User"
+                                width={50}
+                                height={50}
+                                className="w-10 h-10"
+                              />
+                            )}
+                          </div>
+
+                        </div>
+
+                      </td>
 
                         <td className="p-2">
                           <div className="
@@ -5584,7 +5632,12 @@ const fetchBuyOrders = async () => {
 
                                   <div className="w-full flex flex-row gap-2 items-center justify-center">
                                     <span className="
-                                    w-14 text-end
+                                    w-14 
+                                    text-xs text-zinc-500">
+                                      가맹점 결제
+                                    </span>
+                                    <span className="
+                                    w-12 text-end
                                     text-sm text-zinc-500"
                                       style={{
                                         fontFamily: 'monospace',
@@ -5595,6 +5648,7 @@ const fetchBuyOrders = async () => {
                                       }%
                                     </span>
                                   </div>
+
 
                                   {/*
                                   <div className="w-full flex flex-row gap-2 items-center justify-center">
@@ -5851,6 +5905,57 @@ const fetchBuyOrders = async () => {
 
 
                             </div>
+
+
+                            {item?.settlement && (
+
+                              <div className="w-full flex flex-row gap-2 items-center justify-start">
+                                <span className="
+                                w-14
+                                text-xs text-zinc-500">
+                                  AG 수수료
+                                </span>
+                                <span className="
+                                w-12 text-end
+                                text-sm text-zinc-500"
+                                  style={{
+                                    fontFamily: 'monospace',
+                                  }}>
+                                  {Number(item.store?.agentFeePercent ? item.store?.agentFeePercent : 0.0).toFixed(2)}%
+                                </span>
+
+                                {/* agentFeeWalletAddress */}
+                                <div className="flex flex-row gap-1 items-center">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Wallet"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-xs text-zinc-500">
+                                    {item.agent?.agentFeeWalletAddress.slice(0,5) + '...'}
+                                  </span>
+                                </div>
+
+                                {/* settlement.agentFeeAmount */}
+                                <div className="flex flex-row gap-1 items-center">
+                                  <Image
+                                    src="/icon-tether.png"
+                                    alt="Tether"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-xs text-zinc-500">
+                                    {Number(item.settlement?.agentFeeAmount ? item.settlement?.agentFeeAmount : 0.0).toFixed(3)}
+                                  </span>
+                                </div>
+
+                              </div>
+
+                            )}
+
 
                           </div>
 

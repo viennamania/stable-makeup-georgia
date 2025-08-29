@@ -4880,12 +4880,30 @@ const fetchBuyOrders = async () => {
                                 0 + ' 건'
                               }
                             </span>
-                            <span className="text-sm text-zinc-500">
-                              {
-                                item?.userStats?.totalPaymentConfirmedKrwAmount &&
-                                item?.userStats?.totalPaymentConfirmedKrwAmount.toLocaleString() + ' 원'
-                              }
-                            </span>
+
+                            <div className="flex flex-col items-end justify-center gap-1">
+                              <div className="flex flex-row items-center justify-center gap-1">
+                                <Image
+                                  src="/icon-tether.png"
+                                  alt="Tether"
+                                  width={20}
+                                  height={20}
+                                  className="w-3 h-3"
+                                />
+                                <span className="text-sm text-zinc-500">
+                                  {
+                                    item?.userStats?.totalPaymentConfirmedUsdtAmount &&
+                                    Number(item?.userStats?.totalPaymentConfirmedUsdtAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                  }
+                                </span>
+                              </div>
+                              <span className="text-sm text-zinc-500">
+                                {
+                                  item?.userStats?.totalPaymentConfirmedKrwAmount &&
+                                  Number(item?.userStats?.totalPaymentConfirmedKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                }
+                              </span>
+                            </div>
 
                             {!item?.userStats?.totalPaymentConfirmedCount && (
                               <Image
