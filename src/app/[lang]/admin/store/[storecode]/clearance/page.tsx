@@ -1844,7 +1844,7 @@ export default function Index({ params }: any) {
 
 
 
-
+                {/*
                 <div className="flex flex-col items-start justify-start space-y-2">
 
                   <div className="flex flex-row items-center justify-start gap-2">
@@ -1901,7 +1901,7 @@ export default function Index({ params }: any) {
                   </div>
 
                 </div>
-
+                */}
 
 
 
