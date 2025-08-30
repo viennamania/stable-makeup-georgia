@@ -23,6 +23,7 @@ import localFont from "next/font/local";
 
 
 import Image from "next/image";
+import { useRouter }from "next//navigation";
 
 
 
@@ -86,7 +87,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
-
+  const router = useRouter();
 
   /*
   useEffect(() => {
@@ -106,7 +107,7 @@ export default function RootLayout({
 
   return (
 
-    <html lang="kr" className={`${pretendard.variable}`}>
+    <html lang="ko" className={`${pretendard.variable}`}>
 
     {/*
     <html lang="en">
@@ -340,9 +341,26 @@ export default function RootLayout({
 
                 {/* my wallet */}
                 <div className="mt-1 flex flex-col items-center justify-center">
-                  <h2 className="text-sm font-semibold text-gray-800">
-                    My Wallet
-                  </h2>
+
+                  <div className="flex flex-row items-center justify-between gap-2 mb-2">
+                    <span className="text-sm font-semibold text-gray-800">
+                      My Wallet
+                    </span>
+                    {/* 출금하기 버튼 */}
+                    {/* /ko/admin/withdraw-usdt */}
+                    <button
+                      className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
+                      onClick={() => {
+
+                        router.push('/ko/admin/withdraw-usdt');
+
+                        setShowChain(false);
+
+                      }}
+                    >
+                      출금하기
+                    </button>
+                  </div>
 
                   <StabilityConsole />
 
