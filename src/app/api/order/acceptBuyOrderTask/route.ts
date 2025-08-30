@@ -18,7 +18,7 @@ import {
 export async function POST(request: NextRequest) {
 
 
-//export async function GET(request: NextRequest) {
+////export async function GET(request: NextRequest) {
 
 
   const buyordersResult = await getAllBuyOrdersForMatching({
@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
 
 
   //console.log("buyordersResult", buyordersResult);
+
+  console.log("buyordersResult?.orders?.length", buyordersResult?.orders?.length);
 
 
   const buyorders = buyordersResult?.orders || [];

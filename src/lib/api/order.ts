@@ -6424,10 +6424,6 @@ export async function getAllBuyOrdersForMatching(
       
       'store.sellerWalletAddress': { $exists: true, $ne: null },
 
-            // 이것때문에 확인해야함 / 2025.05.28 // nevertry
-
-
-
 
     }
   )
@@ -6437,7 +6433,7 @@ export async function getAllBuyOrdersForMatching(
 
 
 
-  ///console.log('getAllBuyOrdersForMatching results: ' + JSON.stringify(results));
+  console.log('getAllBuyOrdersForMatching results: ' + JSON.stringify(results));
 
 
   // get total count of orders

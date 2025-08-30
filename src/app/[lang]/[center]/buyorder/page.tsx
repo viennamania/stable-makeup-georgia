@@ -3784,7 +3784,7 @@ const fetchBuyOrders = async () => {
                     가맹점 판매용 USDT지갑
                   </span>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-2">
+                <div className="flex flex-row items-center justify-center gap-1">
                   <Image
                     src="/icon-shield.png"
                     alt="Shield"
@@ -3811,7 +3811,7 @@ const fetchBuyOrders = async () => {
                     가맹점 자동결제용 USDT지갑
                   </span>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-2">
+                <div className="flex flex-row items-center justify-center gap-1">
                   <Image
                     src="/icon-shield.png"
                     alt="Shield"
@@ -5066,7 +5066,7 @@ const fetchBuyOrders = async () => {
 
 
                               {/* wallet address */}
-                              <div className="flex flex-row items-center gap-2">
+                              <div className="flex flex-row items-center gap-1">
                                 <Image
                                   src="/icon-shield.png"
                                   alt="Shield"
@@ -5245,7 +5245,7 @@ const fetchBuyOrders = async () => {
                             {item.paymentMethod === 'mkrw' && item?.escrowWallet?.address && (
                               <div className="flex flex-col items-end justify-center gap-2">
 
-                                <div className="flex flex-row items-center justify-center gap-2">
+                                <div className="flex flex-row items-center justify-center gap-1">
                                   <Image
                                     src="/icon-shield.png"
                                     alt="Escrow Wallet"
@@ -5457,7 +5457,7 @@ const fetchBuyOrders = async () => {
                                 </div>
 
                                 {/* wallet address */}
-                                <div className="flex flex-row items-center justify-center gap-2">
+                                <div className="flex flex-row items-center justify-center gap-1">
                                   <Image
                                     src="/icon-shield.png"
                                     alt="Shield"
@@ -7003,7 +7003,6 @@ const fetchBuyOrders = async () => {
                                       }}
                                     >
 
-
                                       <div className="flex flex-col gap-2 items-end justify-center"
                                         style={{
                                           fontFamily: 'monospace',
@@ -7020,6 +7019,15 @@ const fetchBuyOrders = async () => {
                                           <span>
                                             {Number(item?.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                           </span>
+                                          {/* logo-chain-{chain} */}
+                                          <Image
+                                            src={`/logo-chain-${chain}.png`}
+                                            alt={`Settlement ${chain}`}
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                          />
+
                                         </div>
                                         {/*
                                         <span>
@@ -7078,7 +7086,7 @@ const fetchBuyOrders = async () => {
                                       >
                                           {
                                             item?.settlement?.settlementWalletAddress &&
-                                            item?.settlement?.settlementWalletAddress?.slice(0, 5) + '...'
+                                            item?.settlement?.settlementWalletAddress?.slice(0, 6) + '...' + item?.settlement?.settlementWalletAddress?.slice(-4)
                                           }
                                       </button>
                                     </div>
