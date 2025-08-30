@@ -3781,7 +3781,7 @@ const fetchBuyOrders = async () => {
                   {/* dot */}
                   <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
                   <span className="text-sm text-zinc-500">
-                    가맹점 판매용 USDT지갑
+                    가맹점 자동판매용 USDT지갑
                   </span>
                 </div>
                 <div className="flex flex-row items-center justify-center gap-1">
