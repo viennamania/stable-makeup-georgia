@@ -6862,6 +6862,25 @@ const fetchBuyOrders = async () => {
                               <span className="text-sm font-semibold text-zinc-500">
                                 {item?.store?.storeName}{' '}가맹점 결제 및 정산완료
                               </span>
+
+                              <div className="flex flex-row gap-1 items-center">
+                                {/* image for usdt and chain image */}
+                                <Image
+                                  src="/token-usdt-icon.png"
+                                  alt="USDT Icon"
+                                  width={16}
+                                  height={16}
+                                  className="w-4 h-4 rounded-lg object-cover"
+                                />
+                                <Image
+                                  src={`/logo-chain-${chain}.png`}
+                                  alt={`${chain} Icon`}
+                                  width={16}
+                                  height={16}
+                                  className="w-4 h-4 rounded-lg object-cover"
+                                />
+
+                              </div>
                             </div>
 
                           )}
@@ -7209,7 +7228,10 @@ const fetchBuyOrders = async () => {
                                   >
               
                                     <span>
-                                      {item?.settlement?.settlementAmount?.toLocaleString()}
+                                      {
+                                        item?.settlement?.settlementAmount &&
+                                        Number(item?.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                      }
                                       {' '}
                                       {
                                         item?.settlement?.settlementWalletAddress &&
@@ -7218,7 +7240,7 @@ const fetchBuyOrders = async () => {
                                     <span>
                                       {
                                         item?.settlement?.agentFeeAmount ?
-                                        item?.settlement?.agentFeeAmount?.toLocaleString()
+                                        Number(item?.settlement?.agentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                         : '0'
                                       }
                                       {' '}
@@ -7227,7 +7249,10 @@ const fetchBuyOrders = async () => {
                                       item?.settlement?.agentFeeWalletAddress?.slice(0, 5) + '...'}
                                     </span>
                                     <span>
-                                      {item?.settlement?.feeAmount?.toLocaleString()}
+                                      {item?.settlement?.feeAmount ?
+                                        Number(item?.settlement?.feeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                        : '0'
+                                      }
                                       {' '}
                                       {
                                         item?.settlement?.feeWalletAddress &&
@@ -7237,15 +7262,23 @@ const fetchBuyOrders = async () => {
                                   </div>
 
                                 </button>
-
-
-
-                              
+                         
                                 <div className="  
                                 w-24 
                                 flex flex-col gap-2 items-end justify-center"
                                 >
-                                  <div className="flex flex-col gap-1 items-center justify-center">
+                                  <button
+                                    onClick={() => {
+                                      // Handle user click
+                                      // copy item.nickname
+                                      navigator.clipboard.writeText(item.nickname);
+                                      toast.success('회원아이디가 복사되었습니다.');
+                                    }}
+                                    className="flex flex-col gap-1 items-center justify-center p-2
+                                    bg-transparent border-none cursor-pointer
+                                    hover:border hover:border-blue-600 hover:border-dashed
+                                    hover:bg-blue-100 hover:shadow-lg"
+                                  >
                                     <Image
                                       src="/icon-user.png"
                                       alt="User Icon"
@@ -7256,7 +7289,8 @@ const fetchBuyOrders = async () => {
                                     <span className="text-lg font-semibold text-blue-600">
                                       {item.nickname.slice(0, 6)}...
                                     </span>
-                                  </div>
+                                  </button>
+
                                   <span className="text-sm text-zinc-500">
                                     충전금액(원)
                                   </span>

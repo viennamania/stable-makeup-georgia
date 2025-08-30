@@ -7100,6 +7100,46 @@ const fetchBuyOrders = async () => {
                                     </div>
                                   </div>
 
+
+                                  <div className="  
+                                  w-24 
+                                  flex flex-col gap-2 items-end justify-center"
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        // Handle user click
+                                        // copy item.nickname
+                                        navigator.clipboard.writeText(item.nickname);
+                                        toast.success('회원아이디가 복사되었습니다.');
+                                      }}
+                                      className="flex flex-row gap-1 items-center justify-center p-2
+                                      bg-transparent border-none cursor-pointer
+                                      hover:border hover:border-blue-600 hover:border-dashed
+                                      hover:bg-blue-100 hover:shadow-lg"
+                                    >
+                                      <Image
+                                        src="/icon-user.png"
+                                        alt="User Icon"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                      />
+                                      <span className="text-lg font-semibold text-blue-600">
+                                        {item.nickname.slice(0, 6)}...
+                                      </span>
+                                    </button>
+
+                                    <span className="text-sm text-blue-600 font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}
+                                    >
+                                      {Number(item.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원 충전
+                                    </span>
+                                  </div>
+
+
+                                  {/*
                                   <div className="
                                   w-40 
                                   flex flex-col gap-2 items-end justify-center"
@@ -7124,6 +7164,9 @@ const fetchBuyOrders = async () => {
                                       {Number(item.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원 충전
                                     </span>
                                   </div>
+                                  */}
+
+
 
                                 </div>
 
