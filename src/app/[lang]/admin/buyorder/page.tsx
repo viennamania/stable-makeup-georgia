@@ -4678,12 +4678,20 @@ const fetchBuyOrders = async () => {
                             </div>
                           </div>
 
-
-                          <span className="text-sm text-zinc-500 font-semibold">
-                          {
-                            "#" + item.tradeId
-                          }
-                          </span>
+                          <div className="flex flex-row items-start justify-start gap-1">
+                            <Image
+                              src="/icon-trade.png"
+                              alt="Trade Icon"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            <span className="text-sm text-zinc-500 font-semibold">
+                            {
+                              "#" + item.tradeId
+                            }
+                            </span>
+                          </div>
 
                           <div className="flex flex-row items-center justify-start gap-2">
 
