@@ -4543,10 +4543,10 @@ const fetchBuyOrders = async () => {
                     <th className="p-2">
                       <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
                         <span>
-                          거래취소
+                          P2P 거래취소
                         </span>
                         <span>
-                          거래완료
+                          P2P 거래완료
                         </span>
                       </div>
                     </th>
