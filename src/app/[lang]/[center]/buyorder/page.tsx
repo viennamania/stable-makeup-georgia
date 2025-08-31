@@ -5818,12 +5818,12 @@ const fetchBuyOrders = async () => {
                                 <Image
                                   src="/icon-bank-auto.png"
                                   alt="Bank Auto"
-                                  width={20}
-                                  height={20}
+                                  width={16}
+                                  height={16}
                                   className="animate-spin"
                                 />
                                 <span className="text-sm font-semibold text-zinc-500">
-                                  자동입금확인중
+                                  입금확인중입니다.
                                 </span>
                               </div>
 
@@ -5846,33 +5846,42 @@ const fetchBuyOrders = async () => {
 
                               </div>
 
-
-
-                                <span className="text-sm text-purple-600 font-semibold">
-                                  {params.lang === 'ko' ? (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
-                                      ) :
-                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
-                                      )
-                                    }</p>
-                                  ) : (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
-                                      ) :
-                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
-                                      )
-                                    }</p>
-                                  )}
+                              {/* paymentAmount */}
+                              <div className="flex flex-row gap-1 items-center justify-center">
+                                <span className="text-lg text-yellow-600 font-semibold"
+                                  style={{ fontFamily: 'monospace' }}>
+                                  {
+                                    item.krwAmount?.toLocaleString()
+                                  }
                                 </span>
+                              </div>
+
+
+                              <span className="text-sm text-purple-600 font-semibold">
+                                {params.lang === 'ko' ? (
+                                  <p>{
+                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                    ) :
+                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                    ) : (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                    )
+                                  }</p>
+                                ) : (
+                                  <p>{
+                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                    ) :
+                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                    ) : (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                    )
+                                  }</p>
+                                )}
+                              </span>
 
 
 
@@ -5989,7 +5998,7 @@ const fetchBuyOrders = async () => {
                                       className="w-5 h-5 animate-spin"
                                     />
                                     <span className="text-sm text-zinc-500">
-                                      판매자가 판매한 테더(USDT)를 구매자에게 보내는 중
+                                      판매자가 테더(USDT)를 회원에게 보내는 중입니다.
                                     </span>
                                   </div>
                                 )}
@@ -7196,7 +7205,7 @@ const fetchBuyOrders = async () => {
                                               className="animate-spin"
                                             />
                                             <span className="text-sm font-semibold text-zinc-500">
-                                              회원({item.nickname})이 구매한 테더(USDT)를 가맹점 결제하는 중
+                                              회원({item.nickname})이 구매한 테더(USDT)를 가맹점 결제하는 중입니다.
                                             </span>
                                           </div>
 

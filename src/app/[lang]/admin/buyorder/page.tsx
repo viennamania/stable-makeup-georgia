@@ -5604,22 +5604,31 @@ const fetchBuyOrders = async () => {
                                   <Image
                                     src="/icon-bank-auto.png"
                                     alt="Bank Auto"
-                                    width={20}
-                                    height={20}
+                                    width={16}
+                                    height={16}
                                     className="animate-spin"
                                   />
                                   {item?.autoConfirmPayment === true ? (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      자동입금확인중
+                                      입금확인중입니다.
                                     </span>
                                   ) : (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      자동입금확인중
+                                      입금확인중입니다.
                                     </span>
                                   )}
 
                                 </div>
 
+                                {/* paymentAmount */}
+                                <div className="flex flex-row gap-1 items-center justify-center">
+                                  <span className="text-lg text-yellow-600 font-semibold"
+                                    style={{ fontFamily: 'monospace' }}>
+                                    {
+                                      item.krwAmount?.toLocaleString()
+                                    }
+                                  </span>
+                                </div>
 
 
                                 <div className="flex flex-row gap-1 items-center justify-end">
@@ -5949,7 +5958,7 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 animate-spin"
                                 />
                                 <span className="text-sm text-zinc-500">
-                                  판매자가 테더(USDT)를 구매자에게 보내는 중
+                                  판매자가 테더(USDT)를 회원에게 보내는 중입니다.
                                 </span>
                               </div>
                             )}
@@ -7330,7 +7339,7 @@ const fetchBuyOrders = async () => {
                                             className="animate-spin"
                                           />
                                           <span className="text-sm font-semibold text-zinc-500">
-                                            가맹점 결제 및 정산중
+                                            회원이 가맹점 결제를 진행중입니다.
                                           </span>
                                         </div>
 
