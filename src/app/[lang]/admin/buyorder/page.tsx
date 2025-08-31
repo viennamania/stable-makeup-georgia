@@ -7264,7 +7264,7 @@ const fetchBuyOrders = async () => {
                                 </button>
                          
                                 <div className="  
-                                w-24 
+                                w-28 
                                 flex flex-col gap-2 items-end justify-center"
                                 >
                                   <button
@@ -7274,7 +7274,7 @@ const fetchBuyOrders = async () => {
                                       navigator.clipboard.writeText(item.nickname);
                                       toast.success('회원아이디가 복사되었습니다.');
                                     }}
-                                    className="flex flex-col gap-1 items-center justify-center p-2
+                                    className="flex flex-row gap-1 items-center justify-center p-2
                                     bg-transparent border-none cursor-pointer
                                     hover:border hover:border-blue-600 hover:border-dashed
                                     hover:bg-blue-100 hover:shadow-lg"
@@ -7291,18 +7291,14 @@ const fetchBuyOrders = async () => {
                                     </span>
                                   </button>
 
-                                  <span className="text-sm text-zinc-500">
-                                    충전금액(원)
-                                  </span>
                                   <span className="text-sm text-blue-600 font-semibold"
                                     style={{
                                       fontFamily: 'monospace',
                                     }}
                                   >
-                                    {Number(item.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                    {Number(item.krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원 충전
                                   </span>
                                 </div>
-
 
 
                               </div>

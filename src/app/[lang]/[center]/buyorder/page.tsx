@@ -6838,7 +6838,7 @@ const fetchBuyOrders = async () => {
 
 
                         <td className="p-2">
-                          <div className="w-full flex flex-col gap-2 items-center justify-center
+                          <div className="w-full  flex flex-col gap-2 items-center justify-center
                             bg-zinc-50 p-4 rounded-lg shadow-sm">
 
 
@@ -7102,7 +7102,7 @@ const fetchBuyOrders = async () => {
 
 
                                   <div className="  
-                                  w-24 
+                                  w-28 
                                   flex flex-col gap-2 items-end justify-center"
                                   >
                                     <button
