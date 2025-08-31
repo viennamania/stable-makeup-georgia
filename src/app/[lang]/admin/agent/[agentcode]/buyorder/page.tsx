@@ -3801,7 +3801,7 @@ const fetchBuyOrders = async () => {
                       </th>
 
                       <th className="p-2">
-                        구매자 아이디<br/>USDT지갑<br/>입금자
+                        P2P구매자 아이디<br/>USDT지갑<br/>입금자
                       </th>
                       
                       <th className="p-2">

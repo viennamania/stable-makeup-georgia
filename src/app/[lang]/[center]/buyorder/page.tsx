@@ -4747,7 +4747,7 @@ const fetchBuyOrders = async () => {
 
                       <th className="p-2">
                         <div className="flex flex-col items-start justify-center gap-2">
-                          <span>구매자 아이디</span>
+                          <span>P2P구매자 아이디</span>
                           <span>USDT지갑</span>
                           <span>입금자</span>
                         </div>
@@ -4769,7 +4769,7 @@ const fetchBuyOrders = async () => {
                         <div className="flex flex-col items-start justify-center gap-2">
 
                           <span className="text-sm text-zinc-50 font-semibold">
-                            판매자 아이디
+                            P2P판매자 아이디
                           </span>
                           <span className="text-sm text-zinc-50 font-semibold">
                             USDT지갑

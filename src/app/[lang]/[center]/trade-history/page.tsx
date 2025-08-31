@@ -3750,7 +3750,7 @@ const fetchBuyOrders = async () => {
                           </div>
                         </th>
                         <th className="p-2">가맹점</th>
-                        <th className="p-2">구매자 아이디</th>
+                        <th className="p-2">P2P구매자 아이디</th>
                         <th className="p-2">입금자</th>
 
                         <th className="p-2">
@@ -3767,7 +3767,7 @@ const fetchBuyOrders = async () => {
                           </div>
                         </th>
 
-                        <th className="p-2">판매자 아이디</th>
+                        <th className="p-2">P2P판매자 아이디</th>
                         <th className="p-2">판매자 입금통장</th>
 
                         <th className="p-2">자동입금처리</th>
