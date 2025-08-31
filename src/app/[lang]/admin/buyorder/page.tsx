@@ -5620,15 +5620,7 @@ const fetchBuyOrders = async () => {
 
                                 </div>
 
-                                {/* paymentAmount */}
-                                <div className="flex flex-row gap-1 items-center justify-center">
-                                  <span className="text-lg text-yellow-600 font-semibold"
-                                    style={{ fontFamily: 'monospace' }}>
-                                    {
-                                      item.krwAmount?.toLocaleString()
-                                    }
-                                  </span>
-                                </div>
+
 
 
                                 <div className="flex flex-row gap-1 items-center justify-end">
@@ -5641,11 +5633,26 @@ const fetchBuyOrders = async () => {
                                     {item.store?.bankInfo?.bankName}
                                   </div>
                                 </div>
+
+
                                 {/*
                                 <div className="flex flex-row items-end justify-start text-sm text-zinc-500">
                                   {item.store?.bankInfo?.accountNumber}
                                 </div>
                                 */}
+                                
+                                {/* paymentAmount */}
+                                <div className="flex flex-row gap-1 items-center justify-center">
+                                  <span className="text-lg text-yellow-600 font-semibold"
+                                    style={{ fontFamily: 'monospace' }}>
+                                    {
+                                      item.krwAmount?.toLocaleString()
+                                    }
+                                  </span>
+                                </div>
+
+
+
 
                                 <div className="flex flex-col items-between justify-center">
 
