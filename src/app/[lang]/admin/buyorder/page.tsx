@@ -4563,7 +4563,7 @@ const fetchBuyOrders = async () => {
                       <div className="flex flex-col items-center justify-center gap-2">
                         <div className="flex flex-row items-center justify-center gap-2">
                           <span>
-                            자동결제 및 정산(USDT)
+                            가맹점 자동결제 및 정산(USDT)
                           </span>
                           <Image
                             src="/icon-settlement.png"
