@@ -4756,7 +4756,7 @@ const fetchBuyOrders = async () => {
                                         item._id
                                       )}
                                     >
-                                      {item.audioOn ? '꺼기' : '켜기'}
+                                      {item.audioOn ? '끄기' : '켜기'}
                                     </button>
                                   </div>
                                 )}
