@@ -2604,7 +2604,7 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 자동판매용 USDT지갑이 설정되지 않았습니다.
+                                    {store && store.storeName}의 P2P 거래소 판매용 USDT지갑이 설정되지 않았습니다.
                                     </span>
                                 </div>
                                 )}
@@ -2623,7 +2623,7 @@ export default function SettingsPage({ params }: any) {
                                         bg-white text-zinc-500 text-sm"
                                     disabled={updatingSellerWalletAddress}
                                     >
-                                    <option value="">가맹점 자동판매용 USDT지갑 변경</option>
+                                    <option value="">P2P 거래소 판매용 USDT지갑 변경</option>
                                     {allStoreSellers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
@@ -2636,15 +2636,15 @@ export default function SettingsPage({ params }: any) {
                                     onClick={() => {
                                         if (!selectedSellerWalletAddress) {
                                         toast.error
-                                            ('가맹점 자동판매용 USDT지갑을 선택하세요.');
+                                            ('P2P 거래소 판매용 USDT지갑을 선택하세요.');
                                         return;
                                         }
                                         if (selectedSellerWalletAddress === store?.sellerWalletAddress) {
-                                        toast.error('현재 가맹점 자동판매용 USDT지갑과 동일합니다.');
+                                        toast.error('현재 P2P 거래소 판매용 USDT지갑과 동일합니다.');
                                         return;
                                         }
                                         confirm(
-                                        `정말 ${selectedSellerWalletAddress}로 가맹점 자동판매용 USDT지갑을 변경하시겠습니까?`
+                                        `정말 ${selectedSellerWalletAddress}로 P2P 거래소 판매용 USDT지갑을 변경하시겠습니까?`
                                         ) && updateSellerWalletAddress();
                                     }}
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
@@ -2665,7 +2665,7 @@ export default function SettingsPage({ params }: any) {
                                     <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 자동판매용 USDT지갑을 설정하세요.
+                                    가맹점 홈페이지에서 회원가입 후 P2P 거래소 판매용 USDT지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}
