@@ -7134,7 +7134,7 @@ const fetchBuyOrders = async () => {
                                         className="w-5 h-5"
                                       />
                                       <span className="text-lg font-semibold text-blue-600">
-                                        {item.nickname.slice(0, 6)}...
+                                        {item.nickname.slice(0, 5)}...
                                       </span>
                                     </button>
 

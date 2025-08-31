@@ -6801,7 +6801,7 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2">
                         <div className="w-full
-                          flex flex-col gap-2 items-center justify-center
+                          flex flex-col gap-2 items-start justify-center
                           border border-dashed border-zinc-300 rounded-lg p-2">
 
                           {item.status === "paymentConfirmed" &&
@@ -7296,7 +7296,7 @@ const fetchBuyOrders = async () => {
                                       className="w-5 h-5"
                                     />
                                     <span className="text-lg font-semibold text-blue-600">
-                                      {item.nickname.slice(0, 6)}...
+                                      {item.nickname.slice(0, 5)}...
                                     </span>
                                   </button>
 
