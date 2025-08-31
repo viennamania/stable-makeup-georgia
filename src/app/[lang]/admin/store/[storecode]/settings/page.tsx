@@ -3255,7 +3255,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        구매자 계좌송금용 원화통장 설정
+                                        P2P 구매자 계좌이체용 원화통장 설정
                                     </span>
                                 </div>
 
