@@ -5998,7 +5998,7 @@ const fetchBuyOrders = async () => {
                                       className="w-5 h-5 animate-spin"
                                     />
                                     <span className="text-sm text-zinc-500">
-                                      판매자가 테더(USDT)를 회원에게 보내는 중입니다.
+                                      판매자(<b>{item.seller?.nickname}</b>)가 테더(USDT)를 회원(<b>{item.nickname}</b>)에게 보내는 중입니다.
                                     </span>
                                   </div>
                                 )}
@@ -6701,7 +6701,7 @@ const fetchBuyOrders = async () => {
                               <div className="flex flex-col gap-2 items-start justify-start ml-2">
                                 <div className="flex flex-col gap-1 items-start justify-start">
                                   <span className="text-sm">
-                                    구매자에게 전송한 테더(USDT)
+                                    회원에게 전송한 테더(USDT)
                                   </span>
                                   <div className="flex flex-row gap-1 items-center justify-start">
                                     <Image
@@ -7205,7 +7205,7 @@ const fetchBuyOrders = async () => {
                                               className="animate-spin"
                                             />
                                             <span className="text-sm font-semibold text-zinc-500">
-                                              회원({item.nickname})이 구매한 테더(USDT)를 가맹점 결제하는 중입니다.
+                                              회원(<b>{item.nickname}</b>)이 구매한 테더(USDT)를 가맹점 결제하는 중입니다.
                                             </span>
                                           </div>
 

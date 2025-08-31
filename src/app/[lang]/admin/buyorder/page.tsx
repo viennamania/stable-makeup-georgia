@@ -5958,7 +5958,7 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 animate-spin"
                                 />
                                 <span className="text-sm text-zinc-500">
-                                  판매자가 테더(USDT)를 회원에게 보내는 중입니다.
+                                  판매자(<b>{item.seller?.nickname}</b>)가 테더(USDT)를 회원(<b>{item.nickname}</b>)에게 보내는 중입니다.
                                 </span>
                               </div>
                             )}
@@ -7339,7 +7339,7 @@ const fetchBuyOrders = async () => {
                                             className="animate-spin"
                                           />
                                           <span className="text-sm font-semibold text-zinc-500">
-                                            회원이 가맹점 결제를 진행중입니다.
+                                            회원(<b>{item.nickname}</b>)이 가맹점 결제를 진행중입니다.
                                           </span>
                                         </div>
 
