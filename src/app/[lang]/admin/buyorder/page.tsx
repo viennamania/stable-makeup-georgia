@@ -7339,7 +7339,7 @@ const fetchBuyOrders = async () => {
                                             className="animate-spin"
                                           />
                                           <span className="text-sm font-semibold text-zinc-500">
-                                            회원(<b>{item.nickname}</b>)이 가맹점 결제를 진행중입니다.
+                                            회원(<b>{item.nickname}</b>)이 구매한 테더(USDT)로 결제하는 중입니다.
                                           </span>
                                         </div>
 
