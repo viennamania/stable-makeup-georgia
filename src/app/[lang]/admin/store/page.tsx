@@ -2768,10 +2768,10 @@ export default function Index({ params }: any) {
                               전일 보유금(USDT)
                             </span>
                             <span className="text-center">
-                              관리자 USDT지갑
+                              결제용 USDT지갑
                             </span>
                             <span className="text-center">
-                              관리자 USDT지갑 잔고
+                              결제용 USDT지갑 잔고
                             </span>
 
                           </div>
@@ -3518,7 +3518,7 @@ export default function Index({ params }: any) {
                                         navigator.clipboard.writeText(
                                           item.settlementWalletAddress
                                         );
-                                        toast.success('정산 지갑 주소가 복사되었습니다.');
+                                        toast.success('결제용 USDT지갑주소가 복사되었습니다.');
                                       }}
                                       className="text-sm text-blue-500 hover:underline"
                                     >
@@ -3527,7 +3527,7 @@ export default function Index({ params }: any) {
                                     </button>
                                   ) : (
                                     <span className="text-sm text-red-500">
-                                      관리자 USDT지갑 없음
+                                      결제용 USDT지갑 없음
                                     </span>
                                   )}
                                 </span>
