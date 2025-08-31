@@ -4800,7 +4800,7 @@ const fetchBuyOrders = async () => {
                       
                       <td className="p-2">
                         <div className="
-                          w-32     
+                          w-36  
                           flex flex-col items-start justify-start gap-2">
                           
                           <div className="w-full flex flex-col gap-2 items-center justify-start">
@@ -4816,7 +4816,7 @@ const fetchBuyOrders = async () => {
                                   objectFit: 'cover',
                                 }}
                               />
-                              <span className="text-lg text-zinc-500 font-semibold">
+                              <span className="text-sm text-zinc-500 font-semibold">
                                 {
                                   item?.nickname?.length > 10 ?
                                   item?.nickname?.substring(0, 10) + '...' :
