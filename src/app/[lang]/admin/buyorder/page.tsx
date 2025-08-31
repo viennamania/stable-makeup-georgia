@@ -5604,19 +5604,19 @@ const fetchBuyOrders = async () => {
 
                                 <div className="flex flex-row gap-2 items-center justify-end">
                                   <Image
-                                    src="/icon-bank-auto.png"
+                                    src="/icon-search-bank.gif"
                                     alt="Bank Auto"
-                                    width={16}
-                                    height={16}
-                                    className="animate-spin"
+                                    width={30}
+                                    height={30}
+                                    className="rounded-full"
                                   />
                                   {item?.autoConfirmPayment === true ? (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      입금확인중입니다.
+                                      확인중입니다.
                                     </span>
                                   ) : (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      입금확인중입니다.
+                                      확인중입니다.
                                     </span>
                                   )}
 
