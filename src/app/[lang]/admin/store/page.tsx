@@ -83,6 +83,10 @@ import DatePicker from "react-datepicker";
 import { version } from "../../../config/version";
 
 
+
+
+
+
 interface BuyOrder {
   _id: string;
   createdAt: string;
@@ -1589,15 +1593,27 @@ export default function Index({ params }: any) {
       if (index !== -1) {
         newStore[index] = {
           ...newStore[index],
-          usdtBalance: Number(balance) / 10 ** 6,
+
+          // if chain is bsc, then 10 ** 18
+          //usdtBalance: Number(balance) / 10 ** 6,
+
+
+          usdtBalance: chain === "bsc" ? Number(balance) / 10 ** 18 : Number(balance) / 10 ** 6,
+
+
         };
       }
       return newStore;
     } );
 
-    return Number(balance) / 10 ** 6; // Convert to USDT
-
-
+    
+    //return Number(balance) / 10 ** 6; // Convert to USDT
+    // if chain is bsc, then 10 ** 18
+    if (chain === "bsc") {
+      return Number(balance) / 10 ** 18; // Convert to USDT
+    } else {
+      return Number(balance) / 10 ** 6; // Convert to USDT
+    }
 
   };
 
