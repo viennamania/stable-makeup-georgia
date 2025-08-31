@@ -3017,7 +3017,7 @@ export default function SettingsPage({ params }: any) {
                                 <div className='w-full flex flex-row items-center justify-start gap-2'>
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg text-zinc-500">
-                                        판매자용 보유금 수량(USDT)
+                                        판매자 보유금 수량(USDT)
                                     </span>
                                 </div>
 
@@ -3214,7 +3214,8 @@ export default function SettingsPage({ params }: any) {
 
                                 {/* store payactionKey */}
                                 
-                                <div className="w-full flex flex-row items-center justify-start gap-2">
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
                                     <Image
                                         src="/icon-payaction.png"
                                         alt="Payaction"
@@ -3222,7 +3223,7 @@ export default function SettingsPage({ params }: any) {
                                         height={20}
                                         className="w-5 h-5"
                                     />
-                                    <span className="text-lg">
+                                    <span className="text-lg text-zinc-500">
                                         페이액션 자동입금 설정
                                     </span>
                                 </div>

@@ -2758,14 +2758,14 @@ export default function SettingsPage({ params }: any) {
                             <div className='w-full flex flex-row items-center justify-start gap-2
                                 border-b border-gray-300 pb-2'>
                                 <Image
-                                    src="/icon-escrow.png"
-                                    alt="Escrow"
+                                    src="/icon-trade.png"
+                                    alt="Trade"
                                     width={20}
                                     height={20}
                                     className="w-5 h-5"
                                 />
                                 <span className="text-lg text-zinc-500">
-                                    가맹점 에스크로 설정
+                                    가맹점 P2P 거래소 설정
                                 </span>
                             </div>
 
@@ -2965,8 +2965,8 @@ export default function SettingsPage({ params }: any) {
                                 <div className='w-full flex flex-row items-center justify-start gap-2'>
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg text-zinc-500">
-                                        판매자용 보유금 수량(USDT)
+                                    <span className="text-lg text-zinc-600">
+                                        판매자 보유금 수량(USDT)
                                     </span>
                                 </div>
 
@@ -3052,7 +3052,8 @@ export default function SettingsPage({ params }: any) {
 
                                 {/* store withdrawal bankInfo */}
                                 
-                                <div className="w-full flex flex-row items-center justify-start gap-2">
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
                                     <Image
                                         src="/icon-bank.png"
                                         alt="Bank"
@@ -3060,7 +3061,7 @@ export default function SettingsPage({ params }: any) {
                                         height={20}
                                         className="w-5 h-5"
                                     />
-                                    <span className="text-lg">
+                                    <span className="text-lg text-zinc-500">
                                         가맹점 출금용(USDT판매용) 원화통장 설정
                                     </span>
                                 </div>
@@ -3336,7 +3337,8 @@ export default function SettingsPage({ params }: any) {
 
                                 {/* store payactionKey */}
                                 
-                                <div className="w-full flex flex-row items-center justify-start gap-2">
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
                                     <Image
                                         src="/icon-payaction.png"
                                         alt="Payaction"
@@ -3344,7 +3346,7 @@ export default function SettingsPage({ params }: any) {
                                         height={20}
                                         className="w-5 h-5"
                                     />
-                                    <span className="text-lg">
+                                    <span className="text-lg text-zinc-500">
                                         페이액션 자동입금 설정
                                     </span>
                                 </div>
