@@ -30,6 +30,8 @@ import { useRouter }from "next//navigation";
 // import components
 import StabilityConsole from '@/components/StabilityConsole';
 
+import CenterConsole from '@/components/CenterConsole';
+
 
 import {
   clientId,
@@ -162,6 +164,11 @@ export default function RootLayout({
           {/* chain image */}
 
           <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4">
+
+            {/* fixed position left and vertically top */}
+            <div className="fixed top-2 left-2 z-50 flex flex-col items-start justify-center">
+              <CenterConsole />
+            </div>
 
             {/* fixed position vertically top */}
             <div className="fixed top-2 right-2 z-50 flex flex-col items-end justify-center">
@@ -340,14 +347,13 @@ export default function RootLayout({
 
 
                 {/* my wallet */}
+                {/*
                 <div className="mt-1 flex flex-col items-center justify-center">
 
                   <div className="flex flex-row items-center justify-between gap-2 mb-2">
                     <span className="text-sm font-semibold text-gray-800">
                       My Wallet
                     </span>
-                    {/* 출금하기 버튼 */}
-                    {/* /ko/admin/withdraw-usdt */}
                     <button
                       className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
                       onClick={() => {
@@ -365,6 +371,7 @@ export default function RootLayout({
                   <StabilityConsole />
 
                 </div>
+                */}
 
               </div>
 

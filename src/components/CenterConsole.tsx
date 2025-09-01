@@ -134,7 +134,7 @@ const wallets = [
 
 
 
-const StabilityConsole = () => {
+const CenterConsole = () => {
 
   const router = useRouter();
 
@@ -311,23 +311,15 @@ const StabilityConsole = () => {
         {address ? (
 
           <>
-            <div className="flex flex-row gap-2 justify-center items-center">
-
+            <div className="flex flex-col gap-2 justify-center items-center">
 
               <div className="flex flex-row gap-2 justify-center items-center">
                 {/* dot */}
                 <div className="w-2 h-2 bg-zinc-600 rounded-full"></div>
                 <span className="text-sm text-zinc-600">
-                  내 지갑주소
+                  지갑주소
                 </span>
               </div>
-
-              <Image
-                src="/icon-shield.png"
-                alt="Shield"
-                width={25}
-                height={25}
-              />
               <button
                 className="text-lg text-zinc-800 underline"
                 onClick={() => {
@@ -335,9 +327,8 @@ const StabilityConsole = () => {
                   //toast.success(Copied_Wallet_Address);
                 } }
               >
-                {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                {address.substring(0, 6)}...
               </button>
-
 
             </div>
       
@@ -346,7 +337,7 @@ const StabilityConsole = () => {
 
             <div className="w-full flex flex-col gap-2 justify-between items-center
               bg-green-50 p-2 rounded-lg">
-              <div className="flex flex-row gap-2 justify-center items-center">
+              <div className="flex flex-col gap-2 justify-center items-center">
                 <Image
                   src="/token-usdt-icon.png"
                   alt="USDT"
@@ -355,50 +346,21 @@ const StabilityConsole = () => {
                   className="rounded-lg w-6 h-6"
                 />
                 <span className="text-sm text-zinc-600">
-                  내 테더 잔액(USDT)
+                  잔액(USDT)
                 </span>
               </div>
 
               <div className="
-              w-40 flex flex-col items-end justify-center
-              text-xl font-semibold text-green-600"
+              flex flex-col items-end justify-center
+              text-lg font-semibold text-green-600"
               style={{ fontFamily: "monospace" }}
               >
                 {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
               </div>
 
-
-              {/*
-              <button
-                disabled={!address}
-                onClick={() => {
-                  // redirect to send USDT page
-                  router.push(
-                    "/kr/admin/withdraw-usdt"
-                  );
-
-                }}
-                className="w-full flex items-center justify-center
-                bg-[#3167b4]
-                text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-              >
-                <span className="text-sm text-gray-100">
-                  출금하기
-                </span>
-                <Image
-                  src="/icon-share.png"
-                  alt="Withdraw USDT"
-                  width={20}
-                  height={20}
-                  className="ml-2"
-                />
-
-              </button>
-              */}
-
             </div>
 
-            <div className="flex flex-row gap-2 justify-center items-center">
+            <div className="flex flex-col gap-2 justify-center items-center">
               <Image
                 src={`/logo-chain-${chain}.png`}
                 alt={`${chain} logo`}
@@ -412,14 +374,14 @@ const StabilityConsole = () => {
                 chain === "arbitrum" ? "ETH" :
                 chain === "bsc" ? "BNB" : ""})
               </span>
-              <div className="text-xl font-semibold text-zinc-800"
+              <div className="text-sm font-semibold text-zinc-800"
                 style={{ fontFamily: "monospace" }}
               >
                 {Number(nativeBalance).toFixed(8)}
               </div>
             </div>
 
-            <div className="flex flex-row gap-2 justify-center items-center">
+            <div className="flex flex-col gap-2 justify-center items-center">
               {/* if pol balance is 0, comment out the text */}
               {nativeBalance < 0.0001 && (
                 <p className="text-sm text-red-500">
@@ -428,21 +390,28 @@ const StabilityConsole = () => {
               )}
             </div>
 
+            <button
+              className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
+              onClick={() => {
+
+                router.push('/ko/admin/withdraw-usdt');
+
+              }}
+            >
+              출금하기
+            </button>
+
+
+
           </>
 
         ) : (
 
-          <div className="mt-5 flex flex-row gap-2 justify-center items-center">
+          <div className="mt-5 flex flex-col gap-2 justify-center items-center">
             {/* 로그인하고 나의 자산을 확인하세요 */}
             <span className="text-sm text-zinc-600">
               로그인하고 나의 지갑주소에서 자산을 확인하세요
             </span>
-
-
-
-
-
-
           </div>
 
         )}
@@ -459,6 +428,6 @@ const StabilityConsole = () => {
 
 
 
-StabilityConsole.displayName = "StabilityConsole";
+CenterConsole.displayName = "CenterConsole";
 
-export default StabilityConsole;
+export default CenterConsole;
