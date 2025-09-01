@@ -385,7 +385,7 @@ const CenterConsole = () => {
               {/* if pol balance is 0, comment out the text */}
               {nativeBalance < 0.0001 && (
                 <p className="text-sm text-red-500">
-                  가스비용이 부족합니다.<br/>가스비용이 부족하면 입금은 가능하지만 출금은 불가능합니다.
+                  가스비용이 부족합니다.<br/>가스비용이 부족하면<br/>입금은 가능하지만<br/>출금은 불가능합니다.
                 </p>
               )}
             </div>
