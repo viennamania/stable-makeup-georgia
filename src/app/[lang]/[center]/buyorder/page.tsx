@@ -5055,7 +5055,7 @@ const fetchBuyOrders = async () => {
                             
                             <div className="flex flex-col gap-2 items-start justify-start">
 
-                              <div className="flex flex-row items-center gap-2">     
+                              <div className="flex flex-row items-center gap-1">     
                                 <Image
                                   src={item?.buyer?.avatar || "/icon-user.png"}
                                   alt="Avatar"
@@ -5125,7 +5125,7 @@ const fetchBuyOrders = async () => {
 
                             {item?.userStats?.totalPaymentConfirmedCount ? (
                               
-                              <div className="flex flex-row items-center justify-center gap-2">
+                              <div className="w-full flex flex-row items-center justify-between gap-2">
                                 
                                 <span className="text-sm text-zinc-500">
                                   {
@@ -7111,7 +7111,7 @@ const fetchBuyOrders = async () => {
 
 
                                   <div className="  
-                                  w-28 
+                                  w-36  
                                   flex flex-col gap-2 items-end justify-center"
                                   >
                                     <button
@@ -7134,7 +7134,7 @@ const fetchBuyOrders = async () => {
                                         className="w-5 h-5"
                                       />
                                       <span className="text-lg font-semibold text-blue-600">
-                                        {item.nickname.slice(0, 5)}...
+                                        {item.nickname}
                                       </span>
                                     </button>
 
