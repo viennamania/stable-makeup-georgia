@@ -1063,6 +1063,23 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
+
+
             })
 
 
@@ -1191,6 +1208,21 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
+
           }
         });
 
@@ -1458,6 +1490,21 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
+
             })
 
 
@@ -1673,6 +1720,21 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
+
         })
 
 
@@ -1702,167 +1764,6 @@ export default function Index({ params }: any) {
   
 
   }
-
-
-
-  
-  // array of rollbackingPayment
-  const [rollbackingPayment, setRollbackingPayment] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    rollbackingPayment.push(false);
-  }
-  /*
-  useEffect(() => {
-      
-      setRollbackingPayment(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
-
-  // rollback payment check box
-  const [rollbackPaymentCheck, setRollbackPaymentCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    rollbackPaymentCheck.push(false);
-  }
-  /*
-  useEffect(() => {
-      
-      setRollbackPaymentCheck(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
-
-
-  // rollback payment
-  const rollbackPayment = async (
-
-    index: number,
-    orderId: string,
-    paymentAmount: number,
-    paymentAmountUsdt: number,
-
-  ) => {
-    // rollback payment
-    // send usdt to seller wallet address
-
-    if (rollbackingPayment[index]) {
-      return;
-    }
-
-
-    /*
-    // if escrowWalletAddress balance is less than paymentAmount, then return
-    if (escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-
-    // if escrowNativeBalance is less than 0.1, then return
-    if (escrowNativeBalance < 0.1) {
-      toast.error('ETH balance is less than 0.1');
-      return;
-    }
-      */
-    
-
-
-    setRollbackingPayment(
-      rollbackingPayment.map((item, idx) => idx === index ? true : item)
-    );
-
-
-    try {
-
-      const response = await fetch('/api/order/buyOrderRollbackPayment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          chain: params.center,
-          orderId: orderId,
-          paymentAmount: paymentAmount,
-          ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-          isSmartAccount: false,
-        })
-      });
-
-      const data = await response.json();
-
-      //console.log('data', data);
-
-      if (data.result) {
-
-
-        toast.success('Payment has been rollbacked');
-
-        playSong();
-
-        
-        ///fetchBuyOrders();
-
-        // fetch Buy Orders
-        await fetch('/api/order/getAllBuyOrders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
-              storecode: searchStorecode,
-              limit: Number(limitValue),
-              page: Number(pageValue),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-
-              //searchOrderStatusCompleted: true,
-
-              searchBuyer: searchBuyer,
-              searchDepositName: searchDepositName,
-
-              searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-              privateSale: true,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-            }
-          ),
-        })
-        .then(response => response.json())
-        .then(data => {
-            ///console.log('data', data);
-            setBuyOrders(data.result.orders);
-
-            setTotalCount(data.result.totalCount);
-        })
-
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Rollback payment has been failed');
-    }
-
-
-
-    setRollbackingPayment(
-      rollbackingPayment.map((item, idx) => idx === index ? false : item)
-    );
-
-    setRollbackPaymentCheck(
-      rollbackPaymentCheck.map((item, idx) => idx === index ? false : item)
-    );
-
-
-  }
-
-
 
 
 
@@ -1935,6 +1836,22 @@ export default function Index({ params }: any) {
     .then(data => {
       ///console.log('data', data);
       setBuyOrders(data.result.orders);
+
+
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+      });
+
+
     })
     .catch(error => {
       console.error('Error fetching buy orders:', error);
@@ -1943,64 +1860,19 @@ export default function Index({ params }: any) {
   }
 
 
-  // transfer escrow balance to seller wallet address
 
-  const [amountOfEscrowBalance, setAmountOfEscrowBalance] = useState("");
-
-  const [transferingEscrowBalance, setTransferingEscrowBalance] = useState(false);
-
-
-  const transferEscrowBalance = async () => {
-
-    if (transferingEscrowBalance) {
-      return;
-    }
-
-    setTransferingEscrowBalance(true);
-
-    try {
-
-      const response = await fetch('/api/order/transferEscrowBalanceToSeller', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          chain: params.center,
-          walletAddress: address,
-          amount: amountOfEscrowBalance,
-          ///escrowWalletAddress: escrowWalletAddress,
-          //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-          isSmartAccount: false,
-        })
-      });
-
-      const data = await response.json();
-
-      //console.log('data', data);
-
-      if (data.result) {
-
-        setAmountOfEscrowBalance("");
-
-        toast.success('Escrow balance has been transfered to seller wallet address');
-
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Transfer escrow balance has been failed');
-    }
-
-    setTransferingEscrowBalance(false);
-
-  }
-
-
-
-
-
+  const [buyOrderStats, setBuyOrderStats] = useState({
+    totalCount: 0,
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+  });
 
 
 
@@ -2034,12 +1906,10 @@ export default function Index({ params }: any) {
         || acceptingBuyOrder.some((item) => item === true)
         || agreementForCancelTrade.some((item) => item === true)
         || confirmPaymentCheck.some((item) => item === true)
-        || rollbackPaymentCheck.some((item) => item === true)
         || acceptingBuyOrder.some((item) => item === true)
         || escrowing.some((item) => item === true)
         || requestingPayment.some((item) => item === true)
         || confirmingPayment.some((item) => item === true)
-        || rollbackingPayment.some((item) => item === true)
       ) {
         return;
       }
@@ -2127,6 +1997,20 @@ export default function Index({ params }: any) {
       setBuyOrders(data.result.orders);
 
       setTotalCount(data.result.totalCount);
+
+
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+      });
       
 
 
@@ -2163,10 +2047,8 @@ export default function Index({ params }: any) {
     escrowing,
     requestingPayment,
     confirmingPayment,
-    rollbackingPayment,
     agreementForCancelTrade,
     confirmPaymentCheck,
-    rollbackPaymentCheck,
 
     latestBuyOrder,
     searchStorecode,
@@ -2183,65 +2065,6 @@ export default function Index({ params }: any) {
 
 
 
-const [fetchingBuyOrders, setFetchingBuyOrders] = useState(false);
-
-const fetchBuyOrders = async () => {
-
-
-  if (fetchingBuyOrders) {
-    return;
-  }
-  setFetchingBuyOrders(true);
-
-  const response = await fetch('/api/order/getAllBuyOrders', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(
-      {
-        storecode: searchStorecode,
-        limit: Number(limitValue),
-        page: Number(pageValue),
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-
-        //searchOrderStatusCompleted: true,
-
-        searchBuyer: searchBuyer,
-        searchDepositName: searchDepositName,
-
-        searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        privateSale: true,
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-
-      }
-
-    ),
-  });
-
-  if (!response.ok) {
-    setFetchingBuyOrders(false);
-    toast.error('Failed to fetch buy orders');
-    return;
-  }
-  const data = await response.json();
-  //console.log('data', data);
-
-  setBuyOrders(data.result.orders);
-  setTotalCount(data.result.totalCount);
-  setFetchingBuyOrders(false);
-
-  return data.result.orders;
-}
-
-
-
-
-
 
 
   // check table view or card view
@@ -2249,7 +2072,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -2279,17 +2102,7 @@ const fetchBuyOrders = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        /*
-        storecode: params.storecode,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-        //searchBuyer: searchBuyer,
-        //searchDepositName: searchDepositName,
 
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        */
 
         privateSale: true,
 
@@ -2355,7 +2168,7 @@ const fetchBuyOrders = async () => {
       searchDepositName,
   ]);
 
-
+  */
 
 
 
@@ -3117,7 +2930,7 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 청산수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceCount?.toLocaleString()}
+                  {buyOrderStats.totalCount ?.toLocaleString()}
                 </div>
               </div>
 
@@ -3134,7 +2947,7 @@ const fetchBuyOrders = async () => {
                   <div className="text-xl font-semibold text-green-600"
                     style={{ fontFamily: 'monospace' }}
                   >
-                    {tradeSummary.totalClearanceAmountUSDT?.toLocaleString()}
+                    {buyOrderStats.totalUsdtAmount?.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -3145,7 +2958,7 @@ const fetchBuyOrders = async () => {
                   <div className="text-xl font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}
                   >
-                    {tradeSummary.totalClearanceAmount?.toLocaleString()}
+                    {buyOrderStats.totalKrwAmount?.toLocaleString()}
                   </div>
                 </div>
               </div>

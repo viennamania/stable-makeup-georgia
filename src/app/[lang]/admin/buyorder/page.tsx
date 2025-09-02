@@ -2365,176 +2365,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-
-  
-  // array of rollbackingPayment
-  const [rollbackingPayment, setRollbackingPayment] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    rollbackingPayment.push(false);
-  }
-  /*
-  useEffect(() => {
-      
-      setRollbackingPayment(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
-
-  // rollback payment check box
-  const [rollbackPaymentCheck, setRollbackPaymentCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    rollbackPaymentCheck.push(false);
-  }
-  /*
-  useEffect(() => {
-      
-      setRollbackPaymentCheck(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
-
-
-  // rollback payment
-  const rollbackPayment = async (
-
-    index: number,
-    orderId: string,
-    paymentAmount: number,
-    paymentAmountUsdt: number,
-
-  ) => {
-    // rollback payment
-    // send usdt to seller wallet address
-
-    if (rollbackingPayment[index]) {
-      return;
-    }
-
-
-    /*
-    // if escrowWalletAddress balance is less than paymentAmount, then return
-    if (escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-
-    // if escrowNativeBalance is less than 0.1, then return
-    if (escrowNativeBalance < 0.1) {
-      toast.error('ETH balance is less than 0.1');
-      return;
-    }
-      */
-    
-
-
-    setRollbackingPayment(
-      rollbackingPayment.map((item, idx) => idx === index ? true : item)
-    );
-
-
-    try {
-
-      const response = await fetch('/api/order/buyOrderRollbackPayment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          storecode: "admin",
-          orderId: orderId,
-          paymentAmount: paymentAmount,
-          ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-          isSmartAccount: false,
-        })
-      });
-
-      const data = await response.json();
-
-      //console.log('data', data);
-
-      if (data.result) {
-
-
-        toast.success('Payment has been rollbacked');
-
-        playSong();
-
-        
-        ///fetchBuyOrders();
-
-        // fetch Buy Orders
-        await fetch('/api/order/getAllBuyOrders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
-              storecode: searchStorecode,
-              limit: Number(limitValue),
-              page: Number(pageValue),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-              searchOrderStatusCancelled: searchOrderStatusCancelled,
-              searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-              searchStoreName: searchStoreName,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-            }
-          ),
-        })
-        .then(response => response.json())
-        .then(data => {
-            ///console.log('data', data);
-            setBuyOrders(data.result.orders);
-
-            //setTotalCount(data.result.totalCount);
-
-            setBuyOrderStats({
-              totalCount: data.result.totalCount,
-              totalKrwAmount: data.result.totalKrwAmount,
-              totalUsdtAmount: data.result.totalUsdtAmount,
-              totalSettlementCount: data.result.totalSettlementCount,
-              totalSettlementAmount: data.result.totalSettlementAmount,
-              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-              totalFeeAmount: data.result.totalFeeAmount,
-              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-            });
-
-        })
-
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Rollback payment has been failed');
-    }
-
-
-
-    setRollbackingPayment(
-      rollbackingPayment.map((item, idx) => idx === index ? false : item)
-    );
-
-    setRollbackPaymentCheck(
-      rollbackPaymentCheck.map((item, idx) => idx === index ? false : item)
-    );
-
-
-  }
-
-
-
-
   // settlement
  
   // array of settlement
@@ -2660,70 +2490,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-
-  // transfer escrow balance to seller wallet address
-
-  const [amountOfEscrowBalance, setAmountOfEscrowBalance] = useState("");
-
-  const [transferingEscrowBalance, setTransferingEscrowBalance] = useState(false);
-
-
-  const transferEscrowBalance = async () => {
-
-    if (transferingEscrowBalance) {
-      return;
-    }
-
-    setTransferingEscrowBalance(true);
-
-    try {
-
-      const response = await fetch('/api/order/transferEscrowBalanceToSeller', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          storecode: "admin",
-          walletAddress: address,
-          amount: amountOfEscrowBalance,
-          ///escrowWalletAddress: escrowWalletAddress,
-          //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-          isSmartAccount: false,
-        })
-      });
-
-      const data = await response.json();
-
-      //console.log('data', data);
-
-      if (data.result) {
-
-        setAmountOfEscrowBalance("");
-
-        toast.success('Escrow balance has been transfered to seller wallet address');
-
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Transfer escrow balance has been failed');
-    }
-
-    setTransferingEscrowBalance(false);
-
-  }
-
-
-
-
-
-
-
-
-
-
   //const [latestBuyOrder, setLatestBuyOrder] = useState<BuyOrder | null>(null);
 
 
@@ -2752,12 +2518,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         || acceptingBuyOrder.some((item) => item === true)
         || agreementForCancelTrade.some((item) => item === true)
         || confirmPaymentCheck.some((item) => item === true)
-        || rollbackPaymentCheck.some((item) => item === true)
         || acceptingBuyOrder.some((item) => item === true)
         || escrowing.some((item) => item === true)
         || requestingPayment.some((item) => item === true)
         || confirmingPayment.some((item) => item === true)
-        || rollbackingPayment.some((item) => item === true)
       ) {
         return;
       }
@@ -2797,47 +2561,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
       const data = await response.json();
-
-      //console.log('data', data);
-
-
-      // if data.result is different from buyOrders
-      // check neweset order is different from buyOrders
-      // then toasts message
-      //console.log('data.result.orders[0]', data.result.orders?.[0]);
-      //console.log('buyOrders[0]', buyOrders);
-
-
-      //console.log('buyOrders[0]', buyOrders?.[0]);
-
-      /*
-      if (data.result.orders?.[0]?._id !== latestBuyOrder?._id) {
-
-        setLatestBuyOrder(data.result.orders?.[0] || null);
-
-   
-        
-        //toast.success(Newest_order_has_been_arrived);
-        toast.success('새로운 주문이 도착했습니다');
-
-
-
-
-        // <audio src="/racing.mp3" typeof="audio/mpeg" autoPlay={soundStatus} muted={!soundStatus} />
-        // audio play
-
-        //setSoundStatus(true);
-
-        // audio ding play
-
-        playSong();
-
-        // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
-
-
-      }
-      */
-
 
 
       setBuyOrders(data.result.orders);
@@ -2886,10 +2609,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     escrowing,
     requestingPayment,
     confirmingPayment,
-    rollbackingPayment,
     agreementForCancelTrade,
     confirmPaymentCheck,
-    rollbackPaymentCheck,
 
     ///latestBuyOrder,
     searchOrderStatusCancelled,

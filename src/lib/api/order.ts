@@ -2250,6 +2250,7 @@ export async function getBuyOrders(
 
         ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
+
         // filter by fromDate and toDate
         ///createdAt: {
         //  $gte: new Date(fromDate ? fromDate + 'T00:00:00Z' : '1970-01-01T00:00:00Z'),
@@ -2502,6 +2503,7 @@ export async function getBuyOrders(
 
           totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
           totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
+
 
         }
 
