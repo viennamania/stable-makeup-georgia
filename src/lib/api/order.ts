@@ -2204,7 +2204,10 @@ export async function getBuyOrders(
         privateSale: privateSale || { $ne: true },
         ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
         ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
-        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+
+        //...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+        // searchDepositName is buyer.depositName or seller.bankInfo.accountHolder
+        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
         ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
@@ -2246,7 +2249,11 @@ export async function getBuyOrders(
         ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
         ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
-        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+        
+        
+        //...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+
 
         ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
@@ -2326,8 +2333,10 @@ export async function getBuyOrders(
 
         // search buyer name
         ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
+        
         // search deposit name
-        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+        ///...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
         // search store bank account number
         ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
@@ -2383,7 +2392,9 @@ export async function getBuyOrders(
         ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
         ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
-        ...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+
+        ///...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
+        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
         ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
@@ -2476,7 +2487,11 @@ export async function getBuyOrders(
 
           nickname: { $regex: searchBuyer, $options: 'i' },
 
-          'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+          
+          ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+
+
 
           'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
 
