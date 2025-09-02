@@ -4695,9 +4695,9 @@ const fetchBuyOrders = async () => {
                             </span>
                           </div>
 
-                          <div className="flex flex-row items-center justify-start gap-2">
+                          <div className="w-full flex flex-row items-center justify-start gap-2">
 
-                            <div className="flex flex-col items-start justify-start">
+                            <div className="w-full flex flex-col items-start justify-start">
 
                               <span className="text-sm text-zinc-800 font-semibold">
                                 {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
@@ -4716,7 +4716,7 @@ const fetchBuyOrders = async () => {
                               </span>
                               */}
 
-                              <div className="flex flex-row items-center justify-start gap-1">
+                              <div className="w-full flex flex-row items-center justify-between gap-1">
                                 <span className="text-sm text-zinc-500 font-semibold">
                                   {params.lang === 'ko' ? (
                                     <p>{
@@ -5530,13 +5530,13 @@ const fetchBuyOrders = async () => {
 
                             {/* seller bank info */}
                             <div className="flex flex-row gap-2 items-center justify-end">
-                              <span className="text-lg text-gray-800 font-bold">
-                                {/*item.seller?.bankInfo?.accountHolder*/}
-                                {item.store?.bankInfo?.accountHolder}
-                              </span>
                               <span className="text-sm text-zinc-500">
                                 {/*item.seller?.bankInfo?.bankName*/}
                                 {item.store?.bankInfo?.bankName}
+                              </span>
+                              <span className="text-lg text-gray-800 font-bold">
+                                {/*item.seller?.bankInfo?.accountHolder*/}
+                                {item.store?.bankInfo?.accountHolder}
                               </span>
                             </div>
 
@@ -5626,13 +5626,13 @@ const fetchBuyOrders = async () => {
 
 
                                 <div className="flex flex-row gap-1 items-center justify-end">
-                                  <div className="text-lg text-gray-800 font-bold">
-                                    {/*item.seller?.bankInfo?.accountHolder*/}
-                                    {item.store?.bankInfo?.accountHolder}
-                                  </div>
                                   <div className="text-sm text-zinc-500">
                                     {/*item.seller?.bankInfo?.bankName*/}
                                     {item.store?.bankInfo?.bankName}
+                                  </div>
+                                  <div className="text-lg text-gray-800 font-bold">
+                                    {/*item.seller?.bankInfo?.accountHolder*/}
+                                    {item.store?.bankInfo?.accountHolder}
                                   </div>
                                 </div>
 
