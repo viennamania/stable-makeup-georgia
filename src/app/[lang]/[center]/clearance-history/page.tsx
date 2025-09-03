@@ -5369,9 +5369,12 @@ const [tradeSummary, setTradeSummary] = useState({
                                       className="bg-white text-black px-2 py-2 rounded-md"
                                       onClick={() => {
                             
-                                          params.center === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
+                                          //params.center === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
                                           
-
+                                          chain === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
+                                          chain === 'bsc' ? window.open(`https://bscscan.com/tx/${item.escrowTransactionHash}`) : window.open(`https://bscscan.com/tx/${item.escrowTransactionHash}`);
+                                          chain === 'polygon' ? window.open(`https://polygonscan.com/tx/${item.escrowTransactionHash}`) : window.open(`https://polygonscan.com/tx/${item.escrowTransactionHash}`);
+                                          window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`); // default to arbitrum
 
                                       }}
                                     >
