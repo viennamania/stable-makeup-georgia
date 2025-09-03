@@ -1822,13 +1822,13 @@ export default function Index({ params }: any) {
 
                     <div className="flex flex-row items-center justify-center gap-1">
                       <Image
-                        src="/token-usdt-icon.png"
+                        src="/icon-tether.png"
                         alt="USDT"
                         width={30}
                         height={30}
                         className="w-6 h-6"
                       />
-                      <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                      <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
                         style={{ fontFamily: "monospace" }}>
                           {
                             (Number(sellerWalletBalance || 0).toFixed(3))
@@ -1883,13 +1883,13 @@ export default function Index({ params }: any) {
 
                     <div className="flex flex-row items-center justify-center gap-1">
                       <Image
-                        src="/token-usdt-icon.png"
+                        src="/icon-tether.png"
                         alt="USDT"
                         width={30}
                         height={30}
                         className="w-6 h-6"
                       />
-                      <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                      <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
                         style={{ fontFamily: "monospace" }}>
                           {
                             (Number(balance || 0).toFixed(3))
@@ -1953,13 +1953,13 @@ export default function Index({ params }: any) {
                             </div>
                             <div className="flex flex-row items-center gap-1">
                               <Image
-                                src="/token-usdt-icon.png"
+                                src="/icon-tether.png"
                                 alt="USDT"
                                 width={30}
                                 height={30}
                                 className="w-6 h-6"
                               />
-                              <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                              <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
                                 style={{ fontFamily: "monospace" }}>
                                 {store && store.escrowAmountUSDT &&
                                 store.escrowAmountUSDT.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -2014,13 +2014,13 @@ export default function Index({ params }: any) {
                           <div className="flex flex-row items-center justify-center gap-2">
                               <div className="flex flex-row items-center gap-1">
                                 <Image
-                                    src="/token-usdt-icon.png"
+                                    src="/icon-tether.png"
                                     alt="USDT"
                                     width={30}
                                     height={30}
                                     className="w-6 h-6"
                                 />
-                                <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                                <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
                                   style={{ fontFamily: "monospace" }}>
                                     {
                                       (Number(settlementWalletBalance || 0).toFixed(3))
@@ -2680,7 +2680,7 @@ export default function Index({ params }: any) {
                             <span className="text-sm text-zinc-500">
                               총 매입주문수(건)
                             </span>
-                            <span className="text-xl xl:text-2xl font-semibold text-green-600">
+                            <span className="text-xl xl:text-2xl font-semibold text-[#409192]">
                               {totalClearanceCount.toLocaleString()}
                             </span>
                           </div>
@@ -2690,7 +2690,7 @@ export default function Index({ params }: any) {
                                   총 매입수량(USDT)
                               </span>
                               <div className="flex flex-row items-center justify-center gap-2">
-                                <span className="text-xl xl:text-2xl font-semibold text-green-600"
+                                <span className="text-xl xl:text-2xl font-semibold text-[#409192]"
                                   style={{ fontFamily: "monospace" }}>
                                     {
                                       (Number(totalClearanceAmount).toFixed(3))
@@ -2906,7 +2906,7 @@ export default function Index({ params }: any) {
                                       height={20}
                                       className="w-5 h-5"
                                     />
-                                    <span className="text-xl text-green-600 font-semibold"
+                                    <span className="text-xl text-[#409192] font-semibold"
                                       style={{
                                         fontFamily: 'monospace',
                                       }}
@@ -3080,7 +3080,7 @@ export default function Index({ params }: any) {
                                 {item.status === 'paymentConfirmed' && (
                                   <div className="flex flex-col items-center justify-center gap-2">
 
-                                    <span className="text-lg font-semibold text-green-600">
+                                    <span className="text-lg font-semibold text-[#409192]">
                                       {Completed}
                                     </span>
                                     <span>{
@@ -3348,7 +3348,7 @@ export default function Index({ params }: any) {
                                       </button>
                                     </div>
                                   ) : (
-                                    <span className="text-sm text-green-600
+                                    <span className="text-sm text-[#409192]
                                       border border-green-600
                                       rounded-md px-2 py-1">
                                       출금완료

@@ -2642,7 +2642,7 @@ const fetchBuyOrders = async () => {
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 P2P 거래량(USDT)</div>
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalUsdtAmount?.toLocaleString()}
                   </div>
                 </div>
@@ -2668,7 +2668,7 @@ const fetchBuyOrders = async () => {
                 </div>
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 결제량(USDT)</div>
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalSettlementAmount?.toLocaleString()}
                   </div>
                 </div>
@@ -2681,7 +2681,7 @@ const fetchBuyOrders = async () => {
                 </div>
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 수수료수량(USDT)</div>
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalFeeAmount?.toLocaleString()}
                   </div>
                 </div>
@@ -3168,7 +3168,7 @@ const fetchBuyOrders = async () => {
                                   >
                                     {Number(item.krwAmount)?.toLocaleString()}{' '}원
                                   </span>
-                                  <span className="text-lg text-green-600 font-semibold"
+                                  <span className="text-lg text-[#409192] font-semibold"
                                     style={{
                                       fontFamily: 'monospace',
                                       }}

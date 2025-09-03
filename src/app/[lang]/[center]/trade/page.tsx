@@ -2183,7 +2183,7 @@ export default function Index({ params }: any) {
                       </div>
 
                       <div className="flex flex-row items-center justify-end  gap-2">
-                          <span className="text-2xl xl:text-4xl font-semibold text-green-600">
+                          <span className="text-2xl xl:text-4xl font-semibold text-[#409192]">
                               {Number(balance).toFixed(2)}
                           </span>
                           {' '}
@@ -2354,7 +2354,7 @@ export default function Index({ params }: any) {
 
 
                               <div className="flex flex-row items-center gap-2">
-                                <span className="text-xl font-semibold text-green-600">
+                                <span className="text-xl font-semibold text-[#409192]">
                                   {Number(escrowBalance).toFixed(2)}
                                 </span>
                                 <span className="text-sm">USDT</span>

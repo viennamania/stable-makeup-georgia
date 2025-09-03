@@ -1366,7 +1366,7 @@ export default function Index({ params }: any) {
                           구매자<br/>가맹점
                         </th>
                         <th className="px-4 py-2 text-right">
-                          구매량(USDT)<br/>구매금액(원)<br/>구매단가(원)
+                          구매량(USDT)<br/>구매금액(원)<br/>구매개당금액(원)
                         </th>
                         <th className="px-4 py-2 text-center">
                           상태
@@ -1405,12 +1405,12 @@ export default function Index({ params }: any) {
                             <div className="flex flex-col items-end">
                               <div className="flex flex-row items-center justify-end gap-1">
                                 <Image
-                                  src="/token-usdt-icon.png"
+                                  src="/icon-tether.png"
                                   alt="USDT"
                                   width={16}
                                   height={16}
                                 />
-                                <span className="text-lg text-green-600 font-semibold"
+                                <span className="text-lg text-[#409192] font-semibold"
                                   style={{ fontFamily: "monospace" }}
                                 >
                                   {
@@ -1716,13 +1716,13 @@ export default function Index({ params }: any) {
                     <h2 className="text-lg font-semibold">총 거래량(USDT)</h2>
                     <div className="flex flex-row items-center justify-center gap-1">
                       <Image
-                        src="/token-usdt-icon.png"
+                        src="/icon-tether.png"
                         alt="USDT"
                         width={20}
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-lg text-green-600 font-semibold"
+                      <span className="text-lg text-[#409192] font-semibold"
                         style={{ fontFamily: "monospace" }}
                       >
                         {Number(totalSummary.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -1750,13 +1750,13 @@ export default function Index({ params }: any) {
                     <h2 className="text-lg font-semibold">총 결제량(USDT)</h2>
                     <div className="flex flex-row items-center justify-center gap-1">
                       <Image
-                        src="/token-usdt-icon.png"
+                        src="/icon-tether.png"
                         alt="USDT"
                         width={20}
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-lg text-green-600 font-semibold"
+                      <span className="text-lg text-[#409192] font-semibold"
                         style={{ fontFamily: "monospace" }}
                       >
                         {
@@ -1872,12 +1872,12 @@ export default function Index({ params }: any) {
                             <div className="flex flex-col items-end">
                               <div className="flex flex-row items-center justify-end gap-1">
                                 <Image
-                                  src="/token-usdt-icon.png"
+                                  src="/icon-tether.png"
                                   alt="USDT"
                                   width={16}
                                   height={16}
                                 />
-                                <span className="text-lg text-green-600 font-semibold"
+                                <span className="text-lg text-[#409192] font-semibold"
                                 style={{ fontFamily: "monospace" }}
                                 >
                                   {Number(trade.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -1905,12 +1905,12 @@ export default function Index({ params }: any) {
                             <div className="flex flex-col items-end">
                               <div className="flex flex-row items-center justify-end gap-1">
                                 <Image
-                                  src="/token-usdt-icon.png"
+                                  src="/icon-tether.png"
                                   alt="USDT"
                                   width={16}
                                   height={16}
                                 />
-                                <span className="text-lg text-green-600 font-semibold"
+                                <span className="text-lg text-[#409192] font-semibold"
                                   style={{ fontFamily: "monospace" }}
                                 >
                                   {Number(trade.settlement?.settlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}

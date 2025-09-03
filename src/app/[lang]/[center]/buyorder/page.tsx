@@ -3517,7 +3517,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-lg text-green-600 font-semibold"
+                  <span className="text-lg text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -3564,7 +3564,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-lg text-green-600 font-semibold"
+                  <span className="text-lg text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -3611,7 +3611,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-lg text-green-600 font-semibold"
+                  <span className="text-lg text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -3871,7 +3871,7 @@ const fetchBuyOrders = async () => {
                               height={20}
                               className="w-5 h-5"
                           />
-                          <span className="text-2xl xl:text-4xl font-semibold text-green-600"
+                          <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
                               style={{ fontFamily: 'monospace' }}
                           >
                               {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -3936,7 +3936,7 @@ const fetchBuyOrders = async () => {
                           height={20}
                           className="w-5 h-5"
                         />
-                        <span className="text-lg text-green-600 font-semibold"
+                        <span className="text-lg text-[#409192] font-semibold"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {
@@ -4436,7 +4436,7 @@ const fetchBuyOrders = async () => {
                       height={20}
                       className="w-5 h-5"
                     />
-                    <span className="text-xl font-semibold text-green-600"
+                    <span className="text-xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}
                     >
                       {tradeSummary.totalUsdtAmount
@@ -4488,7 +4488,7 @@ const fetchBuyOrders = async () => {
                       height={20}
                       className="w-5 h-5"
                     />
-                    <span className="text-xl font-semibold text-green-600"
+                    <span className="text-xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}
                     >
                       {tradeSummary.totalSettlementAmount
@@ -4523,7 +4523,7 @@ const fetchBuyOrders = async () => {
                       height={20}
                       className="w-5 h-5"
                     />
-                    <span className="text-xl font-semibold text-green-600"
+                    <span className="text-xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
@@ -4586,7 +4586,7 @@ const fetchBuyOrders = async () => {
                       height={20}
                       className="w-5 h-5"
                     />
-                    <span className="text-xl font-semibold text-green-600">
+                    <span className="text-xl font-semibold text-[#409192]">
                       {tradeSummary.totalClearanceAmountUSDT
                       && tradeSummary.totalClearanceAmountUSDT.toFixed(3)
                       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -4757,7 +4757,7 @@ const fetchBuyOrders = async () => {
                         <div className="flex flex-col items-end justify-center gap-2">
                           <span>구매량(USDT)</span>
                           <span>구매금액(원)</span>
-                          <span>단가(원)</span>
+                          <span>개당금액(원)</span>
                         </div>
                       </th>
 
@@ -5195,7 +5195,7 @@ const fetchBuyOrders = async () => {
                                 height={20}
                                 className="w-5 h-5"
                               />
-                              <span className="text-lg text-green-600 font-semibold"
+                              <span className="text-lg text-[#409192] font-semibold"
                                 style={{
                                   fontFamily: 'monospace',
                                 }}
@@ -5673,7 +5673,7 @@ const fetchBuyOrders = async () => {
                             {item.status === 'paymentConfirmed' && (
                               <div className="flex flex-col gap-2 items-start justify-start">
                                 <button
-                                  className="text-sm text-green-600 font-semibold
+                                  className="text-sm text-[#409192] font-semibold
                                     border border-green-600 rounded-lg p-2
                                     bg-green-100
                                     w-full text-center
@@ -6332,7 +6332,7 @@ const fetchBuyOrders = async () => {
                                       <button
                                         disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
                                         
-                                        className="text-sm text-green-600 font-semibold
+                                        className="text-sm text-[#409192] font-semibold
                                           border border-green-600 rounded-lg p-2
                                           bg-green-100
                                           w-full text-center
@@ -6577,7 +6577,7 @@ const fetchBuyOrders = async () => {
                                           
                                           
                                           
-                                          "text-sm text-green-600 font-semibold
+                                          "text-sm text-[#409192] font-semibold
                                             border border-green-600 rounded-lg p-2
                                             bg-green-100
                                             w-full text-center
@@ -6705,13 +6705,13 @@ const fetchBuyOrders = async () => {
                                   </span>
                                   <div className="flex flex-row gap-1 items-center justify-start">
                                     <Image
-                                      src={`/token-usdt-icon.png`}
+                                      src={`/icon-tether.png`}
                                       alt="USDT Logo"
                                       width={20}
                                       height={20}
                                       className="w-5 h-5"
                                     />
-                                    <span className="text-sm text-green-600 font-semibold"
+                                    <span className="text-sm text-[#409192] font-semibold"
                                       style={{
                                         fontFamily: 'monospace',
                                       }}>
@@ -7230,7 +7230,7 @@ const fetchBuyOrders = async () => {
                                               height={20}
                                               className="w-5 h-5"
                                             />
-                                            <span className="text-lg font-semibold text-green-600"
+                                            <span className="text-lg font-semibold text-[#409192]"
                                               style={{
                                                 fontFamily: 'monospace',
                                               }}
@@ -7516,7 +7516,7 @@ const fetchBuyOrders = async () => {
                               />
 
 
-                              <p className="text-sm font-semibold text-green-600 ">
+                              <p className="text-sm font-semibold text-[#409192] ">
                                 {item.tradeId}
                               </p>
 
@@ -7696,7 +7696,7 @@ const fetchBuyOrders = async () => {
                                 <div className="text-sm font-semibold">
                                   {item.nickname}
                                 </div>
-                                <div className="text-lg text-green-600">
+                                <div className="text-lg text-[#409192]">
                                   {item.buyer?.depositName}
                                 </div>
                               </div>
@@ -7791,7 +7791,7 @@ const fetchBuyOrders = async () => {
                                     height: '32px',
                                 }}
                               />
-                              <p className="text-xl text-green-600 font-semibold">
+                              <p className="text-xl text-[#409192] font-semibold">
                                 {Seller}: {
                                   item.seller?.nickname
                                 }
@@ -7935,7 +7935,7 @@ const fetchBuyOrders = async () => {
                           {/* if status is accepted, show payment request button */}
                           {item.status === 'paymentConfirmed' && (
                             <div className="flex flex-col gap-1">
-                              <span className="text-sm font-semibold text-green-600">
+                              <span className="text-sm font-semibold text-[#409192]">
                                 {Completed}
                               </span>
                               <span>{

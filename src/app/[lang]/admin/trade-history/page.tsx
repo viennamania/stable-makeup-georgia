@@ -3077,7 +3077,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-xl font-semibold text-green-600">
+                  <span className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalUsdtAmount
                       ? tradeSummary.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                       : '0.000'}
@@ -3118,7 +3118,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-xl font-semibold text-green-600">
+                  <span className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalSettlementAmount
                       ? tradeSummary.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                       : '0.000'}
@@ -3152,7 +3152,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600">
+                      <span className="text-xl font-semibold text-[#409192]">
                         {tradeSummary.totalFeeAmount
                           ? tradeSummary.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'}
@@ -3183,7 +3183,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600">
+                      <span className="text-xl font-semibold text-[#409192]">
                         {tradeSummary.totalAgentFeeAmount
                           ? tradeSummary.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'}
@@ -3649,7 +3649,7 @@ const fetchBuyOrders = async () => {
                                 height={20}
                                 className="w-5 h-5"
                               />
-                              <span className="text-lg text-green-600 font-semibold"
+                              <span className="text-lg text-[#409192] font-semibold"
                                 style={{
                                   fontFamily: 'monospace',
                                   }}

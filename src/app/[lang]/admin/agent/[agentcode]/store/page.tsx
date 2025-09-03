@@ -1594,7 +1594,7 @@ export default function Index({ params }: any) {
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 P2P 거래량(USDT)</div>
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-[#409192]">
                     {Number(tradeSummary.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   </div>
                 </div>
@@ -1625,7 +1625,7 @@ export default function Index({ params }: any) {
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 결제량(USDT)</div>
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-[#409192]">
                     {Number(tradeSummary.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   </div>
                 </div>
@@ -1640,7 +1640,7 @@ export default function Index({ params }: any) {
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">총 수수료수량(USDT)</div>
-                  <div className="text-xl font-semibold text-green-600">
+                  <div className="text-xl font-semibold text-[#409192]">
                     {Number(tradeSummary.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                   </div>
                 </div>
@@ -2130,7 +2130,7 @@ export default function Index({ params }: any) {
                                 <div className="flex flex-col items-end gap-2">
 
 
-                                  <span className="text-lg text-green-600 font-semibold"
+                                  <span className="text-lg text-[#409192] font-semibold"
                                     style={{ fontFamily: 'monospace' }}
                                   >
                                     {
@@ -2188,7 +2188,7 @@ export default function Index({ params }: any) {
 
                                 <div className="w-full flex flex-col items-end gap-2">
                                   
-                                  <span className="text-lg text-green-600 font-semibold"
+                                  <span className="text-lg text-[#409192] font-semibold"
                                     style={{ fontFamily: 'monospace' }}
                                   >
                                     {
@@ -2209,7 +2209,7 @@ export default function Index({ params }: any) {
 
                                 <div className="w-full flex flex-col items-end gap-2">
 
-                                  <span className="text-lg text-green-600 font-semibold"
+                                  <span className="text-lg text-[#409192] font-semibold"
                                     style={{ fontFamily: 'monospace' }}
                                   >
                                     {

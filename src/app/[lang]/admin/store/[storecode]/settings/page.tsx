@@ -3036,7 +3036,7 @@ export default function SettingsPage({ params }: any) {
                                             height={20}
                                             className="w-5 h-5"
                                         />
-                                        <span className="text-xl text-green-600 font-semibold">
+                                        <span className="text-xl text-[#409192] font-semibold">
                                             {store && store.escrowAmountUSDT &&
                                             store.escrowAmountUSDT.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                             || 0.00}

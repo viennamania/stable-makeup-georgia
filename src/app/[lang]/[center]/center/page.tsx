@@ -1983,7 +1983,7 @@ export default function Index({ params }: any) {
                       height={20}
                       className="w-5 h-5"
                     />
-                    <span className="text-lg text-green-600 font-semibold"
+                    <span className="text-lg text-[#409192] font-semibold"
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
@@ -2063,7 +2063,7 @@ export default function Index({ params }: any) {
                   height={20}
                   className="w-5 h-5"
                 />
-                <span className="text-lg text-green-600 font-semibold"
+                <span className="text-lg text-[#409192] font-semibold"
                   style={{ fontFamily: 'monospace' }}
                 >
                   {
@@ -2114,7 +2114,7 @@ export default function Index({ params }: any) {
                   height={20}
                   className="w-5 h-5"
                 />
-                <span className="text-lg text-green-600 font-semibold"
+                <span className="text-lg text-[#409192] font-semibold"
                   style={{ fontFamily: 'monospace' }}
                 >
                   {
@@ -2164,7 +2164,7 @@ export default function Index({ params }: any) {
                   height={20}
                   className="w-5 h-5"
                 />
-                <span className="text-lg text-green-600 font-semibold"
+                <span className="text-lg text-[#409192] font-semibold"
                   style={{ fontFamily: 'monospace' }}
                 >
                   {
@@ -2376,7 +2376,7 @@ export default function Index({ params }: any) {
                         height={20}
                         className="rounded-lg w-4 h-4"
                       />
-                      <p className="text-lg text-green-600"
+                      <p className="text-lg text-[#409192]"
                         style={{ fontFamily: 'monospace' }}>
                         {Number(storeSummary.totalBuyUsdtAmount
                           ? storeSummary.totalBuyUsdtAmount : 0
@@ -2424,7 +2424,7 @@ export default function Index({ params }: any) {
                                 height={20}
                                 className="rounded-lg w-4 h-4"
                               />
-                              <span className="text-lg text-green-600"
+                              <span className="text-lg text-[#409192]"
                                 style={{ fontFamily: 'monospace' }}>
                                 {Number(order.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                               </span>
@@ -2536,7 +2536,7 @@ export default function Index({ params }: any) {
                           height={20}
                           className="rounded-lg w-4 h-4"
                         />
-                        <p className="text-lg text-green-600"
+                        <p className="text-lg text-[#409192]"
                           style={{ fontFamily: 'monospace' }}>
                           {Number(storeSummary.totalTradeUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </p>
@@ -2575,7 +2575,7 @@ export default function Index({ params }: any) {
                           height={20}
                           className="rounded-lg w-4 h-4"
                         />
-                        <p className="text-lg text-green-600"
+                        <p className="text-lg text-[#409192]"
                           style={{ fontFamily: 'monospace' }}>
                           {Number(storeSummary.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </p>
@@ -2639,7 +2639,7 @@ export default function Index({ params }: any) {
                                   height={20}
                                   className="rounded-lg w-4 h-4"
                                 />
-                                <span className="text-lg text-green-600"
+                                <span className="text-lg text-[#409192]"
                                   style={{ fontFamily: 'monospace' }}>
                                   {Number(trade.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                 </span>
@@ -2742,7 +2742,7 @@ export default function Index({ params }: any) {
                           height={20}
                           className="rounded-lg w-4 h-4"
                         />
-                        <p className="text-lg text-green-600"
+                        <p className="text-lg text-[#409192]"
                           style={{ fontFamily: 'monospace' }}>
                           {Number(storeSummary.totalClearanceUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </p>
@@ -2825,7 +2825,7 @@ export default function Index({ params }: any) {
                                   height={20}
                                   className="rounded-lg w-4 h-4"
                                 />
-                                <span className="text-lg text-green-600"
+                                <span className="text-lg text-[#409192]"
                                   style={{ fontFamily: 'monospace' }}>
                                   {Number(trade.usdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                 </span>

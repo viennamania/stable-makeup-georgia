@@ -1601,7 +1601,7 @@ export default function Index({ params }: any) {
                               <span className="text-sm text-zinc-500">
                                   에스크로 잔액
                               </span>
-                              <span className="text-2xl xl:text-4xl font-semibold text-green-600">
+                              <span className="text-2xl xl:text-4xl font-semibold text-[#409192]">
                                   {Number(balance).toFixed(2)}
                               </span>
                               {' '}

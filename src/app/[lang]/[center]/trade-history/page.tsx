@@ -3064,7 +3064,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-lg text-green-600 font-semibold"
+                      <span className="text-lg text-[#409192] font-semibold"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {
@@ -3140,7 +3140,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-lg text-green-600 font-semibold"
+                  <span className="text-lg text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -3187,7 +3187,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-lg text-green-600 font-semibold"
+                  <span className="text-lg text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -3235,7 +3235,7 @@ const fetchBuyOrders = async () => {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-lg text-green-600 font-semibold"
+                  <span className="text-lg text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -3573,7 +3573,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600"
+                      <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {Number(tradeSummary.totalUsdtAmount
@@ -3625,7 +3625,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600"
+                      <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {Number(tradeSummary.totalSettlementAmount
@@ -3662,7 +3662,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600"
+                      <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}
                       >
                       {
@@ -3708,7 +3708,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600">
+                      <span className="text-xl font-semibold text-[#409192]">
                         {Number(tradeSummary.totalClearanceAmountUSDT
                           ? tradeSummary.totalClearanceAmountUSDT
                           : 0
@@ -3994,7 +3994,7 @@ const fetchBuyOrders = async () => {
                                     height={20}
                                     className="w-5 h-5"
                                   />
-                                  <span className="text-lg text-green-600 font-semibold"
+                                  <span className="text-lg text-[#409192] font-semibold"
                                     style={{
                                       fontFamily: 'monospace',
                                       }}

@@ -1199,7 +1199,7 @@ export default function Index({ params }: any) {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-xl text-green-600 font-semibold"
+                  <span className="text-xl text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -1244,7 +1244,7 @@ export default function Index({ params }: any) {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-xl text-green-600 font-semibold"
+                  <span className="text-xl text-[#409192] font-semibold"
                     style={{ fontFamily: 'monospace' }}
                   >
                     {
@@ -1315,7 +1315,7 @@ export default function Index({ params }: any) {
                         {new Date(escrow.date).toLocaleDateString('ko-KR')}
                       </td>
 
-                      <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {
@@ -1325,7 +1325,7 @@ export default function Index({ params }: any) {
                         }
                       </td>
 
-                      <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {
@@ -1335,7 +1335,7 @@ export default function Index({ params }: any) {
                         }
                       </td>
 
-                      <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {
@@ -1344,7 +1344,7 @@ export default function Index({ params }: any) {
                           : 0
                         }
                       </td>
-                      <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {

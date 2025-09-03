@@ -2431,7 +2431,7 @@ const fetchBuyOrders = async () => {
                                     currency: 'KRW',
                                   })}
                                 </span>
-                                <span className="text-sm text-green-600 font-semibold">
+                                <span className="text-sm text-[#409192] font-semibold">
                                   {item.usdtAmount}{' '}USDT
                                 </span>
                                 <span className="text-xs text-zinc-500 font-semibold">
@@ -2465,7 +2465,7 @@ const fetchBuyOrders = async () => {
 
                                   item.status === 'paymentConfirmed' ? (
 
-                                    <div className=" text-green-600 text-xl font-semibold">
+                                    <div className=" text-[#409192] text-xl font-semibold">
                                       {item.krwAmount}
                                     </div>
 

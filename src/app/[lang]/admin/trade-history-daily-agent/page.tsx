@@ -1755,7 +1755,7 @@ export default function Index({ params }: any) {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-xl font-semibold text-green-600">
+                  <span className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalUsdtAmount
                       ? tradeSummary.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                       : '0.000'}
@@ -1802,7 +1802,7 @@ export default function Index({ params }: any) {
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-xl font-semibold text-green-600">
+                  <span className="text-xl font-semibold text-[#409192]">
                     {tradeSummary.totalSettlementAmount
                       ? tradeSummary.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                       : '0.000'}
@@ -1839,7 +1839,7 @@ export default function Index({ params }: any) {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600">
+                      <span className="text-xl font-semibold text-[#409192]">
                         {tradeSummary.totalFeeAmount
                           ? tradeSummary.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'}
@@ -1871,7 +1871,7 @@ export default function Index({ params }: any) {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-green-600">
+                      <span className="text-xl font-semibold text-[#409192]">
                         {tradeSummary.totalAgentFeeAmount
                           ? tradeSummary.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'}
@@ -2083,7 +2083,7 @@ export default function Index({ params }: any) {
                         </td>
 
 
-                        <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -2102,7 +2102,7 @@ export default function Index({ params }: any) {
                         </td>
                         */}
 
-                        <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -2116,7 +2116,7 @@ export default function Index({ params }: any) {
 
 
                         {/*
-                        <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -2127,7 +2127,7 @@ export default function Index({ params }: any) {
                           {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </td>
 
-                        <td className="px-4 py-2 text-sm text-green-600 font-semibold text-right"
+                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}

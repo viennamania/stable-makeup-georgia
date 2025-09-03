@@ -348,7 +348,7 @@ const StabilityConsole = () => {
               bg-green-50 p-2 rounded-lg">
               <div className="flex flex-row gap-2 justify-center items-center">
                 <Image
-                  src="/token-usdt-icon.png"
+                  src="/icon-tether.png"
                   alt="USDT"
                   width={35}
                   height={35}
@@ -361,7 +361,7 @@ const StabilityConsole = () => {
 
               <div className="
               w-40 flex flex-col items-end justify-center
-              text-xl font-semibold text-green-600"
+              text-xl font-semibold text-[#409192]"
               style={{ fontFamily: "monospace" }}
               >
                 {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
