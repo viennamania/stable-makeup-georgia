@@ -6287,8 +6287,8 @@ const fetchBuyOrders = async () => {
                           <button
                             className="
                               flex flex-row gap-2 items-center justify-between
-                              text-sm text-blue-600 font-semibold
-                              border border-blue-600 rounded-lg p-2
+                              text-sm text-[#409192] font-semibold
+                              border border-[#409192] rounded-lg p-2
                               bg-blue-100
                               text-center
                               hover:bg-blue-200
@@ -6318,7 +6318,7 @@ const fetchBuyOrders = async () => {
                               <div className="flex flex-col gap-2 items-start justify-start ml-2">
                                 <div className="flex flex-col gap-1 items-start justify-start">
                                   <span className="text-sm">
-                                    판매한 테더(USDT) 수량
+                                    판매자가 판매한 테더 수량
                                   </span>
                                   <div className="flex flex-row gap-1 items-center justify-start">
                                     <Image
@@ -6357,8 +6357,8 @@ const fetchBuyOrders = async () => {
                           <div
                             className="
                               flex flex-row gap-2 items-center justify-between
-                              text-sm text-blue-600 font-semibold
-                              border border-blue-600 rounded-lg p-2
+                              text-sm text-[#409192] font-semibold
+                              border border-[#409192] rounded-lg p-2
                               bg-blue-100
                               text-center
                               hover:bg-blue-200
@@ -6372,7 +6372,7 @@ const fetchBuyOrders = async () => {
                               <div className="flex flex-col gap-2 items-start justify-start ml-2">
                                 <div className="flex flex-col gap-1 items-start justify-start">
                                   <span className="text-sm">
-                                    판매한 테더(USDT) 수량
+                                    판매자가 판매한 테더 수량
                                   </span>
                                   <div className="flex flex-row gap-1 items-center justify-start">
                                     <Image
