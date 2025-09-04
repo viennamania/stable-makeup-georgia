@@ -15,7 +15,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
+import {
+  clientId,
+  client
+} from "../../../client";
 
 
 
@@ -25,13 +28,6 @@ import {
   sendTransaction,
   waitForReceipt,
 } from "thirdweb";
-
-
-
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
 
 import {
   ConnectButton,
@@ -80,10 +76,27 @@ import { useSearchParams } from 'next/navigation';
 
 import DatePicker from "react-datepicker";
 
-
+import { paymentUrl } from "../../../config/payment";
 import { version } from "../../../config/version";
 
 
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 interface BuyOrder {
   _id: string;
@@ -3779,7 +3792,7 @@ const fetchBuyOrders = async () => {
                         <td className="p-2">
 
                           <div className="
-                            w-36 
+                            w-52  
                             flex flex-col gap-2 items-center justify-center">
 
                             <div className="flex flex-row items-center gap-2">
@@ -3925,8 +3938,10 @@ const fetchBuyOrders = async () => {
                                       // new window to complete trade
                                       // {`https://www.cryptoss.beauty/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
 
+                                      // ${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+
                                       window.open(
-                                        `/${params.lang}/${item?.storecode}/pay-usdt-reverse/${item?._id}`,
+                                        `${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`,
                                         '_blank'
                                       );
 
@@ -3992,10 +4007,12 @@ const fetchBuyOrders = async () => {
                             && item?.transactionHash !== '0x'
                             && (
                               <button
-                                className="text-sm text-blue-600 font-semibold
-                                  border border-blue-600 rounded-lg p-2
+                                className="
+                                  flex flex-row gap-2 items-center justify-between
+                                  text-sm text-[#409192] font-semibold
+                                  border border-[#409192] rounded-lg p-2
                                   bg-blue-100
-                                  w-full text-center
+                                  text-center
                                   hover:bg-blue-200
                                   cursor-pointer
                                   transition-all duration-200 ease-in-out
@@ -4004,29 +4021,57 @@ const fetchBuyOrders = async () => {
                                   hover:shadow-blue-500/50
                                 "
                                 onClick={() => {
-                                  window.open(
-                                    `https://arbiscan.io/tx/${item.transactionHash}`,
-                                    '_blank'
-                                  );
+                                  let url = '';
+                                  if (chain === "ethereum") {
+                                    url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                  } else if (chain === "polygon") {
+                                    url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                  } else if (chain === "arbitrum") {
+                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                  } else if (chain === "bsc") {
+                                    url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                  } else {
+                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                  }
+                                  window.open(url, '_blank');
+
                                 }}
                               >
-                                <div className="flex flex-row gap-2 items-center justify-center">
+                                  <div className="flex flex-col gap-2 items-start justify-start ml-2">
+                                    <div className="flex flex-col gap-1 items-start justify-start">
+                                      <span className="text-sm">
+                                        판매자가 판매한 테더 수량
+                                      </span>
+                                      <div className="flex flex-row gap-1 items-center justify-start">
+                                        <Image
+                                          src={`/icon-tether.png`}
+                                          alt="USDT Logo"
+                                          width={20}
+                                          height={20}
+                                          className="w-5 h-5"
+                                        />
+                                        <span className="text-lg text-[#409192] font-semibold"
+                                          style={{
+                                            fontFamily: 'monospace',
+                                          }}>
+                                          {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        </span>
+                                      </div>
+                                      <span className="text-sm text-zinc-500">
+                                        테더(USDT) 전송내역
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {/* chain logo */}
                                   <Image
-                                    src="/logo-arbitrum.png"
-                                    alt="Polygon"
+                                    src={`/logo-chain-${chain}.png`}
+                                    alt={`${chain} Logo`}
                                     width={20}
                                     height={20}
                                     className="w-5 h-5"
                                   />
-                                  <span className="text-sm">
-                                    USDT 전송내역
-                                  </span>
-                                </div>
                               </button>
                             )}
-
-
-
 
                           </div>
                         </td>
@@ -4331,12 +4376,37 @@ const fetchBuyOrders = async () => {
 
                               "
 
+                              /*
                               onClick={() => {
                                 window.open(
                                   `https://arbiscan.io/tx/${item.settlement.txid}`,
                                   '_blank'
                                 );
                               }}
+                                */
+
+
+                                onClick={() => {
+                                  if (item.settlement.txid === "0x" || !item.settlement.txid) {
+                                    alert("트랙젝션 해시가 없습니다.");
+                                    return;
+                                  } else {
+                                    window.open(
+                                      
+                                      chain === 'ethereum' ? `https://etherscan.io/tx/${item.settlement.txid}`
+                                      : chain === 'polygon' ? `https://polygonscan.com/tx/${item.settlement.txid}`
+                                      : chain === 'arbitrum' ? `https://arbiscan.io/tx/${item.settlement.txid}`
+                                      : chain === 'bsc' ? `https://bscscan.com/tx/${item.settlement.txid}`
+                                      : `https://arbiscan.io/tx/${item.settlement.txid}`,
+
+                                      '_blank'
+                                    );
+                                  }
+                                }}
+
+
+
+
                             >
 
 
