@@ -6939,7 +6939,7 @@ const fetchBuyOrders = async () => {
 
                                   className={`
                                     ${item.settlement.txid === "0x" || !item.settlement.txid ? "bg-gray-500 cursor-not-allowed" : "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"}
-                                    w-36 
+                                    w-40  
                                     text-sm
 
                                     text-red-600 px-2 py-1 rounded-md
