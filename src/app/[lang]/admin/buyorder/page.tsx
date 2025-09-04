@@ -4602,37 +4602,47 @@ const fetchBuyOrders = async () => {
                           {item?.userStats?.totalPaymentConfirmedCount ? (
                             
                             <div className="w-full flex flex-row items-center justify-between gap-2">
-                              
-                              <span className="text-sm text-zinc-500">
-                                {
-                                  item?.userStats?.totalPaymentConfirmedCount
-                                  ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
-                                  0 + ' 건'
-                                }
-                              </span>
 
-                              <div className="flex flex-col items-end justify-center gap-1">
-                                <div className="flex flex-row items-center justify-center gap-1">
-                                  <Image
-                                    src="/icon-tether.png"
-                                    alt="Tether"
-                                    width={20}
-                                    height={20}
-                                    className="w-3 h-3"
-                                  />
-                                  <span className="text-sm text-zinc-500">
+                              <Image
+                                src="/icon-user-stats.png"
+                                alt="User Stats"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+
+                              <div className="w-full flex flex-row items-center justify-between gap-2">
+                                <span className="text-sm text-zinc-500">
+                                  {
+                                    item?.userStats?.totalPaymentConfirmedCount
+                                    ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
+                                    0 + ' 건'
+                                  }
+                                </span>
+
+                                <div className="flex flex-col items-end justify-center gap-1">
+                                  <div className="flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/icon-tether.png"
+                                      alt="Tether"
+                                      width={20}
+                                      height={20}
+                                      className="w-3 h-3"
+                                    />
+                                    <span className="text-sm text-[#409192]">
+                                      {
+                                        item?.userStats?.totalPaymentConfirmedUsdtAmount &&
+                                        Number(item?.userStats?.totalPaymentConfirmedUsdtAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                      }
+                                    </span>
+                                  </div>
+                                  <span className="text-sm text-yellow-600">
                                     {
-                                      item?.userStats?.totalPaymentConfirmedUsdtAmount &&
-                                      Number(item?.userStats?.totalPaymentConfirmedUsdtAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                      item?.userStats?.totalPaymentConfirmedKrwAmount &&
+                                      Number(item?.userStats?.totalPaymentConfirmedKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                                     }
                                   </span>
                                 </div>
-                                <span className="text-sm text-zinc-500">
-                                  {
-                                    item?.userStats?.totalPaymentConfirmedKrwAmount &&
-                                    Number(item?.userStats?.totalPaymentConfirmedKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                  }
-                                </span>
                               </div>
 
                             </div>
