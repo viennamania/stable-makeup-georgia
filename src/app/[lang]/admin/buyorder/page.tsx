@@ -3855,7 +3855,7 @@ const fetchBuyOrders = async () => {
             <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
             <div className="xl:w-2/3 w-full
-              flex flex-col xl:flex-row items-start justify-start gap-4">
+              flex flex-col xl:flex-row items-start justify-end gap-4">
 
               <div className="flex flex-col xl:flex-row items-start justify-start gap-2">
 
