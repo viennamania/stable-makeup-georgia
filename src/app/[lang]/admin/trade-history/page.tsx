@@ -176,14 +176,6 @@ const wallets = [
 ];
 
 
-// get escrow wallet address
-
-//const escrowWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
 
 
 
@@ -210,14 +202,21 @@ export default function Index({ params }: any) {
     // the chain the contract is deployed on
     
     
-    chain: arbitrum,
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
   
   
   
     // the contract's address
     ///address: contractAddressArbitrum,
 
-    address: contractAddressArbitrum,
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
 
 
     // OPTIONAL: the contract's abi
@@ -529,46 +528,29 @@ export default function Index({ params }: any) {
   
 
 
-  const [nativeBalance, setNativeBalance] = useState(0);
   const [balance, setBalance] = useState(0);
   useEffect(() => {
 
     // get the balance
     const getBalance = async () => {
 
-      ///console.log('getBalance address', address);
+      if (!address) {
+        setBalance(0);
+        return;
+      }
 
       
       const result = await balanceOf({
         contract,
-        address: address || "",
+        address: address,
       });
 
   
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: params.center,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
+      if (chain === 'bsc') {
+        setBalance( Number(result) / 10 ** 18 );
+      } else {
+        setBalance( Number(result) / 10 ** 6 );
+      }
 
 
     };
@@ -576,15 +558,15 @@ export default function Index({ params }: any) {
 
     if (address) getBalance();
 
+    
     const interval = setInterval(() => {
       if (address) getBalance();
     } , 5000);
 
     return () => clearInterval(interval);
+    
 
-  } , [address, contract, params.center]);
-
-
+  } , [address, contract]);
 
 
 
@@ -3433,7 +3415,7 @@ const fetchBuyOrders = async () => {
 
                     <th className="p-2">판매자 입금통장</th>
 
-                    <th className="p-2">자동입금처리</th>
+                    <th className="p-2">자동입금처리(원)</th>
                     <th className="p-2">거래상태</th>
 
                     <th className="p-2">자동결제 및 정산(USDT)</th>
@@ -3550,9 +3532,9 @@ const fetchBuyOrders = async () => {
                             <Image
                               src={item?.store?.storeLogo || "/icon-store.png"}
                               alt="Store"
-                              width={50}
-                              height={50}
-                              className="w-8 h-8 object-cover"
+                              width={35}
+                              height={35}
+                              className="rounded-lg w-8 h-8 object-cover"
                             />
                             <div className="flex flex-col items-start justify-start">
                               <span className="text-sm text-zinc-500 font-bold">
@@ -3649,9 +3631,6 @@ const fetchBuyOrders = async () => {
                               >
                                 {Number(item.krwAmount)?.toLocaleString()}
                               </span>
-                              <span className="text-sm text-zinc-500">
-                                원
-                              </span>
                             </div>
 
                             <div className="flex flex-row items-center gap-1">
@@ -3670,8 +3649,6 @@ const fetchBuyOrders = async () => {
                                 {item.usdtAmount}
                               </span>
                             </div>
-
-                        
 
                             <span className="text-sm text-zinc-500"
                               style={{
@@ -3780,9 +3757,6 @@ const fetchBuyOrders = async () => {
                                     item?.paymentAmount &&
                                     item?.paymentAmount?.toLocaleString()
                                   }
-                                </span>
-                                <span className="text-sm text-zinc-500">
-                                  원
                                 </span>
                               </div>
 
@@ -4002,7 +3976,7 @@ const fetchBuyOrders = async () => {
 
                             </div>
 
-                            {/* polygonscan */}
+
                             {item?.transactionHash
                             && item?.transactionHash !== '0x'
                             && (
