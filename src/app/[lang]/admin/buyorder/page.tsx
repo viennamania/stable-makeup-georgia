@@ -6618,6 +6618,14 @@ const fetchBuyOrders = async () => {
                           {item?.settlement && (
 
                             <div className="w-full flex flex-row gap-2 items-center justify-start">
+                              
+                              <Image
+                                src="/icon-payment.png"
+                                alt="Payment Icon"
+                                width={30}
+                                height={30}
+                                className="w-6 h-6 rounded-lg object-cover"
+                              />
                               <Image
                                 src={item?.store?.storeLogo || '/icon-store.png'}
                                 alt="Store Logo"
@@ -6954,23 +6962,19 @@ const fetchBuyOrders = async () => {
                                   disabled={item.settlement.txid === "0x" || !item.settlement.txid}
 
                                   className={`
-                                    ${item.settlement.txid === "0x" || !item.settlement.txid ? "bg-gray-500 cursor-not-allowed" : "bg-red-100 text-red-600 hover:bg-red-200 cursor-pointer"}
+                                    ${item.settlement.txid === "0x" || !item.settlement.txid ? "bg-gray-500 cursor-not-allowed" : "bg-[#AFE4AB] hover:bg-[#9BCDA5] cursor-pointer"}
                                     w-40  
-                                    text-sm
+                                    flex flex-col gap-2 items-center justify-center
 
-                                    text-red-600 px-2 py-1 rounded-md
-
-                                    transition duration-300 ease-in-out
-                                    transform hover:scale-105
+                                    bg-[#AFE4AB] hover:bg-[#9BCDA5]
+                                    text-sm text-green-800 font-semibold
+                                    border border-green-600 rounded-lg p-2
+                                    hover:border-green-700
                                     hover:shadow-lg
-                                    hover:shadow-red-500/50
-
-
-
+                                    hover:shadow-green-500/50
+                                    transition-all duration-200 ease-in-out
+                                    hover:scale-105
                                     hover:cursor-pointer
-                                    hover:transition-transform
-                                    hover:duration-300
-                                    hover:ease-in-out
                                   `}
 
                                   onClick={() => {

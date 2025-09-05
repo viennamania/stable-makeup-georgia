@@ -828,9 +828,18 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
-  ///console.log('buyOrders', buyOrders);
-
-  
+  const [buyOrderStats, setBuyOrderStats] = useState({
+    totalCount: 0,
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+  });
 
 
 
@@ -989,6 +998,22 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
+
             })
 
 
@@ -1131,6 +1156,21 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
+
           }
         });
 
@@ -1408,6 +1448,20 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
     
                 setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
               }
             });
 
@@ -1532,6 +1586,20 @@ export default function Index({ params }: any) {
               setBuyOrders(data.result.orders);
   
               setTotalCount(data.result.totalCount);
+
+              setBuyOrderStats({
+                totalCount: data.result.totalCount,
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+              });
+
             }
           });
 
@@ -1804,6 +1872,21 @@ export default function Index({ params }: any) {
                   setBuyOrders(data.result.orders);
 
                   setTotalCount(data.result.totalCount);
+
+
+                  setBuyOrderStats({
+                    totalCount: data.result.totalCount,
+                    totalKrwAmount: data.result.totalKrwAmount,
+                    totalUsdtAmount: data.result.totalUsdtAmount,
+                    totalSettlementCount: data.result.totalSettlementCount,
+                    totalSettlementAmount: data.result.totalSettlementAmount,
+                    totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                    totalFeeAmount: data.result.totalFeeAmount,
+                    totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                    totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                    totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                  });
+
               })
 
               toast.success(Payment_has_been_confirmed);
@@ -1969,6 +2052,21 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
             })
 
           toast.success(Payment_has_been_confirmed);
@@ -2145,6 +2243,20 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
         })
 
       }
@@ -2306,6 +2418,19 @@ export default function Index({ params }: any) {
       setTotalCount(data.result.totalCount);
       
 
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+      });
+
 
     }
 
@@ -2421,6 +2546,21 @@ const fetchBuyOrders = async () => {
   setBuyOrders(data.result.orders);
   setTotalCount(data.result.totalCount);
   setFetchingBuyOrders(false);
+
+
+  setBuyOrderStats({
+    totalCount: data.result.totalCount,
+    totalKrwAmount: data.result.totalKrwAmount,
+    totalUsdtAmount: data.result.totalUsdtAmount,
+    totalSettlementCount: data.result.totalSettlementCount,
+    totalSettlementAmount: data.result.totalSettlementAmount,
+    totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+    totalFeeAmount: data.result.totalFeeAmount,
+    totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+    totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+    totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+  });
+
 
   return data.result.orders;
 }
@@ -2687,7 +2827,7 @@ const fetchBuyOrders = async () => {
     */
 
 
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -2771,7 +2911,7 @@ const fetchBuyOrders = async () => {
     searchBuyer, searchDepositName, searchStoreBankAccountNumber,
     params.center]);
 
-
+*/
 
 
 
@@ -4430,7 +4570,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">P2P 거래수(건)</div>
                   <div className="text-4xl font-semibold text-zinc-500">
-                    {tradeSummary.totalCount?.toLocaleString()}
+                    {buyOrderStats.totalCount?.toLocaleString()}
                   </div>
                 </div>
 
@@ -4447,8 +4587,8 @@ const fetchBuyOrders = async () => {
                     <span className="text-xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}
                     >
-                      {tradeSummary.totalUsdtAmount
-                      && tradeSummary.totalUsdtAmount.toFixed(3)
+                      {buyOrderStats.totalUsdtAmount
+                      && buyOrderStats.totalUsdtAmount.toFixed(3)
                       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </span>
                   </div>
@@ -4462,7 +4602,7 @@ const fetchBuyOrders = async () => {
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
-                      Number(tradeSummary.totalKrwAmount)
+                      Number(buyOrderStats.totalKrwAmount)
                       .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                     </span>
@@ -4490,7 +4630,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">가맹점 결제수(건)</div>
                   <div className="text-4xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()}
+                    {buyOrderStats.totalSettlementCount?.toLocaleString()}
                   </div>
                 </div>
 
@@ -4507,8 +4647,8 @@ const fetchBuyOrders = async () => {
                     <span className="text-xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}
                     >
-                      {tradeSummary.totalSettlementAmount
-                      && tradeSummary.totalSettlementAmount.toFixed(3)
+                      {buyOrderStats.totalSettlementAmount
+                      && buyOrderStats.totalSettlementAmount.toFixed(3)
                       .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </span>
                   </div>
@@ -4521,7 +4661,7 @@ const fetchBuyOrders = async () => {
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
-                      Number(tradeSummary.totalSettlementAmountKRW)
+                      Number(buyOrderStats.totalSettlementAmountKRW)
                       .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                     </span>
@@ -4543,7 +4683,7 @@ const fetchBuyOrders = async () => {
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
-                        (tradeSummary.totalFeeAmount + tradeSummary.totalAgentFeeAmount)
+                        (buyOrderStats.totalFeeAmount + buyOrderStats.totalAgentFeeAmount)
                         .toFixed(3)
                         .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
@@ -4558,7 +4698,7 @@ const fetchBuyOrders = async () => {
                       style={{ fontFamily: 'monospace' }}
                     >
                       {
-                        Number(tradeSummary.totalFeeAmountKRW + tradeSummary.totalAgentFeeAmountKRW)
+                        Number(buyOrderStats.totalFeeAmountKRW + buyOrderStats.totalAgentFeeAmountKRW)
                         .toFixed(0)
                         .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
@@ -6885,13 +7025,6 @@ const fetchBuyOrders = async () => {
                                 {/* 자동결제 지갑주소 */}
 
                                 <div className="w-full flex flex-row gap-2 items-center justify-start">
-                                  <Image
-                                    src={item?.store?.storeLogo || '/icon-store.png'}
-                                    alt="Store Logo"
-                                    width={30}
-                                    height={30}
-                                    className="w-6 h-6 rounded-lg object-cover"
-                                  />
                                   <span className="text-sm font-semibold text-zinc-500">
                                     {item?.store?.storeName}{' '}가맹점 자동결제 지갑주소
                                   </span>
@@ -6935,11 +7068,11 @@ const fetchBuyOrders = async () => {
 
                               <div className="w-full flex flex-row gap-2 items-center justify-start">
                                 <Image
-                                  src={item?.store?.storeLogo || '/icon-store.png'}
-                                  alt="Store Logo"
-                                  width={30}
-                                  height={30}
-                                  className="w-6 h-6 rounded-lg"
+                                  src="/icon-payment.png"
+                                  alt="Payment Icon"
+                                  width={50}
+                                  height={50}
+                                  className="w-8 h-8 rounded-lg object-cover"
                                 />
                                 <span className="text-sm font-semibold text-zinc-500">
                                   {item?.store?.storeName}
@@ -7015,23 +7148,22 @@ const fetchBuyOrders = async () => {
 
                                 <div className="flex flex-row gap-2 items-center justify-center">
                                   <div className="flex flex-col gap-2 items-center justify-center">
+
+                                    {/* RGB => 175, 228, 171 */}
                                     <button
                                       className="
                                       w-32
                                       flex flex-col gap-2 items-center justify-center
 
-                                      bg-red-100 text-red-600 px-2 py-1 rounded-md hover:bg-red-200
-
-                                      text-sm
-                                      transition duration-300 ease-in-out
-                                      transform hover:scale-105
+                                      bg-[#AFE4AB] hover:bg-[#9BCDA5]
+                                      text-sm text-green-800 font-semibold
+                                      border border-green-600 rounded-lg p-2
+                                      hover:border-green-700
                                       hover:shadow-lg
-                                      hover:shadow-purple-500/50
+                                      hover:shadow-green-500/50
+                                      transition-all duration-200 ease-in-out
+                                      hover:scale-105
                                       hover:cursor-pointer
-                                      hover:transition-transform
-                                      hover:duration-300
-                                      hover:ease-in-out
-
                                       "
 
                                       onClick={() => {

@@ -2509,6 +2509,73 @@ export async function getBuyOrders(
           totalKrwAmount: { $sum: '$krwAmount' },
           totalUsdtAmount: { $sum: '$usdtAmount' },
 
+          /*
+          totalSettlementCount: { $sum: 1 },
+          totalSettlementAmount: { $sum: { $toDouble: '$settlement.settlementAmount' } },
+          totalSettlementAmountKRW: { $sum: { $toDouble: '$settlement.settlementAmountKRW' } },
+          
+          totalFeeAmount: { $sum: { $toDouble: '$settlement.feeAmount' } },
+          totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
+
+          totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
+          totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
+          */
+
+        }
+
+      }
+
+    ]).toArray();
+
+
+
+
+
+    const totalResultSettlement = await collection.aggregate([
+      {
+        $match: {
+
+          //'seller.walletAddress': walletAddress,
+
+          //nickname: { $regex: searchNickname, $options: 'i' },
+
+
+          status: 'paymentConfirmed',
+          settlement: { $exists: true, $ne: null },
+
+          ///privateSale: { $ne: true },
+          privateSale: privateSale,
+
+
+          agentcode: { $regex: agentcode, $options: 'i' },
+          //storecode: storecode,
+          storecode: { $regex: storecode, $options: 'i' },
+
+          nickname: { $regex: searchBuyer, $options: 'i' },
+
+          
+          ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+
+
+
+          'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+
+          //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
+
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: null,
+
+          /*
+          totalCount: { $sum: 1 },
+          totalKrwAmount: { $sum: '$krwAmount' },
+          totalUsdtAmount: { $sum: '$usdtAmount' },
+          */
+
           totalSettlementCount: { $sum: 1 },
           totalSettlementAmount: { $sum: { $toDouble: '$settlement.settlementAmount' } },
           totalSettlementAmountKRW: { $sum: { $toDouble: '$settlement.settlementAmountKRW' } },
@@ -2526,6 +2593,9 @@ export async function getBuyOrders(
 
     ]).toArray();
 
+
+
+
     
 
     return {
@@ -2533,13 +2603,13 @@ export async function getBuyOrders(
       totalKrwAmount: totalResult.length > 0 ? totalResult[0].totalKrwAmount : 0,
       totalUsdtAmount: totalResult.length > 0 ? totalResult[0].totalUsdtAmount : 0,
 
-      totalSettlementCount: totalResult.length > 0 ? totalResult[0].totalSettlementCount : 0,
-      totalSettlementAmount: totalResult.length > 0 ? totalResult[0].totalSettlementAmount : 0,
-      totalSettlementAmountKRW: totalResult.length > 0 ? totalResult[0].totalSettlementAmountKRW : 0,
-      totalFeeAmount: totalResult.length > 0 ? totalResult[0].totalFeeAmount : 0,
-      totalFeeAmountKRW: totalResult.length > 0 ? totalResult[0].totalFeeAmountKRW : 0,
-      totalAgentFeeAmount: totalResult.length > 0 ? totalResult[0].totalAgentFeeAmount : 0,
-      totalAgentFeeAmountKRW: totalResult.length > 0 ? totalResult[0].totalAgentFeeAmountKRW : 0,
+      totalSettlementCount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementCount : 0,
+      totalSettlementAmount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementAmount : 0,
+      totalSettlementAmountKRW: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementAmountKRW : 0,
+      totalFeeAmount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalFeeAmount : 0,
+      totalFeeAmountKRW: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalFeeAmountKRW : 0,
+      totalAgentFeeAmount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalAgentFeeAmount : 0,
+      totalAgentFeeAmountKRW: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalAgentFeeAmountKRW : 0,
 
       orders: results,
     };
