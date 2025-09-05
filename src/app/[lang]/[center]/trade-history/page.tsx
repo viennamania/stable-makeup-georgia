@@ -4307,7 +4307,7 @@ const fetchBuyOrders = async () => {
                                     <div className="flex flex-col gap-2 items-start justify-start ml-2">
                                       <div className="flex flex-col gap-1 items-start justify-start">
                                         <span className="text-sm">
-                                          판매자가 판매한 테더 수량
+                                          회원지갑으로 전송한 테더
                                         </span>
                                         <div className="flex flex-row gap-1 items-center justify-start">
                                           <Image
