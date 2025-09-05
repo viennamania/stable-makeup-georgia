@@ -4417,11 +4417,19 @@ const fetchBuyOrders = async () => {
               p-4 rounded-lg shadow-md
               ">
 
-              <div className="w-full xl:w-1/3 flex flex-col xl:flex-row items-center justify-between gap-2 pl-4 pr-4">
+              <div className="w-full xl:w-1/3 flex flex-col xl:flex-row items-start justify-start gap-2 pl-4 pr-4">
                 
+                <Image
+                  src="/icon-trade.png"
+                  alt="Trade"
+                  width={50}
+                  height={50}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />  
+
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">P2P 거래수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
+                  <div className="text-4xl font-semibold text-zinc-500">
                     {tradeSummary.totalCount?.toLocaleString()}
                   </div>
                 </div>
@@ -4469,17 +4477,25 @@ const fetchBuyOrders = async () => {
               <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full xl:w-1/2
-                flex flex-col xl:flex-row items-center justify-between gap-2 pl-4 pr-4">
+                flex flex-col xl:flex-row items-start justify-start gap-2 pl-4 pr-4">
                 
+                <Image
+                  src="/icon-payment.png"
+                  alt="Payment"
+                  width={50}
+                  height={50}
+                  className="w-16 h-16 rounded-lg object-cover"
+                /> 
+
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">결제수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
+                  <div className="text-sm">가맹점 결제수(건)</div>
+                  <div className="text-4xl font-semibold text-zinc-500">
                     {tradeSummary.totalSettlementCount?.toLocaleString()}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">결제량(USDT)</div>
+                  <div className="text-sm">가맹점 결제량(USDT)</div>
                   <div className="flex flex-row items-center gap-1">
                     <Image
                       src="/icon-tether.png"
@@ -4499,7 +4515,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">결제금액(원)</div>
+                  <div className="text-sm">가맹점 결제금액(원)</div>
                   <div className="flex flex-row items-center gap-1"> 
                     <span className="text-xl font-semibold text-yellow-600"
                       style={{ fontFamily: 'monospace' }}
@@ -4514,7 +4530,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">수수료량(USDT)</div>
+                  <div className="text-sm">결제 수수료량(USDT)</div>
                   <div className="flex flex-row items-center gap-1">
                     <Image
                       src="/icon-tether.png"
@@ -4536,7 +4552,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">수수료금액(원)</div>
+                  <div className="text-sm">결제 수수료금액(원)</div>
                   <div className="flex flex-row items-center gap-1">
                     <span className="text-xl font-semibold text-yellow-600"
                       style={{ fontFamily: 'monospace' }}
