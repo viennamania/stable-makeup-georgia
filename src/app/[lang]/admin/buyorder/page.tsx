@@ -3797,11 +3797,11 @@ const fetchBuyOrders = async () => {
             ">
 
             <div className="xl:w-1/3 w-full
-              flex flex-col xl:flex-row items-center justify-between gap-2">
+              flex flex-col xl:flex-row items-start justify-start gap-2">
 
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">P2P 거래수(건)</div>
-                <div className="text-xl font-semibold text-zinc-500">
+                <div className="text-4xl font-semibold text-zinc-500">
                   {buyOrderStats.totalCount?.toLocaleString()}
                 </div>
               </div>
@@ -3849,11 +3849,11 @@ const fetchBuyOrders = async () => {
             <div className="xl:w-2/3 w-full
               flex flex-col xl:flex-row items-center justify-end gap-4">
 
-              <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
+              <div className="flex flex-col xl:flex-row items-start justify-start gap-2">
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">결제수(건)</div>
-                    <span className="text-xl font-semibold text-zinc-500">
+                  <div className="text-sm">가맹점 결제수(건)</div>
+                    <span className="text-4xl font-semibold text-zinc-500">
                       {buyOrderStats.totalSettlementCount?.toLocaleString()}
                     </span>
                 </div>
@@ -3861,7 +3861,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-row items-center justify-center gap-2">
 
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제량(USDT)</div>
+                    <div className="text-sm">가맹점 결제량(USDT)</div>
                     <div className="flex flex-row items-center justify-center gap-1">
                       <Image
                         src="/icon-tether.png"
@@ -3880,7 +3880,7 @@ const fetchBuyOrders = async () => {
                   </div>
 
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제금액(원)</div>
+                    <div className="text-sm">가맹점 결제금액(원)</div>
                     <div className="flex flex-row items-center justify-center gap-1">
                       <span className="text-xl font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
