@@ -3797,7 +3797,15 @@ const fetchBuyOrders = async () => {
             ">
 
             <div className="xl:w-1/3 w-full
-              flex flex-col xl:flex-row items-start justify-start gap-2">
+              flex flex-col xl:flex-row items-start justify-start gap-4">
+
+              <Image
+                src="/icon-trade.png"
+                alt="Trade"
+                width={50}
+                height={50}
+                className="w-16 h-16 rounded-lg object-cover"
+              />                
 
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">P2P 거래수(건)</div>
@@ -3843,13 +3851,21 @@ const fetchBuyOrders = async () => {
             </div>
 
             {/* divider */}
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="hidden xl:block w-0.5 h-20 bg-zinc-300"></div>
             <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
             <div className="xl:w-2/3 w-full
-              flex flex-col xl:flex-row items-center justify-end gap-4">
+              flex flex-col xl:flex-row items-start justify-start gap-4">
 
               <div className="flex flex-col xl:flex-row items-start justify-start gap-2">
+
+                <Image
+                  src="/icon-payment.png"
+                  alt="Payment"
+                  width={50}
+                  height={50}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />                
 
                 <div className="flex flex-col gap-2 items-center">
                   <div className="text-sm">가맹점 결제수(건)</div>
