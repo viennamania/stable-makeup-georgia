@@ -2686,13 +2686,13 @@ export default function Index({ params }: any) {
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
-                              판매거래수(건)
+                              P2P 거래수(건)
                             </span>
                             <span className="text-center">
-                              판매금액(원)
+                              P2P 거래금액(원)
                             </span>
                             <span className="text-center">
-                              판매수량(USDT)
+                              P2P 거래량(USDT)
                             </span>
                           </div>
                         </th>
@@ -2721,12 +2721,12 @@ export default function Index({ params }: any) {
                             <div className="flex flex-row items-center justify-center gap-2">
 
                               <div className="flex flex-col items-center justify-center gap-2">
-                                <span>금액(원)</span>
-                                <span>수량(USDT)</span>
+                                <span>결제금액(원)</span>
+                                <span>결제량(USDT)</span>
                               </div>
                               <div className="flex flex-col items-center justify-center gap-2">
                                 <span>수수료금액(원)</span>
-                                <span>수수료수량(USDT)</span>
+                                <span>수수료량(USDT)</span>
                               </div>
 
                             </div>
@@ -2749,8 +2749,8 @@ export default function Index({ params }: any) {
                             <div className="flex flex-row items-center justify-center gap-2">
                               
                               <div className="flex flex-col items-center justify-center gap-2">
-                                <span>금액(원)</span>
-                                <span>수량(USDT)</span>
+                                <span>청산금액(원)</span>
+                                <span>청산량(USDT)</span>
                               </div>
 
                             </div>
@@ -3132,7 +3132,7 @@ export default function Index({ params }: any) {
                                       {
                                         Number(item.totalKrwAmount ? item.totalKrwAmount.toFixed(0) : 0)
                                         ?.toLocaleString('ko-KR')
-                                      }{' '}원
+                                      }
                                     </span>
                                     <div className="flex flex-row items-center gap-2">
                                       <Image
@@ -3283,7 +3283,7 @@ export default function Index({ params }: any) {
                                       {
                                         Number(item.totalSettlementAmountKRW ? item.totalSettlementAmountKRW.toFixed(0) : 0)
                                           ?.toLocaleString('ko-KR')
-                                      }{' '}원
+                                      }
                                     </span>
                                     <div className="flex flex-row items-center gap-2">
                                       <Image
@@ -3313,7 +3313,7 @@ export default function Index({ params }: any) {
                                       {
                                         Number(item.totalFeeAmountKRW ? item.totalFeeAmountKRW.toFixed(0) : 0)
                                           ?.toLocaleString('ko-KR')
-                                      }{' '}원
+                                      }
                                     </span>
                                     <div className="flex flex-row items-center gap-2">
                                       <Image
@@ -3339,7 +3339,7 @@ export default function Index({ params }: any) {
                                       {
                                         Number(item.totalAgentFeeAmountKRW ? item.totalAgentFeeAmountKRW.toFixed(0) : 0)
                                           ?.toLocaleString('ko-KR')
-                                      }{' '}원
+                                      }
                                     </span>
                                     <div className="flex flex-row items-center gap-2">
                                       <Image
@@ -3428,7 +3428,7 @@ export default function Index({ params }: any) {
                                       {
                                         Number(item.totalKrwAmountClearance ? item.totalKrwAmountClearance : 0)
                                           .toLocaleString('ko-KR')
-                                      }{' '}원
+                                      }
                                     </span>
                                     <div className="flex flex-row items-center gap-2">
                                       <Image
