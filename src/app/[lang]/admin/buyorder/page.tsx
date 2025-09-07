@@ -6624,7 +6624,7 @@ const fetchBuyOrders = async () => {
                                 alt="Payment Icon"
                                 width={30}
                                 height={30}
-                                className="w-6 h-6 rounded-lg object-cover"
+                                className="w-8 h-8 rounded-lg object-cover"
                               />
                               <Image
                                 src={item?.store?.storeLogo || '/icon-store.png'}
