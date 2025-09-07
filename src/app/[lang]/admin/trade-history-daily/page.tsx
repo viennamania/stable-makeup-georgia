@@ -1944,13 +1944,22 @@ const fetchBuyOrders = async () => {
 
           {/* trade summary */}
 
-          <div className="flex flex-col xl:flex-row items-center justify-between gap-2
+          <div className="flex flex-col xl:flex-row items-start justify-between gap-2
             w-full
             bg-zinc-100/50
             p-4 rounded-lg shadow-md
             ">
 
-            <div className="xl:w-1/4 flex flex-row items-center justify-between gap-2">
+            <div className="xl:w-2/5 w-full
+              flex flex-col xl:flex-row items-start justify-start gap-4">
+
+              <Image
+                src="/icon-trade.png"
+                alt="Trade"
+                width={50}
+                height={50}
+                className="w-16 h-16 rounded-lg object-cover"
+              />  
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 P2P 거래수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
@@ -1996,8 +2005,17 @@ const fetchBuyOrders = async () => {
             <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
             <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
-            <div className="xl:w-1/2
-              flex flex-row items-center justify-between gap-2">
+            <div className="xl:w-3/5 w-full
+              flex flex-col xl:flex-row items-start justify-end gap-4">
+
+
+              <Image
+                src="/icon-payment.png"
+                alt="Payment"
+                width={50}
+                height={50}
+                className="w-16 h-16 rounded-lg object-cover"
+              />
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 결제수(건)</div>
                   <span className="text-xl font-semibold text-zinc-500">
