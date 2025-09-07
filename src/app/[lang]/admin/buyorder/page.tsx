@@ -4364,7 +4364,7 @@ const fetchBuyOrders = async () => {
                       >
 
                         <div className="
-                          w-36 
+                          w-32
                           flex flex-col items-start justify-start gap-2
                           bg-zinc-100
                           rounded-lg
