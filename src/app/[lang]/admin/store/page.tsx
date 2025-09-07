@@ -3120,7 +3120,7 @@ export default function Index({ params }: any) {
                                     <span className="text-sm text-gray-500">
                                       {
                                         item.totalPaymentConfirmedCount ? item.totalPaymentConfirmedCount : 0
-                                      }{' '}건
+                                      }
                                     </span>
                                   </div>
 
@@ -3269,7 +3269,7 @@ export default function Index({ params }: any) {
                                   <span className="text-sm text-gray-500">
                                     {
                                       item.totalSettlementCount ? item.totalSettlementCount : 0
-                                    }{' '}건
+                                    }
                                   </span>
 
                                 </div>
@@ -3412,7 +3412,7 @@ export default function Index({ params }: any) {
                                   <span className="text-sm text-gray-500">
                                     {
                                       item.totalPaymentConfirmedClearanceCount ? item.totalPaymentConfirmedClearanceCount : 0
-                                    }{' '}건
+                                    }
                                   </span>
                         
                                 </div>
