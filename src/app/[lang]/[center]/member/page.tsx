@@ -2729,6 +2729,9 @@ export default function Index({ params }: any) {
                       <option value="동양종합금융" selected={userBankName === "동양종합금융"}>
                         동양종합금융
                       </option>
+                      <option value="산업은행" selected={userBankName === "산업은행"}>
+                        산업은행
+                      </option>
                     </select>
 
                     {/* userBankAccountNumber */}
