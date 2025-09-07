@@ -273,11 +273,11 @@ export async function POST(request: NextRequest) {
   ) : (
     '⭐️ 출금'
   )} [${bankName}] ${transaction_type === 'deposited' ? '🌕' : '⭐️'}\n\n` +
-    `금액: <b>${amount.toLocaleString()}</b>원\n` +
+    `금액: <b>${amount ? amount.toLocaleString() : 0}</b>원\n` +
     `이름: ${transaction_name}\n` +
     `시간: ${transaction_date.replace('T', ' ').replace('+09:00', '')}\n` +
     `계좌: ${bankName} ${bank_account_number}\n` +
-    `잔액: ${balance.toLocaleString()}원`;
+    `잔액: ${balance ? balance.toLocaleString() : 0}원`;
 
 
 
