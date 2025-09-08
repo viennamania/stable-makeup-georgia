@@ -290,8 +290,7 @@ export async function POST(request: NextRequest) {
 
   const storecode = "ztqmzqah"; // georgia BOW 가맹점 
 
-  // oneclick_melberry_bot
-
+  // oneclick_mulberry_bot
 
   try {
 
@@ -331,13 +330,13 @@ export async function POST(request: NextRequest) {
         
 
 
-        const response = await fetch("https://dubai-telegram.vercel.app/api/telegram/sendMessageByUseridAndStorecodeMelberryBot", {
+        const response = await fetch("https://dubai-telegram.vercel.app/api/telegram/sendMessageByUseridAndStorecodeMulberryBot", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            center: "oneclick_melberry_bot",
+            center: "oneclick_mulberry_bot",
             userid: userid,
             storecode: storecode,
     
