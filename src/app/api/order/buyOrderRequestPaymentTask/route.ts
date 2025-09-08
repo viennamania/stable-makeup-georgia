@@ -222,11 +222,15 @@ export async function POST(request: NextRequest) {
       const billing_name = buyOrder.buyer.depositName;
       const orderer_name = buyOrder.buyer.depositName;
       
-      /*
-      if buyOrder?.mobile has 국가번호, then remove 국가번호
-      if buyOrder?.mobile has - then remove -
-      */
-      const orderer_phone_number = buyOrder?.mobile?.replace(/^\+82/, "0").replace(/-/g, "");
+  
+      // if buyOrder?.mobile is +82, remove +82
+      let mobile = buyOrder?.mobile || "";
+      if (mobile.startsWith("+82")) {
+        mobile = "0" + mobile.substring(3);
+      } else if (mobile.startsWith("82")) {
+        mobile = "0" + mobile.substring(2);
+      }
+
 
 
       const orderer_email = buyOrder.buyer?.email;
@@ -241,7 +245,7 @@ export async function POST(request: NextRequest) {
         order_date: order_date,
         billing_name: billing_name,
         orderer_name: orderer_name,
-        orderer_phone_number: orderer_phone_number,
+        orderer_phone_number: mobile,
         orderer_email: orderer_email,
         trade_usage: trade_usage,
         identity_number: identity_number,
@@ -318,7 +322,7 @@ export async function POST(request: NextRequest) {
           console.log("order_date", order_date);
           console.log("billing_name", billing_name);
           console.log("orderer_name", orderer_name);
-          console.log("orderer_phone_number", orderer_phone_number);
+          console.log("orderer_phone_number", mobile);
           console.log("orderer_email", orderer_email);
           console.log("trade_usage", trade_usage);
           console.log("identity_number", identity_number);
@@ -346,7 +350,7 @@ export async function POST(request: NextRequest) {
           console.log("order_date", order_date);
           console.log("billing_name", billing_name);
           console.log("orderer_name", orderer_name);
-          console.log("orderer_phone_number", orderer_phone_number);
+          console.log("orderer_phone_number", mobile);
           console.log("orderer_email", orderer_email);
           console.log("trade_usage", trade_usage);
           console.log("identity_number", identity_number);

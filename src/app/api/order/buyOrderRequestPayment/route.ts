@@ -110,11 +110,14 @@ export async function POST(request: NextRequest) {
 
 
 
-    /*
-    if buyOrder?.mobile has 국가번호, then remove 국가번호
-    if buyOrder?.mobile has - then remove -
-    */
-    const mobile = buyOrder?.mobile?.replace(/^\+82/, "0").replace(/-/g, "");
+  
+    // if buyOrder?.mobile is +82, remove +82
+    let mobile = buyOrder?.mobile || "";
+    if (mobile.startsWith("+82")) {
+      mobile = "0" + mobile.substring(3);
+    } else if (mobile.startsWith("82")) {
+      mobile = "0" + mobile.substring(2);
+    }
 
 
     if (payactionApiKey && payactionShopId) {

@@ -60,10 +60,16 @@ export async function POST(request: NextRequest) {
   const tradeId = buyOrder.tradeId;
   const krwAmount = buyOrder.krwAmount;
   const usdtAmount = buyOrder.usdtAmount;
-  const mobile = buyer?.mobile;
   const email = buyer?.email;
 
 
+    // if buyOrder?.mobile is +82, remove +82
+  let mobile = buyOrder?.mobile || "";
+  if (mobile.startsWith("+82")) {
+    mobile = "0" + mobile.substring(3);
+  } else if (mobile.startsWith("82")) {
+    mobile = "0" + mobile.substring(2);
+  }
  
 
   const bankName = seller.bankInfo.bankName;
