@@ -5133,7 +5133,10 @@ const fetchBuyOrders = async () => {
                                   alt="Trade Icon"
                                   width={20}
                                   height={20}
-                                  className={`w-5 h-5 ${item?.status === 'cancelled' || (item?.status === 'paymentConfirmed' && item?.transactionHash !== '0x') ? '' : 'animate-spin'}`}
+                                  className={`w-5 h-5 ${item?.status === 'cancelled' ||
+                                    (item?.status === 'paymentConfirmed' && item?.transactionHash !== '0x') ||
+                                    item?.settlement
+                                    ? '' : 'animate-spin'}`}
                                 />
                                 <span className="text-sm text-zinc-500 font-semibold">
                                 {
