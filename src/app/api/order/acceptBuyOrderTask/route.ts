@@ -140,7 +140,8 @@ export async function POST(request: NextRequest) {
 
 
         if (!userSeller
-          || !userSeller.seller
+          
+          //|| !userSeller.seller
 
           //|| !userSeller.seller.bankInfo
           //|| !userSeller.seller.bankInfo.bankName
