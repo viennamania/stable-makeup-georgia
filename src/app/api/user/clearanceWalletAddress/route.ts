@@ -215,6 +215,7 @@ export async function POST(request: NextRequest) {
             error: "Balance not found"
         });
     }
+
     
     //const clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
     // if bsc, 18 decimal
@@ -242,6 +243,16 @@ export async function POST(request: NextRequest) {
     }
 
 
+
+    clearanceUSDTBalance = clearanceUSDTBalance - 0.000001; // to avoid insufficient balance error
+    if (clearanceUSDTBalance < 0) {
+        
+        console.log("clearanceUSDTBalance is too low after fee adjustment");
+        return NextResponse.json({
+            result: "error",
+            error: "Clearance USDT balance is too low after fee adjustment"
+        });
+    }
 
 
 
