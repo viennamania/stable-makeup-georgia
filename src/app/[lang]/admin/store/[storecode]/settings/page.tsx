@@ -1691,6 +1691,53 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // update paymentUrl
+    const [paymentUrl, setPaymentUrl] = useState("");
+    const [updatingPaymentUrl, setUpdatingPaymentUrl] = useState(false);
+    const updatePaymentUrl = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+
+        if (paymentUrl.length < 5 || paymentUrl.length > 100) {
+            toast.error("결제 URL을 5자 이상 100자 이하로 설정하세요");
+            return;
+        }
+
+        setUpdatingPaymentUrl(true);
+
+        const response = await fetch('/api/store/updatePaymentUrl', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.storecode,
+                paymentUrl: paymentUrl,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('결제 URL이 설정되었습니다');
+            setPaymentUrl('');
+
+            setStore({
+                ...store,
+                paymentUrl: paymentUrl,
+            });
+
+            //fetchStore();
+        } else {
+            toast.error('결제 URL 설정에 실패하였습니다');
+        }
+        setUpdatingPaymentUrl(false);
+    }
+
+
+
       
 
 
@@ -3509,6 +3556,102 @@ export default function SettingsPage({ params }: any) {
                     
 
                         
+
+                        {/* 결제 URL settings */}
+                        {/* store paymentUrl */}
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
+
+                            <div className='w-full flex flex-col items-center justify-between gap-2
+                                border-b border-gray-300 pb-2'>
+
+                                {/* store paymentUrl */}
+                                
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
+                                    <Image
+                                        src="/icon-url.png"
+                                        alt="Payment URL"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-zinc-500">
+                                        가맹점 결제 URL 설정
+                                    </span>
+                                </div>
+
+                                {/* information */}
+                                {/* url format */}
+                                <div className='w-full text-sm text-zinc-500'>
+                                    <span>
+                                        결제 URL은 https:// 또는 http:// 로 시작해야 합니다. <br />
+                                        예시: https://yourstore.com/pay
+                                    </span>
+                                </div>
+
+                                <div className='w-full flex flex-col items-start gap-2'>
+                                    
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        {/* dot */}
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg">
+                                        결제 URL:{' '}{store && store.paymentUrl
+                                            ? <a href={store.paymentUrl} target="_blank" className="text-blue-500 underline">
+                                                {store.paymentUrl}
+                                              </a>
+                                            : '설정된 결제 URL이 없습니다.'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* divider */}
+                                <div className='w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-64 flex flex-col items-center justify-center gap-2'>
+
+                                    <input
+                                        type="text"
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        placeholder="결제 URL을 입력하세요"
+                                        value={paymentUrl}
+                                        onChange={(e) => setPaymentUrl(e.target.value)}
+                                    />
+                                    <button
+                                        disabled={!address || !paymentUrl || updatingPaymentUrl}
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!paymentUrl || updatingPaymentUrl
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                            if (!paymentUrl) {
+                                                toast.error("결제 URL을 입력하세요");
+                                                return;
+                                            }
+
+                                            // check url format
+                                            const urlPattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+                                                '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+                                                '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+                                                '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+                                                '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+                                                '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+                                            if (!urlPattern.test(paymentUrl)) {
+                                                toast.error("올바른 URL 형식이 아닙니다.");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${paymentUrl}로 가맹점 결제 URL을 변경하시겠습니까?`
+                                            ) && updatePaymentUrl();
+                                        }}
+                                    >
+                                        {updatingPaymentUrl ? '변경 중...' : '변경'}
+                                    </button>
+
+                                </div>
+
+                            </div>
+                        </div>
 
 
 

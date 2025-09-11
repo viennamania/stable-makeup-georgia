@@ -2573,7 +2573,7 @@ const fetchBuyOrders = async () => {
 
     params.agentcode && fetchData();
 
-  } , [params.agentcode]);
+  } , [params.agentcode, address]);
 
 
 
@@ -2979,7 +2979,6 @@ const fetchBuyOrders = async () => {
     //&&  address !== agent.adminWalletAddress)
     && !isAdmin)
     
-
   ) {
     return (
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">

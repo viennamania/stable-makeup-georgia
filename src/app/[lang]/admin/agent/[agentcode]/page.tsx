@@ -1167,6 +1167,8 @@ export default function Index({ params }: any) {
 
           setAgentAdminWalletAddress(data.result?.adminWalletAddress);
 
+          ///console.log("data.result.adminWalletAddress", data.result.adminWalletAddress);
+
           if (data.result?.adminWalletAddress === address) {
             setIsAdmin(true);
           }
@@ -1204,7 +1206,7 @@ export default function Index({ params }: any) {
 
     params.agentcode && fetchData();
 
-  } , [params.agentcode]);
+  } , [params.agentcode, address]);
 
 
 

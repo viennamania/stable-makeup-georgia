@@ -2283,7 +2283,7 @@ const fetchBuyOrders = async () => {
 
     ////console.log('buyOrders', buyOrders);
 
-
+  const [isAgentAdmin, setIsAgentAdmin] = useState(false);
 
 
 
@@ -2317,6 +2317,12 @@ const fetchBuyOrders = async () => {
 
           setAgentAdminWalletAddress(data.result?.adminWalletAddress);
 
+          if (data.result?.adminWalletAddress && address && data.result?.adminWalletAddress === address) {
+            setIsAgentAdmin(true);
+          } else {
+            setIsAgentAdmin(false);
+          }
+
         }
 
         setFetchingAgent(false);
@@ -2324,9 +2330,7 @@ const fetchBuyOrders = async () => {
 
     fetchData();
 
-  } , [params.agentcode]);
-
-
+  } , [params.agentcode, address]);
 
   useEffect(() => {
     // Dynamically load the Binance widget script

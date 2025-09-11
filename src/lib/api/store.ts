@@ -2,6 +2,7 @@ import { create } from 'domain';
 import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
+import { paymentUrl } from '@/app/config/payment';
 
 
 
@@ -188,6 +189,9 @@ export async function getStoreByStorecode(
         agentcode: 1,
         agentName: { $ifNull: ['$agentInfo.agentName', null] },
         agentLogo: { $ifNull: ['$agentInfo.agentLogo', null] },
+
+
+        paymentUrl: 1,
       },
     },
   ]).toArray();

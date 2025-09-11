@@ -1373,6 +1373,10 @@ export default function Index({ params }: any) {
             setAgent(data.result);
   
             setAgentAdminWalletAddress(data.result?.adminWalletAddress);
+
+            if (data.result?.adminWalletAddress === address) {
+              setIsAdmin(true);
+            }
   
           }
   
@@ -1381,7 +1385,7 @@ export default function Index({ params }: any) {
   
       fetchData();
   
-    } , [params.agentcode]);
+    } , [params.agentcode, address]);
 
 
 
