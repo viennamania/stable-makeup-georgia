@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
       mobile = "0" + mobile.substring(2);
     }
 
+    console.log("mobile", mobile);
 
     if (payactionApiKey && payactionShopId) {
 
@@ -133,8 +134,8 @@ export async function POST(request: NextRequest) {
         orderer_name: buyOrder.buyer.depositName,
         orderer_phone_number: mobile,
         orderer_email: buyOrder.buyer?.email,
-        trade_usage: "USDT구매",
-        identity_number: buyOrder.walletAddress,
+        trade_usage: "지출증빙용",
+        identity_number: '',
       };
 
       

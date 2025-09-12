@@ -232,10 +232,11 @@ export async function POST(request: NextRequest) {
       }
 
 
+      console.log("mobile", mobile);
 
       const orderer_email = buyOrder.buyer?.email;
-      const trade_usage = "USDT구매";
-      const identity_number = buyOrder.walletAddress;
+      const trade_usage = "지출증빙용";
+      const identity_number = '';
 
       
       const payactionUrl = "https://api.payaction.app/order";
