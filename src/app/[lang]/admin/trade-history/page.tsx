@@ -3218,6 +3218,7 @@ const fetchBuyOrders = async () => {
             </div>
 
             {/* divider */}
+            {/*
             <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
             <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
 
@@ -3307,7 +3308,7 @@ const fetchBuyOrders = async () => {
                   </div>
 
                 </div>
-                
+
 
                 <div className="flex flex-row gap-2 items-center">
 
@@ -3348,6 +3349,7 @@ const fetchBuyOrders = async () => {
               </div>
 
             </div>
+            */}
 
             
             {/* divider */}
@@ -3576,7 +3578,9 @@ const fetchBuyOrders = async () => {
                     <th className="p-2">자동입금처리(원)</th>
                     <th className="p-2">거래상태</th>
 
+                    {/*
                     <th className="p-2">자동결제 및 정산(USDT)</th>
+                    */}
 
                   </tr>
                 </thead>
@@ -4484,7 +4488,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+                        {/*
                         <td className="
                         p-2">
 
@@ -4507,16 +4511,6 @@ const fetchBuyOrders = async () => {
                               hover:ease-in-out
 
                               "
-
-                              /*
-                              onClick={() => {
-                                window.open(
-                                  `https://arbiscan.io/tx/${item.settlement.txid}`,
-                                  '_blank'
-                                );
-                              }}
-                                */
-
 
                                 onClick={() => {
                                   if (item.settlement.txid === "0x" || !item.settlement.txid) {
@@ -4619,6 +4613,7 @@ const fetchBuyOrders = async () => {
                             </>
                           )}
                         </td>
+                        */}
 
 
 
