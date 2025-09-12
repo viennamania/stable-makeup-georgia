@@ -3313,7 +3313,7 @@ const fetchBuyOrders = async () => {
                       className="w-4 h-4"
                     />
                     <div className="text-sm font-semibold">
-                      거래내역
+                      P2P 거래내역
                     </div>
                   </div>
 
@@ -3373,7 +3373,7 @@ const fetchBuyOrders = async () => {
                   />
 
                   <div className="text-xl font-semibold">
-                    거래내역
+                    P2P 거래내역
                   </div>
 
                   

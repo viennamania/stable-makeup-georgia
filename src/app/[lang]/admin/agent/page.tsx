@@ -1593,7 +1593,7 @@ export default function Index({ params }: any) {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  거래내역
+                  P2P 거래내역
               </button>
 
               {version !== 'bangbang' && (
@@ -2214,7 +2214,7 @@ export default function Index({ params }: any) {
                                   className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
                                   hover:bg-[#3167b4]/80"
                                 >
-                                  거래내역
+                                  P2P 거래내역
                                 </button>
                               </div>
                               */}

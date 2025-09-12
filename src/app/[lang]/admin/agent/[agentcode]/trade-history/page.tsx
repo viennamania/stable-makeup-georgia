@@ -2584,7 +2584,7 @@ const fetchBuyOrders = async () => {
                     className="w-4 h-4"
                   />
                   <div className="text-sm font-semibold">
-                    거래내역
+                    P2P 거래내역
                   </div>
                 </div>
 
@@ -2614,7 +2614,7 @@ const fetchBuyOrders = async () => {
                 />
 
                 <div className="text-xl font-semibold">
-                  거래내역
+                  P2P 거래내역
                 </div>
 
             </div>
@@ -2961,7 +2961,7 @@ const fetchBuyOrders = async () => {
                         {buyOrders.length === 0 && (
                           <tr>
                             <td colSpan={9} className="p-4 text-center text-zinc-500">
-                              거래내역이 없습니다.
+                              P2P 거래내역이 없습니다.
                             </td>
                           </tr>
                         )}

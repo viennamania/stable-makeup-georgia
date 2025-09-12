@@ -2730,7 +2730,7 @@ const fetchBuyOrders = async () => {
                 />
 
                 <div className="text-xl font-semibold">
-                  거래내역
+                  P2P 거래내역
                 </div>
 
             </div>

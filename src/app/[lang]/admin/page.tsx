@@ -1691,7 +1691,7 @@ export default function Index({ params }: any) {
                     }}
                     className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
-                    거래내역관리
+                    P2P 거래내역관리
                   </button>
                 </div>
 
@@ -1950,7 +1950,7 @@ export default function Index({ params }: any) {
                   }}
                   className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                 >
-                  거래내역
+                  P2P 거래내역
                 </button>
               </div>
               */}
@@ -2146,7 +2146,7 @@ export default function Index({ params }: any) {
                   }}
                   className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                 >
-                  거래내역
+                  P2P 거래내역
                 </button>
               </div>
               */}

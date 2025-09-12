@@ -2150,7 +2150,7 @@ export default function Index({ params }: any) {
                   hover: scale-105
                   transition-all duration-200 ease-in-out
                   ">
-                  거래내역
+                  P2P 거래내역
               </button>
 
               {version !== 'bangbang' && (

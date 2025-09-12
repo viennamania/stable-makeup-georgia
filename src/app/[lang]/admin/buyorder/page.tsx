@@ -3436,7 +3436,7 @@ const fetchBuyOrders = async () => {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  거래내역
+                  P2P 거래내역
               </button>
 
               {version !== 'bangbang' && (
