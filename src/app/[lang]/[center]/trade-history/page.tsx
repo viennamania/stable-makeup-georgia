@@ -3483,7 +3483,7 @@ const fetchBuyOrders = async () => {
                       type="text"
                       value={searchStoreBankAccountNumber}
                       onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                      placeholder="입금통장번호"
+                      placeholder="구매자 통장번호"
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     /> 
                   </div>
@@ -4029,12 +4029,12 @@ const fetchBuyOrders = async () => {
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
-                                  toast.success('입금통장번호가 복사되었습니다.');
+                                  toast.success('판매자 통장번호가 복사되었습니다.');
                                 }}
                                 className="text-sm text-zinc-500 font-semibold
                                   hover:text-blue-600 cursor-pointer
                                   hover:underline"
-                                title="입금통장번호 복사"
+                                title="판매자 통장번호 복사"
                               >
                                 {item?.store?.bankInfo?.accountNumber}
                               </button>

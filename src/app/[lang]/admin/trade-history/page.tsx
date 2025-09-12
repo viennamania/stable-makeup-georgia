@@ -889,9 +889,18 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
-  //console.log('buyOrders', buyOrders);
-
-  
+  const [buyOrderStats, setBuyOrderStats] = useState({
+    totalCount: 0,
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+  });
 
 
 
@@ -1047,6 +1056,25 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
+
+
+
             })
 
             setFetchingBuyOrders(false);
@@ -1176,6 +1204,20 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
           }
         });
         setFetchingBuyOrders(false);
@@ -1440,6 +1482,20 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
             })
             setFetchingBuyOrders(false);
 
@@ -1652,6 +1708,20 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
         })
         setFetchingBuyOrders(false);
 
@@ -1816,6 +1886,20 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
         })
         setFetchingBuyOrders(false);
 
@@ -2027,7 +2111,18 @@ export default function Index({ params }: any) {
 
       setTotalCount(data.result.totalCount);
       
-
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+      });
 
     }
 
@@ -2036,6 +2131,8 @@ export default function Index({ params }: any) {
       setBuyOrders([]);
       setTotalCount(0);
       setFetchingBuyOrders(false);
+   
+
       return;
     }
 
@@ -2149,7 +2246,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -2182,17 +2279,7 @@ const fetchBuyOrders = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        /*
-        storecode: params.storecode,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-        //searchBuyer: searchBuyer,
-        //searchDepositName: searchDepositName,
 
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        */
 
         agentcode: params.agentcode,
         storecode: searchStorecode,
@@ -2253,7 +2340,7 @@ const fetchBuyOrders = async () => {
     searchFromDate, searchToDate,
   ]);
 
-
+  */
 
 
 
@@ -2860,7 +2947,7 @@ const fetchBuyOrders = async () => {
                 />
 
                 <span className="
-                  w-32
+                  w-20
                   text-sm font-semibold">
                   가맹점선택
                 </span>
@@ -2878,7 +2965,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className="w-32 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                 >
                   <option value="">전체</option>
 
@@ -2900,9 +2987,6 @@ const fetchBuyOrders = async () => {
                 </select>
             
             </div>
-
-
-
 
 
             {/* serach fromDate and toDate */}
@@ -2939,8 +3023,39 @@ const fetchBuyOrders = async () => {
                   className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                 />
               </div>
-            </div>
 
+              <div className="flex flex-row items-center gap-2">
+                  {/* 오늘, 어제 */}
+                  <button
+                    onClick={() => {
+                      // korea time
+                      const today = new Date();
+                      today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                      setSearchFormDate(today.toISOString().split("T")[0]);
+                      setSearchToDate(today.toISOString().split("T")[0]);
+                    }}
+                    className="text-sm text-zinc-500 underline"
+                  >
+                    오늘
+                  </button>
+                  <button
+                    onClick={() => {
+                      // korea time yesterday
+                      const today = new Date();
+                      today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                      const yesterday = new Date(today);
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      setSearchFormDate(yesterday.toISOString().split("T")[0]);
+                      setSearchToDate(yesterday.toISOString().split("T")[0]);
+                    }}
+                    className="text-sm text-zinc-500 underline"
+                  >
+                    어제
+                  </button>
+                </div>
+
+            </div>
+            
 
             {/* search depositName */}
             <div className="flex flex-col items-center gap-2">
@@ -2968,20 +3083,28 @@ const fetchBuyOrders = async () => {
                   />
                 </div>
 
-                {/* searchStoreBankAccountNumber */}
+                {/*
                 <div className="flex flex-row items-center gap-2">
                   <input
                     type="text"
                     value={searchStoreBankAccountNumber}
                     onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                    placeholder="입금통장번호"
+                    placeholder="구매자 통장번호"
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   /> 
                 </div>
+                */}
 
-
-
-              
+                {/* search store bank account number */}
+                <div className="flex flex-row items-center gap-2">
+                  <input
+                    type="text"
+                    value={searchStoreBankAccountNumber}
+                    onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
+                    placeholder="판매자 통장번호"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  /> 
+                </div>
 
 
                 {/* 검색 버튼 */}
@@ -2994,7 +3117,7 @@ const fetchBuyOrders = async () => {
                       
                       fetchBuyOrders();
 
-                      getTradeSummary();
+                      ///getTradeSummary();
                     }}
                     //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
                     className={`${
@@ -3057,8 +3180,8 @@ const fetchBuyOrders = async () => {
 
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">P2P 거래수(건)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalCount?.toLocaleString()}
+                <div className="text-4xl font-semibold text-zinc-500">
+                  {buyOrderStats.totalCount?.toLocaleString()}
                 </div>
               </div>
 
@@ -3074,8 +3197,8 @@ const fetchBuyOrders = async () => {
                   />
                   <span className="text-xl font-semibold text-[#409192]"
                     style={{ fontFamily: 'monospace' }}>
-                    {tradeSummary.totalUsdtAmount
-                      ? tradeSummary.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                    {buyOrderStats.totalUsdtAmount
+                      ? buyOrderStats.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                       : '0.000'}
                   </span>
                 </div>
@@ -3086,7 +3209,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-row items-center justify-center gap-1">
                   <span className="text-xl font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
-                    {tradeSummary.totalKrwAmount?.toLocaleString()}
+                    {buyOrderStats.totalKrwAmount?.toLocaleString()}
                   </span>
                   
                 </div>
@@ -3111,9 +3234,8 @@ const fetchBuyOrders = async () => {
 
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">가맹점 결제수(건)</div>
-                  <span className="text-xl font-semibold text-zinc-500"
-                    style={{ fontFamily: 'monospace' }}>
-                    {tradeSummary.totalSettlementCount?.toLocaleString()}
+                  <span className="text-4xl font-semibold text-zinc-500">
+                    {buyOrderStats.totalSettlementCount?.toLocaleString()}
                   </span>
               </div>
 
@@ -3129,8 +3251,8 @@ const fetchBuyOrders = async () => {
                   />
                   <span className="text-xl font-semibold text-[#409192]"
                     style={{ fontFamily: 'monospace' }}>
-                    {tradeSummary.totalSettlementAmount
-                      ? tradeSummary.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                    {buyOrderStats.totalSettlementAmount
+                      ? buyOrderStats.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                       : '0.000'}
                   </span>
                 </div>
@@ -3141,7 +3263,7 @@ const fetchBuyOrders = async () => {
                 <div className="flex flex-row items-center justify-center gap-1">
                   <span className="text-xl font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
-                    {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
+                    {buyOrderStats.totalSettlementAmountKRW?.toLocaleString()}
                   </span>
                   
                 </div>
@@ -3149,7 +3271,8 @@ const fetchBuyOrders = async () => {
 
               <div className="flex flex-col gap-2 items-center">
 
-                <div className="flex flex-row gap-2 items-center">
+                <div className="flex flex-row gap-2 items-center
+                  border-b border-zinc-300 pb-2">
 
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">PG 수수료량(USDT)</div>
@@ -3163,8 +3286,8 @@ const fetchBuyOrders = async () => {
                       />
                       <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalFeeAmount
-                          ? tradeSummary.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        {buyOrderStats.totalFeeAmount
+                          ? buyOrderStats.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'}
                       </span>
                     </div>
@@ -3175,8 +3298,8 @@ const fetchBuyOrders = async () => {
                     <div className="w-full flex flex-row items-center justify-end gap-1">
                       <span className="text-xl font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalFeeAmountKRW
-                          ? tradeSummary.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        {buyOrderStats.totalFeeAmountKRW
+                          ? buyOrderStats.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0'}
                       </span>
                       
@@ -3184,9 +3307,7 @@ const fetchBuyOrders = async () => {
                   </div>
 
                 </div>
-
-                {/* divider */}
-                <div className="w-full h-0.5 bg-zinc-300"></div>
+                
 
                 <div className="flex flex-row gap-2 items-center">
 
@@ -3202,8 +3323,8 @@ const fetchBuyOrders = async () => {
                       />
                       <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalAgentFeeAmount
-                          ? tradeSummary.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        {buyOrderStats.totalAgentFeeAmount
+                          ? buyOrderStats.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'}
                       </span>
                     </div>
@@ -3214,8 +3335,8 @@ const fetchBuyOrders = async () => {
                     <div className="w-full flex flex-row items-center justify-end gap-1">
                       <span className="text-xl font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
-                        {tradeSummary.totalAgentFeeAmountKRW
-                          ? tradeSummary.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        {buyOrderStats.totalAgentFeeAmountKRW
+                          ? buyOrderStats.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0'}
                       </span>
                       
@@ -3752,12 +3873,12 @@ const fetchBuyOrders = async () => {
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
-                                toast.success('입금통장번호가 복사되었습니다.');
+                                toast.success('판매자 통장번호가 복사되었습니다.');
                               }}
                               className="text-sm text-zinc-500 font-semibold
                                 hover:text-blue-600 cursor-pointer
                                 hover:underline"
-                              title="입금통장번호 복사"
+                              title="판매자 통장번호 복사"
                             >
                               {item?.store?.bankInfo?.accountNumber}
                             </button>

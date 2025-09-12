@@ -4469,7 +4469,7 @@ const fetchBuyOrders = async () => {
                         type="text"
                         value={searchStoreBankAccountNumber}
                         onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                        placeholder="입금통장번호"
+                        placeholder="구매자 통장번호"
                         className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                       /> 
                     </div>
