@@ -184,6 +184,15 @@ export async function POST(request: NextRequest) {
     예금주: 민수영
   */}
 
+
+  {/*
+    라이징 (crluonsn)
+    은행이름: 농협
+    계좌번호: 3521497643823
+    예금주: 김지섭
+  */}
+
+
   let storecode = '';
   
   if (bank_account_number === '66200201761933') {
@@ -196,6 +205,8 @@ export async function POST(request: NextRequest) {
     storecode = 'arygljqt'; // MOON (arygljqt)
   } else if (bank_account_number === '3520836679913') {
     storecode = 'wvdjgmbq'; // 마돈나 (wvdjgmbq)
+  } else if (bank_account_number === '3521497643823') {
+    storecode = 'crluonsn'; // 라이징 (crluonsn)
   }
 
 
