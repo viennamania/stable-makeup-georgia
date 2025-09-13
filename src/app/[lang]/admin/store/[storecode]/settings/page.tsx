@@ -3227,6 +3227,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대신은행">대신은행</option>
                                         <option value="동양종합금융">동양종합금융</option>
                                         <option value="산업은행">산업은행</option>
+                                        <option value="우체국">우체국</option>
                                     </select>
                                     <input
                                         type="number"
@@ -3365,6 +3366,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대신은행">대신은행</option>
                                         <option value="동양종합금융">동양종합금융</option>
                                         <option value="산업은행">산업은행</option>
+                                        <option value="우체국">우체국</option>
                                     </select>
 
 
