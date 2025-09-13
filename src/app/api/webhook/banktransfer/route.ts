@@ -161,12 +161,23 @@ export async function POST(request: NextRequest) {
   계좌번호: 22105556021573
   예금주: 김명실
   */}
+
+  {/*
+     BLUFF (gbndgyfl)
+    은행이름: 농협
+    계좌번호: 3521522179003
+    예금주: 함태곤
+  */}
+
+
   let storecode = '';
   
   if (bank_account_number === '66200201761933') {
     storecode = 'mslxvbmm'; // 더블디 (mslxvbmm)
   } else if (bank_account_number === '22105556021573') {
     storecode = 'alwmkqst'; // 스텔스 (alwmkqst)
+  } else if (bank_account_number === '3521522179003') {
+    storecode = 'gbndgyfl'; // BLUFF (gbndgyfl)
   }
 
 
