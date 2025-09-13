@@ -169,6 +169,14 @@ export async function POST(request: NextRequest) {
     예금주: 함태곤
   */}
 
+  {/*
+    MOON (arygljqt)
+
+  은행이름: 농협
+  계좌번호: 3022084120331
+  예금주: 조건희
+  */}
+
 
   let storecode = '';
   
@@ -178,6 +186,8 @@ export async function POST(request: NextRequest) {
     storecode = 'alwmkqst'; // 스텔스 (alwmkqst)
   } else if (bank_account_number === '3521522179003') {
     storecode = 'gbndgyfl'; // BLUFF (gbndgyfl)
+  } else if (bank_account_number === '3022084120331') {
+    storecode = 'arygljqt'; // MOON (arygljqt)
   }
 
 
