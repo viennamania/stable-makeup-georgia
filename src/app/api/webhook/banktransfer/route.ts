@@ -154,10 +154,19 @@ export async function POST(request: NextRequest) {
     계좌번호: 66200201761933
     예금주: 전성미
   */}
+  {/*
+    스텔스 (alwmkqst)
+
+  은행이름: 농협
+  계좌번호: 22105556021573
+  예금주: 김명실
+  */}
   let storecode = '';
   
   if (bank_account_number === '66200201761933') {
     storecode = 'mslxvbmm'; // 더블디 (mslxvbmm)
+  } else if (bank_account_number === '22105556021573') {
+    storecode = 'alwmkqst'; // 스텔스 (alwmkqst)
   }
 
 
@@ -172,7 +181,7 @@ export async function POST(request: NextRequest) {
   }
 
 
-  
+
 
   // center = 'place69_bot'
   // userid = 'mcmcmo'
