@@ -177,6 +177,12 @@ export async function POST(request: NextRequest) {
   예금주: 조건희
   */}
 
+  {/*
+    마돈나 (wvdjgmbq)
+    은행이름: 농협
+    계좌번호: 3520836679913
+    예금주: 민수영
+  */}
 
   let storecode = '';
   
@@ -188,6 +194,8 @@ export async function POST(request: NextRequest) {
     storecode = 'gbndgyfl'; // BLUFF (gbndgyfl)
   } else if (bank_account_number === '3022084120331') {
     storecode = 'arygljqt'; // MOON (arygljqt)
+  } else if (bank_account_number === '3520836679913') {
+    storecode = 'wvdjgmbq'; // 마돈나 (wvdjgmbq)
   }
 
 
