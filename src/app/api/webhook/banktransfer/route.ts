@@ -133,9 +133,46 @@ export async function POST(request: NextRequest) {
   console.log("transaction_name", transaction_name);
   console.log("balance", balance);
   console.log("processing_date", processing_date);
+
+  {/*
+  {
+    transaction_type: 'deposited',
+    bank_account_id: ' ',
+    bank_account_number: '22105556021573',
+    bank_code: '011',
+    amount: 1000000,
+    transaction_date: '2025-09-13T02:38:50.000+09:00',
+    transaction_name: '엄영식',
+    balance: 3532913,
+    processing_date: '2025-09-13T02:38:52.653+09:00'
+  }
+  */}
+
+  {/*
+     더블디 (mslxvbmm)
+    은행이름: 국민은행
+    계좌번호: 66200201761933
+    예금주: 전성미
+  */}
+  let storecode = '';
   
+  if (bank_account_number === '66200201761933') {
+    storecode = 'mslxvbmm'; // 더블디 (mslxvbmm)
+  }
 
 
+
+
+  if (storecode === '') {
+    console.log("No matching storecode for bank_account_number:", bank_account_number);
+    return NextResponse.json({
+      status: "error",
+      message: "No matching storecode for bank_account_number",
+    });
+  }
+
+
+  
 
   // center = 'place69_bot'
   // userid = 'mcmcmo'
@@ -252,9 +289,9 @@ export async function POST(request: NextRequest) {
 
 
   //const storecode = "ixryqqtw"; // upbet
-  /*
+  
 
-  const storecode = "ycvqgqgg"; // 타이틀
+  ///const storecode = "ycvqgqgg"; // 타이틀
 
 
 
@@ -330,7 +367,6 @@ export async function POST(request: NextRequest) {
   }
 
 
-  */
 
   
 
