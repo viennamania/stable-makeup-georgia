@@ -231,7 +231,8 @@ export async function POST(request: NextRequest) {
         orderer_phone_number: buyOrder.mobile,
         orderer_email: buyOrder?.email || 'abc@gmail.com',
         trade_usage: "지출증빙용",
-        identity_number: '',
+        identity_number: buyOrder.mobile,
+        auto_confirm: 0,
       };
 
 
