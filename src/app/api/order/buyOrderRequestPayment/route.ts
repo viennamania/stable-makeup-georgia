@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
         billing_name: buyOrder.buyer.depositName,
         orderer_name: buyOrder.buyer.depositName,
         orderer_phone_number: buyOrder.mobile,
-        orderer_email: buyOrder.buyer?.email,
+        orderer_email: buyOrder?.email || 'abc@gmail.com',
         trade_usage: "지출증빙용",
         identity_number: '',
       };
