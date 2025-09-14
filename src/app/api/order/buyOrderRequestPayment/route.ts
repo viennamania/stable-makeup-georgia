@@ -121,6 +121,10 @@ export async function POST(request: NextRequest) {
 
     console.log("mobile", mobile);
 
+
+
+
+
     if (payactionApiKey && payactionShopId) {
 
       const tradeId = buyOrder.tradeId;
@@ -193,6 +197,98 @@ export async function POST(request: NextRequest) {
       }
     
     }
+
+
+
+  } else {
+
+    /*
+    post
+    https://order.ausua.workers.dev/api/order
+
+    body
+    {
+        "order_number": "ORDER20250914002",
+        "order_amount": 50000,
+        "order_date": "2025-09-14 19:19:30+09:00",
+        "billing_name": "이경래",
+        "orderer_name": "이경래",
+        "orderer_phone_number": "010-1234-5678",
+        "orderer_email": "kimjiyun@example.com",
+        "trade_usage": "소득공제용",
+        "identity_number": "010-1234-5678",
+        "auto_confirm": 0
+    }
+    */
+
+      const payactionUrl = "https://order.ausua.workers.dev/api/order";
+      const payactionBody = {
+        order_number: buyOrder.tradeId,
+        order_amount: buyOrder.krwAmount,
+        order_date: new Date().toISOString(),
+        billing_name: buyOrder.buyer.depositName,
+        orderer_name: buyOrder.buyer.depositName,
+        orderer_phone_number: buyOrder.mobile,
+        orderer_email: buyOrder.buyer?.email,
+        trade_usage: "지출증빙용",
+        identity_number: '',
+      };
+
+
+      const payactionHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      const payactionOptions = {
+        method: "POST",
+        headers: payactionHeaders,
+        body: JSON.stringify(payactionBody),
+      };
+
+      try {
+        const payactionResponse = await fetch(payactionUrl, payactionOptions);
+
+        const payactionResult = await payactionResponse.json();
+        console.log("buyOrderRequestPayment payactionResult", payactionResult);
+        /*
+        { status: 'success', response: {} }
+        */
+
+        // updateBuyOrderPayactionResult
+        await updateBuyOrderPayactionResult({
+          orderId: orderId,
+          api: "/api/order/buyOrderRequestPayment",
+          payactionResult: payactionResult,
+        });
+
+
+
+        if (payactionResponse.status !== 200) {
+          console.error("Payaction API error", payactionResult);
+          ////throw new Error("Payaction API error");
+        }
+
+
+        if (payactionResult.status !== "success") {
+          console.error("Payaction API error", payactionResult);
+          ////throw new Error("Payaction API error");
+        }
+
+        
+      
+      } catch (error) {
+        // Error calling Payaction API
+        console.error("Error calling Payaction API", error);
+        
+        /*
+        return NextResponse.json({
+          error: "Error calling Payaction API",
+          details: error instanceof Error ? error.message : "Unknown error",
+        }, { status: 500 });
+        */
+
+      }
+
+
 
   }
   
