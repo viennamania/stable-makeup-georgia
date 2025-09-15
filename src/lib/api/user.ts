@@ -740,6 +740,38 @@ export async function getOneByWalletAddress(
 }
 
 
+// getOneByStorecodeAndWalletAddress
+export async function getOneByStorecodeAndWalletAddress(
+  storecode: string,
+  walletAddress: string,
+): Promise<UserProps | null> {
+
+  const client = await clientPromise;
+
+  const collection = client.db(dbName).collection('users');
+
+  const results = await collection.findOne<UserProps>(
+    {
+      storecode: storecode,
+      walletAddress: walletAddress
+    },
+    {
+      projection: {
+        nickname: 1,
+        email: 1,
+        walletAddress: 1,
+        buyer: 1,
+        createdAt: 1,
+        updatedAt: 1
+      }
+    }
+  );
+
+  return results;
+
+}
+
+
 
 
 

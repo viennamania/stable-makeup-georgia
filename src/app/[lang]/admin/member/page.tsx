@@ -2836,6 +2836,21 @@ export default function Index({ params }: any) {
                               
                               <span>{item?.buyer?.depositName}</span>
                             </div>
+
+                            {/* 변경하기 button */}
+                            {/* member-settings?storecode=mgorlkxu&walletAddress=0x59B3597fF4e109a22e262AF940B77e3c59f7c56C */}
+                            <button
+                              onClick={() => {
+                                router.push(
+                                  `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
+                                );
+                              }}
+                              className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                hover:bg-[#3167b4]/80"
+                            >
+                              변경하기
+                            </button>
+
                           </td>
 
                           <td className="p-2">
