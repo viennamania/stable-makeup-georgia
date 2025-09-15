@@ -101,6 +101,18 @@ export async function POST(request: NextRequest) {
   }
   */
 
+  /*
+   {
+    order_number: '40620819',
+    order_status: '매칭완료',
+    processing_date: '2025-09-15T05:46:42.060+09:00',
+    agent_id: 3,
+    agent_name: '원클릭',
+    account_number: '37591024505107',
+    amount: '3,000,000'
+  }
+  */
+
 
   if (!body) {
     return NextResponse.json({

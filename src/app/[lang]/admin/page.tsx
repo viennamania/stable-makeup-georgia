@@ -997,7 +997,7 @@ export default function Index({ params }: any) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-4">
 
-        <h1 className="text-2xl font-bold">접근이 거부되었습니다</h1>
+        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
         <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
         <div className="text-lg text-gray-500">{address}</div>
 
