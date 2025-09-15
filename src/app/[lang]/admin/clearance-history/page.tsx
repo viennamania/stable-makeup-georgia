@@ -2426,6 +2426,148 @@ export default function Index({ params }: any) {
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
 
 
+
+      {/* fixed position right and vertically center */}
+
+      <div className="
+        hidden xl:flex
+        fixed right-4 top-1/2 transform -translate-y-1/2
+        z-40
+        ">
+
+          <div className="w-full flex flex-col items-end justify-center gap-4">
+
+
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+              {loadingTotalNumberOfBuyOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-buyorder.png"
+                  alt="Buy Order"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+
+              <p className="text-lg text-red-500 font-semibold">
+                {
+                totalNumberOfBuyOrders
+                }
+              </p>
+
+              {totalNumberOfBuyOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/buyorder');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      구매주문관리
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+
+            {/* Clearance Orders */}
+            {version !== 'bangbang' && (
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+
+              {loadingTotalNumberOfClearanceOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              <p className="text-lg text-yellow-500 font-semibold">
+                {
+                totalNumberOfClearanceOrders
+                }
+              </p>
+
+              {totalNumberOfClearanceOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                </div>
+              )}
+            </div>
+            )}
+
+
+            {/* P2P 거래수 */}
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+              <Image
+                src="/icon-trade.png"
+                alt="P2P"
+                width={35}
+                height={35}
+                className="w-6 h-6"
+              />
+              <p className="text-lg text-green-500 font-semibold">
+                {
+                buyOrderStats.totalCount
+                }
+              </p>
+            </div>
+        
+          </div>
+
+      </div>
+
+
+
       <div className="py-0 w-full">
 
         <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
