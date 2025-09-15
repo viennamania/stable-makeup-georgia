@@ -63,6 +63,19 @@ Response Body
  */
 
 
+/*
+{
+  order_number: '11787973',
+  order_status: '매칭완료',
+  processing_date: '2025-09-15T02:47:58.306+09:00',
+  agent_id: 3,
+  agent_name: '원클릭',
+  account_number: '22105556021573',
+  amount: '1,000,000'
+}
+  */
+
+
 export async function POST(request: NextRequest) {
 
 
@@ -111,6 +124,15 @@ export async function POST(request: NextRequest) {
   console.log("payaction order_status", order_status);
   console.log("payaction processing_date", processing_date);
 
+  /*
+
+  payaction order_number 11787973
+  payaction order_status 매칭완료
+  payaction processing_date 2025-09-15T02:47:58.306+09:00
+  */
+
+
+  
 
   if (!order_number) {
     return NextResponse.json({
@@ -165,7 +187,7 @@ export async function POST(request: NextRequest) {
   */
 
 
-  /*
+  
   
   const buyOrder = await getOneBuyOrderByTradeId({
     tradeId: order_number,
@@ -179,7 +201,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  console.log("buyOrder", buyOrder);
+  //console.log("buyOrder", buyOrder);
 
   
   if (buyOrder?.status !== "paymentRequested") {
@@ -216,7 +238,7 @@ export async function POST(request: NextRequest) {
 
   });
 
-  */
+  console.log("buyOrderConfirmPayment response", response);
 
   
   

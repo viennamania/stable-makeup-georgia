@@ -194,19 +194,26 @@ export async function POST(request: NextRequest) {
 
 
   let storecode = '';
+  let center = '';
   
   if (bank_account_number === '66200201761933') {
     storecode = 'mslxvbmm'; // 더블디 (mslxvbmm)
+    center = 'place69_bot';
   } else if (bank_account_number === '22105556021573') {
     storecode = 'alwmkqst'; // 스텔스 (alwmkqst)
+    center = 'place69_bot';
   } else if (bank_account_number === '3521522179003') {
     storecode = 'gbndgyfl'; // BLUFF (gbndgyfl)
+    center = 'place69_bot';
   } else if (bank_account_number === '3022084120331') {
     storecode = 'arygljqt'; // MOON (arygljqt)
+    center = 'place69_bot';
   } else if (bank_account_number === '3520836679913') {
     storecode = 'wvdjgmbq'; // 마돈나 (wvdjgmbq)
+    center = 'place69_bot';
   } else if (bank_account_number === '3521497643823') {
     storecode = 'crluonsn'; // 라이징 (crluonsn)
+    center = 'place69_bot';
   }
 
 
@@ -219,6 +226,17 @@ export async function POST(request: NextRequest) {
       message: "No matching storecode for bank_account_number",
     });
   }
+
+  if (center === '') {
+    console.log("No matching center for bank_account_number:", bank_account_number);
+    return NextResponse.json({
+      status: "error",
+      message: "No matching center for bank_account_number",
+    });
+  }
+
+  console.log("storecode", storecode);
+  console.log("center", center);
 
 
 
@@ -388,7 +406,7 @@ export async function POST(request: NextRequest) {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            center: "place69_bot",
+            center: center,
             userid: userid,
             storecode: storecode,
 
