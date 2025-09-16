@@ -2462,7 +2462,16 @@ export default function Index({ params }: any) {
                                   </span>
 
                                   <input 
-                                    type="number"
+                                    type='text'
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    
+                                    // disable mouse wheel
+                                    onWheel={(e) => e.currentTarget.blur()}
+                                    // remove updown button
+                                    style={{ MozAppearance: 'textfield' }}
+
+
                                     className="
                                       text-xl text-blue-500 font-bold
                                       w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 "
@@ -2496,9 +2505,15 @@ export default function Index({ params }: any) {
                                     } }
                                   />
 
+                                  <span className="text-2xl text-yellow-600 font-semibold"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {krwAmount === 0 ? '0' : Number(krwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                  </span>
                                   <span className="text-xl text-zinc-400 font-bold">
                                     원  
                                   </span>
+
 
                                 </div>
                                 {/* 매입수량 */}

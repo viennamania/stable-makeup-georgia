@@ -3981,13 +3981,16 @@ const [tradeSummary, setTradeSummary] = useState({
                               </span>
 
                               <input 
-                                // disable mouse up down scroll
-                                //onWheel={(e) => e.preventDefault()}
+                                type='text'
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                
+                                // disable mouse wheel
+                                onWheel={(e) => e.currentTarget.blur()}
+                                // remove updown button
+                                style={{ MozAppearance: 'textfield' }}
 
 
-
-
-                                type="number"
                                 className="
                                   text-xl text-blue-500 font-bold
                                   w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 "

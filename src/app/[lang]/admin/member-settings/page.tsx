@@ -633,7 +633,18 @@ export default function SettingsPage({ params }: any) {
                             className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded-lg text-lg"
                             placeholder={Enter_your_account_number}
                             value={accountNumber}
-                            type='number'
+                            
+                            type='text'
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            
+                            // disable mouse wheel
+                            onWheel={(e) => e.currentTarget.blur()}
+                            // remove updown button
+                            style={{ MozAppearance: 'textfield' }}
+                            
+
+
                             onChange={(e) => {
 
                                 // check if the value is a number
