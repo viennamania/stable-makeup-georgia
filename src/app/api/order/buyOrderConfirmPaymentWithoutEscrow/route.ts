@@ -203,6 +203,8 @@ export async function POST(request: NextRequest) {
 
       transactionHash: transactionHash,
 
+      sellerWalletAddressBalance: sellerWalletAddressBalance,
+
     });
   
   

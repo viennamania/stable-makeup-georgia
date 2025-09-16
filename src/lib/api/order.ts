@@ -3596,6 +3596,8 @@ export async function buyOrderConfirmPayment(data: any) {
           escrowTransactionHash: data.escrowTransactionHash,
           escrowTransactionConfirmedAt: new Date().toISOString(),
 
+          sellerWalletAddressBalance: data.sellerWalletAddressBalance,
+
         } }
       );
 
@@ -3614,6 +3616,8 @@ export async function buyOrderConfirmPayment(data: any) {
 
           escrowTransactionHash: data.escrowTransactionHash,
           escrowTransactionConfirmedAt: new Date().toISOString(),
+
+          sellerWalletAddressBalance: data.sellerWalletAddressBalance,
 
         } }
       );
