@@ -11,14 +11,73 @@ import {
 
 
 import {
-  getOneByWalletAddress 
+  checkSellerByWalletAddress, 
 } from '@lib/api/user';
 
-// Download the helper library from https://www.twilio.com/docs/node/install
-import twilio from "twilio";
-import { webhook } from "twilio/lib/webhooks/webhooks";
-import { create } from "domain";
 
+// thirdweb
+
+import {
+  getContract,
+} from "thirdweb";
+
+import { balanceOf, transfer } from "thirdweb/extensions/erc20";
+ 
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
+
+
+
+import {
+  client,
+} from "@/app/client";
+
+
+
+
+
+
+const contract = getContract({
+  // the client you have created via `createThirdwebClient()`
+  client,
+  // the chain the contract is deployed on
+  
+  
+  //chain: arbitrum,
+  chain:  chain === "ethereum" ? ethereum :
+          chain === "polygon" ? polygon :
+          chain === "arbitrum" ? arbitrum :
+          chain === "bsc" ? bsc : arbitrum,
+
+
+
+  // the contract's address
+  ///address: contractAddressArbitrum,
+
+  address: chain === "ethereum" ? ethereumContractAddressUSDT :
+          chain === "polygon" ? polygonContractAddressUSDT :
+          chain === "arbitrum" ? arbitrumContractAddressUSDT :
+          chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
+
+
+  // OPTIONAL: the contract's abi
+  //abi: [...],
+});
 
 
 
@@ -92,7 +151,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const user = await getOneByWalletAddress(
+    // check seller exists
+    const user = await checkSellerByWalletAddress(
       storecode,
       sellerWalletAddress
     );
@@ -104,6 +164,31 @@ export async function POST(request: NextRequest) {
         result: null,
       });
     }
+
+
+    // get balance of seller wallet address
+
+    let sellerWalletAddressBalance = 0;
+
+    try {
+      const sellerBalance = await balanceOf({
+        contract,
+        address: sellerWalletAddress,
+      });
+
+      if (chain === 'bsc') {
+        sellerWalletAddressBalance = Number(sellerBalance) / 10 ** 18
+      } else {
+        sellerWalletAddressBalance = Number(sellerBalance) / 10 ** 6
+      }
+      console.log("sellerWalletAddressBalance=", sellerWalletAddressBalance);
+
+    } catch (error) {
+        
+      console.log(" error=====>" + error);
+
+    }
+
 
 
     const queueId = "queueId";

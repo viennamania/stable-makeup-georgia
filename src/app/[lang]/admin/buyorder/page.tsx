@@ -2232,9 +2232,17 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     const storecode = "admin";
 
 
-    if (confirmingPayment[index]) {
+    //if (confirmingPayment[index]) {
+    //  return;
+    //}
+    // if some of confirmingPayment is true, then return
+    if (confirmingPayment.some((item) => item === true)) {
+      alert('다른 결제확인 처리중입니다.');
       return;
     }
+
+
+
 
     setConfirmingPayment(
       confirmingPayment.map((item, idx) =>  idx === index ? true : item)
