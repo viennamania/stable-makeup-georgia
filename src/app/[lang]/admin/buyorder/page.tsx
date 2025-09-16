@@ -4792,8 +4792,8 @@ const fetchBuyOrders = async () => {
                                 <span className="text-sm text-zinc-500">
                                   {
                                     item?.userStats?.totalPaymentConfirmedCount
-                                    ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() + ' 건' :
-                                    0 + ' 건'
+                                    ? item?.userStats?.totalPaymentConfirmedCount.toLocaleString() :
+                                    0
                                   }
                                 </span>
 
