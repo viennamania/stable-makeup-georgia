@@ -172,6 +172,9 @@ interface BuyOrder {
     balance: number;
     transactionHash: string;
   };
+
+  sellerWalletAddressBalance: number; // balance of seller wallet address, added in version 1.1.5
+
 }
 
 
@@ -6501,8 +6504,9 @@ const fetchBuyOrders = async () => {
                             }}
                           >
                               <div className="flex flex-col gap-2 items-start justify-start ml-2">
-                                <div className="flex flex-col gap-1 items-start justify-start">
-                                  <span className="text-sm">
+                                <div className="flex flex-col gap-1 items-start justify-start
+                                border-b border-dashed border-zinc-300 pb-1">
+                                  <span className="text-sm text-zinc-500 font-normal">
                                     회원지갑으로 전송한 테더
                                   </span>
                                   <div className="flex flex-row gap-1 items-center justify-start">
@@ -6520,10 +6524,28 @@ const fetchBuyOrders = async () => {
                                       {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                     </span>
                                   </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1 items-start justify-start">
+                                  {/*
                                   <span className="text-sm text-zinc-500">
                                     테더(USDT) 전송내역
                                   </span>
+                                  */}
+                                  {/* sellerWalletAddressBalance */}
+                                  <div className="flex flex-col gap-1 items-start justify-start">
+                                    <span className="text-sm text-zinc-500 font-normal">
+                                      판매자지갑 잔액
+                                    </span>
+                                    <span className="text-lg text-[#409192] font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}>
+                                      {item?.sellerWalletAddressBalance ? item?.sellerWalletAddressBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
+                                    </span>
+                                  </div>
                                 </div>
+
                               </div>
                               {/* chain logo */}
                               <Image
