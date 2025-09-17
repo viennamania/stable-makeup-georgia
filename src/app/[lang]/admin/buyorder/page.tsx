@@ -3267,6 +3267,9 @@ const fetchBuyOrders = async () => {
                     <span className="text-xs text-gray-500">
                       {order?.store?.storeName || 'Store'}
                     </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer.depositName || 'Buyer'}
+                    </span>
                   </div>
 
                 ))}

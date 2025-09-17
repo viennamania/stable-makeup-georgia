@@ -7429,7 +7429,7 @@ export async function getTotalNumberOfBuyOrders(
       privateSale: { $ne: true },
       status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
     },
-    { projection: { tradeId: 1, store: 1, createdAt: 1 } }
+    { projection: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } }
   )
     .sort({ createdAt: -1 })
     .toArray();
