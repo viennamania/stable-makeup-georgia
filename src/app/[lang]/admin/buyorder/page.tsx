@@ -4221,8 +4221,8 @@ const fetchBuyOrders = async () => {
           </div>
 
 
-
-          <div className="w-full flex flex-row items-center justify-end gap-2">
+          {/* for mobile */}
+          <div className="xl:hidden w-full flex flex-row items-center justify-end gap-2">
 
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
