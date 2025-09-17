@@ -7069,20 +7069,53 @@ const fetchBuyOrders = async () => {
 
                             {item?.settlement && (
 
-                              <div className="w-full flex flex-row gap-2 items-center justify-start">
-                                <Image
-                                  src="/icon-payment.png"
-                                  alt="Payment Icon"
-                                  width={50}
-                                  height={50}
-                                  className="w-8 h-8 rounded-lg object-cover"
-                                />
-                                <span className="text-sm font-semibold text-zinc-500">
-                                  {item?.store?.storeName}
-                                </span>
-                                <span className="text-sm font-semibold text-zinc-500">
-                                  가맹점 결제 및 정산완료
-                                </span>
+                              <div className="w-full flex flex-row gap-2 items-center justify-between">
+                                
+                                <div className="flex flex-row gap-1 items-center">
+                                  <Image
+                                    src="/icon-payment.png"
+                                    alt="Payment Icon"
+                                    width={30}
+                                    height={30}
+                                    className="w-8 h-8 rounded-lg object-cover"
+                                  />
+                                  <span className="text-sm font-semibold text-zinc-500">
+                                    가맹점 결제완료
+                                  </span>
+
+                                  <div className="flex flex-row gap-1 items-center">
+                                    {/* image for usdt and chain image */}
+                                    <Image
+                                      src="/icon-tether.png"
+                                      alt="USDT Icon"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4 rounded-lg object-cover"
+                                    />
+                                    <Image
+                                      src={`/logo-chain-${chain}.png`}
+                                      alt={`${chain} Icon`}
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4 rounded-lg object-cover"
+                                    />
+                                  </div>
+                                </div>
+                                {/*
+                                <div className="flex flex-row gap-1 items-center">
+                                  <span className="text-sm font-semibold text-zinc-500">
+                                    지갑잔액:
+                                  </span>
+                                  <span className="text-lg font-semibold text-green-600"
+                                    style={{
+                                      fontFamily: 'monospace',
+                                    }}>
+                                    {item?.settlement?.settlementWalletBalance &&
+                                      `${Number(item?.settlement?.settlementWalletBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`
+                                    }
+                                  </span>
+                                </div>
+                                */}
 
                               </div>
 

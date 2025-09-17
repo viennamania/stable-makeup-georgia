@@ -5634,7 +5634,7 @@ const fetchBuyOrders = async () => {
                                   {item?.store?.storeName}
                                 </span>
                                 <span className="text-sm font-semibold text-zinc-500">
-                                  가맹점 결제 및 정산완료
+                                  가맹점 결제완료
                                 </span>
 
                               </div>
