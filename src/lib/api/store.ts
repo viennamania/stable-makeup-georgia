@@ -192,7 +192,7 @@ export async function getStoreByStorecode(
 
 
         paymentUrl: 1,
-        updateMaxPaymentAmountKRW: 1,
+        maxPaymentAmountKRW: 1,
 
 
       },
