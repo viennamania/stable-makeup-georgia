@@ -6000,7 +6000,7 @@ const fetchBuyOrders = async () => {
                 </a>
               </div>
               <div className="text-sm text-zinc-500 mt-2">
-                © 2023 Iskan9. All rights reserved.
+                © 2023 stable.makeup. All rights reserved.
               </div>
 
             </div>
