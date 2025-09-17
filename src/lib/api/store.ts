@@ -721,6 +721,9 @@ export async function getAllStores(
           agentFeeWalletAddress: { $ifNull: ['$agentInfo.agentFeeWalletAddress', null] },
 
           escrowAmountUSDT: 1,
+
+          maxPaymentAmountKRW: 1,
+          paymentUrl: 1,
        
         },
       },

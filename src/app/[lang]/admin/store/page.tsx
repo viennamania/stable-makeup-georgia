@@ -2651,6 +2651,10 @@ export default function Index({ params }: any) {
                             <span className="text-center">
                               블랙회원수(명)
                             </span>
+                            {/* maxPaymentAmountKRW */}
+                            <span className="text-center">
+                              1회 최대결제금액(원)
+                            </span>
                           </div>
                         </th>
                         {/*
@@ -2909,7 +2913,7 @@ export default function Index({ params }: any) {
                             ">
  
                             <div className=" h-56
-                              w-24
+                              w-28
                               flex flex-col items-between justify-between gap-2">
 
 
@@ -2917,12 +2921,17 @@ export default function Index({ params }: any) {
                                 <span className="text-lg text-gray-500">
                                   {
                                     item.totalBuyerCount ? item.totalBuyerCount : 0
-                                  }{' '}명
+                                  }
                                 </span>
                                 <span className="text-lg text-red-500">
                                   {
                                     item.totalBlackBuyerCount ? item.totalBlackBuyerCount : 0
-                                  }{' '}명
+                                  }
+                                </span>
+                                <span className="text-lg text-yellow-600">
+                                  {
+                                    item.maxPaymentAmountKRW ? Number(item.maxPaymentAmountKRW.toFixed(0)).toLocaleString('ko-KR') : 0
+                                  }
                                 </span>
                               </div>
                               
