@@ -2926,6 +2926,7 @@ const fetchBuyOrders = async () => {
   // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
+  const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
   const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
 
 
@@ -2947,6 +2948,7 @@ const fetchBuyOrders = async () => {
     const data = await response.json();
     //console.log('getTotalNumberOfBuyOrders data', data);
     setTotalNumberOfBuyOrders(data.result.totalCount);
+    setProcessingBuyOrders(data.result.orders);
     setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
 
     setLoadingTotalNumberOfBuyOrders(false);
@@ -3247,6 +3249,34 @@ const fetchBuyOrders = async () => {
                 />
               )}
 
+              {/* array of processingBuyOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingBuyOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingBuyOrders.length - 3}
+                  </span>
+                )}
+              </div>
 
               <p className="text-lg text-red-500 font-semibold">
                 {
