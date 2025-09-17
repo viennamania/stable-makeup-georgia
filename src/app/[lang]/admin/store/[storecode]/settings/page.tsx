@@ -1738,7 +1738,47 @@ export default function SettingsPage({ params }: any) {
 
 
 
-      
+    
+
+    // maxPaymentAmountKRW
+    const [maxPaymentAmountKRW, setMaxPaymentAmountKRW] = useState(0);
+    const [updatingMaxPaymentAmountKRW, setUpdatingMaxPaymentAmountKRW] = useState(false);
+    const updateMaxPaymentAmountKRW = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        if (!maxPaymentAmountKRW || maxPaymentAmountKRW < 1000 || maxPaymentAmountKRW > 10000000) {
+            toast.error("최대 결제 금액을 1,000 ~ 10,000,000 KRW로 설정하세요");
+            return;
+        }
+        setUpdatingMaxPaymentAmountKRW(true);
+        const response = await fetch('/api/store/updateMaxPaymentAmountKRW', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.storecode,
+                maxPaymentAmountKRW: maxPaymentAmountKRW,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('최대 결제 금액이 설정되었습니다');
+            setMaxPaymentAmountKRW(0);
+            setStore({
+                ...store,
+                maxPaymentAmountKRW: maxPaymentAmountKRW,
+            });
+            //fetchStore();
+        } else {
+            toast.error('최대 결제 금액 설정에 실패하였습니다');
+        }
+        setUpdatingMaxPaymentAmountKRW(false);
+    }
 
 
     return (
@@ -3579,7 +3619,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        가맹점 결제 URL 설정
+                                        가맹점 결제 설정
                                     </span>
                                 </div>
 
@@ -3651,6 +3691,74 @@ export default function SettingsPage({ params }: any) {
                                     </button>
 
                                 </div>
+
+
+                                {/* 가맹점 결제 상한 금액 KRW 설정 */}
+
+                                {/* divider */}
+                                <div className='w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                    <div className="w-full flex flex-row items-center justify-start gap-2
+                                        border-b border-gray-300 pb-2">
+                                        {/* dot */}
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg text-zinc-500">
+                                            가맹점 결제 상한 금액(원) 설정
+                                        </span>
+                                    </div>
+
+
+                                    <span className="text-zinc-500">
+                                        현재 가맹점 결제 상한 금액: {store?.maxPaymentAmountKRW
+                                            ? store?.maxPaymentAmountKRW.toLocaleString() + ' 원'
+                                            : '설정된 결제 상한 금액이 없습니다. (기본값: 3,000,000 원)'}
+                                    </span>
+
+                                    <input
+                                        type="number"
+                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                        placeholder="가맹점 결제 상한 금액(KRW)을 입력하세요"
+                                        value={maxPaymentAmountKRW}
+                                        onChange={(e) => setMaxPaymentAmountKRW(Number(e.target.value))}
+                                        // hide up and down arrow
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                                e.preventDefault();
+                                            }
+                                        }}
+                                        onWheel={(e) => e.currentTarget.blur()}
+                                    />
+                                    <button
+                                        disabled={!address || !maxPaymentAmountKRW || updatingMaxPaymentAmountKRW}
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!maxPaymentAmountKRW || updatingMaxPaymentAmountKRW
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
+
+
+                                            if (!maxPaymentAmountKRW) {
+                                                toast.error("가맹점 결제 상한 금액(KRW)을 입력하세요");
+                                                return;
+                                            }
+                                            if (Number(maxPaymentAmountKRW) <= 0) {
+                                                toast.error("가맹점 결제 상한 금액(KRW)은 0보다 커야 합니다");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${Number(maxPaymentAmountKRW).toLocaleString()} KRW로 가맹점 결제 상한 금액을 변경하시겠습니까?`
+                                            ) && updateMaxPaymentAmountKRW();
+                                        }}
+                                    >
+                                        {updatingMaxPaymentAmountKRW ? '변경 중...' : '변경'}
+                                    </button>
+
+                                </div>
+
+
+
 
                             </div>
                         </div>
