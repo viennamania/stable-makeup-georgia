@@ -192,6 +192,9 @@ export async function getStoreByStorecode(
 
 
         paymentUrl: 1,
+        updateMaxPaymentAmountKRW: 1,
+
+
       },
     },
   ]).toArray();
@@ -565,7 +568,32 @@ export async function updateStoreWithdrawalBankInfo(
 
 
 
+// updateMaxPaymentAmountKRW
+export async function updateMaxPaymentAmountKRW(
+  {
+    walletAddress,
+    storecode,
+    maxPaymentAmountKRW,
+  }: {
+    walletAddress: string;
+    storecode: string;
+    maxPaymentAmountKRW: number;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
 
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { maxPaymentAmountKRW: maxPaymentAmountKRW } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 
 

@@ -3710,30 +3710,46 @@ export default function SettingsPage({ params }: any) {
                                     </div>
 
 
-                                    <span className="text-zinc-500">
-                                        현재 가맹점 결제 상한 금액: {store?.maxPaymentAmountKRW
-                                            ? store?.maxPaymentAmountKRW.toLocaleString() + ' 원'
-                                            : '설정된 결제 상한 금액이 없습니다. (기본값: 3,000,000 원)'}
-                                    </span>
+                                    <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                        {/* information icon */}
+                                        <Image
+                                            src="/icon-info.png"
+                                            alt="Info"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-zinc-500">
+                                            현재 가맹점 결제 상한 금액: {store?.maxPaymentAmountKRW
+                                                ? store?.maxPaymentAmountKRW.toLocaleString() + ' 원'
+                                                : '설정된 결제 상한 금액이 없습니다. (기본값: 3,000,000 원)'}
+                                        </span>
+                                    </div>
 
-                                    <input
-                                        type="number"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="가맹점 결제 상한 금액(KRW)을 입력하세요"
-                                        value={maxPaymentAmountKRW}
-                                        onChange={(e) => setMaxPaymentAmountKRW(Number(e.target.value))}
-                                        // hide up and down arrow
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                                                e.preventDefault();
-                                            }
-                                        }}
-                                        onWheel={(e) => e.currentTarget.blur()}
-                                    />
+                                    <div className='w-full flex flex-row items-center justify-between'>
+                                        <input
+                                            type="text"
+                                            className="flex-1 bg-white text-zinc-500 rounded-lg p-2 text-sm"
+                                            placeholder="가맹점 결제 상한 금액(KRW)을 입력하세요"
+                                            value={maxPaymentAmountKRW}
+                                            onChange={(e) => {
+                                                // only number input with comma
+                                                const value = e.target.value;
+                                                const numericValue = value.replace(/[^0-9]/g, '');
+                                                const formattedValue = Number(numericValue).toLocaleString();
+                                                setMaxPaymentAmountKRW(Number(numericValue));
+                                            }}
+
+                                        />
+                                        <span className="text-zinc-500 ml-2">
+                                            {maxPaymentAmountKRW ? Number(maxPaymentAmountKRW).toLocaleString() : '0'} 원
+                                        </span>
+                                    </div>
+
                                     <button
                                         disabled={!address || !maxPaymentAmountKRW || updatingMaxPaymentAmountKRW}
                                         className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!maxPaymentAmountKRW || updatingMaxPaymentAmountKRW
+                                            ${!address || !maxPaymentAmountKRW || updatingMaxPaymentAmountKRW
                                             ? "opacity-50" : ""}`}
                                         onClick={() => {
 
