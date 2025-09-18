@@ -3813,7 +3813,7 @@ export default function Index({ params }: any) {
 
                               </div>
 
-                              {/* arbiscan */}
+                              {/* scan */}
                               {item?.transactionHash
                               && item?.transactionHash !== '0x'
                               && (
@@ -3888,7 +3888,13 @@ export default function Index({ params }: any) {
                                   "
                                   onClick={() => {
                                     window.open(
+                                      chain === "ethereum" ? `https://etherscan.io/tx/${item.settlement.txid}` :
+                                      chain === "polygon" ? `https://polygonscan.com/tx/${item.settlement.txid}` :
+                                      chain === "arbitrum" ? `https://arbiscan.io/tx/${item.settlement.txid}` :
+                                      chain === "bsc" ? `https://bscscan.com/tx/${item.settlement.txid}` :
                                       `https://arbiscan.io/tx/${item.settlement.txid}`,
+
+
                                       '_blank'
                                     );
                                   }}
