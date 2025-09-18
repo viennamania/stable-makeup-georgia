@@ -3270,18 +3270,11 @@ export default function SettingsPage({ params }: any) {
                                         <option value="우체국">우체국</option>
                                     </select>
                                     <input
-                                        type="number"
+                                        type="text"
                                         className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
                                         placeholder="계좌번호"
                                         value={withdrawalAccountNumber}
                                         onChange={(e) => setWithdrawalAccountNumber(e.target.value)}
-                                        // hide up and down arrow
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                                                e.preventDefault();
-                                            }
-                                        }}
-                                        onWheel={(e) => e.currentTarget.blur()}
                                     />
                                     <input
                                         type="text"
@@ -3412,19 +3405,11 @@ export default function SettingsPage({ params }: any) {
 
 
                                     <input
-                                        type="number"
+                                        type="text"
                                         className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
                                         placeholder="계좌번호"
                                         value={accountNumber}
                                         onChange={(e) => setAccountNumber(e.target.value)}
-                                        // hide up and down arrow
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                                                e.preventDefault();
-                                            }
-                                        }}
-                                        onWheel={(e) => e.currentTarget.blur()}
-
                                     />
                                     <input
                                         type="text"
