@@ -2281,6 +2281,7 @@ export default function Index({ params }: any) {
   // totalNumberOfClearanceOrders
   const [loadingTotalNumberOfClearanceOrders, setLoadingTotalNumberOfClearanceOrders] = useState(false);
   const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
+  const [processingClearanceOrders, setProcessingClearanceOrders] = useState([] as BuyOrder[]);
   useEffect(() => {
     if (!address) {
       setTotalNumberOfClearanceOrders(0);
@@ -2304,6 +2305,7 @@ export default function Index({ params }: any) {
       const data = await response.json();
       //console.log('getTotalNumberOfClearanceOrders data', data);
       setTotalNumberOfClearanceOrders(data.result.totalCount);
+      setProcessingClearanceOrders(data.result.orders);
 
       setLoadingTotalNumberOfClearanceOrders(false);
     };
@@ -2554,6 +2556,40 @@ export default function Index({ params }: any) {
                   className="w-6 h-6"
                 />
               )}
+
+              {/* array of processingClearanceOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingClearanceOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer?.depositName || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingClearanceOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingClearanceOrders.length - 3}
+                  </span>
+                )}
+              </div>
+
+
 
               <p className="text-lg text-yellow-500 font-semibold">
                 {
@@ -3171,6 +3207,40 @@ export default function Index({ params }: any) {
                       className="w-6 h-6"
                     />
                   )}
+
+
+                  {/* array of processingBuyOrders store logos */}
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                      <div className="flex flex-col items-center justify-center
+                      bg-white p-1 rounded-lg shadow-md
+                      "
+                      key={index}>
+                        <Image
+                          src={order?.store?.storeLogo || '/logo.png'}
+                          alt={order?.store?.storeName || 'Store'}
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-lg object-cover"
+                        />
+                        <span className="text-xs text-gray-500">
+                          {order?.store?.storeName || 'Store'}
+                        </span>
+                        <span className="text-sm text-gray-800 font-semibold">
+                          {order?.buyer.depositName || 'Buyer'}
+                        </span>
+                      </div>
+
+                    ))}
+
+                    {processingBuyOrders.length > 3 && (
+                      <span className="text-sm text-gray-500">
+                        +{processingBuyOrders.length - 3}
+                      </span>
+                    )}
+                  </div>
+
 
 
                   <p className="text-lg text-red-500 font-semibold">

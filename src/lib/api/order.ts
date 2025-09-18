@@ -7459,7 +7459,7 @@ export async function getTotalNumberOfBuyOrders(
 
 
 // getTotalNumberOfClearanceOrders
-export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: number }> {
+export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: number, orders: any[] }> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
   // get total number of buy orders
@@ -7468,14 +7468,34 @@ export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: n
       privateSale: true,
       //status: 'paymentConfirmed',
       status: { $in: ['paymentConfirmed'] },
+      
       'buyer.depositCompleted': false, // buyer has not completed deposit
+      //'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
+
     }
   );
 
   ///console.log('getTotalNumberOfClearanceOrders totalCount: ' + totalCount);
 
+  const results = await collection.find<UserProps>(
+    {
+      privateSale: true,
+      status: { $in: ['paymentConfirmed'] },
+      
+      'buyer.depositCompleted': false, // buyer has not completed deposit
+      //'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
+
+    },
+    { projection: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } }
+  )
+    .sort({ createdAt: -1 })
+    .toArray();
+
+
+
   return {
     totalCount: totalCount,
+    orders: results,
   }
 }
 
