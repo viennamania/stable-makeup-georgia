@@ -2226,6 +2226,7 @@ export default function Index({ params }: any) {
   // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
+  const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
   const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
 
   useEffect(() => {
@@ -2252,6 +2253,7 @@ export default function Index({ params }: any) {
       const data = await response.json();
       //console.log('getTotalNumberOfBuyOrders data', data);
       setTotalNumberOfBuyOrders(data.result.totalCount);
+      setProcessingBuyOrders(data.result.orders);
       setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
 
       setLoadingTotalNumberOfBuyOrders(false);
@@ -2460,6 +2462,39 @@ export default function Index({ params }: any) {
                   className="w-6 h-6"
                 />
               )}
+
+
+              {/* array of processingBuyOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer.depositName || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingBuyOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingBuyOrders.length - 3}
+                  </span>
+                )}
+              </div>
 
 
               <p className="text-lg text-red-500 font-semibold">
@@ -3111,8 +3146,8 @@ export default function Index({ params }: any) {
           </div>
 
 
-
-            <div className="w-full flex flex-row items-center justify-end gap-2">
+            
+            <div className="xl:hidden w-full flex flex-row items-center justify-end gap-2">
 
                 <div className="flex flex-row items-center justify-center gap-2
                 bg-white/80
