@@ -2987,6 +2987,7 @@ const fetchBuyOrders = async () => {
   // get count of status is 'paymentRequested' from api
   const [paymentRequestedCount, setPaymentRequestedCount] = useState(0);
   const [loadingPaymentRequestedCount, setLoadingPaymentRequestedCount] = useState(false);
+  const [processingPaymentRequestedOrders, setProcessingPaymentRequestedOrders] = useState([] as BuyOrder[]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -3004,7 +3005,8 @@ const fetchBuyOrders = async () => {
         });
         if (response.ok) {
           const data = await response.json();
-          setPaymentRequestedCount(data.count || 0);
+          setPaymentRequestedCount(data.result.totalCount || 0);
+          setProcessingPaymentRequestedOrders(data.result.orders || []);
         }
       } catch (error) {
         console.error("Error fetching payment requested count: ", error);
@@ -3561,6 +3563,38 @@ const fetchBuyOrders = async () => {
                 />
               )}
 
+              {/* array of processingPaymentRequestedOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingPaymentRequestedOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.store?.bankInfo?.accountHolder || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingPaymentRequestedOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingPaymentRequestedOrders.length - 3}
+                  </span>
+                )}
+              </div>
+
               <p className="text-lg text-yellow-500 font-semibold">
                 {
                 paymentRequestedCount
@@ -3585,7 +3619,7 @@ const fetchBuyOrders = async () => {
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
                     <span className="text-sm">
-                      청산관리
+                      거래소<br />판매
                     </span>
                   </button>
                 </div>

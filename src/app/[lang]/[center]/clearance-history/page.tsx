@@ -2536,6 +2536,8 @@ const [tradeSummary, setTradeSummary] = useState({
   // get count of status is 'paymentRequested' from api
   const [paymentRequestedCount, setPaymentRequestedCount] = useState(0);
   const [loadingPaymentRequestedCount, setLoadingPaymentRequestedCount] = useState(false);
+  const [processingPaymentRequestedOrders, setProcessingPaymentRequestedOrders] = useState([] as BuyOrder[]);
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -2553,7 +2555,8 @@ const [tradeSummary, setTradeSummary] = useState({
         });
         if (response.ok) {
           const data = await response.json();
-          setPaymentRequestedCount(data.count || 0);
+          setPaymentRequestedCount(data.result.totalCount || 0);
+          setProcessingPaymentRequestedOrders(data.result.orders || []);
         }
       } catch (error) {
         console.error("Error fetching payment requested count: ", error);

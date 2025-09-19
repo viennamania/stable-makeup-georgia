@@ -8025,11 +8025,6 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
       'buyer.depositName': { $eq: '' },
       status: 'paymentRequested',
     },
-    {
-      projection: {
-        tradeId: 1,
-      },
-    }
   ).toArray();
 
   ////console.log('getPaymentRequestedCount paymentRequestedOrders: ' + JSON.stringify(paymentRequestedOrders));
@@ -8050,7 +8045,10 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
     }
   );
 
-  return count;
+  return {
+    totalCount: count,
+    orders: paymentRequestedOrders,
+  }
 }
 
 

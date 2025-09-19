@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
  
   return NextResponse.json({
 
-    count: result
+    result,
 
   });
   
