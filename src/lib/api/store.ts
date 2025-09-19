@@ -597,6 +597,34 @@ export async function updateMaxPaymentAmountKRW(
 
 
 
+// updateStoreAccessToken
+export async function updateStoreAccessToken(
+  {
+    storecode,
+    accessToken,
+  }: {
+    storecode: string;
+    accessToken: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { accessToken: accessToken } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+
 
 
 

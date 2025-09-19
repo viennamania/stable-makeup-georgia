@@ -1785,7 +1785,7 @@ export default function SettingsPage({ params }: any) {
     // update accessToken
     const [accessToken, setAccessToken] = useState("");
     const [updatingAccessToken, setUpdatingAccessToken] = useState(false);
-    const updateAccessToken = async () => {
+    const updateStoreAccessToken = async () => {
         if (!address) {
             toast.error(Please_connect_your_wallet_first);
             return;
@@ -1795,7 +1795,7 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingAccessToken(true);
-        const response = await fetch('/api/store/updateAccessToken', {
+        const response = await fetch('/api/store/updateStoreAccessToken', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1844,7 +1844,7 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingAccessToken(true);
-        const response = await fetch('/api/store/updateAccessToken', {
+        const response = await fetch('/api/store/updateStoreAccessToken', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3889,7 +3889,7 @@ export default function SettingsPage({ params }: any) {
                                             <input
                                                 type="text"
                                                 className="bg-white text-zinc-500 rounded-lg p-2 text-sm flex-1"
-                                                placeholder="가맹점 Access Token을 입력하세요"
+                                                placeholder="결제 URL Access Token을 입력하세요"
                                                 value={accessToken}
                                                 onChange={(e) => setAccessToken(e.target.value)}
                                             />
@@ -3916,7 +3916,7 @@ export default function SettingsPage({ params }: any) {
 
                                                 confirm(
                                                     `정말 ${accessToken}로 가맹점 Access Token을 변경하시겠습니까?`
-                                                ) && updateAccessToken();
+                                                ) && updateStoreAccessToken();
                                             }}
                                         >
                                             {updatingAccessToken ? '변경 중...' : '변경하기'}

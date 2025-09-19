@@ -3579,7 +3579,7 @@ const fetchBuyOrders = async () => {
                   />
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/clearance-history');
+                      router.push('/' + params.lang + '/' + params.center + '/clearance-history');
                     }}
                     className="flex items-center justify-center gap-2
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
