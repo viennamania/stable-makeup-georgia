@@ -170,7 +170,9 @@ export default function RootLayout({
                     alt={store.storeName}
                     width={50}
                     height={50}
-                    className="rounded-lg object-cover mb-2"
+                    className="
+                    w-12 h-12
+                    rounded-lg object-cover mb-2"
                   />
                 )}
                 <h1 className="text-2xl font-bold">{store.storeName}</h1>
