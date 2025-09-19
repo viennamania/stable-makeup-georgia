@@ -736,7 +736,7 @@ export default function SettingsPage({ params }: any) {
             setAccountHolderAAA('');
             setStore({
                 ...store,
-                bankInfo: {
+                bankInfoAAA: {
                     bankName: bankNameAAA,
                     accountNumber: accountNumberAAA,
                     accountHolder: accountHolderAAA,

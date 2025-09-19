@@ -524,6 +524,48 @@ export async function updateStoreBankInfo(
 }
 
 
+// updateStoreBankInfoAAA
+export async function updateStoreBankInfoAAA(
+  {
+    walletAddress,
+    storecode,
+    bankName,
+    accountNumber,
+    accountHolder
+  }: {
+    walletAddress: string;
+    storecode: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const bankInfoAAA = {
+    bankName: bankName,
+    accountNumber: accountNumber,
+    accountHolder: accountHolder,
+  };
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { bankInfoAAA: bankInfoAAA } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+
+
+
 
 
 
