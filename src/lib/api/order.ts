@@ -1520,7 +1520,14 @@ export async function insertBuyOrder(data: any) {
         settlementWalletAddress: 1,
         settlementFeeWalletAddress: 1,
         settlementFeePercent: 1,
+        
         bankInfo: 1,
+        bankInfoAAA: 1,
+        bankInfoBBB: 1,
+        bankInfoCCC: 1,
+        bankInfoDDD: 1,
+        bankInfoEEE: 1,
+
         agentFeePercent: 1,
 
         totalSettlementAmount: 1,
