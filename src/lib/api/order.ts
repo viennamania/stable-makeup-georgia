@@ -74,6 +74,8 @@ export interface UserProps {
   escrowWallet: any,
 
   latestBuyOrder: any,
+
+  userType: string,
 }
 
 export interface ResultProps {
@@ -1620,6 +1622,8 @@ export async function insertBuyOrder(data: any) {
 
   const avatar = user?.avatar;
 
+  const userType = user?.userType || '';
+
   
   //const seller = user.seller;
 
@@ -1653,6 +1657,7 @@ export async function insertBuyOrder(data: any) {
       nickname: nickname,
       mobile: mobile,
       avatar: avatar,
+      userType: userType,
       
       userStats: {
         totalPaymentConfirmedCount: user.totalPaymentConfirmedCount || 0,
