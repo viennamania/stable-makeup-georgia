@@ -5954,7 +5954,7 @@ const fetchBuyOrders = async () => {
                                   className="w-5 h-5 animate-spin"
                                 />
                                 <span className="text-sm text-zinc-500">
-                                  판매자(<b>{item.seller?.nickname}</b>)가 테더(USDT)를 회원(<b>{item.nickname}</b>)에게 보내는 중입니다.
+                                  판매자(<b>{item.seller?.nickname}</b>)가 <b>{item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b> USDT를 회원(<b>{item.nickname}</b>)에게 보내는 중입니다.
                                 </span>
                               </div>
                             )}
