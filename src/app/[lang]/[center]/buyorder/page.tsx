@@ -161,6 +161,8 @@ interface BuyOrder {
     transactionHash: string;
   };
 
+  userType: string;
+
 }
 
 
@@ -5453,12 +5455,17 @@ const fetchBuyOrders = async () => {
                                   height={20}
                                   className="rounded-sm w-5 h-5"
                                 />                         
-                                <span className="text-lg text-zinc-500 font-semibold">
+                                <span className="text-sm text-zinc-500 font-semibold">
                                   {
                                     item?.nickname?.length > 10 ?
                                     item?.nickname?.substring(0, 10) + '...' :
                                     item?.nickname
                                   }
+                                </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item?.userType === 'AAA'
+                                  ? ' (AAA) '
+                                  : ' (일반) '}
                                 </span>
                               </div>
 
@@ -6156,11 +6163,21 @@ const fetchBuyOrders = async () => {
                               <div className="flex flex-row gap-2 items-center justify-center">
                                 <span className="text-lg text-gray-800 font-bold">
                                   {/*item.seller?.bankInfo?.accountHolder*/}
-                                  {item.store?.bankInfo?.accountHolder}
+                                  
+                                  {
+                                    item?.userType === 'AAA'
+                                    ? item.store?.bankInfoAAA?.accountHolder
+                                    : item.store?.bankInfo?.accountHolder
+                                  }
+
                                 </span>
                                 <span className="text-sm text-zinc-500">
                                   {/*item.seller?.bankInfo?.bankName*/}
-                                  {item.store?.bankInfo?.bankName}
+                                  {
+                                    item?.userType === 'AAA'
+                                    ? item.store?.bankInfoAAA?.bankName
+                                    : item.store?.bankInfo?.bankName
+                                  }
                                 </span>
 
                               </div>
@@ -6231,11 +6248,18 @@ const fetchBuyOrders = async () => {
                                 <div className="flex flex-row items-center gap-2">
                                   <div className="text-lg text-gray-800 font-bold">
                                     {/*item.seller?.bankInfo?.accountHolder*/}
-                                    {item.store?.bankInfo?.accountHolder}
+                                    {
+                                      item?.userType === 'AAA'
+                                      ? item.store?.bankInfoAAA?.accountHolder
+                                      : item.store?.bankInfo?.accountHolder
+                                    }
                                   </div>
                                   <div className="text-sm text-zinc-500">
                                     {/*item.seller?.bankInfo?.bankName*/}
-                                    {item.store?.bankInfo?.bankName}
+                                    {item?.userType === 'AAA'
+                                      ? item.store?.bankInfoAAA?.bankName
+                                      : item.store?.bankInfo?.bankName
+                                    }
                                   </div>
                                 </div>
                                 {/*
