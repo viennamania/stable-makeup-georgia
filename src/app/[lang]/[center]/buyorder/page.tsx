@@ -199,7 +199,7 @@ export default function Index({ params }: any) {
 
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
+  //const wallet = searchParams.get('wallet');
 
 
   // limit, page number params
@@ -2739,7 +2739,7 @@ const fetchBuyOrders = async () => {
       , 5000);
       return () => clearInterval(interval);
   
-    } , [params.center]);
+    } , [params.center, address]);
 
 
 

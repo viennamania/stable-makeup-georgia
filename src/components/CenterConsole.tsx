@@ -337,7 +337,7 @@ const CenterConsole = () => {
 
             <div className="w-full flex flex-col gap-2 justify-between items-center
               bg-green-50 p-2 rounded-lg">
-              <div className="flex flex-col gap-2 justify-center items-center">
+              <div className="flex flex-row gap-2 justify-center items-center">
                 <Image
                   src="/icon-tether.png"
                   alt="USDT"
@@ -346,7 +346,7 @@ const CenterConsole = () => {
                   className="rounded-lg w-6 h-6"
                 />
                 <span className="text-sm text-zinc-600">
-                  잔액(USDT)
+                  USDT
                 </span>
               </div>
 
@@ -360,7 +360,7 @@ const CenterConsole = () => {
 
             </div>
 
-            <div className="flex flex-col gap-2 justify-center items-center">
+            <div className="flex flex-row gap-2 justify-center items-center">
               <Image
                 src={`/logo-chain-${chain}.png`}
                 alt={`${chain} logo`}
@@ -369,16 +369,16 @@ const CenterConsole = () => {
                 className="rounded-lg"
               />
               <span className="text-sm text-zinc-600">
-                가스보유량({chain === "ethereum" ? "ETH" :
+                {chain === "ethereum" ? "ETH" :
                 chain === "polygon" ? "POL" :
                 chain === "arbitrum" ? "ETH" :
-                chain === "bsc" ? "BNB" : ""})
+                chain === "bsc" ? "BNB" : ""}
               </span>
-              <div className="text-sm font-semibold text-zinc-800"
-                style={{ fontFamily: "monospace" }}
-              >
-                {Number(nativeBalance).toFixed(8)}
-              </div>
+            </div>
+            <div className="text-sm font-semibold text-zinc-800"
+              style={{ fontFamily: "monospace" }}
+            >
+              {Number(nativeBalance).toFixed(8)}
             </div>
 
             <div className="flex flex-col gap-2 justify-center items-center">
