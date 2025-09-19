@@ -163,7 +163,7 @@ export default function RootLayout({
 
             {/* storeLogo and storeName and storecode */}
             {store && (
-              <div className="flex flex-col items-center justify-center mb-4">
+              <div className="flex flex-row items-center justify-center mb-4">
                 {store.storeLogo && (
                   <Image
                     src={store.storeLogo}
@@ -171,7 +171,7 @@ export default function RootLayout({
                     width={50}
                     height={50}
                     className="
-                    w-12 h-12
+                    w-10 h-10 mr-2
                     rounded-lg object-cover mb-2"
                   />
                 )}
