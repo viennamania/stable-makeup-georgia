@@ -176,7 +176,13 @@ export async function getStoreByStorecode(
         totalPaymentConfirmedClearanceCount: 1,
         totalKrwAmountClearance: 1,
         totalUsdtAmountClearance: 1,
+        
         bankInfo: 1,
+        bankInfoAAA: 1,
+        bankInfoBBB: 1,
+        bankInfoCCC: 1,
+        bankInfoDDD: 1,
+        bankInfoEEE: 1,
 
         withdrawalBankInfo: 1,
         
