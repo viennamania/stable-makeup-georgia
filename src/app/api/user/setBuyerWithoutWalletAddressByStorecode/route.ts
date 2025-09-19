@@ -209,6 +209,7 @@ export async function POST(request: NextRequest) {
       mobile: mobile,
       password: password,
       buyer: buyer,
+      userType: userType,
     });
 
     // return wallet address to user

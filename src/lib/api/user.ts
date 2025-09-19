@@ -1,3 +1,4 @@
+import { use } from 'react';
 import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
@@ -185,7 +186,9 @@ export async function insertOne(data: any) {
         depositBankAccountNumber: depositBankAccountNumber,
         depositBankName: depositBankName,
         depositName: depositName,
-      }
+      },
+
+      userType: data.userType,
     }
   );
 
@@ -1028,6 +1031,7 @@ export async function getAllBuyers(
           totalPaymentConfirmedKrwAmount: 1,
           totalPaymentConfirmedUsdtAmount: 1,
 
+          userType: 1,
         }
       }
     )
@@ -1420,6 +1424,8 @@ export async function getAllUsersByStorecodeAndVerified(
     )
     .sort({ nickname: 1 })
     .toArray();
+
+
   const totalCount = await collection.countDocuments(
     {
       storecode: { $regex: storecode, $options: 'i' },

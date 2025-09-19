@@ -1130,7 +1130,7 @@ export default function Index({ params }: any) {
   const [userBankDepositName, setUserBankDepositName] = useState('');
   const [userBankName, setUserBankName] = useState('');
   const [userBankAccountNumber, setUserBankAccountNumber] = useState('');
-  const [userType, setUserType] = useState('test');
+  const [userType, setUserType] = useState('');
 
 
 
@@ -2739,10 +2739,50 @@ export default function Index({ params }: any) {
                       disabled={insertingUserCode}
                       type="text"
                       value={userBankAccountNumber}
-                      onChange={(e) => setUserBankAccountNumber(e.target.value)}
+                      
+                      //onChange={(e) => setUserBankAccountNumber(e.target.value)}
+                      // check only number, not hyphen
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const regex = /^[0-9]*$/; // 숫자만 허용하는 정규식
+                        if (regex.test(value)) {
+                          setUserBankAccountNumber(value);
+                        }
+                      }}
+                     
+
                       placeholder="회원 계좌번호"
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+
+                    {/* userType */}
+                    {/* select box */}
+                    {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
+                    <select
+                      disabled={insertingUserCode}
+                      value={userType}
+                      onChange={(e) => setUserType(e.target.value)}
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="" selected={userType === ""}>
+                        일반회원
+                      </option>
+                      <option value="AAA" selected={userType === "AAA"}>
+                        AAA회원
+                      </option>
+                      <option value="BBB" selected={userType === "BBB"}>
+                        BBB회원
+                      </option>
+                      <option value="CCC" selected={userType === "CCC"}>
+                        CCC회원
+                      </option>
+                      <option value="DDD" selected={userType === "DDD"}>
+                        DDD회원
+                      </option>
+                      <option value="EEE" selected={userType === "EEE"}>
+                        EEE회원
+                      </option>
+                    </select>
 
                   </div>
 
@@ -2867,6 +2907,7 @@ export default function Index({ params }: any) {
                       <tr>
                         <th className="p-2">등록일</th>
                         <th className="p-2">회원아이디</th>
+                        <th className="p-2">회원등급</th>
                         <th className="p-2">회원 통장</th>
                         <th className="p-2">구매수(건)</th>
                         <th className="p-2 text-right">
@@ -2907,6 +2948,20 @@ export default function Index({ params }: any) {
 
                           <td className="p-2">
                             {item.nickname}
+                          </td>
+
+                          {/* userType */}
+                          {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
+                          {/* if '' or not exists then '일반회원' */}
+                          <td className="p-2 w-20 text-center"> 
+                            {
+                              item?.userType === 'AAA' ? 'AAA회원'
+                              : item?.userType === 'BBB' ? 'BBB회원'
+                              : item?.userType === 'CCC' ? 'CCC회원'
+                              : item?.userType === 'DDD' ? 'DDD회원'
+                              : item?.userType === 'EEE' ? 'EEE회원'
+                              : '일반회원'
+                            }
                           </td>
 
                           <td className="p-2">
