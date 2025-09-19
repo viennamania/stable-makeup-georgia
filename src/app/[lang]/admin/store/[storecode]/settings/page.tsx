@@ -1781,6 +1781,100 @@ export default function SettingsPage({ params }: any) {
     }
 
 
+
+    // update accessToken
+    const [accessToken, setAccessToken] = useState("");
+    const [updatingAccessToken, setUpdatingAccessToken] = useState(false);
+    const updateAccessToken = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        if (accessToken.length < 5 || accessToken.length > 100) {
+            toast.error("엑세스 토큰을 5자 이상 100자 이하로 설정하세요");
+            return;
+        }
+        setUpdatingAccessToken(true);
+        const response = await fetch('/api/store/updateAccessToken', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.storecode,
+                accessToken: accessToken,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('엑세스 토큰이 설정되었습니다');
+            setAccessToken('');
+            setStore({
+                ...store,
+                accessToken: accessToken,
+            });
+            //fetchStore();
+        } else {
+            toast.error('엑세스 토큰 설정에 실패하였습니다');
+        }
+        setUpdatingAccessToken(false);
+    }
+
+    // generateAccessToken
+    // generate a random string of 20 characters
+  
+    const generateAccessToken = async () => {
+
+        // generate a random string of 20 characters
+        const newAccessToken = Array(20)
+            .fill(null)
+            .map(() => Math.random().toString(36).charAt(2))
+            .join('');
+
+        setAccessToken(newAccessToken);
+    }
+
+
+    // resetAccessToken
+    const resetAccessToken = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        setUpdatingAccessToken(true);
+        const response = await fetch('/api/store/updateAccessToken', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.storecode,
+                accessToken: '',
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('엑세스 토큰이 초기화되었습니다');
+            setAccessToken('');
+            setStore({
+                ...store,
+                accessToken: '',
+            });
+            //fetchStore();
+        } else {
+            toast.error('엑세스 토큰 초기화에 실패하였습니다');
+        }
+        setUpdatingAccessToken(false);
+    }
+
+
+        
+
+
     return (
 
         <main className="p-4 min-h-[100vh] flex items-start justify-center container max-w-screen-sm mx-auto">
@@ -2032,7 +2126,7 @@ export default function SettingsPage({ params }: any) {
                                             ) && writeStoreName();
                                         }}
                                     >
-                                        {settingStoreName ? "수정 중..." : "수정"}
+                                        {settingStoreName ? "변경 중..." : "변경하기"}
                                     </button>
                                 
                                 </div>
@@ -2077,7 +2171,7 @@ export default function SettingsPage({ params }: any) {
                                             writeStoreDescription();
                                         }}
                                     >
-                                        {writingStoreDescription ? "수정 중..." : "수정"}
+                                        {writingStoreDescription ? "변경 중..." : "변경하기"}
                                     </button>
                                 </div>
                             </div>
@@ -2178,7 +2272,7 @@ export default function SettingsPage({ params }: any) {
                                         ) && updateBackgroundColor();
                                     }}
                                 >
-                                    {updatingBackgroundColor ? '변경 중...' : '변경'}
+                                    {updatingBackgroundColor ? '변경 중...' : '변경하기'}
                                 </button>
                             
                             </div>
@@ -2354,7 +2448,7 @@ export default function SettingsPage({ params }: any) {
                                             ) && updateAgentFeePercent();
                                         }}
                                     >
-                                        {updatingAgentFeePercent ? "수정 중..." : "수정"}
+                                        {updatingAgentFeePercent ? "변경 중..." : "변경하기"}
                                     </button>
                                 </div>
 
@@ -2516,7 +2610,7 @@ export default function SettingsPage({ params }: any) {
                                         className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
                                             ${updatingAdminWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
-                                        {updatingAdminWalletAddress ? '변경 중...' : '변경'}
+                                        {updatingAdminWalletAddress ? '변경 중...' : '변경하기'}
                                         </button> 
                                     </div>
                                 ) : (
@@ -2642,7 +2736,7 @@ export default function SettingsPage({ params }: any) {
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
                                         ${updatingSettlementWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
-                                    {updatingSettlementWalletAddress ? '변경 중...' : '변경'}
+                                    {updatingSettlementWalletAddress ? '변경 중...' : '변경하기'}
                                     </button>
                                 </div>
                                 ) : (
@@ -2787,7 +2881,7 @@ export default function SettingsPage({ params }: any) {
                                             className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
                                                 ${updatingSettlementFeeWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
-                                            {updatingSettlementFeeWalletAddress ? '변경 중...' : '변경'}
+                                            {updatingSettlementFeeWalletAddress ? '변경 중...' : '변경하기'}
                                             </button>
                                         </div>
                                     ) : (
@@ -2866,7 +2960,7 @@ export default function SettingsPage({ params }: any) {
                                                 ) && updateSettlementFeePercent();
                                             }}
                                         >
-                                            {updatingSettlementFeePercent ? '변경 중...' : '변경'}
+                                            {updatingSettlementFeePercent ? '변경 중...' : '변경하기'}
                                         </button>
 
                                     </div>
@@ -3014,7 +3108,7 @@ export default function SettingsPage({ params }: any) {
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
                                         ${updatingSellerWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
-                                    {updatingSellerWalletAddress ? '변경 중...' : '변경'}
+                                    {updatingSellerWalletAddress ? '변경 중...' : '변경하기'}
                                     </button> 
                                 </div>
                                 ) : (
@@ -3077,7 +3171,7 @@ export default function SettingsPage({ params }: any) {
                                     className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
                                         ${updatingSellerWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
-                                    {updatingSellerWalletAddress ? '변경 중...' : '변경'}
+                                    {updatingSellerWalletAddress ? '변경 중...' : '변경하기'}
                                     </button>
                                 </div>
                                 ) : (
@@ -3171,7 +3265,7 @@ export default function SettingsPage({ params }: any) {
                                             ) && updateEscrowAmountUSDT();
                                         }}
                                     >
-                                        {updatingEscrowAmountUSDT ? '변경 중...' : '변경'}
+                                        {updatingEscrowAmountUSDT ? '변경 중...' : '변경하기'}
                                     </button>
                                     */}
 
@@ -3300,7 +3394,7 @@ export default function SettingsPage({ params }: any) {
                                             ) && writeStoreWithdrawalBankInfo();
                                         }}
                                     >
-                                        {writingStoreWithdrawalBankInfo ? '변경 중...' : '변경'}
+                                        {writingStoreWithdrawalBankInfo ? '변경 중...' : '변경하기'}
                                     </button>
 
                                 </div>
@@ -3437,7 +3531,7 @@ export default function SettingsPage({ params }: any) {
                                             ) && writeStoreBankInfo();
                                         }}
                                     >
-                                        {writingStoreBankInfo ? '변경 중...' : '변경'}
+                                        {writingStoreBankInfo ? '변경 중...' : '변경하기'}
                                     </button>
 
                                 </div>
@@ -3554,7 +3648,7 @@ export default function SettingsPage({ params }: any) {
                                             ) && updatePayactionKeys();
                                         }}
                                     >
-                                        {updatingPayactionKeys ? '변경 중...' : '변경'}
+                                        {updatingPayactionKeys ? '변경 중...' : '변경하기'}
                                     </button>
 
                                     <div className='mt-2 w-full flex flex-col items-center justify-center gap-2'>
@@ -3672,13 +3766,13 @@ export default function SettingsPage({ params }: any) {
                                             ) && updatePaymentUrl();
                                         }}
                                     >
-                                        {updatingPaymentUrl ? '변경 중...' : '변경'}
+                                        {updatingPaymentUrl ? '변경 중...' : '변경하기'}
                                     </button>
 
                                 </div>
 
 
-                                {/* 가맹점 결제 상한 금액 KRW 설정 */}
+                                {/* 결제 상한 금액 KRW 설정 */}
 
                                 {/* divider */}
                                 <div className='w-full h-[1px] bg-zinc-300'></div>
@@ -3690,7 +3784,7 @@ export default function SettingsPage({ params }: any) {
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg text-zinc-500">
-                                            가맹점 결제 상한 금액(원) 설정
+                                            결제 상한 금액(원) 설정
                                         </span>
                                     </div>
 
@@ -3705,7 +3799,7 @@ export default function SettingsPage({ params }: any) {
                                             className="w-4 h-4"
                                         />
                                         <span className="text-zinc-500">
-                                            현재 가맹점 결제 상한 금액: {store?.maxPaymentAmountKRW
+                                            현재 결제 상한 금액: {store?.maxPaymentAmountKRW
                                                 ? store?.maxPaymentAmountKRW.toLocaleString() + ' 원'
                                                 : '설정된 결제 상한 금액이 없습니다. (기본값: 3,000,000 원)'}
                                         </span>
@@ -3715,7 +3809,7 @@ export default function SettingsPage({ params }: any) {
                                         <input
                                             type="text"
                                             className="flex-1 bg-white text-zinc-500 rounded-lg p-2 text-sm"
-                                            placeholder="가맹점 결제 상한 금액(KRW)을 입력하세요"
+                                            placeholder="결제 상한 금액(KRW)을 입력하세요"
                                             value={maxPaymentAmountKRW}
                                             onChange={(e) => {
                                                 // only number input with comma
@@ -3740,23 +3834,116 @@ export default function SettingsPage({ params }: any) {
 
 
                                             if (!maxPaymentAmountKRW) {
-                                                toast.error("가맹점 결제 상한 금액(KRW)을 입력하세요");
+                                                toast.error("결제 상한 금액(KRW)을 입력하세요");
                                                 return;
                                             }
                                             if (Number(maxPaymentAmountKRW) <= 0) {
-                                                toast.error("가맹점 결제 상한 금액(KRW)은 0보다 커야 합니다");
+                                                toast.error("결제 상한 금액(KRW)은 0보다 커야 합니다");
                                                 return;
                                             }
 
                                             confirm(
-                                                `정말 ${Number(maxPaymentAmountKRW).toLocaleString()} KRW로 가맹점 결제 상한 금액을 변경하시겠습니까?`
+                                                `정말 ${Number(maxPaymentAmountKRW).toLocaleString()} KRW로 결제 상한 금액을 변경하시겠습니까?`
                                             ) && updateMaxPaymentAmountKRW();
                                         }}
                                     >
-                                        {updatingMaxPaymentAmountKRW ? '변경 중...' : '변경'}
+                                        {updatingMaxPaymentAmountKRW ? '변경 중...' : '변경하기'}
                                     </button>
 
                                 </div>
+
+
+                                {/* 결제 URL accessToken settings */}
+                                {/* divider */}
+                                <div className='w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                    <div className="w-full flex flex-row items-center justify-start gap-2
+                                        border-b border-gray-300 pb-2">
+                                        {/* dot */}
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg text-zinc-500">
+                                            결제 URL Access Token 설정
+                                        </span>
+                                    </div>
+                                    <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                        {/* information icon */}
+                                        <Image
+                                            src="/icon-info.png"
+                                            alt="Info"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-zinc-500">
+                                            현재 결제 URL Access Token: {store?.accessToken
+                                                ? store?.accessToken
+                                                : '설정된 Access Token이 없습니다.'}
+                                        </span>
+                                    </div>
+
+                                    <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                        <div className="w-full flex flex-row items-between justify-center gap-2">
+                                            <input
+                                                type="text"
+                                                className="bg-white text-zinc-500 rounded-lg p-2 text-sm flex-1"
+                                                placeholder="가맹점 Access Token을 입력하세요"
+                                                value={accessToken}
+                                                onChange={(e) => setAccessToken(e.target.value)}
+                                            />
+                                            {/* button for random accessToken */}
+                                            <button
+                                                className="bg-gray-300 text-zinc-700 rounded-lg p-2 text-sm"
+                                                onClick={() => {
+                                                    generateAccessToken();
+                                                }}
+                                            >
+                                                자동생성하기
+                                            </button>
+                                        </div>
+                                        <button
+                                            disabled={!address || !accessToken || updatingAccessToken}
+                                            className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!accessToken || updatingAccessToken
+                                                ? "opacity-50" : ""}`}
+                                            onClick={() => {
+                                                if (!accessToken) {
+                                                    toast.error("가맹점 Access Token을 입력하세요");
+                                                    return;
+                                                }
+
+                                                confirm(
+                                                    `정말 ${accessToken}로 가맹점 Access Token을 변경하시겠습니까?`
+                                                ) && updateAccessToken();
+                                            }}
+                                        >
+                                            {updatingAccessToken ? '변경 중...' : '변경하기'}
+                                        </button>
+
+                                    </div>
+
+                                    {/* 초기화 하기 resetAccessToken */}
+                                    <div className="flex flex-row items-center justify-start gap-2">
+                                        <button
+                                            disabled={updatingAccessToken}
+                                            className={`bg-red-500 text-zinc-100 rounded-lg p-2 text-sm
+                                                ${updatingAccessToken
+                                                ? "opacity-50" : ""}`}
+                                            style={{ marginTop: '8px' }}
+                                            onClick={() => {
+                                                confirm(
+                                                    `정말 ${accessToken}로 가맹점 Access Token을 초기화하시겠습니까?`
+                                                ) && resetAccessToken();
+                                            }}
+                                        >
+                                            {updatingAccessToken ? '초기화 중...' : '초기화 하기'}
+                                        </button>
+                                    </div>
+
+                                </div>
+                                
 
 
 
