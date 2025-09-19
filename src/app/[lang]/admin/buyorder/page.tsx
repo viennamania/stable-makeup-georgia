@@ -4836,6 +4836,11 @@ const fetchBuyOrders = async () => {
                                   item?.nickname
                                 }
                               </span>
+                              <span className="text-sm text-zinc-500">
+                                {item?.userType === 'AAA'
+                                ? ' (AAA) '
+                                : ' (일반) '}
+                              </span>
                             </div>
 
                             {/* wallet address */}
