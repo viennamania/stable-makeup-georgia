@@ -175,6 +175,7 @@ interface BuyOrder {
 
   sellerWalletAddressBalance: number; // balance of seller wallet address, added in version 1.1.5
 
+  userType: string; // added in version 1.2.0, user type (e.g., AAA, BBB, CCC, DDD, EEE)
 }
 
 
@@ -5650,11 +5651,19 @@ const fetchBuyOrders = async () => {
                                 <div className="flex flex-row gap-1 items-center justify-end">
                                   <div className="text-sm text-zinc-500">
                                     {/*item.seller?.bankInfo?.bankName*/}
-                                    {item.store?.bankInfo?.bankName}
+                                    {
+                                      item?.userType === 'AAA'
+                                      ? item.store?.bankInfoAAA?.bankName
+                                      : item.store?.bankInfo?.bankName
+                                    }
                                   </div>
                                   <div className="text-lg text-gray-800 font-bold">
                                     {/*item.seller?.bankInfo?.accountHolder*/}
-                                    {item.store?.bankInfo?.accountHolder}
+                                    {
+                                      item?.userType === 'AAA'
+                                      ? item.store?.bankInfoAAA?.accountHolder
+                                      : item.store?.bankInfo?.accountHolder
+                                    }
                                   </div>
                                 </div>
 
@@ -6255,18 +6264,29 @@ const fetchBuyOrders = async () => {
                                     <div className="flex flex-col gap-2 items-center justify-center">
                                       <div className="flex flex-row gap-2 items-center justify-center">
                                         <span className="text-sm text-zinc-500">
-                                          {item.store?.bankInfo?.accountHolder}
+                                          {
+                                            item?.userType === 'AAA'
+                                            ? item.store?.bankInfoAAA?.accountHolder
+                                            : item.store?.bankInfo?.accountHolder
+                                          }
                                         </span>
                                         <span className="text-sm text-zinc-500">
-                                          {item.store?.bankInfo?.bankName}
+                                          {
+                                            item?.userType === 'AAA'
+                                            ? item.store?.bankInfoAAA?.bankName
+                                            : item.store?.bankInfo?.bankName
+                                          }
                                         </span>
                                       </div>
 
                                       <span className="text-sm text-zinc-500">
                                         {
-                                          item.store?.bankInfo?.accountNumber &&
-                                          item.store?.bankInfo?.accountNumber.length > 5 &&
-                                          item.store?.bankInfo?.accountNumber.substring(0, 5) + '...'
+                                          item?.userType === 'AAA'
+                                          ? item.store?.bankInfoAAA?.accountNumber && item.store?.bankInfoAAA?.accountNumber.length > 5 &&
+                                            item.store?.bankInfoAAA?.accountNumber.substring(0, 5) + '...'
+                                          : item.store?.bankInfo?.accountNumber &&
+                                            item.store?.bankInfo?.accountNumber.length > 5 &&
+                                            item.store?.bankInfo?.accountNumber.substring(0, 5) + '...'
                                         }
                                       </span>
 

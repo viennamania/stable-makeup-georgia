@@ -2770,6 +2770,7 @@ export default function Index({ params }: any) {
                       <option value="AAA" selected={userType === "AAA"}>
                         AAA회원
                       </option>
+                      {/*
                       <option value="BBB" selected={userType === "BBB"}>
                         BBB회원
                       </option>
@@ -2782,6 +2783,7 @@ export default function Index({ params }: any) {
                       <option value="EEE" selected={userType === "EEE"}>
                         EEE회원
                       </option>
+                      */}
                     </select>
 
                   </div>
