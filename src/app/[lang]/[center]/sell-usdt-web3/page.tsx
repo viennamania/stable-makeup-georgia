@@ -1517,7 +1517,7 @@ export default function Index({ params }: any) {
               </div>
 
 
-                <div className="mt-5 w-full flex flex-col md:flex-row items-start justify-between gap-3">
+                <div className="mt-5 w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
                   {/* my usdt balance */}
                   <div className="flex flex-row items-start gap-3">
@@ -1795,7 +1795,7 @@ export default function Index({ params }: any) {
                       bg-black p-4 rounded-md border-2 border-green-500`}
                     >
 
-                      <div className="flex flex-col md:flex-row gap-5 xl:gap-10 items-center">
+                      <div className="flex flex-col sm:flex-row gap-5 xl:gap-10 items-center">
 
 
                         <div className="flex flex-col gap-2 items-start">
@@ -2192,7 +2192,7 @@ export default function Index({ params }: any) {
                       className={` ${checkInputKrwAmount ? 'block' : 'hidden'} bg-black p-4 rounded-md border-2 border-green-500`}
                     >
                         
-                        <div className="flex flex-col md:flex-row gap-5 xl:gap-5 items-center ">
+                        <div className="flex flex-col sm:flex-row gap-5 xl:gap-5 items-center ">
                             
                             <div className="flex flex-col gap-2 items-start">
                               
@@ -3234,7 +3234,7 @@ export default function Index({ params }: any) {
                                             height={12}
                                           />
                                         )}
-                                        <div className="flex flex-row md:flex-col items-center gap-1">
+                                        <div className="flex flex-row sm:flex-col items-center gap-1">
                                           <span>{Cancel_My_Order}</span>
                                         </div>
                                       </div>

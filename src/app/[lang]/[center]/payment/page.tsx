@@ -2379,7 +2379,7 @@ export default function Index({ params }: any) {
 
 
             {orderId === '0' && (
-              <div className='hidden w-full flex-col md:flex-row gap-2 items-center xl:items-end justify-center'>
+              <div className='hidden w-full flex-col sm:flex-row gap-2 items-center xl:items-end justify-center'>
 
               
                   <span className="text-sm text-zinc-500">
@@ -2515,7 +2515,7 @@ export default function Index({ params }: any) {
 
 
                     {isMyWalletAddress && (
-                      <div className="w-full flex flex-col md:flex-row gap-2 items-start justify-start">
+                      <div className="w-full flex flex-col sm:flex-row gap-2 items-start justify-start">
 
                         <input
                           disabled
@@ -2606,7 +2606,7 @@ export default function Index({ params }: any) {
 
                   
 
-                      <div className="flex flex-col md:flex-row gap-2 items-center justify-center
+                      <div className="flex flex-col sm:flex-row gap-2 items-center justify-center
                         border-b-2 border-zinc-200 border-opacity-50
                         pb-2 mb-2
                         ">
@@ -2782,7 +2782,7 @@ export default function Index({ params }: any) {
                       )}
 
 
-                      <div className='mt-5 flex flex-col md:flex-row gap-2 items-center justify-center'>
+                      <div className='mt-5 flex flex-col sm:flex-row gap-2 items-center justify-center'>
 
                         <div className="felex flex-col gap-2 items-center justify-center">
 
@@ -2944,7 +2944,7 @@ export default function Index({ params }: any) {
 
 
             {sellOrders.length > 0 && (
-              <div className="mt-4 w-full flex flex-col gap-5 md:flex-row items-start justify-center ">
+              <div className="mt-4 w-full flex flex-col gap-5 sm:flex-row items-start justify-center ">
 
 
                 <div className="w-full mb-10 grid grid-cols-1 gap-4  justify-center  ">

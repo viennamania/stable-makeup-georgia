@@ -2174,7 +2174,7 @@ const fetchBuyOrders = async () => {
 
 
 
-              <div className="mt-5 w-full flex flex-col md:flex-row items-center justify-end gap-3">
+              <div className="mt-5 w-full flex flex-col sm:flex-row items-center justify-end gap-3">
 
 
                 {/* search bar */}

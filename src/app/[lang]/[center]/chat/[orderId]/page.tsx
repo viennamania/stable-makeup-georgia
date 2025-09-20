@@ -1881,7 +1881,7 @@ export default function Index({ params }: any) {
 
 
              {orderId === '0' && (
-                <div className='hidden w-full flex-col md:flex-row gap-2 items-center xl:items-end justify-center'>
+                <div className='hidden w-full flex-col sm:flex-row gap-2 items-center xl:items-end justify-center'>
 
                 
                     <span className="text-sm text-zinc-500">
@@ -2345,7 +2345,7 @@ export default function Index({ params }: any) {
 
 
           {buyOrders.length > 0 && (
-            <div className="w-full flex flex-col md:flex-row items-start justify-center gap-2">
+            <div className="w-full flex flex-col sm:flex-row items-start justify-center gap-2">
 
 
               <div className="

@@ -3164,7 +3164,7 @@ const [tradeSummary, setTradeSummary] = useState({
         <div className="py-0 w-full">
 
        
-          <div className={`w-full flex flex-col md:flex-row items-center justify-between gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
             p-2 rounded-lg mb-4
             ${store?.backgroundColor ?
               "bg-" + store.backgroundColor + " " :
@@ -3255,7 +3255,7 @@ const [tradeSummary, setTradeSummary] = useState({
                       >
                         <div className="
                           w-40 xl:w-48
-                          flex flex-col md:flex-row items-center justify-center gap-2">
+                          flex flex-col sm:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
                           </span>
@@ -3478,7 +3478,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
-                <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5">
+                <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
 
                   <div className="hidden flex-row items-start gap-3">
 
@@ -3494,7 +3494,7 @@ const [tradeSummary, setTradeSummary] = useState({
                             
                             <div className="flex flex-col gap-2">
 
-                              <div className="flex flex-col md:flex-row gap-2">
+                              <div className="flex flex-col sm:flex-row gap-2">
                                 <span className="text-sm">
                                   {
                                     user && user.seller?.bankInfo.bankName
@@ -3555,14 +3555,14 @@ const [tradeSummary, setTradeSummary] = useState({
                   {address && (
                       <div className="flex
                       mt-4 mb-2
-                      w-full flex-col md:flex-row items-start justify-start gap-5
+                      w-full flex-col sm:flex-row items-start justify-start gap-5
                       border border-zinc-200 rounded-lg p-4
                       bg-white shadow-md
                       ">
 
 
                         
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                           <div className="flex flex-row items-center justify-center gap-2">
                               <Image
                                   src="/icon-shield.png"
@@ -3692,14 +3692,14 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-center gap-5 mt-4">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-5 mt-4">
 
 
                 <div className="flex flex-col gap-2 items-start">
 
                   <div className="flex flex-row items-center gap-2">
 
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                       {/* search nickname */}
                       <div className="flex flex-row items-center gap-2">
                         <input
@@ -3825,7 +3825,7 @@ const [tradeSummary, setTradeSummary] = useState({
                 >
                     
                     <div className="
-                    flex flex-col md:flex-row gap-5 xl:gap-20 items-center ">
+                    flex flex-col sm:flex-row gap-5 xl:gap-20 items-center ">
                         
                         <div className="flex flex-col gap-2 items-start">
 
@@ -4036,13 +4036,13 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3 mt-4">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
 
-                <div className="selection:w-full flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="selection:w-full flex flex-col sm:flex-row items-center justify-between gap-3">
 
                   {/* serach fromDate and toDate */}
                   {/* DatePicker for fromDate and toDate */}
-                  <div className="flex flex-col md:flex-row items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
                     <div className="flex flex-row items-center gap-2">
                       <Image
                         src="/icon-calendar.png"
@@ -4113,7 +4113,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                 {/* search depositName */}
                 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
 
                   <div className="flex flex-row items-center gap-2">
                     <input
@@ -4169,7 +4169,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                 {/* trade summary */}
 
-                <div className="flex flex-col md:flex-row items-center justify-between gap-2
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2
                   w-full
                   bg-zinc-100/50
                   p-4 rounded-lg shadow-md
@@ -4179,7 +4179,7 @@ const [tradeSummary, setTradeSummary] = useState({
                   {/* divider */}
                   
                   <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-                  <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
+                  <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
                   <div className="w-full xl:w-1/3
                     flex flex-row items-start justify-between gap-2 pl-4 pr-4">

@@ -1918,7 +1918,7 @@ export default function Index({ params }: any) {
 
 
 
-        <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
             
            <div className="w-full flex flex-row items-center justify-start gap-2">
              <button
@@ -2226,7 +2226,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
+          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
   
 
@@ -2262,7 +2262,7 @@ export default function Index({ params }: any) {
 
           {/* 바이어 추가 input and button */}
           <div className="
-            flex flex-col md:flex-col items-start justify-center gap-2">
+            flex flex-col sm:flex-col items-start justify-center gap-2">
 
 
             <div className="w-full flex flex-row items-center justify-between gap-2">
@@ -2466,7 +2466,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-col md:flex-row items-start justify-between gap-2 mt-4">
+          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2 mt-4">
 
 
 
@@ -2542,7 +2542,7 @@ export default function Index({ params }: any) {
             <div className="flex flex-row items-center gap-2">
 
 
-              <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                 {/* search nickname */}
                 <div className="flex flex-row items-center gap-2">
                   <input
@@ -2751,7 +2751,7 @@ export default function Index({ params }: any) {
                         </th>
 
                         <th className="p-2">
-                          <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                             <span>회원아이디</span>
                             <span>가맹점 </span>
                           </div>
@@ -2814,7 +2814,7 @@ export default function Index({ params }: any) {
                             <div className="
                               w-40
                               xl:w-64
-                              flex flex-col md:flex-row items-center justify-between gap-2">
+                              flex flex-col sm:flex-row items-center justify-between gap-2">
                               <span className="
                                 w-1/2
                                 text-lg font-semibold">
@@ -2915,7 +2915,7 @@ export default function Index({ params }: any) {
 
                           {/* depositAmountKrw input */}
                           <td className="p-2">
-                            <div className="flex flex-col md:flex-row items-start justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
                               <input
                                 type="text"
                                 value={depositAmountKrw[index]}
@@ -2935,7 +2935,7 @@ export default function Index({ params }: any) {
 
                           <td className="p-2">
 
-                            <div className="flex flex-col md:flex-row items-start justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
 
  
 
@@ -3005,7 +3005,7 @@ export default function Index({ params }: any) {
 
 
                           <td className="p-2">
-                            <div className="flex flex-col md:flex-row items-start justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
                               <span className="text-sm text-zinc-500">
                                 {
                                 item?.buyOrderStatus === 'ordered' ? (

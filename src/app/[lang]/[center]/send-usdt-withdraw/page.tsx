@@ -780,7 +780,7 @@ export default function SendUsdt({ params }: any) {
             <div className="w-full flex flex-col gap-2 items-start">
 
 
-              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
+              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
                 {/* my usdt balance */}
                 <div className="flex flex-row items-start gap-3">
@@ -916,7 +916,7 @@ export default function SendUsdt({ params }: any) {
               <div className="text-lg">{Enter_the_amount_and_recipient_address}</div>
 
 
-              <div className='mb-5 flex flex-col md:flex-row gap-5 items-start justify-between'>
+              <div className='mb-5 flex flex-col sm:flex-row gap-5 items-start justify-between'>
 
                 <input
                   disabled={sending}

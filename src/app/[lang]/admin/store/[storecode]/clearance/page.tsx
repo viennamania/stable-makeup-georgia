@@ -1780,7 +1780,7 @@ export default function Index({ params }: any) {
                   </div>
               </div>
 
-              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-4">
+              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-4">
 
 
                 {/*
@@ -1918,10 +1918,10 @@ export default function Index({ params }: any) {
 
 
 
-                  <div className="w-full flex flex-col md:flex-row items-center justify-start gap-5">
+                  <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-5">
 
 
-                    <div className="flex flex-col md:flex-row items-between justify-between gap-5
+                    <div className="flex flex-col sm:flex-row items-between justify-between gap-5
                       border border-zinc-300/50
                       bg-white/50
                       p-4 rounded-lg shadow-md
@@ -2076,7 +2076,7 @@ export default function Index({ params }: any) {
               
                     >
 
-                      <div className="flex flex-col md:flex-row gap-5 xl:gap-10 items-center">
+                      <div className="flex flex-col sm:flex-row gap-5 xl:gap-10 items-center">
 
 
                         <div className="flex flex-col gap-2 items-start">
@@ -2441,7 +2441,7 @@ export default function Index({ params }: any) {
                         
                         <div className="
                         w-full
-                        flex flex-col md:flex-row gap-5 xl:gap-20 items-center ">
+                        flex flex-col sm:flex-row gap-5 xl:gap-20 items-center ">
                             
                             <div className="flex flex-col gap-2 items-start">
 
@@ -2631,7 +2631,7 @@ export default function Index({ params }: any) {
 
                     {/* serach fromDate and toDate */}
                     {/* DatePicker for fromDate and toDate */}
-                    <div className="flex flex-col md:flex-row items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
                       <div className="flex flex-row items-center gap-2">
                         <Image
                           src="/icon-calendar.png"
@@ -3751,7 +3751,7 @@ export default function Index({ params }: any) {
                                             height={12}
                                           />
                                         )}
-                                        <div className="flex flex-row md:flex-col items-center gap-1">
+                                        <div className="flex flex-row sm:flex-col items-center gap-1">
                                           <span>{Cancel_My_Order}</span>
                                         </div>
                                       </div>

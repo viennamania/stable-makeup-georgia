@@ -2740,7 +2740,7 @@ const fetchBuyOrders = async () => {
 
 
         {params.agentcode && (
-          <div className={`w-full flex flex-col md:flex-row items-center justify-start gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
             p-2 rounded-lg mb-4
               "bg-black/10"
             }`}>
@@ -2985,7 +2985,7 @@ const fetchBuyOrders = async () => {
 
         <div className="py-0 w-full">
 
-          <div className={`w-full flex flex-col md:flex-row items-center justify-start gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
             p-2 rounded-lg mb-4
             ${agent?.backgroundColor ?
               "bg-[#"+agent?.backgroundColor+"]" :
@@ -3107,7 +3107,7 @@ const fetchBuyOrders = async () => {
         <div className="py-0 w-full">
 
 
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
             <div className="w-full flex flex-row items-center justify-start gap-2">
              <button
@@ -3377,7 +3377,7 @@ const fetchBuyOrders = async () => {
 
             {/* trade summary */}
 
-            <div className="flex flex-col md:flex-row items-center justify-between gap-2
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2
               w-full
               bg-zinc-100/50
               p-4 rounded-lg shadow-md
@@ -3408,7 +3408,7 @@ const fetchBuyOrders = async () => {
 
               {/* divider */}
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
+              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full flex flex-row items-center justify-center gap-2">
                 <div className="flex flex-col gap-2 items-center">
@@ -3435,7 +3435,7 @@ const fetchBuyOrders = async () => {
 
               {/* divider */}
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
+              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full flex flex-row items-center justify-center gap-2">
                 <div className="flex flex-col gap-2 items-center">
@@ -3467,7 +3467,7 @@ const fetchBuyOrders = async () => {
 
 
             {address && (
-                <div className="w-full flex flex-col md:flex-row items-center justify-end gap-2">
+                <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-2">
 
 
                     <div className="flex flex-row items-center justify-center gap-2">
@@ -3552,14 +3552,14 @@ const fetchBuyOrders = async () => {
 
 
 
-            <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5">
+            <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
 
-              <div className="flex flex-col md:flex-row items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
 
                 {/* search bar */}
                 {/* searchStorecode */}
                 {/*
-                <div className="flex flex-col md:flex-row items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <input
                     type="text"
                     value={searchStoreName}
@@ -3871,7 +3871,7 @@ const fetchBuyOrders = async () => {
 
 
                       <th className="p-2">
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                           <span>
                             거래취소
                           </span>
@@ -3941,7 +3941,7 @@ const fetchBuyOrders = async () => {
                           <div className="
 
                             w-32
-                            flex flex-col md:flex-row items-start justify-start gap-2
+                            flex flex-col sm:flex-row items-start justify-start gap-2
                             bg-zinc-100
                             rounded-lg
                             border border-zinc-800
@@ -4087,7 +4087,7 @@ const fetchBuyOrders = async () => {
                                   }
                                 </span>
                                 <span className="
-                                  hidden md:flex
+                                  hidden sm:flex
                                   text-sm text-zinc-500">
                                   {
                                     item?.buyer?.depositBankName
@@ -4786,7 +4786,7 @@ const fetchBuyOrders = async () => {
 
                               w-44
                               xl:w-64
-                              flex flex-col md:flex-row gap-2 items-start justify-start">
+                              flex flex-col sm:flex-row gap-2 items-start justify-start">
 
 
                             
@@ -4879,7 +4879,7 @@ const fetchBuyOrders = async () => {
                             <div className="flex flex-col gap-2 items-center justify-center">
 
                               {/*
-                              <div className="flex flex-col md:flex-row gap-2 items-center justify-center">
+                              <div className="flex flex-col sm:flex-row gap-2 items-center justify-center">
                                 <span className="text-sm text-zinc-500 font-semibold">
                                   {item.store?.bankInfo?.bankName}
                                 </span>
@@ -4925,7 +4925,7 @@ const fetchBuyOrders = async () => {
 
                               w-44
                               xl:w-64
-                              flex flex-col md:flex-row gap-2 items-start justify-start
+                              flex flex-col sm:flex-row gap-2 items-start justify-start
                               `}>
 
                               

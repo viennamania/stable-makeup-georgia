@@ -1003,7 +1003,7 @@ export default function Index({ params }: any) {
         <div className="py-0 w-full">
 
 
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
             <div className="w-full flex flex-row items-center justify-start gap-2">
 
@@ -1267,7 +1267,7 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
 
 
 
@@ -1332,7 +1332,7 @@ export default function Index({ params }: any) {
                 {/* serach fromDate and toDate */}
                 {/* DatePicker for fromDate and toDate */}
                 {/*
-                <div className="flex flex-col md:flex-row items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <div className="flex flex-row items-center gap-2">
                     <Image
                       src="/icon-calendar.png"
@@ -1373,7 +1373,7 @@ export default function Index({ params }: any) {
                 {/*
                 <div className="flex flex-col items-center gap-2">
 
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
 
                     <div className="flex flex-row items-center gap-2">
                       <input

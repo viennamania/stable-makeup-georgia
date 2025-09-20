@@ -2465,6 +2465,7 @@ export default function Index({ params }: any) {
 
 
   // totalNumberOfBuyOrders
+  /*
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
   const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
@@ -2522,7 +2523,7 @@ export default function Index({ params }: any) {
       audio.play();
     }
   }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
-
+  */
 
 
 
@@ -2879,13 +2880,14 @@ export default function Index({ params }: any) {
 
       {/* fixed position right and vertically center */}
       <div className="
-        hidden md:flex
+        hidden sm:flex
         fixed right-4 top-1/2 transform -translate-y-1/2
         z-40
         ">
 
           <div className="w-full flex flex-col items-end justify-center gap-4">
 
+            {/*
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
             p-2 rounded-lg shadow-md
@@ -2909,7 +2911,6 @@ export default function Index({ params }: any) {
                 />
               )}
 
-              {/* array of processingBuyOrders store logos */}
               <div className="flex flex-row items-center justify-center gap-1">
                 {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
 
@@ -2973,6 +2974,7 @@ export default function Index({ params }: any) {
 
 
             </div>
+            */}
 
 
             {/* Clearance Orders */}
@@ -3064,7 +3066,7 @@ export default function Index({ params }: any) {
 
       <div className="py-0 w-full">
 
-        <div className={`w-full flex flex-col md:flex-row items-center justify-between gap-2
+        <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
           p-2 rounded-lg mb-4
           ${store?.backgroundColor ?
             "bg-" + store.backgroundColor + " " :
@@ -3155,7 +3157,7 @@ export default function Index({ params }: any) {
                     >
                       <div className="
                         w-40 xl:w-48
-                        flex flex-col md:flex-row items-center justify-center gap-2">
+                        flex flex-col sm:flex-row items-center justify-center gap-2">
                         <span className="text-sm text-zinc-50">
                           {user?.nickname || "프로필"}
                         </span>
@@ -3341,7 +3343,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-col md:flex-row items-start justify-between gap-5">
+          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-5">
 
     
             <div className="hidden flex-row items-start gap-3">
@@ -3361,7 +3363,7 @@ export default function Index({ params }: any) {
                       
                       <div className="flex flex-col gap-2">
 
-                        <div className="flex flex-col md:flex-row gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <span className="text-sm">
                             {
                               user && user.seller?.bankInfo.bankName
@@ -3409,14 +3411,14 @@ export default function Index({ params }: any) {
             {address && (
                 <div className="flex
                 mt-4 mb-2
-                w-full flex-col md:flex-row items-start justify-start gap-5
+                w-full flex-col sm:flex-row items-start justify-start gap-5
                 border border-zinc-200 rounded-lg p-4
                 bg-white shadow-md
                 ">
 
 
                   
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     <div className="flex flex-row items-center justify-center gap-2">
                         <Image
                             src="/icon-shield.png"
@@ -3570,13 +3572,13 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="mt-5 selection:w-full flex flex-col md:flex-row items-between justify-between gap-3">
+          <div className="mt-5 selection:w-full flex flex-col sm:flex-row items-between justify-between gap-3">
 
 
 
             {/* serach fromDate and toDate */}
             {/* DatePicker for fromDate and toDate */}
-            <div className="flex flex-col md:flex-row items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
               <div className="flex flex-row items-center gap-2">
                 <Image
                   src="/icon-calendar.png"
@@ -3638,7 +3640,7 @@ export default function Index({ params }: any) {
 
             {/* trade summary */}
 
-            <div className="flex flex-col md:flex-row items-center justify-end gap-2
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-2
               w-full
               bg-zinc-100/50
               p-4 rounded-lg shadow-md
@@ -3678,7 +3680,7 @@ export default function Index({ params }: any) {
               </div>
 
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
+              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full xl:w-1/3
                 flex flex-row items-start justify-between gap-2 pl-4 pr-4">
@@ -3715,7 +3717,7 @@ export default function Index({ params }: any) {
               </div>
 
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
+              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
               */}
 
               <div className="w-full xl:w-1/3
@@ -3759,8 +3761,9 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="md:hidden w-full flex flex-row items-center justify-end gap-2">
+          <div className="sm:hidden w-full flex flex-row items-center justify-end gap-2">
 
+              {/*
               <div className="flex flex-row items-center justify-center gap-2
               bg-white/80
               p-2 rounded-lg shadow-md
@@ -3784,8 +3787,6 @@ export default function Index({ params }: any) {
                   />
                 )}
 
-
-                {/* array of processingBuyOrders store logos */}
                 <div className="flex flex-row items-center justify-center gap-1">
                   {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
 
@@ -3849,6 +3850,9 @@ export default function Index({ params }: any) {
                   </div>
                 )}
               </div>
+              */}
+
+
 
 
               {/* Clearance Orders */}

@@ -1527,7 +1527,7 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="mt-4 w-full flex flex-col gap-5 md:flex-row items-start justify-center ">
+              <div className="mt-4 w-full flex flex-col gap-5 sm:flex-row items-start justify-center ">
 
 
                 <div className="w-full mb-10 grid grid-cols-1 gap-4  justify-center  ">

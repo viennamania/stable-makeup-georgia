@@ -1546,7 +1546,7 @@ export default function Index({ params }: any) {
 
 
         {params.agentcode && (
-          <div className={`w-full flex flex-col md:flex-row items-center justify-start gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
             p-2 rounded-lg mb-4
               "bg-black/10"
             }`}>
@@ -1792,7 +1792,7 @@ export default function Index({ params }: any) {
 
         <div className="py-0 w-full">
 
-          <div className={`w-full flex flex-col md:flex-row items-center justify-start gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
             p-2 rounded-lg mb-4
             ${agent?.backgroundColor ?
               "bg-[#"+agent?.backgroundColor+"]" :
@@ -1937,7 +1937,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className={`w-full flex flex-col md:flex-row items-center justify-start gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
               p-2 rounded-lg mb-4
               ${agent?.backgroundColor ?
                 "bg-[#"+agent?.backgroundColor+"]" :
@@ -2165,7 +2165,7 @@ export default function Index({ params }: any) {
             {/* store */}
             <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
               
-              <div className="w-full flex flex-col md:flex-row items-center justify-start gap-2">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-2">
 
                 <div className="w-full flex flex-row items-center justify-start gap-2">                
                   <Image
@@ -2356,7 +2356,7 @@ export default function Index({ params }: any) {
             <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
               
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-start gap-2">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-2">
 
                 <div className="w-full flex flex-row items-center justify-start gap-2">                
                   <Image
@@ -2499,7 +2499,7 @@ export default function Index({ params }: any) {
             {/* total number of trades, total buy amount krw, total usdt amount */}
             <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-start gap-2">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-2">
 
                 <div className="w-full flex flex-row items-center justify-start gap-2">                
                   <Image
@@ -2571,7 +2571,7 @@ export default function Index({ params }: any) {
 
                 <div className="flex flex-row items-center justify-center gap-2">
                 
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <h2 className="text-lg font-semibold">총 거래금액(원)</h2>
                       <p className="text-lg text-zinc-500">
@@ -2590,7 +2590,7 @@ export default function Index({ params }: any) {
                   {/* divider */}
                   <div className="w-0.5 h-10 bg-gray-300 mx-2"></div>
 
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                   
                     <div className="flex flex-col items-center justify-center gap-2">
                       <h2 className="text-lg font-semibold">총 결제금액(원)</h2>
@@ -2611,7 +2611,7 @@ export default function Index({ params }: any) {
 
                 {/* 총 수수료금액 */}
                 <div className="flex flex-row items-center justify-center gap-2 mt-4">
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <h2 className="text-lg font-semibold">총 수수료금액(원)</h2>
                       <p className="text-lg text-zinc-500">
@@ -2769,7 +2769,7 @@ export default function Index({ params }: any) {
             {/* total number of trades, total buy amount krw, total usdt amount */}
             <div className="w-full flex flex-col items-start justify-start gap-2  bg-white shadow-md rounded-lg p-4">
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-start gap-2">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-2">
 
                 <div className="w-full flex flex-row items-center justify-start gap-2">                
                   <Image
@@ -3009,7 +3009,7 @@ export default function Index({ params }: any) {
 
        <div className="
         mt-5
-        w-full flex flex-col md:flex-row gap-5 items-start justify-start">
+        w-full flex flex-col sm:flex-row gap-5 items-start justify-start">
     
 
           <div className="w-full flex flex-col gap-0 items-center justify-between">

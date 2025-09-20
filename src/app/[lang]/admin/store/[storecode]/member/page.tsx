@@ -1574,7 +1574,7 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="flex flex-col md:flex-row items-center justify-start gap-2">
+              <div className="flex flex-col sm:flex-row items-center justify-start gap-2">
     
                 <span className="text-sm text-zinc-500">
                   가맹점 관리자
@@ -1687,7 +1687,7 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
+              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
      
 
@@ -1723,12 +1723,12 @@ export default function Index({ params }: any) {
               </div>
 
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5 mt-4">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5 mt-4">
 
                 {/* 바이어 추가 input and button */}
                 <div className="
                   w-full xl:w-1/2
-                  flex flex-col md:flex-col items-center justify-center gap-2">
+                  flex flex-col sm:flex-col items-center justify-center gap-2">
 
 
                   <div className="flex flex-row items-center justify-start gap-2">
@@ -2050,7 +2050,7 @@ export default function Index({ params }: any) {
 
 
                           <td className="p-2">
-                            <div className="flex flex-col md:flex-row items-start justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
                               <span className="text-sm text-zinc-500">
                                 {
                                 item?.buyOrderStatus === 'ordered' ? (

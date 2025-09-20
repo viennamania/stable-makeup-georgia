@@ -1401,7 +1401,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                            <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     
 
 
@@ -1539,7 +1539,7 @@ export default function SettingsPage({ params }: any) {
                                     가맹점 자동결제용 USDT지갑 설정
                                 </span>
                             </div>
-                            <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
 
 
                                 {!fetchingStore && store && store.settlementWalletAddress ? (
@@ -1661,7 +1661,7 @@ export default function SettingsPage({ params }: any) {
                                         가맹점 수수료 USDT지갑 설정
                                     </span>
                                 </div>
-                                <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2">
+                                <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2">
                                     {!fetchingStore && store && store.settlementFeeWalletAddress ? (
                                     <button
                                         onClick={() => {
@@ -1884,7 +1884,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                            <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     
 
 

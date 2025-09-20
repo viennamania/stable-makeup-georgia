@@ -1802,7 +1802,7 @@ export default function SettingsPage({ params }: any) {
                             </div>
                             
                             
-                            <div className='w-full flex flex-col md:flex-row items-center justify-between gap-2'>
+                            <div className='w-full flex flex-col sm:flex-row items-center justify-between gap-2'>
 
 
 
@@ -1859,7 +1859,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                            <div className='w-full flex flex-col md:flex-row items-center justify-between gap-2'>
+                            <div className='w-full flex flex-col sm:flex-row items-center justify-between gap-2'>
                                 <div className="flex flex-row items-center justify-start gap-2">
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>

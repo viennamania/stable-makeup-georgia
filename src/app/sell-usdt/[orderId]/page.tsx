@@ -1052,7 +1052,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className=" flex flex-col md:flex-row items-start justify-center space-y-4">
+          <div className=" flex flex-col sm:flex-row items-start justify-center space-y-4">
 
                 {address && (
                   <div className="w-full flex flex-col items-start justify-between gap-2">

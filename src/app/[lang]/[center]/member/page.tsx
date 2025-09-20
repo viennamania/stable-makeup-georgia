@@ -1671,7 +1671,7 @@ export default function Index({ params }: any) {
         {params.center && (
 
 
-            <div className={`w-full flex flex-col md:flex-row items-center justify-start gap-2
+            <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
               p-2 rounded-lg mb-4
               ${store?.backgroundColor ?
                 "bg-" + store.backgroundColor + " " :
@@ -1974,7 +1974,7 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-          <div className={`w-full flex flex-col md:flex-row items-center justify-between gap-2
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
             p-2 rounded-lg mb-4
             ${store?.backgroundColor ?
               "bg-" + store.backgroundColor + " " :
@@ -2067,7 +2067,7 @@ export default function Index({ params }: any) {
                       >
                         <div className="
                           w-40 xl:w-48
-                          flex flex-col md:flex-row items-center justify-center gap-2">
+                          flex flex-col sm:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
                           </span>
@@ -2162,7 +2162,7 @@ export default function Index({ params }: any) {
             border-b border-zinc-300 pb-2">
 
               {version !== 'bangbang' && (
-              <div className="flex flex-col md:flex-row items-start xl:items-center gap-2
+              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2
                 bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
                 <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
@@ -2244,7 +2244,7 @@ export default function Index({ params }: any) {
               </div>
               )}
 
-              <div className="flex flex-col md:flex-row items-start xl:items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
                     src="/icon-trade.png"
@@ -2291,7 +2291,7 @@ export default function Index({ params }: any) {
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row items-start xl:items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
                     src="/icon-settlement.png"
@@ -2339,7 +2339,7 @@ export default function Index({ params }: any) {
               </div>
 
               {version !== 'bangbang' && (
-              <div className="flex flex-col md:flex-row items-start xl:items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
                     src="/icon-clearance.png"
@@ -2541,7 +2541,7 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
+              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
      
 
@@ -2575,12 +2575,12 @@ export default function Index({ params }: any) {
               </div>
 
 
-              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5 mt-4">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5 mt-4">
 
                 {/* 바이어 추가 input and button */}
                 <div className="
                   w-full xl:w-1/2
-                  flex flex-col md:flex-col items-center justify-center gap-2">
+                  flex flex-col sm:flex-col items-center justify-center gap-2">
 
 
                   <div className="flex flex-row items-center justify-start gap-2">
@@ -2825,7 +2825,7 @@ export default function Index({ params }: any) {
                 <div className="flex flex-row items-center gap-2">
 
 
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     {/* search nickname */}
                     <div className="flex flex-row items-center gap-2">
                       <input
@@ -3022,7 +3022,7 @@ export default function Index({ params }: any) {
                           </td>
 
                           <td className="p-2">
-                            <div className="flex flex-col md:flex-row items-start justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
                               <input
                                 type="text"
                                 value={depositAmountKrw[index]}
@@ -3157,7 +3157,7 @@ export default function Index({ params }: any) {
                           <td className="p-2">
                             <div className="
                               w-32
-                              flex flex-col md:flex-row items-start justify-center gap-2">
+                              flex flex-col sm:flex-row items-start justify-center gap-2">
                               <span className="text-sm text-zinc-500">
                                 {
                                 item?.buyOrderStatus === 'ordered' ? (

@@ -2358,7 +2358,7 @@ const fetchBuyOrders = async () => {
         <div className="py-0 w-full">
 
 
-          <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
             <div className="w-full flex flex-row items-center justify-start gap-2">
 
@@ -2623,7 +2623,7 @@ const fetchBuyOrders = async () => {
 
             {/* trade summary */}
 
-            <div className="flex flex-col md:flex-row items-center justify-between gap-2
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2
               w-full
               bg-zinc-100/50
               p-4 rounded-lg shadow-md
@@ -2654,7 +2654,7 @@ const fetchBuyOrders = async () => {
 
               {/* divider */}
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
+              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full flex flex-row items-center justify-center gap-2">
                 <div className="flex flex-col gap-2 items-center">
@@ -2733,7 +2733,7 @@ const fetchBuyOrders = async () => {
               </div>
 
 
-              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
+              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
 
                 {/* select storecode */}
@@ -2802,7 +2802,7 @@ const fetchBuyOrders = async () => {
 
                 {/* serach fromDate and toDate */}
                 {/* DatePicker for fromDate and toDate */}
-                <div className="flex flex-col md:flex-row items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <div className="flex flex-row items-center gap-2">
                     <Image
                       src="/icon-calendar.png"
@@ -2839,10 +2839,10 @@ const fetchBuyOrders = async () => {
 
 
                 {/* search depositName */}
-                <div className="flex flex-col md:flex-row items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
 
 
-                  <div className="flex flex-col md:flex-row items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                     {/* search nickname */}
                     <div className="flex flex-row items-center gap-2">
                       <input
