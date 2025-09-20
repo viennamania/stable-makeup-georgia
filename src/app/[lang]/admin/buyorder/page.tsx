@@ -3101,6 +3101,17 @@ const fetchBuyOrders = async () => {
     return (
       <div className="flex flex-col items-center justify-center">
 
+
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
+
+
+        {/*
         <h1 className="text-2xl font-bold">로그인</h1>
 
           <ConnectButton
@@ -3138,6 +3149,7 @@ const fetchBuyOrders = async () => {
             locale={"ko_KR"}
             //locale={"en_US"}
           />
+        */}
 
       </div>
     );

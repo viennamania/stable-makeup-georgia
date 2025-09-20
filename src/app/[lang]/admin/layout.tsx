@@ -107,7 +107,7 @@ export default function RootLayout({
             fixed top-2 left-2 z-50 flex flex-col items-start justify-start">
               <button
                 className="
-                w-36
+                w-32
                 flex flex-row items-center justify-center gap-2
                 mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
                 onClick={() => setShowCenter(!showCenter)}
@@ -126,7 +126,7 @@ export default function RootLayout({
 
               <div className={`flex flex-col items-center justify-center
                 ${showCenter ? 'bg-white' : 'hidden'}
-                p-4 rounded-lg shadow-md transition-all duration-300 ease-in-out
+                p-2 rounded-lg shadow-lg
               `}>
                 <CenterConsole />
               </div>

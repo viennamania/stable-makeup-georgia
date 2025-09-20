@@ -100,6 +100,7 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
+import { toast } from "react-hot-toast";
 
 
 
@@ -258,165 +259,144 @@ const CenterConsole = () => {
 
   return (
 
-    <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4">
+    <div className="
+    w-36
+    flex flex-col items-center justify-center p-2 bg-gray-100 rounded-lg shadow-md">
+
+      {address ? (
+
+        <div className="w-full flex flex-col gap-2 justify-between items-center">
+
+          <button
+            className="text-lg text-zinc-800 underline"
+            onClick={() => {
+              navigator.clipboard.writeText(address);
+              toast.success("주소가 복사되었습니다.");
+            }}
+          >
+            {address.substring(0, 6)}...
+          </button>
 
 
 
-      {!address && (
-
-        <ConnectButton
-          client={client}
-          wallets={wallets}
-          chain={chain === "ethereum" ? ethereum :
-                  chain === "polygon" ? polygon :
-                  chain === "arbitrum" ? arbitrum :
-                  chain === "bsc" ? bsc : arbitrum}
-          
-          theme={"light"}
-
-          // button color is dark skyblue convert (49, 103, 180) to hex
-          connectButton={{
-            style: {
-              backgroundColor: "#3167b4", // dark skyblue
-
-              color: "#f3f4f6", // gray-300 
-              padding: "2px 2px",
-              borderRadius: "10px",
-              fontSize: "14px",
-              //width: "40px",
-              height: "38px",
-            },
-            label: "원클릭 로그인",
-          }}
-
-          connectModal={{
-            size: "wide", 
-            //size: "compact",
-            titleIcon: "https://www.stable.makeup/logo.png",                           
-            showThirdwebBranding: false,
-          }}
-
-          locale={"ko_KR"}
-          //locale={"en_US"}
-        />
-
-      )}  
-
-
-
-
-      {/* address balance */}
-      <div className="flex flex-col gap-2 justify-between items-center">
-
-        {address ? (
-
-          <>
-            <div className="flex flex-col gap-2 justify-center items-center">
-
-              <div className="flex flex-row gap-2 justify-center items-center">
-                {/* dot */}
-                <div className="w-2 h-2 bg-zinc-600 rounded-full"></div>
-                <span className="text-sm text-zinc-600">
-                  지갑주소
-                </span>
-              </div>
-              <button
-                className="text-lg text-zinc-800 underline"
-                onClick={() => {
-                  navigator.clipboard.writeText(address);
-                  //toast.success(Copied_Wallet_Address);
-                } }
-              >
-                {address.substring(0, 6)}...
-              </button>
-
-            </div>
-      
-
-
-
-            <div className="w-full flex flex-col gap-2 justify-between items-center
-              bg-green-50 p-2 rounded-lg">
-              <div className="flex flex-row gap-2 justify-center items-center">
-                <Image
-                  src="/icon-tether.png"
-                  alt="USDT"
-                  width={35}
-                  height={35}
-                  className="rounded-lg w-6 h-6"
-                />
-                <span className="text-sm text-zinc-600">
-                  USDT
-                </span>
-              </div>
-
-              <div className="
-              flex flex-col items-end justify-center
-              text-lg font-semibold text-[#409192]"
-              style={{ fontFamily: "monospace" }}
-              >
-                {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-              </div>
-
-            </div>
-
+          <div className="w-full flex flex-col gap-2 justify-between items-center
+            bg-green-50 p-2 rounded-lg">
             <div className="flex flex-row gap-2 justify-center items-center">
               <Image
-                src={`/logo-chain-${chain}.png`}
-                alt={`${chain} logo`}
-                width={20}
-                height={20}
-                className="rounded-lg"
+                src="/icon-tether.png"
+                alt="USDT"
+                width={35}
+                height={35}
+                className="rounded-lg w-6 h-6"
               />
               <span className="text-sm text-zinc-600">
-                {chain === "ethereum" ? "ETH" :
-                chain === "polygon" ? "POL" :
-                chain === "arbitrum" ? "ETH" :
-                chain === "bsc" ? "BNB" : ""}
+                USDT
               </span>
             </div>
-            <div className="text-sm font-semibold text-zinc-800"
-              style={{ fontFamily: "monospace" }}
+
+            <div className="
+            flex flex-col items-end justify-center
+            text-lg font-semibold text-[#409192]"
+            style={{ fontFamily: "monospace" }}
             >
-              {Number(nativeBalance).toFixed(8)}
+              {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             </div>
 
-            <div className="flex flex-col gap-2 justify-center items-center">
-              {/* if pol balance is 0, comment out the text */}
-              {nativeBalance < 0.0001 && (
-                <p className="text-sm text-red-500">
-                  가스비용이 부족합니다.<br/>가스비용이 부족하면<br/>입금은 가능하지만<br/>출금은 불가능합니다.
-                </p>
-              )}
-            </div>
-
-            <button
-              className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
-              onClick={() => {
-
-                router.push('/ko/admin/withdraw-usdt');
-
-              }}
-            >
-              출금하기
-            </button>
-
-
-
-          </>
-
-        ) : (
-
-          <div className="mt-5 flex flex-col gap-2 justify-center items-center">
-            {/* 로그인하고 나의 자산을 확인하세요 */}
-            <span className="text-sm text-zinc-600">
-              로그인하고 나의 지갑주소에서 자산을 확인하세요
-            </span>
           </div>
 
-        )}
+          <div className="flex flex-row gap-2 justify-center items-center">
+            <Image
+              src={`/logo-chain-${chain}.png`}
+              alt={`${chain} logo`}
+              width={20}
+              height={20}
+              className="rounded-lg"
+            />
+            <span className="text-sm text-zinc-600">
+              {chain === "ethereum" ? "ETH" :
+              chain === "polygon" ? "POL" :
+              chain === "arbitrum" ? "ETH" :
+              chain === "bsc" ? "BNB" : ""}
+            </span>
+          </div>
+          <div className="text-sm font-semibold text-zinc-800"
+            style={{ fontFamily: "monospace" }}
+          >
+            {Number(nativeBalance).toFixed(8)}
+          </div>
 
-      </div>
+          <div className="flex flex-col gap-2 justify-center items-center">
+            {/* if pol balance is 0, comment out the text */}
+            {nativeBalance < 0.0001 && (
+              <p className="text-sm text-red-500">
+                가스비용이 부족합니다.<br/>가스비용이 부족하면<br/>입금은 가능하지만<br/>출금은 불가능합니다.
+              </p>
+            )}
+          </div>
+
+          <button
+            className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
+            onClick={() => {
+
+              router.push('/ko/admin/withdraw-usdt');
+
+            }}
+          >
+            출금하기
+          </button>
+
+
+
+        </div>
+
+      ) : (
+
+        <div className="w-full flex flex-col gap-2 justify-center items-center">
+
+          <ConnectButton
+            client={client}
+            wallets={wallets}
+            chain={chain === "ethereum" ? ethereum :
+                    chain === "polygon" ? polygon :
+                    chain === "arbitrum" ? arbitrum :
+                    chain === "bsc" ? bsc : arbitrum}
+            
+            theme={"light"}
+
+            // button color is dark skyblue convert (49, 103, 180) to hex
+            connectButton={{
+              style: {
+                backgroundColor: "#3167b4", // dark skyblue
+
+                color: "#f3f4f6", // gray-300 
+                padding: "2px 2px",
+                borderRadius: "10px",
+                fontSize: "14px",
+                //width: "40px",
+                height: "38px",
+              },
+              label: "원클릭 로그인",
+            }}
+
+            connectModal={{
+              size: "wide", 
+              //size: "compact",
+              titleIcon: "https://www.stable.makeup/logo.png",                           
+              showThirdwebBranding: false,
+            }}
+
+            locale={"ko_KR"}
+            //locale={"en_US"}
+          />
+
+          {/* 로그인하고 나의 자산을 확인하세요 */}
+          <span className="text-sm text-zinc-600">
+            로그인하고 나의 지갑주소에서 자산을 확인하세요.
+          </span>
+
+        </div>
+
+      )}
 
 
     </div>

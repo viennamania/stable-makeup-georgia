@@ -1577,6 +1577,124 @@ export default function Index({ params }: any) {
 
 
 
+
+
+  if (!address) {
+    return (
+   <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+
+      <div className="py-0 w-full">
+
+
+        {params.center && (
+
+
+              <div className={`w-full flex flex-row items-center justify-start gap-2
+                p-2 rounded-lg mb-4
+                ${store?.backgroundColor ?
+                  "bg-" + store.backgroundColor + " " :
+                  "bg-black/10"
+                }`}>
+  
+              
+
+       
+
+
+              {/* banner-igor-bastidas-7.gif */}
+              <Image
+                src="/banner-igor-bastidas-7.gif"
+                alt="Please connect your wallet"
+                width={400}
+                height={200}
+                className="rounded-lg w-full max-w-2xl"
+              />
+              <div className="text-sm text-[#3167b4] font-bold">
+                {store?.storeName} ({store?.storecode}) 가맹점 - 지갑을 연결해주세요.
+              </div>
+              
+
+            </div>
+        )}
+
+
+        <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">
+   
+
+          <div className="w-full flex flex-row gap-2 justify-end items-center">
+
+
+          {/* right space */}
+          {/* background transparent */}
+          <select
+            //className="p-2 text-sm bg-zinc-800 text-white rounded"
+
+
+            className="p-2 text-sm bg-transparent text-zinc-800 rounded"
+
+            onChange={(e) => {
+              const lang = e.target.value;
+              router.push(
+                "/" + lang + "/" + params.center + "/center"
+              );
+            }}
+          >
+            <option
+              value="en"
+              selected={params.lang === "en"}
+            >
+              English(US)
+            </option>
+            <option
+              value="ko"
+              selected={params.lang === "ko"}
+            >
+              한국어(KR)
+            </option>
+            <option
+              value="zh"
+              selected={params.lang === "zh"}
+            >
+              中文(ZH)
+            </option>
+            <option
+              value="ja"
+              selected={params.lang === "ja"}
+            >
+              日本語(JP)
+            </option>
+          </select>
+
+          {/* icon-language */}
+          {/* color is tone down */}
+          <Image
+            src="/icon-language.png"
+            alt="Language"
+            width={20}
+            height={20}
+            className="rounded-lg w-6 h-6
+              opacity-50
+              "
+          />
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </main>
+
+
+    );
+  }
+
+
+
+
+
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
@@ -1656,6 +1774,7 @@ export default function Index({ params }: any) {
           />
           <div className="text-lg text-gray-500">로그인이 필요합니다.</div>
           <div className="text-sm text-gray-400">로그인 후 가맹점 정보를 확인하세요.</div>
+          {/*
           <ConnectButton
             client={client}
             wallets={wallets}
@@ -1681,6 +1800,7 @@ export default function Index({ params }: any) {
             locale={"ko_KR"}
             //locale={"en_US"}
           />
+          */}
         </div>
       ) : (
         <div className="w-full flex flex-col items-start justify-start gap-4">
@@ -1693,7 +1813,7 @@ export default function Index({ params }: any) {
               "bg-black/10"
             }`}>
               
-              
+              {/*
               <button
                 onClick={() => {
                   router.push('/' + params.lang + '/' + params.center + '/center');
@@ -1718,6 +1838,7 @@ export default function Index({ params }: any) {
                 </div>
 
               </button>
+              */}
 
               {/* 가맹점 설정 */}
               {version === 'bangbang' &&
@@ -1739,19 +1860,12 @@ export default function Index({ params }: any) {
 
               <div className="flex flex-row items-center gap-2">
                 
-
+                {/*
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   {!address && (
                     <ConnectButton
                       client={client}
                       wallets={wallets}
-
-                      /*
-                      accountAbstraction={{
-                        chain: arbitrum,
-                        sponsorGas: true
-                      }}
-                      */
                       
                       theme={"light"}
 
@@ -1781,6 +1895,7 @@ export default function Index({ params }: any) {
                     />
                   )}
                 </div>
+                */}
 
             
                 {address && !loadingUser && (
