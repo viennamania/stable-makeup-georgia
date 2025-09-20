@@ -4891,16 +4891,19 @@ const fetchBuyOrders = async () => {
                                   hidden xl:flex
                                   text-sm text-zinc-500">
                                   {
-                                    item?.buyer?.depositBankName
+                                    item?.buyer?.depositBankName ? item?.buyer?.depositBankName : '은행명 없음'
                                   }
                                 </span>
+                                {/*
                                 <span className="
                                   text-sm text-zinc-500">
                                   {
-                                    item?.buyer?.depositBanktAccountNumber &&
+                                    item?.buyer?.depositBanktAccountNumber ?
                                     item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
+                                    : '계좌번호 없음'
                                   }
                                 </span>
+                                */}
                               </div>
                             )}
 
