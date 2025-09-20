@@ -3076,6 +3076,7 @@ export default function Index({ params }: any) {
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
                                       + '&depositName=' + item?.buyer?.depositName
                                       + '&depositAmountKrw=' + depositAmountKrw[index]
+                                      + '&accessToken=' + store?.accessToken
                                     );
                                     toast.success('회원 결제페이지 링크가 복사되었습니다.');
                                   }}
@@ -3094,7 +3095,7 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      `<script src="${paymentUrl}/${params.lang}/${clientId}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}">결제하기</script>`
+                                      `<script src="${paymentUrl}/${params.lang}/${clientId}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}&accessToken=${store?.accessToken}">결제하기</script>`
                                     );
                                     toast.success('회원 결제페이지 스크립트가 복사되었습니다.');
                                   }}
@@ -3116,6 +3117,7 @@ export default function Index({ params }: any) {
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
                                       + '&depositName=' + item?.buyer?.depositName
                                       + '&depositAmountKrw=' + depositAmountKrw[index]
+                                      + '&accessToken=' + store?.accessToken
                                       ,
                                       '_blank'
                                     );
