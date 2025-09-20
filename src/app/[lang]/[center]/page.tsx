@@ -784,7 +784,7 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
  
-          <div className="w-full flex flex-col xl:flex-row items-center justify-between
+          <div className="w-full flex flex-col md:flex-row items-center justify-between
           gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
               
@@ -1095,7 +1095,7 @@ export default function Index({ params }: any) {
 
 
   
-          <div className="w-full flex flex-col xl:flex-row gap-5 items-start justify-start">
+          <div className="w-full flex flex-col md:flex-row gap-5 items-start justify-start">
       
 
             <div className="w-full flex flex-col gap-0 items-center justify-between">

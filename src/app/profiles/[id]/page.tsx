@@ -458,7 +458,7 @@ export default function ProfilePage() {
                         
 
                         {userCode && (
-                            <div className='flex flex-col xl:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+                            <div className='flex flex-col md:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
 
                                 <div className="bg-red-800 text-sm text-zinc-100 p-2 rounded">
                                     My Profile Picture

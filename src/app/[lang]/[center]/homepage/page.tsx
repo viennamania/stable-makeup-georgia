@@ -2494,7 +2494,7 @@ const fetchBuyOrders = async () => {
 
         <div className="flex flex-col items-start justify-start gap-2">
 
-          <div className={`w-full flex flex-col xl:flex-row items-center justify-between gap-2
+          <div className={`w-full flex flex-col md:flex-row items-center justify-between gap-2
             h-20
             bg-white dark:bg-zinc-900
             border-b border-zinc-800 dark:border-zinc-700
@@ -2762,7 +2762,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-2">
+                <div className="w-full flex flex-col md:flex-row items-center justify-end gap-2">
 
                   <div className="bg-gray-900 text-white px-6 py-10 font-sans border border-gray-800 rounded-lg shadow-lg">
                     {/* 헤더 */}
@@ -2825,7 +2825,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
 
-                <div className="mt-5 w-full flex flex-col xl:flex-row items-center justify-end gap-2">
+                <div className="mt-5 w-full flex flex-col md:flex-row items-center justify-end gap-2">
 
 
                   <div className="flex flex-row items-center justify-center gap-2">
@@ -3031,7 +3031,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-3">
+                <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3">
 
 
                   {/* select storecode */}
@@ -3131,7 +3131,7 @@ const fetchBuyOrders = async () => {
 
                   {/* serach fromDate and toDate */}
                   {/* DatePicker for fromDate and toDate */}
-                  <div className="flex flex-col xl:flex-row items-center gap-2">
+                  <div className="flex flex-col md:flex-row items-center gap-2">
                     <div className="flex flex-row items-center gap-2">
                       <Image
                         src="/icon-calendar.png"
@@ -3203,7 +3203,7 @@ const fetchBuyOrders = async () => {
 
 
                   {true && (
-                    <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
+                    <div className="flex flex-col md:flex-row items-center justify-center gap-2">
 
                       <div className="hidden flex-row items-center justify-center gap-2">
                         <Image
@@ -3264,7 +3264,7 @@ const fetchBuyOrders = async () => {
 
                       {/* divider */}
                       {/*
-                      <div className="xl:hidden w-full h-0.5 bg-zinc-200 my-2" />
+                      <div className="md:hidden w-full h-0.5 bg-zinc-200 my-2" />
 
                       <div className="w-full flex flex-row items-between justify-center gap-2">
 
@@ -3340,7 +3340,7 @@ const fetchBuyOrders = async () => {
                 */}
 
                 {address && !user?.seller?.bankInfo && (
-                  <div className="flex flex-col xl:flex-row items-center gap-2 mt-4 mb-4">
+                  <div className="flex flex-col md:flex-row items-center gap-2 mt-4 mb-4">
                     <Image
                       src="/icon-bank.png"
                       alt="Bank"
@@ -3463,7 +3463,7 @@ const fetchBuyOrders = async () => {
 
                           {address && (
                             <th className="p-2">
-                              <div className="flex flex-col xl:flex-row items-center justify-center gap-2">
+                              <div className="flex flex-col md:flex-row items-center justify-center gap-2">
                                 <span>
                                   거래취소
                                 </span>
@@ -3573,7 +3573,7 @@ const fetchBuyOrders = async () => {
                               <div className="
 
                               w-32
-                              flex flex-col xl:flex-row items-start justify-start gap-2
+                              flex flex-col md:flex-row items-start justify-start gap-2
                               bg-zinc-100
                               rounded-lg
                               border border-zinc-800
@@ -3678,7 +3678,7 @@ const fetchBuyOrders = async () => {
                                       }
                                     </span>
                                     <span className="
-                                      hidden xl:flex
+                                      hidden md:flex
                                       text-sm text-zinc-500">
                                       {
                                         item?.buyer?.depositBankName
@@ -4170,7 +4170,7 @@ const fetchBuyOrders = async () => {
 
                                     w-44
                                     xl:w-64
-                                    flex flex-col xl:flex-row gap-2 items-start justify-start">
+                                    flex flex-col md:flex-row gap-2 items-start justify-start">
 
 
                                   
@@ -4247,7 +4247,7 @@ const fetchBuyOrders = async () => {
                                   <div className="flex flex-col gap-2 items-center justify-center">
 
 
-                                    <div className="flex flex-col xl:flex-row gap-2 items-center justify-center">
+                                    <div className="flex flex-col md:flex-row gap-2 items-center justify-center">
                                       <span className="text-sm text-zinc-500 font-semibold">
                                         {item.seller?.bankInfo?.bankName}
                                       </span>
@@ -4292,7 +4292,7 @@ const fetchBuyOrders = async () => {
 
                                     w-44
                                     xl:w-64
-                                    flex flex-col xl:flex-row gap-2 items-start justify-start
+                                    flex flex-col md:flex-row gap-2 items-start justify-start
                                     `}>
 
                                     

@@ -2003,13 +2003,13 @@ export default function Index({ params }: any) {
                 <span className="hidden xl:inline">
                   홈으로
                 </span>
-                <span className="xl:hidden">
+                <span className="md:hidden">
                   홈
                 </span>
               </span>
             </button>
 
-            <div className='flex flex-col xl:flex-row gap-2 items-center justify-start'>
+            <div className='flex flex-col md:flex-row gap-2 items-center justify-start'>
               <Image
                 src={storeInfo?.storeLogo || '/logo.png'}
                 alt="Store Logo"
@@ -2332,9 +2332,9 @@ export default function Index({ params }: any) {
 
                     {/* selected krw amount */}
                   
-                  <div className='w-full flex flex-col xl:flex-row gap-2 items-center justify-between'>
+                  <div className='w-full flex flex-col md:flex-row gap-2 items-center justify-between'>
 
-                    <div className='w-full flex flex-col xl:flex-row gap-5 items-center justify-center'>
+                    <div className='w-full flex flex-col md:flex-row gap-5 items-center justify-center'>
                       <div className="flex flex-row gap-2 items-center justify-center">
                           <span className="text-sm text-zinc-500">
                             구매금액
@@ -2489,7 +2489,7 @@ export default function Index({ params }: any) {
                   </div>
 
 
-                    <div className='mt-5 flex flex-col xl:flex-row gap-2 items-center justify-center'>
+                    <div className='mt-5 flex flex-col md:flex-row gap-2 items-center justify-center'>
 
                       <div className="w-full flex flex-col gap-2 items-center justify-center">
 
@@ -2675,7 +2675,7 @@ export default function Index({ params }: any) {
 
 
             {sellOrders.length > 0 && (
-              <div className="mt-4 w-full flex flex-col gap-5 xl:flex-row items-start justify-center ">
+              <div className="mt-4 w-full flex flex-col gap-5 md:flex-row items-start justify-center ">
 
 
                 <div className="w-full mb-10 grid grid-cols-1 gap-4  justify-center  ">

@@ -1300,7 +1300,7 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-        <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
             
           <div className="w-full flex flex-row items-center justify-start gap-2">
 
@@ -1578,7 +1578,7 @@ export default function Index({ params }: any) {
 
             {/* trade summary */}
 
-            <div className="flex flex-col xl:flex-row items-center justify-between gap-2
+            <div className="flex flex-col md:flex-row items-center justify-between gap-2
               w-full
               bg-zinc-100/50
               p-4 rounded-lg shadow-md
@@ -1613,7 +1613,7 @@ export default function Index({ params }: any) {
 
               {/* divider */}
               <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="xl:hidden w-full h-0.5 bg-zinc-300"></div>
+              <div className="md:hidden w-full h-0.5 bg-zinc-300"></div>
 
               <div className="w-full flex flex-row items-center justify-center gap-2">
                 <div className="flex flex-col gap-2 items-center">
@@ -1705,7 +1705,7 @@ export default function Index({ params }: any) {
               </div>
                
 
-              <div className="w-full flex flex-col xl:flex-row items-center justify-between gap-5">
+              <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5">
 
                 {/* 가맹점 추가 input and button */}
                 <div className="flex flex-row items-center gap-2">
@@ -1757,7 +1757,7 @@ export default function Index({ params }: any) {
 
                 {/* serach fromDate and toDate */}
                 {/* DatePicker for fromDate and toDate */}
-                <div className="flex flex-col xl:flex-row items-center gap-2">
+                <div className="flex flex-col md:flex-row items-center gap-2">
                   <div className="flex flex-row items-center gap-2">
                     <Image
                       src="/icon-calendar.png"

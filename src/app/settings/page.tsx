@@ -306,7 +306,7 @@ export default function SettingsPage() {
 
 
                         {/* My Wallet */}
-                        <div className='flex flex-col xl:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+                        <div className='flex flex-col md:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
 
                             <div className='flex flex-col items-start gap-2'>
 
@@ -398,7 +398,7 @@ export default function SettingsPage() {
                         </div>
 
                         {/* My Phone Number */}
-                        <div className='flex flex-col xl:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+                        <div className='flex flex-col md:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
                                 
                             <div className="bg-green-500 text-sm text-zinc-100 p-2 rounded">
                                 My Phone Number

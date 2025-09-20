@@ -479,7 +479,7 @@ const P2PTable = () => {
 
                   {/* trades is the status is accepted or paymentRequested */}
 
-                  <div className="flex flex-col xl:flex-row gap-2 xl:gap-5 items-start">
+                  <div className="flex flex-col md:flex-row gap-2 xl:gap-5 items-start">
                     <div className="text-sm">
                       {/* dot */}
                       <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>

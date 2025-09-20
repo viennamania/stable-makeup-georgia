@@ -895,7 +895,7 @@ export default function SettingsPage({ params }: any) {
 
 
                         { (address && (nicknameEdit || !userCode)) && (
-                            <div className=' flex flex-col xl:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+                            <div className=' flex flex-col md:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
 
                                 <div
                                     className="bg-green-500 text-sm text-zinc-100 p-2 rounded"
@@ -955,7 +955,7 @@ export default function SettingsPage({ params }: any) {
 
 
                         {userCode && (
-                            <div className='flex flex-row xl:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+                            <div className='flex flex-row md:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
 
                                 <div className="bg-green-500 text-sm text-zinc-100 p-2 rounded">
                                     {My_Profile_Picture}

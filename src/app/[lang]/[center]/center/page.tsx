@@ -1806,7 +1806,7 @@ export default function Index({ params }: any) {
         <div className="w-full flex flex-col items-start justify-start gap-4">
 
 
-          <div className={`w-full flex flex-col xl:flex-row items-center justify-between gap-2
+          <div className={`w-full flex flex-col md:flex-row items-center justify-between gap-2
             p-2 rounded-lg mb-4
             ${store?.backgroundColor ?
               "bg-" + store.backgroundColor + " " :
@@ -1911,7 +1911,7 @@ export default function Index({ params }: any) {
                       >
                         <div className="
                           w-40 xl:w-48
-                          flex flex-col xl:flex-row items-center justify-center gap-2">
+                          flex flex-col md:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
                           </span>
@@ -2069,7 +2069,7 @@ export default function Index({ params }: any) {
 
             {/* 가맹점 보유량 */}
             {version !== 'bangbang' && (
-            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2
+            <div className="flex flex-col md:flex-row items-start xl:items-center gap-2
             bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
 
               <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
@@ -2156,7 +2156,7 @@ export default function Index({ params }: any) {
 
 
             {/* 가맹점 거래 */}
-            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
+            <div className="flex flex-col md:flex-row items-start xl:items-center gap-2">
               <div className="flex flex-row gap-2 items-center">
                 <Image
                   src="/icon-trade.png"
@@ -2207,7 +2207,7 @@ export default function Index({ params }: any) {
 
 
             {/* 가맹점 정산금 */}
-            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
+            <div className="flex flex-col md:flex-row items-start xl:items-center gap-2">
               <div className="flex flex-row gap-2 items-center">
                 <Image
                   src="/icon-settlement.png"
@@ -2257,7 +2257,7 @@ export default function Index({ params }: any) {
 
             {/* 가맹점 판매금 */}
             {version !== 'bangbang' && (
-            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
+            <div className="flex flex-col md:flex-row items-start xl:items-center gap-2">
               <div className="flex flex-row gap-2 items-center">
                 <Image
                   src="/icon-clearance.png"
@@ -2323,7 +2323,7 @@ export default function Index({ params }: any) {
                 className="rounded-lg w-6 h-6"
               />
 
-              <div className="flex flex-col xl:flex-row items-center justify-start gap-2">
+              <div className="flex flex-col md:flex-row items-center justify-start gap-2">
 
                 <button
                   onClick={() => {
@@ -2993,7 +2993,7 @@ export default function Index({ params }: any) {
 
             <div className="
             mt-5
-            w-full flex flex-col xl:flex-row gap-5 items-start justify-start">
+            w-full flex flex-col md:flex-row gap-5 items-start justify-start">
         
 
               <div className="w-full flex flex-col gap-0 items-center justify-between">

@@ -1133,7 +1133,7 @@ export default function SettingsPage({ params }: any) {
                         </div>
 
 
-                        <div className="flex flex-col xl:flex-row p-2 gap-2">
+                        <div className="flex flex-col md:flex-row p-2 gap-2">
                             
                             <span className="text-lg text-zinc-500 font-semibold">
                                 {seller?.bankInfo?.bankName}

@@ -1861,7 +1861,7 @@ export default function SettingsPage({ params }: any) {
                             </div>
                             
                             
-                            <div className='w-full flex flex-col xl:flex-row items-center justify-between gap-2'>
+                            <div className='w-full flex flex-col md:flex-row items-center justify-between gap-2'>
 
 
 
@@ -1918,7 +1918,7 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                            <div className='w-full flex flex-col xl:flex-row items-center justify-between gap-2'>
+                            <div className='w-full flex flex-col md:flex-row items-center justify-between gap-2'>
                                 <div className="flex flex-row items-center justify-start gap-2">
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
@@ -2157,7 +2157,7 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                 </div>
 
-                                <div className='flex flex-col xl:flex-row gap-2 items-center justify-between'>
+                                <div className='flex flex-col md:flex-row gap-2 items-center justify-between'>
                                     <select
                                         disabled={!address || updatingAgentWFeeWalletAddress}
                                         className="bg-white text-zinc-500 rounded-lg p-2 text-sm"

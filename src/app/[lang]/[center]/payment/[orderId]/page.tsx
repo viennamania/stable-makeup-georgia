@@ -2128,7 +2128,7 @@ export default function Index({ params }: any) {
 
 
              {orderId === '0' && (
-                <div className='hidden w-full flex-col xl:flex-row gap-2 items-center xl:items-end justify-center'>
+                <div className='hidden w-full flex-col md:flex-row gap-2 items-center xl:items-end justify-center'>
 
                 
                     <span className="text-sm text-white">
@@ -2277,7 +2277,7 @@ export default function Index({ params }: any) {
 
 
                       {isMyWalletAddress && (
-                        <div className="w-full flex flex-col xl:flex-row gap-2 items-start justify-start">
+                        <div className="w-full flex flex-col md:flex-row gap-2 items-start justify-start">
 
                           <input
                             disabled
@@ -2643,7 +2643,7 @@ export default function Index({ params }: any) {
 
 
               {sellOrders.length > 0 && (
-                <div className="mt-4 w-full flex flex-col gap-5 xl:flex-row items-start justify-center ">
+                <div className="mt-4 w-full flex flex-col gap-5 md:flex-row items-start justify-center ">
 
 
                   <div className="w-full mb-10 grid grid-cols-1 gap-4  justify-center  ">

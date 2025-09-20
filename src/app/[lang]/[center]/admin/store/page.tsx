@@ -1497,7 +1497,7 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-col xl:flex-row items-start justify-between gap-3">
+              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
 
         
                 <div className="flex flex-row items-start gap-3">

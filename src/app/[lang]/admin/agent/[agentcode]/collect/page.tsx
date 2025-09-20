@@ -1571,7 +1571,7 @@ export default function Index({ params }: any) {
 
 
                   {address && (
-                      <div className="w-full flex flex-col xl:flex-row items-center justify-end gap-2">
+                      <div className="w-full flex flex-col md:flex-row items-center justify-end gap-2">
 
 
                           <div className="flex flex-row items-center justify-center gap-2">
@@ -1640,7 +1640,7 @@ export default function Index({ params }: any) {
               
                     >
 
-                      <div className="flex flex-col xl:flex-row gap-5 xl:gap-10 items-center">
+                      <div className="flex flex-col md:flex-row gap-5 xl:gap-10 items-center">
 
 
                         <div className="flex flex-col gap-2 items-start">
@@ -2005,7 +2005,7 @@ export default function Index({ params }: any) {
                         
                         <div className="
                         w-full
-                        flex flex-col xl:flex-row gap-5 xl:gap-20 items-center ">
+                        flex flex-col md:flex-row gap-5 xl:gap-20 items-center ">
                             
                             <div className="flex flex-col gap-2 items-start">
 
@@ -2867,7 +2867,7 @@ export default function Index({ params }: any) {
                                             height={12}
                                           />
                                         )}
-                                        <div className="flex flex-row xl:flex-col items-center gap-1">
+                                        <div className="flex flex-row md:flex-col items-center gap-1">
                                           <span>{Cancel_My_Order}</span>
                                         </div>
                                       </div>

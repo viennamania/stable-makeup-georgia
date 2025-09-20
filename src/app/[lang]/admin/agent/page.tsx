@@ -1358,7 +1358,7 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-        <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
             
            <div className="w-full flex flex-row items-center justify-start gap-2">
              <button
@@ -1694,7 +1694,7 @@ export default function Index({ params }: any) {
 
               </div>
 
-              <div className="w-full flex flex-col xl:flex-row items-start justify-between gap-5">
+              <div className="w-full flex flex-col md:flex-row items-start justify-between gap-5">
 
                 {/* 에이전트 추가 input and button */}
                 <div className="flex flex-row items-center gap-2">
@@ -2013,7 +2013,7 @@ export default function Index({ params }: any) {
                                 </div>
                               </div>
 
-                              <div className="w-full flex flex-col xl:flex-row items-center justify-center gap-2">
+                              <div className="w-full flex flex-col md:flex-row items-center justify-center gap-2">
                                 {/* settings button */}
                                 <button
                                   disabled={!isAdmin}
@@ -2193,7 +2193,7 @@ export default function Index({ params }: any) {
                               </div>
 
                               {/*
-                              <div className="flex flex-col xl:flex-row items-center gap-2">
+                              <div className="flex flex-col md:flex-row items-center gap-2">
                                 <button
                                   onClick={() => {
                                     router.push(
@@ -2302,7 +2302,7 @@ export default function Index({ params }: any) {
                               </div>
 
           
-                              <div className="flex flex-col xl:flex-row items-center gap-2">
+                              <div className="flex flex-col md:flex-row items-center gap-2">
                                 <button
                                   disabled={!isAdmin}
                                   onClick={() => {

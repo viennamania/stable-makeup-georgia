@@ -2242,7 +2242,7 @@ export default function Index({ params }: any) {
 
 
 
-                <div className="w-full flex flex-col xl:flex-row items-start justify-between gap-3">
+                <div className="w-full flex flex-col md:flex-row items-start justify-between gap-3">
 
          
                   <div className="flex flex-row items-start gap-3">
@@ -2281,7 +2281,7 @@ export default function Index({ params }: any) {
                                 }
                               </div>
 
-                              <div className="flex flex-col xl:flex-row gap-2">
+                              <div className="flex flex-col md:flex-row gap-2">
                                 <span className="text-sm">
                                   {
                                     user && user.seller?.bankInfo.bankName

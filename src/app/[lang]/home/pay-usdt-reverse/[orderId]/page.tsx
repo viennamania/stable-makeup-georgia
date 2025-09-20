@@ -1674,7 +1674,7 @@ export default function Index({ params }: any) {
                 <span className="hidden xl:inline">
                   홈으로
                 </span>
-                <span className="xl:hidden">
+                <span className="md:hidden">
                   홈
                 </span>
               </span>
@@ -1683,7 +1683,7 @@ export default function Index({ params }: any) {
 
 
 
-            <div className='flex flex-col xl:flex-row gap-2 items-center justify-start'>
+            <div className='flex flex-col md:flex-row gap-2 items-center justify-start'>
               <Image
                 src={storeInfo?.storeLogo || '/logo.png'}
                 alt="Store Logo"
@@ -1891,7 +1891,7 @@ export default function Index({ params }: any) {
 
 
              {orderId === '0' && (
-                <div className='hidden w-full flex-col xl:flex-row gap-2 items-center xl:items-end justify-center'>
+                <div className='hidden w-full flex-col md:flex-row gap-2 items-center xl:items-end justify-center'>
 
                 
                     <span className="text-sm text-zinc-500">
@@ -1975,7 +1975,7 @@ export default function Index({ params }: any) {
             <span className="text-lg text-zinc-500">
               가맹점으로 USDT 충전하기
             </span>
-            <div className='flex flex-col xl:flex-row gap-2 items-center justify-center'>
+            <div className='flex flex-col md:flex-row gap-2 items-center justify-center'>
               <span className="text-lg text-zinc-500">
                 충전금액
               </span>
@@ -2396,7 +2396,7 @@ export default function Index({ params }: any) {
 
 
               {buyOrders.length > 0 && (
-                <div className="w-full flex flex-col xl:flex-row items-start justify-center gap-2">
+                <div className="w-full flex flex-col md:flex-row items-start justify-center gap-2">
 
 
                   <div className="
