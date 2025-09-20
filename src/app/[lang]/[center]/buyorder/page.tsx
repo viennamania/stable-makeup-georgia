@@ -2748,180 +2748,13 @@ const fetchBuyOrders = async () => {
 
 
     const [selectedItem, setSelectedItem] = useState<any>(null);
-    
 
-
-
-
-
-    /*
-    const [storeTrades, setStoreTrades] = useState<{
-      totalCount: number;
-      totalKrwAmount: number;
-      totalUsdtAmount: number;
-      totalSettlementCount: number;
-      totalSettlementAmount: number;
-      totalSettlementAmountKRW: number;
-      latestTrades: any[];
-    }>({
-      totalCount: 0,
-      totalKrwAmount: 0,
-      totalUsdtAmount: 0,
-      totalSettlementCount: 0,
-      totalSettlementAmount: 0,
-      totalSettlementAmountKRW: 0,
-      latestTrades: [],
-    });
-
-    const [fetchingStoreTrades, setFetchingStoreTrades] = useState(false);
-  
-    const fetchStoreSummary = async () => {
-      if (!address) {
-        return;
-      }
-
-      if (fetchingStoreTrades) {
-        return;
-      }
-
-      setFetchingStoreTrades(true);
-
-
-      const response = await fetch('/api/summary/getStoreTrades', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-          {
-            storecode: params.center,
-          }
-        ),
-      });
-      if (!response.ok) {
-
-        setFetchingStoreTrades(false);
-        return;
-      }
-      const data = await response.json();
-      
-      console.log('getStoreSummary data', data);
-  
-      setStoreTrades(data.result);
-
-      setFetchingStoreTrades(false);
-  
-    }
   
   
-    useEffect(() => {
-      if (!address) {
-        return;
-      }
-      fetchStoreSummary();
-      // interval
-      const interval = setInterval(() => {
-        fetchStoreSummary();
-      } , 10000);
-      return () => clearInterval(interval);
-    } , [address, params.center]);
   
-    */
-
-
-  /*
-  const [tradeSummary, setTradeSummary] = useState({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-
-    orders: [] as BuyOrder[],
-
-    totalClearanceCount: 0,
-    totalClearanceAmount: 0,
-    totalClearanceAmountUSDT: 0,
-  });
-  const [loadingTradeSummary, setLoadingTradeSummary] = useState(false);
-
-
-  const getTradeSummary = async () => {
-    if (!address) {
-      return;
-    }
-    setLoadingTradeSummary(true);
-    const response = await fetch('/api/summary/getTradeSummary', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        storecode: params.center,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-
-        searchBuyer: searchBuyer,
-        searchDepositName: searchDepositName,
-
-        searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-      })
-    });
-    if (!response.ok) {
-      setLoadingTradeSummary(false);
-      toast.error('Failed to fetch trade summary');
-      return;
-    }
-    const data = await response.json();
-    
-    console.log('getTradeSummary data', data);
-
-
-    setTradeSummary(data.result);
-    setLoadingTradeSummary(false);
-    return data.result;
-  }
-
-
-
-
-  useEffect(() => {
-
-    if (!address) {
-      return;
-    }
-
-    getTradeSummary();
-
-    // fetch trade summary every 10 seconds
-    const interval = setInterval(() => {
-      getTradeSummary();
-    }, 10000);
-    return () => clearInterval(interval);
-
-  } , [address, searchMyOrders, 
-    searchFromDate, searchToDate,
-    searchBuyer, searchDepositName, searchStoreBankAccountNumber,
-    params.center]);
-
-*/
-
-
-
-
-
-
-
- // totalNumberOfBuyOrders
+  
+  
+  // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
   const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
@@ -3149,18 +2982,12 @@ const fetchBuyOrders = async () => {
 
         {params.center && (
 
-
-              <div className={`w-full flex flex-row items-center justify-start gap-2
-                p-2 rounded-lg mb-4
-                ${store?.backgroundColor ?
-                  "bg-" + store.backgroundColor + " " :
-                  "bg-black/10"
-                }`}>
-  
-              
-
-       
-
+            <div className={`w-full flex flex-row items-center justify-start gap-2
+              p-2 rounded-lg mb-4
+              ${store?.backgroundColor ?
+                "bg-" + store.backgroundColor + " " :
+                "bg-black/10"
+              }`}>
 
               {/* banner-igor-bastidas-7.gif */}
               <Image
@@ -3174,7 +3001,6 @@ const fetchBuyOrders = async () => {
                 {store?.storeName} ({store?.storecode}) 가맹점 - 지갑을 연결해주세요.
               </div>
               
-
             </div>
         )}
 
@@ -3344,7 +3170,6 @@ const fetchBuyOrders = async () => {
 
 
       {/* fixed position right and vertically center */}
-
       <div className="
         hidden xl:flex
         fixed right-4 top-1/2 transform -translate-y-1/2
