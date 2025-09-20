@@ -3,6 +3,7 @@ import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
 import { paymentUrl } from '@/app/config/payment';
+import { access } from 'fs';
 
 
 
@@ -200,6 +201,7 @@ export async function getStoreByStorecode(
         paymentUrl: 1,
         maxPaymentAmountKRW: 1,
 
+        accessToken: 1,
 
       },
     },
