@@ -2968,132 +2968,36 @@ const [tradeSummary, setTradeSummary] = useState({
       <div className="py-0 w-full">
 
 
+        {params.center && (
 
 
-        <div className={`w-full flex flex-row items-center justify-start gap-2
-          p-2 rounded-lg mb-4
-          ${store?.backgroundColor ?
-            "bg-" + store.backgroundColor + " " :
-            "bg-black/10"
-          }`}>
+              <div className={`w-full flex flex-row items-center justify-start gap-2
+                p-2 rounded-lg mb-4
+                ${store?.backgroundColor ?
+                  "bg-" + store.backgroundColor + " " :
+                  "bg-black/10"
+                }`}>
+  
+              
+
+       
 
 
-          <div className="w-full flex flex-row items-center justify-start gap-2">
-            <Image
-              src={store?.storeLogo || "/logo.png"}
-              alt="logo"
-              width={35}
-              height={35}
-              className="rounded-lg w-6 h-6"
-            />
-            {address && address === storeAdminWalletAddress && (
+              {/* banner-igor-bastidas-7.gif */}
+              <Image
+                src="/banner-igor-bastidas-7.gif"
+                alt="Please connect your wallet"
+                width={400}
+                height={200}
+                className="rounded-lg w-full max-w-2xl"
+              />
               <div className="text-sm text-[#3167b4] font-bold">
-                {store?.storeName + " (" + store?.storecode + ") 가맹점 관리자"}
+                {store?.storeName} ({store?.storecode}) 가맹점 - 지갑을 연결해주세요.
               </div>
-            )}
-            {address && address !== storeAdminWalletAddress && (
-              <div className="text-sm text-[#3167b4] font-bold">
-                {store?.storeName + " (" + store?.storecode + ")"}
-              </div>
-            )}
-
-          </div>
-
-
-          {address && !loadingUser && (
-
-
-            <div className="w-full flex flex-row items-center justify-end gap-2">
-              <button
-                onClick={() => {
-                  router.push('/' + params.lang + '/' + params.center + '/profile-settings');
-                }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                {user?.nickname || "프로필"}
-              </button>
-
-
-              {/* logout button */}
-              <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
+              
 
             </div>
-
-
-          )}
-
-
-          {!address && (
-            <ConnectButton
-              client={client}
-              wallets={wallets}
-
-              /*
-              accountAbstraction={{
-                chain: arbitrum,
-                sponsorGas: true
-              }}
-              */
-              
-              theme={"light"}
-
-              // button color is dark skyblue convert (49, 103, 180) to hex
-              connectButton={{
-                  style: {
-                      backgroundColor: "#3167b4", // dark skyblue
-                      color: "#f3f4f6", // gray-300
-                      padding: "2px 10px",
-                      borderRadius: "10px",
-                      fontSize: "14px",
-                      width: "60x",
-                      height: "38px",
-                  },
-                  label: "원클릭 로그인",
-              }}
-
-              connectModal={{
-                size: "wide", 
-                //size: "compact",
-                titleIcon: "https://www.stable.makeup/logo.png",                           
-                showThirdwebBranding: false,
-              }}
-
-              locale={"ko_KR"}
-              //locale={"en_US"}
-            />
-          )}
-
-
-
-
-        </div>
- 
+        )}
 
 
         <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">
@@ -3167,13 +3071,6 @@ const [tradeSummary, setTradeSummary] = useState({
 
     );
   }
-
-
-
-
-  // if store.adminWalletAddress is same as address, return "가맹점 관리자" else return "가맹점"
-  // if user?.role is not "admin", return "가맹점"
-
 
   if (
     (address
@@ -3281,14 +3178,14 @@ const [tradeSummary, setTradeSummary] = useState({
                 }}
                 className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
               >
-
+                {/*
                 <div className="flex flex-row items-center gap-2">
                   <Image
                       src={store?.storeLogo || "/logo.png"}
                       alt="Store"
                       width={35}
                       height={35}
-                      className="rounded-lg w-5 h-5"
+                      className="rounded-lg w-5 h-5 object-cover"
                   />
                   <span className="text-sm text-zinc-50">
                     {
@@ -3297,25 +3194,22 @@ const [tradeSummary, setTradeSummary] = useState({
                   </span>
 
                 </div>
+                */}
+                <span className="text-sm text-zinc-50 font-bold">
+                  홈
+                </span>
 
               </button>
 
 
               <div className="flex flex-row items-center gap-2">
                 
-
+                {/*}
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   {!address && (
                     <ConnectButton
                       client={client}
                       wallets={wallets}
-
-                      /*
-                      accountAbstraction={{
-                        chain: arbitrum,
-                        sponsorGas: true
-                      }}
-                      */
                       
                       theme={"light"}
 
@@ -3345,6 +3239,7 @@ const [tradeSummary, setTradeSummary] = useState({
                     />
                   )}
                 </div>
+                */}
 
             
                 {address && !loadingUser && (

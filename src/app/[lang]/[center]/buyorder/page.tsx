@@ -3073,6 +3073,8 @@ const fetchBuyOrders = async () => {
       </main>
     );
   }
+
+  
   if (!fetchingStore && !store) {
     return (
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
@@ -3249,15 +3251,6 @@ const fetchBuyOrders = async () => {
     );
   }
 
-
-
-
-
-
-
-
-  // if store.adminWalletAddress is same as address, return "가맹점 관리자" else return "가맹점"
-  // if user?.role is not "admin", return "가맹점"
 
 
   if (
