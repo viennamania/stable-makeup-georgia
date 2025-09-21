@@ -2119,7 +2119,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-
+          /*
           await fetch('/api/order/getAllBuyOrders', {
             method: 'POST',
             headers: {
@@ -2165,6 +2165,19 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
             }
           });
+          */
+
+          setBuyOrders(
+            buyOrders.map((item, idx) => {
+              if (idx === index) {
+                return {
+                  ...item,
+                  status: 'paymentConfirmed',
+                };
+              }
+              return item;
+            })
+          );
 
           toast.success(Payment_has_been_confirmed);
           ////playSong();
@@ -2299,7 +2312,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
           //console.log('data', data);
 
-
+          /*
           await fetch('/api/order/getAllBuyOrders', {
             method: 'POST',
             headers: {
@@ -2345,9 +2358,26 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
             }
           });
+          */
+
+
+          setBuyOrders(
+            buyOrders.map((item, idx) => {
+              if (idx === index) {
+                return {
+                  ...item,
+                  //status: 'paymentConfirmed',
+                  transactionHash: transactionHash,
+                };
+              }
+              return item;
+            })
+          );
+
+
 
           toast.success(Payment_has_been_confirmed);
-          playSong();
+          ///playSong();
 
 
         } else {
