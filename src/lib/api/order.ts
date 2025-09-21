@@ -3674,6 +3674,8 @@ export async function buyOrderConfirmPayment(data: any) {
 
       if (userCollection) {
 
+
+        /*
         //const toalPaymentConfirmedCount = await collection.countDocuments(
         //  { walletAddress: order.walletAddress, storecode: order.storecode, status: 'paymentConfirmed' }
         //);
@@ -3706,12 +3708,28 @@ export async function buyOrderConfirmPayment(data: any) {
             }
           }
         );
-
-
+        */
+        // set buyOrderStatus = 'paymentConfirmed'
+        // set totalPaymentConfirmedCount increase by 1
+        // set totalPaymentConfirmedKrwAmount increase by krwAmount
+        // set totalPaymentConfirmedUsdtAmount increase by usdtAmount
+        await userCollection.updateOne(
+          { walletAddress: walletAddress,
+            storecode: storecode,
+          },
+          { $set: { buyOrderStatus: 'paymentConfirmed' },
+            $inc: {
+              totalPaymentConfirmedCount: 1,
+              totalPaymentConfirmedKrwAmount: paymentAmount,
+              totalPaymentConfirmedUsdtAmount: data.usdtAmount || 0,
+            }
+          }
+        );
 
       }
 
 
+      /*
       const totalPaymentConfirmed = await collection.aggregate([
         { $match: {
           storecode: storecode,
@@ -3746,7 +3764,7 @@ export async function buyOrderConfirmPayment(data: any) {
       //console.log('confirmPayment totalPaymentConfirmedClearance: ' + JSON.stringify(totalPaymentConfirmedClearance));
       // update store collection
       const storeCollection = client.db(dbName).collection('stores');
-      const store = await storeCollection.updateOne(
+      await storeCollection.updateOne(
         { storecode: storecode },
         { $set: {
           
@@ -3759,6 +3777,30 @@ export async function buyOrderConfirmPayment(data: any) {
           totalUsdtAmountClearance: totalPaymentConfirmedClearance[0]?.totalUsdtAmountClearance || 0,
         } }
       );
+      */
+
+      // update store collection
+      const storeCollection = client.db(dbName).collection('stores');
+      // update store collection for clearance
+      if (data.privateSale) {
+        await storeCollection.updateOne(
+          { storecode: storecode },
+          { $inc: {
+            totalPaymentConfirmedClearanceCount: 1,
+            totalKrwAmountClearance: paymentAmount,
+            totalUsdtAmountClearance: data.usdtAmount || 0,
+          } }
+        );
+      } else {
+        await storeCollection.updateOne(
+          { storecode: storecode },
+          { $inc: {
+            totalPaymentConfirmedCount: 1,
+            totalKrwAmount: paymentAmount,
+            totalUsdtAmount: data.usdtAmount || 0,
+          } }
+        );
+      }
 
 
 
@@ -3771,7 +3813,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
       const agentcode = order.agentcode;
 
-
+      /*
       const totalPaymentConfirmed = await collection.aggregate([
         { $match: {
           agentcode: agentcode,
@@ -3815,6 +3857,36 @@ export async function buyOrderConfirmPayment(data: any) {
           totalUsdtAmountClearance: totalPaymentConfirmedClearance[0]?.totalUsdtAmountClearance || 0,
         } }
       );
+      */
+
+
+      // update agent collection
+      const agentCollection = client.db(dbName).collection('agents');
+
+
+
+      // update agent collection for clearance
+      if (data.privateSale) {
+        await agentCollection.updateOne(
+          { agentcode: agentcode },
+          { $inc: {
+            totalPaymentConfirmedClearanceCount: 1,
+            totalKrwAmountClearance: paymentAmount,
+            totalUsdtAmountClearance: data.usdtAmount || 0,
+          } }
+        );
+      } else {
+        await agentCollection.updateOne(
+          { agentcode: agentcode },
+          { $inc: {
+            totalPaymentConfirmedCount: 1,
+            totalKrwAmount: paymentAmount,
+            totalUsdtAmount: data.usdtAmount || 0,
+          } }
+        );
+      }
+
+
 
 
     }
