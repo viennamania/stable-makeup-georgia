@@ -1790,6 +1790,8 @@ export default function Index({ params }: any) {
 
 
 
+
+
           toast.success(Payment_has_been_confirmed);
 
           playSong();
@@ -1871,6 +1873,7 @@ export default function Index({ params }: any) {
               ///fetchBuyOrders();
 
               // fetch Buy Orders
+              /*
               await fetch('/api/order/getAllCollectOrdersForUser', {
                 method: 'POST',
                 headers: {
@@ -1901,9 +1904,24 @@ export default function Index({ params }: any) {
                   setTotalClearanceAmount(data.result.totalClearanceAmount);
                   setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
+              */
+
+              setBuyOrders(
+                buyOrders.map((item, idx) => {
+                  if (idx === index) {
+                    return {
+                      ...item,
+                      transactionHash: transactionHash,
+                    };
+                  }
+                  return item;
+                })
+              );
+
+              
 
               toast.success(Payment_has_been_confirmed);
-              playSong();
+              ////playSong();
             } else {
               toast.error('결제확인이 실패했습니다.');
             }
