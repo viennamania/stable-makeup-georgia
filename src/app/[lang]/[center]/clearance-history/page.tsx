@@ -1839,6 +1839,7 @@ export default function Index({ params }: any) {
               ///fetchBuyOrders();
 
               // fetch Buy Orders
+              /*
               await fetch('/api/order/getAllCollectOrdersForSeller', {
                 method: 'POST',
                 headers: {
@@ -1865,9 +1866,25 @@ export default function Index({ params }: any) {
                   setTotalClearanceAmount(data.result.totalClearanceAmount);
                   setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
+              */
+
+
+              setBuyOrders(
+                buyOrders.map((item, idx) => {
+                  if (idx === index) {
+                    return {
+                      ...item,
+                      transactionHash: transactionHash,
+                    };
+                  }
+                  return item;
+                })
+              );
+
+
 
               toast.success(Payment_has_been_confirmed);
-              playSong();
+              ///playSong();
             } else {
               toast.error('결제확인이 실패했습니다.');
             }
@@ -3883,11 +3900,11 @@ export default function Index({ params }: any) {
 
                 <p className="text-lg text-yellow-500 font-semibold">
                   {
-                  totalClearanceCount
+                  paymentRequestedCount
                   }
                 </p>
 
-                {totalClearanceCount > 0 && (
+                {paymentRequestedCount > 0 && (
                   <div className="flex flex-row items-center justify-center gap-2">
                     <Image
                       src="/icon-notification.gif"
@@ -4000,7 +4017,9 @@ export default function Index({ params }: any) {
                                   year: 'numeric',
                                   month: '2-digit',
                                   day: '2-digit',
-                                }) + ' ' +
+                                })
+                              } <br />
+                              {
                                 new Date(item.createdAt).toLocaleTimeString(params.lang, {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -4067,7 +4086,7 @@ export default function Index({ params }: any) {
                                   className="w-5 h-5"
                                 />
                                 <span className="text-sm font-semibold text-zinc-800">
-                                  {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
+                                  {item.walletAddress.slice(0, 6) + '...'}
                                 </span>
                               </div>
 
@@ -4155,7 +4174,12 @@ export default function Index({ params }: any) {
                                 {item.seller?.bankInfo?.bankName}
                               </div>
                               <div className="text-lg font-semibold text-zinc-500">
-                                {item.seller?.bankInfo?.accountNumber}
+                                {
+                                  item.seller?.bankInfo?.accountNumber
+                                  && item.seller?.bankInfo?.accountNumber.length > 5
+                                  ? item.seller?.bankInfo?.accountNumber.slice(0, 3) + '...' + item.seller?.bankInfo?.accountNumber.slice(-2)
+                                  : item.seller?.bankInfo?.accountNumber
+                                }
                               </div>
                               <div className="text-lg font-semibold text-zinc-500">
                                 {item.seller?.bankInfo?.accountHolder}
@@ -4285,11 +4309,20 @@ export default function Index({ params }: any) {
                             {item.status === 'paymentConfirmed' && (
                               <div className="flex flex-col gap-2 items-center justify-center">
 
-                                <div className="text-sm text-zinc-500">
-                                  {
-                                    ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
-                                    item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
-                                  }
+                                <div className="flex flex-row gap-1 items-center justify-center">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Shield"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-sm text-zinc-800 font-semibold">
+                                    {
+                                      ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                      item.seller?.walletAddress.slice(0, 6) + '...'
+                                    }
+                                  </span>
                                 </div>
 
 
