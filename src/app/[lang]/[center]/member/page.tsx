@@ -1974,159 +1974,157 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-          <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
-            p-2 rounded-lg mb-4
-            ${store?.backgroundColor ?
-              "bg-" + store.backgroundColor + " " :
-              "bg-black/10"
-            }`}>
-              
-              
-              <button
-                onClick={() => {
-                  router.push('/' + params.lang + '/' + params.center + '/center');
-                }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-
-                <div className="flex flex-row items-center gap-2">
-                  <Image
-                      src={store?.storeLogo || "/logo.png"}
-                      alt="Store"
-                      width={35}
-                      height={35}
-                      className="rounded-lg w-5 h-5 object-cover"
-                  />
-                  <span className="text-sm text-zinc-50">
-                    {
-                      store && store?.storeName + " (" + store?.storecode + ")"
-                    }
-                  </span>
-
-                </div>
-
-              </button>
-
-
-              <div className="flex flex-row items-center gap-2">
-                
-
-                <div className="w-full flex flex-row items-center justify-end gap-2">
-                  {!address && (
-                    <ConnectButton
-                      client={client}
-                      wallets={wallets}
-
-                      /*
-                      accountAbstraction={{
-                        chain: arbitrum,
-                        sponsorGas: true
-                      }}
-                      */
-                      
-                      theme={"light"}
-
-                      // button color is dark skyblue convert (49, 103, 180) to hex
-                      connectButton={{
-                          style: {
-                              backgroundColor: "#3167b4", // dark skyblue
-                              color: "#f3f4f6", // gray-300
-                              padding: "2px 10px",
-                              borderRadius: "10px",
-                              fontSize: "14px",
-                              width: "60x",
-                              height: "38px",
-                          },
-                          label: "원클릭 로그인",
-                      }}
-
-                      connectModal={{
-                        size: "wide", 
-                        //size: "compact",
-                        titleIcon: "https://www.stable.makeup/logo.png",                           
-                        showThirdwebBranding: false,
-                      }}
-
-                      locale={"ko_KR"}
-                      //locale={"en_US"}
-                    />
-                  )}
-                </div>
-
+        <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
+          p-2 rounded-lg mb-4
+          ${store?.backgroundColor ?
+            "bg-" + store.backgroundColor + " " :
+            "bg-black/10"
+          }`}>
             
-                {address && !loadingUser && (
-                    <div className="w-full flex flex-row items-center justify-end gap-2">
-
-                      <button
-                        onClick={() => {
-                          router.push('/' + params.lang + '/' + params.center + '/profile-settings');
-                        }}
-                        className="
-                        items-center justify-center
-                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                      >
-                        <div className="
-                          w-40 xl:w-48
-                          flex flex-col sm:flex-row items-center justify-center gap-2">
-                          <span className="text-sm text-zinc-50">
-                            {user?.nickname || "프로필"}
-                          </span>
-                          {isAdmin && (
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <Image
-                                src="/icon-admin.png"
-                                alt="Admin"
-                                width={20}
-                                height={20}
-                                className="rounded-lg w-5 h-5"
-                              />
-                              <span className="text-sm text-yellow-500">
-                                가맹점 관리자
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </button>
-
-                      {/* logout button */}
-                      <button
-                          onClick={() => {
-                              confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                              .then(() => {
-
-                                  toast.success('로그아웃 되었습니다');
-
-                                  //router.push(
-                                  //    "/admin/" + params.center
-                                  //);
-                              });
-                          } }
-
-                          className="
-                            w-32
-                            flex items-center justify-center gap-2
-                            bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                      >
-                        <Image
-                          src="/icon-logout.webp"
-                          alt="Logout"
-                          width={20}
-                          height={20}
-                          className="rounded-lg w-5 h-5"
-                        />
-                        <span className="text-sm">
-                          로그아웃
-                        </span>
-                      </button>
-
-                  </div>
-                )}
-
+            
+            <button
+              onClick={() => {
+                router.push('/' + params.lang + '/' + params.center + '/center');
+              }}
+              className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+            >
+              {/*
+              <div className="flex flex-row items-center gap-2">
+                <Image
+                    src={store?.storeLogo || "/logo.png"}
+                    alt="Store"
+                    width={35}
+                    height={35}
+                    className="rounded-lg w-5 h-5 object-cover"
+                />
+                <span className="text-sm text-zinc-50">
+                  {
+                    store && store?.storeName + " (" + store?.storecode + ")"
+                  }
+                </span>
 
               </div>
+              */}
+              <span className="text-sm text-zinc-50 font-bold">
+                홈
+              </span>
+
+            </button>
 
 
-          </div>
+            <div className="flex flex-row items-center gap-2">
+              
+              {/*}
+              <div className="w-full flex flex-row items-center justify-end gap-2">
+                {!address && (
+                  <ConnectButton
+                    client={client}
+                    wallets={wallets}
+                    
+                    theme={"light"}
+
+                    // button color is dark skyblue convert (49, 103, 180) to hex
+                    connectButton={{
+                        style: {
+                            backgroundColor: "#3167b4", // dark skyblue
+                            color: "#f3f4f6", // gray-300
+                            padding: "2px 10px",
+                            borderRadius: "10px",
+                            fontSize: "14px",
+                            width: "60x",
+                            height: "38px",
+                        },
+                        label: "원클릭 로그인",
+                    }}
+
+                    connectModal={{
+                      size: "wide", 
+                      //size: "compact",
+                      titleIcon: "https://www.stable.makeup/logo.png",                           
+                      showThirdwebBranding: false,
+                    }}
+
+                    locale={"ko_KR"}
+                    //locale={"en_US"}
+                  />
+                )}
+              </div>
+              */}
+
+          
+              {address && !loadingUser && (
+                  <div className="w-full flex flex-row items-center justify-end gap-2">
+
+                    <button
+                      onClick={() => {
+                        router.push('/' + params.lang + '/' + params.center + '/profile-settings');
+                      }}
+                      className="
+                      items-center justify-center
+                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    >
+                      <div className="
+                        w-40 xl:w-48
+                        flex flex-col sm:flex-row items-center justify-center gap-2">
+                        <span className="text-sm text-zinc-50">
+                          {user?.nickname || "프로필"}
+                        </span>
+                        {isAdmin && (
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            <Image
+                              src="/icon-admin.png"
+                              alt="Admin"
+                              width={20}
+                              height={20}
+                              className="rounded-lg w-5 h-5"
+                            />
+                            <span className="text-sm text-yellow-500">
+                              가맹점 관리자
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+
+                    {/* logout button */}
+                    <button
+                        onClick={() => {
+                            confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                            .then(() => {
+
+                                toast.success('로그아웃 되었습니다');
+
+                                //router.push(
+                                //    "/admin/" + params.center
+                                //);
+                            });
+                        } }
+
+                        className="
+                          w-32
+                          flex items-center justify-center gap-2
+                          bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    >
+                      <Image
+                        src="/icon-logout.webp"
+                        alt="Logout"
+                        width={20}
+                        height={20}
+                        className="rounded-lg w-5 h-5"
+                      />
+                      <span className="text-sm">
+                        로그아웃
+                      </span>
+                    </button>
+
+                </div>
+              )}
+
+
+            </div>
+
+
+        </div>
             
        
           <div className="flex flex-col items-start justify-center gap-2">

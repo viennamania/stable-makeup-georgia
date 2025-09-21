@@ -1048,12 +1048,6 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-
-          <div className="flex flex-col items-start justify-center gap-2">
-
-
-
-
           <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
             p-2 rounded-lg mb-4
             ${store?.backgroundColor ?
@@ -1068,7 +1062,7 @@ export default function Index({ params }: any) {
                 }}
                 className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
               >
-
+                {/*
                 <div className="flex flex-row items-center gap-2">
                   <Image
                       src={store?.storeLogo || "/logo.png"}
@@ -1084,25 +1078,22 @@ export default function Index({ params }: any) {
                   </span>
 
                 </div>
+                */}
+                <span className="text-sm text-zinc-50 font-bold">
+                  홈
+                </span>
 
               </button>
 
 
               <div className="flex flex-row items-center gap-2">
                 
-
+                {/*}
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   {!address && (
                     <ConnectButton
                       client={client}
                       wallets={wallets}
-
-                      /*
-                      accountAbstraction={{
-                        chain: arbitrum,
-                        sponsorGas: true
-                      }}
-                      */
                       
                       theme={"light"}
 
@@ -1132,6 +1123,7 @@ export default function Index({ params }: any) {
                     />
                   )}
                 </div>
+                */}
 
             
                 {address && !loadingUser && (
@@ -1202,9 +1194,17 @@ export default function Index({ params }: any) {
                   </div>
                 )}
 
+
               </div>
 
-            </div>
+
+          </div>
+
+
+          <div className="flex flex-col items-start justify-center gap-2">
+
+
+
 
 
 
