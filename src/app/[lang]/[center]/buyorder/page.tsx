@@ -7067,7 +7067,7 @@ const fetchBuyOrders = async () => {
                                     className="w-8 h-8 rounded-lg object-cover"
                                   />
                                   <span className="text-sm font-semibold text-zinc-500">
-                                    가맹점 결제완료
+                                    결제완료
                                   </span>
 
                                   <div className="flex flex-row gap-1 items-center">

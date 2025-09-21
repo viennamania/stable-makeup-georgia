@@ -6968,7 +6968,7 @@ const fetchBuyOrders = async () => {
                                   className="w-6 h-6 rounded-lg object-cover"
                                 />
                                 <span className="text-sm font-semibold text-zinc-500">
-                                  {item?.store?.storeName}{' '}가맹점 결제완료
+                                  {item?.store?.storeName}{' '}결제완료
                                 </span>
 
                                 <div className="flex flex-row gap-1 items-center">
