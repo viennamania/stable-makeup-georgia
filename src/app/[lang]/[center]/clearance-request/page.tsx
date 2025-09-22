@@ -3750,34 +3750,34 @@ const [tradeSummary, setTradeSummary] = useState({
                   <div className="w-full xl:w-1/3
                     flex flex-row items-start justify-between gap-2 pl-4 pr-4">
                     <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 판매주문수(건)</div>
+                      <div className="text-sm">판매주문수(건)</div>
                       <div className="text-xl font-semibold text-zinc-500">
                         {totalClearanceCount?.toLocaleString()}
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 판매금액(원)</div>
-                      <div className="text-sm font-semibold text-zinc-500">
-                        <span className="text-xl text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {totalClearanceAmountKRW?.toLocaleString()}
-                        </span>{' '}
-                          원
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">총 판매량(USDT)</div>
+                      <div className="text-sm">판매량(USDT)</div>
                       <div className="text-sm font-semibold text-zinc-500">
                         <span className="text-xl text-[#409192]"
                           style={{ fontFamily: 'monospace' }}
                         >
                           {totalClearanceAmount?.toLocaleString()}
-                        </span>{' '}
-                          USDT
+                        </span>
                       </div>
                     </div>
+
+                    <div className="flex flex-col gap-2 items-center">
+                      <div className="text-sm">판매금액(원)</div>
+                      <div className="text-sm font-semibold text-zinc-500">
+                        <span className="text-xl text-yellow-600"
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {totalClearanceAmountKRW?.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+
                   </div>
                   
                   
