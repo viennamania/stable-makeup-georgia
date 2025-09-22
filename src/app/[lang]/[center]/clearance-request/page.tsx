@@ -521,125 +521,6 @@ export default function Index({ params }: any) {
 
   
 
-  
-
-
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [balance, setBalance] = useState(0);
-  useEffect(() => {
-
-    // get the balance
-    const getBalance = async () => {
-
-      ///console.log('getBalance address', address);
-
-      
-      const result = await balanceOf({
-        contract,
-        address: address || "",
-      });
-
-  
-      console.log('getBalance result', result);
-  
-       if (chain === 'bsc') {
-        setBalance( Number(result) / 10 ** 18 );
-      } else {
-        setBalance( Number(result) / 10 ** 6 );
-      }
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: params.center,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
-
-
-    };
-
-
-    if (address) getBalance();
-
-    const interval = setInterval(() => {
-      if (address) getBalance();
-    } , 5000);
-
-    return () => clearInterval(interval);
-
-  } , [address, contract]);
-
-
-
-
-
-
-
-
-
-
-
-  const [escrowWalletAddress, setEscrowWalletAddress] = useState('');
-  const [makeingEscrowWallet, setMakeingEscrowWallet] = useState(false);
-
-  const makeEscrowWallet = async () => {
-      
-    if (!address) {
-      toast.error('Please connect your wallet');
-      return;
-    }
-
-
-    setMakeingEscrowWallet(true);
-
-    fetch('/api/order/getEscrowWalletAddress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        lang: params.lang,
-        storecode: params.center,
-        walletAddress: address,
-        //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-        isSmartAccount: false,
-      }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        
-        //console.log('getEscrowWalletAddress data.result', data.result);
-
-
-        if (data.result) {
-          setEscrowWalletAddress(data.result.escrowWalletAddress);
-          toast.success(Escrow_Wallet_Address_has_been_created);
-        } else {
-          toast.error(Failed_to_create_Escrow_Wallet_Address);
-        }
-    })
-    .finally(() => {
-      setMakeingEscrowWallet(false);
-    });
-
-  }
-
-  //console.log("escrowWalletAddress", escrowWalletAddress);
-
-
-
 
 
   
@@ -719,7 +600,7 @@ export default function Index({ params }: any) {
 
     }
 
-  } , [address]);
+  } , [address, params.center]);
 
 
 
@@ -752,15 +633,13 @@ export default function Index({ params }: any) {
 
         setUser(data.result);
 
-        setEscrowWalletAddress(data.result.escrowWalletAddress);
-
         setIsAdmin(data.result?.role === "admin");
 
     })
     .catch((error) => {
         console.error('Error:', error);
         setUser(null);
-        setEscrowWalletAddress('');
+
         setIsAdmin(false);
     });
 
@@ -1245,22 +1124,6 @@ export default function Index({ params }: any) {
     }
 
 
-    /*
-    useEffect(() => {
-
-      setRequestingPayment(
-
-        new Array(buyOrders.length).fill(false)
-
-      );
-
-    } , [buyOrders]);
-      */
-
-
-    // without escrow
-    const [isWithoutEscrow, setIsWithoutEscrow] = useState(true);
-
 
     const requestPayment = async (
       index: number,
@@ -1270,15 +1133,24 @@ export default function Index({ params }: any) {
     ) => {
 
 
-      // check escrowWalletAddress
-
-      if (!isWithoutEscrow && escrowWalletAddress === '') {
-        toast.error('Recipient wallet address is empty');
-        return;
-      }
+   
 
       // check balance
       // send payment request
+
+      let balance = 0;
+      const result = await balanceOf({
+        contract,
+        address: address || "",
+      });
+
+       if (chain === 'bsc') {
+        balance = Number(result) / 10 ** 18;
+      } else {
+        balance = Number(result) / 10 ** 6;
+      }
+
+
 
       if (balance < amount) {
         toast.error(Insufficient_balance);
@@ -1286,306 +1158,123 @@ export default function Index({ params }: any) {
       }
 
 
-      // check all escrowing is false
-      if (!isWithoutEscrow && escrowing.some((item) => item === true)) {
-        toast.error('Escrowing');
-        return;
-      }
-
-
-
 
       // check all requestingPayment is false
       if (requestingPayment.some((item) => item === true)) {
-        toast.error('Requesting Payment');
+        toast.error('결제요청중입니다.');
         return;
       }
 
 
-      if (!isWithoutEscrow) {
+      try {
+
+        const transactionHash = '0x';
 
 
-        setEscrowing(
-          escrowing.map((item, idx) =>  idx === index ? true : item) 
+        setRequestingPayment(
+          requestingPayment.map((item, idx) => idx === index ? true : item)
         );
-    
-
-   
-
-
-        // send USDT
-        // Call the extension function to prepare the transaction
-        const transaction = transfer({
-          contract,
-          to: escrowWalletAddress,
-          amount: amount,
-        });
         
 
-
-        try {
-
-
-          /*
-          const transactionResult = await sendAndConfirmTransaction({
-              account: smartAccount as any,
-              transaction: transaction,
-          });
-
-          //console.log("transactionResult===", transactionResult);
-          */
-
-          const { transactionHash } = await sendTransaction({
-            
-            account: activeAccount as any,
-
-            transaction,
-          });
-
-          console.log("transactionHash===", transactionHash);
-
-
-          /*
-          const transactionResult = await waitForReceipt({
-            client,
-            arbitrum,
-            maxBlocksWaitTime: 1,
+      const response = await fetch('/api/order/buyOrderRequestPayment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            lang: params.lang,
+            storecode: params.center,
+            orderId: orderId,
+            //transactionHash: transactionResult.transactionHash,
             transactionHash: transactionHash,
-          });
+          })
+        });
+
+        const data = await response.json();
 
 
-          console.log("transactionResult===", transactionResult);
-          */
-    
+        if (data.result) {
 
-          // send payment request
+          toast.success(Payment_request_has_been_sent);
 
-          //if (transactionResult) {
-          if (transactionHash) {
+          //toast.success('Payment request has been sent');
 
-            
-            setRequestingPayment(
-              requestingPayment.map((item, idx) => idx === index ? true : item)
-            );
-            
-            
-            
-
-
-          
-            const response = await fetch('/api/order/buyOrderRequestPayment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.center,
-                orderId: orderId,
-                //transactionHash: transactionResult.transactionHash,
-                transactionHash: transactionHash,
-              })
-            });
-
-            const data = await response.json();
-
-            //console.log('/api/order/buyOrderRequestPayment data====', data);
-
-
-            /*
-            setRequestingPayment(
-              requestingPayment.map((item, idx) => {
-                if (idx === index) {
-                  return false;
-                }
-                return item;
-              })
-            );
-            */
-            
-
-
-            if (data.result) {
-
-              toast.success(Payment_request_has_been_sent);
-
-              //toast.success('Payment request has been sent');
-
-              playSong();
-              
-
-              
-              //fetchBuyOrders();
-              // fetch Buy Orders
-              await fetch('/api/order/getAllCollectOrdersForUser', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: params.center,
-                    limit: Number(limit),
-                    page: Number(page),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
-
-                    fromDate: searchFromDate,
-                    toDate: searchToDate,
-                    searchWithdrawDepositName: searchWithdrawDepositName,
-                  }
-                ),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  ///console.log('data', data);
-                  setBuyOrders(data.result.orders);
-
-                  setTotalCount(data.result.totalCount);
-
-                  setTotalClearanceCount(data.result.totalClearanceCount);
-                  setTotalClearanceAmount(data.result.totalClearanceAmount);
-                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-              })
-
-
-              // refresh balance
-
-              const result = await balanceOf({
-                contract,
-                address: address || "",
-              });
-
-              //console.log(result);
-
-              setBalance( Number(result) / 10 ** 6 );
-
-
-            
-
-            } else {
-              toast.error('Payment request has been failed');
-            }
-
-          }
-
-
-        } catch (error) {
-          console.error('Error:', error);
-
-          toast.error('Payment request has been failed');
-        }
-
-        setEscrowing(
-          escrowing.map((item, idx) =>  idx === index ? false : item)
-        );
-
-
-
-      } else {
-        // without escrow
-
-
-        try {
-
-          const transactionHash = '0x';
-
-
-          setRequestingPayment(
-            requestingPayment.map((item, idx) => idx === index ? true : item)
-          );
-          
-          
+          //playSong();
           
 
-
-        
-          const response = await fetch('/api/order/buyOrderRequestPayment', {
+          
+          //fetchBuyOrders();
+          // fetch Buy Orders
+          /*
+          await fetch('/api/order/getAllCollectOrdersForUser', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              lang: params.lang,
-              storecode: params.center,
-              orderId: orderId,
-              //transactionHash: transactionResult.transactionHash,
-              transactionHash: transactionHash,
+            body: JSON.stringify(
+              {
+                storecode: params.center,
+                limit: Number(limit),
+                page: Number(page),
+                walletAddress: address,
+                searchMyOrders: searchMyOrders,
+
+                fromDate: searchFromDate,
+                toDate: searchToDate,
+                searchWithdrawDepositName: searchWithdrawDepositName,
+              }
+            ),
+          })
+          .then(response => response.json())
+          .then(data => {
+              ///console.log('data', data);
+              setBuyOrders(data.result.orders);
+
+              setTotalCount(data.result.totalCount);
+
+              setTotalClearanceCount(data.result.totalClearanceCount);
+              setTotalClearanceAmount(data.result.totalClearanceAmount);
+              setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+          })
+          */
+
+          setBuyOrders(
+            buyOrders.map((item, idx) => {
+              if (idx === index) {
+                return {
+                  ...item,
+                  status: 'paymentRequested',
+                };
+              }
+              return item;
             })
+          );
+
+
+          // refresh balance
+          /*
+          const result = await balanceOf({
+            contract,
+            address: address || "",
           });
 
-          const data = await response.json();
+          //console.log(result);
+
+          setBalance( Number(result) / 10 ** 6 );
+          */
 
 
-          if (data.result) {
-
-            toast.success(Payment_request_has_been_sent);
-
-            //toast.success('Payment request has been sent');
-
-            playSong();
-            
-
-            
-            //fetchBuyOrders();
-            // fetch Buy Orders
-            await fetch('/api/order/getAllCollectOrdersForUser', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(
-                {
-                  storecode: params.center,
-                  limit: Number(limit),
-                  page: Number(page),
-                  walletAddress: address,
-                  searchMyOrders: searchMyOrders,
-
-                  fromDate: searchFromDate,
-                  toDate: searchToDate,
-                  searchWithdrawDepositName: searchWithdrawDepositName,
-                }
-              ),
-            })
-            .then(response => response.json())
-            .then(data => {
-                ///console.log('data', data);
-                setBuyOrders(data.result.orders);
-
-                setTotalCount(data.result.totalCount);
-
-                setTotalClearanceCount(data.result.totalClearanceCount);
-                setTotalClearanceAmount(data.result.totalClearanceAmount);
-                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-            })
-
-
-            // refresh balance
-
-            const result = await balanceOf({
-              contract,
-              address: address || "",
-            });
-
-            //console.log(result);
-
-            setBalance( Number(result) / 10 ** 6 );
-
-
-          } else {
-            toast.error('결제요청이 실패했습니다.');
-          }
- 
-        } catch (error) {
-          console.error('Error:', error);
-
+        } else {
           toast.error('결제요청이 실패했습니다.');
         }
 
-        
-      } // end of without escrow
+      } catch (error) {
+        console.error('Error:', error);
 
+        toast.error('결제요청이 실패했습니다.');
+      }
+
+ 
 
       setRequestingPayment(
         requestingPayment.map((item, idx) => idx === index ? false : item)
@@ -1609,11 +1298,12 @@ export default function Index({ params }: any) {
 
 
   // array of confirmingPayment
-
+    /*
   const [confirmingPayment, setConfirmingPayment] = useState([] as boolean[]);
   for (let i = 0; i < 100; i++) {
     confirmingPayment.push(false);
   }
+    */
 
   /*
   useEffect(() => {
@@ -1627,10 +1317,12 @@ export default function Index({ params }: any) {
 
 
   // confirm payment check box
+  /*
   const [confirmPaymentCheck, setConfirmPaymentCheck] = useState([] as boolean[]);
   for (let i = 0; i < 100; i++) {
     confirmPaymentCheck.push(false);
   }
+    */
 
   /*
   useEffect(() => {
@@ -1644,7 +1336,7 @@ export default function Index({ params }: any) {
 
 
 
-
+  /*
   // payment amoount array
   const [paymentAmounts, setPaymentAmounts] = useState([] as number[]);
   useEffect(() => {
@@ -1667,7 +1359,11 @@ export default function Index({ params }: any) {
       );
 
   } , [buyOrders]);
+  */
 
+
+
+  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
 
   // confirm payment
@@ -1675,8 +1371,13 @@ export default function Index({ params }: any) {
 
     index: number,
     orderId: string,
-    paymentAmount: number,
-    paymentAmountUsdt: number,
+    //////paymentAmount: number,
+    krwAmount: number,
+    //////paymentAmountUsdt: number,
+
+    usdtAmount: number,
+
+    buyerWalletAddress: string,
 
   ) => {
     // confirm payment
@@ -1719,106 +1420,35 @@ export default function Index({ params }: any) {
     }
     */
 
+    /*
     if (confirmingPayment[index]) {
       return;
     }
+    */
 
+    /*
+   if (confirmingPayment.some((item) => item === true)) {
+      alert('다른 결제확인 처리중입니다. 잠시후 다시 시도해주세요.');
+      return;
+    }
+    */
+
+    if (isProcessingSendTransaction) {
+      alert('결제확인 처리중입니다. 잠시후 다시 시도해주세요.');
+      return;
+    }
+    
+
+    /*
     setConfirmingPayment(
       confirmingPayment.map((item, idx) =>  idx === index ? true : item)
     );
+    */
 
+    setIsProcessingSendTransaction(true);
 
     try {
 
-      
-      if (!isWithoutEscrow) {
-      
-        const response = await fetch('/api/order/buyOrderConfirmPayment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            lang: params.lang,
-            storecode: params.center,
-            orderId: orderId,
-            paymentAmount: paymentAmount,
-            ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-            isSmartAccount: false,
-          })
-        });
-
-        const data = await response.json();
-
-        //console.log('data', data);
-
-        if (data.result) {
-          
-          ///fetchBuyOrders();
-
-          // fetch Buy Orders
-          await fetch('/api/order/getAllCollectOrdersForUser', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-              {
-                storecode: params.center,
-                limit: Number(limit),
-                page: Number(page),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-
-                fromDate: searchFromDate,
-                toDate: searchToDate,
-                searchWithdrawDepositName: searchWithdrawDepositName,
-              }
-            ),
-          })
-          .then(response => response.json())
-          .then(data => {
-              ///console.log('data', data);
-              setBuyOrders(data.result.orders);
-
-              setTotalCount(data.result.totalCount);
-
-              setTotalClearanceCount(data.result.totalClearanceCount);
-              setTotalClearanceAmount(data.result.totalClearanceAmount);
-              setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-          })
-
-
-
-
-
-          toast.success(Payment_has_been_confirmed);
-
-          playSong();
-
-
-        } else {
-          toast.error('결제확인이 실패했습니다.');
-        }
-
-      } else {
-
-
-        // transfer my wallet to seller wallet address
-
-        
-        //const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
-        //const sellerWalletAddress = "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666"; // for test
-
-        //const sellerWalletAddress = buyOrders[index].store.sellerWalletAddress;
-
-        const buyerWalletAddress = buyOrders[index].walletAddress;
-
-        //alert('sellerWalletAddress: ' + sellerWalletAddress);
-
-        console.log('buyerWalletAddress', buyerWalletAddress);
-
-        const usdtAmount = buyOrders[index].usdtAmount;
 
         const transaction = transfer({
           contract,
@@ -1857,7 +1487,7 @@ export default function Index({ params }: any) {
                 lang: params.lang,
                 storecode: params.center,
                 orderId: orderId,
-                paymentAmount: paymentAmount,
+                paymentAmount: krwAmount,
                 transactionHash: transactionHash,
                 ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
                 isSmartAccount: false,
@@ -1920,7 +1550,7 @@ export default function Index({ params }: any) {
 
               
 
-              toast.success(Payment_has_been_confirmed);
+              toast.success('결제확인이 완료되었습니다.');
               ////playSong();
             } else {
               toast.error('결제확인이 실패했습니다.');
@@ -1936,8 +1566,6 @@ export default function Index({ params }: any) {
           toast.error('결제확인이 실패했습니다.' + JSON.stringify(error));
         }
 
-      }
-
 
 
     } catch (error) {
@@ -1945,7 +1573,9 @@ export default function Index({ params }: any) {
       toast.error('결제확인이 실패했습니다.');
     }
 
+    setIsProcessingSendTransaction(false);
 
+    /*
     setConfirmingPayment(
       confirmingPayment.map((item, idx) => idx === index ? false : item)
     );
@@ -1954,6 +1584,9 @@ export default function Index({ params }: any) {
     setConfirmPaymentCheck(
       confirmPaymentCheck.map((item, idx) => idx === index ? false : item)
     );
+    */
+
+
 
   }
 
@@ -2055,7 +1688,7 @@ export default function Index({ params }: any) {
 
         toast.success('Payment has been rollbacked');
 
-        playSong();
+        //playSong();
 
         
         ///fetchBuyOrders();
@@ -2193,11 +1826,13 @@ export default function Index({ params }: any) {
     //console.log('requestingPayment', requestingPayment);
     //console.log('confirmingPayment', confirmingPayment);
 
+    ///console.log('confirmPaymentCheck', confirmPaymentCheck);
 
 
     // check all agreementForTrade is false
 
     if (
+      /*
       //!address || !searchMyOrders
       agreementForTrade.some((item) => item === true)
       || acceptingBuyOrder.some((item) => item === true)
@@ -2209,6 +1844,9 @@ export default function Index({ params }: any) {
       || requestingPayment.some((item) => item === true)
       || confirmingPayment.some((item) => item === true)
       || rollbackingPayment.some((item) => item === true)
+      */
+
+      isProcessingSendTransaction
     ) {
       return;
     }
@@ -2270,9 +1908,6 @@ export default function Index({ params }: any) {
   useEffect(() => {
 
 
-
-
-
     if (!address || !searchFromDate || !searchToDate) {
       return;
     }
@@ -2290,88 +1925,32 @@ export default function Index({ params }: any) {
     
 
   } , [
+
     limit,
     page,
     address,
     searchMyOrders,
-    agreementForTrade,
-    acceptingBuyOrder,
-    escrowing,
-    requestingPayment,
-    confirmingPayment,
-    rollbackingPayment,
-    agreementForCancelTrade,
-    confirmPaymentCheck,
-    rollbackPaymentCheck,
+    
+    //agreementForTrade,
+    //acceptingBuyOrder,
+    //escrowing,
+    //requestingPayment,
+    //confirmingPayment,
+    //rollbackingPayment,
+    //agreementForCancelTrade,
+    //confirmPaymentCheck,
+    //rollbackPaymentCheck,
 
-    latestBuyOrder,
+    //latestBuyOrder,
     //playSong,
 
     params.center,
     searchFromDate,
     searchToDate,
     searchWithdrawDepositName,
+
+    isProcessingSendTransaction,
 ]);
-
-
-
-
-
-
-  const [escrowBalance, setEscrowBalance] = useState(0);
-  const [todayMinusedEscrowAmount, setTodayMinusedEscrowAmount] = useState(0);
-
-  useEffect(() => {
-
-    const fetchEscrowBalance = async () => {
-      if (!params.center) {
-        return;
-      }
-
-      const response = await fetch('/api/store/getEscrowBalance', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
-              storecode: params.center,
-            }
-        ),
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-
-
-      const data = await response.json();
-
-      setEscrowBalance(data.result.escrowBalance);
-      setTodayMinusedEscrowAmount(data.result.todayMinusedEscrowAmount);
-
-    }
-
-
-    fetchEscrowBalance();
-
-    
-    
-    const interval = setInterval(() => {
-
-      fetchEscrowBalance();
-
-    }, 5000);
-
-    return () => clearInterval(interval);
-
-  } , [
-    params.center,
-  ]);
-
-
-
 
 
 
@@ -4310,7 +3889,28 @@ const [tradeSummary, setTradeSummary] = useState({
                           <th className="p-2">거래소전송</th>
 
                           <th className="p-2">거래취소</th>
-                          <th className="p-2">USDT 전송</th>
+                          
+                          <th className="p-2">
+                            {isProcessingSendTransaction ? (
+                              <div className="flex flex-row items-center gap-2">
+                                <Image
+                                  src="/icon-transfer.png"
+                                  alt="Transfer"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 animate-spin"
+                                />
+                                <span className="text-sm">
+                                  USDT 전송중...
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-sm">
+                                USDT 전송
+                              </span>
+                            )}
+                          </th>
+
                           <th className="p-2">출금상태</th>
                         </tr>
                       </thead>
@@ -4977,6 +4577,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                     
                                     <div className="flex flex-row gap-2">
 
+                                      {/*
                                       <input
                                         disabled={confirmingPayment[index]}
                                         type="checkbox"
@@ -4992,27 +4593,36 @@ const [tradeSummary, setTradeSummary] = useState({
                                           );
                                         }}
                                       />
+                                      */}
 
                                       <button
-                                        disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
+                                        
+                                        //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
+
+                                        disabled={isProcessingSendTransaction}
+
                                         className={`
                                           w-32 h-8
                                           flex flex-row
                                           items-center justify-center
-                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${confirmingPayment[index] || !confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
+                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-600'}`}
 
                                 
                                         onClick={() => {
                                           confirmPayment(
                                             index,
                                             item._id,
-                                            paymentAmounts[index],
-                                            paymentAmountsUsdt[index]
+                                            //paymentAmounts[index],
+                                            item.krwAmount,
+                                            ///paymentAmountsUsdt[index]
+                                            item.usdtAmount,
+
+                                            item.walletAddress
                                           );
                                         }}
 
                                       >
-                                        
+                                        {/*
                                         {confirmingPayment[index] && (
                                           <Image
                                             src="/loading.png"
@@ -5022,6 +4632,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                             className="w-4 h-4 animate-spin "
                                           />
                                         )}
+                                        */}
                                         <span className="text-sm">
                                           USDT 전송
                                         </span>
@@ -5029,60 +4640,6 @@ const [tradeSummary, setTradeSummary] = useState({
                                       </button>
 
                                     </div>
-
-
-                                    {!isWithoutEscrow && (
-                                      <div className="flex flex-row gap-2">
-
-                                        <input
-                                          disabled={rollbackingPayment[index]}
-                                          type="checkbox"
-                                          checked={rollbackPaymentCheck[index]}
-                                          onChange={(e) => {
-                                            setRollbackPaymentCheck(
-                                              rollbackPaymentCheck.map((item, idx) => {
-                                                if (idx === index) {
-                                                  return e.target.checked;
-                                                }
-                                                return item;
-                                              })
-                                            );
-                                          }}
-                                        />
-
-                                        <button
-                                          disabled={rollbackingPayment[index] || !rollbackPaymentCheck[index]}
-                                          className={`
-                                            w-24 h-8
-                                            flex flex-row
-                                            items-center justify-center
-                                            gap-1 text-sm text-white px-2 py-1 rounded-md ${rollbackingPayment[index] || !rollbackPaymentCheck[index] ? 'bg-gray-500' : 'bg-red-500'}`}
-                                          onClick={() => {
-                                            rollbackPayment(
-                                              index,
-                                              item._id,
-                                              paymentAmounts[index],
-                                              paymentAmountsUsdt[index]
-                                            );
-                                          }}
-
-                                        >
-                                            
-                                            <Image
-                                              src="/loading.png"
-                                              alt="loading"
-                                              width={16}
-                                              height={16}
-                                              className={rollbackingPayment[index] ? 'animate-spin' : 'hidden'}
-                                            />
-                                            <span className="text-sm">
-                                              에스크로 취소
-                                            </span>
-
-                                        </button>
-
-                                      </div>
-                                    )}
 
 
                                   </div>

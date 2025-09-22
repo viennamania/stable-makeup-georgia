@@ -2217,6 +2217,11 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
   // send payment
+
+
+  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
+
+
   const sendPayment = async (
 
     index: number,
@@ -2249,24 +2254,36 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     const storecode = "admin";
 
 
-    //if (confirmingPayment[index]) {
-    //  return;
-    //}
+
     // if some of confirmingPayment is true, then return
+    
     if (confirmingPayment.some((item) => item === true)) {
       alert('다른 결제확인 처리중입니다.');
       return;
     }
+    
 
-
+    /*
+    if (isProcessingSendPayment) {
+      alert('다른 결제확인 처리중입니다.');
+      return;
+    }
+    */
 
 
     setConfirmingPayment(
       confirmingPayment.map((item, idx) =>  idx === index ? true : item)
     );
+    
 
-      try {
 
+
+
+
+     //setIsProcessingSendPayment(true);
+
+
+    try {
 
         const transaction = transfer({
           contract,
@@ -2376,12 +2393,15 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-          toast.success(Payment_has_been_confirmed);
+          ///toast.success(Payment_has_been_confirmed);
           ///playSong();
+
+          toast.success('USDT 전송이 완료되었습니다.');
 
 
         } else {
-          toast.error('결제확인이 실패했습니다.');
+          //toast.error('결제확인이 실패했습니다.');
+          alert('USDT 전송이 실패했습니다.');
         }
 
     } catch (error) {
@@ -2389,6 +2409,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       //toast.error('결제확인이 실패했습니다.');
     }
 
+
+    ///setIsProcessingSendPayment(false);
 
 
     setConfirmingPayment(
@@ -2401,6 +2423,19 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   
 
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2564,6 +2599,11 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         || escrowing.some((item) => item === true)
         || requestingPayment.some((item) => item === true)
         || confirmingPayment.some((item) => item === true)
+
+
+        //|| isProcessingSendPayment
+
+
       ) {
         return;
       }
@@ -2665,7 +2705,12 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     pageValue,
     searchStorecode,
     searchFromDate,
-    searchToDate
+    searchToDate,
+
+
+
+    ////isProcessingSendPayment,
+
 ]);
 
 

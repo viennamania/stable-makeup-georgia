@@ -1666,8 +1666,13 @@ export default function Index({ params }: any) {
 
     index: number,
     orderId: string,
-    paymentAmount: number,
-    paymentAmountUsdt: number,
+    //////paymentAmount: number,
+    krwAmount: number,
+    //////paymentAmountUsdt: number,
+
+    usdtAmount: number,
+
+    buyerWalletAddress: string,
 
   ) => {
     // confirm payment
@@ -1710,9 +1715,18 @@ export default function Index({ params }: any) {
     }
     */
 
+    /*
     if (confirmingPayment[index]) {
       return;
     }
+    */
+
+
+    if (confirmingPayment.some((item) => item === true)) {
+      alert('다른 결제확인 처리중입니다.');
+      return;
+    }
+
 
     setConfirmingPayment(
       confirmingPayment.map((item, idx) =>  idx === index ? true : item)
@@ -1721,78 +1735,11 @@ export default function Index({ params }: any) {
 
     try {
 
-      
-      if (!isWithoutEscrow) {
-      
-        const response = await fetch('/api/order/buyOrderConfirmPayment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            lang: params.lang,
-            storecode: params.center,
-            orderId: orderId,
-            paymentAmount: paymentAmount,
-            ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-            isSmartAccount: false,
-          })
-        });
-
-        const data = await response.json();
-
-        //console.log('data', data);
-
-        if (data.result) {
-          
-          ///fetchBuyOrders();
-
-          // fetch Buy Orders
-          await fetch('/api/order/getAllCollectOrdersForSeller', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-              {
-                storecode: params.center,
-                limit: Number(limit),
-                page: Number(page),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-              }
-            ),
-          })
-          .then(response => response.json())
-          .then(data => {
-              ///console.log('data', data);
-              setBuyOrders(data.result.orders);
-
-              setTotalCount(data.result.totalCount);
-
-              setTotalClearanceCount(data.result.totalClearanceCount);
-              setTotalClearanceAmount(data.result.totalClearanceAmount);
-              setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-          })
-
-
-
-          toast.success(Payment_has_been_confirmed);
-
-          playSong();
-
-
-        } else {
-          toast.error('결제확인이 실패했습니다.');
-        }
-
-      } else {
-
 
         // transfer my wallet to buyer wallet address
 
-        const buyerWalletAddress = buyOrders[index].walletAddress;
-        const usdtAmount = buyOrders[index].usdtAmount;
+        //const buyerWalletAddress = buyOrders[index].walletAddress;
+        //const usdtAmount = buyOrders[index].usdtAmount;
 
         const transaction = transfer({
           contract,
@@ -1823,7 +1770,7 @@ export default function Index({ params }: any) {
                 lang: params.lang,
                 storecode: params.center,
                 orderId: orderId,
-                paymentAmount: paymentAmount,
+                paymentAmount: krwAmount,
                 transactionHash: transactionHash,
                 ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
                 isSmartAccount: false,
@@ -1898,12 +1845,6 @@ export default function Index({ params }: any) {
           console.error('Error:', error);
           toast.error('결제확인이 실패했습니다.');
         }
-
-
-
-      }
-
-
 
 
 
@@ -4697,8 +4638,13 @@ export default function Index({ params }: any) {
                                       confirmPayment(
                                         index,
                                         item._id,
-                                        paymentAmounts[index],
-                                        paymentAmountsUsdt[index]
+                                        //paymentAmounts[index],
+                                        item.krwAmount,
+
+                                        //paymentAmountsUsdt[index]
+                                        item.usdtAmount,
+
+                                        item.walletAddress
                                       );
                                     }}
 
