@@ -1815,7 +1815,10 @@ export default function Index({ params }: any) {
       || rollbackingPayment.some((item) => item === true)
       */
 
-      isProcessingSendTransaction
+      agreementForCancelTrade.some((item) => item === true)
+
+      || isProcessingSendTransaction
+      
     ) {
       return;
     }
