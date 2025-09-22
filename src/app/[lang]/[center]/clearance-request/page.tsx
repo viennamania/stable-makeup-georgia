@@ -3867,11 +3867,16 @@ const [tradeSummary, setTradeSummary] = useState({
 
                           <th className="p-2">
                             <div className="flex flex-col items-end">
+                              <span className="text-sm">
                               {Buyer}
+                              </span>
+                              <span className="text-sm hidden sm:block">
+                                구매자 통장
+                              </span>
                             </div>
                           </th>
 
-                          <th className="p-2">
+                          <th className="p-2 sm:hidden">
                             <div className="flex flex-col items-start">
                               구매자 통장
                             </div>
@@ -3909,27 +3914,31 @@ const [tradeSummary, setTradeSummary] = useState({
                             </div>
                           </th>
 
-                          <th className="p-2">거래취소</th>
-                          
+ 
                           <th className="p-2">
-                            {isProcessingSendTransaction ? (
-                              <div className="flex flex-row items-center gap-2">
-                                <Image
-                                  src="/icon-transfer.png"
-                                  alt="Transfer"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5 animate-spin"
-                                />
-                                <span className="text-sm">
-                                  USDT 전송중...
-                                </span>
-                              </div>
-                            ) : (
+                            <div className="flex flex-col items-center">
                               <span className="text-sm">
-                                USDT 전송
+                                거래취소
                               </span>
-                            )}
+                              {isProcessingSendTransaction ? (
+                                <div className="flex flex-row items-center gap-2">
+                                  <Image
+                                    src="/icon-transfer.png"
+                                    alt="Transfer"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5 animate-spin"
+                                  />
+                                  <span className="text-sm">
+                                    USDT 전송중...
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-sm">
+                                  USDT 전송
+                                </span>
+                              )}
+                            </div>
                           </th>
 
                           <th className="p-2">출금상태</th>
@@ -4053,15 +4062,58 @@ const [tradeSummary, setTradeSummary] = useState({
 
 
                                 </div>
+
+                                <div className="flex-col gap-2 items-end justify-end hidden sm:flex">
+                                  {item?.buyer?.nickname ? (
+
+                                    <div className="flex flex-col gap-2 items-start">
+                                      <div className="text-sm font-semibold text-zinc-500">
+                                        {item.buyer?.depositBankName}
+                                      </div>
+                                      <div className="text-sm font-semibold text-zinc-500
+                                      underline decoration-dotted
+                                        ">
+                                        <button
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(item.buyer?.depositBankAccountNumber || '');
+                                            toast.success('계좌번호가 복사되었습니다.', { duration: 2000 });
+                                          }}
+                                        >
+                                          {item.buyer?.depositBankAccountNumber}
+                                        </button>
+                                      </div>
+                                      <div className="text-sm font-semibold text-zinc-500">
+                                        {item.buyer?.depositName}
+                                      </div>
+                                    </div>
+
+
+                                  ) : (
+
+                                    <div className="flex flex-col gap-2 items-start">
+                                      <div className="text-lg font-semibold text-zinc-500">
+                                        {item.seller?.bankInfo?.bankName}
+                                      </div>
+                                      <div className="text-lg font-semibold text-zinc-500">
+                                        {item.seller?.bankInfo?.accountNumber}
+                                      </div>
+                                      <div className="text-lg font-semibold text-zinc-500">
+                                        {item.seller?.bankInfo?.accountHolder}
+                                      </div>
+                                    </div>
+
+                                  )}
+                                </div>
+
                               </div>
                             </td>
 
 
-                            <td className="p-2">
+                            <td className="p-2 sm:hidden">
 
                               {item?.buyer?.nickname ? (
 
-                                <div className="flex flex-col gap-2 items-start">
+                                <div className="flex flex-col gap-2 items-center justify-end">
                                   <div className="text-lg font-semibold text-zinc-500">
                                     {item.buyer?.depositBankName}
                                   </div>
@@ -4076,7 +4128,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                               ) : (
 
-                                <div className="flex flex-col gap-2 items-start">
+                                <div className="flex flex-col gap-2 items-center justify-end">
                                   <div className="text-lg font-semibold text-zinc-500">
                                     {item.seller?.bankInfo?.bankName}
                                   </div>
@@ -4169,156 +4221,111 @@ const [tradeSummary, setTradeSummary] = useState({
                             </td>
                             */}
 
-                            <td className="p-2 w-52 flex flex-col items-center justify-center gap-2">
-                              <div className=" 
-                                w-full flex flex-row items-center gap-2 justify-center">
-                                {/* status */}
-                                {item.status === 'ordered' && (
-                                  <div className="text-lg text-yellow-600 font-semibold">
-                                    {Buy_Order_Opened}
-                                  </div>
-                                )}
+                            <td className="p-2">
 
+                              <div className="w-52 flex flex-col gap-2 items-center justify-center">
 
-                                {item.status === 'accepted' && (
-
-                                  <div className="flex flex-row gap-2 items-center justify-center">
-                                    
-                                    <div className="text-sm text-zinc-500">
-                                      {item.seller?.nickname}
+                                <div className=" 
+                                  w-full flex flex-row items-center gap-2 justify-center">
+                                  {/* status */}
+                                  {item.status === 'ordered' && (
+                                    <div className="text-lg text-yellow-600 font-semibold">
+                                      {Buy_Order_Opened}
                                     </div>
-
-                                    <div className="text-sm text-[#409192]">
-                                      {Trade_Started}
-                                    </div>
-
-   
+                                  )}
 
 
-                                  </div>
-                                )}
+                                  {item.status === 'accepted' && (
 
-                                {item.status === 'paymentRequested' && (
-                                  <div className="flex flex-col gap-2 items-center justify-center">
-                                    
-                                    <div className="text-sm text-zinc-500">
-                                      {
-                                        //item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
-                                        item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
-                                      }
-                                    </div>
-                                  
-                                    <div className="text-lg text-[#409192] font-semibold">
-                                      {/*Waiting_for_seller_to_deposit*/}
-                                      결제요청
-                                    </div>
-
-
-
-
-                                  </div>
-                                )}
-
-                                {item.status === 'cancelled' && (
-                                  <div className="flex flex-row gap-2 items-center justify-center">
-                                       <span className="text-sm text-zinc-500">
+                                    <div className="flex flex-row gap-2 items-center justify-center">
+                                      
+                                      <div className="text-sm text-zinc-500">
                                         {item.seller?.nickname}
-                                      </span>
-
-                                      <div className="text-lg text-red-600 font-semibold">
-                                        {
-                                          Cancelled_at
-                                        }
                                       </div>
 
+                                      <div className="text-sm text-[#409192]">
+                                        {Trade_Started}
+                                      </div>
 
-                                  </div>
-                                )}
+    
 
 
-                                {/* if status is accepted, show payment request button */}
-                                {item.status === 'paymentConfirmed' && (
-                                  <div className="flex flex-col gap-2 items-center justify-center">
-
-                                    <div className="text-sm text-zinc-500">
-                                      {
-                                        ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
-                                        item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
-                                      }
                                     </div>
+                                  )}
 
+                                  {item.status === 'paymentRequested' && (
+                                    <div className="flex flex-col gap-2 items-center justify-center">
 
-                                    <span className="text-lg font-semibold text-yellow-600">
-                                      {Completed}
-                                    </span>
-
-                                    <button
-                                      className="text-sm text-blue-600 font-semibold
-                                        border border-blue-600 rounded-lg p-2
-                                        bg-blue-100
-                                        w-full text-center
-                                        hover:bg-blue-200
-                                        cursor-pointer
-                                        transition-all duration-200 ease-in-out
-                                        hover:scale-105
-                                        hover:shadow-lg
-                                        hover:shadow-blue-500/50
-                                      "
-                                      onClick={() => {
-                                        let url = '';
-                                        if (chain === "ethereum") {
-                                          url = `https://etherscan.io/tx/${item.transactionHash}`;
-                                        } else if (chain === "polygon") {
-                                          url = `https://polygonscan.com/tx/${item.transactionHash}`;
-                                        } else if (chain === "arbitrum") {
-                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
-                                        } else if (chain === "bsc") {
-                                          url = `https://bscscan.com/tx/${item.transactionHash}`;
-                                        } else {
-                                          url = `https://arbiscan.io/tx/${item.transactionHash}`;
-                                        }
-                                        window.open(url, '_blank');
-
-                                      }}
-                                    >
-                                      <div className="flex flex-row gap-2 items-center justify-center">
+                                      <div className="flex flex-row gap-1 items-center justify-center"> 
                                         <Image
-                                          src={`/logo-chain-${chain}.png`}
-                                          alt="Chain"
+                                          src="/icon-shield.png"
+                                          alt="Shield"
                                           width={20}
                                           height={20}
                                           className="w-5 h-5"
-                                        />
-                                        <span className="text-sm">
-                                          USDT 전송내역(구매자)
+                                        />                                 
+                                        <span className="text-sm text-zinc-800 font-semibold">
+                                          {
+                                            //item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                            item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
+                                          }
                                         </span>
                                       </div>
-                                    </button>
+                                    
+                                      <div className="text-lg text-[#409192] font-semibold">
+                                        {/*Waiting_for_seller_to_deposit*/}
+                                        결제요청
+                                      </div>
 
 
 
-                      
 
-                                  </div>
-                                )}
+                                    </div>
+                                  )}
+
+                                  {item.status === 'cancelled' && (
+                                    <div className="flex flex-row gap-2 items-center justify-center">
+                                        <span className="text-sm text-zinc-500">
+                                          {item.seller?.nickname}
+                                        </span>
+
+                                        <div className="text-lg text-red-600 font-semibold">
+                                          {
+                                            Cancelled_at
+                                          }
+                                        </div>
 
 
-                                {item.status === 'completed' && (
-                                  <div className="text-sm text-[#409192]">
-                                    {Completed_at}
-                                  </div>
-                                )}
-
-                              </div>
+                                    </div>
+                                  )}
 
 
-                              <div className="
-                                w-full
-                                flex flex-row items-center gap-2 justify-center">
-                                    {item?.settlement
-                                    && item?.settlement?.txid
-                                    && item?.settlement?.txid !== '0x'
-                                    && (
+                                  {/* if status is accepted, show payment request button */}
+                                  {item.status === 'paymentConfirmed' && (
+                                    <div className="flex flex-col gap-2 items-center justify-center">
+
+
+                                      <div className="flex flex-row gap-1 items-center justify-center"> 
+                                        <Image
+                                          src="/icon-shield.png"
+                                          alt="Shield"
+                                          width={20}
+                                          height={20}
+                                          className="w-5 h-5"
+                                        />                                 
+                                        <span className="text-sm text-zinc-800 font-semibold">
+                                          {
+                                            //item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                            item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
+                                          }
+                                        </span>
+                                      </div>
+
+
+                                      <span className="text-lg font-semibold text-yellow-600">
+                                        {Completed}
+                                      </span>
+
                                       <button
                                         className="text-sm text-blue-600 font-semibold
                                           border border-blue-600 rounded-lg p-2
@@ -4334,15 +4341,15 @@ const [tradeSummary, setTradeSummary] = useState({
                                         onClick={() => {
                                           let url = '';
                                           if (chain === "ethereum") {
-                                            url = `https://etherscan.io/tx/${item.settlement.txid}`;
+                                            url = `https://etherscan.io/tx/${item.transactionHash}`;
                                           } else if (chain === "polygon") {
-                                            url = `https://polygonscan.com/tx/${item.settlement.txid}`;
+                                            url = `https://polygonscan.com/tx/${item.transactionHash}`;
                                           } else if (chain === "arbitrum") {
-                                            url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                            url = `https://arbiscan.io/tx/${item.transactionHash}`;
                                           } else if (chain === "bsc") {
-                                            url = `https://bscscan.com/tx/${item.settlement.txid}`;
+                                            url = `https://bscscan.com/tx/${item.transactionHash}`;
                                           } else {
-                                            url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                            url = `https://arbiscan.io/tx/${item.transactionHash}`;
                                           }
                                           window.open(url, '_blank');
 
@@ -4357,256 +4364,253 @@ const [tradeSummary, setTradeSummary] = useState({
                                             className="w-5 h-5"
                                           />
                                           <span className="text-sm">
-                                            USDT 전송내역(거래소)
+                                            USDT 전송내역(구매자)
                                           </span>
                                         </div>
                                       </button>
-                                    )}
-
-                              </div>
-
-                            </td>
 
 
 
+                        
 
-                            <td className="p-2">
-
-                              <div className="
-                              w-32
-                              flex flex-row gap-2 items-start justify-start">
+                                    </div>
+                                  )}
 
 
-                                {
-                                (item.status === 'accepted' || item.status === 'paymentRequested')
-                                && item.seller && item.seller.walletAddress === address && (
-                                  
-                                  <div className="flex flex-row items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={agreementForCancelTrade[index]}
-                                      onChange={(e) => {
-                                        setAgreementForCancelTrade(
-                                          agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                        );
-                                      }}
-                                    />
-                                    <button
-                                      disabled={cancellings[index] || !agreementForCancelTrade[index]}
-                   
-                                      className={`
-                                        w-24 h-8
-                                        flex flex-row
-                                        items-center justify-center
-                                        gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
-                                        
-                                      onClick={() => {
-                                        cancelTrade(item._id, index);
-                                      }}
-                                    >
-                                      {cancellings[index] && (
-                                        <Image
-                                          src="/loading.png"
-                                          alt="Loading"
-                                          width={20}
-                                          height={20}
-                                          className="animate-spin"
-                                        />
-                                      )}
-                                      
-                                      <span className="text-sm">{Cancel_My_Trade}</span>
-                                    
-                                    </button>
-                                  </div>
+                                  {item.status === 'completed' && (
+                                    <div className="text-sm text-[#409192]">
+                                      {Completed_at}
+                                    </div>
+                                  )}
 
-                                )}
-                                {item.status === 'cancelled' && (
-                                  <div className="text-sm text-red-600">
-                                    
-                                  </div>
-                                )}
-                              </div>
-                            </td>
+                                </div>
 
 
-                            <td className="p-2">
-
-                              <div className="flex flex-row gap-2 items-start justify-start">
-
-                                {/*
-                                (item.status === 'accepted' || item.status === 'paymentRequested')
-                                && item.seller && item.seller.walletAddress === address && (
-                                  
-                                  <div className="flex flex-row items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={agreementForCancelTrade[index]}
-                                      onChange={(e) => {
-                                        setAgreementForCancelTrade(
-                                          agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                        );
-                                      }}
-                                    />
-                                    <button
-                                      disabled={cancellings[index] || !agreementForCancelTrade[index]}
-                   
-                                      className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
-                                        
-                                      onClick={() => {
-                                        cancelTrade(item._id, index);
-                                      }}
-                                    >
-                                      {cancellings[index] && (
-                                        <Image
-                                          src="/loading.png"
-                                          alt="Loading"
-                                          width={20}
-                                          height={20}
-                                          className="animate-spin"
-                                        />
-                                      )}
-                                      
-                                      <span className="text-sm">{Cancel_My_Trade}</span>
-                                    
-                                    </button>
-                                  </div>
-
-                                )*/}
-
-
-
-
-
-                                {user && user.seller &&
-                                item.status === 'ordered' && item.walletAddress !== address && (
-                                  
-                                  <div className="flex flex-row items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={agreementForTrade[index]}
-                                      onChange={(e) => {
-                                        setAgreementForTrade(
-                                          agreementForTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                        );
-                                      }}
-                                    />
-                                    <button
-                                      disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
-                                      className={`
-                                        w-24 h-8
-                                        flex flex-row 
-                                        items-center justify-center
-                                        gap-1 text-sm text-white px-2 py-1 rounded-md
-                                        ${acceptingBuyOrder[index] || !agreementForTrade[index] ?
-                                          'bg-zinc-500 text-white' :
-                                          'bg-green-600 text-white '}
-                                      `}
-                                      onClick={() => {
-                                        acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
-                                      }}
-                                    >
-                                      {acceptingBuyOrder[index] && (
-                                        <Image
-                                          src="/loading.png"
-                                          alt="Loading"
-                                          width={20}
-                                          height={20}
-                                          className="w-4 h-4 animate-spin "
-                                        />
-                                      )}
-                                      <span className="text-sm">{Buy_Order_Accept}</span>
-                                      
-                                    </button>
-                                  </div>
-
-                                )}
-
-
-
-
-
-
-                                
-                                {
-                                  item.seller && item.seller.walletAddress === address &&
-                                  item.status === 'accepted' && (
-                                  <div className="flex flex-row gap-2">
-
-                                    {/* check box for agreement */}
-                                    <input
-                                      disabled={escrowing[index] || requestingPayment[index]}
-                                      type="checkbox"
-                                      checked={requestPaymentCheck[index]}
-                                      onChange={(e) => {
-                                        setRequestPaymentCheck(
-                                          requestPaymentCheck.map((item, idx) => {
-                                            if (idx === index) {
-                                              return e.target.checked;
+                                <div className="
+                                  w-full
+                                  flex flex-row items-center gap-2 justify-center">
+                                      {item?.settlement
+                                      && item?.settlement?.txid
+                                      && item?.settlement?.txid !== '0x'
+                                      && (
+                                        <button
+                                          className="text-sm text-blue-600 font-semibold
+                                            border border-blue-600 rounded-lg p-2
+                                            bg-blue-100
+                                            w-full text-center
+                                            hover:bg-blue-200
+                                            cursor-pointer
+                                            transition-all duration-200 ease-in-out
+                                            hover:scale-105
+                                            hover:shadow-lg
+                                            hover:shadow-blue-500/50
+                                          "
+                                          onClick={() => {
+                                            let url = '';
+                                            if (chain === "ethereum") {
+                                              url = `https://etherscan.io/tx/${item.settlement.txid}`;
+                                            } else if (chain === "polygon") {
+                                              url = `https://polygonscan.com/tx/${item.settlement.txid}`;
+                                            } else if (chain === "arbitrum") {
+                                              url = `https://arbiscan.io/tx/${item.settlement.txid}`;
+                                            } else if (chain === "bsc") {
+                                              url = `https://bscscan.com/tx/${item.settlement.txid}`;
+                                            } else {
+                                              url = `https://arbiscan.io/tx/${item.settlement.txid}`;
                                             }
-                                            return item;
-                                          })
-                                        );
-                                      }}
-                                    />
+                                            window.open(url, '_blank');
 
-                                    <button
-                                      disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
-                                      
-                                      className={`
-                                        w-24 h-8
-                                        flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
-                                      onClick={() => {
+                                          }}
+                                        >
+                                          <div className="flex flex-row gap-2 items-center justify-center">
+                                            <Image
+                                              src={`/logo-chain-${chain}.png`}
+                                              alt="Chain"
+                                              width={20}
+                                              height={20}
+                                              className="w-5 h-5"
+                                            />
+                                            <span className="text-sm">
+                                              USDT 전송내역(거래소)
+                                            </span>
+                                          </div>
+                                        </button>
+                                      )}
 
-                                        requestPayment(
-                                          index,
-                                          item._id,
-                                          item.tradeId,
-                                          item.usdtAmount
-                                        );
-                                      }}
-                                    >
-                                      <Image
-                                        src="/loading.png"
-                                        alt="loading"
-                                        width={16}
-                                        height={16}
-                                        className={escrowing[index] || requestingPayment[index] ? 'animate-spin' : 'hidden'}
+                                </div>
+                              </div>
+
+                            </td>
+
+
+
+
+                            <td className="p-2">
+
+                              <div className="w-32 flex flex-col gap-2 items-center justify-center">
+
+                                <div className="flex flex-row gap-2 items-start justify-start">
+
+
+                                  {
+                                  (item.status === 'accepted' || item.status === 'paymentRequested')
+                                  && item.seller && item.seller.walletAddress === address && (
+                                    
+                                    <div className="flex flex-row items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={agreementForCancelTrade[index]}
+                                        onChange={(e) => {
+                                          setAgreementForCancelTrade(
+                                            agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                          );
+                                        }}
                                       />
-                                      <span className="text-sm">
-                                        {Request_Payment}
-                                      </span>
+                                      <button
+                                        disabled={cancellings[index] || !agreementForCancelTrade[index]}
+                    
+                                        className={`
+                                          w-24 h-8
+                                          flex flex-row
+                                          items-center justify-center
+                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                          
+                                        onClick={() => {
+                                          cancelTrade(item._id, index);
+                                        }}
+                                      >
+                                        {cancellings[index] && (
+                                          <Image
+                                            src="/loading.png"
+                                            alt="Loading"
+                                            width={20}
+                                            height={20}
+                                            className="animate-spin"
+                                          />
+                                        )}
+                                        
+                                        <span className="text-sm">{Cancel_My_Trade}</span>
+                                      
+                                      </button>
+                                    </div>
+
+                                  )}
+                                  {item.status === 'cancelled' && (
+                                    <div className="text-sm text-red-600">
+                                      
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-row gap-2 items-start justify-start">
+
+                                  {/*
+                                  (item.status === 'accepted' || item.status === 'paymentRequested')
+                                  && item.seller && item.seller.walletAddress === address && (
                                     
-                                    </button>
+                                    <div className="flex flex-row items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={agreementForCancelTrade[index]}
+                                        onChange={(e) => {
+                                          setAgreementForCancelTrade(
+                                            agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                          );
+                                        }}
+                                      />
+                                      <button
+                                        disabled={cancellings[index] || !agreementForCancelTrade[index]}
+                    
+                                        className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                          
+                                        onClick={() => {
+                                          cancelTrade(item._id, index);
+                                        }}
+                                      >
+                                        {cancellings[index] && (
+                                          <Image
+                                            src="/loading.png"
+                                            alt="Loading"
+                                            width={20}
+                                            height={20}
+                                            className="animate-spin"
+                                          />
+                                        )}
+                                        
+                                        <span className="text-sm">{Cancel_My_Trade}</span>
+                                      
+                                      </button>
+                                    </div>
 
-                                  </div>
-                                )}
+                                  )*/}
 
 
 
 
 
-
-
-
-
-
-                                {item.seller && item.seller.walletAddress === address &&   
-                                item.status === 'paymentRequested' && (
-
-                                  <div className="flex flex-row gap-2">
-
-                               
+                                  {user && user.seller &&
+                                  item.status === 'ordered' && item.walletAddress !== address && (
                                     
+                                    <div className="flex flex-row items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={agreementForTrade[index]}
+                                        onChange={(e) => {
+                                          setAgreementForTrade(
+                                            agreementForTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                          );
+                                        }}
+                                      />
+                                      <button
+                                        disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
+                                        className={`
+                                          w-24 h-8
+                                          flex flex-row 
+                                          items-center justify-center
+                                          gap-1 text-sm text-white px-2 py-1 rounded-md
+                                          ${acceptingBuyOrder[index] || !agreementForTrade[index] ?
+                                            'bg-zinc-500 text-white' :
+                                            'bg-green-600 text-white '}
+                                        `}
+                                        onClick={() => {
+                                          acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
+                                        }}
+                                      >
+                                        {acceptingBuyOrder[index] && (
+                                          <Image
+                                            src="/loading.png"
+                                            alt="Loading"
+                                            width={20}
+                                            height={20}
+                                            className="w-4 h-4 animate-spin "
+                                          />
+                                        )}
+                                        <span className="text-sm">{Buy_Order_Accept}</span>
+                                        
+                                      </button>
+                                    </div>
+
+                                  )}
+
+
+
+
+
+
+                                  
+                                  {
+                                    item.seller && item.seller.walletAddress === address &&
+                                    item.status === 'accepted' && (
                                     <div className="flex flex-row gap-2">
 
-                                      {/*
+                                      {/* check box for agreement */}
                                       <input
-                                        disabled={confirmingPayment[index]}
+                                        disabled={escrowing[index] || requestingPayment[index]}
                                         type="checkbox"
-                                        checked={confirmPaymentCheck[index]}
+                                        checked={requestPaymentCheck[index]}
                                         onChange={(e) => {
-                                          setConfirmPaymentCheck(
-                                            confirmPaymentCheck.map((item, idx) => {
+                                          setRequestPaymentCheck(
+                                            requestPaymentCheck.map((item, idx) => {
                                               if (idx === index) {
                                                 return e.target.checked;
                                               }
@@ -4615,71 +4619,139 @@ const [tradeSummary, setTradeSummary] = useState({
                                           );
                                         }}
                                       />
-                                      */}
 
                                       <button
+                                        disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                         
-                                        //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
-
-                                        disabled={isProcessingSendTransaction}
-
                                         className={`
-                                          w-32 h-8
-                                          flex flex-row
-                                          items-center justify-center
-                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-600'}`}
-
-                                
+                                          w-24 h-8
+                                          flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
                                         onClick={() => {
-                                          confirmPayment(
+
+                                          requestPayment(
                                             index,
                                             item._id,
-                                            //paymentAmounts[index],
-                                            item.krwAmount,
-                                            ///paymentAmountsUsdt[index]
-                                            item.usdtAmount,
-
-                                            item.walletAddress
+                                            item.tradeId,
+                                            item.usdtAmount
                                           );
                                         }}
-
                                       >
-
-                                        {sendingTransaction[index] ? (
-                                          <div className="flex flex-row gap-2 items-center justify-center">
-                                            <Image
-                                              src="/icon-transfer.png"
-                                              alt="Transferring"
-                                              width={20}
-                                              height={20}
-                                              className="w-4 h-4 animate-spin "
-                                            />
-                                            <span className="text-sm">
-                                              USDT 전송중...
-                                            </span>
-                                          </div>
-                                        ) : (
-                                          <span className="text-sm">
-                                            USDT 전송
-                                          </span>
-                                        )}
+                                        <Image
+                                          src="/loading.png"
+                                          alt="loading"
+                                          width={16}
+                                          height={16}
+                                          className={escrowing[index] || requestingPayment[index] ? 'animate-spin' : 'hidden'}
+                                        />
+                                        <span className="text-sm">
+                                          {Request_Payment}
+                                        </span>
+                                      
                                       </button>
 
                                     </div>
+                                  )}
 
 
-                                  </div>
+
+
+
+
+
+
+
+
+                                  {item.seller && item.seller.walletAddress === address &&   
+                                  item.status === 'paymentRequested' && (
+
+                                    <div className="flex flex-row gap-2">
 
                                 
+                                      
+                                      <div className="flex flex-row gap-2">
+
+                                        {/*
+                                        <input
+                                          disabled={confirmingPayment[index]}
+                                          type="checkbox"
+                                          checked={confirmPaymentCheck[index]}
+                                          onChange={(e) => {
+                                            setConfirmPaymentCheck(
+                                              confirmPaymentCheck.map((item, idx) => {
+                                                if (idx === index) {
+                                                  return e.target.checked;
+                                                }
+                                                return item;
+                                              })
+                                            );
+                                          }}
+                                        />
+                                        */}
+
+                                        <button
+                                          
+                                          //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
+
+                                          disabled={isProcessingSendTransaction}
+
+                                          className={`
+                                            w-32 h-8
+                                            flex flex-row
+                                            items-center justify-center
+                                            gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-600'}`}
+
+                                  
+                                          onClick={() => {
+                                            confirmPayment(
+                                              index,
+                                              item._id,
+                                              //paymentAmounts[index],
+                                              item.krwAmount,
+                                              ///paymentAmountsUsdt[index]
+                                              item.usdtAmount,
+
+                                              item.walletAddress
+                                            );
+                                          }}
+
+                                        >
+
+                                          {sendingTransaction[index] ? (
+                                            <div className="flex flex-row gap-2 items-center justify-center">
+                                              <Image
+                                                src="/icon-transfer.png"
+                                                alt="Transferring"
+                                                width={20}
+                                                height={20}
+                                                className="w-4 h-4 animate-spin "
+                                              />
+                                              <span className="text-sm">
+                                                USDT 전송중...
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            <span className="text-sm">
+                                              USDT 전송
+                                            </span>
+                                          )}
+                                        </button>
+
+                                      </div>
+
+
+                                    </div>
+
+                                  
 
 
 
-                                )}
+                                  )}
 
-                                
+                                  
+
+                                </div>
 
                               </div>
-
 
                             </td>
 
