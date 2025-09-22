@@ -1298,14 +1298,12 @@ export default function Index({ params }: any) {
 
 
   // array of confirmingPayment
-    /*
+  /*
   const [confirmingPayment, setConfirmingPayment] = useState([] as boolean[]);
   for (let i = 0; i < 100; i++) {
     confirmingPayment.push(false);
   }
-    */
-
-  /*
+  
   useEffect(() => {
       
       setConfirmingPayment(
@@ -1313,7 +1311,7 @@ export default function Index({ params }: any) {
       );
 
   } , [buyOrders]);
-   */
+    */
 
 
   // confirm payment check box
@@ -1364,6 +1362,12 @@ export default function Index({ params }: any) {
 
 
   const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
+
+
+  const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
+  for (let i = 0; i < 100; i++) {
+    sendingTransaction.push(false);
+  }
 
 
   // confirm payment
@@ -1434,9 +1438,18 @@ export default function Index({ params }: any) {
     */
 
     if (isProcessingSendTransaction) {
-      alert('결제확인 처리중입니다. 잠시후 다시 시도해주세요.');
+      alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+
+    if (sendingTransaction.some((item) => item === true)) {
+      alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
+      return;
+    }
+
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? true : item)
+    );
     
 
     /*
@@ -1550,30 +1563,37 @@ export default function Index({ params }: any) {
 
               
 
-              toast.success('결제확인이 완료되었습니다.');
+              //toast.success('결제확인이 완료되었습니다.');
+              alert("USDT 전송이 완료되었습니다.");
+
               ////playSong();
             } else {
-              toast.error('결제확인이 실패했습니다.');
+              //toast.error('USDT 전송이 실패했습니다.');
+              alert("USDT 전송이 실패했습니다.");
             }
 
 
           } else {
-            toast.error('결제확인이 실패했습니다.');
+            alert('USDT 전송이 실패했습니다.');
           }
 
         } catch (error) {
           console.error('Error:', error);
-          toast.error('결제확인이 실패했습니다.' + JSON.stringify(error));
+          alert('USDT 전송이 실패했습니다.' + JSON.stringify(error));
         }
 
 
 
     } catch (error) {
       console.error('Error:', error);
-      toast.error('결제확인이 실패했습니다.');
+      alert('USDT 전송이 실패했습니다.');
     }
 
     setIsProcessingSendTransaction(false);
+
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? false : item)
+    );
 
     /*
     setConfirmingPayment(
@@ -3883,10 +3903,11 @@ const [tradeSummary, setTradeSummary] = useState({
                               <span className="text-sm">
                                 {Status}
                               </span>
+                              <span className="text-sm">
+                                전송내역
+                              </span>
                             </div>
                           </th>
-
-                          <th className="p-2">거래소전송</th>
 
                           <th className="p-2">거래취소</th>
                           
@@ -4148,10 +4169,9 @@ const [tradeSummary, setTradeSummary] = useState({
                             </td>
                             */}
 
-                            <td className="p-2">
-                              <div className="
-                              w-52 
-                              flex flex-row items-center gap-2 justify-center">
+                            <td className="p-2 w-52 flex flex-col items-center justify-center gap-2">
+                              <div className=" 
+                                w-full flex flex-row items-center gap-2 justify-center">
                                 {/* status */}
                                 {item.status === 'ordered' && (
                                   <div className="text-lg text-yellow-600 font-semibold">
@@ -4290,12 +4310,11 @@ const [tradeSummary, setTradeSummary] = useState({
                                 )}
 
                               </div>
-                            </td>
 
 
-
-                            <td className="p-2">
-                              <div className="flex flex-row items-center gap-2 justify-center">
+                              <div className="
+                                w-full
+                                flex flex-row items-center gap-2 justify-center">
                                     {item?.settlement
                                     && item?.settlement?.txid
                                     && item?.settlement?.txid !== '0x'
@@ -4338,21 +4357,24 @@ const [tradeSummary, setTradeSummary] = useState({
                                             className="w-5 h-5"
                                           />
                                           <span className="text-sm">
-                                            USDT 전송내역
+                                            USDT 전송내역(거래소)
                                           </span>
                                         </div>
                                       </button>
                                     )}
 
-                                  </div>
-                                
+                              </div>
+
                             </td>
+
 
 
 
                             <td className="p-2">
 
-                              <div className="flex flex-row gap-2 items-start justify-start">
+                              <div className="
+                              w-32
+                              flex flex-row gap-2 items-start justify-start">
 
 
                                 {
@@ -4622,21 +4644,25 @@ const [tradeSummary, setTradeSummary] = useState({
                                         }}
 
                                       >
-                                        {/*
-                                        {confirmingPayment[index] && (
-                                          <Image
-                                            src="/loading.png"
-                                            alt="Loading"
-                                            width={20}
-                                            height={20}
-                                            className="w-4 h-4 animate-spin "
-                                          />
-                                        )}
-                                        */}
-                                        <span className="text-sm">
-                                          USDT 전송
-                                        </span>
 
+                                        {sendingTransaction[index] ? (
+                                          <div className="flex flex-row gap-2 items-center justify-center">
+                                            <Image
+                                              src="/icon-transfer.png"
+                                              alt="Transferring"
+                                              width={20}
+                                              height={20}
+                                              className="w-4 h-4 animate-spin "
+                                            />
+                                            <span className="text-sm">
+                                              USDT 전송중...
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-sm">
+                                            USDT 전송
+                                          </span>
+                                        )}
                                       </button>
 
                                     </div>
