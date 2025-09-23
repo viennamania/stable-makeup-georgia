@@ -1364,12 +1364,6 @@ export default function Index({ params }: any) {
     );
     
 
-    /*
-    setConfirmingPayment(
-      confirmingPayment.map((item, idx) =>  idx === index ? true : item)
-    );
-    */
-
     setIsProcessingSendTransaction(true);
 
     try {
@@ -1389,17 +1383,6 @@ export default function Index({ params }: any) {
             account: activeAccount as any,
             transaction,
           });
-          
-          /*
-         const { transactionHash } = await sendAndConfirmTransaction({
-            account: activeAccount as any,
-            transaction,
-          });
-          */
-
-          console.log("transactionHash===", transactionHash);
-
-
 
           if (transactionHash) {
 
@@ -1424,42 +1407,6 @@ export default function Index({ params }: any) {
             //console.log('data', data);
 
             if (data.result) {
-              
-              ///fetchBuyOrders();
-
-              // fetch Buy Orders
-              /*
-              await fetch('/api/order/getAllCollectOrdersForUser', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: params.center,
-                    limit: Number(limit),
-                    page: Number(page),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
-
-                    fromDate: searchFromDate,
-                    toDate: searchToDate,
-                    searchWithdrawDepositName: searchWithdrawDepositName,
-                  }
-                ),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  ///console.log('data', data);
-                  setBuyOrders(data.result.orders);
-
-                  setTotalCount(data.result.totalCount);
-
-                  setTotalClearanceCount(data.result.totalClearanceCount);
-                  setTotalClearanceAmount(data.result.totalClearanceAmount);
-                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-              })
-              */
 
               setBuyOrders(
                 buyOrders.map((item, idx) => {
@@ -1506,18 +1453,6 @@ export default function Index({ params }: any) {
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
-
-    /*
-    setConfirmingPayment(
-      confirmingPayment.map((item, idx) => idx === index ? false : item)
-    );
-
-    
-    setConfirmPaymentCheck(
-      confirmPaymentCheck.map((item, idx) => idx === index ? false : item)
-    );
-    */
-
 
 
   }
@@ -1683,6 +1618,7 @@ export default function Index({ params }: any) {
 
     cancellings,
 
+
     //confirmPaymentCheck,
     //rollbackPaymentCheck,
 
@@ -1694,6 +1630,7 @@ export default function Index({ params }: any) {
     searchToDate,
     searchWithdrawDepositName,
 
+    sendingTransaction,
     isProcessingSendTransaction,
 ]);
 

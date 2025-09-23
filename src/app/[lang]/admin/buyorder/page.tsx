@@ -599,6 +599,7 @@ export default function Index({ params }: any) {
 
 
   //const [nativeBalance, setNativeBalance] = useState(0);
+  /*
   const [balance, setBalance] = useState(0);
   useEffect(() => {
 
@@ -638,7 +639,7 @@ export default function Index({ params }: any) {
     
 
   } , [address, contract]);
-
+  */
 
 
 
@@ -1739,20 +1740,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
               }
             });
-
-
-            // refresh balance
-
-            const result = await balanceOf({
-              contract,
-              address: address || "",
-            });
-
-            //console.log(result);
-
-            setBalance( Number(result) / 10 ** 6 );
-
-
           
 
           } else {
@@ -1868,18 +1855,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
             }
           });
-
-
-          // refresh balance
-
-          const result = await balanceOf({
-            contract,
-            address: address || "",
-          });
-
-          //console.log(result);
-
-          setBalance( Number(result) / 10 ** 6 );
 
 
         } else {
@@ -2191,9 +2166,19 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
   // send payment
-
-
   const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
+
+
+  const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
+  useEffect(() => {
+    setSendingTransaction([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setSendingTransaction(newArray);
+  } , [buyOrders.length]);
+
 
 
   const sendPayment = async (
@@ -2218,44 +2203,56 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     //console.log('paymentAmountUsdt', paymentAmountUsdt);
     
 
+
+    if (!address) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
+
+    let balance = 0;
+    const result = await balanceOf({
+      contract,
+      address: address,
+    });
+
+
+    if (chain === 'bsc') {
+      balance = Number(result) / 10 ** 18;
+    } else {
+      balance = Number(result) / 10 ** 6;
+    }
+
     // check balance
     // if balance is less than paymentAmount, then return
     if (balance < usdtAmount) {
       toast.error(Insufficient_balance);
       return;
     }
+  
 
-    const storecode = "admin";
-
-
-
-    // if some of confirmingPayment is true, then return
-    
-    if (confirmingPayment.some((item) => item === true)) {
-      alert('다른 결제확인 처리중입니다.');
+    if (isProcessingSendTransaction) {
+      alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
-    
 
-    /*
-    if (isProcessingSendPayment) {
-      alert('다른 결제확인 처리중입니다.');
+    //console.log('sendingTransaction', sendingTransaction);
+
+    if (sendingTransaction.some((item) => item === true)) {
+      alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
-    */
 
-
-    setConfirmingPayment(
-      confirmingPayment.map((item, idx) =>  idx === index ? true : item)
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
     
 
+    setIsProcessingSendTransaction(true);
 
 
 
-
-     //setIsProcessingSendPayment(true);
-
+    const storecode = "admin";
 
     try {
 
@@ -2273,15 +2270,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
           account: activeAccount as any,
         });
 
-        console.log("transactionHash===", transactionHash);
-
 
 
         if (transactionHash) {
-
-
-          //alert('USDT 전송이 완료되었습니다.');
-
 
           const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
             method: 'POST',
@@ -2301,57 +2292,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
           const data = await response.json();
 
-          //console.log('data', data);
-
-          /*
-          await fetch('/api/order/getAllBuyOrders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-              {
-                storecode: searchStorecode,
-                limit: Number(limitValue),
-                page: Number(pageValue),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-                searchOrderStatusCancelled: searchOrderStatusCancelled,
-                searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                searchStoreName: searchStoreName,
-
-                fromDate: searchFromDate,
-                toDate: searchToDate,
-              }
-            )
-          }).then(async (response) => {
-            const data = await response.json();
-            //console.log('data', data);
-            if (data.result) {
-              setBuyOrders(data.result.orders);
-  
-              //setTotalCount(data.result.totalCount);
-
-
-              setBuyOrderStats({
-                totalCount: data.result.totalCount,
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-              });
-
-            }
-          });
-          */
-
-
           setBuyOrders(
             buyOrders.map((item, idx) => {
               if (idx === index) {
@@ -2370,7 +2310,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
           ///toast.success(Payment_has_been_confirmed);
           ///playSong();
 
-          toast.success('USDT 전송이 완료되었습니다.');
+          ///toast.success('USDT 전송이 완료되었습니다.');
+          alert("USDT 전송이 완료되었습니다.");
 
 
         } else {
@@ -2383,35 +2324,13 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       //toast.error('결제확인이 실패했습니다.');
     }
 
+    setIsProcessingSendTransaction(false);
 
-    ///setIsProcessingSendPayment(false);
-
-
-    setConfirmingPayment(
-      confirmingPayment.map((item, idx) => idx === index ? false : item)
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
-
-    setConfirmPaymentCheck(
-      confirmPaymentCheck.map((item, idx) => idx === index ? false : item)
-    );
-  
 
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2589,7 +2508,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         || confirmingPayment.some((item) => item === true)
 
 
-        //|| isProcessingSendPayment
+        || sendingTransaction.some((item) => item === true)
+        || isProcessingSendTransaction
 
 
       ) {
@@ -2682,6 +2602,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     agreementForCancelTrade,
     confirmPaymentCheck,
 
+
+
+    
+
     ///latestBuyOrder,
     searchOrderStatusCancelled,
     searchOrderStatusCompleted,
@@ -2696,8 +2620,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     searchToDate,
 
 
-
-    ////isProcessingSendPayment,
+    sendingTransaction,
+    isProcessingSendTransaction,
 
 ]);
 
@@ -2966,7 +2890,7 @@ const fetchBuyOrders = async () => {
 
     const data = await response.json();
     
-    console.log('getAllStores data', data);
+    //console.log('getAllStores data', data);
 
 
 
@@ -2982,7 +2906,7 @@ const fetchBuyOrders = async () => {
       return;
     }
     fetchAllStores();
-  }, [address]); 
+  }, [address]);
 
 
 
@@ -4629,13 +4553,28 @@ const fetchBuyOrders = async () => {
 
 
                     <th className="p-2">
-                      <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                      <div className="flex flex-col items-center justify-center gap-2">
                         <span>
                           P2P 거래취소
                         </span>
-                        <span>
-                          P2P 거래완료
-                        </span>
+                        {isProcessingSendTransaction ? (
+                          <div className="flex flex-row items-center gap-2">
+                            <Image
+                              src="/icon-transfer.png"
+                              alt="Transfer"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5 animate-spin"
+                            />
+                            <span className="text-sm">
+                              USDT 전송중...
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm">
+                            USDT 전송
+                          </span>
+                        )}
                       </div>
                     </th>
 
@@ -6572,7 +6511,8 @@ const fetchBuyOrders = async () => {
 
                                       <button
                                         //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
-                                        disabled={confirmingPayment[index]}
+                                        //disabled={confirmingPayment[index]}
+                                        disabled={isProcessingSendTransaction}
 
                                         /*
                                         className={`
@@ -6599,7 +6539,7 @@ const fetchBuyOrders = async () => {
                                           hover:shadow-green-500/50
                                           transition-all duration-200 ease-in-out
 
-                                          ${confirmingPayment[index] ? 'bg-red-500' : 'bg-green-500'}
+                                          ${sendingTransaction[index] ? 'bg-red-500' : 'bg-green-500'}
                                         `}
 
                                         onClick={() => {
@@ -6630,11 +6570,11 @@ const fetchBuyOrders = async () => {
                                             width={20}
                                             height={20}
                                             className={`
-                                            ${confirmingPayment[index] ? 'animate-spin' : 'animate-pulse'}
+                                            ${sendingTransaction[index] ? 'animate-spin' : 'animate-pulse'}
                                               w-5 h-5
                                             `}
                                           />
-                                          <span className="text-sm">
+                                          <span className="text-sm text-white">
                                             구매자에게 {item.usdtAmount.toFixed(3)} USDT 전송하기
                                           </span>
                                         </div>
