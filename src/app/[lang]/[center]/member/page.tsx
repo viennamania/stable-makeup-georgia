@@ -2763,22 +2763,22 @@ export default function Index({ params }: any) {
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="" selected={userType === ""}>
-                        일반회원
+                        일반 회원
                       </option>
                       <option value="AAA" selected={userType === "AAA"}>
                         1등급회원
                       </option>
                       <option value="BBB" selected={userType === "BBB"}>
-                        2등급회원
+                        2등급 회원
                       </option>
                       <option value="CCC" selected={userType === "CCC"}>
-                        3등급회원
+                        3등급 회원
                       </option>
                       <option value="DDD" selected={userType === "DDD"}>
-                        4등급회원
+                        4등급 회원
                       </option>
                       <option value="EEE" selected={userType === "EEE"}>
-                        5등급회원
+                        5등급 회원
                       </option>
                     </select>
 
@@ -2953,11 +2953,11 @@ export default function Index({ params }: any) {
                           {/* if '' or not exists then '일반회원' */}
                           <td className="p-2 w-20 text-center"> 
                             {
-                              item?.userType === 'AAA' ? '1등급회원'
-                              : item?.userType === 'BBB' ? '2등급회원'
-                              : item?.userType === 'CCC' ? '3등급회원'
-                              : item?.userType === 'DDD' ? '4등급회원'
-                              : '일반회원'
+                              item?.userType === 'AAA' ? '1등급 회원'
+                              : item?.userType === 'BBB' ? '2등급 회원'
+                              : item?.userType === 'CCC' ? '3등급 회원'
+                              : item?.userType === 'DDD' ? '4등급 회원'
+                              : '일반 회원'
                             }
                           </td>
 

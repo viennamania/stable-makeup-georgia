@@ -2823,16 +2823,16 @@ export default function Index({ params }: any) {
                                 {item.nickname}<br/>
                                 (
                                   {item?.userType === ''
-                                  ? '일반회원'
+                                  ? '일반 회원'
                                   : item?.userType === 'AAA'
                                   ? '1등급회원'
                                   : item?.userType === 'BBB'
-                                  ? '2등급회원'
+                                  ? '2등급 회원'
                                   : item?.userType === 'CCC'
-                                  ? '3등급회원'
+                                  ? '3등급 회원'
                                   : item?.userType === 'DDD'
-                                  ? '4등급회원'
-                                  : '일반회원'
+                                  ? '4등급 회원'
+                                  : '일반 회원'
                                   }
                                 )
                               </span>

@@ -765,7 +765,7 @@ export default function SettingsPage({ params }: any) {
                                 : memberData?.userType === 'BBB' ? '2등급 회원' 
                                 : memberData?.userType === 'CCC' ? '3등급 회원' 
                                 : memberData?.userType === 'DDD' ? '4등급 회원' 
-                                : '일반회원'}
+                                : '일반 회원'}
                             </span>
                         </div>
 
@@ -804,7 +804,7 @@ export default function SettingsPage({ params }: any) {
                                     }}
                                 />
                                 <span className="text-lg text-zinc-500 font-semibold">
-                                    일반회원
+                                    일반 회원
                                 </span>
                             </label>
 
