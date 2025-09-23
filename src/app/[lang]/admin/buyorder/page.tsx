@@ -5232,6 +5232,7 @@ const fetchBuyOrders = async () => {
                                   {item.seller?.walletAddress && item.seller?.walletAddress.substring(0, 6) + '...' + item.seller?.walletAddress.substring(item.seller?.walletAddress.length - 4)}
                                 </button>
                               </div>
+
                               {/*
                               <span className="text-sm text-zinc-500">
                                 {
@@ -5580,16 +5581,66 @@ const fetchBuyOrders = async () => {
                             )}
 
                             {/* seller bank info */}
-                            <div className="flex flex-row gap-2 items-center justify-end">
-                              <span className="text-sm text-zinc-500">
-                                {/*item.seller?.bankInfo?.bankName*/}
-                                {item.store?.bankInfo?.bankName}
-                              </span>
-                              <span className="text-lg text-gray-800 font-bold">
-                                {/*item.seller?.bankInfo?.accountHolder*/}
-                                {item.store?.bankInfo?.accountHolder}
-                              </span>
-                            </div>
+                            {item?.userType === '' ? (
+                              <div className="flex flex-row gap-2 items-center justify-end">
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfo?.bankName}
+                                </span>
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {item.store?.bankInfo?.accountHolder}
+                                </span>
+                              </div>
+                            ) : (item?.userType === 'AAA' ? (
+                              <div className="flex flex-row gap-2 items-center justify-end">
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoAAA?.bankName}
+                                </span>
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {item.store?.bankInfoAAA?.accountHolder}
+                                </span>
+                              </div>
+                            ) : (item?.userType === 'BBB' ? (
+                              <div className="flex flex-row gap-2 items-center justify-end">
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoBBB?.bankName}
+                                </span>
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {item.store?.bankInfoBBB?.accountHolder}
+                                </span>
+                              </div>
+                            ) : (item?.userType === 'CCC' ? (
+                              <div className="flex flex-row gap-2 items-center justify-end">
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoCCC?.bankName}
+                                </span>
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {item.store?.bankInfoCCC?.accountHolder}
+                                </span>
+                              </div>
+                            ) : (item?.userType === 'DDD' ? (
+                              <div className="flex flex-row gap-2 items-center justify-end">
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoDDD?.bankName}
+                                </span>
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {item.store?.bankInfoDDD?.accountHolder}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-row gap-2 items-center justify-end">
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfo?.bankName}
+                                </span>
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {item.store?.bankInfo?.accountHolder}
+                                </span>
+                              </div>
+                            )))))}
+
+
+
+
+
 
                             {/* paymentAmount */}
                             <div className="flex flex-row gap-1 items-center justify-end">
@@ -5675,46 +5726,90 @@ const fetchBuyOrders = async () => {
 
 
 
+                                {item?.userType === '' ? (
+                                  <div className="flex flex-row gap-1 items-center justify-end">
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfo?.bankName
+                                      }
+                                    </span>
+                                    <span className="text-lg text-gray-800 font-bold">
+                                      {
+                                        item.store?.bankInfo?.accountHolder
+                                      }
+                                    </span>
+                                  </div>
+                                ) : (item?.userType === 'AAA' ? (
+                                  <div className="flex flex-row gap-1 items-center justify-end">
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoAAA?.bankName
+                                      }
+                                    </span>
+                                    <span className="text-lg text-gray-800 font-bold">
+                                      {
+                                        item.store?.bankInfoAAA?.accountHolder
+                                      }
+                                    </span>
+                                  </div>
+                                ) : (item?.userType === 'BBB' ? (
+                                  <div className="flex flex-row gap-1 items-center justify-end">
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoBBB?.bankName
+                                      }
+                                    </span>
+                                    <span className="text-lg text-gray-800 font-bold">
+                                      {
+                                        item.store?.bankInfoBBB?.accountHolder
+                                      }
+                                    </span>
+                                  </div>
+                                ) : (item?.userType === 'CCC' ? (
+                                  <div className="flex flex-row gap-1 items-center justify-end">
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoCCC?.bankName
+                                      }
+                                    </span>
+                                    <span className="text-lg text-gray-800 font-bold">
+                                      {
+                                        item.store?.bankInfoCCC?.accountHolder
+                                      }
+                                    </span>
+                                  </div>
+                                ) : (item?.userType === 'DDD' ? (
+                                  <div className="flex flex-row gap-1 items-center justify-end">
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoDDD?.bankName
+                                      }
+                                    </span>
+                                    <span className="text-lg text-gray-800 font-bold">
+                                      {
+                                        item.store?.bankInfoDDD?.accountHolder
+                                      }
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-row gap-1 items-center justify-end">
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfo?.bankName
+                                      }
+                                    </span>
+                                    <span className="text-lg text-gray-800 font-bold">
+                                      {
+                                        item.store?.bankInfo?.accountHolder
+                                      }
+                                    </span>
+                                  </div>
+                                )))))}
 
-                                <div className="flex flex-row gap-1 items-center justify-end">
-                                  <div className="text-sm text-zinc-500">
-                                    {/*item.seller?.bankInfo?.bankName*/}
-                                    {
-                                      item?.userType === ''
-                                      ? item.store?.bankInfoAAA?.bankName
-                                      : item.store?.bankInfo?.bankName
-                                    }
-                                  </div>
-                                  <div className="text-lg text-gray-800 font-bold">
-                                    {/*item.seller?.bankInfo?.accountHolder*/}
-                                    {
-                                      item?.userType === 'AAA'
-                                      ? item.store?.bankInfoAAA?.accountHolder
-                                      : item.store?.bankInfo?.accountHolder
-                                    }
-                                  </div>
-                                  <div className="text-sm text-zinc-500">
-                                    {
-                                      item?.userType === 'BBB'
-                                      ? item.store?.bankInfoBBB?.accountNumber
-                                      : item.store?.bankInfo?.accountNumber
-                                    }
-                                  </div>
-                                  <div className="text-sm text-zinc-500">
-                                    {
-                                      item?.userType === 'CCC'
-                                      ? item.store?.bankInfoCCC?.accountNumber
-                                      : item.store?.bankInfo?.accountNumber
-                                    }
-                                  </div>
-                                  <div className="text-sm text-zinc-500">
-                                    {
-                                      item?.userType === 'DDD'
-                                      ? item.store?.bankInfoDDD?.accountNumber
-                                      : item.store?.bankInfo?.accountNumber
-                                    }
-                                  </div>
-                                </div>
+
+
+
+
 
 
                                 {/*
@@ -6311,7 +6406,9 @@ const fetchBuyOrders = async () => {
                                   {item?.paymentMethod === 'bank' && (
 
                                     <div className="flex flex-col gap-2 items-center justify-center">
+
                                       <div className="flex flex-row gap-2 items-center justify-center">
+                                        
                                         <span className="text-sm text-zinc-500">
                                           {
                                             item?.userType === 'AAA'
@@ -6319,6 +6416,7 @@ const fetchBuyOrders = async () => {
                                             : item.store?.bankInfo?.accountHolder
                                           }
                                         </span>
+
                                         <span className="text-sm text-zinc-500">
                                           {
                                             item?.userType === 'BBB'
@@ -6327,17 +6425,26 @@ const fetchBuyOrders = async () => {
                                           }
                                         </span>
 
+                                        <span className="text-sm text-zinc-500">
+                                          {
+                                            item?.userType === 'CCC'
+                                            ? item.store?.bankInfoCCC?.accountNumber
+                                            : item.store?.bankInfo?.accountNumber
+                                          }
+                                        </span>
 
+                                        <span className="text-sm text-zinc-500">
+                                          {
+                                            item?.userType === 'DDD'
+                                            ? item.store?.bankInfoDDD?.accountNumber
+                                            : item.store?.bankInfo?.accountNumber
+                                          }
+                                        </span>
+                                        
                                       </div>
 
-                                      <span className="text-sm text-zinc-500">
-                                        {
-                                          item?.userType === 'CCC'
-                                          ? item.store?.bankInfoCCC?.accountNumber
-                                          : item.store?.bankInfo?.accountNumber
-                                        }
-                                      </span>
 
+                                          
 
                                     </div>
 
