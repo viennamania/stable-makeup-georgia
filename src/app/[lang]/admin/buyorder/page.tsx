@@ -1549,12 +1549,12 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
     // check balance
     // send payment request
-
+    /*
     if (balance < amount) {
       toast.error(Insufficient_balance);
       return;
     }
-
+    */
 
     // check all escrowing is false
     if (!isWithoutEscrow && escrowing.some((item) => item === true)) {
