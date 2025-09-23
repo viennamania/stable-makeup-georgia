@@ -1602,39 +1602,24 @@ export default function Index({ params }: any) {
   // array of confirmingPayment
 
   const [confirmingPayment, setConfirmingPayment] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    confirmingPayment.push(false);
-  }
-
-  /*
   useEffect(() => {
-      
-      setConfirmingPayment(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
+    setConfirmingPayment([] as boolean[]);
+    for (let i = 0; i < buyOrders.length; i++) {
+      confirmingPayment.push(false);
+    }
+  } , [buyOrders.length]);
 
 
   // confirm payment check box
   const [confirmPaymentCheck, setConfirmPaymentCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    confirmPaymentCheck.push(false);
-  }
-
-  /*
   useEffect(() => {
-      
-      setConfirmPaymentCheck(
-        new Array(buyOrders.length).fill(false)
-      );
+    setConfirmPaymentCheck([] as boolean[]);
+    for (let i = 0; i < buyOrders.length; i++) {
+      confirmPaymentCheck.push(false);
+    }
+  } , [buyOrders.length]);
 
-  } , [buyOrders]);
-    */
-
-
-
+  
 
   // payment amoount array
   const [paymentAmounts, setPaymentAmounts] = useState([] as number[]);

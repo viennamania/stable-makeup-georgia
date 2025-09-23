@@ -1034,25 +1034,27 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
   /* agreement for trade */
   const [agreementForTrade, setAgreementForTrade] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-      agreementForTrade.push(false);
-  }
-  /*
   useEffect(() => {
-      setAgreementForTrade (
-          buyOrders.map((item, idx) => {
-              return false;
-          })
-      );
-  } , [buyOrders]);
-    */
-    
+    setAgreementForTrade([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAgreementForTrade(newArray);
+  } , [buyOrders.length]);
+
+
     
   // initialize false array of 100
   const [acceptingBuyOrder, setAcceptingBuyOrder] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-      acceptingBuyOrder.push(false);
-  }
+  useEffect(() => {
+    setAcceptingBuyOrder([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAcceptingBuyOrder(newArray);
+  } , [buyOrders.length]);
 
    
 
@@ -1231,50 +1233,49 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
   // agreement for cancel trade
   const [agreementForCancelTrade, setAgreementForCancelTrade] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    agreementForCancelTrade.push(false);
-  }
-  /*
   useEffect(() => {
-    setAgreementForCancelTrade(
-      buyOrders.map(() => false)
-    );
-  } , [buyOrders]);
-   */
+    setAgreementForCancelTrade([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAgreementForCancelTrade(newArray);
+  } , [buyOrders.length]);
+
 
 
   // cancelReason
   const [cancelTradeReason, setCancelTradeReason] = useState([] as string[]);
-  for (let i = 0; i < 100; i++) {
-    cancelTradeReason.push('');
-  }
+  useEffect(() => {
+    setCancelTradeReason([]);
+    const newArray: string[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push("");
+    }
+    setCancelTradeReason(newArray);
+  } , [buyOrders.length]);
 
 
 
 
     // cancel sell order state
     const [cancellings, setCancellings] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      cancellings.push(false);
-    }
-    /*
     useEffect(() => {
-      setCancellings(buyOrders.map(() => false));
-    }, [buyOrders]);
-    */
-
+      setCancellings([]);
+      const newArray: boolean[] = [];
+      for (let i = 0; i < buyOrders.length; i++) {
+        newArray.push(false);
+      }
+      setCancellings(newArray);
+    } , [buyOrders.length]);
 
 
 
   const cancelTrade = async (orderId: string, index: number) => {
 
-
-
     if (cancellings[index]) {
       return;
     }
-
-
 
     setCancellings(
       cancellings.map((item, i) => i === index ? true : item)
@@ -1481,62 +1482,44 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-    // request payment check box
-    const [requestPaymentCheck, setRequestPaymentCheck] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      requestPaymentCheck.push(false);
+  // request payment check box
+  const [requestPaymentCheck, setRequestPaymentCheck] = useState([] as boolean[]);
+  useEffect(() => {
+    setRequestPaymentCheck([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
     }
+    setRequestPaymentCheck(newArray);
+  } , [buyOrders.length]);  
 
-    /*
-    useEffect(() => {
-        
-        setRequestPaymentCheck(
-          new Array(buyOrders.length).fill(false)
-        );
+
+
+
+  // array of escrowing
+  const [escrowing, setEscrowing] = useState([] as boolean[]);
+  useEffect(() => {
+    setEscrowing([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setEscrowing(newArray);
+  } , [buyOrders.length]);
   
-    } , [buyOrders]);
-     */
-    
-
-
-
-
-    // array of escrowing
-    const [escrowing, setEscrowing] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      escrowing.push(false);
-    }
-
-    /*
-    useEffect(() => {
-        
-        setEscrowing(
-          new Array(buyOrders.length).fill(false)
-        );
   
-    } , [buyOrders]);
-     */
 
-    // array of requestingPayment
-    const [requestingPayment, setRequestingPayment] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      requestingPayment.push(false);
+
+  // array of requestingPayment
+  const [requestingPayment, setRequestingPayment] = useState([] as boolean[]);
+  useEffect(() => {
+    setRequestingPayment([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
     }
-
-
-    /*
-    useEffect(() => {
-
-      setRequestingPayment(
-
-        new Array(buyOrders.length).fill(false)
-
-      );
-
-    } , [buyOrders]);
-      */
-
-
+    setRequestingPayment(newArray);
+  } , [buyOrders.length]);
 
 
 
@@ -1931,37 +1914,28 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   // array of confirmingPayment
 
   const [confirmingPayment, setConfirmingPayment] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    confirmingPayment.push(false);
-  }
-
-  /*
   useEffect(() => {
-      
-      setConfirmingPayment(
-        new Array(buyOrders.length).fill(false)
-      );
+    setConfirmingPayment([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setConfirmingPayment(newArray);
+  } , [buyOrders.length]);
 
-  } , [buyOrders]);
-   */
+
 
 
   // confirm payment check box
   const [confirmPaymentCheck, setConfirmPaymentCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    confirmPaymentCheck.push(false);
-  }
-
-  /*
   useEffect(() => {
-      
-      setConfirmPaymentCheck(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-    */
-
+    setConfirmPaymentCheck([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setConfirmPaymentCheck(newArray);
+  } , [buyOrders.length]);
 
 
 
@@ -2447,15 +2421,29 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   // array of settlement
 
   const [loadingSettlement, setLoadingSettlement] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    loadingSettlement.push(false);
-  }
+  useEffect(() => {
+    setLoadingSettlement([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setLoadingSettlement(newArray);
+  } , [buyOrders.length]);
+
+
 
   // settlement check box
   const [settlementCheck, setSettlementCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    settlementCheck.push(false);
-  }
+  useEffect(() => {
+    setSettlementCheck([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setSettlementCheck(newArray);
+  } , [buyOrders.length]);
+
+  
 
   const settlementRequest = async (index: number, orderId: string) => {
     // settlement
