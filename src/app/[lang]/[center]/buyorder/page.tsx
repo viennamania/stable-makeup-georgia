@@ -5194,7 +5194,13 @@ const fetchBuyOrders = async () => {
                               </span>
                               <span className="text-sm text-zinc-500">
                                 {item?.userType === 'AAA'
-                                ? ' (AAA) '
+                                ? ' (1등금) '
+                                : item?.userType === 'BBB'
+                                ? ' (2등금) '
+                                : item?.userType === 'CCC'
+                                ? ' (3등금) '
+                                : item?.userType === 'DDD'
+                                ? ' (4등금) '
                                 : ' (일반) '}
                               </span>
                             </div>
@@ -5897,6 +5903,12 @@ const fetchBuyOrders = async () => {
                                 {
                                   item?.userType === 'AAA'
                                   ? item.store?.bankInfoAAA?.accountHolder
+                                  : item?.userType === 'BBB'
+                                  ? item.store?.bankInfoBBB?.accountHolder
+                                  : item?.userType === 'CCC'
+                                  ? item.store?.bankInfoCCC?.accountHolder
+                                  : item?.userType === 'DDD'
+                                  ? item.store?.bankInfoDDD?.accountHolder
                                   : item.store?.bankInfo?.accountHolder
                                 }
 
@@ -5906,6 +5918,12 @@ const fetchBuyOrders = async () => {
                                 {
                                   item?.userType === 'AAA'
                                   ? item.store?.bankInfoAAA?.bankName
+                                  : item?.userType === 'BBB'
+                                  ? item.store?.bankInfoBBB?.bankName
+                                  : item?.userType === 'CCC'
+                                  ? item.store?.bankInfoCCC?.bankName
+                                  : item?.userType === 'DDD'
+                                  ? item.store?.bankInfoDDD?.bankName
                                   : item.store?.bankInfo?.bankName
                                 }
                               </span>
@@ -5981,6 +5999,12 @@ const fetchBuyOrders = async () => {
                                   {
                                     item?.userType === 'AAA'
                                     ? item.store?.bankInfoAAA?.accountHolder
+                                    : item?.userType === 'BBB'
+                                    ? item.store?.bankInfoBBB?.accountHolder
+                                    : item?.userType === 'CCC'
+                                    ? item.store?.bankInfoCCC?.accountHolder
+                                    : item?.userType === 'DDD'
+                                    ? item.store?.bankInfoDDD?.accountHolder
                                     : item.store?.bankInfo?.accountHolder
                                   }
                                 </div>
@@ -5988,6 +6012,12 @@ const fetchBuyOrders = async () => {
                                   {/*item.seller?.bankInfo?.bankName*/}
                                   {item?.userType === 'AAA'
                                     ? item.store?.bankInfoAAA?.bankName
+                                    : item?.userType === 'BBB'
+                                    ? item.store?.bankInfoBBB?.bankName
+                                    : item?.userType === 'CCC'
+                                    ? item.store?.bankInfoCCC?.bankName
+                                    : item?.userType === 'DDD'
+                                    ? item.store?.bankInfoDDD?.bankName
                                     : item.store?.bankInfo?.bankName
                                   }
                                 </div>

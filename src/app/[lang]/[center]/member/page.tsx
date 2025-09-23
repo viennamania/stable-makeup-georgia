@@ -2766,22 +2766,20 @@ export default function Index({ params }: any) {
                         일반회원
                       </option>
                       <option value="AAA" selected={userType === "AAA"}>
-                        AAA회원
+                        1등급회원
                       </option>
-                      {/*
                       <option value="BBB" selected={userType === "BBB"}>
-                        BBB회원
+                        2등급회원
                       </option>
                       <option value="CCC" selected={userType === "CCC"}>
-                        CCC회원
+                        3등급회원
                       </option>
                       <option value="DDD" selected={userType === "DDD"}>
-                        DDD회원
+                        4등급회원
                       </option>
                       <option value="EEE" selected={userType === "EEE"}>
-                        EEE회원
+                        5등급회원
                       </option>
-                      */}
                     </select>
 
                   </div>
@@ -2955,11 +2953,10 @@ export default function Index({ params }: any) {
                           {/* if '' or not exists then '일반회원' */}
                           <td className="p-2 w-20 text-center"> 
                             {
-                              item?.userType === 'AAA' ? 'AAA회원'
-                              : item?.userType === 'BBB' ? 'BBB회원'
-                              : item?.userType === 'CCC' ? 'CCC회원'
-                              : item?.userType === 'DDD' ? 'DDD회원'
-                              : item?.userType === 'EEE' ? 'EEE회원'
+                              item?.userType === 'AAA' ? '1등급회원'
+                              : item?.userType === 'BBB' ? '2등급회원'
+                              : item?.userType === 'CCC' ? '3등급회원'
+                              : item?.userType === 'DDD' ? '4등급회원'
                               : '일반회원'
                             }
                           </td>

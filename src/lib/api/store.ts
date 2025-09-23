@@ -565,6 +565,119 @@ export async function updateStoreBankInfoAAA(
 
 
 
+// updateStoreBankInfoBBB
+export async function updateStoreBankInfoBBB(
+  {
+    walletAddress,
+    storecode,
+    bankName,
+    accountNumber,
+    accountHolder
+  }: {
+    walletAddress: string;
+    storecode: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const bankInfoBBB = {
+    bankName: bankName,
+    accountNumber: accountNumber,
+    accountHolder: accountHolder,
+  };
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { bankInfoBBB: bankInfoBBB } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+// updateStoreBankInfoCCC
+export async function updateStoreBankInfoCCC(
+  {
+    walletAddress,
+    storecode,
+    bankName,
+    accountNumber,
+    accountHolder
+  }: {
+    walletAddress: string;
+    storecode: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const bankInfoCCC = {
+    bankName: bankName,
+    accountNumber: accountNumber,
+    accountHolder: accountHolder,
+  };
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { bankInfoCCC: bankInfoCCC } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+//updateStoreBankInfoDDD
+export async function updateStoreBankInfoDDD(
+  {
+    walletAddress,
+    storecode,
+    bankName,
+    accountNumber,
+    accountHolder
+  }: {
+    walletAddress: string;
+    storecode: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const bankInfoDDD = {
+    bankName: bankName,
+    accountNumber: accountNumber,
+    accountHolder: accountHolder,
+  };
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { bankInfoDDD: bankInfoDDD } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 
 

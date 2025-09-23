@@ -4852,7 +4852,13 @@ const fetchBuyOrders = async () => {
                               </span>
                               <span className="text-sm text-zinc-500">
                                 {item?.userType === 'AAA'
-                                ? ' (AAA) '
+                                ? ' 1등급 회원'
+                                : item?.userType === 'BBB'
+                                ? ' 2등급 회원'
+                                : item?.userType === 'CCC'
+                                ? ' 3등급 회원'
+                                : item?.userType === 'DDD'
+                                ? '4등급 회원'
                                 : ' (일반) '}
                               </span>
                             </div>
@@ -5674,7 +5680,7 @@ const fetchBuyOrders = async () => {
                                   <div className="text-sm text-zinc-500">
                                     {/*item.seller?.bankInfo?.bankName*/}
                                     {
-                                      item?.userType === 'AAA'
+                                      item?.userType === ''
                                       ? item.store?.bankInfoAAA?.bankName
                                       : item.store?.bankInfo?.bankName
                                     }
@@ -5685,6 +5691,27 @@ const fetchBuyOrders = async () => {
                                       item?.userType === 'AAA'
                                       ? item.store?.bankInfoAAA?.accountHolder
                                       : item.store?.bankInfo?.accountHolder
+                                    }
+                                  </div>
+                                  <div className="text-sm text-zinc-500">
+                                    {
+                                      item?.userType === 'BBB'
+                                      ? item.store?.bankInfoBBB?.accountNumber
+                                      : item.store?.bankInfo?.accountNumber
+                                    }
+                                  </div>
+                                  <div className="text-sm text-zinc-500">
+                                    {
+                                      item?.userType === 'CCC'
+                                      ? item.store?.bankInfoCCC?.accountNumber
+                                      : item.store?.bankInfo?.accountNumber
+                                    }
+                                  </div>
+                                  <div className="text-sm text-zinc-500">
+                                    {
+                                      item?.userType === 'DDD'
+                                      ? item.store?.bankInfoDDD?.accountNumber
+                                      : item.store?.bankInfo?.accountNumber
                                     }
                                   </div>
                                 </div>
@@ -6294,23 +6321,23 @@ const fetchBuyOrders = async () => {
                                         </span>
                                         <span className="text-sm text-zinc-500">
                                           {
-                                            item?.userType === 'AAA'
-                                            ? item.store?.bankInfoAAA?.bankName
+                                            item?.userType === 'BBB'
+                                            ? item.store?.bankInfoBBB?.bankName
                                             : item.store?.bankInfo?.bankName
                                           }
                                         </span>
+
+
                                       </div>
 
                                       <span className="text-sm text-zinc-500">
                                         {
-                                          item?.userType === 'AAA'
-                                          ? item.store?.bankInfoAAA?.accountNumber && item.store?.bankInfoAAA?.accountNumber.length > 5 &&
-                                            item.store?.bankInfoAAA?.accountNumber.substring(0, 5) + '...'
-                                          : item.store?.bankInfo?.accountNumber &&
-                                            item.store?.bankInfo?.accountNumber.length > 5 &&
-                                            item.store?.bankInfo?.accountNumber.substring(0, 5) + '...'
+                                          item?.userType === 'CCC'
+                                          ? item.store?.bankInfoCCC?.accountNumber
+                                          : item.store?.bankInfo?.accountNumber
                                         }
                                       </span>
+
 
                                     </div>
 
