@@ -892,25 +892,28 @@ export default function Index({ params }: any) {
 
   /* agreement for trade */
   const [agreementForTrade, setAgreementForTrade] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-      agreementForTrade.push(false);
-  }
-  /*
   useEffect(() => {
-      setAgreementForTrade (
-          buyOrders.map((item, idx) => {
-              return false;
-          })
-      );
-  } , [buyOrders]);
-    */
+    setAgreementForTrade([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAgreementForTrade(newArray);
+  } , [buyOrders.length]);
+
+
     
     
   // initialize false array of 100
   const [acceptingBuyOrder, setAcceptingBuyOrder] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-      acceptingBuyOrder.push(false);
-  }
+  useEffect(() => {
+    setAcceptingBuyOrder([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAcceptingBuyOrder(newArray);
+  } , [buyOrders.length]);
 
    
 
@@ -1084,16 +1087,15 @@ export default function Index({ params }: any) {
 
   // agreement for cancel trade
   const [agreementForCancelTrade, setAgreementForCancelTrade] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    agreementForCancelTrade.push(false);
-  }
-  /*
   useEffect(() => {
-    setAgreementForCancelTrade(
-      buyOrders.map(() => false)
-    );
-  } , [buyOrders]);
-   */
+    setAgreementForCancelTrade([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAgreementForCancelTrade(newArray);
+  } , [buyOrders.length]);
+
 
 
 
@@ -1102,26 +1104,23 @@ export default function Index({ params }: any) {
 
     // cancel sell order state
     const [cancellings, setCancellings] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      cancellings.push(false);
-    }
-    /*
     useEffect(() => {
-      setCancellings(buyOrders.map(() => false));
-    }, [buyOrders]);
-    */
+      setCancellings([]);
+      const newArray: boolean[] = [];
+      for (let i = 0; i < buyOrders.length; i++) {
+        newArray.push(false);
+      }
+      setCancellings(newArray);
+    } , [buyOrders.length]);
+
 
 
 
     const cancelTrade = async (orderId: string, index: number) => {
 
-
-
       if (cancellings[index]) {
         return;
       }
-
-
 
       setCancellings(
         cancellings.map((item, i) => i === index ? true : item)
@@ -1203,60 +1202,45 @@ export default function Index({ params }: any) {
 
 
 
-    // request payment check box
-    const [requestPaymentCheck, setRequestPaymentCheck] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      requestPaymentCheck.push(false);
+  // request payment check box
+  const [requestPaymentCheck, setRequestPaymentCheck] = useState([] as boolean[]);
+  useEffect(() => {
+    setRequestPaymentCheck([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
     }
+    setRequestPaymentCheck(newArray);
+  } , [buyOrders.length]);  
 
-    /*
-    useEffect(() => {
-        
-        setRequestPaymentCheck(
-          new Array(buyOrders.length).fill(false)
-        );
+
+
+
+  // array of escrowing
+  const [escrowing, setEscrowing] = useState([] as boolean[]);
+  useEffect(() => {
+    setEscrowing([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setEscrowing(newArray);
+  } , [buyOrders.length]);
+
+
+
+  // array of requestingPayment
+  const [requestingPayment, setRequestingPayment] = useState([] as boolean[]);
+  useEffect(() => {
+    setRequestingPayment([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setRequestingPayment(newArray);
+  } , [buyOrders.length]);
+
   
-    } , [buyOrders]);
-     */
-    
-
-
-
-
-    // array of escrowing
-    const [escrowing, setEscrowing] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      escrowing.push(false);
-    }
-
-    /*
-    useEffect(() => {
-        
-        setEscrowing(
-          new Array(buyOrders.length).fill(false)
-        );
-  
-    } , [buyOrders]);
-     */
-
-    // array of requestingPayment
-    const [requestingPayment, setRequestingPayment] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      requestingPayment.push(false);
-    }
-
-
-    /*
-    useEffect(() => {
-
-      setRequestingPayment(
-
-        new Array(buyOrders.length).fill(false)
-
-      );
-
-    } , [buyOrders]);
-      */
 
 
     // without escrow
