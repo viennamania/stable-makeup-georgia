@@ -1715,6 +1715,7 @@ export default function Index({ params }: any) {
                   if (idx === index) {
                     return {
                       ...item,
+                      status: 'paymentConfirmed',
                       transactionHash: transactionHash,
                     };
                   }
@@ -3837,7 +3838,27 @@ export default function Index({ params }: any) {
 
                       <th className="p-2">{Seller} / {Status}</th>
                       <th className="p-2">거래취소</th>
-                      <th className="p-2">거래완료</th>
+                      <th className="p-2">
+                        {isProcessingSendTransaction ? (
+                          <div className="flex flex-row items-center gap-2">
+                            <Image
+                              src="/icon-transfer.png"
+                              alt="Transfer"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5 animate-spin"
+                            />
+                            <span className="text-sm">
+                              USDT 전송중...
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-sm">
+                            USDT 전송
+                          </span>
+                        )}
+                      </th>
+
                       <th className="p-2">출금상태</th>
                     </tr>
                   </thead>

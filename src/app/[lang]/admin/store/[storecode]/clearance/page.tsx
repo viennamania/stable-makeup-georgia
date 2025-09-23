@@ -1163,6 +1163,22 @@ export default function Index({ params }: any) {
       if (data.result) {
         toast.success(Order_has_been_cancelled);
 
+
+        setBuyOrders(
+          buyOrders.map((item, i) => {
+            if (i === index) {
+              return {
+                ...item,
+                status: 'cancelled',
+                canceller: 'seller',
+                cancelledAt: new Date().toISOString(),
+              };
+            }
+            return item;
+          })
+        );
+
+        /*
         //await fetch('/api/order/getAllBuyOrders', {
         await fetch('/api/order/getAllCollectOrdersForSeller', {
 
@@ -1195,6 +1211,7 @@ export default function Index({ params }: any) {
             setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
           }
         });
+        */
 
       } else {
         toast.error('실패했습니다. 잠시 후 다시 시도해주세요.');
@@ -1373,9 +1390,17 @@ export default function Index({ params }: any) {
 
   // buyOrderDepositCompleted
   const [loadingDeposit, setLoadingDeposit] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    loadingDeposit.push(false);
-  }
+  useEffect(() => {
+    setLoadingDeposit([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setLoadingDeposit(newArray);
+  } , [buyOrders.length]);
+
+
+
 
   const buyOrderDepositCompleted = async (index: number, orderId: string) => {
     // call API to set deposit completed
@@ -1402,12 +1427,37 @@ export default function Index({ params }: any) {
       }),
     });
     
+    if (!response.ok) {
+      setLoadingDeposit(
+        loadingDeposit.map((item, idx) => idx === index ? false : item)
+      );
+      toast.error('Failed to set deposit completed');
+      return;
+    }
 
     setLoadingDeposit(
       loadingDeposit.map((item, idx) => idx === index ? false : item)
     );
 
 
+    setBuyOrders(
+      buyOrders.map((item, idx) => {
+        if (idx === index) {
+          return {
+            ...item,
+            //buyer.depositCompleted
+            buyer: {
+              ...item.buyer,
+              depositCompleted: true,
+            },
+          };
+        }
+        return item;
+      })
+    );
+
+
+    /*
     //await fetch('/api/order/getAllBuyOrders', {
     await fetch('/api/order/getAllCollectOrdersForSeller', {
       method: 'POST',
@@ -1437,6 +1487,7 @@ export default function Index({ params }: any) {
         setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
       }
     });
+    */
 
 
   }
