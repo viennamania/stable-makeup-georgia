@@ -3688,7 +3688,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(일반회원용)</b>
+                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(일반 회원용)</b>
                                     </span>
                                 </div>
 
@@ -3812,7 +3812,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(1등급)</b>
+                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(1등급 회원용)</b>
                                     </span>
                                 </div>
 
@@ -3936,7 +3936,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(2등급)</b>
+                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(2등급 회원용)</b>
                                     </span>
                                 </div>
 
@@ -4062,7 +4062,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(3등급)</b>
+                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(3등급 회원용)</b>
                                     </span>
                                 </div>
 
@@ -4186,7 +4186,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(4등급)</b>
+                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(4등급 회원용)</b>
                                     </span>
                                 </div>
 
