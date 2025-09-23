@@ -769,40 +769,27 @@ export default function Index({ params }: any) {
 
   /* agreement for trade */
   const [agreementForTrade, setAgreementForTrade] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-      agreementForTrade.push(false);
-  }
-  /*
   useEffect(() => {
-      setAgreementForTrade (
-          buyOrders.map((item, idx) => {
-              return false;
-          })
-      );
-  } , [buyOrders]);
-    */
-    
-    
+    setAgreementForTrade([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAgreementForTrade(newArray);
+  } , [buyOrders.length]);
+
+
   // initialize false array of 100
   const [acceptingBuyOrder, setAcceptingBuyOrder] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-      acceptingBuyOrder.push(false);
-  }
+  useEffect(() => {
+    setAcceptingBuyOrder([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setAcceptingBuyOrder(newArray);
+  } , [buyOrders.length]);
 
-   
-
-
-
-   
-    /*
-    useEffect(() => {
-        setAcceptingBuyOrder (
-            buyOrders.map((item, idx) => {
-                return false;
-            })
-        );
-    } , [buyOrders]);
-     */
 
 
     /*
@@ -964,72 +951,247 @@ export default function Index({ params }: any) {
 
   // agreement for cancel trade
   const [agreementForCancelTrade, setAgreementForCancelTrade] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    agreementForCancelTrade.push(false);
-  }
-  /*
+
   useEffect(() => {
-    setAgreementForCancelTrade(
-      buyOrders.map(() => false)
-    );
-  } , [buyOrders]);
-   */
-
-
-
-
-
-
-    // cancel sell order state
-    const [cancellings, setCancellings] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      cancellings.push(false);
+    setAgreementForCancelTrade([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
     }
-    /*
-    useEffect(() => {
-      setCancellings(buyOrders.map(() => false));
-    }, [buyOrders]);
-    */
+    setAgreementForCancelTrade(newArray);
+  } , [buyOrders.length]);
 
 
-    const cancelTrade = async (orderId: string, index: number) => {
+  // cancel sell order state
+  const [cancellings, setCancellings] = useState([] as boolean[]);
+  useEffect(() => {
+    setCancellings([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setCancellings(newArray);
+  } , [buyOrders.length]);
 
-      if (cancellings[index]) {
-        return;
-      }
 
-      setCancellings(
-        cancellings.map((item, i) => i === index ? true : item)
+
+  const cancelTrade = async (orderId: string, index: number) => {
+
+    if (cancellings[index]) {
+      return;
+    }
+
+    setCancellings(
+      cancellings.map((item, i) => i === index ? true : item)
+    );
+
+
+    const response = await fetch('/api/order/cancelTradeBySeller', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        storecode: params.center,
+        orderId: orderId,
+        walletAddress: address,
+      })
+    });
+
+    const data = await response.json();
+
+    ///console.log('data', data);
+
+    if (data.result) {
+
+      toast.success(Order_has_been_cancelled);
+
+      ///playSong();
+
+      /*
+      await fetch('/api/order/getAllCollectOrdersForUser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+          {
+            storecode: params.center,
+            limit: Number(limit),
+            page: Number(page),
+            walletAddress: address,
+            searchMyOrders: searchMyOrders,
+
+            fromDate: searchFromDate,
+            toDate: searchToDate,
+            searchWithdrawDepositName: searchWithdrawDepositName,
+          }
+        )
+      }).then(async (response) => {
+        const data = await response.json();
+        //console.log('data', data);
+        if (data.result) {
+          setBuyOrders(data.result.orders);
+
+          setTotalCount(data.result.totalCount);
+
+          setTotalClearanceCount(data.result.totalClearanceCount);
+          setTotalClearanceAmount(data.result.totalClearanceAmount);
+          setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+        }
+      });
+      */
+
+      setBuyOrders(
+        buyOrders.map((item, i) => i === index ? {
+            ...item,
+            status: 'cancelled',
+            cancelledAt: new Date().toISOString()
+          } : item)
       );
 
 
-      const response = await fetch('/api/order/cancelTradeBySeller', {
+    } else {
+      toast.error('Order has been failed');
+    }
+
+
+    setAgreementForCancelTrade(
+      agreementForCancelTrade.map((item, i) => i === index ? false : item)
+    );
+
+    setCancellings(
+      cancellings.map((item, i) => i === index ? false : item)
+    );
+
+  }
+
+
+
+
+
+
+
+
+
+  // request payment check box
+  const [requestPaymentCheck, setRequestPaymentCheck] = useState([] as boolean[]);
+  useEffect(() => {
+    setRequestPaymentCheck([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setRequestPaymentCheck(newArray);
+  } , [buyOrders.length]);
+
+
+  // array of escrowing
+  const [escrowing, setEscrowing] = useState([] as boolean[]);
+  useEffect(() => {
+    setEscrowing([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setEscrowing(newArray);
+  } , [buyOrders.length]);
+
+
+  // array of requestingPayment
+  const [requestingPayment, setRequestingPayment] = useState([] as boolean[]);
+  useEffect(() => {
+    setRequestingPayment([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setRequestingPayment(newArray);
+  } , [buyOrders.length]);
+
+
+
+  const requestPayment = async (
+    index: number,
+    orderId: string,
+    tradeId: string,
+    amount: number,
+  ) => {
+    // check balance
+    // send payment request
+
+    let balance = 0;
+    const result = await balanceOf({
+      contract,
+      address: address || "",
+    });
+
+      if (chain === 'bsc') {
+      balance = Number(result) / 10 ** 18;
+    } else {
+      balance = Number(result) / 10 ** 6;
+    }
+
+
+
+    if (balance < amount) {
+      toast.error(Insufficient_balance);
+      return;
+    }
+
+
+
+    // check all requestingPayment is false
+    if (requestingPayment.some((item) => item === true)) {
+      toast.error('결제요청중입니다.');
+      return;
+    }
+
+
+    try {
+
+      const transactionHash = '0x';
+
+
+      setRequestingPayment(
+        requestingPayment.map((item, idx) => idx === index ? true : item)
+      );
+      
+
+    const response = await fetch('/api/order/buyOrderRequestPayment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          lang: params.lang,
           storecode: params.center,
           orderId: orderId,
-          walletAddress: address,
+          //transactionHash: transactionResult.transactionHash,
+          transactionHash: transactionHash,
         })
       });
 
       const data = await response.json();
 
-      ///console.log('data', data);
 
       if (data.result) {
 
-        toast.success(Order_has_been_cancelled);
+        toast.success(Payment_request_has_been_sent);
 
-        playSong();
+        //toast.success('Payment request has been sent');
 
+        //playSong();
+        
 
+        
+        //fetchBuyOrders();
+        // fetch Buy Orders
+        /*
         await fetch('/api/order/getAllCollectOrdersForUser', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(
             {
@@ -1043,11 +1205,11 @@ export default function Index({ params }: any) {
               toDate: searchToDate,
               searchWithdrawDepositName: searchWithdrawDepositName,
             }
-          )
-        }).then(async (response) => {
-          const data = await response.json();
-          //console.log('data', data);
-          if (data.result) {
+          ),
+        })
+        .then(response => response.json())
+        .then(data => {
+            ///console.log('data', data);
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
@@ -1055,309 +1217,52 @@ export default function Index({ params }: any) {
             setTotalClearanceCount(data.result.totalClearanceCount);
             setTotalClearanceAmount(data.result.totalClearanceAmount);
             setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-          }
+        })
+        */
+
+        setBuyOrders(
+          buyOrders.map((item, idx) => {
+            if (idx === index) {
+              return {
+                ...item,
+                status: 'paymentRequested',
+              };
+            }
+            return item;
+          })
+        );
+
+
+        // refresh balance
+        /*
+        const result = await balanceOf({
+          contract,
+          address: address || "",
         });
 
+        //console.log(result);
+
+        setBalance( Number(result) / 10 ** 6 );
+        */
+
+
       } else {
-        toast.error('Order has been failed');
-      }
-
-
-      setAgreementForCancelTrade(
-        agreementForCancelTrade.map((item, i) => i === index ? false : item)
-      );
-
-      setCancellings(
-        cancellings.map((item, i) => i === index ? false : item)
-      );
-
-    }
-
-
-
-
-
-
-
-
-
-    // request payment check box
-    const [requestPaymentCheck, setRequestPaymentCheck] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      requestPaymentCheck.push(false);
-    }
-
-    /*
-    useEffect(() => {
-        
-        setRequestPaymentCheck(
-          new Array(buyOrders.length).fill(false)
-        );
-  
-    } , [buyOrders]);
-     */
-    
-
-
-
-
-    // array of escrowing
-    const [escrowing, setEscrowing] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      escrowing.push(false);
-    }
-
-    /*
-    useEffect(() => {
-        
-        setEscrowing(
-          new Array(buyOrders.length).fill(false)
-        );
-  
-    } , [buyOrders]);
-     */
-
-    // array of requestingPayment
-    const [requestingPayment, setRequestingPayment] = useState([] as boolean[]);
-    for (let i = 0; i < 100; i++) {
-      requestingPayment.push(false);
-    }
-
-
-
-    const requestPayment = async (
-      index: number,
-      orderId: string,
-      tradeId: string,
-      amount: number,
-    ) => {
-
-
-   
-
-      // check balance
-      // send payment request
-
-      let balance = 0;
-      const result = await balanceOf({
-        contract,
-        address: address || "",
-      });
-
-       if (chain === 'bsc') {
-        balance = Number(result) / 10 ** 18;
-      } else {
-        balance = Number(result) / 10 ** 6;
-      }
-
-
-
-      if (balance < amount) {
-        toast.error(Insufficient_balance);
-        return;
-      }
-
-
-
-      // check all requestingPayment is false
-      if (requestingPayment.some((item) => item === true)) {
-        toast.error('결제요청중입니다.');
-        return;
-      }
-
-
-      try {
-
-        const transactionHash = '0x';
-
-
-        setRequestingPayment(
-          requestingPayment.map((item, idx) => idx === index ? true : item)
-        );
-        
-
-      const response = await fetch('/api/order/buyOrderRequestPayment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            lang: params.lang,
-            storecode: params.center,
-            orderId: orderId,
-            //transactionHash: transactionResult.transactionHash,
-            transactionHash: transactionHash,
-          })
-        });
-
-        const data = await response.json();
-
-
-        if (data.result) {
-
-          toast.success(Payment_request_has_been_sent);
-
-          //toast.success('Payment request has been sent');
-
-          //playSong();
-          
-
-          
-          //fetchBuyOrders();
-          // fetch Buy Orders
-          /*
-          await fetch('/api/order/getAllCollectOrdersForUser', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-              {
-                storecode: params.center,
-                limit: Number(limit),
-                page: Number(page),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-
-                fromDate: searchFromDate,
-                toDate: searchToDate,
-                searchWithdrawDepositName: searchWithdrawDepositName,
-              }
-            ),
-          })
-          .then(response => response.json())
-          .then(data => {
-              ///console.log('data', data);
-              setBuyOrders(data.result.orders);
-
-              setTotalCount(data.result.totalCount);
-
-              setTotalClearanceCount(data.result.totalClearanceCount);
-              setTotalClearanceAmount(data.result.totalClearanceAmount);
-              setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-          })
-          */
-
-          setBuyOrders(
-            buyOrders.map((item, idx) => {
-              if (idx === index) {
-                return {
-                  ...item,
-                  status: 'paymentRequested',
-                };
-              }
-              return item;
-            })
-          );
-
-
-          // refresh balance
-          /*
-          const result = await balanceOf({
-            contract,
-            address: address || "",
-          });
-
-          //console.log(result);
-
-          setBalance( Number(result) / 10 ** 6 );
-          */
-
-
-        } else {
-          toast.error('결제요청이 실패했습니다.');
-        }
-
-      } catch (error) {
-        console.error('Error:', error);
-
         toast.error('결제요청이 실패했습니다.');
       }
 
- 
+    } catch (error) {
+      console.error('Error:', error);
 
-      setRequestingPayment(
-        requestingPayment.map((item, idx) => idx === index ? false : item)
-      );
-
-
-
-
-
-
-
+      toast.error('결제요청이 실패했습니다.');
     }
 
+    setRequestingPayment(
+      requestingPayment.map((item, idx) => idx === index ? false : item)
+    );
 
-
-
-
-
-
-
-
-
-  // array of confirmingPayment
-  /*
-  const [confirmingPayment, setConfirmingPayment] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    confirmingPayment.push(false);
   }
-  
-  useEffect(() => {
-      
-      setConfirmingPayment(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-    */
 
 
-  // confirm payment check box
-  /*
-  const [confirmPaymentCheck, setConfirmPaymentCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    confirmPaymentCheck.push(false);
-  }
-    */
-
-  /*
-  useEffect(() => {
-      
-      setConfirmPaymentCheck(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-    */
-
-
-
-  /*
-  // payment amoount array
-  const [paymentAmounts, setPaymentAmounts] = useState([] as number[]);
-  useEffect(() => {
-
-    // default payment amount is from sellOrders krwAmount
-      
-    setPaymentAmounts(
-      buyOrders.map((item) => item.krwAmount)
-      );
-
-  } , [buyOrders]);
-
-  const [paymentAmountsUsdt, setPaymentAmountsUsdt] = useState([] as number[]);
-  useEffect(() => {
-
-    // default payment amount is from sellOrders krwAmount
-      
-    setPaymentAmountsUsdt(
-      buyOrders.map((item) => item.usdtAmount)
-      );
-
-  } , [buyOrders]);
-  */
 
 
 
@@ -1365,9 +1270,14 @@ export default function Index({ params }: any) {
 
 
   const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    sendingTransaction.push(false);
-  }
+  useEffect(() => {
+    setSendingTransaction([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setSendingTransaction(newArray);
+  } , [buyOrders.length]);
 
 
   // confirm payment
@@ -1441,6 +1351,8 @@ export default function Index({ params }: any) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+
+    //console.log('sendingTransaction', sendingTransaction);
 
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
@@ -1612,159 +1524,6 @@ export default function Index({ params }: any) {
 
 
 
-  
-  // array of rollbackingPayment
-  const [rollbackingPayment, setRollbackingPayment] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    rollbackingPayment.push(false);
-  }
-  /*
-  useEffect(() => {
-      
-      setRollbackingPayment(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
-
-  // rollback payment check box
-  const [rollbackPaymentCheck, setRollbackPaymentCheck] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    rollbackPaymentCheck.push(false);
-  }
-  /*
-  useEffect(() => {
-      
-      setRollbackPaymentCheck(
-        new Array(buyOrders.length).fill(false)
-      );
-
-  } , [buyOrders]);
-   */
-
-
-  // rollback payment
-  const rollbackPayment = async (
-
-    index: number,
-    orderId: string,
-    paymentAmount: number,
-    paymentAmountUsdt: number,
-
-  ) => {
-    // rollback payment
-    // send usdt to seller wallet address
-
-    if (rollbackingPayment[index]) {
-      return;
-    }
-
-
-    /*
-    // if escrowWalletAddress balance is less than paymentAmount, then return
-    if (escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-
-    // if escrowNativeBalance is less than 0.1, then return
-    if (escrowNativeBalance < 0.1) {
-      toast.error('ETH balance is less than 0.1');
-      return;
-    }
-      */
-    
-
-
-    setRollbackingPayment(
-      rollbackingPayment.map((item, idx) => idx === index ? true : item)
-    );
-
-
-    try {
-
-      const response = await fetch('/api/order/buyOrderRollbackPayment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          storecode: params.center,
-          orderId: orderId,
-          paymentAmount: paymentAmount,
-          ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-          isSmartAccount: false,
-        })
-      });
-
-      const data = await response.json();
-
-      //console.log('data', data);
-
-      if (data.result) {
-
-
-        toast.success('Payment has been rollbacked');
-
-        //playSong();
-
-        
-        ///fetchBuyOrders();
-
-        // fetch Buy Orders
-        await fetch('/api/order/getAllCollectOrdersForUser', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
-              storecode: params.center,
-              limit: Number(limit),
-              page: Number(page),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-              searchWithdrawDepositName: searchWithdrawDepositName,
-            }
-          ),
-        })
-        .then(response => response.json())
-        .then(data => {
-            ///console.log('data', data);
-            setBuyOrders(data.result.orders);
-
-            setTotalCount(data.result.totalCount);
-
-            setTotalClearanceCount(data.result.totalClearanceCount);
-            setTotalClearanceAmount(data.result.totalClearanceAmount);
-            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-        })
-
-      }
-
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Rollback payment has been failed');
-    }
-
-
-
-    setRollbackingPayment(
-      rollbackingPayment.map((item, idx) => idx === index ? false : item)
-    );
-
-    setRollbackPaymentCheck(
-      rollbackPaymentCheck.map((item, idx) => idx === index ? false : item)
-    );
-
-
-  }
-
 
 
 
@@ -1783,9 +1542,11 @@ export default function Index({ params }: any) {
   const [searchWithdrawDepositName, setSearchWithdrawDepositName] = useState("");
 
 
+
+
   const fetchBuyOrders = async () => {
 
-    console.log('fetchBuyOrders===============>');
+    console.log('fetchBuyOrders=========================>');
     //console.log("address=", address);
     //console.log("searchMyOrders=", searchMyOrders);
 
@@ -1799,6 +1560,8 @@ export default function Index({ params }: any) {
 
 
     // check all agreementForTrade is false
+    //console.log('agreementForCancelTrade', agreementForCancelTrade);
+    //console.log('isProcessingSendTransaction', isProcessingSendTransaction);
 
     if (
       /*
@@ -1815,10 +1578,14 @@ export default function Index({ params }: any) {
       || rollbackingPayment.some((item) => item === true)
       */
 
-      agreementForCancelTrade.some((item) => item === true)
+      //agreementForCancelTrade.some((item) => item === true)
+      // if agreementForCancelTrade array has true value, then return
+      //agreementForCancelTrade.some((item) => item === true)
 
+      cancellings.some((item) => item === true)
+      || sendingTransaction.some((item) => item === true)
       || isProcessingSendTransaction
-      
+
     ) {
       return;
     }
@@ -1858,7 +1625,6 @@ export default function Index({ params }: any) {
       return;
     }
 
-    setFetchingBuyOrders(false);
 
 
     const data = await response.json();
@@ -1871,6 +1637,9 @@ export default function Index({ params }: any) {
     setTotalClearanceCount(data.result.totalClearanceCount);
     setTotalClearanceAmount(data.result.totalClearanceAmount);
     setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+
+    setFetchingBuyOrders(false);
 
 
   }
@@ -1909,7 +1678,11 @@ export default function Index({ params }: any) {
     //requestingPayment,
     //confirmingPayment,
     //rollbackingPayment,
+    
     //agreementForCancelTrade,
+
+    cancellings,
+
     //confirmPaymentCheck,
     //rollbackPaymentCheck,
 
@@ -4175,7 +3948,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                             <td className="p-2">
 
-                              <div className="w-52 flex flex-col gap-2 items-center justify-center">
+                              <div className="w-36 flex flex-col gap-2 items-center justify-center">
 
                                 <div className=" 
                                   w-full flex flex-row items-center gap-2 justify-center">
@@ -4409,25 +4182,38 @@ const [tradeSummary, setTradeSummary] = useState({
                                   && item.seller && item.seller.walletAddress === address && (
                                     
                                     <div className="flex flex-row items-center gap-2">
+                                      {/*}
                                       <input
                                         type="checkbox"
                                         checked={agreementForCancelTrade[index]}
                                         onChange={(e) => {
-                                          setAgreementForCancelTrade(
-                                            agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                          );
+                                            setAgreementForCancelTrade(
+                                              agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                            );
+
                                         }}
                                       />
+                                      */}
+
                                       <button
-                                        disabled={cancellings[index] || !agreementForCancelTrade[index]}
+                                        disabled={
+                                          cancellings[index]
+                                          || sendingTransaction[index]
+                                          ///|| !agreementForCancelTrade[index]
+                                        }
                     
                                         className={`
-                                          w-24 h-8
+                                          w-32 h-8
                                           flex flex-row
                                           items-center justify-center
-                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || sendingTransaction[index] ? 'bg-gray-500' : 'bg-red-500'}`}
                                           
                                         onClick={() => {
+
+                                          // confirming
+                                          confirm("정말 거래를 취소하시겠습니까?") &&
+
+                                          
                                           cancelTrade(item._id, index);
                                         }}
                                       >
@@ -4516,7 +4302,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                       <button
                                         disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
                                         className={`
-                                          w-24 h-8
+                                          w-32 h-8
                                           flex flex-row 
                                           items-center justify-center
                                           gap-1 text-sm text-white px-2 py-1 rounded-md
@@ -4576,7 +4362,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                         disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                         
                                         className={`
-                                          w-24 h-8
+                                          w-32 h-8
                                           flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-600'}`}
                                         onClick={() => {
 
@@ -4603,14 +4389,6 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                     </div>
                                   )}
-
-
-
-
-
-
-
-
 
 
                                   {item.seller && item.seller.walletAddress === address &&   
@@ -4693,8 +4471,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                                     </div>
 
-                                  
-
+                                
 
 
                                   )}
@@ -5303,6 +5080,7 @@ const [tradeSummary, setTradeSummary] = useState({
                                           type="checkbox"
                                           checked={agreementForCancelTrade[index]}
                                           onChange={(e) => {
+                                            /*
                                             setAgreementForCancelTrade(
                                               buyOrders.map((item, idx) => {
                                                 if (idx === index) {
@@ -5312,6 +5090,15 @@ const [tradeSummary, setTradeSummary] = useState({
                                                 }
                                               })
                                             );
+                                            */
+
+                                            setAgreementForCancelTrade(
+                                              agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                            );
+
+
+
+
                                           }}
                                         />
                                         <label className="text-sm text-zinc-500">
