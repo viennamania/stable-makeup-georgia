@@ -2751,7 +2751,7 @@ export default function Index({ params }: any) {
                         </th>
 
                         <th className="p-2">
-                          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                          <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
                             <span>회원아이디</span>
                             <span>가맹점 </span>
                           </div>
@@ -2814,12 +2814,29 @@ export default function Index({ params }: any) {
                             <div className="
                               w-40
                               xl:w-64
-                              flex flex-col sm:flex-row items-center justify-between gap-2">
+                              flex flex-col sm:flex-row items-start justify-start gap-2">
+
                               <span className="
                                 w-1/2
                                 text-lg font-semibold">
-                                {item.nickname}
+
+                                {item.nickname}<br/>
+                                (
+                                  {item?.userType === ''
+                                  ? '일반회원'
+                                  : item?.userType === 'AAA'
+                                  ? '1등급회원'
+                                  : item?.userType === 'BBB'
+                                  ? '2등급회원'
+                                  : item?.userType === 'CCC'
+                                  ? '3등급회원'
+                                  : item?.userType === 'DDD'
+                                  ? '4등급회원'
+                                  : '일반회원'
+                                  }
+                                )
                               </span>
+
                               <span className="
                                 w-1/2
                                 text-sm text-zinc-500">

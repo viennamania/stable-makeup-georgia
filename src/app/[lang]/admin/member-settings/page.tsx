@@ -427,6 +427,60 @@ export default function SettingsPage({ params }: any) {
     }
 
 
+    /// change userType of memberData
+    const [updateUserType, setUpdateUserType] = useState('');
+
+    const [changingUserType, setChangingUserType] = useState(false);
+
+    // api call to get userType from memberData
+    const changeUserType = async (newType: string) => {
+
+        if (changingUserType) {
+            return;
+        }
+
+        if (!userStorecode || !userWalletAddress) {
+            toast.error('User store code and wallet address are required');
+            return;
+        }
+
+        setChangingUserType(true);
+
+        try {
+
+            const response = await fetch('/api/user/updateUserType', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    storecode: userStorecode,
+                    walletAddress: userWalletAddress,
+                    userType: newType,
+                }),
+            });
+
+            const data = await response.json();
+
+            toast.success('회원 등급이 성공적으로 업데이트되었습니다.');
+
+            setMemberData({
+                ...memberData,
+                userType: newType,
+            });
+
+            setUpdateUserType('');
+
+        } catch (e) {
+            toast.error('회원 등급 업데이트에 실패했습니다. 다시 시도해주세요.');
+        }
+
+        setChangingUserType(false);
+
+    }
+
+
+
 
     return (
 
@@ -674,20 +728,171 @@ export default function SettingsPage({ params }: any) {
                             onClick={() => {
                                 apply();
                             }}
-                            className="w-64 bg-blue-500 text-white p-2 rounded-lg
-                            hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed
-                            "
-                        >
+                            className={`${!bankName || !accountNumber || !accountHolder || applying || !address
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-500 text-white hover:bg-blue-600"
+                            } p-2 rounded-lg w-64
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            `}>
+                                
                             {applying ? Applying + "..." : Apply}
                         </button>
                     </div>
 
 
-        
-
-
                 </div>
   
+
+                {/* 회원 등급*/}
+                <div className='w-full flex flex-row gap-2 items-center justify-between mt-4 mb-4
+                    border border-gray-300 p-4 rounded-lg'>
+
+                    <div className="flex flex-row items-center gap-2">
+                        {/* dot */}
+                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                        <span className="text-lg">
+                            회원 등급
+                        </span>
+                    </div>
+
+          
+                    {/* userType */}
+                    {/* 일반회원, 1등급회원, 2등급회원, 3등급회원, 4등급회원 */}
+                    <div className='flex flex-col gap-2 items-start justify-between'>
+                        <div className="w-full flex flex-row gap-2 items-center justify-start">
+                            <span className="text-lg text-zinc-500 font-semibold">
+                                현재 등급: {memberData?.userType === 'AAA' ? '1등급 회원' 
+                                : memberData?.userType === 'BBB' ? '2등급 회원' 
+                                : memberData?.userType === 'CCC' ? '3등급 회원' 
+                                : memberData?.userType === 'DDD' ? '4등급 회원' 
+                                : '일반회원'}
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {/* 회원 등급 수정 */}
+                <div className='w-full flex flex-row gap-2 items-center justify-between mt-4 mb-4
+                    border border-gray-300 p-4 rounded-lg'>
+
+                    <div className="flex flex-row items-center gap-2">
+                        {/* dot */}
+                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                        <span className="text-lg">
+                            회원 등급 수정
+                        </span>
+                    </div>
+
+          
+                    {/* userType */}
+                    {/* 일반회원, 1등급회원, 2등급회원, 3등급회원, 4등급회원 */}
+                    <div className='flex flex-col gap-2 items-start justify-between'>
+
+                        {/* checkbox style radio button */}
+                        <div className="w-full flex flex-col gap-2 items-start justify-start">
+
+                            <label className="flex items-center gap-2">
+                                <input 
+                                    type="radio"
+                                    name="userType"
+                                    value="normal"
+                                    checked={updateUserType === 'normal'}
+                                    onChange={() => {
+                                        setUpdateUserType('normal');
+                                    }}
+                                />
+                                <span className="text-lg text-zinc-500 font-semibold">
+                                    일반회원
+                                </span>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                                <input 
+                                    type="radio"
+                                    name="userType"
+                                    value="AAA"
+                                    checked={updateUserType === 'AAA'}
+                                    onChange={() => {
+                                        setUpdateUserType('AAA');
+                                    }}
+                                />
+                                <span className="text-lg text-zinc-500 font-semibold">
+                                    1등급 회원
+                                </span>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                                <input 
+                                    type="radio"
+                                    name="userType"
+                                    value="BBB"
+                                    checked={updateUserType === 'BBB'}
+                                    onChange={() => {
+                                        setUpdateUserType('BBB');
+                                    }}
+                                />
+                                <span className="text-lg text-zinc-500 font-semibold">
+                                    2등급 회원
+                                </span>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                                <input 
+                                    type="radio"
+                                    name="userType"
+                                    value="CCC"
+                                    checked={updateUserType === 'CCC'}
+                                    onChange={() => {
+                                        setUpdateUserType('CCC');
+                                    }}
+                                />
+                                <span className="text-lg text-zinc-500 font-semibold">
+                                    3등급 회원
+                                </span>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                                <input 
+                                    type="radio"
+                                    name="userType"
+                                    value="DDD"
+                                    checked={updateUserType === 'DDD'}
+                                    onChange={() => {
+                                        setUpdateUserType('DDD');
+                                    }}
+                                />
+                                <span className="text-lg text-zinc-500 font-semibold">
+                                    4등급 회원
+                                </span>
+                            </label>
+
+                        </div>
+
+
+                        <button
+                            disabled={!updateUserType || !userStorecode || !userWalletAddress}
+                            onClick={async () => {
+                                updateUserType && changeUserType(updateUserType);
+                                
+                            }}
+                            className={`${
+                                !updateUserType
+                                || !userStorecode || !userWalletAddress
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-500 text-white hover:bg-blue-600"
+                            } p-2 rounded-lg w-64
+                            disabled:opacity-50 disabled:cursor-not-allowed
+                            `}
+                        >
+                            {changingUserType ? "변경중..." : "등급 변경하기"}
+                        </button>
+
+                    </div>
+
+                </div>
+
 
 
 
@@ -696,7 +901,5 @@ export default function SettingsPage({ params }: any) {
         </main>
 
     );
-
 }
 
-          

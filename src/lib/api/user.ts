@@ -798,7 +798,8 @@ export async function getOneByStorecodeAndWalletAddress(
         walletAddress: 1,
         buyer: 1,
         createdAt: 1,
-        updatedAt: 1
+        updatedAt: 1,
+        userType: 1,
       }
     }
   );

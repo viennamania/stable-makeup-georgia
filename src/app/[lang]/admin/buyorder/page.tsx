@@ -4852,14 +4852,14 @@ const fetchBuyOrders = async () => {
                               </span>
                               <span className="text-sm text-zinc-500">
                                 {item?.userType === 'AAA'
-                                ? ' 1등급 회원'
+                                ? ' (1등급)'
                                 : item?.userType === 'BBB'
-                                ? ' 2등급 회원'
+                                ? ' (2등급)'
                                 : item?.userType === 'CCC'
-                                ? ' 3등급 회원'
+                                ? ' (3등급)'
                                 : item?.userType === 'DDD'
-                                ? '4등급 회원'
-                                : ' (일반회원) '}
+                                ? ' (4등급)'
+                                : ' (일반) '}
                               </span>
                             </div>
 
