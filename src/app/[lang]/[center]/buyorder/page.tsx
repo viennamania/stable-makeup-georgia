@@ -5201,7 +5201,7 @@ const fetchBuyOrders = async () => {
                                 ? ' (3등금) '
                                 : item?.userType === 'DDD'
                                 ? ' (4등금) '
-                                : ' (일반) '}
+                                : ' (일반회원) '}
                               </span>
                             </div>
 
