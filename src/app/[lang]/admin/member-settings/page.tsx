@@ -444,6 +444,13 @@ export default function SettingsPage({ params }: any) {
             return;
         }
 
+        const userType = newType === 'normal' ? '' : ['AAA', 'BBB', 'CCC', 'DDD'].includes(newType) ? newType : null;
+
+        if (userType === null) {
+            toast.error('잘못된 회원 등급입니다.');
+            return;
+        }
+
         setChangingUserType(true);
 
         try {
@@ -456,7 +463,7 @@ export default function SettingsPage({ params }: any) {
                 body: JSON.stringify({
                     storecode: userStorecode,
                     walletAddress: userWalletAddress,
-                    userType: newType,
+                    userType: userType,
                 }),
             });
 

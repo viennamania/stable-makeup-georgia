@@ -2837,6 +2837,20 @@ export default function Index({ params }: any) {
                                 )
                               </span>
 
+                              <button
+                                onClick={() => {
+                                  router.push(
+                                    `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
+                                  );
+                                }}
+                                className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
+                              >
+                                변경하기
+                              </button>
+
+
+
                               <span className="
                                 w-1/2
                                 text-sm text-zinc-500">

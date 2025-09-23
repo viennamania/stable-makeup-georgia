@@ -684,6 +684,35 @@ export async function updateBuyer({
 
 
 
+// updateUserType
+export async function updateUserType({
+  storecode,
+  walletAddress,
+  userType,
+}: {
+  storecode: string;
+  walletAddress: string;
+  userType: string | null;
+}) {
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  return await collection.updateOne(
+    {
+      storecode: storecode,
+      walletAddress: walletAddress
+    },
+    {
+      $set: {
+        userType,
+      }
+    }
+  );
+
+}
+
+
 
 
 

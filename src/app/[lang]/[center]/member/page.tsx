@@ -2766,7 +2766,7 @@ export default function Index({ params }: any) {
                         일반 회원
                       </option>
                       <option value="AAA" selected={userType === "AAA"}>
-                        1등급회원
+                        1등급 회원
                       </option>
                       <option value="BBB" selected={userType === "BBB"}>
                         2등급 회원
@@ -2776,9 +2776,6 @@ export default function Index({ params }: any) {
                       </option>
                       <option value="DDD" selected={userType === "DDD"}>
                         4등급 회원
-                      </option>
-                      <option value="EEE" selected={userType === "EEE"}>
-                        5등급 회원
                       </option>
                     </select>
 
@@ -2951,18 +2948,38 @@ export default function Index({ params }: any) {
                           {/* userType */}
                           {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
                           {/* if '' or not exists then '일반회원' */}
-                          <td className="p-2 w-20 text-center"> 
-                            {
-                              item?.userType === 'AAA' ? '1등급 회원'
-                              : item?.userType === 'BBB' ? '2등급 회원'
-                              : item?.userType === 'CCC' ? '3등급 회원'
-                              : item?.userType === 'DDD' ? '4등급 회원'
-                              : '일반 회원'
-                            }
+                          <td className="p-2">
+                            <div className="
+                            w-20
+                            flex flex-col items-center justify-center">
+                              <span className='text-sm text-zinc-500'>
+                              {
+                                item?.userType === 'AAA' ? '1등급 회원'
+                                : item?.userType === 'BBB' ? '2등급 회원'
+                                : item?.userType === 'CCC' ? '3등급 회원'
+                                : item?.userType === 'DDD' ? '4등급 회원'
+                                : '일반 회원'
+                              }
+                              </span>
+
+                              <button
+                                onClick={() => {
+                                  router.push(
+                                    `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
+                                  );
+                                }}
+                                className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
+                              >
+                                변경하기
+                              </button>
+
+                            </div>
                           </td>
 
                           <td className="p-2">
                             <div className="flex flex-col items-end justify-center gap-1">
+                              
                               <span className="text-sm text-zinc-500">
                                 {item?.buyer?.depositBankName}
                               </span>
@@ -2972,6 +2989,19 @@ export default function Index({ params }: any) {
                               <span className="text-sm text-zinc-500">
                                 {item?.buyer?.depositName}
                               </span>
+
+                              <button
+                                onClick={() => {
+                                  router.push(
+                                    `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
+                                  );
+                                }}
+                                className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
+                              >
+                                변경하기
+                              </button>
+
                             </div>
                           </td>
 
