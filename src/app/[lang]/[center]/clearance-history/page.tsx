@@ -1583,27 +1583,21 @@ export default function Index({ params }: any) {
 
 
 
-  // array of confirmingPayment
+  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
-  const [confirmingPayment, setConfirmingPayment] = useState([] as boolean[]);
+
+  const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
   useEffect(() => {
-    setConfirmingPayment([] as boolean[]);
+    setSendingTransaction([]);
+    const newArray: boolean[] = [];
     for (let i = 0; i < buyOrders.length; i++) {
-      confirmingPayment.push(false);
+      newArray.push(false);
     }
+    setSendingTransaction(newArray);
   } , [buyOrders.length]);
 
 
-  // confirm payment check box
-  const [confirmPaymentCheck, setConfirmPaymentCheck] = useState([] as boolean[]);
-  useEffect(() => {
-    setConfirmPaymentCheck([] as boolean[]);
-    for (let i = 0; i < buyOrders.length; i++) {
-      confirmPaymentCheck.push(false);
-    }
-  } , [buyOrders.length]);
 
-  
 
   // payment amoount array
   const [paymentAmounts, setPaymentAmounts] = useState([] as number[]);
@@ -1644,62 +1638,28 @@ export default function Index({ params }: any) {
     buyerWalletAddress: string,
 
   ) => {
-    // confirm payment
-    // send usdt to buyer wallet address
-
-
-    // if escrowWalletAddress balance is less than paymentAmount, then return
-
-    //console.log('escrowBalance', escrowBalance);
-    //console.log('paymentAmountUsdt', paymentAmountUsdt);
-    
-    /*
-    if (escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-    
-    // if escrowNativeBalance is less than 0.1, then return
-    if (escrowNativeBalance < 0.1) {
-      toast.error('ETH balance is less than 0.1');
-      return;
-    }
-      */
-
+ 
     if (!address) {
       toast.error('Please connect your wallet');
       return;
     }
 
-    /*
-    if (isWithoutEscrow && balance < paymentAmountUsdt) {
-      toast.error(Insufficient_balance);
-      return;
-    }
-    
 
-    if (!isWithoutEscrow && escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-    */
-
-    /*
-    if (confirmingPayment[index]) {
-      return;
-    }
-    */
-
-
-    if (confirmingPayment.some((item) => item === true)) {
-      alert('다른 결제확인 처리중입니다.');
+    if (isProcessingSendTransaction) {
+      alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
 
+    if (sendingTransaction.some((item) => item === true)) {
+      alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
+      return;
+    }
 
-    setConfirmingPayment(
-      confirmingPayment.map((item, idx) =>  idx === index ? true : item)
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
+    
+    setIsProcessingSendTransaction(true);
 
 
     try {
@@ -1723,9 +1683,6 @@ export default function Index({ params }: any) {
             account: activeAccount as any,
             transaction,
           });
-
-          console.log("transactionHash===", transactionHash);
-
 
 
           if (transactionHash) {
@@ -1751,39 +1708,7 @@ export default function Index({ params }: any) {
             //console.log('data', data);
 
             if (data.result) {
-              
-              ///fetchBuyOrders();
-
-              // fetch Buy Orders
-              /*
-              await fetch('/api/order/getAllCollectOrdersForSeller', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: params.center,
-                    limit: Number(limit),
-                    page: Number(page),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
-                  }
-                ),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  ///console.log('data', data);
-                  setBuyOrders(data.result.orders);
-
-                  setTotalCount(data.result.totalCount);
-
-                  setTotalClearanceCount(data.result.totalClearanceCount);
-                  setTotalClearanceAmount(data.result.totalClearanceAmount);
-                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-              })
-              */
-
+            
 
               setBuyOrders(
                 buyOrders.map((item, idx) => {
@@ -1799,20 +1724,26 @@ export default function Index({ params }: any) {
 
 
 
-              toast.success(Payment_has_been_confirmed);
+              //toast.success(Payment_has_been_confirmed);
+
+              alert("USDT 전송이 완료되었습니다.");
+
               ///playSong();
             } else {
-              toast.error('결제확인이 실패했습니다.');
+              ///toast.error('결제확인이 실패했습니다.');
+              alert("USDT 전송이 실패했습니다.");
             }
 
 
           } else {
-            toast.error('결제확인이 실패했습니다.');
+            //toast.error('결제확인이 실패했습니다.');
+            alert("USDT 전송이 실패했습니다.");
+
           }
 
         } catch (error) {
           console.error('Error:', error);
-          toast.error('결제확인이 실패했습니다.');
+          alert("USDT 전송이 실패했습니다.");
         }
 
 
@@ -1820,16 +1751,14 @@ export default function Index({ params }: any) {
 
     } catch (error) {
       console.error('Error:', error);
-      toast.error('결제확인이 실패했습니다.');
+      alert("USDT 전송이 실패했습니다.");
     }
 
 
-    setConfirmingPayment(
-      confirmingPayment.map((item, idx) => idx === index ? false : item)
-    );
+    setIsProcessingSendTransaction(false);
 
-    setConfirmPaymentCheck(
-      confirmPaymentCheck.map((item, idx) => idx === index ? false : item)
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
   
 
@@ -2074,6 +2003,7 @@ export default function Index({ params }: any) {
 
       if (
         //!address || !searchMyOrders
+        /*
         agreementForTrade.some((item) => item === true)
         || acceptingBuyOrder.some((item) => item === true)
         || agreementForCancelTrade.some((item) => item === true)
@@ -2084,6 +2014,13 @@ export default function Index({ params }: any) {
         || requestingPayment.some((item) => item === true)
         || confirmingPayment.some((item) => item === true)
         || rollbackingPayment.some((item) => item === true)
+        */
+
+        cancellings.some((item) => item === true)
+        || sendingTransaction.some((item) => item === true)
+        || isProcessingSendTransaction
+
+
       ) {
         return;
       }
@@ -2168,13 +2105,18 @@ export default function Index({ params }: any) {
     searchMyOrders,
     agreementForTrade,
     acceptingBuyOrder,
-    escrowing,
-    requestingPayment,
-    confirmingPayment,
-    rollbackingPayment,
-    agreementForCancelTrade,
-    confirmPaymentCheck,
-    rollbackPaymentCheck,
+
+
+    //escrowing,
+    //requestingPayment,
+    //confirmingPayment,
+    //rollbackingPayment,
+    //agreementForCancelTrade,
+    //confirmPaymentCheck,
+    //rollbackPaymentCheck,
+
+    cancellings,
+
 
     latestBuyOrder,
     //playSong,
@@ -2182,6 +2124,9 @@ export default function Index({ params }: any) {
     params.center,
     searchFromDate,
     searchToDate,
+
+    sendingTransaction,
+    isProcessingSendTransaction,
 ]);
 
 
@@ -4357,7 +4302,8 @@ export default function Index({ params }: any) {
 
                         <td className="p-2">
 
-                          <div className="flex flex-row gap-2 items-start justify-start">
+                          <div className="
+                          flex flex-row gap-2 items-start justify-start">
 
 
                             {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
@@ -4472,7 +4418,7 @@ export default function Index({ params }: any) {
                                 <button
                                   disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
                                   className={`
-                                    w-24 h-8
+                                    w-32 h-8
                                     flex flex-row 
                                     items-center justify-center
                                     gap-1 text-sm text-white px-2 py-1 rounded-md
@@ -4532,7 +4478,7 @@ export default function Index({ params }: any) {
                                   disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                   
                                   className={`
-                                    w-24 h-8
+                                    w-32 h-8
                                     flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
                                   onClick={() => {
 
@@ -4578,6 +4524,7 @@ export default function Index({ params }: any) {
                                 
                                 <div className="flex flex-row gap-2">
 
+                                  {/*
                                   <input
                                     disabled={confirmingPayment[index]}
                                     type="checkbox"
@@ -4593,14 +4540,15 @@ export default function Index({ params }: any) {
                                       );
                                     }}
                                   />
+                                  */}
 
                                   <button
-                                    disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
+                                    disabled={isProcessingSendTransaction}
                                     className={`
-                                      w-28 
+                                      w-32 h-8
                                       flex flex-row
                                       items-center justify-center
-                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${confirmingPayment[index] || !confirmPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-500'}`}
 
                             
                                     onClick={() => {
@@ -4619,20 +4567,24 @@ export default function Index({ params }: any) {
 
                                   >
                                     
-                                    {confirmingPayment[index] && (
-                                      <Image
-                                        src="/loading.png"
-                                        alt="Loading"
-                                        width={20}
-                                        height={20}
-                                        className="w-4 h-4 animate-spin "
-                                      />
+                                    {sendingTransaction[index] ? (
+                                      <div className="flex flex-row gap-2 items-center justify-center">
+                                        <Image
+                                          src="/icon-transfer.png"
+                                          alt="Transferring"
+                                          width={20}
+                                          height={20}
+                                          className="w-4 h-4 animate-spin "
+                                        />
+                                        <span className="text-sm">
+                                          USDT 전송중...
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm">
+                                        USDT 전송
+                                      </span>
                                     )}
-                                    <span className="text-sm">
-                                      거래완료
-                                      <br />
-                                      USDT 전송
-                                    </span>
 
                                   </button>
 
@@ -4661,7 +4613,7 @@ export default function Index({ params }: any) {
                                     <button
                                       disabled={rollbackingPayment[index] || !rollbackPaymentCheck[index]}
                                       className={`
-                                        w-24 h-8
+                                        w-32 h-8
                                         flex flex-row
                                         items-center justify-center
                                         gap-1 text-sm text-white px-2 py-1 rounded-md ${rollbackingPayment[index] || !rollbackPaymentCheck[index] ? 'bg-gray-500' : 'bg-red-500'}`}

@@ -1294,65 +1294,18 @@ export default function Index({ params }: any) {
     buyerWalletAddress: string,
 
   ) => {
-    // confirm payment
-    // send usdt to buyer wallet address
-
-
-    // if escrowWalletAddress balance is less than paymentAmount, then return
-
-    //console.log('escrowBalance', escrowBalance);
-    //console.log('paymentAmountUsdt', paymentAmountUsdt);
-    
-    /*
-    if (escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-    
-    // if escrowNativeBalance is less than 0.1, then return
-    if (escrowNativeBalance < 0.1) {
-      toast.error('ETH balance is less than 0.1');
-      return;
-    }
-      */
+  
 
     if (!address) {
       toast.error('Please connect your wallet');
       return;
     }
 
-    /*
-    if (isWithoutEscrow && balance < paymentAmountUsdt) {
-      toast.error(Insufficient_balance);
-      return;
-    }
-    
-
-    if (!isWithoutEscrow && escrowBalance < paymentAmountUsdt) {
-      toast.error(Escrow_balance_is_less_than_payment_amount);
-      return;
-    }
-    */
-
-    /*
-    if (confirmingPayment[index]) {
-      return;
-    }
-    */
-
-    /*
-   if (confirmingPayment.some((item) => item === true)) {
-      alert('다른 결제확인 처리중입니다. 잠시후 다시 시도해주세요.');
-      return;
-    }
-    */
 
     if (isProcessingSendTransaction) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
-
-    //console.log('sendingTransaction', sendingTransaction);
 
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
@@ -1363,7 +1316,6 @@ export default function Index({ params }: any) {
       sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
     
-
     setIsProcessingSendTransaction(true);
 
     try {
