@@ -147,6 +147,8 @@ interface BuyOrder {
   autoConfirmPayment: boolean;
 
   agent: any;
+
+  userType: string;
 }
 
 
@@ -3678,7 +3680,7 @@ const fetchBuyOrders = async () => {
                     <th className="p-2">입금자</th>
 
                     <th className="p-2">
-                      <div className="flex flex-col gap-2 items-center justify-center">
+                      <div className="flex flex-col gap-2 items-end justify-center">
                         <span className="text-sm text-white">
                           {Price}(원)
                         </span>
@@ -3851,23 +3853,72 @@ const fetchBuyOrders = async () => {
                             
                             <div className="flex flex-col gap-2 items-center">
 
-                              <div className="text-lg text-blue-600 font-semibold">
-                                {item?.nickname}
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-user.png"
+                                  alt="User"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <div className="text-lg text-blue-600 font-semibold">
+                                  {item?.nickname}
+                                </div>
+                                {item?.userType === 'AAA' ? (
+                                  <div className="
+                                    text-xs text-white bg-red-500 px-1 rounded-md
+                                    ">
+                                    1등급
+                                  </div>
+                                ) : item?.userType === 'BBB' ? (
+                                  <div className="
+                                    text-xs text-white bg-orange-500 px-1 rounded-md
+                                    ">
+                                    2등급
+                                  </div>
+                                ) : item?.userType === 'CCC' ? (
+                                  <div className="
+                                    text-xs text-white bg-yellow-500 px-1 rounded-md
+                                    ">
+                                    3등급
+                                  </div>
+                                ) : item?.userType === 'DDD' ? (
+                                  <div className="
+                                    text-xs text-white bg-green-500 px-1 rounded-md
+                                    ">
+                                    4등급
+                                  </div>
+                                ) : (
+                                  <div className="
+                                    text-xs text-white bg-zinc-500 px-1 rounded-md
+                                    ">
+                                    일반
+                                  </div>
+                                )}
                               </div>
 
                               {/* wallet address */}
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item.walletAddress);
-                                  toast.success('지갑주소가 복사되었습니다.');
-                                }}
-                                className="text-sm text-zinc-500 font-semibold
-                                hover:text-blue-600 cursor-pointer
-                                hover:underline"
-                                title="지갑주소 복사"
-                              >
-                                {item.walletAddress.substring(0, 10) + '...'}
-                              </button>
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-shield.png"
+                                  alt="Wallet"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.walletAddress);
+                                    toast.success('지갑주소가 복사되었습니다.');
+                                  }}
+                                  className="text-sm text-zinc-500 font-semibold
+                                  hover:text-blue-600 cursor-pointer
+                                  hover:underline"
+                                  title="지갑주소 복사"
+                                >
+                                  {item.walletAddress.substring(0, 10) + '...'}
+                                </button>
+                              </div>
 
 
                             </div>
@@ -4000,13 +4051,33 @@ const fetchBuyOrders = async () => {
                         <td className="p-2">
                           <div className="flex flex-col gap-2 items-center justify-center">
                             <div className="text-sm font-semibold text-zinc-500">
-                              {item?.store?.bankInfo?.bankName}
+                              {
+                                item?.userType === 'AAA'
+                                ? item.store?.bankInfoAAA?.bankName
+                                : item?.userType === 'BBB'
+                                ? item.store?.bankInfoBBB?.bankName
+                                : item?.userType === 'CCC'
+                                ? item.store?.bankInfoCCC?.bankName
+                                : item?.userType === 'DDD'
+                                ? item.store?.bankInfoDDD?.bankName
+                                : item.store?.bankInfo?.bankName
+                              }
                             </div>
 
                             {/* copy account number to clipboard */}
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
+                                navigator.clipboard.writeText(
+                                  item?.userType === 'AAA'
+                                  ? item?.store?.bankInfoAAA?.accountNumber
+                                  : item?.userType === 'BBB'
+                                  ? item?.store?.bankInfoBBB?.accountNumber
+                                  : item?.userType === 'CCC'
+                                  ? item?.store?.bankInfoCCC?.accountNumber
+                                  : item?.userType === 'DDD'
+                                  ? item?.store?.bankInfoDDD?.accountNumber
+                                  : item?.store?.bankInfo?.accountNumber
+                                );
                                 toast.success('판매자 통장번호가 복사되었습니다.');
                               }}
                               className="text-sm text-zinc-500 font-semibold
@@ -4014,11 +4085,31 @@ const fetchBuyOrders = async () => {
                                 hover:underline"
                               title="판매자 통장번호 복사"
                             >
-                              {item?.store?.bankInfo?.accountNumber}
+                              {
+                                item?.userType === 'AAA'
+                                ? item?.store?.bankInfoAAA?.accountNumber
+                                : item?.userType === 'BBB'
+                                ? item?.store?.bankInfoBBB?.accountNumber
+                                : item?.userType === 'CCC'
+                                ? item?.store?.bankInfoCCC?.accountNumber
+                                : item?.userType === 'DDD'
+                                ? item?.store?.bankInfoDDD?.accountNumber
+                                : item?.store?.bankInfo?.accountNumber
+                              }
                             </button>
 
                             <div className="text-sm font-semibold text-zinc-500">
-                              {item?.store?.bankInfo?.accountHolder}
+                              {
+                                item?.userType === 'AAA'
+                                ? item?.store?.bankInfoAAA?.accountHolder
+                                : item?.userType === 'BBB'
+                                ? item?.store?.bankInfoBBB?.accountHolder
+                                : item?.userType === 'CCC'
+                                ? item?.store?.bankInfoCCC?.accountHolder
+                                : item?.userType === 'DDD'
+                                ? item?.store?.bankInfoDDD?.accountHolder
+                                : item?.store?.bankInfo?.accountHolder
+                              }
                             </div>
                           </div>
                         </td>
@@ -5125,7 +5216,17 @@ const fetchBuyOrders = async () => {
                 
 
                         <div className="mb-4 flex flex-col items-start text-sm ">
-                          {Payment}: {Bank_Transfer} ({item.seller?.bankInfo?.bankName})
+                          {Payment}: {Bank_Transfer} ({
+                            item?.userType === 'AAA'
+                              ? item?.store?.bankInfoAAA?.accountHolder
+                              : item?.userType === 'BBB'
+                              ? item?.store?.bankInfoBBB?.accountHolder
+                              : item?.userType === 'CCC'
+                              ? item?.store?.bankInfoCCC?.accountHolder
+                              : item?.userType === 'DDD'
+                              ? item?.store?.bankInfoDDD?.accountHolder
+                              : item?.store?.bankInfo?.accountHolder
+                          })
                         </div>
 
 
