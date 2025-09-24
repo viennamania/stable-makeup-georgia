@@ -2825,7 +2825,7 @@ export default function Index({ params }: any) {
                                   {item?.userType === ''
                                   ? '일반 회원'
                                   : item?.userType === 'AAA'
-                                  ? '1등급회원'
+                                  ? '1등급 회원'
                                   : item?.userType === 'BBB'
                                   ? '2등급 회원'
                                   : item?.userType === 'CCC'

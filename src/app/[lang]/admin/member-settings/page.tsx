@@ -764,7 +764,7 @@ export default function SettingsPage({ params }: any) {
 
           
                     {/* userType */}
-                    {/* 일반회원, 1등급회원, 2등급회원, 3등급회원, 4등급회원 */}
+                    {/* 일반회원, 1등급 회원, 2등급회원, 3등급회원, 4등급회원 */}
                     <div className='flex flex-col gap-2 items-start justify-between'>
                         <div className="w-full flex flex-row gap-2 items-center justify-start">
                             <span className="text-lg text-zinc-500 font-semibold">
@@ -794,7 +794,7 @@ export default function SettingsPage({ params }: any) {
 
           
                     {/* userType */}
-                    {/* 일반회원, 1등급회원, 2등급회원, 3등급회원, 4등급회원 */}
+                    {/* 일반회원, 1등급 회원, 2등급회원, 3등급회원, 4등급회원 */}
                     <div className='flex flex-col gap-2 items-start justify-between'>
 
                         {/* checkbox style radio button */}
