@@ -2,6 +2,7 @@ import { use } from 'react';
 import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
+import { id } from 'ethers/lib/utils';
 
 export interface UserProps {
   /*
@@ -50,6 +51,8 @@ export interface UserProps {
   role: string,
 
   buyOrderStatus: string,
+
+  userType: string,
 
 }
 
@@ -1582,7 +1585,40 @@ export async function getUserByEmail(
 }
 
 
+
+
+
+
 // getUserByNickname
+/*
+{
+  "_id": {
+    "$oid": "68ca596ed46688da89e9c667"
+  },
+  "id": 4792508,
+  "email": null,
+  "nickname": "test",
+  "mobile": "+821012345678",
+  "storecode": "ablwgfnp",
+  "store": {
+
+  },
+  "walletAddress": "0x153E986cb68741514317FFB09A4419163F5528c8",
+  
+  "createdAt": "2025-09-17T06:47:10.012Z",
+  "settlementAmountOfFee": "0",
+  "buyer": {
+
+  },
+  "buyOrderStatus": "paymentConfirmed",
+  "latestBuyOrder": {
+
+  },
+  "totalPaymentConfirmedCount": 1,
+  "totalPaymentConfirmedKrwAmount": 5000,
+  "totalPaymentConfirmedUsdtAmount": 3.62
+}
+*/
 export async function getUserByNickname(
   storecode: string,
   nickname: string,
@@ -1598,8 +1634,31 @@ export async function getUserByNickname(
       storecode: storecode,
       nickname: nickname,
     },
+    { projection: {
+      _id: 0,
+      id: 1,
+      email: 1,
+      nickname: 1,
+      mobile: 1,
+      storecode: 1,
+      walletAddress: 1,
+      createdAt: 1,
+      settlementAmountOfFee: 1,
+      buyer: 1,
+      buyOrderStatus: 1,
+      latestBuyOrder: 1,
+      totalPaymentConfirmedCount: 1,
+      totalPaymentConfirmedKrwAmount: 1,
+      totalPaymentConfirmedUsdtAmount: 1,
+      userType: 1,
+    } }
   )
 }
+
+
+
+
+
 
 
 export async function checkUserByEmail(

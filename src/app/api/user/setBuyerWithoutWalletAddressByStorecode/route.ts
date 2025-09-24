@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
         walletAddress: user.walletAddress,
         storecode: user?.storecode,
         buyOrderStatus: user?.buyOrderStatus,
+        userType: user?.userType || '',
       });
     }
 
@@ -218,6 +219,7 @@ export async function POST(request: NextRequest) {
 
       result,
       walletAddress: userWalletAddress,
+      userType: userType,
       
     });
 
