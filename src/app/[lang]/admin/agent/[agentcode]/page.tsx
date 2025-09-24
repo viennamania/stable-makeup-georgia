@@ -3117,7 +3117,7 @@ export default function Index({ params }: any) {
                           && !loadingUser
                           && (
                             <span className="text-sm text-red-500">
-                              아이디이 설정되지 않았습니다.<br/>
+                              아이디가 설정되지 않았습니다.<br/>
                               거래를 시작하려면 아이디를 설정해야 합니다.
                             </span>
                           )}

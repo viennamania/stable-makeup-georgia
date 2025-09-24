@@ -566,7 +566,7 @@ export default function SettingsPage({ params }: any) {
                 setNicknameEdit(false);
                 setEditedNickname('');
 
-                toast.success('아이디이 저장되었습니다');
+                toast.success('아이디가 저장되었습니다');
 
             } else {
 
@@ -605,7 +605,7 @@ export default function SettingsPage({ params }: any) {
                 setNicknameEdit(false);
                 setEditedNickname('');
 
-                toast.success('아이디이 저장되었습니다');
+                toast.success('아이디가 저장되었습니다');
 
             } else {
                 toast.error('아이디 저장에 실패했습니다');
