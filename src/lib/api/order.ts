@@ -3675,7 +3675,7 @@ export async function buyOrderConfirmPayment(data: any) {
       if (userCollection) {
 
 
-        /*
+        
         //const toalPaymentConfirmedCount = await collection.countDocuments(
         //  { walletAddress: order.walletAddress, storecode: order.storecode, status: 'paymentConfirmed' }
         //);
@@ -3708,11 +3708,15 @@ export async function buyOrderConfirmPayment(data: any) {
             }
           }
         );
-        */
+        
+
+
+
         // set buyOrderStatus = 'paymentConfirmed'
         // set totalPaymentConfirmedCount increase by 1
         // set totalPaymentConfirmedKrwAmount increase by krwAmount
         // set totalPaymentConfirmedUsdtAmount increase by usdtAmount
+        /*
         await userCollection.updateOne(
           { walletAddress: walletAddress,
             storecode: storecode,
@@ -3729,6 +3733,7 @@ export async function buyOrderConfirmPayment(data: any) {
             }
           }
         );
+        */
 
       }
 
