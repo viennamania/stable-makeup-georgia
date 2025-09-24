@@ -4845,8 +4845,8 @@ const fetchBuyOrders = async () => {
                               />
                               <span className="text-sm text-zinc-500 font-semibold">
                                 {
-                                  item?.nickname?.length > 10 ?
-                                  item?.nickname?.substring(0, 10) + '...' :
+                                  item?.nickname?.length > 8 ?
+                                  item?.nickname?.substring(0, 8) + '...' :
                                   item?.nickname
                                 }
                               </span>
