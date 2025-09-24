@@ -3721,7 +3721,11 @@ export async function buyOrderConfirmPayment(data: any) {
             $inc: {
               totalPaymentConfirmedCount: 1,
               totalPaymentConfirmedKrwAmount: paymentAmount,
-              totalPaymentConfirmedUsdtAmount: data.usdtAmount || 0,
+              
+              //totalPaymentConfirmedUsdtAmount: data.usdtAmount || 0,
+              // convert data.usdtAmount to number
+              totalPaymentConfirmedUsdtAmount: Number(data.usdtAmount) || 0,
+
             }
           }
         );
