@@ -4850,17 +4850,44 @@ const fetchBuyOrders = async () => {
                                   item?.nickname
                                 }
                               </span>
-                              <span className="text-sm text-zinc-500">
-                                {item?.userType === 'AAA'
-                                ? ' (1등급)'
-                                : item?.userType === 'BBB'
-                                ? ' (2등급)'
-                                : item?.userType === 'CCC'
-                                ? ' (3등급)'
-                                : item?.userType === 'DDD'
-                                ? ' (4등급)'
-                                : ' (일반) '}
-                              </span>
+
+                              {
+                              item?.userType === 'AAA'
+                              ? (<div className="
+                                    text-xs text-white bg-red-500 px-1 rounded-md
+                                    ">
+                                    1등급
+                                  </div>
+                              )
+                              : item?.userType === 'BBB'
+                              ? (<div className="
+                                    text-xs text-white bg-orange-500 px-1 rounded-md
+                                    ">
+                                    2등급
+                                  </div>
+                              )
+                              : item?.userType === 'CCC'
+                              ? (<div className="
+                                    text-xs text-white bg-yellow-500 px-1 rounded-md
+                                    ">
+                                    3등급
+                                  </div>
+                              )
+                              : item?.userType === 'DDD'
+                              ? (<div className="
+                                    text-xs text-white bg-green-500 px-1 rounded-md
+                                    ">
+                                    4등급
+                                  </div>
+                              )
+                              : (<div className="
+                                    text-xs text-white bg-zinc-500 px-1 rounded-md
+                                    ">
+                                    일반
+                                  </div>
+                              )
+                              }
+
                             </div>
 
                             {/* wallet address */}

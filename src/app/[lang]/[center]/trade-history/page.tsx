@@ -146,6 +146,8 @@ interface BuyOrder {
   agentcode: string;
 
   agent: any;
+
+  userType: string;
 }
 
 
@@ -3875,17 +3877,64 @@ const fetchBuyOrders = async () => {
 
 
                           
-                          <td className="p-2">
-                            <div className="
-                              w-20  
-                              flex flex-col items-center justify-center gap-2">
-
-                                {/* buyer nickname */}
-                                <div className="text-lg text-blue-600 font-semibold">
-                                  {item?.nickname}
+                        <td className="p-2">
+                          <div className="
+                          w-36 
+                          flex flex-col items-center gap-2">
+         
+                              <div className="w-full flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-user.png"
+                                  alt="User"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <div className="text-sm text-blue-600 font-semibold">
+                                  {item?.nickname.length > 8 ? item?.nickname.substring(0, 8) + '...' : item?.nickname}
                                 </div>
+                                {item?.userType === 'AAA' ? (
+                                  <div className="
+                                    text-xs text-white bg-red-500 px-1 rounded-md
+                                    ">
+                                    1등급
+                                  </div>
+                                ) : item?.userType === 'BBB' ? (
+                                  <div className="
+                                    text-xs text-white bg-orange-500 px-1 rounded-md
+                                    ">
+                                    2등급
+                                  </div>
+                                ) : item?.userType === 'CCC' ? (
+                                  <div className="
+                                    text-xs text-white bg-yellow-500 px-1 rounded-md
+                                    ">
+                                    3등급
+                                  </div>
+                                ) : item?.userType === 'DDD' ? (
+                                  <div className="
+                                    text-xs text-white bg-green-500 px-1 rounded-md
+                                    ">
+                                    4등급
+                                  </div>
+                                ) : (
+                                  <div className="
+                                    text-xs text-white bg-zinc-500 px-1 rounded-md
+                                    ">
+                                    일반
+                                  </div>
+                                )}
+                              </div>
 
-                                {/* wallet address */}
+                              {/* wallet address */}
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-shield.png"
+                                  alt="Wallet"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(item.walletAddress);
@@ -3898,9 +3947,13 @@ const fetchBuyOrders = async () => {
                                 >
                                   {item.walletAddress.substring(0, 10) + '...'}
                                 </button>
+                              </div>
 
-                            </div>
-                          </td>
+
+
+                          </div>
+                        </td>
+
 
 
                           
@@ -4020,13 +4073,33 @@ const fetchBuyOrders = async () => {
                               w-24
                               flex flex-col gap-2 items-center justify-center">
                               <div className="text-sm font-semibold text-zinc-500">
-                                {item?.store?.bankInfo?.bankName}
+                                {
+                                  item?.userType === 'AAA'
+                                  ? item?.store?.bankInfoAAA?.bankName
+                                  : item?.userType === 'BBB'
+                                  ? item?.store?.bankInfoBBB?.bankName
+                                  : item?.userType === 'CCC'
+                                  ? item?.store?.bankInfoCCC?.bankName
+                                  : item?.userType === 'DDD'
+                                  ? item?.store?.bankInfoDDD?.bankName
+                                  : item?.store?.bankInfo?.bankName
+                                }
                               </div>
 
                               {/* copy account number to clipboard */}
                               <button
                                 onClick={() => {
-                                  navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
+                                  navigator.clipboard.writeText(
+                                    item?.userType === 'AAA'
+                                    ? item?.store?.bankInfoAAA?.accountNumber
+                                    : item?.userType === 'BBB'
+                                    ? item?.store?.bankInfoBBB?.accountNumber
+                                    : item?.userType === 'CCC'
+                                    ? item?.store?.bankInfoCCC?.accountNumber
+                                    : item?.userType === 'DDD'
+                                    ? item?.store?.bankInfoDDD?.accountNumber
+                                    : item?.store?.bankInfo?.accountNumber
+                                  );
                                   toast.success('판매자 통장번호가 복사되었습니다.');
                                 }}
                                 className="text-sm text-zinc-500 font-semibold
@@ -4034,11 +4107,31 @@ const fetchBuyOrders = async () => {
                                   hover:underline"
                                 title="판매자 통장번호 복사"
                               >
-                                {item?.store?.bankInfo?.accountNumber}
+                                {
+                                  item?.userType === 'AAA'
+                                  ? item?.store?.bankInfoAAA?.accountNumber
+                                  : item?.userType === 'BBB'
+                                  ? item?.store?.bankInfoBBB?.accountNumber
+                                  : item?.userType === 'CCC'
+                                  ? item?.store?.bankInfoCCC?.accountNumber
+                                  : item?.userType === 'DDD'
+                                  ? item?.store?.bankInfoDDD?.accountNumber
+                                  : item?.store?.bankInfo?.accountNumber
+                                }
                               </button>
 
                               <div className="text-sm font-semibold text-zinc-500">
-                                {item?.store?.bankInfo?.accountHolder}
+                                {
+                                  item?.userType === 'AAA'
+                                  ? item?.store?.bankInfoAAA?.accountHolder
+                                  : item?.userType === 'BBB'
+                                  ? item?.store?.bankInfoBBB?.accountHolder
+                                  : item?.userType === 'CCC'
+                                  ? item?.store?.bankInfoCCC?.accountHolder
+                                  : item?.userType === 'DDD'
+                                  ? item?.store?.bankInfoDDD?.accountHolder
+                                  : item?.store?.bankInfo?.accountHolder
+                                }
                               </div>
                             </div>
                           </td>
