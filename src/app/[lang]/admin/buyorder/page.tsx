@@ -6406,45 +6406,20 @@ const fetchBuyOrders = async () => {
                                   {item?.paymentMethod === 'bank' && (
 
                                     <div className="flex flex-col gap-2 items-center justify-center">
-
-                                      <div className="flex flex-row gap-2 items-center justify-center">
-                                        
-                                        <span className="text-sm text-zinc-500">
-                                          {
-                                            item?.userType === 'AAA'
-                                            ? item.store?.bankInfoAAA?.accountHolder
-                                            : item.store?.bankInfo?.accountHolder
-                                          }
-                                        </span>
-
-                                        <span className="text-sm text-zinc-500">
-                                          {
-                                            item?.userType === 'BBB'
-                                            ? item.store?.bankInfoBBB?.bankName
-                                            : item.store?.bankInfo?.bankName
-                                          }
-                                        </span>
-
-                                        <span className="text-sm text-zinc-500">
-                                          {
-                                            item?.userType === 'CCC'
-                                            ? item.store?.bankInfoCCC?.accountNumber
-                                            : item.store?.bankInfo?.accountNumber
-                                          }
-                                        </span>
-
-                                        <span className="text-sm text-zinc-500">
-                                          {
-                                            item?.userType === 'DDD'
-                                            ? item.store?.bankInfoDDD?.accountNumber
-                                            : item.store?.bankInfo?.accountNumber
-                                          }
-                                        </span>
-                                        
-                                      </div>
-
-
-                                          
+     
+                                      <span className="text-sm text-zinc-500">
+                                        {
+                                          item?.userType === 'AAA'
+                                          ? item.store?.bankInfoAAA?.accountHolder
+                                          : item?.userType === 'BBB'
+                                          ? item.store?.bankInfoBBB?.accountHolder
+                                          : item?.userType === 'CCC'
+                                          ? item.store?.bankInfoCCC?.accountHolder
+                                          : item?.userType === 'DDD'
+                                          ? item.store?.bankInfoDDD?.accountHolder
+                                          : item.store?.bankInfo?.accountHolder
+                                        }
+                                      </span> 
 
                                     </div>
 
