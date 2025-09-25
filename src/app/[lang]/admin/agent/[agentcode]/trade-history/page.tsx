@@ -3206,12 +3206,12 @@ const fetchBuyOrders = async () => {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(item?.store?.bankInfo?.accountNumber);
-                                    toast.success('판매자 통장번호가 복사되었습니다.');
+                                    toast.success('판매자 입금통장가 복사되었습니다.');
                                   }}
                                   className="text-sm text-zinc-500 font-semibold
                                     hover:text-blue-600 cursor-pointer
                                     hover:underline"
-                                  title="판매자 통장번호 복사"
+                                  title="판매자 입금통장 복사"
                                 >
                                   {item?.store?.bankInfo?.accountNumber}
                                 </button>

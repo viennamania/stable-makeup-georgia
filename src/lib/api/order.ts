@@ -2221,7 +2221,20 @@ export async function getBuyOrders(
         // searchDepositName is buyer.depositName or seller.bankInfo.accountHolder
         ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
-        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        
+        ///...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+        // store.bankInfo.accountNumber, store.bankInfoAAA.accountNumber, store.bankInfoBBB.accountNumber, store.bankInfoCCC.accountNumber, store.bankInfoDDD.accountNumber
+        // if userType is 'AAA', search store.bankInfoAAA.accountNumber
+        // if userType is 'BBB', search store.bankInfoBBB.accountNumber
+        // if userType is 'CCC', search store.bankInfoCCC.accountNumber
+        // if userType is 'DDD', search store.bankInfoDDD.accountNumber
+        // if userType is null or empty, search store.bankInfo.accountNumber
+    
+
+        
+
+
 
         // filter by fromDate and toDate
         // fromDate format: YYYY-MM-DD
@@ -2267,7 +2280,18 @@ export async function getBuyOrders(
         ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
 
-        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+      // store.bankInfo.accountNumber, store.bankInfo.accountNumberAAA, store.bankInfo.accountNumberBBB, store.bankInfo.accountNumberCCC, store.bankInfo.accountNumberDDD
+        ...(searchStoreBankAccountNumber ? { $or: [
+          { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoAAA.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoBBB.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoCCC.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoDDD.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+        ] } : {}),
+
+
+
 
 
         // filter by fromDate and toDate
@@ -2351,7 +2375,18 @@ export async function getBuyOrders(
         ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
         // search store bank account number
-        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        // store.bankInfo.accountNumber, store.bankInfo.accountNumberAAA, store.bankInfo.accountNumberBBB, store.bankInfo.accountNumberCCC, store.bankInfo.accountNumberDDD
+        ...(searchStoreBankAccountNumber ? { $or: [
+          { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoAAA.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoBBB.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoCCC.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoDDD.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+        ] } : {}),
+
+
+
 
         // filter by fromDate and toDate
         /*
@@ -2408,7 +2443,18 @@ export async function getBuyOrders(
         ///...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
         ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
 
-        ...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        
+        ////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+        // store.bankInfo.accountNumber, store.bankInfo.accountNumberAAA, store.bankInfo.accountNumberBBB, store.bankInfo.accountNumberCCC, store.bankInfo.accountNumberDDD
+        ...(searchStoreBankAccountNumber ? { $or: [
+          { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoAAA.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoBBB.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoCCC.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+          { 'store.bankInfoDDD.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
+        ] } : {}),
+
+
 
         // filter by fromDate and toDate
         
@@ -3293,12 +3339,16 @@ export async function acceptBuyOrder(data: any) {
   // check validation of storecode
 
   const storeCollection = client.db(dbName).collection('stores');
-  const stores = await storeCollection.findOne<any>(
+  const userCollection = client.db(dbName).collection('users');
+
+
+
+  const store = await storeCollection.findOne<any>(
     {
       storecode: data.storecode,
     },
   );
-  if (!stores) {
+  if (!store) {
 
     console.log('acceptBuyOrder storecode is not valid: ' + data.storecode);
     return null;
@@ -3327,7 +3377,7 @@ export async function acceptBuyOrder(data: any) {
   if (order && order?.privateSale === false) {
     
 
-    const userCollection = client.db(dbName).collection('users');
+
     user = await userCollection.findOne<UserProps>(
       {
         walletAddress: data.sellerWalletAddress,
@@ -3349,17 +3399,44 @@ export async function acceptBuyOrder(data: any) {
 
 
 
+  // get buyer userType
+  const buyer = await userCollection.findOne<UserProps>(
+    {
+      storecode: data.storecode,
+      walletAddress: order?.walletAddress,
+    },
+    { projection: { userType: 1 } }
+  );
 
+  // userType is null or empty, or 'AAA', 'BBB', 'CCC', 'DDD'
+  const userType = buyer?.userType || '';
 
-
-  const sellerNickname = user?.nickname || '';
-  const sellerAvatar = user?.avatar || '';
-
+  /*
   const bankInfo = user?.seller?.bankInfo || {
     bankName: '',
     accountNumber: '',
     accountHolder: '',
   };
+  */
+
+  const bankInfo = userType === ''
+    ? store?.bankInfo
+    : userType === 'AAA'
+      ? store?.bankInfoAAA
+      : userType === 'BBB'
+        ? store?.bankInfoBBB
+        : userType === 'CCC'
+          ? store?.bankInfoCCC
+          : userType === 'DDD'
+            ? store?.bankInfoDDD
+            : store?.bankInfo;
+
+
+  const sellerNickname = user?.nickname || '';
+  const sellerAvatar = user?.avatar || '';
+
+
+
 
   const sellerMobile = user?.mobile || '';
 
@@ -3424,7 +3501,6 @@ export async function acceptBuyOrder(data: any) {
 
     } }
   );
-
 
 
 
