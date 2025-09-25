@@ -1378,7 +1378,7 @@ const fetchBuyOrders = async () => {
                     className="w-5 h-5"
                   />
                   <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 보유수량(USDT)
+                    가맹점 보유량(USDT)
                   </span>
                 </div>
   
