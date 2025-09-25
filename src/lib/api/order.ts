@@ -2224,13 +2224,8 @@ export async function getBuyOrders(
         
         ///...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
-        // store.bankInfo.accountNumber, store.bankInfoAAA.accountNumber, store.bankInfoBBB.accountNumber, store.bankInfoCCC.accountNumber, store.bankInfoDDD.accountNumber
-        // if userType is 'AAA', search store.bankInfoAAA.accountNumber
-        // if userType is 'BBB', search store.bankInfoBBB.accountNumber
-        // if userType is 'CCC', search store.bankInfoCCC.accountNumber
-        // if userType is 'DDD', search store.bankInfoDDD.accountNumber
-        // if userType is null or empty, search store.bankInfo.accountNumber
-    
+        // seller?.bankInfo?.accountNumber
+        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         
 
@@ -2281,14 +2276,9 @@ export async function getBuyOrders(
 
 
         /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
-      // store.bankInfo.accountNumber, store.bankInfo.accountNumberAAA, store.bankInfo.accountNumberBBB, store.bankInfo.accountNumberCCC, store.bankInfo.accountNumberDDD
-        ...(searchStoreBankAccountNumber ? { $or: [
-          { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoAAA.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoBBB.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoCCC.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoDDD.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-        ] } : {}),
+        // seller?.bankInfo?.accountNumber
+        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
 
 
 
@@ -2376,14 +2366,9 @@ export async function getBuyOrders(
 
         // search store bank account number
         /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
-        // store.bankInfo.accountNumber, store.bankInfo.accountNumberAAA, store.bankInfo.accountNumberBBB, store.bankInfo.accountNumberCCC, store.bankInfo.accountNumberDDD
-        ...(searchStoreBankAccountNumber ? { $or: [
-          { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoAAA.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoBBB.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoCCC.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoDDD.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-        ] } : {}),
+        // seller?.bankInfo?.accountNumber
+        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
 
 
 
@@ -2445,14 +2430,9 @@ export async function getBuyOrders(
 
         
         ////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
-        // store.bankInfo.accountNumber, store.bankInfo.accountNumberAAA, store.bankInfo.accountNumberBBB, store.bankInfo.accountNumberCCC, store.bankInfo.accountNumberDDD
-        ...(searchStoreBankAccountNumber ? { $or: [
-          { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoAAA.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoBBB.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoCCC.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-          { 'store.bankInfoDDD.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } },
-        ] } : {}),
+        // seller?.bankInfo?.accountNumber
+        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
 
 
 
@@ -2551,7 +2531,11 @@ export async function getBuyOrders(
 
 
 
-          'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+          //'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+                  // seller?.bankInfo?.accountNumber
+          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+
 
           //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -2617,7 +2601,11 @@ export async function getBuyOrders(
 
 
 
-          'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+          ///'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+          // seller?.bankInfo?.accountNumber
+          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+
 
           //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -3370,7 +3358,10 @@ export async function acceptBuyOrder(data: any) {
     .collection('buyorders')
     .findOne<any>(
       { _id: new ObjectId(data.orderId + '')},
-      { projection: { privateSale: 1 } }
+      { projection: {
+        privateSale: 1,
+        walletAddress: 1,
+      } }
     );
 
 
