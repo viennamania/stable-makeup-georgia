@@ -2581,7 +2581,7 @@ export default function Index({ params }: any) {
                   flex flex-col sm:flex-col items-center justify-center gap-2">
 
 
-                  <div className="flex flex-row items-center justify-start gap-2">
+                  <div className="w-full flex flex-row items-center justify-between gap-2">
 
                     <input
                       disabled={insertingUserCode}
@@ -2621,7 +2621,7 @@ export default function Index({ params }: any) {
                   </div>
 
 
-                  <div className="flex flex-row items-center justify-start gap-2">
+                  <div className="w-full flex flex-row items-center justify-between gap-2">
 
 
                     {/* userBankDepositName */}
@@ -2952,15 +2952,43 @@ export default function Index({ params }: any) {
                             <div className="
                             w-20
                             flex flex-col items-center justify-center">
-                              <span className='text-sm text-zinc-500'>
                               {
-                                item?.userType === 'AAA' ? '1등급 회원'
-                                : item?.userType === 'BBB' ? '2등급 회원'
-                                : item?.userType === 'CCC' ? '3등급 회원'
-                                : item?.userType === 'DDD' ? '4등급 회원'
-                                : '일반 회원'
+                                item?.userType === 'AAA' ? (
+                                  <div className="
+                                    text-xs text-white bg-red-500 px-1 rounded-md
+                                    ">
+                                    1등급
+                                  </div>
+                                )
+                                : item?.userType === 'BBB' ? (
+                                  <div className="
+                                    text-xs text-white bg-orange-500 px-1 rounded-md
+                                    ">
+                                    2등급
+                                  </div>
+                                )
+                                : item?.userType === 'CCC' ? (
+                                  <div className="
+                                    text-xs text-white bg-yellow-500 px-1 rounded-md
+                                    ">
+                                    3등급
+                                  </div>
+                                )
+                                : item?.userType === 'DDD' ? (
+                                  <div className="
+                                    text-xs text-white bg-green-500 px-1 rounded-md
+                                    ">
+                                    4등급
+                                  </div>
+                                )
+                                : (
+                                  <div className="
+                                    text-xs text-white bg-blue-500 px-1 rounded-md
+                                    ">
+                                    일반회원
+                                  </div>
+                                )
                               }
-                              </span>
 
                               <button
                                 onClick={() => {
@@ -3163,19 +3191,28 @@ export default function Index({ params }: any) {
 
 
                           <td className="p-2">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item?.walletAddress);
-                                toast.success(Copied_Wallet_Address);
-                              } }
-                              className="text-sm text-zinc-500 underline"
-                            >
-                            {
-                                item?.walletAddress && (
-                                  item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
-                                )
-                              }
-                            </button>
+                            <div className="flex flex-row items-center justify-center gap-1">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Wallet"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item?.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                } }
+                                className="text-sm text-zinc-500 underline"
+                              >
+                              {
+                                  item?.walletAddress && (
+                                    item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
+                                  )
+                                }
+                              </button>
+                            </div>
                           </td>
 
  
