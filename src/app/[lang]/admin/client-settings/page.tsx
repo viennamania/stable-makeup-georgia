@@ -667,6 +667,7 @@ export default function SettingsPage({ params }: any) {
 
 
     // /api/client/getClientInfo
+    const [clientId, setClientId] = useState("");
     const [clientInfo, setClientInfo] = useState<any>(null);
 
     useEffect(() => {
@@ -680,11 +681,13 @@ export default function SettingsPage({ params }: any) {
 
             const data = await response.json();
 
-            //console.log("clientInfo", data);
+            console.log("clientInfo", data);
 
             if (data.result) {
 
                 setChain(data.result.chain || "polygon");
+
+                setClientId(data.result.clientId || "");
 
                 setClientInfo(data.result.clientInfo);
 
@@ -812,14 +815,14 @@ export default function SettingsPage({ params }: any) {
 
                         {/* clientInfo?.clientId */}
                         <span className="text-sm text-gray-500">
-                            CLIENTID: {clientInfo?.clientId}
+                            CLIENTID: {clientId || 'Loading...'}
                         </span>
 
                     </div>
 
 
                     {/* clientInfo */}
-                    {clientInfo ? (
+                    {true ? (
                         <div className="w-full flex flex-col items-start justify-start space-y-4">
 
 
