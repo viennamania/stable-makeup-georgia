@@ -3336,7 +3336,7 @@ export async function acceptBuyOrder(data: any) {
 
 
 
-  // check validation of storecode
+  const buyorderCollection = client.db(dbName).collection('buyorders');
 
   const storeCollection = client.db(dbName).collection('stores');
   const userCollection = client.db(dbName).collection('users');
@@ -3446,7 +3446,6 @@ export async function acceptBuyOrder(data: any) {
 
 
 
-  const collection = client.db(dbName).collection('buyorders');
 
 
 
@@ -3474,7 +3473,7 @@ export async function acceptBuyOrder(data: any) {
   // check condition and update status to accepted
   // *********************************************
 
-  const result = await collection.findOneAndUpdate(
+  const result = await buyorderCollection.findOneAndUpdate(
     { _id: new ObjectId(data.orderId + ''), status: 'ordered' },
     { $set: {
       status: 'accepted',
@@ -3508,8 +3507,8 @@ export async function acceptBuyOrder(data: any) {
   if (result) {
 
 
-
-    const updated = await collection.findOne<UserProps>(
+    /*
+    const updated = await buyorderCollection.findOne<any>(
       { _id: new ObjectId(data.orderId + '') }
     );
 
@@ -3518,6 +3517,10 @@ export async function acceptBuyOrder(data: any) {
 
 
     return updated;
+    */
+    
+    return result;
+    
 
   } else {
     
