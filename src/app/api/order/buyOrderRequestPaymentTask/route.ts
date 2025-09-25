@@ -494,11 +494,12 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       transactionHash: transactionHash,
 
-      bankInfo: bankInfo,
+      /////////////bankInfo: bankInfo,
+
     });
     
 
-    console.log("result", result);
+    /////console.log("result", result);
 
 
     reaultArray.push(buyOrder.tradeId);
