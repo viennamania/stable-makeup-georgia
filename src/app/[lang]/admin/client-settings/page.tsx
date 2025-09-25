@@ -646,62 +646,88 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    const [chain, setChain] = useState("polygon");
+
+    const [clientName, setClientName] = useState("");
+    const [clientDescription, setClientDescription] = useState("");
 
 
 
-    // transfer escrow balance to seller wallet address
+    // /api/client/getClientInfo
+    const [clientInfo, setClientInfo] = useState<any>(null);
 
-    const [amountOfEscrowBalance, setAmountOfEscrowBalance] = useState("");
+    useEffect(() => {
+        const fetchClientInfo = async () => {
+            const response = await fetch("/api/client/getClientInfo", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
 
-    const [transferingEscrowBalance, setTransferingEscrowBalance] = useState(false);
+            const data = await response.json();
+
+            //console.log("clientInfo", data);
+
+            if (data.result) {
+
+                setChain(data.result.chain || "polygon");
+
+                setClientInfo(data.result.clientInfo);
+
+                setClientName(data.result.clientInfo?.name || "");
+                setClientDescription(data.result.clientInfo?.description || "");
+            }
+
+        };
+
+        fetchClientInfo();
+    }, []);
 
 
-    const transferEscrowBalance = async () => {
 
-        if (transferingEscrowBalance) {
-        return;
+    // /api/client/setClientInfo
+
+    const [updatingClientInfo, setUpdatingClientInfo] = useState(false);
+
+    const updateClientInfo = async () => {
+        if (updatingClientInfo) {
+            return;
         }
-
-        setTransferingEscrowBalance(true);
-
-        try {
-
-        const response = await fetch('/api/order/transferEscrowBalanceToSeller', {
-            method: 'POST',
+        
+        setUpdatingClientInfo(true);
+        const response = await fetch("/api/client/setClientInfo", {
+            method: "POST",
             headers: {
-            'Content-Type': 'application/json'
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
-            lang: params.lang,
-            storecode: storecode,
-            walletAddress: address,
-            amount: amountOfEscrowBalance,
-            ///escrowWalletAddress: escrowWalletAddress,
-            //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-            isSmartAccount: false,
-            })
+                data: {
+                    name: clientName,
+                    description: clientDescription,
+                }
+            }),
         });
 
         const data = await response.json();
 
-        //console.log('data', data);
+        //console.log("setClientInfo", data);
 
         if (data.result) {
-
-            setAmountOfEscrowBalance("");
-
-            toast.success('Escrow balance has been transfered to seller wallet address');
-
+            setClientInfo({
+                ...clientInfo,
+                name: clientName,
+                description: clientDescription,
+            });
+            toast.success('Client info updated');
+        } else {
+            toast.error('Failed to update client info');
         }
 
-        } catch (error) {
-        console.error('Error:', error);
-        toast.error('Transfer escrow balance has been failed');
-        }
+        setUpdatingClientInfo(false);
+    };
 
-        setTransferingEscrowBalance(false);
 
-    }
 
 
 
@@ -750,258 +776,181 @@ export default function SettingsPage({ params }: any) {
 
                     <div className='flex flex-row items-center space-x-4'>
                         <Image
-                            src={"/icon-user.png"}
-                            alt="Avatar"
-                            width={20}
-                            height={20}
-                            priority={true} // Added priority property
-                            className="rounded-full"
-                            style={{
-                                objectFit: 'cover',
-                                width: '20px',
-                                height: '20px',
-                            }}
-                        />
-                        <div className="text-xl font-semibold">
-                            {Profile_Settings}
-                            
-                        </div>
-
-
-                    </div>
-
-
-                    {/* 회원코드(id) */}
-                    {userCode && (
-                        <div className='flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-                            <div className="flex flex-row items-center gap-2">
-                                {/* dot */}
-                                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                <span className="text-lg">
-                                    회원코드
-                                </span>
-                            </div>
-                            <span className="text-xl font-semibold text-zinc-500">
-                                {userCode}
-                            </span>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(userCode);
-                                    toast.success('회원코드가 복사되었습니다');
-                                }}
-                                className="p-2 bg-green-500 text-zinc-100 rounded-lg"
-                            >
-                                복사
-                            </button>
-                        </div>
-                    )}
-
-
-
-                
-                    <div className='w-full  flex flex-col gap-5 '>
-
-                        {userCode && (
-                            <div className='flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-
-
-                                <div className="flex flex-row items-center gap-2">
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        나의 아이디
-                                    </span>
-                                </div>
-
-
-                                <span className="text-xl font-semibold text-zinc-500">
-                                    {nickname}
-                                </span>
-
-
-
-                                
-                                <button
-                                    onClick={() => {
-
-                                        nicknameEdit ? setNicknameEdit(false) : setNicknameEdit(true);
-
-                                    } }
-                                    className="p-2 bg-green-500 text-zinc-100 rounded-lg"
-                                >
-                                    {nicknameEdit ? Cancel : Edit}
-                                </button>
-
-                                <Image
-                                src="/verified.png"
-                                alt="Verified"
-                                width={20}
-                                height={20}
-                                className="rounded-lg"
-                                />
-
-
-                                
-                            </div>
-                        )}
-
-
-                        { (address && (nicknameEdit || !userCode)) && (
-                            <div className=' flex flex-col sm:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-
-
-                                <div className="flex flex-row items-center gap-2">
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        {nicknameEdit ? "내 아이디 수정" : "내 아이디 설정"}
-                                    </span>
-                                </div>
-
-
-                                <div className='flex flex-col gap-2'>
-                                    <input
-                                        disabled={!address}
-                                        className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded text-2xl font-semibold"
-                                        placeholder={Enter_your_nickname}
-                                        
-                                        //value={nickname}
-                                        value={editedNickname}
-
-                                        type='text'
-                                        onChange={(e) => {
-                                            // check if the value is a number
-                                            // check if the value is alphanumeric and lowercase
-
-                                            if (!/^[a-z0-9]*$/.test(e.target.value)) {
-                                                toast.error(Nickname_should_be_alphanumeric_lowercase);
-                                                return;
-                                            }
-                                            if ( e.target.value.length > 10) {
-                                                toast.error(Nickname_should_be_at_least_5_characters_and_at_most_10_characters);
-                                                return;
-                                            }
-
-                                            //setNickname(e.target.value);
-
-                                            setEditedNickname(e.target.value);
-
-                                        } }
-
-
-                                    />
-                                    <div className='flex flex-row gap-2 items-center justify-between'>
-                                        <span className='text-xs font-semibold'>
-                                            {Nickname_should_be_5_10_characters}
-                                        </span>
-                                    </div>
-                                </div>
-                                <button
-                                    disabled={!address}
-                                    className="p-2 bg-green-500 text-zinc-100 rounded-lg"
-                                    onClick={() => {
-                                        setUserData();
-                                    }}
-                                >
-                                    {Save}
-                                </button>
-
-                                
-
-                            </div>
-                        )}
-
-
-                        {false && userCode && (
-                            <div className='flex flex-row sm:flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-
-                                <div className="bg-green-500 text-sm text-zinc-100 p-2 rounded-lg">
-                                    {My_Profile_Picture}
-                                </div>
-
-                                <div className="p-2 bg-zinc-800 rounded text-zinc-100 text-xl font-semibold">
-                                    <Uploader
-                                        lang={params.lang}
-                                        walletAddress={address as string}
-                                    />
-                                </div>
-
-                            </div>
-                        )}
-
-
-                    </div>
-
-
-                </div>
-
-
-
-                <div className='hidden w-full flex-col gap-5 mt-4'>
-                    <div className='w-full flex flex-row items-center justify-start gap-2'>
-                        <Image
                             src={"/icon-gear.png"}
                             alt="Settings"
                             width={20}
                             height={20}
                             className="rounded-full"
                         />
-                        <span className='text-xl font-semibold text-zinc-500'>
-                            지갑 관리
-                        </span>
-                    </div>
-
-                    <div className='w-full flex flex-col gap-2
-                    border border-gray-300 p-4 rounded-lg'>
-
-                        <div className='flex flex-row items-center justify-start gap-2 mb-2'>
-                            {/* dot */}
-                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                            <span className='text-lg'>
-                                {Wallet_Settings}
-                            </span>
+                        <div className="text-xl font-semibold">
+                            센터 설정
                         </div>
 
-
-                        <ConnectButton
-                        client={client}
-                        wallets={wallets}
-
-                        
-                        //accountAbstraction={{
-                        //    chain: arbitrum,
-                        //    sponsorGas: true
-                        //}}
-                        
-                        
-                        theme={"light"}
-
-                        // button color is dark skyblue convert (49, 103, 180) to hex
-                        connectButton={{
-                            style: {
-                                backgroundColor: "#3167b4", // dark skyblue
-                                color: "#f3f4f6", // gray-300
-                                padding: "2px 10px",
-                                borderRadius: "10px",
-                                fontSize: "14px",
-                                width: "60x",
-                                height: "38px",
-                            },
-                            label: "원클릭 로그인",
-                        }}
-
-                        connectModal={{
-                            size: "wide", 
-                            //size: "compact",
-                            titleIcon: "https://www.stable.makeup/logo.png",                           
-                            showThirdwebBranding: false,
-                        }}
-
-                        locale={"ko_KR"}
-                        //locale={"en_US"}
-                        />
+                        {/* clientInfo?.clientId */}
+                        <span className="text-sm text-gray-500">
+                            CLIENTID: {clientInfo?.clientId}
+                        </span>
 
                     </div>
+
+
+                    {/* clientInfo */}
+                    {clientInfo ? (
+                        <div className="w-full flex flex-col items-start justify-start space-y-4">
+
+
+
+
+                            <div className="w-full flex flex-col items-start justify-start space-y-2">
+                                <span className="text-sm text-gray-500 font-semibold">
+                                    현재 체인
+                                </span>
+
+                                <div className="flex flex-row items-center justify-center gap-4 mb-4">
+                                    
+                                    <div className={`
+                                    w-20 h-20
+                                    flex flex-col items-center justify-center gap-1 ${chain === 'ethereum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                                    <Image
+                                        src={`/logo-chain-ethereum.png`}
+                                        alt={`Chain logo for Ethereum`}
+                                        width={25}
+                                        height={25}
+                                        className="h-6 w-6 rounded-full"
+                                        style={{ objectFit: "cover" }}
+                                    />
+                                    <span className={`
+                                        ${chain === 'ethereum' ? 'text-blue-500' : 'text-gray-600'}
+                                        hover:text-blue-500
+                                    `}>
+                                        Ethereum
+                                    </span>
+                                    </div>
+
+                                    <div className={`
+                                    w-20 h-20
+                                    flex flex-col items-center justify-center gap-1 ${chain === 'polygon' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                                    <Image
+                                        src={`/logo-chain-polygon.png`}
+                                        alt={`Chain logo for Polygon`}
+                                        width={25}
+                                        height={25}
+                                        className="h-6 w-6 rounded-full"
+                                        style={{ objectFit: "cover" }}
+                                    />
+                                    <span className={`
+                                        ${chain === 'polygon' ? 'text-blue-500' : 'text-gray-600'}
+                                        hover:text-blue-500
+                                    `}>
+                                        Polygon
+                                    </span>
+                                    </div>
+
+                                    <div className={`
+                                    w-20 h-20
+                                    flex flex-col items-center justify-center gap-1 ${chain === 'bsc' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                                    <Image
+                                        src={`/logo-chain-bsc.png`}
+                                        alt={`Chain logo for BSC`}
+                                        width={25}
+                                        height={25}
+                                        className="h-6 w-6 rounded-full"
+                                        style={{ objectFit: "cover" }}
+                                    />
+                                    <span className={`
+                                        ${chain === 'bsc' ? 'text-blue-500' : 'text-gray-600'}
+                                        hover:text-blue-500
+                                    `}>
+                                        BSC
+                                    </span>
+                                    </div>
+
+                                    <div className={`
+                                    w-20 h-20
+                                    flex flex-col items-center justify-center gap-1 ${chain === 'arbitrum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
+                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
+                                    <Image
+                                        src={`/logo-chain-arbitrum.png`}
+                                        alt={`Chain logo for Arbitrum`}
+                                        width={25}
+                                        height={25}
+                                        className="h-6 w-6 rounded-full"
+                                        style={{ objectFit: "cover" }}
+                                    />
+                                    <span className={`
+                                        ${chain === 'arbitrum' ? 'text-blue-500' : 'text-gray-600'}
+                                        hover:text-blue-500
+                                    `}>
+                                        Arbitrum
+                                    </span>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+
+
+
+                            <div className="w-full flex flex-col items-start justify-start space-y-2">
+                                <span className="text-sm text-gray-500 font-semibold">
+                                    센터 이름
+                                </span>
+                                <input
+                                    type="text"
+                                    value={clientName}
+                                    onChange={(e) => setClientName(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 rounded-lg"
+                                    placeholder="센터 이름"
+                                />
+                            </div>
+
+                            <div className="w-full flex flex-col items-start justify-start space-y-2">
+                                <span className="text-sm text-gray-500 font-semibold">
+                                    센터 소개
+                                </span>
+                                <textarea
+                                    value={clientDescription}
+                                    rows={4}
+                                    onChange={(e) => setClientDescription(e.target.value)}
+                                    className="w-full p-2 border border-gray-300 rounded-lg"
+                                    placeholder="센터 소개"
+                                />
+                            </div>
+
+                            {/*
+                            <div className="w-full flex flex-col items-start justify-start space-y-2">
+                                <span className="text-sm text-gray-500 font-semibold">
+                                    센터 로고
+                                </span>
+                                <Uploader
+                                    value={clientInfo.logo || ''}
+                                    onChange={(value) => updateClientInfo({ logo: value })}
+                                />
+                            </div>
+                            */}
+
+                            <button
+                                disabled={updatingClientInfo}
+                                onClick={() => updateClientInfo()}
+                                className={`w-full bg-blue-500 text-white p-2 rounded-lg ${updatingClientInfo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
+                            >
+                                {updatingClientInfo ? '저장 중...' : '저장하기'}
+                            </button>
+
+                        </div>
+                    ) : (
+                        <div className="w-full flex flex-col items-center justify-center">
+                            <span className="text-sm text-gray-500">
+                                Loading...
+                            </span>
+                        </div>
+                    )}
 
 
                 </div>

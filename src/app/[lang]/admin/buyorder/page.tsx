@@ -2180,6 +2180,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   } , [buyOrders.length]);
 
 
+  ///console.log('sendingTransaction', sendingTransaction);
+
+
 
   const sendPayment = async (
 
@@ -2236,7 +2239,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       return;
     }
 
-    //console.log('sendingTransaction', sendingTransaction);
+    ///console.log('sendingTransaction', sendingTransaction);
 
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
