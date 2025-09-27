@@ -4948,7 +4948,7 @@ const fetchBuyOrders = async () => {
 
                           {item?.userStats?.totalPaymentConfirmedCount ? (
                             
-                            <div className="w-full flex flex-row items-center justify-between gap-2">
+                            <div className="w-full flex flex-row items-center justify-between gap-1">
 
                               <Image
                                 src="/icon-user-stats.png"

@@ -3825,7 +3825,7 @@ const fetchBuyOrders = async () => {
           <div className="w-full flex flex-col items-end gap-4">
 
             {/* P2P 거래소 입금통장 */}
-            <div className="flex flex-col sm:flex-row items-start xl:items-end gap-1">
+            <div className="flex flex-col sm:flex-row items-start justify-start gap-1">
               <div className="flex flex-row gap-2 items-center">
                 {/* dot */}
                 <div className="w-1 h-1 rounded-full bg-zinc-500" />
@@ -3833,7 +3833,8 @@ const fetchBuyOrders = async () => {
                   P2P 거래소 입금통장
                 </span>
               </div>
-              <div className="flex flex-row items-center justify-center gap-2">
+
+              <div className="w-56 flex flex-row items-start justify-start gap-1">
                 <Image
                   src="/icon-bank.png"
                   alt="Bank"
@@ -3841,27 +3842,131 @@ const fetchBuyOrders = async () => {
                   height={20}
                   className="rounded-lg"
                 />
-                <span className="text-sm text-zinc-500">
+                <div className="w-full flex flex-col items-start justify-center">
 
-                    {store?.bankInfo?.accountNumber.length > 5 ? (
-                      <>
-                        {store?.bankInfo?.bankName + " " + store?.bankInfo?.accountHolder
-                        + " " + store?.bankInfo?.accountNumber.slice(0, 5) + "..."}
-                      </>
-                    ) : (
-                      <>
-                        {store?.bankInfo?.bankName + " " + store?.bankInfo?.accountHolder
-                        + " " + store?.bankInfo?.accountNumber}
-                      </>
-                    )}
+                  {/* 일반 */}
+                  <div className="flex flex-row items-center gap-1">
+                    <div className="w-10 h-5 rounded-full bg-zinc-500 flex items-center justify-center">
+                      <span className="text-xs text-white">일반</span>
+                    </div>
+                    <span className="text-sm text-zinc-500">
+                        {store?.bankInfo?.accountNumber.length > 5 ? (
+                          <>
+                            {store?.bankInfo?.accountHolder
+                            + " " + store?.bankInfo?.accountNumber.slice(0, 5) + "..."
+                            + " " + store?.bankInfo?.bankName}
+                          </>
+                        ) : (
+                          <>
+                            {store?.bankInfo?.accountHolder
+                            + " " + store?.bankInfo?.accountNumber
+                            + " " + store?.bankInfo?.bankName}
+                          </>
+                        )}
+                    </span>
+                  </div>
+                  {/* 1등급 */}
+                  {store?.bankInfoAAA && (
+                  <div className="flex flex-row items-center gap-1">
+                    <div className="w-10 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                      <span className="text-xs text-white">1등급</span>
+                    </div>
+                    <span className="text-sm text-zinc-500">
+                        {store?.bankInfoAAA?.accountNumber.length > 5 ? (
+                          <>
+                            {store?.bankInfoAAA?.accountHolder
+                            + " " + store?.bankInfoAAA?.accountNumber.slice(0, 5) + "..."
+                            + " " + store?.bankInfoAAA?.bankName}
+                          </>
+                        ) : (
+                          <>
+                            {store?.bankInfoAAA?.accountHolder
+                            + " " + store?.bankInfoAAA?.accountNumber
+                            + " " + store?.bankInfoAAA?.bankName}
+                          </>
+                        )}
+                    </span>
+                  </div>
+                  )}
+                  {/* 2등급 */}
+                  {store?.bankInfoBBB && (
+                  <div className="flex flex-row items-center gap-1">
+                    <div className="w-10 h-5 rounded-full bg-orange-500 flex items-center justify-center">
+                      <span className="text-xs text-white">2등급</span>
+                    </div>
+                    <span className="text-sm text-zinc-500">
+                        {store?.bankInfoBBB?.accountNumber.length > 5 ? (
+                          <>
+                            {store?.bankInfoBBB?.accountHolder
+                            + " " + store?.bankInfoBBB?.accountNumber.slice(0, 5) + "..."
+                            + " " + store?.bankInfoBBB?.bankName}
+                          </>
+                        ) : (
+                          <>
+                            {store?.bankInfoBBB?.accountHolder
+                            + " " + store?.bankInfoBBB?.accountNumber
+                            + " " + store?.bankInfoBBB?.bankName}
+                          </>
+                        )}
+                    </span>
+                  </div>
+                  )}
+                  {/* 3등급 */}
+                  {store?.bankInfoCCC && (
+                  <div className="flex flex-row items-center gap-1">
+                    <div className="w-10 h-5 rounded-full bg-yellow-500 flex items-center justify-center">
+                      <span className="text-xs text-white">3등급</span>
+                    </div>
+                    <span className="text-sm text-zinc-500">
+                        {store?.bankInfoCCC?.accountNumber.length > 5 ? (
+                          <>
+                            {store?.bankInfoCCC?.accountHolder
+                            + " " + store?.bankInfoCCC?.accountNumber.slice(0, 5) + "..."
+                            + " " + store?.bankInfoCCC?.bankName}
+                          </>
+                        ) : (
+                          <>
+                            {store?.bankInfoCCC?.accountHolder
+                            + " " + store?.bankInfoCCC?.accountNumber
+                            + " " + store?.bankInfoCCC?.bankName}
+                          </>
+                        )}
+                    </span>
+                  </div>
+                  )}
+                  {/* 4등급 */}
+                  {store?.bankInfoDDD && (
+                  <div className="flex flex-row items-center gap-1">
+                    <div className="w-10 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                      <span className="text-xs text-white">4등급</span>
+                    </div>
+                    <span className="text-sm text-zinc-500">
+                        {store?.bankInfoDDD?.accountNumber.length > 5 ? (
+                          <>
+                            {store?.bankInfoDDD?.accountHolder
+                            + " " + store?.bankInfoDDD?.accountNumber.slice(0, 5) + "..."
+                            + " " + store?.bankInfoDDD?.bankName}
+                          </>
+                        ) : (
+                          <>
+                            {store?.bankInfoDDD?.accountHolder
+                            + " " + store?.bankInfoDDD?.accountNumber
+                            + " " + store?.bankInfoDDD?.bankName}
+                          </>
+                        )}
+                    </span>
+                  </div>
+                  )}
+                
+                </div>
 
-                </span>
               </div>
+
             </div>
 
             {/* 판매용 USDT지갑 */}
             {/* storeInfo.walletAddress */}
-            <div className="flex flex-col sm:flex-row items-start xl:items-end gap-1">
+            <div className="flex flex-col sm:flex-row items-start justify-start gap-1">
               <div className="flex flex-row gap-2 items-center">
                 {/* dot */}
                 <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
@@ -3869,7 +3974,7 @@ const fetchBuyOrders = async () => {
                   P2P 거래소 판매용 USDT지갑
                 </span>
               </div>
-              <div className="flex flex-row items-center justify-center gap-1">
+              <div className="w-56 flex flex-row items-center justify-start gap-1">
                 <Image
                   src="/icon-shield.png"
                   alt="Shield"
@@ -3888,7 +3993,7 @@ const fetchBuyOrders = async () => {
 
             {/* 자동결제용 USDT지갑 */}
             {/* store.settlementWalletAddress */}
-            <div className="flex flex-col sm:flex-row items-start xl:items-end gap-1">
+            <div className="flex flex-col sm:flex-row items-start justify-start gap-1">
               <div className="flex flex-row gap-2 items-center">
                 {/* dot */}
                 <div className="w-1 h-1 rounded-full bg-zinc-500" />
@@ -3896,7 +4001,7 @@ const fetchBuyOrders = async () => {
                   가맹점 자동결제용 USDT지갑
                 </span>
               </div>
-              <div className="flex flex-row items-center justify-center gap-1">
+              <div className="w-56 flex flex-row items-center justify-start gap-1">
                 <Image
                   src="/icon-shield.png"
                   alt="Shield"
