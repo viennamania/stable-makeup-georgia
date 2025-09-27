@@ -2183,7 +2183,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   ///console.log('sendingTransaction', sendingTransaction);
 
 
-
+  // avoid double click event
   const sendPayment = async (
 
     index: number,
@@ -2196,23 +2196,34 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     buyerWalletAddress: string,
 
   ) => {
-    // confirm payment
-    // send usdt to buyer wallet address
+
+    if (isProcessingSendTransaction) {
+      alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
+      return;
+    }
+    if (sendingTransaction.some((item) => item === true)) {
+      alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
+      return;
+    }
+
+    setSendingTransaction(
+      sendingTransaction.map((item, idx) => idx === index ? true : item)
+    );
+    setIsProcessingSendTransaction(true);
 
 
-    // if escrowWalletAddress balance is less than paymentAmount, then return
-
-    //console.log('escrowBalance', escrowBalance);
-    //console.log('paymentAmountUsdt', paymentAmountUsdt);
-    
 
 
     if (!address) {
       toast.error('Please connect your wallet');
+      setIsProcessingSendTransaction(false);
+      setSendingTransaction(
+        sendingTransaction.map((item, idx) => idx === index ? false : item)
+      );
       return;
     }
 
-
+  
     let balance = 0;
     const result = await balanceOf({
       contract,
@@ -2230,28 +2241,13 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     // if balance is less than paymentAmount, then return
     if (balance < usdtAmount) {
       toast.error(Insufficient_balance);
+      setIsProcessingSendTransaction(false);
+      setSendingTransaction(
+        sendingTransaction.map((item, idx) => idx === index ? false : item)
+      );
       return;
     }
   
-
-    if (isProcessingSendTransaction) {
-      alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
-      return;
-    }
-
-    ///console.log('sendingTransaction', sendingTransaction);
-
-    if (sendingTransaction.some((item) => item === true)) {
-      alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
-      return;
-    }
-
-    setSendingTransaction(
-      sendingTransaction.map((item, idx) => idx === index ? true : item)
-    );
-    
-
-    setIsProcessingSendTransaction(true);
 
 
 
@@ -2328,7 +2324,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     }
 
     setIsProcessingSendTransaction(false);
-
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
@@ -5903,19 +5898,15 @@ const fetchBuyOrders = async () => {
 
                                           disabled={confirmingPayment[index]}
                                           
-                                          className="text-sm text-[#409192] font-semibold
-                                            border border-green-600 rounded-lg p-2
-                                            bg-green-100
-                                            w-full text-center
-                                            hover:bg-green-200
-                                            cursor-pointer
-                                            transition-all duration-200 ease-in-out
-                                            hover:scale-105
-                                            hover:shadow-lg
-                                            hover:shadow-green-500/50
-                                          "
-                                          
+                                          className={`
+                                            ${confirmingPayment[index]
+                                            ? 'text-gray-400 border-gray-400 bg-gray-100 cursor-not-allowed'
+                                            : 'text-blue-600 border-blue-600 bg-blue-100 hover:bg-blue-200 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50'
+                                            } bg-blue-100 border border-blue-600 rounded-lg p-2
+                                          `}
+
                                           onClick={() => {
+                                            confirm("정말 입금확인 하시겠습니까?") &&
                                             confirmPayment(
                                               index,
                                               item._id,
@@ -6649,7 +6640,10 @@ const fetchBuyOrders = async () => {
                                       <button
                                         //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
                                         //disabled={confirmingPayment[index]}
-                                        disabled={isProcessingSendTransaction}
+                                        disabled={
+                                          isProcessingSendTransaction
+                                          || sendingTransaction[index]
+                                        }
 
                                         /*
                                         className={`
@@ -6679,7 +6673,11 @@ const fetchBuyOrders = async () => {
                                           ${sendingTransaction[index] ? 'bg-red-500' : 'bg-green-500'}
                                         `}
 
-                                        onClick={() => {
+                                        //avoid double click event
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+
                                           //confirmPayment(
                                           sendPayment(
 
