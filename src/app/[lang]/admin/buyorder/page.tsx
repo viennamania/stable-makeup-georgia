@@ -4846,14 +4846,6 @@ const fetchBuyOrders = async () => {
                                   objectFit: 'cover',
                                 }}
                               />
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {
-                                  item?.nickname?.length > 8 ?
-                                  item?.nickname?.substring(0, 8) + '...' :
-                                  item?.nickname
-                                }
-                              </span>
-
                               {
                               item?.userType === 'AAA'
                               ? (<div className="
@@ -4890,7 +4882,13 @@ const fetchBuyOrders = async () => {
                                   </div>
                               )
                               }
-
+                              <span className="text-sm text-zinc-500 font-semibold">
+                                {
+                                  item?.nickname?.length > 8 ?
+                                  item?.nickname?.substring(0, 8) + '...' :
+                                  item?.nickname
+                                }
+                              </span>
                             </div>
 
                             {/* wallet address */}

@@ -3861,9 +3861,6 @@ const fetchBuyOrders = async () => {
                                   height={20}
                                   className="w-5 h-5"
                                 />
-                                <div className="text-lg text-blue-600 font-semibold">
-                                  {item?.nickname}
-                                </div>
                                 {item?.userType === 'AAA' ? (
                                   <div className="
                                     text-xs text-white bg-red-500 px-1 rounded-md
@@ -3895,6 +3892,9 @@ const fetchBuyOrders = async () => {
                                     일반
                                   </div>
                                 )}
+                                <span className="text-lg text-blue-600 font-semibold">
+                                  {item?.nickname}
+                                </span>
                               </div>
 
                               {/* wallet address */}

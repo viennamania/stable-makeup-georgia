@@ -863,9 +863,18 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
-  ///console.log('buyOrders', buyOrders);
-
-  
+  const [buyOrderStats, setBuyOrderStats] = useState({
+    totalCount: 0,
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+  });
 
 
 
@@ -1012,6 +1021,24 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
+
+
+
+
             })
 
 
@@ -1130,6 +1157,22 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
+
+
           }
         });
 
@@ -1388,10 +1431,24 @@ export default function Index({ params }: any) {
               })
               .then(response => response.json())
               .then(data => {
-                  ///console.log('data', data);
-                  setBuyOrders(data.result.orders);
+                ///console.log('data', data);
+                setBuyOrders(data.result.orders);
 
-                  setTotalCount(data.result.totalCount);
+                setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
               })
 
 
@@ -1496,6 +1553,20 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
             })
 
 
@@ -1700,6 +1771,20 @@ export default function Index({ params }: any) {
               setBuyOrders(data.result.orders);
 
               setTotalCount(data.result.totalCount);
+
+              setBuyOrderStats({
+                totalCount: data.result.totalCount,
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+              });
+
           })
 
 
@@ -1784,6 +1869,20 @@ export default function Index({ params }: any) {
                 setBuyOrders(data.result.orders);
 
                 setTotalCount(data.result.totalCount);
+
+                setBuyOrderStats({
+                  totalCount: data.result.totalCount,
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+                });
+
             })
 
             toast.success(Payment_has_been_confirmed);
@@ -1949,6 +2048,20 @@ export default function Index({ params }: any) {
             setBuyOrders(data.result.orders);
 
             setTotalCount(data.result.totalCount);
+
+            setBuyOrderStats({
+              totalCount: data.result.totalCount,
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+            });
+
         })
 
       }
@@ -2068,7 +2181,18 @@ export default function Index({ params }: any) {
 
       setTotalCount(data.result.totalCount);
       
-
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+      });
 
     }
 
@@ -2174,6 +2298,21 @@ const fetchBuyOrders = async () => {
 
   setBuyOrders(data.result.orders);
   setTotalCount(data.result.totalCount);
+
+
+  setBuyOrderStats({
+    totalCount: data.result.totalCount,
+    totalKrwAmount: data.result.totalKrwAmount,
+    totalUsdtAmount: data.result.totalUsdtAmount,
+    totalSettlementCount: data.result.totalSettlementCount,
+    totalSettlementAmount: data.result.totalSettlementAmount,
+    totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+    totalFeeAmount: data.result.totalFeeAmount,
+    totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+    totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+    totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+  });
+
   setFetchingBuyOrders(false);
 
   return data.result.orders;
@@ -2352,7 +2491,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -2441,17 +2580,11 @@ const fetchBuyOrders = async () => {
 
     getTradeSummary();
 
-    /*
-    // fetch trade summary every 10 seconds
-    const interval = setInterval(() => {
-      getTradeSummary();
-    }, 10000);
-    return () => clearInterval(interval);
-    */
+
 
   } , [address, searchMyOrders, params.center, searchFromDate, searchToDate]);
 
-
+  */
 
   
 
@@ -3498,7 +3631,7 @@ const fetchBuyOrders = async () => {
                         
                         fetchBuyOrders();
 
-                        getTradeSummary();
+                        //getTradeSummary();
                       }}
                       //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
                       className={`${
@@ -3545,35 +3678,26 @@ const fetchBuyOrders = async () => {
                 p-4 rounded-lg shadow-md
                 ">
 
-                <div className="w-full xl:w-1/3 flex flex-row items-center justify-between gap-2 pl-4 pr-4">
+                <div className="xl:w-1/3 w-full
+                  flex flex-col sm:flex-row items-start justify-start gap-4">
                   
+                  <Image
+                    src="/icon-trade.png"
+                    alt="Trade"
+                    width={50}
+                    height={50}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />  
+
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 P2P 거래수(건)</div>
-                    <div className="text-xl font-semibold text-zinc-500">
-                      {tradeSummary.totalCount?.toLocaleString()}
+                    <div className="text-sm">P2P 거래수(건)</div>
+                    <div className="text-4xl font-semibold text-zinc-500">
+                      {buyOrderStats.totalCount?.toLocaleString()}
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 P2P 거래금액(원)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                      
-                        {
-                        Number(tradeSummary.totalKrwAmount)
-                        .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                      <span className="text-sm text-zinc-500">
-                        원
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 P2P 거래량(USDT)</div>
+                    <div className="text-sm">P2P 거래량(USDT)</div>
                     <div className="flex flex-row items-center gap-1">
                       <Image
                         src="/icon-tether.png"
@@ -3585,47 +3709,54 @@ const fetchBuyOrders = async () => {
                       <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}
                       >
-                        {Number(tradeSummary.totalUsdtAmount
-                          ? tradeSummary.totalUsdtAmount
+                        {Number(buyOrderStats.totalUsdtAmount
+                          ? buyOrderStats.totalUsdtAmount
                           : 0
                         ).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                       </span>
                     </div>
                   </div>
+
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">P2P 거래금액(원)</div>
+                    <div className="flex flex-row items-center gap-1">
+                      <span className="text-xl font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                        Number(buyOrderStats.totalKrwAmount)
+                        .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        }
+                      </span>
+                    </div>
+                  </div>
+
                 </div>
 
                 {/* divider */}
                 <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
                 <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
-                <div className="w-full xl:w-1/2
-                  flex flex-row items-center justify-between gap-2 pl-4 pr-4">
-
+                <div className="xl:w-2/3 w-full
+                  flex flex-col sm:flex-row items-start justify-end gap-4">
                   
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 결제수(건)</div>
-                    <div className="text-xl font-semibold text-zinc-500">
-                      {tradeSummary.totalSettlementCount?.toLocaleString()}
+                  <Image
+                    src="/icon-payment.png"
+                    alt="Payment"
+                    width={50}
+                    height={50}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  /> 
+
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-sm">결제수(건)</div>
+                    <div className="text-4xl font-semibold text-zinc-500">
+                      {buyOrderStats.totalSettlementCount?.toLocaleString()}
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 결제금액(원)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                        Number(tradeSummary.totalSettlementAmountKRW)
-                        .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                      
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 결제량(USDT)</div>
+                    <div className="text-sm">결제량(USDT)</div>
                     <div className="flex flex-row items-center gap-1">
                       <Image
                         src="/icon-tether.png"
@@ -3637,8 +3768,8 @@ const fetchBuyOrders = async () => {
                       <span className="text-xl font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}
                       >
-                        {Number(tradeSummary.totalSettlementAmount
-                          ? tradeSummary.totalSettlementAmount
+                        {Number(buyOrderStats.totalSettlementAmount
+                          ? buyOrderStats.totalSettlementAmount
                           : 0
                         ).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                       </span>
@@ -3646,23 +3777,24 @@ const fetchBuyOrders = async () => {
                   </div>
 
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 수수료금액(원)</div>
+                    <div className="text-sm">결제금액(원)</div>
                     <div className="flex flex-row items-center gap-1">
                       <span className="text-xl font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}
                       >
-
                         {
-                          Number(tradeSummary.totalFeeAmountKRW + tradeSummary.totalAgentFeeAmountKRW)
-                          .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        Number(buyOrderStats.totalSettlementAmountKRW)
+                        .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                         }
-
                       </span>
                       
                     </div>
                   </div>
+
+
+
                   <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">총 수수료수량(USDT)</div>
+                    <div className="text-sm">결제 수수료수량(USDT)</div>
                     <div className="flex flex-row items-center gap-1">
                       <Image
                         src="/icon-tether.png"
@@ -3675,13 +3807,29 @@ const fetchBuyOrders = async () => {
                         style={{ fontFamily: 'monospace' }}
                       >
                       {
-                        (tradeSummary.totalFeeAmount + tradeSummary.totalAgentFeeAmount)
+                        (buyOrderStats.totalFeeAmount + buyOrderStats.totalAgentFeeAmount)
                         .toFixed(3)
                         .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                       }
                       </span>
                     </div>
                   </div>
+
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">결제 수수료금액(원)</div>
+                    <div className="flex flex-row items-center gap-1">
+                      <span className="text-xl font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                          Number(buyOrderStats.totalFeeAmountKRW + buyOrderStats.totalAgentFeeAmountKRW)
+                          .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        }
+                      </span>
+                      
+                    </div>
+                  </div>
+
                 </div>
 
 
@@ -3890,9 +4038,6 @@ const fetchBuyOrders = async () => {
                                   height={20}
                                   className="w-5 h-5"
                                 />
-                                <div className="text-sm text-blue-600 font-semibold">
-                                  {item?.nickname.length > 8 ? item?.nickname.substring(0, 8) + '...' : item?.nickname}
-                                </div>
                                 {item?.userType === 'AAA' ? (
                                   <div className="
                                     text-xs text-white bg-red-500 px-1 rounded-md
@@ -3924,6 +4069,10 @@ const fetchBuyOrders = async () => {
                                     일반
                                   </div>
                                 )}
+                                <span className="text-sm text-blue-600 font-semibold">
+                                  {item?.nickname.length > 8 ? item?.nickname.substring(0, 8) + '...' : item?.nickname}
+                                </span>
+
                               </div>
 
                               {/* wallet address */}

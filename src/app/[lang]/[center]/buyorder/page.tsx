@@ -4570,102 +4570,98 @@ const fetchBuyOrders = async () => {
             <div className="xl:w-2/3 w-full
               flex flex-col sm:flex-row items-start justify-end gap-4">
               
-              <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
+              <Image
+                src="/icon-payment.png"
+                alt="Payment"
+                width={50}
+                height={50}
+                className="w-16 h-16 rounded-lg object-cover"
+              /> 
 
-                <Image
-                  src="/icon-payment.png"
-                  alt="Payment"
-                  width={50}
-                  height={50}
-                  className="w-16 h-16 rounded-lg object-cover"
-                /> 
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">결제수(건)</div>
+                <div className="text-4xl font-semibold text-zinc-500">
+                  {buyOrderStats.totalSettlementCount?.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex flex-row items-center justify-center gap-2">
 
                 <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">결제수(건)</div>
-                  <div className="text-4xl font-semibold text-zinc-500">
-                    {buyOrderStats.totalSettlementCount?.toLocaleString()}
+                  <div className="text-sm">결제량(USDT)</div>
+                  <div className="flex flex-row items-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-xl font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {buyOrderStats.totalSettlementAmount
+                      && buyOrderStats.totalSettlementAmount.toFixed(3)
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex flex-row items-center justify-center gap-2">
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제량(USDT)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {buyOrderStats.totalSettlementAmount
-                        && buyOrderStats.totalSettlementAmount.toFixed(3)
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                      </span>
-                    </div>
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">결제금액(원)</div>
+                  <div className="flex flex-row items-center gap-1"> 
+                    <span className="text-xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {
+                      Number(buyOrderStats.totalSettlementAmountKRW)
+                      .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                    </span>
+                    
                   </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제금액(원)</div>
-                    <div className="flex flex-row items-center gap-1"> 
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                        Number(buyOrderStats.totalSettlementAmountKRW)
-                        .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                      
-                    </div>
-                  </div>
-
                 </div>
 
+              </div>
 
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제 수수료량(USDT)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          (buyOrderStats.totalFeeAmount + buyOrderStats.totalAgentFeeAmount)
-                          .toFixed(3)
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                    </div>
+
+              <div className="flex flex-row items-center justify-center gap-2">
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">결제 수수료량(USDT)</div>
+                  <div className="flex flex-row items-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-xl font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {
+                        (buyOrderStats.totalFeeAmount + buyOrderStats.totalAgentFeeAmount)
+                        .toFixed(3)
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                    </span>
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제 수수료금액(원)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          Number(buyOrderStats.totalFeeAmountKRW + buyOrderStats.totalAgentFeeAmountKRW)
-                          .toFixed(0)
-                          .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                      
-                    </div>
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">결제 수수료금액(원)</div>
+                  <div className="flex flex-row items-center gap-1">
+                    <span className="text-xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {
+                        Number(buyOrderStats.totalFeeAmountKRW + buyOrderStats.totalAgentFeeAmountKRW)
+                        .toFixed(0)
+                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                      }
+                    </span>
+                    
                   </div>
-
                 </div>
 
               </div>
@@ -5185,13 +5181,6 @@ const fetchBuyOrders = async () => {
                                 height={20}
                                 className="rounded-sm w-5 h-5"
                               />                         
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {
-                                  item?.nickname?.length > 10 ?
-                                  item?.nickname?.substring(0, 10) + '...' :
-                                  item?.nickname
-                                }
-                              </span>
                               {
                               item?.userType === 'AAA'
                               ? (<div className="
@@ -5228,6 +5217,14 @@ const fetchBuyOrders = async () => {
                                   </div>
                               )
                               }
+                              <span className="text-sm text-zinc-500 font-semibold">
+                                {
+                                  item?.nickname?.length > 8 ?
+                                  item?.nickname?.substring(0, 8) + '...' :
+                                  item?.nickname
+                                }
+                              </span>
+
                             </div>
 
 
@@ -5256,7 +5253,7 @@ const fetchBuyOrders = async () => {
 
                             {/* buyer info */}
 
-                            <div className="flex flex-row items-center gap-2">
+                            <div className="flex flex-row items-center justify-start gap-1">
                               <span className="text-lg text-gray-800 font-bold">
                                 {
                                   item?.buyer?.depositName
@@ -5283,7 +5280,7 @@ const fetchBuyOrders = async () => {
 
                           {item?.userStats?.totalPaymentConfirmedCount ? (
                             
-                            <div className="w-full flex flex-row items-center justify-between gap-2">
+                            <div className="w-full flex flex-row items-center justify-between gap-1">
 
                               <Image
                                 src="/icon-user-stats.png"
@@ -5331,7 +5328,7 @@ const fetchBuyOrders = async () => {
 
                           ) : (
 
-                            <div className="flex flex-row items-center justify-center gap-2">
+                            <div className="flex flex-row items-center justify-center gap-1">
                               <Image
                                 src="/icon-new-user.png"
                                 alt="New User"
