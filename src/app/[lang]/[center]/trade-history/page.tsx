@@ -790,47 +790,31 @@ export default function Index({ params }: any) {
 
 
 
-  // limit number
-  const [limitValue, setLimitValue] = useState(limit || 20);
+  const [limitValue, setLimitValue] = useState(20);
   useEffect(() => {
-    setLimitValue(limit || 20);
-  }, [limit]);
+    const limit = searchParams.get('limit') || 20;
+    setLimitValue(Number(limit));
+  }, [searchParams]);
 
-  // page number
-  const [pageValue, setPageValue] = useState(page || 1);
+
+
+  const [pageValue, setPageValue] = useState(1);
   useEffect(() => {
-    setPageValue(page || 1);
-  }, [page]);
-  
+    const page = searchParams.get('page') || 1;
+    setPageValue(Number(page));
+  }, [searchParams]);
 
 
+
+  const today = new Date();
+  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
 
   // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState("");
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-    const today = new Date();
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+  const [searchToDate, setSearchToDate] = useState(formattedDate);
 
-
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchFormDate(formattedDate);
-  }, []);
-
-
-
-
-  const [searchToDate, setSearchToDate] = useState("");
-
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-    const today = new Date();
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchToDate(formattedDate);
-  }, []);
-
+ 
 
 
 
