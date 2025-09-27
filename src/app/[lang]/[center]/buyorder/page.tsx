@@ -4967,7 +4967,7 @@ const fetchBuyOrders = async () => {
 
                     <th className="p-2">
                       <div className="flex flex-col items-start justify-center gap-2">
-                        <span>P2P구매자 아이디</span>
+                        <span>P2P 구매자 아이디</span>
                         <span>USDT지갑</span>
                         <span>입금자</span>
                       </div>
@@ -4989,7 +4989,7 @@ const fetchBuyOrders = async () => {
                       <div className="flex flex-col items-start justify-center gap-2">
 
                         <span className="text-sm text-zinc-50 font-semibold">
-                          P2P판매자 아이디
+                          P2P 판매자 아이디
                         </span>
                         <span className="text-sm text-zinc-50 font-semibold">
                           USDT지갑
@@ -5135,7 +5135,7 @@ const fetchBuyOrders = async () => {
 
                         <div className="
 
-                          w-36 
+                          w-32  
                           flex flex-col sm:flex-row items-start justify-start gap-2
                           bg-zinc-100
                           rounded-lg
@@ -5151,13 +5151,8 @@ const fetchBuyOrders = async () => {
 
                           "
                           onClick={() => {
-
-                            // copy traideId to clipboard
                             navigator.clipboard.writeText(item.tradeId);
                             toast.success("거래번호가 복사되었습니다.");
-
-
-
                           }}
                         
                         >
@@ -5259,7 +5254,9 @@ const fetchBuyOrders = async () => {
                       </td>
                       
                       <td className="p-2">
-                        <div className="flex flex-col items-start justify-start gap-2">
+                        <div className="
+                          w-38
+                          flex flex-col items-start justify-start gap-2">
                           {/*
                           <Image
                             src={item.avatar || "/profile-default.png"}
@@ -5359,25 +5356,36 @@ const fetchBuyOrders = async () => {
                             {/* buyer info */}
 
                             <div className="flex flex-row items-center justify-start gap-1">
-                              <span className="text-lg text-gray-800 font-bold">
-                                {
-                                  item?.buyer?.depositName
-                                }
-                              </span>
-                              <span className="
-                                hidden sm:flex
-                                text-sm text-zinc-500">
-                                {
-                                  item?.buyer?.depositBankName
-                                }
-                              </span>
-                              <span className="
-                                text-sm text-zinc-500">
-                                {
-                                  item?.buyer?.depositBanktAccountNumber &&
-                                  item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
-                                }
-                              </span>
+                              <Image
+                                src="/icon-bank.png"
+                                alt="Bank"
+                                width={20}
+                                height={20}
+                                className="rounded-sm w-5 h-5"
+                              />
+
+                              <div className="flex flex-row items-center justify-start gap-1">
+                                <span className="text-lg text-gray-800 font-bold">
+                                  {
+                                    item?.buyer?.depositName
+                                  }
+                                </span>
+                                <span className="
+                                  hidden sm:flex
+                                  text-sm text-zinc-500">
+                                  {
+                                    item?.buyer?.depositBankName
+                                  }
+                                </span>
+                                <span className="
+                                  text-sm text-zinc-500">
+                                  {
+                                    item?.buyer?.depositBanktAccountNumber &&
+                                    item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
+                                  }
+                                </span>
+                              </div>
+
                             </div>
 
                           </div>
@@ -6024,6 +6032,21 @@ const fetchBuyOrders = async () => {
 
                             {/* seller bank info */}
                             <div className="flex flex-row gap-2 items-center justify-center">
+
+                              <span className="text-sm text-zinc-500">
+                                {/*item.seller?.bankInfo?.bankName*/}
+                                {
+                                  item?.userType === 'AAA'
+                                  ? item.store?.bankInfoAAA?.bankName
+                                  : item?.userType === 'BBB'
+                                  ? item.store?.bankInfoBBB?.bankName
+                                  : item?.userType === 'CCC'
+                                  ? item.store?.bankInfoCCC?.bankName
+                                  : item?.userType === 'DDD'
+                                  ? item.store?.bankInfoDDD?.bankName
+                                  : item.store?.bankInfo?.bankName
+                                }
+                              </span>
                               <span className="text-lg text-gray-800 font-bold">
                                 {/*item.seller?.bankInfo?.accountHolder*/}
                                 
@@ -6040,20 +6063,7 @@ const fetchBuyOrders = async () => {
                                 }
 
                               </span>
-                              <span className="text-sm text-zinc-500">
-                                {/*item.seller?.bankInfo?.bankName*/}
-                                {
-                                  item?.userType === 'AAA'
-                                  ? item.store?.bankInfoAAA?.bankName
-                                  : item?.userType === 'BBB'
-                                  ? item.store?.bankInfoBBB?.bankName
-                                  : item?.userType === 'CCC'
-                                  ? item.store?.bankInfoCCC?.bankName
-                                  : item?.userType === 'DDD'
-                                  ? item.store?.bankInfoDDD?.bankName
-                                  : item.store?.bankInfo?.bankName
-                                }
-                              </span>
+
 
                             </div>
 
@@ -6121,6 +6131,20 @@ const fetchBuyOrders = async () => {
 
                             <div className="flex flex-col gap-2 items-center justify-center">
                               <div className="flex flex-row items-center gap-2">
+
+                                <div className="text-sm text-zinc-500">
+                                  {/*item.seller?.bankInfo?.bankName*/}
+                                  {item?.userType === 'AAA'
+                                    ? item.store?.bankInfoAAA?.bankName
+                                    : item?.userType === 'BBB'
+                                    ? item.store?.bankInfoBBB?.bankName
+                                    : item?.userType === 'CCC'
+                                    ? item.store?.bankInfoCCC?.bankName
+                                    : item?.userType === 'DDD'
+                                    ? item.store?.bankInfoDDD?.bankName
+                                    : item.store?.bankInfo?.bankName
+                                  }
+                                </div>
                                 <div className="text-lg text-gray-800 font-bold">
                                   {/*item.seller?.bankInfo?.accountHolder*/}
                                   {
@@ -6135,19 +6159,7 @@ const fetchBuyOrders = async () => {
                                     : item.store?.bankInfo?.accountHolder
                                   }
                                 </div>
-                                <div className="text-sm text-zinc-500">
-                                  {/*item.seller?.bankInfo?.bankName*/}
-                                  {item?.userType === 'AAA'
-                                    ? item.store?.bankInfoAAA?.bankName
-                                    : item?.userType === 'BBB'
-                                    ? item.store?.bankInfoBBB?.bankName
-                                    : item?.userType === 'CCC'
-                                    ? item.store?.bankInfoCCC?.bankName
-                                    : item?.userType === 'DDD'
-                                    ? item.store?.bankInfoDDD?.bankName
-                                    : item.store?.bankInfo?.bankName
-                                  }
-                                </div>
+
                               </div>
                               {/*
                               <div className="text-sm text-zinc-500">
