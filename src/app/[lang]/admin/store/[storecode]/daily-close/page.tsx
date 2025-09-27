@@ -1799,12 +1799,12 @@ const fetchBuyOrders = async () => {
 
                           <td>
                             <div className="flex flex-col px-4 py-2">
-                              <span className="text-sm text-[#409192] font-semibold"
+                              <span className="text-sm text-[#409192] font-semibold text-right"
                                 style={{ fontFamily: 'monospace' }}
                               >
                                 {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                               </span>
-                              <span className="text-sm text-yellow-600 font-semibold"
+                              <span className="text-sm text-yellow-600 font-semibold text-right"
                                 style={{ fontFamily: 'monospace' }}
                               >
                                 {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}

@@ -1795,20 +1795,23 @@ export default function Index({ params }: any) {
 
             {/* escrow history table */}
             
-            <div className="w-full flex flex-col items-start justify-start gap-2 mt-4">
+            <div className="max-w-screen-lg flex flex-col items-start justify-start gap-2 mt-4">
 
               <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
 
                 <thead className="bg-zinc-200">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                      날짜
+                      처리시간
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
+                      정산날짜
                     </th>
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      입금량(USDT)
+                      보유금 정산량(USDT)
                     </th>
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      출금량(USDT)
+                      보유금 충전량/차감량(USDT)
                     </th>
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
                       처리전 보유량(USDT)
@@ -1826,7 +1829,21 @@ export default function Index({ params }: any) {
                   escrowHistory.map((escrow, index) => (
                     <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
                       <td className="px-4 py-2 text-sm text-zinc-700">
+                        {new Date(escrow.createdAt).toLocaleString('ko-KR')}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-zinc-700">
                         {new Date(escrow.date).toLocaleDateString('ko-KR')}
+                      </td>
+
+
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {
+                          escrow.withdrawAmount
+                          ? Number(escrow.withdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : 0
+                        }
                       </td>
 
                       <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
@@ -1839,15 +1856,6 @@ export default function Index({ params }: any) {
                         }
                       </td>
 
-                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrow.withdrawAmount
-                          ? Number(escrow.withdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : 0
-                        }
-                      </td>
 
                       <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                         style={{ fontFamily: 'monospace' }}
