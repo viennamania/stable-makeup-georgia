@@ -4912,29 +4912,38 @@ const fetchBuyOrders = async () => {
                             item?.paymentMethod === 'mkrw' ? (
                               <></>
                             ) : (
-                              <div className="w-full flex flex-row items-center justify-start gap-2">
-                                <span className="text-lg text-gray-800 font-bold">
-                                  {
-                                    item?.buyer?.depositName
-                                  }
-                                </span>
-                                <span className="
-                                  hidden sm:flex
-                                  text-sm text-zinc-500">
-                                  {
-                                    item?.buyer?.depositBankName ? item?.buyer?.depositBankName : '은행명 없음'
-                                  }
-                                </span>
-                                {/*
-                                <span className="
-                                  text-sm text-zinc-500">
-                                  {
-                                    item?.buyer?.depositBanktAccountNumber ?
-                                    item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
-                                    : '계좌번호 없음'
-                                  }
-                                </span>
-                                */}
+                              <div className="w-full flex flex-row items-center justify-start gap-1">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Deposit Name"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <div className="flex flex-row items-center justify-start gap-1">
+                                  <span className="text-lg text-gray-800 font-bold">
+                                    {
+                                      item?.buyer?.depositName
+                                    }
+                                  </span>
+                                  <span className="
+                                    hidden sm:flex
+                                    text-sm text-zinc-500">
+                                    {
+                                      item?.buyer?.depositBankName ? item?.buyer?.depositBankName : '은행명 없음'
+                                    }
+                                  </span>
+                                  {/*
+                                  <span className="
+                                    text-sm text-zinc-500">
+                                    {
+                                      item?.buyer?.depositBanktAccountNumber ?
+                                      item?.buyer?.depositBanktAccountNumber.substring(0, 3) + '...'
+                                      : '계좌번호 없음'
+                                    }
+                                  </span>
+                                  */}
+                                </div>
                               </div>
                             )}
 
