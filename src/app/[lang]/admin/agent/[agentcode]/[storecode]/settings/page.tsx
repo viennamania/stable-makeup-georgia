@@ -2993,7 +2993,7 @@ export default function SettingsPage({ params }: any) {
                                         className="bg-[#3167b4] text-zinc-100 rounded-lg p-2 text-sm"
                                         disabled={!address}
                                     >
-                                        일일 마감 페이지로 이동
+                                        보유금 관리
                                     </button>
 
                                     {/*

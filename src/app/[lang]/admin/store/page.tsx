@@ -3042,24 +3042,124 @@ export default function Index({ params }: any) {
                           <td className="
                             p-2">
                             <div className="h-56
-                              w-28
+                              w-38  
                               flex flex-col items-between justify-between gap-2">
                               
                               <div className="flex flex-col items-center gap-2">
-
-
                                 
                                 {/* 판매자 통장 */}
                                 {item?.bankInfo ? (
-                                  <div className="flex flex-col sm:flex-row items-center gap-2">
-                                  {
-                                    item?.bankInfo?.bankName
-                                  }
-                                  {' '}
-                                  {
-                                    item?.bankInfo?.accountHolder
-                                  }
+
+                                  <div className="w-full flex flex-col items-start justify-center">
+
+                                    {/* 일반 */}
+                                    {item?.bankInfo && (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <div className="w-10 h-5 rounded-full bg-zinc-500 flex items-center justify-center">
+                                        <span className="text-xs text-white">일반</span>
+                                      </div>
+                                      <span className="text-sm text-zinc-500">
+                                          {item?.bankInfo?.accountNumber.length > 5 ? (
+                                            <>
+                                              {item?.bankInfo?.accountHolder
+                                              + " " + item?.bankInfo?.bankName}
+                                            </>
+                                          ) : (
+                                            <>
+                                              {item?.bankInfo?.accountHolder
+                                              + " " + item?.bankInfo?.bankName}
+                                            </>
+                                          )}
+                                      </span>
+                                    </div>
+                                    )}
+                                    {/* 1등급 */}
+                                    {item?.bankInfoAAA && (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <div className="w-10 h-5 rounded-full bg-red-500 flex items-center justify-center">
+                                        <span className="text-xs text-white">1등급</span>
+                                      </div>
+                                      <span className="text-sm text-zinc-500">
+                                          {item?.bankInfoAAA?.accountNumber.length > 5 ? (
+                                            <>
+                                              {item?.bankInfoAAA?.accountHolder
+                                              + " " + item?.bankInfoAAA?.bankName}
+                                            </>
+                                          ) : (
+                                            <>
+                                              {item?.bankInfoAAA?.accountHolder
+                                              + " " + item?.bankInfoAAA?.bankName}
+                                            </>
+                                          )}
+                                      </span>
+                                    </div>
+                                    )}
+                                    {/* 2등급 */}
+                                    {item?.bankInfoBBB && (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <div className="w-10 h-5 rounded-full bg-orange-500 flex items-center justify-center">
+                                        <span className="text-xs text-white">2등급</span>
+                                      </div>
+                                      <span className="text-sm text-zinc-500">
+                                          {item?.bankInfoBBB?.accountNumber.length > 5 ? (
+                                            <>
+                                              {item?.bankInfoBBB?.accountHolder
+                                              + " " + item?.bankInfoBBB?.bankName}
+                                            </>
+                                          ) : (
+                                            <>
+                                              {item?.bankInfoBBB?.accountHolder
+                                              + " " + item?.bankInfoBBB?.bankName}
+                                            </>
+                                          )}
+                                      </span>
+                                    </div>
+                                    )}
+                                    {/* 3등급 */}
+                                    {item?.bankInfoCCC && (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <div className="w-10 h-5 rounded-full bg-yellow-500 flex items-center justify-center">
+                                        <span className="text-xs text-white">3등급</span>
+                                      </div>
+                                      <span className="text-sm text-zinc-500">
+                                          {item?.bankInfoCCC?.accountNumber.length > 5 ? (
+                                            <>
+                                              {item?.bankInfoCCC?.accountHolder
+                                              + " " + item?.bankInfoCCC?.bankName}
+                                            </>
+                                          ) : (
+                                            <>
+                                              {item?.bankInfoCCC?.accountHolder
+                                              + " " + item?.bankInfoCCC?.bankName}
+                                            </>
+                                          )}
+                                      </span>
+                                    </div>
+                                    )}
+                                    {/* 4등급 */}
+                                    {item?.bankInfoDDD && (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <div className="w-10 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                                        <span className="text-xs text-white">4등급</span>
+                                      </div>
+                                      <span className="text-sm text-zinc-500">
+                                          {item?.bankInfoDDD?.accountNumber.length > 5 ? (
+                                            <>
+                                              {item?.bankInfoDDD?.accountHolder
+                                              + " " + item?.bankInfoDDD?.bankName}
+                                            </>
+                                          ) : (
+                                            <>
+                                              {item?.bankInfoDDD?.accountHolder
+                                              + " " + item?.bankInfoDDD?.bankName}
+                                            </>
+                                          )}
+                                      </span>
+                                    </div>
+                                    )}
+                                  
                                   </div>
+
                                 ) : (
                                   <div className="flex flex-col sm:flex-row items-center gap-2">
                                     <span className="text-sm text-red-500">
@@ -3109,6 +3209,19 @@ export default function Index({ params }: any) {
                                 </div>
 
                               </div>
+
+                              <button
+                                  onClick={() => router.push(`/${params.lang}/admin/store/${item.storecode}/daily-close`)}
+                                  className={`
+                                    ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}
+                                    w-full mb-2
+                                    bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                    hover:bg-[#3167b4]/80
+                                  `}
+                                  disabled={!isAdmin}
+                              >
+                                  보유금 관리
+                              </button>
 
                             </div>
 
@@ -3589,6 +3702,7 @@ export default function Index({ params }: any) {
                               </button>
 
                             </div>
+
                           </td>
                           )}
 

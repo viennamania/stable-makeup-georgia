@@ -3845,6 +3845,7 @@ const fetchBuyOrders = async () => {
                 <div className="w-full flex flex-col items-start justify-center">
 
                   {/* 일반 */}
+                  {store?.bankInfo && (
                   <div className="flex flex-row items-center gap-1">
                     <div className="w-10 h-5 rounded-full bg-zinc-500 flex items-center justify-center">
                       <span className="text-xs text-white">일반</span>
@@ -3865,6 +3866,7 @@ const fetchBuyOrders = async () => {
                         )}
                     </span>
                   </div>
+                  )}
                   {/* 1등급 */}
                   {store?.bankInfoAAA && (
                   <div className="flex flex-row items-center gap-1">

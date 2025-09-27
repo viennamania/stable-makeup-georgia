@@ -904,6 +904,10 @@ export async function getAllStores(
           
 
           bankInfo: 1,
+          bankInfoAAA: 1,
+          bankInfoBBB: 1,
+          bankInfoCCC: 1,
+          bankInfoDDD: 1,
 
  
           agentcode: 1,
