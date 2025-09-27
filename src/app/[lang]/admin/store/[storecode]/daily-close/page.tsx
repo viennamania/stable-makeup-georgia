@@ -1743,22 +1743,31 @@ const fetchBuyOrders = async () => {
                       </th>
                       {/* align right */}
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
-
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                        P2P 거래량(USDT)
+                        <br />
+                        P2P 거래금액(원)
+                      </th>
+               
                       {/*
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
                       */}
 
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
-
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                        AG 수수료량(USDT)
+                        <br />
+                        AG 수수료금액(원)
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                        PG 수수료량(USDT)
+                        <br />
+                        PG 수수료금액(원)
+                      </th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                        결제량(USDT)
+                        <br />
+                        결제금액(원)
+                      </th>
                       {/* escrow withdraw */}
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
                         보유금 정산처리(USDT)
@@ -1781,62 +1790,71 @@ const fetchBuyOrders = async () => {
                           <td className="px-4 py-2 text-sm text-zinc-700">
                             {new Date(order.date).toLocaleDateString('ko-KR')}
                           </td>
+
                           {/* align right */}
                           <td className="px-4 py-2 text-sm text-zinc-700 text-right">
                             {order.totalCount ? order.totalCount.toLocaleString() : 0}
                           </td>
 
 
-                          <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          </td>
-
-                          {/*
-                          <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                            {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
-                            {' / '}
-                            {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
-                          </td>
-                          */}
-
-                          <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          <td>
+                            <div className="flex flex-col px-4 py-2">
+                              <span className="text-sm text-[#409192] font-semibold"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                              <span className="text-sm text-yellow-600 font-semibold"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                            </div>
                           </td>
 
-                          <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          <td>
+                            <div className="flex flex-col px-4 py-2">
+                              <span className="text-sm text-[#409192] font-semibold text-right"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                              <span className="text-sm text-yellow-600 font-semibold text-right"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                            </div>
                           </td>
 
-                          <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          <td>
+                            <div className="flex flex-col px-4 py-2">
+                              <span className="text-sm text-[#409192] font-semibold text-right"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                              <span className="text-sm text-yellow-600 font-semibold text-right"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                            </div>
                           </td>
-                          <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+
+                          <td>
+                            <div className="flex flex-col px-4 py-2">
+                              <span className="text-sm text-[#409192] font-semibold text-right"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                              <span className="text-sm text-yellow-600 font-semibold text-right"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              </span>
+                            </div>
                           </td>
 
 
