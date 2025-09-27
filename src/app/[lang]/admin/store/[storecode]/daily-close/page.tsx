@@ -91,6 +91,7 @@ import { useSearchParams } from 'next/navigation';
     */
 
 interface BuyOrder {
+  createdAt: string,
 
   date: string,
 
@@ -1027,11 +1028,27 @@ const fetchBuyOrders = async () => {
 
 
 
+  const [withdrawingEscrow, setWithdrawingEscrow] = useState([] as any) ;
+   useEffect(() => {
+    setWithdrawingEscrow([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setWithdrawingEscrow(newArray);
+  } , [buyOrders.length]);
 
 
-  
+  const withdrawEscrow = async (index: number, date: string, withdrawAmount: number) => {
 
-  const withdrawEscrow = async (date: string, withdrawAmount: number) => {
+    if (withdrawingEscrow[index]) {
+      return;
+    }
+
+    setWithdrawingEscrow(
+      withdrawingEscrow.map((item: boolean, idx: number): boolean => idx === index ? true : item)
+    );
+
 
     const response = await fetch('/api/escrow/withdraw', {
       method: 'POST',
@@ -1047,6 +1064,10 @@ const fetchBuyOrders = async () => {
 
     if (!response.ok) {
       toast.error('Failed to withdraw from escrow');
+      
+      setWithdrawingEscrow(
+        withdrawingEscrow.map((item: boolean, idx: number): boolean => idx === index ? false : item)
+      );
       return;
     }
 
@@ -1069,6 +1090,9 @@ const fetchBuyOrders = async () => {
 
     if (!responseStore.ok) {
       toast.error('Failed to fetch store data');
+      setWithdrawingEscrow(
+        withdrawingEscrow.map((item: boolean, idx: number): boolean => idx === index ? false : item)
+      );
       return;
     }
 
@@ -1096,10 +1120,7 @@ const fetchBuyOrders = async () => {
         }),
       });
 
-      if (!response.ok) {
-        toast.error('Failed to fetch escrow history');
-        return;
-      }
+
 
       const data = await response.json();
 
@@ -1108,6 +1129,9 @@ const fetchBuyOrders = async () => {
 
     fetchEscrowHistory();
 
+    setWithdrawingEscrow(
+      withdrawingEscrow.map((item: boolean, idx: number): boolean => idx === index ? false : item)
+    );
 
     return data.result;
 
@@ -1120,8 +1144,13 @@ const fetchBuyOrders = async () => {
   ///const [depositEscrowDate, setDepositEscrowDate] = useState("");
   
   const [depositEscrowAmount, setDepositEscrowAmount] = useState(0);
+  const [depositingEscrow, setDepositingEscrow] = useState(false);
 
   const depositEscrow = async (depositAmount: number) => {
+    if (depositingEscrow) {
+      return;
+    }
+    setDepositingEscrow(true);
 
     // date is set to today
     const date = new Date();
@@ -1143,10 +1172,12 @@ const fetchBuyOrders = async () => {
 
     if (!response.ok) {
       toast.error('Failed to deposit to escrow');
+      setDepositingEscrow(false);
       return;
     }
 
     toast.success('Escrow deposit successful');
+    setDepositEscrowAmount(0);
 
     const data = await response.json();
 
@@ -1165,6 +1196,7 @@ const fetchBuyOrders = async () => {
 
     if (!responseStore.ok) {
       toast.error('Failed to fetch store data');
+      setDepositingEscrow(false);
       return;
     }
 
@@ -1192,10 +1224,6 @@ const fetchBuyOrders = async () => {
         }),
       });
 
-      if (!response.ok) {
-        toast.error('Failed to fetch escrow history');
-        return;
-      }
 
       const data = await response.json();
 
@@ -1204,9 +1232,108 @@ const fetchBuyOrders = async () => {
 
     fetchEscrowHistory();
 
+    setDepositingEscrow(false);
+
     return data.result;
   };
   
+
+
+  // deduct Escrow function
+  const [deductEscrowAmount, setDeductEscrowAmount] = useState(0);
+  const [deductingEscrow, setDeductingEscrow] = useState(false);
+
+  const deductEscrow = async (deductAmount: number) => {
+    if (deductingEscrow) {
+      return;
+    }
+    setDeductingEscrow(true);
+
+    // date is set to today
+    const date = new Date();
+    date.setHours(date.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+    const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+   const response = await fetch('/api/escrow/deposit', {
+     method: 'POST',
+     headers: {
+       'Content-Type': 'application/json',
+     },
+     body: JSON.stringify({
+       storecode: params.storecode,
+       date: formattedDate,
+       depositAmount: // deductAmount to minus -deductAmount
+       -deductAmount
+     }),
+   });
+
+   if (!response.ok) {
+     toast.error('Failed to deduct from escrow');
+     setDeductingEscrow(false);
+     return;
+   }
+
+   toast.success('Escrow deduction successful');
+   setDeductEscrowAmount(0);
+
+
+   const data = await response.json();
+
+   // get store.escrowAmountUSDT from storecode
+   // api getStoreEscrowAmountUSDT
+
+   const responseStore = await fetch('/api/store/getOneStore', {
+     method: 'POST',
+     headers: {
+       'Content-Type': 'application/json',
+     },
+     body: JSON.stringify({
+       storecode: params.storecode,
+     }),
+   });
+
+   if (!responseStore.ok) {
+     toast.error('Failed to fetch store data');
+     setDeductingEscrow(false);
+     return;
+   }
+
+   const storeData = await responseStore.json();
+
+   //console.log("storeData", storeData);
+
+   if (storeData.result) {
+
+     setStore(storeData.result);
+
+   }
+
+   // get escrow history
+   const fetchEscrowHistory = async () => {
+     const response = await fetch('/api/escrow/history', {
+       method: 'POST',
+       headers: {
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify({
+         storecode: params.storecode,
+         limit: 100,
+         page: 1,
+       }),
+     });
+
+
+     const data = await response.json();
+
+     setEscrowHistory(data.result.escrows || []);
+   };
+
+   fetchEscrowHistory();
+
+   setDeductingEscrow(false);
+
+   return data.result;
+  };
 
 
 
@@ -1357,7 +1484,7 @@ const fetchBuyOrders = async () => {
                 <div className="text-xl font-semibold">
                 가맹점{' '}{
                     store && store.storeName + " (" + store.storecode + ")"
-                }{' '}에스크로관리
+                }{' '}보유금 관리
                 </div>
             </div>
 
@@ -1405,32 +1532,110 @@ const fetchBuyOrders = async () => {
             </div>
 
 
-            {/* dpposit date picker and deposit amount and deposit escrow button */}
+            
             <div className="flex flex-row items-center justify-between gap-2 mt-4">
-              
+
+              {/* deposit date picker and deposit amount and deposit escrow button */}
               <div className="flex flex-col items-start justify-start gap-2 w-full">
                 <label className="text-sm text-zinc-500 font-semibold">
-                  에스크로 입금 금액(USDT)
+                  가맹점 보유금 충전 금액(USDT)
                 </label>
                 <input
                   type="number"
                   value={depositEscrowAmount}
-                  onChange={(e) => setDepositEscrowAmount(Number(e.target.value))}
-                  className="w-full p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) => {
+                    // if prefix 0, then remove 0
+                    if (e.target.value.startsWith('0')) {
+                      e.target.value = e.target.value.replace(/^0+/, '');
+                    }
+
+                    const value = Number(e.target.value) || 0;
+                    if (value <= 0) {
+                      setDepositEscrowAmount(0);
+                    } else {
+                      setDepositEscrowAmount( Number(value.toFixed(3)) );
+                    }
+                  }}
+                  disabled={depositingEscrow}
+                  className={`w-72 h-10 px-3 py-2 border border-zinc-300 rounded-md
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  text-lg font-semibold text-zinc-700
+                  ${depositingEscrow ? "bg-gray-100" : "bg-white"}
+                  `}
+                  placeholder="충전할 USDT 금액을 입력하세요"
                 />
+                <button
+                  //onClick={() => depositEscrow(depositEscrowAmount)}
+                  // onClick confirm
+                  onClick={() => {
+                    if (confirm(`정말로 ${depositEscrowAmount} USDT를 가맹점 보유금으로 충전하시겠습니까?`)) {
+                      depositEscrow(depositEscrowAmount);
+                    }
+                  }}
+                  disabled={depositEscrowAmount <= 0 || depositingEscrow}
+                  className={`
+                    ${depositEscrowAmount <= 0 || depositingEscrow ? "bg-gray-300 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}
+                    w-72 h-10 flex items-center justify-center
+                    text-white font-semibold py-2 px-4 rounded-md transition duration-200 ease-in-out
+                  `}
+                >
+                  {depositingEscrow ? "충전 처리중..." : "가맹점 보유금 충전 처리"}
+                </button>
+
               </div>
 
-              <button
-                onClick={() => depositEscrow(depositEscrowAmount)}
-                disabled={depositEscrowAmount <= 0}
-                className={`
-                  ${depositEscrowAmount <= 0 ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}
-                  w-72 h-10 flex items-center justify-center
-                  text-white font-semibold py-2 px-4 rounded-md transition duration-200 ease-in-out
-                `}
-              >
-                에스크로 입금
-              </button>
+              {/* deposit date picker and deduction amount and deduction escrow button */}
+              <div className="flex flex-col items-start justify-start gap-2 w-full">
+                <label className="text-sm text-zinc-500 font-semibold">
+                  가맹점 보유금 차감 금액(USDT)
+                </label>
+                <input
+                  type="number"
+                  value={deductEscrowAmount}
+                  ///onChange={(e) => setDeductEscrowAmount(Number(e.target.value))}
+                  // check plus number only
+                  onChange={(e) => {
+                    // if prefix 0, then remove 0
+                    if (e.target.value.startsWith('0')) {
+                      e.target.value = e.target.value.replace(/^0+/, '');
+                    }
+
+                    const value = Number(e.target.value) || 0;
+                    if (value <= 0) {
+                      setDeductEscrowAmount(0);
+                    } else {
+                      setDeductEscrowAmount( Number(value.toFixed(3)) );
+                    }
+                  }}
+                  disabled={deductingEscrow}
+                  className={`w-72 h-10 px-3 py-2 border border-zinc-300 rounded-md
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  text-lg font-semibold text-zinc-700
+                  ${deductingEscrow ? "bg-gray-100" : "bg-white"}
+                  `}
+                  placeholder="차감할 USDT 금액을 입력하세요"
+                />
+                <button
+                  //onClick={() => deductEscrow(deductEscrowAmount)}
+                  // onClick confirm
+                  onClick={() => {
+                    if (confirm(`정말로 ${deductEscrowAmount} USDT를 가맹점 보유금에서 차감하시겠습니까?`)) {
+                      deductEscrow(deductEscrowAmount);
+                    }
+                  }}
+                  disabled={deductEscrowAmount <= 0 || deductingEscrow}
+                  className={`
+                    ${deductEscrowAmount <= 0 || deductingEscrow ? "bg-gray-300 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"}
+                    w-72 h-10 flex items-center justify-center
+                    text-white font-semibold py-2 px-4 rounded-md transition duration-200 ease-in-out
+                  `}
+                >
+                  {deductingEscrow ? "차감 처리중..." : "가맹점 보유금 차감 처리"}
+                </button>
+
+              </div>
+
+
             </div>
 
 
@@ -1438,29 +1643,31 @@ const fetchBuyOrders = async () => {
             <div className="w-full flex flex-col items-start justify-start gap-2 mt-4">
 
               <h2 className="text-lg font-semibold text-zinc-600">
-                에스크로 입출금 내역
+                보유금 변동 내역
               </h2>
 
               <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
 
                 <thead className="bg-zinc-200">
                   <tr>
+
                     <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                      날짜
+                      처리시간
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
+                      정산날짜
                     </th>
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      에스크로 출금량(USDT)
+                      보유금 정산량(USDT)
                     </th>
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      에스크로 입금량(USDT)
+                      보유금 충전량/차감량(USDT)
                     </th>
-                    {/* 처리전 잔고 */}
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      처리전 잔고(USDT)
+                      처리전 보유량(USDT)
                     </th>
-                    {/* 처리후 잔고 */}
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      처리후 잔고(USDT)
+                      처리후 보유량(USDT)
                     </th>
 
                   </tr>
@@ -1471,6 +1678,9 @@ const fetchBuyOrders = async () => {
                   escrowHistory && escrowHistory.length > 0 &&
                   escrowHistory.map((escrow, index) => (
                     <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
+                      <td className="px-4 py-2 text-sm text-zinc-700">
+                        {new Date(escrow.createdAt).toLocaleString('ko-KR')}
+                      </td>
                       <td className="px-4 py-2 text-sm text-zinc-700">
                         {new Date(escrow.date).toLocaleDateString('ko-KR')}
                       </td>
@@ -1521,7 +1731,7 @@ const fetchBuyOrders = async () => {
 
             <div className="w-full overflow-x-auto mt-4">
               <h2 className="text-lg font-semibold text-zinc-600">
-                에스크로 출금처리
+                보유금 정산처리
               </h2>
 
                 <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
@@ -1529,7 +1739,7 @@ const fetchBuyOrders = async () => {
                   <thead className="bg-zinc-200">
                     <tr>
                       <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                        날짜
+                        정산날짜
                       </th>
                       {/* align right */}
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
@@ -1551,9 +1761,8 @@ const fetchBuyOrders = async () => {
 
                       {/* escrow withdraw */}
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                        에스크로 출금
+                        보유금 정산처리(USDT)
                       </th>
-
                     </tr>
                   </thead>
                   <tbody>
@@ -1566,7 +1775,9 @@ const fetchBuyOrders = async () => {
                       {new Date(order.date).toLocaleDateString('ko-KR') !== new Date().toLocaleDateString('ko-KR') && (
                       
 
+
                         <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
+
                           <td className="px-4 py-2 text-sm text-zinc-700">
                             {new Date(order.date).toLocaleDateString('ko-KR')}
                           </td>
@@ -1633,20 +1844,31 @@ const fetchBuyOrders = async () => {
                             {order.totalEscrowCount && order.totalEscrowCount > 0 ? (
                               <span className="text-[#409192]">
                                 {Number(order.totalEscrowWithdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USDT
-                                출금완료
+                                정산완료
                               </span>
                             ) : (
 
                               <button
                                 onClick={() => {
 
-                                  withdrawEscrow(order.date, order.totalAgentFeeAmount + order.totalFeeAmount)
+                                  withdrawEscrow(
+                                    index,
+                                    order.date,
+                                    order.totalAgentFeeAmount + order.totalFeeAmount
+                                  )
                                   
                                 }}
-                                className="text-blue-600 hover:underline"
+                                disabled={
+                                  withdrawingEscrow[index]
+                                  || (Number(store?.escrowAmountUSDT) < Number(order.totalAgentFeeAmount + order.totalFeeAmount))}
+                                className={`
+                                  ${withdrawingEscrow[index] ? "bg-gray-300 cursor-not-allowed" : (Number(store?.escrowAmountUSDT) < Number(order.totalAgentFeeAmount + order.totalFeeAmount) ? "bg-gray-300 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600")}
+                                  w-32 h-14 flex items-center justify-center
+                                  text-white font-semibold py-2 px-4 rounded-md transition duration-200 ease-in-out
+                                `}
                               >
                                 {Number(order.totalAgentFeeAmount + order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USDT
-                                출금하기
+                                {withdrawingEscrow[index] ? "보유금 정산중..." : " 보유금 정산하기"}
                               </button>
                             
                             )}

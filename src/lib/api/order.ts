@@ -7800,6 +7800,7 @@ export async function depositEscrow(
   const escrowCollection = client.db(dbName).collection('escrows');
   const result = await escrowCollection.insertOne(
     {
+      createdAt: new Date().toISOString(),
       storecode: storecode,
       date: date,
       depositAmount: depositAmount,
