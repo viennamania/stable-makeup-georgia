@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import Image from "next/image";
 
@@ -2322,7 +2322,7 @@ export default function Index({ params }: any) {
   const [processingPaymentRequestedOrders, setProcessingPaymentRequestedOrders] = useState([] as BuyOrder[]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       setLoadingPaymentRequestedCount(true);
       try {
         const response = await fetch('/api/order/getCountOfPaymentRequested', {
@@ -2337,6 +2337,9 @@ export default function Index({ params }: any) {
         });
         if (response.ok) {
           const data = await response.json();
+
+          console.log("data=", data);
+
           setPaymentRequestedCount(data.result.totalCount || 0);
           setProcessingPaymentRequestedOrders(data.result.orders || []);
         }
@@ -2355,15 +2358,18 @@ export default function Index({ params }: any) {
   }, [address, params.center]);
   
 
+
+
   useEffect(() => {
-    if (paymentRequestedCount > 0) {
+
+    if (paymentRequestedCount > 0 && loadingPaymentRequestedCount === false) {
+
       const audio = new Audio('/notification.wav'); 
       audio.play();
+
     }
-  }, [paymentRequestedCount]);
-
-
-
+  }, [paymentRequestedCount, loadingPaymentRequestedCount]);
+ 
 
 
 
