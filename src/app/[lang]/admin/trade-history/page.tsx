@@ -2218,6 +2218,20 @@ const fetchBuyOrders = async () => {
 
   setBuyOrders(data.result.orders);
   setTotalCount(data.result.totalCount);
+  setBuyOrderStats({
+    totalCount: data.result.totalCount,
+    totalKrwAmount: data.result.totalKrwAmount,
+    totalUsdtAmount: data.result.totalUsdtAmount,
+    totalSettlementCount: data.result.totalSettlementCount,
+    totalSettlementAmount: data.result.totalSettlementAmount,
+    totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+    totalFeeAmount: data.result.totalFeeAmount,
+    totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+    totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+    totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+  });
+
+
   setFetchingBuyOrders(false);
 
   return data.result.orders;

@@ -2283,7 +2283,6 @@ const fetchBuyOrders = async () => {
   setBuyOrders(data.result.orders);
   setTotalCount(data.result.totalCount);
 
-
   setBuyOrderStats({
     totalCount: data.result.totalCount,
     totalKrwAmount: data.result.totalKrwAmount,
