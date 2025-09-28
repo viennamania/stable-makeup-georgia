@@ -3817,10 +3817,12 @@ export default function Index({ params }: any) {
                               && item?.transactionHash !== '0x'
                               && (
                                 <button
-                                  className="text-sm text-blue-600 font-semibold
+                                  className="
+                                    w-full flex flex-row gap-2 items-start justify-start
+                                    text-sm text-blue-600 font-semibold
                                     border border-blue-600 rounded-lg p-2
                                     bg-blue-100
-                                    w-full text-center
+                                    text-center
                                     hover:bg-blue-200
                                     cursor-pointer
                                     transition-all duration-200 ease-in-out
@@ -3848,7 +3850,7 @@ export default function Index({ params }: any) {
                                   <div className="flex flex-row gap-2 items-center justify-center">
                                     <Image
                                       src={`/logo-chain-${chain}.png`}
-                                      alt="Polygon"
+                                      alt="chain logo"
                                       width={20}
                                       height={20}
                                       className="w-5 h-5"
@@ -3862,51 +3864,51 @@ export default function Index({ params }: any) {
 
 
 
-                              <div className="flex flex-col gap-2 items-center justify-center">
-                                {item?.settlement
-                                && item?.settlement?.txid
-                                && item?.settlement?.txid !== '0x'
-                                && (
-                                  <button
-                                    className="text-sm text-blue-600 font-semibold
-                                      border border-blue-600 rounded-lg p-2
-                                      bg-blue-100
-                                      w-full text-center
-                                      hover:bg-blue-200
-                                      cursor-pointer
-                                      transition-all duration-200 ease-in-out
-                                      hover:scale-105
-                                      hover:shadow-lg
-                                      hover:shadow-blue-500/50
-                                    "
-                                    onClick={() => {
-                                      window.open(
-                                        chain === "ethereum" ? `https://etherscan.io/tx/${item.settlement.txid}` :
-                                        chain === "polygon" ? `https://polygonscan.com/tx/${item.settlement.txid}` :
-                                        chain === "arbitrum" ? `https://arbiscan.io/tx/${item.settlement.txid}` :
-                                        chain === "bsc" ? `https://bscscan.com/tx/${item.settlement.txid}` :
-                                        `https://arbiscan.io/tx/${item.settlement.txid}`,
+                              {item?.settlement
+                              && item?.settlement?.txid
+                              && item?.settlement?.txid !== '0x'
+                              && (
+                                <button
+                                  className="w-full flex flex-row gap-2 items-start justify-start
+                                    text-sm text-blue-600 font-semibold
+                                    border border-blue-600 rounded-lg p-2
+                                    bg-blue-100
+                                    text-center
+                                    hover:bg-blue-200
+                                    cursor-pointer
+                                    transition-all duration-200 ease-in-out
+                                    hover:scale-105
+                                    hover:shadow-lg
+                                    hover:shadow-blue-500/50
+                                  "
+                                  onClick={() => {
+                                    window.open(
+                                      chain === "ethereum" ? `https://etherscan.io/tx/${item.settlement.txid}` :
+                                      chain === "polygon" ? `https://polygonscan.com/tx/${item.settlement.txid}` :
+                                      chain === "arbitrum" ? `https://arbiscan.io/tx/${item.settlement.txid}` :
+                                      chain === "bsc" ? `https://bscscan.com/tx/${item.settlement.txid}` :
+                                      `https://arbiscan.io/tx/${item.settlement.txid}`,
 
 
-                                        '_blank'
-                                      );
-                                    }}
-                                  >
-                                    <div className="flex flex-row gap-2 items-center justify-center">
-                                      <Image
-                                        src={`/logo-chain-${chain}.png`}
-                                        alt="Polygon"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                      />
-                                      <span className="text-sm">
-                                        USDT 전송내역
-                                      </span>
-                                    </div>
-                                  </button>
-                                )}
-                              </div>
+                                      '_blank'
+                                    );
+                                  }}
+                                >
+                                  <div className="flex flex-row gap-2 items-center justify-center">
+                                    <Image
+                                      src={`/logo-chain-${chain}.png`}
+                                      alt="chain logo"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
+                                    <span className="text-sm">
+                                      구매자가 USDT 전송한 내역
+                                    </span>
+                                  </div>
+                                </button>
+                              )}
+
 
 
 
