@@ -2474,100 +2474,58 @@ const fetchBuyOrders = async () => {
 
 
 
-  /*
-  const [tradeSummary, setTradeSummary] = useState({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-    orders: [] as BuyOrder[],
-
-    totalClearanceCount: 0,
-    totalClearanceAmount: 0,
-    totalClearanceAmountUSDT: 0,
-  });
-  const [loadingTradeSummary, setLoadingTradeSummary] = useState(false);
 
 
-  const getTradeSummary = async () => {
-    if (!address) {
-      return;
-    }
-    setLoadingTradeSummary(true);
-    const response = await fetch('/api/summary/getTradeSummary', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        storecode: params.center,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
 
-        searchBuyer: searchBuyer,
-        searchDepositName: searchDepositName,
-
-        searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-      })
-    });
-    if (!response.ok) {
-      setLoadingTradeSummary(false);
-      toast.error('Failed to fetch trade summary');
-      return;
-    }
-    const data = await response.json();
+    // get count of status is 'paymentRequested' from api
+    const [paymentRequestedCount, setPaymentRequestedCount] = useState(0);
+    const [loadingPaymentRequestedCount, setLoadingPaymentRequestedCount] = useState(false);
+    const [processingPaymentRequestedOrders, setProcessingPaymentRequestedOrders] = useState([] as BuyOrder[]);
+  
+    useEffect(() => {
+      const fetchData = async () => {
+        setLoadingPaymentRequestedCount(true);
+        try {
+          const response = await fetch('/api/order/getCountOfPaymentRequested', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              storecode: params.center,
+              walletAddress: address,
+            }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setPaymentRequestedCount(data.result.totalCount || 0);
+            setProcessingPaymentRequestedOrders(data.result.orders || []);
+          }
+        } catch (error) {
+          console.error("Error fetching payment requested count: ", error);
+        }
+  
+        setLoadingPaymentRequestedCount(false);
+      };
+      fetchData();
+  
+      const interval = setInterval(() => {
+        fetchData();
+      }, 5000);
+      return () => clearInterval(interval);
+    }, [address, params.center]);
     
-    console.log('getTradeSummary data', data);
-
-
-    setTradeSummary(data.result);
-    setLoadingTradeSummary(false);
-    return data.result;
-  }
-
-
-
-
-  useEffect(() => {
-
-    if (!address || !params.center || !searchFromDate || !searchToDate) {
-      setTradeSummary({
-        totalCount: 0,
-        totalKrwAmount: 0,
-        totalUsdtAmount: 0,
-        totalSettlementCount: 0,
-        totalSettlementAmount: 0,
-        totalSettlementAmountKRW: 0,
-        totalFeeAmount: 0,
-        totalFeeAmountKRW: 0,
-        totalAgentFeeAmount: 0,
-        totalAgentFeeAmountKRW: 0,
-        orders: [] as BuyOrder[],
-
-        totalClearanceCount: 0,
-        totalClearanceAmount: 0,
-        totalClearanceAmountUSDT: 0,
-      });
-      return;
-    }
-
-    getTradeSummary();
+  
+    useEffect(() => {
+      if (paymentRequestedCount > 0 && loadingPaymentRequestedCount === false) {
+        const audio = new Audio('/notification.wav'); 
+        audio.play();
+      }
+    }, [paymentRequestedCount, loadingPaymentRequestedCount]);
+  
 
 
 
-  } , [address, searchMyOrders, params.center, searchFromDate, searchToDate]);
-
-  */
 
   
 
@@ -2971,6 +2929,115 @@ const fetchBuyOrders = async () => {
     return (
 
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+
+        {/* fixed position right and vertically center */}
+        <div className="
+          hidden sm:flex
+          fixed right-4 top-1/2 transform -translate-y-1/2
+          z-40
+          ">
+
+            <div className="w-full flex flex-col items-end justify-center gap-4">
+
+
+              {/* Clearance Orders */}
+              
+              {version !== 'bangbang' && (
+              <div className="flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+              ">
+
+                {loadingPaymentRequestedCount ? (
+                  <Image
+                    src="/loading.png"
+                    alt="Loading"
+                    width={20}
+                    height={20}
+                    className="w-6 h-6 animate-spin"
+                  />
+                ) : (
+                  <Image
+                    src="/icon-clearance.png"
+                    alt="Clearance"
+                    width={35}
+                    height={35}
+                    className="w-6 h-6"
+                  />
+                )}
+
+                {/* array of processingPaymentRequestedOrders store logos */}
+                <div className="flex flex-row items-center justify-center gap-1">
+                  {processingPaymentRequestedOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                    <div className="flex flex-col items-center justify-center
+                    bg-white p-1 rounded-lg shadow-md
+                    "
+                    key={index}>
+                      <Image
+                        src={order?.store?.storeLogo || '/logo.png'}
+                        alt={order?.store?.storeName || 'Store'}
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 rounded-lg object-cover"
+                      />
+                      <span className="text-xs text-gray-500">
+                        {order?.store?.storeName || 'Store'}
+                      </span>
+                      <span className="text-sm text-gray-800 font-semibold">
+                        {order?.seller?.bankInfo?.accountHolder || 'Buyer'}
+                      </span>
+                    </div>
+
+                  ))}
+
+                  {processingPaymentRequestedOrders.length > 3 && (
+                    <span className="text-sm text-gray-500">
+                      +{processingPaymentRequestedOrders.length - 3}
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-lg text-yellow-500 font-semibold">
+                  {
+                  paymentRequestedCount
+                  }
+                </p>
+
+                {paymentRequestedCount > 0 && (
+                  <div className="flex flex-row items-center justify-center gap-2">
+                    <Image
+                      src="/icon-notification.gif"
+                      alt="Notification"
+                      width={50}
+                      height={50}
+                      className="w-15 h-15 object-cover"
+                      
+                    />
+                    <button
+                      onClick={() => {
+                        router.push('/' + params.lang + '/' + params.center + '/clearance-history');
+                      }}
+                      className="flex items-center justify-center gap-2
+                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    >
+                      <span className="text-sm">
+                        거래소<br />판매
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              )}
+              
+
+          
+            </div>
+
+        </div>
+
 
 
         <div className="py-0 w-full">
