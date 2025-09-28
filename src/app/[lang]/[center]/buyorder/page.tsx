@@ -2860,7 +2860,7 @@ const fetchBuyOrders = async () => {
 
   useEffect(() => {
     if (paymentRequestedCount > 0 && loadingPaymentRequestedCount === false) {
-      const audio = new Audio('/notification.wav'); 
+      const audio = new Audio('/audio-notification-order-private.wav'); 
       audio.play();
     }
   }, [paymentRequestedCount, loadingPaymentRequestedCount]);
