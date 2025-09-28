@@ -1977,7 +1977,7 @@ export default function Index({ params }: any) {
 
                         <th className="p-2">
                           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                            <span>회원아이디</span>
+                            <span>회원 아이디</span>
                             <span>가맹점 </span>
                           </div>
                         </th>

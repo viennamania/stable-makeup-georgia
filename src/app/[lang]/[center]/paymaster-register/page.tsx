@@ -1763,7 +1763,7 @@ export default function Index({ params }: any) {
   
   const userLogin = async () => {
     if (!memberid) {
-      toast.error('회원아이디를 입력해주세요');
+      toast.error('회원 아이디를 입력해주세요');
       return;
     }
     if (!userPassword) {

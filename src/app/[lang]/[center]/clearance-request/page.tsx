@@ -2937,7 +2937,7 @@ const [tradeSummary, setTradeSummary] = useState({
                           type="text"
                           value={searchBuyer}
                           onChange={(e) => setSearchBuyer(e.target.value)}
-                          placeholder="회원아이디"
+                          placeholder="회원 아이디"
                           className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                         />
 

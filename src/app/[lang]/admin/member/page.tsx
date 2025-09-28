@@ -1326,7 +1326,7 @@ export default function Index({ params }: any) {
     });
     if (!response.ok) {
       setInsertingUserCode(false);
-      toast.error('회원아이디 추가에 실패했습니다.');
+      toast.error('회원 아이디 추가에 실패했습니다.');
       return;
     }
 
@@ -1337,7 +1337,7 @@ export default function Index({ params }: any) {
     //console.log('setBuyerWithoutWalletAddressByStorecode data', data);
 
     if (data.result) {
-      toast.success('회원아이디가 추가되었습니다.');
+      toast.success('회원 아이디가 추가되었습니다.');
       setUserCode('');
       setUserPassword('');
       setUserName('');
@@ -1350,7 +1350,7 @@ export default function Index({ params }: any) {
       // fetch all buyer user
       fetchAllBuyer();
     } else {
-      toast.error('회원아이디 추가에 실패했습니다.');
+      toast.error('회원 아이디 추가에 실패했습니다.');
     }
 
 
@@ -2277,7 +2277,7 @@ export default function Index({ params }: any) {
                   setUserCode(e.target.value);
 
                 } }
-                placeholder="회원아이디"
+                placeholder="회원 아이디"
                 className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
@@ -2549,7 +2549,7 @@ export default function Index({ params }: any) {
                     type="text"
                     value={searchBuyer}
                     onChange={(e) => setSearchBuyer(e.target.value)}
-                    placeholder="회원아이디"
+                    placeholder="회원 아이디"
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
 
@@ -2752,7 +2752,7 @@ export default function Index({ params }: any) {
 
                         <th className="p-2">
                           <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
-                            <span>회원아이디</span>
+                            <span>회원 아이디</span>
                             <span>가맹점 </span>
                           </div>
                         </th>
@@ -2811,31 +2811,34 @@ export default function Index({ params }: any) {
                           </td>
                         
                           <td className="p-2">
-                            <div className="
-                              w-40
-                              xl:w-64
-                              flex flex-col sm:flex-row items-start justify-start gap-2">
+                            <div className="flex flex-col items-start justify-center gap-2">
 
-                              <span className="
-                                w-1/2
-                                text-lg font-semibold">
+                              <div className="
+                                flex flex-col sm:flex-row items-start justify-between gap-2">
 
-                                {item.nickname}<br/>
-                                (
+                                <div className="
+                                  w-40
+                                  flex flex-row items-center justify-start gap-2">
+                                  <span className="text-lg text-zinc-500">
+                                    {item.nickname}
+                                  </span>
                                   {item?.userType === ''
-                                  ? '일반 회원'
+                                  ? <span className="bg-gray-500 text-white px-2 py-1 rounded-lg text-xs">일반</span>
                                   : item?.userType === 'AAA'
-                                  ? '1등급 회원'
-                                  : item?.userType === 'BBB'
-                                  ? '2등급 회원'
-                                  : item?.userType === 'CCC'
-                                  ? '3등급 회원'
-                                  : item?.userType === 'DDD'
-                                  ? '4등급 회원'
-                                  : '일반 회원'
+                                    ? <span className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs">1등급</span>
+                                    : item?.userType === 'BBB'
+                                      ? <span className="bg-orange-500 text-white px-2 py-1 rounded-lg text-xs">2등급</span>
+                                      : item?.userType === 'CCC'
+                                        ? <span className="bg-yellow-500 text-white px-2 py-1 rounded-lg text-xs">3등급</span>
+                                        : item?.userType === 'DDD'
+                                          ? <span className="bg-green-500 text-white px-2 py-1 rounded-lg text-xs">4등급</span>
+                                          : <span className="bg-gray-500 text-white px-2 py-1 rounded-lg text-xs">일반</span>
                                   }
-                                )
-                              </span>
+                                </div>
+                                <span className="text-sm text-zinc-500 text-right">
+                                  {item?.store?.storeName}<br />({item?.store?.storecode})
+                                </span>
+                              </div>
 
                               <button
                                 onClick={() => {
@@ -2849,14 +2852,8 @@ export default function Index({ params }: any) {
                                 변경하기
                               </button>
 
-
-
-                              <span className="
-                                w-1/2
-                                text-sm text-zinc-500">
-                                {item?.store?.storeName}{' '}({item?.store?.storecode})
-                              </span>
                             </div>
+
                           </td>
 
                           <td className="p-2">

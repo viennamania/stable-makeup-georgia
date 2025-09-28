@@ -1213,7 +1213,7 @@ export default function Index({ params }: any) {
     });
     if (!response.ok) {
       setInsertingUserCode(false);
-      toast.error('회원아이디 추가에 실패했습니다.');
+      toast.error('회원 아이디 추가에 실패했습니다.');
       return;
     }
 
@@ -1224,7 +1224,7 @@ export default function Index({ params }: any) {
     //console.log('setBuyerWithoutWalletAddressByStorecode data', data);
 
     if (data.result) {
-      toast.success('회원아이디가 추가되었습니다.');
+      toast.success('회원 아이디가 추가되었습니다.');
       setUserCode('');
       setUserName('');
       setUserBankName('');
@@ -1235,7 +1235,7 @@ export default function Index({ params }: any) {
       // fetch all buyer user
       fetchAllBuyer();
     } else {
-      toast.error('회원아이디 추가에 실패했습니다.');
+      toast.error('회원 아이디 추가에 실패했습니다.');
     }
 
 
@@ -1736,7 +1736,7 @@ export default function Index({ params }: any) {
                         setUserCode(e.target.value);
 
                       } }
-                      placeholder="회원아이디"
+                      placeholder="회원 아이디"
                       className="hidden w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <input
@@ -1776,7 +1776,7 @@ export default function Index({ params }: any) {
 
                       // check if store code already exists
                       if (allBuyer.find((item) => item.nickname === userCode)) {
-                        toast.error('회원아이디가 이미 존재합니다.');
+                        toast.error('회원 아이디가 이미 존재합니다.');
                         return;
                       }
 
@@ -1855,7 +1855,7 @@ export default function Index({ params }: any) {
                       }}
                     >
                       <tr>
-                        <th className="p-2">회원아이디</th>
+                        <th className="p-2">회원 아이디</th>
                         <th className="p-2">
                           회원 입금자명
                         </th>

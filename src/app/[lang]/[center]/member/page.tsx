@@ -2825,7 +2825,7 @@ export default function Index({ params }: any) {
                         type="text"
                         value={searchBuyer}
                         onChange={(e) => setSearchBuyer(e.target.value)}
-                        placeholder="회원아이디"
+                        placeholder="회원 아이디"
                         className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                       />
 
@@ -2901,7 +2901,7 @@ export default function Index({ params }: any) {
                     >
                       <tr>
                         <th className="p-2">등록일</th>
-                        <th className="p-2">회원아이디</th>
+                        <th className="p-2">회원 아이디</th>
                         <th className="p-2">회원등급</th>
                         <th className="p-2">회원 통장</th>
                         <th className="p-2">구매수(건)</th>

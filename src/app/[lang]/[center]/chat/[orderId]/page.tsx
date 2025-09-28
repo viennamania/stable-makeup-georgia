@@ -1729,7 +1729,7 @@ export default function Index({ params }: any) {
                             user?.nickname
                           ) : (
                             <span className="text-sm text-zinc-500">
-                              회원아이디가 없습니다.
+                              회원 아이디가 없습니다.
                             </span>
                           )
                         }

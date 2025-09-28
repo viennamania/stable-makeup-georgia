@@ -5275,7 +5275,7 @@ const fetchBuyOrders = async () => {
                           />
                           */}
                           
-                          <div className="flex flex-col gap-2 items-start justify-start">
+                          <div className="w-full flex flex-col gap-2 items-start justify-start">
 
                             <div className="flex flex-row items-center gap-1">     
                               <Image
@@ -7471,7 +7471,7 @@ const fetchBuyOrders = async () => {
                                       // Handle user click
                                       // copy item.nickname
                                       navigator.clipboard.writeText(item.nickname);
-                                      toast.success('회원아이디가 복사되었습니다.');
+                                      toast.success('회원 아이디가 복사되었습니다.');
                                     }}
                                     className="flex flex-row gap-1 items-center justify-center p-2
                                     bg-transparent border-none cursor-pointer

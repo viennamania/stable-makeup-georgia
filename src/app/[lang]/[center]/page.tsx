@@ -1225,8 +1225,8 @@ export default function Index({ params }: any) {
                             {/* 아이디를 설정해야 거래를 시작할 수 있습니다. */}
                             {address && (
                               <span className="text-sm text-red-500">
-                                회원아이디가 설정되지 않았습니다.<br/>
-                                거래를 시작하려면 회원아이디를 설정해야 합니다.
+                                회원 아이디가 설정되지 않았습니다.<br/>
+                                거래를 시작하려면 회원 아이디를 설정해야 합니다.
                               </span>
                             )}
 

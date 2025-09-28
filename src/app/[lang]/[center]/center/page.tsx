@@ -2402,7 +2402,7 @@ export default function Index({ params }: any) {
                   <table className="min-w-full">
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="px-4 py-2 text-left">회원아이디</th>
+                        <th className="px-4 py-2 text-left">회원 아이디</th>
                         <th className="px-4 py-2 text-left">입금자명</th>
                         <th className="px-4 py-2 text-left">가입일</th>
                       </tr>
