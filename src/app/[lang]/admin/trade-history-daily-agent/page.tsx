@@ -1460,7 +1460,7 @@ export default function Index({ params }: any) {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  통계(가맹)
+                  P2P통계(가맹)
               </button>
 
               <div className='flex w-32 items-center justify-center gap-2
@@ -1473,7 +1473,7 @@ export default function Index({ params }: any) {
                   className="w-4 h-4"
                 />
                 <div className="text-sm font-semibold">
-                  통계(AG)
+                  P2P통계(AG)
                 </div>
               </div>
 
@@ -1508,7 +1508,7 @@ export default function Index({ params }: any) {
                   />
 
                   <div className="text-xl font-semibold">
-                    통계(AG)
+                    P2P통계(AG)
                   </div>
 
                   

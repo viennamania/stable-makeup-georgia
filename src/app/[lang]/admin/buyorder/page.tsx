@@ -3700,7 +3700,7 @@ const fetchBuyOrders = async () => {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  통계(가맹)
+                  P2P통계(가맹)
               </button>
 
               <button
@@ -3711,7 +3711,7 @@ const fetchBuyOrders = async () => {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  통계(AG)
+                  P2P통계(AG)
               </button>
 
               {version !== 'bangbang' && (

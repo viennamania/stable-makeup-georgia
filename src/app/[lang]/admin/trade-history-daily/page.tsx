@@ -1649,7 +1649,7 @@ const fetchBuyOrders = async () => {
                   className="w-4 h-4"
                 />
                 <div className="text-sm font-semibold">
-                  통계(가맹)
+                  P2P통계(가맹)
                 </div>
               </div>
 
@@ -1661,7 +1661,7 @@ const fetchBuyOrders = async () => {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  통계(AG)
+                  P2P통계(AG)
               </button>
 
               {version !== 'bangbang' && (
@@ -1695,7 +1695,7 @@ const fetchBuyOrders = async () => {
                   />
 
                   <div className="text-xl font-semibold">
-                    통계(가맹)
+                    P2P통계(가맹)
                   </div>
 
                   

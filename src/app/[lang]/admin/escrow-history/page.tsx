@@ -1441,7 +1441,7 @@ export default function Index({ params }: any) {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  통계(가맹)
+                  P2P통계(가맹)
               </button>
 
               <button
@@ -1452,7 +1452,7 @@ export default function Index({ params }: any) {
                   hover:scale-105
                   transition-transform duration-200 ease-in-out
                   ">
-                  통계(AG)
+                  P2P통계(AG)
               </button>
 
               <div className='flex w-32 items-center justify-center gap-2
