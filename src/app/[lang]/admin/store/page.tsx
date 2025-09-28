@@ -2683,7 +2683,9 @@ export default function Index({ params }: any) {
                             <span className="text-center">
                               판매자 USDT지갑
                             </span>
-
+                            <span className="text-center">
+                              전일 보유금(USDT)
+                            </span>
                           </div>
                         </th>
 
@@ -2704,9 +2706,15 @@ export default function Index({ params }: any) {
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
-                              PG 수수료율(%)
+                              PG 수수료 USDT지갑
                             </span>
 
+                            <span className="text-center">
+                              PG 수수료율(%)
+                            </span>
+                            <span className="text-center">
+                              AG 수수료 USDT지갑
+                            </span>
                             <span className="text-center">
                               AG 수수료율(%)
                             </span>
@@ -2768,9 +2776,6 @@ export default function Index({ params }: any) {
                         {version !== 'bangbang' && (
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
-                            <span className="text-center">
-                              전일 보유금(USDT)
-                            </span>
                             <span className="text-center">
                               결제용 USDT지갑
                             </span>
@@ -3042,7 +3047,7 @@ export default function Index({ params }: any) {
                           <td className="
                             p-2">
                             <div className="h-56
-                              w-38  
+                              w-40 
                               flex flex-col items-between justify-between gap-2">
                               
                               <div className="flex flex-col items-center gap-2">
@@ -3187,19 +3192,29 @@ export default function Index({ params }: any) {
                                 <div className="flex flex-col sm:flex-row items-center gap-2">
                                 {
                                   item?.sellerWalletAddress ? (
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(
-                                          item.sellerWalletAddress
-                                        );
-                                        toast.success('복사되었습니다');
+                                    <div className="flex flex-row items-center gap-1">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={15}
+                                        height={15}
+                                        className="w-4 h-4"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            item.sellerWalletAddress
+                                          );
+                                          toast.success('복사되었습니다');
+                                        }
                                       }
-                                    }
-                                    className="text-sm text-blue-500 hover:underline"
-                                    >
-                                      {item.sellerWalletAddress.substring(0, 6) + '...' + item.sellerWalletAddress.substring(item.sellerWalletAddress.length - 4)
-                                      }
-                                    </button>
+                                      className="text-sm text-blue-500 hover:underline"
+                                      >
+                                        {item.sellerWalletAddress.substring(0, 6) + '...' + item.sellerWalletAddress.substring(item.sellerWalletAddress.length - 4)
+                                        }
+                                      </button>
+                                    </div>
+
                                   ) : (
                                     <span className="text-sm text-red-500">
                                       판매자 USDT지갑 없음
@@ -3207,6 +3222,25 @@ export default function Index({ params }: any) {
                                   )
                                 }
                                 </div>
+
+
+
+                                {/* escrowAmountUSDT */}
+                                <div className="w-full flex flex-row items-center justify-center gap-1">
+                                  <Image
+                                    src="/icon-tether.png"
+                                    alt="Tether"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-xl text-[#409192] font-semibold"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {item?.escrowAmountUSDT ? item?.escrowAmountUSDT.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
+                                  </span>
+                                </div>
+
 
                               </div>
 
@@ -3312,24 +3346,34 @@ export default function Index({ params }: any) {
                                   {item.settlementFeeWalletAddress ? (
 
                                     <div className="flex flex-col items-center gap-2">
-                                      <button
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(
-                                            item.settlementFeeWalletAddress
-                                          );
-                                          toast.success('복사되었습니다');
+                                      <div className="flex flex-row items-center gap-1">
+                                        <Image
+                                          src="/icon-shield.png"
+                                          alt="Shield"
+                                          width={15}
+                                          height={15}
+                                          className="w-4 h-4"
+                                        />
+                                        <button
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(
+                                              item.settlementFeeWalletAddress
+                                            );
+                                            toast.success('복사되었습니다');
+                                          }
                                         }
-                                      }
-                                      className="text-sm text-blue-500 hover:underline"
-                                      >
-                                        {item.settlementFeeWalletAddress.substring(0, 6) + '...'
-                                        }
-                                      </button>
+                                        className="text-sm text-blue-500 hover:underline"
+                                        >
+                                          {item.settlementFeeWalletAddress.substring(0, 6) + '...'
+                                          }
+                                        </button>
+                                      </div>
 
-                                      <span className="text-xl text-gray-500 font-semibold">
+
+                                      <span className="text-2xl text-gray-500 font-semibold">
                                         {
                                           item.settlementFeePercent ? item.settlementFeePercent : 0.00
-                                        }%
+                                        }
                                       </span>
 
 
@@ -3345,20 +3389,29 @@ export default function Index({ params }: any) {
                                 <div className="flex flex-col items-center gap-2">
 
                                   {item.agentFeeWalletAddress ? (
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(
-                                          item.agentFeeWalletAddress
-                                        );
-                                        toast.success('복사되었습니다');
+                                    <div className="flex flex-row items-center gap-1">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={15}
+                                        height={15}
+                                        className="w-4 h-4"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            item.agentFeeWalletAddress
+                                          );
+                                          toast.success('복사되었습니다');
+                                        }
                                       }
-                                    }
-                                    // underline text
-                                    className="text-sm text-blue-500 hover:underline"
-                                    >
-                                      {item.agentFeeWalletAddress?.substring(0, 6) + '...'
-                                      }
-                                    </button>
+                                      // underline text
+                                      className="text-sm text-blue-500 hover:underline"
+                                      >
+                                        {item.agentFeeWalletAddress?.substring(0, 6) + '...'
+                                        }
+                                      </button>
+                                    </div>
                                   ) : (
                                     <span className="text-sm text-red-500">
                                       에이전트 USDT지갑 없음
@@ -3366,10 +3419,10 @@ export default function Index({ params }: any) {
                                   )}
 
                                   {' '}
-                                  <span className="text-xl text-gray-500 font-semibold">
+                                  <span className="text-2xl text-gray-500 font-semibold">
                                     {
                                       item.agentFeePercent ? item.agentFeePercent : 0.00
-                                    }%
+                                    }
                                   </span>
                                 </div>
 
@@ -3611,42 +3664,32 @@ export default function Index({ params }: any) {
                               h-56
                               flex flex-col items-between justify-between gap-2">
 
-
                               <div className="w-full flex flex-col items-center justify-center gap-2">
-
-
-                                {/* escrowAmountUSDT */}
-                                <div className="w-full flex flex-row items-center justify-center gap-1">
-                                  <Image
-                                    src="/icon-tether.png"
-                                    alt="Tether"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
-                                  />
-                                  <span className="text-xl text-[#409192]"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {item?.escrowAmountUSDT ? item?.escrowAmountUSDT.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
-                                  </span>
-                                </div>
-
 
                                 {/* settlementWalletAddress */}
                                 <span className="text-sm text-gray-500">
                                   {item.settlementWalletAddress ? (
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(
-                                          item.settlementWalletAddress
-                                        );
-                                        toast.success('결제용 USDT지갑주소가 복사되었습니다.');
-                                      }}
-                                      className="text-sm text-blue-500 hover:underline"
-                                    >
-                                      { item.settlementWalletAddress.substring(0, 6) + '...' + item.settlementWalletAddress.substring(item.settlementWalletAddress.length - 4)
-                                      }
-                                    </button>
+                                    <div className="flex flex-row items-center gap-1">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={15}
+                                        height={15}
+                                        className="w-4 h-4"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            item.settlementWalletAddress
+                                          );
+                                          toast.success('결제용 USDT지갑주소가 복사되었습니다.');
+                                        }}
+                                        className="text-sm text-blue-500 hover:underline"
+                                      >
+                                        { item.settlementWalletAddress.substring(0, 6) + '...' + item.settlementWalletAddress.substring(item.settlementWalletAddress.length - 4)
+                                        }
+                                      </button>
+                                    </div>
                                   ) : (
                                     <span className="text-sm text-red-500">
                                       결제용 USDT지갑 없음
