@@ -2859,11 +2859,11 @@ const fetchBuyOrders = async () => {
   
 
   useEffect(() => {
-    if (paymentRequestedCount > 0) {
+    if (paymentRequestedCount > 0 && loadingPaymentRequestedCount === false) {
       const audio = new Audio('/notification.wav'); 
       audio.play();
     }
-  }, [paymentRequestedCount]);
+  }, [paymentRequestedCount, loadingPaymentRequestedCount]);
 
 
 
