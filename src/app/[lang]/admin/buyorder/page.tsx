@@ -2123,6 +2123,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 return {
                   ...item,
                   status: 'paymentConfirmed',
+                  transactionHash: transactionHash,
                 };
               }
               return item;
