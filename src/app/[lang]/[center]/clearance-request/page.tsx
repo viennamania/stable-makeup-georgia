@@ -1265,7 +1265,6 @@ export default function Index({ params }: any) {
 
 
 
-
   const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
 
@@ -1296,17 +1295,10 @@ export default function Index({ params }: any) {
   ) => {
   
 
-    if (!address) {
-      toast.error('Please connect your wallet');
-      return;
-    }
-
-
     if (isProcessingSendTransaction) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
-
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
@@ -1315,8 +1307,49 @@ export default function Index({ params }: any) {
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
-    
     setIsProcessingSendTransaction(true);
+
+
+
+
+    if (!address) {
+      toast.error('Please connect your wallet');
+      setIsProcessingSendTransaction(false);
+      setSendingTransaction(
+        sendingTransaction.map((item, idx) => idx === index ? false : item)
+      );
+      return;
+    }
+
+
+
+
+  
+    let balance = 0;
+    const result = await balanceOf({
+      contract,
+      address: address,
+    });
+
+
+    if (chain === 'bsc') {
+      balance = Number(result) / 10 ** 18;
+    } else {
+      balance = Number(result) / 10 ** 6;
+    }
+
+    // check balance
+    // if balance is less than paymentAmount, then return
+    if (balance < usdtAmount) {
+      toast.error(Insufficient_balance);
+      setIsProcessingSendTransaction(false);
+      setSendingTransaction(
+        sendingTransaction.map((item, idx) => idx === index ? false : item)
+      );
+      return;
+    }
+
+
 
     try {
 
@@ -1401,7 +1434,6 @@ export default function Index({ params }: any) {
     }
 
     setIsProcessingSendTransaction(false);
-
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
@@ -2202,17 +2234,12 @@ const [tradeSummary, setTradeSummary] = useState({
         {params.center && (
 
 
-              <div className={`w-full flex flex-row items-center justify-start gap-2
+              <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
                 p-2 rounded-lg mb-4
                 ${store?.backgroundColor ?
                   "bg-" + store.backgroundColor + " " :
                   "bg-black/10"
                 }`}>
-  
-              
-
-       
-
 
               {/* banner-igor-bastidas-7.gif */}
               <Image
@@ -4319,8 +4346,10 @@ const [tradeSummary, setTradeSummary] = useState({
                                             items-center justify-center
                                             gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-600'}`}
 
-                                  
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+
                                             confirmPayment(
                                               index,
                                               item._id,

@@ -2476,7 +2476,7 @@ export default function Index({ params }: any) {
 
         {params.center && (
 
-            <div className={`w-full flex flex-row items-center justify-start gap-2
+            <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
               p-2 rounded-lg mb-4
               ${store?.backgroundColor ?
                 "bg-" + store.backgroundColor + " " :
