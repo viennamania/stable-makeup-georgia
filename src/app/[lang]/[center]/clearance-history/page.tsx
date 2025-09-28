@@ -546,71 +546,6 @@ export default function Index({ params }: any) {
 
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  
-
-  
-
-
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [balance, setBalance] = useState(0);
-  useEffect(() => {
-
-    // get the balance
-    const getBalance = async () => {
-
-      ///console.log('getBalance address', address);
-
-      
-      const result = await balanceOf({
-        contract,
-        address: address || "",
-      });
-
-  
-      if (chain === 'bsc') {
-        setBalance( Number(result) / 10 ** 18 );
-      } else {
-        setBalance( Number(result) / 10 ** 6 );
-      }
-
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: params.center,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
-
-
-    };
-
-
-    if (address) getBalance();
-
-    const interval = setInterval(() => {
-      if (address) getBalance();
-    } , 5000);
-
-    return () => clearInterval(interval);
-
-  } , [address, contract]);
-
-
-
-
 
 
 
@@ -1262,14 +1197,6 @@ export default function Index({ params }: any) {
         return;
       }
 
-      // check balance
-      // send payment request
-
-      if (balance < amount) {
-        toast.error(Insufficient_balance);
-        return;
-      }
-
 
       // check all escrowing is false
       if (!isWithoutEscrow && escrowing.some((item) => item === true)) {
@@ -1427,21 +1354,6 @@ export default function Index({ params }: any) {
                   setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
               })
 
-
-              // refresh balance
-
-              const result = await balanceOf({
-                contract,
-                address: address || "",
-              });
-
-              //console.log(result);
-
-              setBalance( Number(result) / 10 ** 6 );
-
-
-            
-
             } else {
               toast.error('Payment request has been failed');
             }
@@ -1536,18 +1448,6 @@ export default function Index({ params }: any) {
             })
 
 
-            // refresh balance
-
-            const result = await balanceOf({
-              contract,
-              address: address || "",
-            });
-
-            //console.log(result);
-
-            setBalance( Number(result) / 10 ** 6 );
-
-
           } else {
             toast.error('결제요청이 실패했습니다.');
           }
@@ -1583,20 +1483,6 @@ export default function Index({ params }: any) {
 
 
 
-  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
-
-
-  const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
-  useEffect(() => {
-    setSendingTransaction([]);
-    const newArray: boolean[] = [];
-    for (let i = 0; i < buyOrders.length; i++) {
-      newArray.push(false);
-    }
-    setSendingTransaction(newArray);
-  } , [buyOrders.length]);
-
-
 
 
   // payment amoount array
@@ -1624,6 +1510,23 @@ export default function Index({ params }: any) {
 
 
 
+
+
+  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
+
+
+  const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
+  useEffect(() => {
+    setSendingTransaction([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setSendingTransaction(newArray);
+  } , [buyOrders.length]);
+
+
+
   // confirm payment
   const confirmPayment = async (
 
@@ -1639,17 +1542,10 @@ export default function Index({ params }: any) {
 
   ) => {
  
-    if (!address) {
-      toast.error('Please connect your wallet');
-      return;
-    }
-
-
     if (isProcessingSendTransaction) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
-
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
@@ -1658,8 +1554,48 @@ export default function Index({ params }: any) {
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
-    
     setIsProcessingSendTransaction(true);
+
+
+
+
+    if (!address) {
+      toast.error('Please connect your wallet');
+      setIsProcessingSendTransaction(false);
+      setSendingTransaction(
+        sendingTransaction.map((item, idx) => idx === index ? false : item)
+      );
+      return;
+    }
+
+
+
+
+  
+    let balance = 0;
+    const result = await balanceOf({
+      contract,
+      address: address,
+    });
+
+
+    if (chain === 'bsc') {
+      balance = Number(result) / 10 ** 18;
+    } else {
+      balance = Number(result) / 10 ** 6;
+    }
+
+    // check balance
+    // if balance is less than paymentAmount, then return
+    if (balance < usdtAmount) {
+      toast.error(Insufficient_balance);
+      setIsProcessingSendTransaction(false);
+      setSendingTransaction(
+        sendingTransaction.map((item, idx) => idx === index ? false : item)
+      );
+      return;
+    }
+
 
 
     try {
@@ -1757,7 +1693,6 @@ export default function Index({ params }: any) {
 
 
     setIsProcessingSendTransaction(false);
-
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
@@ -2311,28 +2246,6 @@ export default function Index({ params }: any) {
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   
-
-
-
-  // balance of sellerWalletAddress
-  const [balanceOfSellerWallet, setBalanceOfSellerWallet] = useState(0);
-  useEffect(() => {
-    const fetchBalanceOfSellerWallet = async () => {
-      if (!sellerWalletAddress) {
-        setBalanceOfSellerWallet(0);
-        return;
-      }
-      const result = await balanceOf({
-        contract,
-        address: sellerWalletAddress,
-      });
-      //console.log('balanceOfSellerWallet result', result);
-      setBalanceOfSellerWallet(Number(result) / 10 ** 6);
-    }
-    fetchBalanceOfSellerWallet();
-  } , [sellerWalletAddress, contract]);
-
-
 
 
 
@@ -4571,8 +4484,12 @@ export default function Index({ params }: any) {
                                       items-center justify-center
                                       gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-500'}`}
 
-                            
-                                    onClick={() => {
+
+                                    onClick={(e) => {
+
+                                      e.preventDefault();
+                                      e.stopPropagation();
+
                                       confirmPayment(
                                         index,
                                         item._id,

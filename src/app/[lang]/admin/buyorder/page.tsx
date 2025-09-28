@@ -644,6 +644,7 @@ export default function Index({ params }: any) {
 
 
   // balance of MKRW
+  /*
   const [mkrwBalance, setMkrwBalance] = useState(0);
   useEffect(() => {
     if (!address) {
@@ -666,7 +667,7 @@ export default function Index({ params }: any) {
     } , 5000);
     return () => clearInterval(interval);
   }, [address, contractMKRW]);
-
+  */
 
 
 
