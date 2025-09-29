@@ -1512,7 +1512,6 @@ export default function Index({ params }: any) {
 
 
 
-  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
 
   const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
@@ -1525,6 +1524,9 @@ export default function Index({ params }: any) {
     setSendingTransaction(newArray);
   } , [buyOrders.length]);
 
+
+  const isProcessingSendTransaction = useRef(false);
+  //const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
 
   // confirm payment
@@ -1542,26 +1544,36 @@ export default function Index({ params }: any) {
 
   ) => {
  
-    if (isProcessingSendTransaction) {
+    if (isProcessingSendTransaction.current) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+    isProcessingSendTransaction.current = true;
+
+    /*
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+    */
+
 
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
-    setIsProcessingSendTransaction(true);
+    
+
+    ///setIsProcessingSendTransaction(true);
 
 
 
 
     if (!address) {
       toast.error('Please connect your wallet');
-      setIsProcessingSendTransaction(false);
+      
+      //setIsProcessingSendTransaction(false);
+      isProcessingSendTransaction.current = false;
+      
       setSendingTransaction(
         sendingTransaction.map((item, idx) => idx === index ? false : item)
       );
@@ -1589,7 +1601,10 @@ export default function Index({ params }: any) {
     // if balance is less than paymentAmount, then return
     if (balance < usdtAmount) {
       toast.error(Insufficient_balance);
-      setIsProcessingSendTransaction(false);
+      
+      //setIsProcessingSendTransaction(false);
+      isProcessingSendTransaction.current = false;
+
       setSendingTransaction(
         sendingTransaction.map((item, idx) => idx === index ? false : item)
       );
@@ -1692,7 +1707,9 @@ export default function Index({ params }: any) {
     }
 
 
-    setIsProcessingSendTransaction(false);
+    //setIsProcessingSendTransaction(false);
+    isProcessingSendTransaction.current = false;
+
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
@@ -1954,7 +1971,9 @@ export default function Index({ params }: any) {
 
         cancellings.some((item) => item === true)
         || sendingTransaction.some((item) => item === true)
-        || isProcessingSendTransaction
+
+        ///|| isProcessingSendTransaction
+        || isProcessingSendTransaction.current
 
 
       ) {
@@ -2062,7 +2081,10 @@ export default function Index({ params }: any) {
     searchToDate,
 
     sendingTransaction,
-    isProcessingSendTransaction,
+
+    //isProcessingSendTransaction,
+    isProcessingSendTransaction.current
+
 ]);
 
 
@@ -3758,7 +3780,10 @@ export default function Index({ params }: any) {
                       <th className="p-2">{Seller} / {Status}</th>
                       <th className="p-2">거래취소</th>
                       <th className="p-2">
-                        {isProcessingSendTransaction ? (
+                        {
+                        //isProcessingSendTransaction
+                        isProcessingSendTransaction.current
+                        ? (
                           <div className="flex flex-row items-center gap-2">
                             <Image
                               src="/icon-transfer.png"
@@ -4483,12 +4508,18 @@ export default function Index({ params }: any) {
                                   */}
 
                                   <button
-                                    disabled={isProcessingSendTransaction}
+                                    disabled={
+                                      //isProcessingSendTransaction
+                                      isProcessingSendTransaction.current
+                                    }
                                     className={`
                                       w-32 h-8
                                       flex flex-row
                                       items-center justify-center
-                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-500'}`}
+                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${
+                                      //isProcessingSendTransaction
+                                      isProcessingSendTransaction.current
+                                      ? 'bg-gray-500' : 'bg-green-500'}`}
 
 
                                     onClick={(e) => {

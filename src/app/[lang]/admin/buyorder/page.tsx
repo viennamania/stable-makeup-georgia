@@ -2646,7 +2646,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
     sendingTransaction,
-    isProcessingSendTransaction,
+
+    //isProcessingSendTransaction,
+    isProcessingSendTransaction.current
 
 ]);
 
