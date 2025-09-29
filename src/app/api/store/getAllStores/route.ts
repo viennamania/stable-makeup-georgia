@@ -35,10 +35,8 @@ export async function POST(request: NextRequest) {
     toDate: toDate || '',
   });
 
-  ///console.log("getAllStores result", result);
-
-
-
+  //console.log("getAllStores result", result);
+  
  
   return NextResponse.json({
 

@@ -2896,7 +2896,7 @@ const fetchBuyOrders = async () => {
       return;
     }
     setFetchingAllStores(true);
-    const response = await fetch('/api/store/getAllStores', {
+    const response = await fetch('/api/store/getAllStoresForBalance', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
@@ -6657,7 +6657,7 @@ const fetchBuyOrders = async () => {
                                   (
 
 
-                                    <div className="w-full flex flex-row items-center justify-center gap-2">
+                                    <div className="w-full flex flex-col items-start justify-center gap-2">
 
                                       {/*
                                       <input
@@ -6755,11 +6755,27 @@ const fetchBuyOrders = async () => {
                                             `}
                                           />
                                           <span className="text-sm text-white">
-                                            구매자에게 {item.usdtAmount.toFixed(3)} USDT<br />전송하기
+                                            구매자에게 {item.usdtAmount.toFixed(3)} USDT<br />{sendingTransaction[index] ? '전송중...' : '전송하기'}
                                           </span>
                                         </div>
 
                                       </button>
+
+                                      {/* warning message */}
+                                      {sendingTransaction[index] && (
+                                        <div className="flex flex-row gap-2 items-center justify-center">
+                                          <Image
+                                            src="/icon-warning.png"
+                                            alt="Warning"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                          />
+                                          <div className="text-sm text-red-500">
+                                            전송중에 절대 새로고침하거나 뒤로가기를 하지 마세요.
+                                          </div>
+                                        </div>
+                                      )}
 
                                     </div>
 
