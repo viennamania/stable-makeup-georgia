@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, use, act, useRef } from "react";
 
 import Image from "next/image";
 
@@ -2168,7 +2168,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
   // send payment
-  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
 
   const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
@@ -2185,7 +2184,14 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   ///console.log('sendingTransaction', sendingTransaction);
 
 
+
+
   // avoid double click event
+
+  const isProcessingSendTransaction = useRef(false);
+  //const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
+
+
   const sendPayment = async (
 
     index: number,
@@ -2199,26 +2205,37 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
   ) => {
 
-    if (isProcessingSendTransaction) {
+ 
+    if (isProcessingSendTransaction.current) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+    isProcessingSendTransaction.current = true;
+
+    /*
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+    */
+
 
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
-    setIsProcessingSendTransaction(true);
+    
+
+    ///setIsProcessingSendTransaction(true);
 
 
 
 
     if (!address) {
       toast.error('Please connect your wallet');
-      setIsProcessingSendTransaction(false);
+      
+      //setIsProcessingSendTransaction(false);
+      isProcessingSendTransaction.current = false;
+
       setSendingTransaction(
         sendingTransaction.map((item, idx) => idx === index ? false : item)
       );
@@ -2243,7 +2260,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     // if balance is less than paymentAmount, then return
     if (balance < usdtAmount) {
       toast.error(Insufficient_balance);
-      setIsProcessingSendTransaction(false);
+      
+      //setIsProcessingSendTransaction(false);
+      isProcessingSendTransaction.current = false;
+
       setSendingTransaction(
         sendingTransaction.map((item, idx) => idx === index ? false : item)
       );
@@ -2325,7 +2345,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       //toast.error('결제확인이 실패했습니다.');
     }
 
-    setIsProcessingSendTransaction(false);
+    //setIsProcessingSendTransaction(false);
+    isProcessingSendTransaction.current = false;
+
+
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
@@ -2509,7 +2532,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
         || sendingTransaction.some((item) => item === true)
-        || isProcessingSendTransaction
+
+        ///|| isProcessingSendTransaction
+        || isProcessingSendTransaction.current
 
 
       ) {
@@ -4557,7 +4582,10 @@ const fetchBuyOrders = async () => {
                         <span>
                           P2P 거래취소
                         </span>
-                        {isProcessingSendTransaction ? (
+                        {
+                        //isProcessingSendTransaction
+                        isProcessingSendTransaction.current
+                        ? (
                           <div className="flex flex-row items-center gap-2">
                             <Image
                               src="/icon-transfer.png"
@@ -6608,7 +6636,7 @@ const fetchBuyOrders = async () => {
                               {item.status === 'paymentConfirmed' && (
 
                                 <div className="
-                                  w-40
+                                  w-56
                                   flex flex-col gap-2 items-center justify-center">
 
 
@@ -6652,7 +6680,10 @@ const fetchBuyOrders = async () => {
                                         //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
                                         //disabled={confirmingPayment[index]}
                                         disabled={
-                                          isProcessingSendTransaction
+                                          
+                                          //isProcessingSendTransaction
+                                          isProcessingSendTransaction.current
+
                                           || sendingTransaction[index]
                                         }
 
@@ -6673,7 +6704,7 @@ const fetchBuyOrders = async () => {
                                         */
 
                                         className={`
-                                          w-full
+                                          w-full  
                                           flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md
                                           border border-green-600
                                           hover:border-green-700
@@ -6684,10 +6715,13 @@ const fetchBuyOrders = async () => {
                                           ${sendingTransaction[index] ? 'bg-red-500' : 'bg-green-500'}
                                         `}
 
-                                        //avoid double click event
+                                        // onclick avoid avoid repeated execution of onclick event
+                                        // use a ref to track if the event is already in progress
+                                        
                                         onClick={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
+
+                                          //e.preventDefault();
+                                          //e.stopPropagation();
 
                                           //confirmPayment(
                                           sendPayment(
@@ -6705,8 +6739,6 @@ const fetchBuyOrders = async () => {
                                             item.walletAddress,
                                           );
                                         }}
-
-
                                       >
 
                                         <div className="flex flex-row gap-2 items-center justify-center">
@@ -6721,7 +6753,7 @@ const fetchBuyOrders = async () => {
                                             `}
                                           />
                                           <span className="text-sm text-white">
-                                            구매자에게 {item.usdtAmount.toFixed(3)} USDT 전송하기
+                                            구매자에게 {item.usdtAmount.toFixed(3)} USDT<br />전송하기
                                           </span>
                                         </div>
 

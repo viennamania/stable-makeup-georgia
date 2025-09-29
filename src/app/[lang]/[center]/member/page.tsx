@@ -3145,9 +3145,9 @@ export default function Index({ params }: any) {
                                 )
                                 : (
                                   <div className="
-                                    text-xs text-white bg-blue-500 px-1 rounded-md
+                                    text-xs text-white bg-gray-500 px-1 rounded-md
                                     ">
-                                    일반회원
+                                    일반
                                   </div>
                                 )
                               }
