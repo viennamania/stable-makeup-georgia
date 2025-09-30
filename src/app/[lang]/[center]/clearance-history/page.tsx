@@ -4287,7 +4287,7 @@ export default function Index({ params }: any) {
                                   disabled={cancellings[index] || !agreementForCancelTrade[index]}
                 
                                   className={`
-                                    w-24 h-8
+                                    w-32 h-8
                                     flex flex-row
                                     items-center justify-center
                                     gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
@@ -4323,7 +4323,9 @@ export default function Index({ params }: any) {
 
                         <td className="p-2">
 
-                          <div className="flex flex-row gap-2 items-start justify-start">
+                          <div className="
+                            w-32
+                            flex flex-row gap-2 items-start justify-start">
 
                             {/*item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
                               
@@ -4383,7 +4385,7 @@ export default function Index({ params }: any) {
                                 <button
                                   disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
                                   className={`
-                                    w-32 h-8
+                                    w-full h-8
                                     flex flex-row 
                                     items-center justify-center
                                     gap-1 text-sm text-white px-2 py-1 rounded-md
@@ -4443,7 +4445,7 @@ export default function Index({ params }: any) {
                                   disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                   
                                   className={`
-                                    w-32 h-8
+                                    w-full h-8
                                     flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
                                   onClick={() => {
 
@@ -4483,11 +4485,9 @@ export default function Index({ params }: any) {
                             {item.seller && item.seller.walletAddress === address &&   
                             item.status === 'paymentRequested' && (
 
-                              <div className="flex flex-row gap-2">
+                              <div className="w-full flex flex-row gap-2">
 
-                            
-                                
-                                <div className="flex flex-row gap-2">
+                                <div className="w-full flex flex-col gap-2 items-start justify-center">
 
                                   {/*
                                   <input
@@ -4513,7 +4513,7 @@ export default function Index({ params }: any) {
                                       isProcessingSendTransaction.current
                                     }
                                     className={`
-                                      w-32 h-8
+                                      w-full h-8
                                       flex flex-row
                                       items-center justify-center
                                       gap-1 text-sm text-white px-2 py-1 rounded-md ${
@@ -4524,8 +4524,8 @@ export default function Index({ params }: any) {
 
                                     onClick={(e) => {
 
-                                      e.preventDefault();
-                                      e.stopPropagation();
+                                      //e.preventDefault();
+                                      //e.stopPropagation();
 
                                       confirmPayment(
                                         index,
@@ -4562,6 +4562,23 @@ export default function Index({ params }: any) {
                                     )}
 
                                   </button>
+
+                                  {/* warning message */}
+                                  {sendingTransaction[index] && (
+                                    <div className="flex flex-row gap-1 items-center justify-center">
+                                      <Image
+                                        src="/icon-warning.png"
+                                        alt="Warning"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm text-red-600">
+                                        전송중에 절대 새로고침하거나 뒤로가기를 하지 마세요.
+                                      </span>
+                                    </div>
+                                  )}
+
 
                                 </div>
 

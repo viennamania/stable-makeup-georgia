@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, use, act, useRef } from "react";
 
 import Image from "next/image";
 
@@ -1265,8 +1265,6 @@ export default function Index({ params }: any) {
 
 
 
-  const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
-
 
   const [sendingTransaction, setSendingTransaction] = useState([] as boolean[]);
   useEffect(() => {
@@ -1277,6 +1275,10 @@ export default function Index({ params }: any) {
     }
     setSendingTransaction(newArray);
   } , [buyOrders.length]);
+
+
+  const isProcessingSendTransaction = useRef(false);
+  //const [isProcessingSendTransaction, setIsProcessingSendTransaction] = useState(false);
 
 
   // confirm payment
@@ -1295,32 +1297,41 @@ export default function Index({ params }: any) {
   ) => {
   
 
-    if (isProcessingSendTransaction) {
+    if (isProcessingSendTransaction.current) {
       alert('USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+    isProcessingSendTransaction.current = true;
+
+    /*
     if (sendingTransaction.some((item) => item === true)) {
       alert('다른 USDT 전송이 처리중입니다. 잠시후 다시 시도해주세요.');
       return;
     }
+    */
+
 
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? true : item)
     );
-    setIsProcessingSendTransaction(true);
+    
+
+    ///setIsProcessingSendTransaction(true);
 
 
 
 
     if (!address) {
       toast.error('Please connect your wallet');
-      setIsProcessingSendTransaction(false);
+      
+      //setIsProcessingSendTransaction(false);
+      isProcessingSendTransaction.current = false;
+      
       setSendingTransaction(
         sendingTransaction.map((item, idx) => idx === index ? false : item)
       );
       return;
     }
-
 
 
 
@@ -1342,7 +1353,9 @@ export default function Index({ params }: any) {
     // if balance is less than paymentAmount, then return
     if (balance < usdtAmount) {
       toast.error(Insufficient_balance);
-      setIsProcessingSendTransaction(false);
+      //setIsProcessingSendTransaction(false);
+      isProcessingSendTransaction.current = false;
+
       setSendingTransaction(
         sendingTransaction.map((item, idx) => idx === index ? false : item)
       );
@@ -1433,7 +1446,9 @@ export default function Index({ params }: any) {
       alert('USDT 전송이 실패했습니다.');
     }
 
-    setIsProcessingSendTransaction(false);
+    //setIsProcessingSendTransaction(false);
+    isProcessingSendTransaction.current = false;
+
     setSendingTransaction(
       sendingTransaction.map((item, idx) => idx === index ? false : item)
     );
@@ -1503,7 +1518,9 @@ export default function Index({ params }: any) {
 
       cancellings.some((item) => item === true)
       || sendingTransaction.some((item) => item === true)
-      || isProcessingSendTransaction
+
+      //|| isProcessingSendTransaction
+      || isProcessingSendTransaction.current
 
     ) {
       return;
@@ -1615,7 +1632,9 @@ export default function Index({ params }: any) {
     searchWithdrawDepositName,
 
     sendingTransaction,
-    isProcessingSendTransaction,
+
+    //isProcessingSendTransaction,
+    isProcessingSendTransaction.current
 ]);
 
 
@@ -3718,7 +3737,10 @@ const [tradeSummary, setTradeSummary] = useState({
                             <span className="text-sm">
                               거래취소
                             </span>
-                            {isProcessingSendTransaction ? (
+                            {
+                            //isProcessingSendTransaction
+                            isProcessingSendTransaction.current
+                            ? (
                               <div className="flex flex-row items-center gap-2">
                                 <Image
                                   src="/icon-transfer.png"
@@ -4467,11 +4489,10 @@ const [tradeSummary, setTradeSummary] = useState({
                                 {item.seller && item.seller.walletAddress === address &&   
                                 item.status === 'paymentRequested' && (
 
-                                  <div className="flex flex-row gap-2">
+                                  <div className="w-full flex flex-row items-center justify-center">
 
-                              
-                                    
-                                    <div className="flex flex-row gap-2">
+
+                                    <div className="w-full flex flex-col gap-2 items-start justify-start">
 
                                       {/*
                                       <input
@@ -4495,17 +4516,21 @@ const [tradeSummary, setTradeSummary] = useState({
                                         
                                         //disabled={confirmingPayment[index] || !confirmPaymentCheck[index]}
 
-                                        disabled={isProcessingSendTransaction}
+                                        disabled={
+                                          //isProcessingSendTransaction
+                                          isProcessingSendTransaction.current
+                                        }
 
                                         className={`
                                           w-32 h-8
                                           flex flex-row
                                           items-center justify-center
-                                          gap-1 text-sm text-white px-2 py-1 rounded-md ${isProcessingSendTransaction ? 'bg-gray-500' : 'bg-green-600'}`}
+                                          gap-1 text-sm text-white px-2 py-1 rounded-md
+                                          ${isProcessingSendTransaction.current ? 'bg-gray-500' : 'bg-green-600'}`}
 
                                         onClick={(e) => {
-                                          e.preventDefault();
-                                          e.stopPropagation();
+                                          //e.preventDefault();
+                                          //e.stopPropagation();
 
                                           confirmPayment(
                                             index,
@@ -4541,7 +4566,26 @@ const [tradeSummary, setTradeSummary] = useState({
                                         )}
                                       </button>
 
+
+                                      {/* warning message */}
+                                      {sendingTransaction[index] && (
+                                        <div className="flex flex-row gap-1 items-center justify-center">
+                                          <Image
+                                            src="/icon-warning.png"
+                                            alt="Warning"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                          />
+                                          <span className="text-sm text-red-600">
+                                            전송중에 절대 새로고침하거나 뒤로가기를 하지 마세요.
+                                          </span>
+                                        </div>
+                                      )}
+
+
                                     </div>
+
 
 
                                   </div>
@@ -4570,14 +4614,14 @@ const [tradeSummary, setTradeSummary] = useState({
                                   flex flex-row items-center gap-2
                                   border border-red-600
                                   rounded-md px-2 py-1">
-                                    출금대기중
+                                    출금 대기중
                                   </div>
                                 ) : (
                                   <div className="text-sm text-[#409192]
                                   flex flex-row items-center gap-2
                                   border border-green-600
                                   rounded-md px-2 py-1">
-                                    출금완료
+                                    출금 완료
                                   </div>
                                 )}
                               </>

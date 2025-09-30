@@ -1003,6 +1003,7 @@ export default function Index({ params }: any) {
         );
 
         setUsdtAmount(0);
+        setKrwAmount(0);
         setprivateBuyOrder(false);
 
         setAgreementPlaceOrder(false);
@@ -2634,7 +2635,7 @@ export default function Index({ params }: any) {
 
 
                                       onClick={() => {
-                                          console.log('Buy USDT');
+                                          //console.log('Buy USDT');
                                           // open trade detail
                                           // open modal of trade detail
                                           ///openModal();

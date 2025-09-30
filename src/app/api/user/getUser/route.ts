@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
   } = body;
 
 
-  console.log("getUser storecode", storecode);
-  console.log("getUser walletAddress", walletAddress);
+  //console.log("getUser storecode", storecode);
+  //console.log("getUser walletAddress", walletAddress);
 
 
   const result = await getOneByWalletAddress(
