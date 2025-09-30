@@ -1260,16 +1260,16 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-    // cancel sell order state
-    const [cancellings, setCancellings] = useState([] as boolean[]);
-    useEffect(() => {
-      setCancellings([]);
-      const newArray: boolean[] = [];
-      for (let i = 0; i < buyOrders.length; i++) {
-        newArray.push(false);
-      }
-      setCancellings(newArray);
-    } , [buyOrders.length]);
+  // cancel sell order state
+  const [cancellings, setCancellings] = useState([] as boolean[]);
+  useEffect(() => {
+    setCancellings([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setCancellings(newArray);
+  } , [buyOrders.length]);
 
 
 
@@ -1313,7 +1313,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
         toast.success(Order_has_been_cancelled);
 
-        playSong();
+        //playSong();
 
         await fetch('/api/order/getAllBuyOrders', {
           method: 'POST',
@@ -2343,6 +2343,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     } catch (error) {
       console.error('Error:', error);
       //toast.error('결제확인이 실패했습니다.');
+      alert('USDT 전송이 실패했습니다.');
     }
 
     //setIsProcessingSendTransaction(false);

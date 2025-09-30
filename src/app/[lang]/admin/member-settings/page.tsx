@@ -690,6 +690,9 @@ export default function SettingsPage({ params }: any) {
                             <option value="새마을금고" selected={bankName === "새마을금고"}>
                                 새마을금고
                             </option>
+                            <option value="우체국" selected={bankName === "우체국"}>
+                                우체국
+                            </option>
                         </select>
 
                         <input
