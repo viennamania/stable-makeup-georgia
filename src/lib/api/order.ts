@@ -7632,21 +7632,21 @@ export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: n
       //status: 'paymentConfirmed',
       status: { $in: ['paymentConfirmed'] },
       
-      'buyer.depositCompleted': false, // buyer has not completed deposit
-      //'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
+      //'buyer.depositCompleted': false, // buyer has not completed deposit
+      'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
 
     }
   );
 
   ///console.log('getTotalNumberOfClearanceOrders totalCount: ' + totalCount);
 
-  const results = await collection.find<UserProps>(
+  const results = await collection.find<any>(
     {
       privateSale: true,
       status: { $in: ['paymentConfirmed'] },
       
-      'buyer.depositCompleted': false, // buyer has not completed deposit
-      //'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
+      //'buyer.depositCompleted': false, // buyer has not completed deposit
+      'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
 
     },
     { projection: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } }
