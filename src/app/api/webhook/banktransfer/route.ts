@@ -285,6 +285,7 @@ export async function POST(request: NextRequest) {
     bank_code === '031' ? '대구은행' :
     bank_code === '037' ? '전북은행' :
     bank_code === '071' ? '경북은행' :
+    bank_code === '039' ? '경남은행' :
     bank_code === '034' ? '광주은행' :
     bank_code === '071' ? '우체국' :
     bank_code === '007' ? '수협' :

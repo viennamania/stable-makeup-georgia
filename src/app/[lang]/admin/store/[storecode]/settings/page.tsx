@@ -3609,6 +3609,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
                                         <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
                                         <option value="광주은행">광주은행</option>
                                         <option value="제주은행">제주은행</option>
                                         <option value="새마을금고">새마을금고</option>
@@ -3741,6 +3742,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
                                         <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
                                         <option value="광주은행">광주은행</option>
                                         <option value="수협">수협</option>
                                         <option value="신협">신협</option>
@@ -3865,6 +3867,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
                                         <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
                                         <option value="광주은행">광주은행</option>
                                         <option value="수협">수협</option>
                                         <option value="신협">신협</option>
@@ -3989,6 +3992,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
                                         <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
                                         <option value="광주은행">광주은행</option>
                                         <option value="수협">수협</option>
                                         <option value="신협">신협</option>
@@ -4115,6 +4119,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
                                         <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
                                         <option value="광주은행">광주은행</option>
                                         <option value="수협">수협</option>
                                         <option value="신협">신협</option>
@@ -4239,6 +4244,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
                                         <option value="경북은행">경북은행</option>
+                                        <option value="경남은행">경남은행</option>
                                         <option value="광주은행">광주은행</option>
                                         <option value="수협">수협</option>
                                         <option value="신협">신협</option>

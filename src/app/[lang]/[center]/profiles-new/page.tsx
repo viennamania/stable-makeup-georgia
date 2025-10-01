@@ -972,113 +972,6 @@ export default function SettingsPage({ params }: any) {
                         )}
 
 
-
-                        {/*
-                        {userCode && (
-
-                            <div className='flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-
-                                <div className="bg-red-800 text-sm text-zinc-100 p-2 rounded">
-                                    My Referral Code
-                                </div>
-
-                                <div className="p-2 bg-zinc-800 rounded text-zinc-100 text-xl font-semibold">
-                                    {userCode}
-                                </div>
-
- 
-
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(userCode);
-                                        toast.success('Referral code copied to clipboard');
-                                    }}
-                                    className="p-2 bg-blue-500 text-zinc-100 rounded"
-                                >
-                                    Copy
-                                </button>
-
-                                <Image
-                                src="/verified.png"
-                                alt="Verified"
-                                width={20}
-                                height={20}
-                                className="rounded-lg"
-                                />
-
-
-                            </div>
-
-                        )}
-                        */}
-
-
-
-
-
-
-
-                        {/*userCode && buyer && (
-
-                            <div className='flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-
-                                <div className="bg-green-500 text-sm text-zinc-100 p-2 rounded">
-                                    구매자 은행정보
-                                </div>
-
-                                <div className="flex flex-col p-2 bg-zinc-800 rounded text-zinc-100 text-xl font-semibold">
-                                    
-                                    <div className="text-lg font-semibold">
-                                        
-                                        
-                                        {
-                                        buyer?.bankInfo?.bankName === "090" ? "카카오뱅크" :
-                                        buyer?.bankInfo?.bankName === "089" ? "케이뱅크" :
-                                        buyer?.bankInfo?.bankName === "092" ? "토스뱅크" :
-                                        buyer?.bankInfo?.bankName === "004" ? "국민은행" :
-                                        buyer?.bankInfo?.bankName === "020" ? "우리은행" :
-                                        buyer?.bankInfo?.bankName === "088" ? "신한은행" :
-                                        buyer?.bankInfo?.bankName === "011" ? "농협" :
-                                        buyer?.bankInfo?.bankName === "003" ? "기업은행" :
-                                        buyer?.bankInfo?.bankName === "081" ? "하나은행" :
-                                        buyer?.bankInfo?.bankName === "002" ? "외환은행" :
-                                        buyer?.bankInfo?.bankName === "032" ? "부산은행" :
-                                        buyer?.bankInfo?.bankName === "031" ? "대구은행" :
-                                        buyer?.bankInfo?.bankName === "037" ? "전북은행" :
-                                        buyer?.bankInfo?.bankName === "071" ? "경북은행" :
-                                        buyer?.bankInfo?.bankName === "034" ? "광주은행" :
-                                        buyer?.bankInfo?.bankName === "007" ? "수협" :
-                                        buyer?.bankInfo?.bankName === "027" ? "씨티은행" :
-                                        buyer?.bankInfo?.bankName === "055" ? "대신은행" :
-                                        buyer?.bankInfo?.bankName === "054" ? "동양종합금융" :
-                                        "은행선택"
-                                        }
-
-
-                                    </div>
-                                    <div className="text-lg font-semibold">
-                                        {buyer?.bankInfo?.accountNumber}
-                                    </div>
-                                    <div className="text-lg font-semibold">
-                                        {buyer?.bankInfo?.accountHolder}
-                                    </div>
-
-                                </div>
-                                
-
-
-                                <Image
-                                src="/verified.png"
-                                alt="Verified"
-                                width={20}
-                                height={20}
-                                className="rounded-lg"
-                                />
-
-
-                            </div>
-                        )*/}
-
                         {
                             //(userCode && !seller) || (userCode && seller && editSeller) && (
                             false && (
@@ -1163,13 +1056,6 @@ export default function SettingsPage({ params }: any) {
 
                                             <div className='flex flex-row gap-2 items-center justify-between'>
 
-
-                                                {/*
-                                                국민은행: 004, 우리은행: 020, 신한은행: 088, 농협: 011, 기업은행: 003, 하나은행: 081, 외환은행: 002, 부산은행: 032, 대구은행: 031, 전북은행: 037, 경북은행: 071, 부산은행: 032, 광주은행: 034, 우체국: 071, 수협: 007, 씨티은행: 027, 대신은행: 055, 동양종합금융: 054, 롯데카드: 062, 삼성카드: 029, 현대카드: 048, 신한카드: 016, 국민카드: 020, 하나카드: 081, 외환카드: 002, 씨티카드: 027, 현대카드: 048, 롯데카드: 062, 삼성카드: 029, 신한카드: 016, 국민카드: 020, 하나카드: 081, 외환카드: 002, 씨티카드: 027, 현대카드: 048, 롯데카드: 062, 삼성카드: 029, 신한카드: 016, 국민카드: 020, 하나카드: 081, 외환카드: 002, 씨티카드: 027, 현대카드: 048, 롯데카드: 062, 삼성카드: 029, 신한카드: 016, 국민카드: 020, 하나카드: 081, 외환카
-
-                                                
-                                                */}
-
                                                 {/* select bank */}
 
                                                 <select
@@ -1231,6 +1117,9 @@ export default function SettingsPage({ params }: any) {
                                                     </option>
                                                     <option value="071" selected={buyer?.bankInfo?.bankName === "071"}>
                                                         경북은행
+                                                    </option>
+                                                    <option value="039" selected={buyer?.bankInfo?.bankName === "039"}>
+                                                        경남은행
                                                     </option>
                                                     <option value="034" selected={buyer?.bankInfo?.bankName === "034"}>
                                                         광주은행

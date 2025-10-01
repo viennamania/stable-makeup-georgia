@@ -2376,9 +2376,6 @@ export default function Index({ params }: any) {
                 <option value="부산은행">
                   부산은행
                 </option>
-                <option value="경남은행">
-                  경남은행
-                </option>
                 <option value="대구은행">
                   대구은행
                 </option>
@@ -2387,6 +2384,9 @@ export default function Index({ params }: any) {
                 </option>
                 <option value="경북은행">
                   경북은행
+                </option>
+                <option value="경남은행">
+                  경남은행
                 </option>
                 <option value="광주은행">
                   광주은행
