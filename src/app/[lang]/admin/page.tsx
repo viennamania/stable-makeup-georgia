@@ -954,6 +954,15 @@ export default function Index({ params }: any) {
 
         <p className="text-lg">지갑을 연결하여 로그인 해주세요</p>
 
+        {/* banner-home.webp */}
+        <Image
+          src="/banner-home.webp"
+          alt="Banner"
+          width={1200}
+          height={400}
+          className="rounded-lg"
+        />
+
       </div>
     );
   }
