@@ -3719,6 +3719,9 @@ export async function buyOrderConfirmPayment(data: any) {
 
 
 
+
+
+
     // update store collection
 
     // get count of paymentConfirmed orders by storecode
@@ -3727,6 +3730,9 @@ export async function buyOrderConfirmPayment(data: any) {
     const order = await collection.findOne<UserProps>(
       { _id: new ObjectId(data.orderId+'') },
       { projection: {
+        tradeId: 1,
+        nickname: 1,
+        krwAmount: 1,
         storecode: 1,
         agentcode: 1,
         walletAddress: 1,
@@ -3734,6 +3740,57 @@ export async function buyOrderConfirmPayment(data: any) {
     );
 
     if (order && order.storecode) {
+
+
+
+
+
+      // 조지아 WOOD site
+      // when storecode is "qibgieiu"
+
+      // callback to site
+      // url POST
+      // https://wood-505.com/tools/arena/ChangeBalance2.php
+      // jsoin body
+      /*
+      {
+        "indexkey": "26834827",
+        "userid": "user123",
+        "amount": "10000",
+      }
+      */
+      if (order.storecode === 'qibgieiu') {
+        try {
+          await fetch('https://wood-505.com/tools/arena/ChangeBalance2.php',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                indexkey: order.tradeId,
+                userid: order.nickname,
+                amount: order.krwAmount,
+              }),
+            }
+          );
+        } catch (error) {
+          console.error('Error calling external API for storecode qibgieiu:', error);
+        }
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
       const storecode = order.storecode;
