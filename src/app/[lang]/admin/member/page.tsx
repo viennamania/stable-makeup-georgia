@@ -2818,7 +2818,7 @@ export default function Index({ params }: any) {
 
                                 <div className="
                                   w-40
-                                  flex flex-row items-center justify-start gap-2">
+                                  flex flex-col items-center justify-start gap-2">
                                   <span className="text-lg text-zinc-500">
                                     {item.nickname}
                                   </span>
@@ -2867,6 +2867,7 @@ export default function Index({ params }: any) {
 
                             {/* 변경하기 button */}
                             {/* member-settings?storecode=mgorlkxu&walletAddress=0x59B3597fF4e109a22e262AF940B77e3c59f7c56C */}
+                            {/*
                             <button
                               onClick={() => {
                                 router.push(
@@ -2878,6 +2879,7 @@ export default function Index({ params }: any) {
                             >
                               변경하기
                             </button>
+                            */}
 
                           </td>
 

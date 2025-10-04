@@ -3155,6 +3155,7 @@ export default function Index({ params }: any) {
                                 )
                               }
 
+                              {/*
                               <button
                                 onClick={() => {
                                   router.push(
@@ -3166,6 +3167,7 @@ export default function Index({ params }: any) {
                               >
                                 변경하기
                               </button>
+                              */}
 
                             </div>
                           </td>
@@ -3182,18 +3184,6 @@ export default function Index({ params }: any) {
                               <span className="text-sm text-zinc-500">
                                 {item?.buyer?.depositName}
                               </span>
-
-                              <button
-                                onClick={() => {
-                                  router.push(
-                                    `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
-                                  );
-                                }}
-                                className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                              >
-                                변경하기
-                              </button>
 
                             </div>
                           </td>
