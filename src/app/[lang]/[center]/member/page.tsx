@@ -3096,14 +3096,22 @@ export default function Index({ params }: any) {
                         `}>
                         
                           <td className="p-2">
-                            {new Date(item.createdAt).toLocaleDateString('ko-KR', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit',
-                            })}
+                            <div className="flex flex-col items-start justify-center">
+                              <span className="text-sm font-semibold">
+                                {new Date(item.createdAt).toLocaleDateString('ko-KR', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                })}
+                              </span>
+                              <span className="text-sm font-semibold">
+                                {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                })}
+                              </span>
+                            </div>
                           </td>
 
                           <td className="p-2">
