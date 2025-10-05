@@ -1753,7 +1753,7 @@ export default function Index({ params }: any) {
 
               </div>
 
-
+              {/*
               {address && !loadingUser && (
 
 
@@ -1767,8 +1767,6 @@ export default function Index({ params }: any) {
                     {user?.nickname || "프로필"}
                   </button>
 
-
-                  {/* logout button */}
                   <button
                       onClick={() => {
                           confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
@@ -1801,19 +1799,13 @@ export default function Index({ params }: any) {
 
 
               )}
+              */}
 
-
+              {/*
               {!address && (
                 <ConnectButton
                   client={client}
                   wallets={wallets}
-
-                  /*
-                  accountAbstraction={{
-                    chain: arbitrum,
-                    sponsorGas: true
-                  }}
-                  */
                   
                   theme={"light"}
 
@@ -1842,7 +1834,7 @@ export default function Index({ params }: any) {
                   //locale={"en_US"}
                 />
               )}
-
+              */}
 
 
 
@@ -1910,6 +1902,24 @@ export default function Index({ params }: any) {
           />
 
           </div>
+
+        </div>
+
+
+        {/* 로그인을 해야합니다. */}
+        <div className="w-full flex flex-col items-center justify-center gap-4
+          mt-20
+        ">
+
+          <Image
+            src="/banner-login.gif"
+            alt="Login"
+            width={200}
+            height={200}
+          />
+
+          <div className="text-lg text-gray-500">로그인을 해야합니다.</div>
+          <div className="text-sm text-gray-400">지갑 연결 후, 가맹점 관리자에게 회원 가입을 요청하세요.</div>
 
         </div>
 
@@ -3096,7 +3106,9 @@ export default function Index({ params }: any) {
                         `}>
                         
                           <td className="p-2">
-                            <div className="flex flex-col items-start justify-center">
+                            <div className="
+                              w-24
+                              flex flex-col items-start justify-center">
                               <span className="text-sm font-semibold">
                                 {new Date(item.createdAt).toLocaleDateString('ko-KR', {
                                   year: 'numeric',
@@ -3163,11 +3175,10 @@ export default function Index({ params }: any) {
                                 )
                               }
 
-                              {/*
                               <button
                                 onClick={() => {
                                   router.push(
-                                    `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
+                                    `/${params.lang}/admin/member-grade-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
                                   );
                                 }}
                                 className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
@@ -3175,7 +3186,6 @@ export default function Index({ params }: any) {
                               >
                                 변경하기
                               </button>
-                              */}
 
                             </div>
                           </td>
