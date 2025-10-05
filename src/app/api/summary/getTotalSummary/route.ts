@@ -13,6 +13,8 @@ import {
 	getAllTradesByAdmin,
   ///getAllClearancesByAdmin,
   getAllBuyOrdersByAdmin,
+
+  getAllClearancesByAdmin,
 } from '@lib/api/order';
 
 /*
@@ -115,15 +117,15 @@ export async function POST(request: NextRequest) {
   //console.log("getTotal Summary orders", orders);
 
 
-  const totalNumberOfTrades = orders?.totalCount || 0;
+  //const totalNumberOfTrades = orders?.totalCount || 0;
 
 
   //console.log("getTotal Summary totalNumberOfTrades", totalNumberOfTrades);
 
-  const totalBuyAmountKrw = orders?.totalKrwAmount || 0;
-  const totalUsdtAmount = orders?.totalUsdtAmount || 0;
-  const totalSettlementAmount = orders?.totalSettlementAmount || 0;
-  const totalSettlementAmountKRW = orders?.totalSettlementAmountKRW || 0;
+  //const totalBuyAmountKrw = orders?.totalKrwAmount || 0;
+  //const totalUsdtAmount = orders?.totalUsdtAmount || 0;
+  //const totalSettlementAmount = orders?.totalSettlementAmount || 0;
+  //const totalSettlementAmountKRW = orders?.totalSettlementAmountKRW || 0;
 
   const totalAgentFeeAmount = orders?.totalAgentFeeAmount || 0;
   const totalAgentFeeAmountKRW = orders?.totalAgentFeeAmountKRW || 0;
@@ -205,6 +207,31 @@ export async function POST(request: NextRequest) {
 
 
 
+  const sellOrders = await getAllClearancesByAdmin({
+    limit: 5,
+    page: 1,
+    
+    //startDate: "",
+    //endDate: "",
+
+    agentcode: "",
+    searchNickname: "",
+    walletAddress: "",
+    storecode,
+    searchOrderStatusCompleted: false,
+    searchBuyer: "",
+    searchDepositName: "",
+    searchStoreBankAccountNumber: "",
+
+    fromDate: "",
+    toDate: "",
+  });
+
+
+  const latestSellOrders = sellOrders?.orders || [];
+
+
+
 
   const result = {
     totalNumberOfStores,
@@ -212,12 +239,12 @@ export async function POST(request: NextRequest) {
     totalNumberOfBuyers,
     latestBuyers,
 
-    totalNumberOfTrades,
+    //totalNumberOfTrades,
     latestTrades,
-    totalBuyAmountKrw,
-    totalUsdtAmount,
-    totalSettlementAmount,
-    totalSettlementAmountKRW,
+    //totalBuyAmountKrw,
+    //totalUsdtAmount,
+    //totalSettlementAmount,
+    //totalSettlementAmountKRW,
 
     totalAgentFeeAmount,
     totalAgentFeeAmountKRW,
@@ -227,6 +254,8 @@ export async function POST(request: NextRequest) {
     totalBuyAmount,
     totalUsdtAmountBuyOrders,
     latestBuyOrders,
+
+    latestSellOrders,
   };
 
 

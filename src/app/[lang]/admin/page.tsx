@@ -835,17 +835,18 @@ export default function Index({ params }: any) {
 
 
 
-    totalNumberOfTrades: number;
-    totalBuyAmountKrw: number;
-    totalUsdtAmount: number;
-    totalSettlementAmount: number;
-    totalSettlementAmountKRW: number;
+    //totalNumberOfTrades: number;
+    //totalBuyAmountKrw: number;
+    //totalUsdtAmount: number;
+    //totalSettlementAmount: number;
+    //totalSettlementAmountKRW: number;
     latestTrades: any[];
 
 
-    totalNumberOfClearances?: number;
-    totalClearanceAmountKrw?: number;
-    totalClearanceAmountUsdt?: number;
+    //totalNumberOfClearances?: number;
+
+    //totalClearanceAmountKrw?: number;
+    //totalClearanceAmountUsdt?: number;
     latestClearances?: any[];
 
 
@@ -863,16 +864,16 @@ export default function Index({ params }: any) {
     latestBuyers: [],
 
 
-    totalNumberOfTrades: 0,
-    totalBuyAmountKrw: 0,
-    totalUsdtAmount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
+    //totalNumberOfTrades: 0,
+    //totalBuyAmountKrw: 0,
+    //totalUsdtAmount: 0,
+    //totalSettlementAmount: 0,
+    //totalSettlementAmountKRW: 0,
     latestTrades: [],
 
-    totalNumberOfClearances: 0,
-    totalClearanceAmountKrw: 0,
-    totalClearanceAmountUsdt: 0,
+    //totalNumberOfClearances: 0,
+    //totalClearanceAmountKrw: 0,
+    //totalClearanceAmountUsdt: 0,
     latestClearances: [],
 
 
@@ -1564,15 +1565,7 @@ export default function Index({ params }: any) {
                           <td className="px-4 py-2">
                             {/* "orderded", "accepted", "paymentRequested" */}
 
-                            <button
-                              onClick={() => {
-                                //router.push('/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade.tradeId);
-                                // new window open
-                                window.open(
-                                  '/' + params.lang + '/' + trade.storecode + '/pay-usdt-reverse/' + trade._id,
-                                  '_blank'
-                                );
-                              }}
+                            <div
                               className={`
                                 text-sm font-semibold
                                 bg-[#3167b4] text-white
@@ -1581,6 +1574,7 @@ export default function Index({ params }: any) {
                                 ${trade.status === "ordered" ? "bg-red-500" : ""}
                                 ${trade.status === "accepted" ? "bg-green-500" : ""}
                                 ${trade.status === "paymentRequested" ? "bg-yellow-500" : ""}
+                                ${trade.status === "paymentConfirmed" ? "bg-blue-500" : ""}
                               `}
                             >
 
@@ -1596,14 +1590,17 @@ export default function Index({ params }: any) {
                                 <span className="text-white font-semibold">
                                   결제요청
                                 </span>
+                              ) : trade.status === "paymentConfirmed" ? (
+                                <span className="text-white font-semibold">
+                                  결제확인
+                                </span>
                               ) : (
                                 <span className="text-white font-semibold">
                                   {trade.status}
                                 </span>
                               )}
-
-
-                            </button>
+                            </div>
+                            
                           </td>
 
                         </tr>
@@ -1649,6 +1646,7 @@ export default function Index({ params }: any) {
 
               </div>
 
+              {/*
               <div className="w-full flex flex-row items-center justify-center gap-2
                 bg-white shadow-md rounded-lg p-4 mt-4">
 
@@ -1683,7 +1681,6 @@ export default function Index({ params }: any) {
                   </div>
                 </div>
 
-                {/* divider */}
                 <div className="w-0.5 h-10 bg-gray-300 mx-2"></div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
@@ -1721,29 +1718,22 @@ export default function Index({ params }: any) {
                 </div>
 
               </div>
-
+              */}
 
               <div className="w-full flex flex-row items-center justify-end gap-2">
 
                 {/* latest trades table */}
                 <div className="w-full mt-4">
+
+                  {/*
                   <div className="flex flex-row items-center justify-start gap-2">
-                    {/* dot */}
                     <div className="w-2 h-2 bg-[#3167b4] rounded-full"></div>
                     <h2 className="text-lg font-semibold">총 거래수</h2>
                     <p className="text-lg text-zinc-500">
                       {totalSummary.totalNumberOfTrades}
                     </p>
-                    {loadingSummary && (
-                      <Image
-                        src="/loading.png"
-                        alt="Loading"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 animate-spin"
-                      />
-                    )}
                   </div>
+                  */}
 
                   <table className="min-w-full
                     border-collapse
@@ -1927,7 +1917,7 @@ export default function Index({ params }: any) {
                     height={35}
                     className="w-6 h-6"
                   />
-                  <h2 className="text-lg font-semibold">청산관리</h2>
+                  <h2 className="text-lg font-semibold">청산내역</h2>
                 </div>
 
                 <div className="w-full flex flex-row items-center justify-end gap-2">
@@ -1943,6 +1933,7 @@ export default function Index({ params }: any) {
 
               </div>
 
+              {/*
               <div className="w-full flex flex-row items-center justify-center gap-2
                 bg-white shadow-md rounded-lg p-4 mt-4">
 
@@ -1967,29 +1958,21 @@ export default function Index({ params }: any) {
                 </div>
 
               </div>
-
+              */}
 
               <div className="w-full flex flex-row items-center justify-end gap-2">
 
-                {/* latest trades table */}
                 <div className="w-full mt-4">
+                  
+                  {/*
                   <div className="flex flex-row items-center justify-start gap-2">
-                    {/* dot */}
                     <div className="w-2 h-2 bg-[#3167b4] rounded-full"></div>
                     <h2 className="text-lg font-semibold">총 거래수</h2>
                     <p className="text-lg text-zinc-500">
                       {totalSummary.totalNumberOfClearances}
                     </p>
-                    {loadingSummary && (
-                      <Image
-                        src="/loading.png"
-                        alt="Loading"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 animate-spin"
-                      />
-                    )}
                   </div>
+                  */}    
 
                   <table className="min-w-full
                     border-collapse
@@ -2183,14 +2166,37 @@ export default function Index({ params }: any) {
                       <th className="px-4 py-2 text-left">가맹점이름</th>
                       <th className="
                         hidden xl:block
-                        px-4 py-2 text-left"
+                        px-4 py-2"
                       >
-                          회원수
-                          <br/>
-                          거래수
+                        <div className="flex flex-col items-end justify-center gap-1">
+                          <span>
+                          회원수(명)
+                          </span>
+                          <span>
+                          거래수(건)
+                          </span>
+                        </div>
                       </th>
-                      <th className="px-4 py-2 text-left">거래금액(원)<br/>거래량(USDT)</th>
-                      <th className="px-4 py-2 text-left">결제금액(원)<br/>결제량(USDT)</th>
+                      <th className="px-4 py-2">
+                        <div className="flex flex-col items-end justify-center gap-1">
+                          <span>
+                          거래량(USDT)
+                          </span>
+                          <span>
+                          거래금액(원)
+                          </span>
+                        </div>
+                      </th>
+                      <th className="px-4 py-2">
+                        <div className="flex flex-col items-end justify-center gap-1">
+                          <span>
+                          결제량(USDT)
+                          </span>
+                          <span>
+                          결제금액(원)
+                          </span>
+                        </div>
+                      </th>
 
                       {/*
                       <th className="px-4 py-2 text-left">가입일</th>
@@ -2230,21 +2236,48 @@ export default function Index({ params }: any) {
                           hidden xl:block
                           px-4 py-2"
                         >
-                          {store.totalBuyerCount > 0 ? Number(store.totalBuyerCount)?.toLocaleString() : 0} 명
-                          <br/>
-                          {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0}
-                        </td>
-
-                        <td className="px-4 py-2">{
-                          store.totalKrwAmount > 0 ? Number(store.totalKrwAmount)?.toLocaleString() : 0} 원
-                          <br/>
-                          {store.totalUsdtAmount > 0 ? Number(store.totalUsdtAmount)?.toLocaleString() : 0} USDT
+                          <div className="flex flex-col items-end justify-center gap-1">
+                            <span
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {store.totalBuyerCount > 0 ? Number(store.totalBuyerCount)?.toLocaleString() : 0}
+                            </span>
+                            <span
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {store.totalPaymentConfirmedCount > 0 ? Number(store.totalPaymentConfirmedCount)?.toLocaleString() : 0}
+                            </span>
+                          </div>
                         </td>
 
                         <td className="px-4 py-2">
-                          {store.totalSettlementAmountKRW > 0 ? Number(store.totalSettlementAmountKRW)?.toLocaleString() : 0} 원
-                          <br/>
-                          {store.totalSettlementAmount > 0 ? Number(store.totalSettlementAmount)?.toLocaleString() : 0} USDT
+                          <div className="flex flex-col items-end justify-center gap-1">
+                            <span
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {store.totalUsdtAmount > 0 ? Number(store.totalUsdtAmount)?.toFixed(3)?.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : 0}
+                            </span>
+                            <span
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {store.totalKrwAmount > 0 ? Number(store.totalKrwAmount)?.toFixed(0)?.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : 0}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-2">
+                          <div className="flex flex-col items-end justify-center gap-1">
+                            <span
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {store.totalSettlementAmount > 0 ? Number(store.totalSettlementAmount)?.toFixed(3)?.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : 0}
+                            </span>
+                            <span
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {store.totalSettlementAmountKRW > 0 ? Number(store.totalSettlementAmountKRW)?.toFixed(0)?.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : 0}
+                            </span>
+                          </div>
                         </td>
                         {/*
                         <td className="px-4 py-2">{new Date(store.createdAt).toLocaleDateString()}</td>

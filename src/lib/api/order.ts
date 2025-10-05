@@ -5030,6 +5030,7 @@ export async function getAllTradesByAdmin(
   // sum of krwAmount
   // TypeError: Cannot read properties of undefined (reading 'totalKrwAmount')
 
+  /*
   const totalResult = await collection.aggregate([
     {
       $match: {
@@ -5082,6 +5083,7 @@ export async function getAllTradesByAdmin(
       }
     }
   ]).toArray();
+  */
 
   /////console.log('getAllTradesByAdmin totalKrwAmount: ' + JSON.stringify(totalKrwAmount));
 
@@ -5371,16 +5373,18 @@ export async function getAllTradesByAdmin(
   };
   */
   return {
-    totalCount: totalResult ? totalResult[0]?.totalCount : 0,
-    totalKrwAmount: totalResult ? totalResult[0]?.totalKrwAmount : 0,
-    totalUsdtAmount: totalResult ? totalResult[0]?.totalUsdtAmount : 0,
-    totalSettlementCount: totalResult ? totalResult[0]?.totalSettlementCount : 0,
-    totalSettlementAmount: totalResult ? totalResult[0]?.totalSettlementAmount : 0,
-    totalSettlementAmountKRW: totalResult ? totalResult[0]?.totalSettlementAmountKRW : 0,
-    totalFeeAmount: totalResult ? totalResult[0]?.totalFeeAmount : 0,
-    totalFeeAmountKRW: totalResult ? totalResult[0]?.totalFeeAmountKRW : 0,
-    totalAgentFeeAmount: totalResult ? totalResult[0]?.totalAgentFeeAmount : 0,
-    totalAgentFeeAmountKRW: totalResult ? totalResult[0]?.totalAgentFeeAmountKRW : 0,
+    //totalCount: totalResult ? totalResult[0]?.totalCount : 0,
+    //totalKrwAmount: totalResult ? totalResult[0]?.totalKrwAmount : 0,
+    //totalUsdtAmount: totalResult ? totalResult[0]?.totalUsdtAmount : 0,
+    //totalSettlementCount: totalResult ? totalResult[0]?.totalSettlementCount : 0,
+    //totalSettlementAmount: totalResult ? totalResult[0]?.totalSettlementAmount : 0,
+    //totalSettlementAmountKRW: totalResult ? totalResult[0]?.totalSettlementAmountKRW : 0,
+    
+    //totalFeeAmount: totalResult ? totalResult[0]?.totalFeeAmount : 0,
+    //totalFeeAmountKRW: totalResult ? totalResult[0]?.totalFeeAmountKRW : 0,
+    //totalAgentFeeAmount: totalResult ? totalResult[0]?.totalAgentFeeAmount : 0,
+    //totalAgentFeeAmountKRW: totalResult ? totalResult[0]?.totalAgentFeeAmountKRW : 0,
+
     orders: results,
   };
 
