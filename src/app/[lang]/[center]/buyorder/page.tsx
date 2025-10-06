@@ -2805,14 +2805,14 @@ const fetchBuyOrders = async () => {
 
 
       
-
+  /*
   useEffect(() => {
     if (totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
       const audio = new Audio('/notification.wav'); 
       audio.play();
     }
   }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
-
+  */
 
 
 
@@ -3402,36 +3402,16 @@ const fetchBuyOrders = async () => {
             "bg-black/10"
           }`}>
             
-            
             <button
               onClick={() => {
                 router.push('/' + params.lang + '/' + params.center + '/center');
               }}
               className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
             >
-              {/*
-              <div className="flex flex-row items-center gap-2">
-                <Image
-                    src={store?.storeLogo || "/logo.png"}
-                    alt="Store"
-                    width={35}
-                    height={35}
-                    className="rounded-lg w-5 h-5 object-cover"
-                />
-                <span className="text-sm text-zinc-50">
-                  {
-                    store && store?.storeName + " (" + store?.storecode + ")"
-                  }
-                </span>
-
-              </div>
-              */}
               <span className="text-sm text-zinc-50 font-bold">
                 홈
               </span>
-
             </button>
-
 
             <div className="flex flex-row items-center gap-2">
               
