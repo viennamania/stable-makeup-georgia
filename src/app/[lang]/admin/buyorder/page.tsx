@@ -4806,7 +4806,9 @@ const fetchBuyOrders = async () => {
                                     <span className="text-xl text-zinc-500 font-semibold">
                                       {item.audioOn ? (
                                         '🔊'
-                                      ) : '🔇'}
+                                      ) : (
+                                        '🔇'
+                                      )}
                                     </span>
                                     {/* audioOn off button */}
                                     <button

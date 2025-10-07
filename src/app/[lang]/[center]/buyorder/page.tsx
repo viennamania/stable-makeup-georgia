@@ -2805,14 +2805,18 @@ const fetchBuyOrders = async () => {
 
 
       
-  /*
+  
   useEffect(() => {
-    if (totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
+    if (
+      user?.buyOrderAudioOn &&
+      totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
       const audio = new Audio('/notification.wav'); 
       audio.play();
     }
-  }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
-  */
+  }, [
+    user?.buyOrderAudioOn,
+    totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
+  
 
 
 
@@ -2867,6 +2871,37 @@ const fetchBuyOrders = async () => {
 
 
 
+  // handleUserBuyOrderAudioToggle
+  const handleUserBuyOrderAudioToggle = async (audioOn: boolean) => {
+    const response = await fetch('/api/user/toggleBuyOrderAudioNotification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddress: address,
+        storecode: params.center,
+        audioOn,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to toggle audio notification');
+      return;
+    }
+
+    const data = await response.json();
+    console.log('Audio notification toggled:', data);
+
+    if (data.success) {
+      // update user audioOn state
+      setUser((prevUser: any) => ({
+        ...prevUser,
+        buyOrderAudioOn: audioOn,
+      }));
+    }
+
+  };
 
 
 
@@ -3183,6 +3218,29 @@ const fetchBuyOrders = async () => {
             p-2 rounded-lg shadow-md
             backdrop-blur-md
             ">
+
+              <div className="flex flex-col items-center justify-center gap-1
+              border-r-2 border-gray-300 pr-2
+              ">
+                <span className="text-xl text-zinc-500 font-semibold">
+                  {user?.buyOrderAudioOn ? (
+                    '🔊'
+                  ) : (
+                    '🔇'
+                  )}
+                </span>
+                {/* audioOn off button */}
+                <button
+                  className="text-sm text-blue-600 font-semibold underline"
+                  onClick={() => handleUserBuyOrderAudioToggle(
+                    user?.buyOrderAudioOn ? false : true
+                  )}
+                >
+                  {user?.buyOrderAudioOn ? '끄기' : '켜기'}
+                </button>
+              </div>
+
+
               {loadingTotalNumberOfBuyOrders ? (
                 <Image
                   src="/loading.png"
@@ -3203,6 +3261,7 @@ const fetchBuyOrders = async () => {
 
               {/* array of processingBuyOrders store logos */}
               <div className="flex flex-row items-center justify-center gap-1">
+
                 {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
 
                   <div className="flex flex-col items-center justify-center

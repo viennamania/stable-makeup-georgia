@@ -3,6 +3,7 @@ import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
 import { id } from 'ethers/lib/utils';
+import { ObjectId } from 'mongodb';
 
 export interface UserProps {
   /*
@@ -53,6 +54,8 @@ export interface UserProps {
   buyOrderStatus: string,
 
   userType: string,
+
+  buyOrderAudioOn: boolean,
 
 }
 
@@ -2145,3 +2148,25 @@ export async function getAllAdmin(
 
 
 
+// updateBuyOrderAudioNotification
+export async function updateBuyOrderAudioNotification(data: any) {
+
+  if (!data.walletAddress || !data.storecode || data.audioOn === undefined) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const result = await collection.updateOne(
+    { walletAddress: data.walletAddress, storecode: data.storecode },
+    { $set: { buyOrderAudioOn: data.audioOn } }
+  );
+  
+  if (result.modifiedCount === 1) {
+    return true;
+  } else {
+    return false;
+  }
+
+}
