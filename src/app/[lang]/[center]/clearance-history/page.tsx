@@ -2271,9 +2271,7 @@ export default function Index({ params }: any) {
 
 
 
-
   // totalNumberOfBuyOrders
-  /*
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
   const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
@@ -2320,18 +2318,18 @@ export default function Index({ params }: any) {
     return () => clearInterval(interval);
 
   }, [address, params.center]);
-
-
-
       
-
+  
   useEffect(() => {
-    if (totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
+    if (
+      user?.buyOrderAudioOn &&
+      totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
       const audio = new Audio('/notification.wav'); 
       audio.play();
     }
-  }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
-  */
+  }, [
+    user?.buyOrderAudioOn,
+    totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
 
 
 
@@ -2393,6 +2391,40 @@ export default function Index({ params }: any) {
   }, [paymentRequestedCount, loadingPaymentRequestedCount]);
  
 
+
+
+
+  // handleUserBuyOrderAudioToggle
+  const handleUserBuyOrderAudioToggle = async (audioOn: boolean) => {
+    const response = await fetch('/api/user/toggleBuyOrderAudioNotification', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddress: address,
+        storecode: params.center,
+        audioOn,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to toggle audio notification');
+      return;
+    }
+
+    const data = await response.json();
+    console.log('Audio notification toggled:', data);
+
+    if (data.success) {
+      // update user audioOn state
+      setUser((prevUser: any) => ({
+        ...prevUser,
+        buyOrderAudioOn: audioOn,
+      }));
+    }
+
+  };
 
 
 
@@ -2701,12 +2733,34 @@ export default function Index({ params }: any) {
 
           <div className="w-full flex flex-col items-end justify-center gap-4">
 
-            {/*
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
             p-2 rounded-lg shadow-md
             backdrop-blur-md
             ">
+
+              <div className="flex flex-col items-center justify-center gap-1
+              border-r-2 border-gray-300 pr-2
+              ">
+                <span className="text-xl text-zinc-500 font-semibold">
+                  {user?.buyOrderAudioOn ? (
+                    '🔊'
+                  ) : (
+                    '🔇'
+                  )}
+                </span>
+                {/* audioOn off button */}
+                <button
+                  className="text-sm text-blue-600 font-semibold underline"
+                  onClick={() => handleUserBuyOrderAudioToggle(
+                    user?.buyOrderAudioOn ? false : true
+                  )}
+                >
+                  {user?.buyOrderAudioOn ? '끄기' : '켜기'}
+                </button>
+              </div>
+
+
               {loadingTotalNumberOfBuyOrders ? (
                 <Image
                   src="/loading.png"
@@ -2725,7 +2779,9 @@ export default function Index({ params }: any) {
                 />
               )}
 
+              {/* array of processingBuyOrders store logos */}
               <div className="flex flex-row items-center justify-center gap-1">
+
                 {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
 
                   <div className="flex flex-col items-center justify-center
@@ -2770,11 +2826,10 @@ export default function Index({ params }: any) {
                     width={50}
                     height={50}
                     className="w-15 h-15 object-cover"
-                    
                   />
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/' + params.center + '/buyorder');
+                      router.push('/' + params.lang + '/admin/buyorder');
                     }}
                     className="flex items-center justify-center gap-2
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
@@ -2785,13 +2840,8 @@ export default function Index({ params }: any) {
                   </button>
                 </div>
               )}
-
-
             </div>
-            */}
 
-
-            {/* Clearance Orders */}
             
             {version !== 'bangbang' && (
             <div className="flex flex-row items-center justify-center gap-2
@@ -3574,10 +3624,9 @@ export default function Index({ params }: any) {
 
 
 
-
+          {/*
           <div className="sm:hidden w-full flex flex-row items-center justify-end gap-2">
 
-              {/*
               <div className="flex flex-row items-center justify-center gap-2
               bg-white/80
               p-2 rounded-lg shadow-md
@@ -3664,12 +3713,7 @@ export default function Index({ params }: any) {
                   </div>
                 )}
               </div>
-              */}
 
-
-
-
-              {/* Clearance Orders */}
               {version !== 'bangbang' && (
               <div className="flex flex-row items-center justify-center gap-2
               bg-white/80
@@ -3719,185 +3763,443 @@ export default function Index({ params }: any) {
           
           </div>
 
+          */}
 
 
 
 
-
-            {/* table view is horizontal scroll */}
-            {tableView ? (
-
-
-              <div className="w-full overflow-x-auto">
-
-                <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+          {/* table view is horizontal scroll */}
+          {tableView ? (
 
 
-                  <thead
-                    className="bg-zinc-800 text-white text-sm font-semibold"
-                    style={{
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    }}
-                  >
-                    <tr>
-                      <th className="p-2">
-                        <div className="flex flex-col items-center">
+            <div className="w-full overflow-x-auto">
+
+              <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+
+
+                <thead
+                  className="bg-zinc-800 text-white text-sm font-semibold"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  }}
+                >
+                  <tr>
+                    <th className="p-2">
+                      <div className="flex flex-col items-center justify-start gap-2">
+                        <span className="text-sm">
+                          #{TID}
+                        </span>
+                        <span className="text-sm">
+                          신청시간
+                        </span>
+                      </div>
+                    </th>
+
+                    <th className="p-2">
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm">
+                          {Buyer}
+                        </span>
+                      </div>
+                    </th>
+
+                    <th className="p-2">
+                      <div className="flex flex-col items-end">
+                        <span>
+                          판매량(USDT)
+                        </span>
+                        <span>
+                          판매금액(원)
+                        </span>
+                        <span>
+                          환율(원)
+                        </span>
+                      </div>
+                    </th>
+                    <th className="p-2">결제통장</th>
+                    {/*
+                    <th className="p-2">{Payment_Amount}</th>
+                    */}
+
+                    <th className="p-2">{Seller} / {Status}</th>
+                    <th className="p-2">거래취소</th>
+                    <th className="p-2">
+                      {
+                      //isProcessingSendTransaction
+                      isProcessingSendTransaction.current
+                      ? (
+                        <div className="flex flex-row items-center gap-2">
+                          <Image
+                            src="/icon-transfer.png"
+                            alt="Transfer"
+                            width={20}
+                            height={20}
+                            className="w-5 h-5 animate-spin"
+                          />
                           <span className="text-sm">
-                            #{TID}
-                          </span>
-                          <span className="text-sm">
-                            신청시간
+                            USDT 전송중...
                           </span>
                         </div>
-                      </th>
+                      ) : (
+                        <span className="text-sm">
+                          USDT 전송
+                        </span>
+                      )}
+                    </th>
 
-                      <th className="p-2">
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm">
-                            {Buyer}
+                    <th className="p-2">출금상태</th>
+                  </tr>
+                </thead>
+
+                {/* if my trading, then tr has differenc color */}
+                <tbody>
+
+                  {buyOrders.map((item, index) => (
+
+                    
+                    <tr key={index} className={`
+                      ${
+                        index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
+
+
+                        //item.walletAddress === address ?
+                        
+
+                      }
+                    `}>
+                    
+
+                      <td className="p-2">
+
+                        <button
+                          className="
+                            w-36 
+                            flex flex-col items-start justify-start gap-2
+                            bg-zinc-100
+                            rounded-lg
+                            border border-zinc-800
+                            hover:bg-zinc-200
+                            cursor-pointer
+                            transition-all duration-200 ease-in-out
+                            hover:scale-105
+                            hover:shadow-lg
+                            hover:shadow-zinc-500/50
+                            hover:cursor-pointer
+                            p-2
+                          "
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.tradeId);
+                            toast.success("거래번호가 복사되었습니다.");
+                          }}
+                        >
+                          <span className="text-lg font-semibold text-zinc-500">
+                            #{item.tradeId}
                           </span>
-                        </div>
-                      </th>
-
-                      <th className="p-2">
-                        <div className="flex flex-col items-end">
-                          <span>
-                            판매량(USDT)
-                          </span>
-                          <span>
-                            판매금액(원)
-                          </span>
-                          <span>
-                            환율(원)
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2">결제통장</th>
-                      {/*
-                      <th className="p-2">{Payment_Amount}</th>
-                      */}
-
-                      <th className="p-2">{Seller} / {Status}</th>
-                      <th className="p-2">거래취소</th>
-                      <th className="p-2">
-                        {
-                        //isProcessingSendTransaction
-                        isProcessingSendTransaction.current
-                        ? (
-                          <div className="flex flex-row items-center gap-2">
-                            <Image
-                              src="/icon-transfer.png"
-                              alt="Transfer"
-                              width={20}
-                              height={20}
-                              className="w-5 h-5 animate-spin"
-                            />
-                            <span className="text-sm">
-                              USDT 전송중...
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-sm">
-                            USDT 전송
-                          </span>
-                        )}
-                      </th>
-
-                      <th className="p-2">출금상태</th>
-                    </tr>
-                  </thead>
-
-                  {/* if my trading, then tr has differenc color */}
-                  <tbody>
-
-                    {buyOrders.map((item, index) => (
-
-                      
-                      <tr key={index} className={`
-                        ${
-                          index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-
-
-                          //item.walletAddress === address ?
-                          
-
-                        }
-                      `}>
-                      
-
-                        <td className="p-2">
                           <div className="flex flex-col items-center gap-2">
+
                             <span className="text-sm text-zinc-500">
-                              #{item.tradeId}
+                            {
+                              new Date(item.createdAt).toLocaleDateString(params.lang, {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                              })
+                            }
                             </span>
-                            <div className="flex flex-col items-center gap-2">
+                            <span className="text-lg text-zinc-500">
+                            {
+                              new Date(item.createdAt).toLocaleTimeString(params.lang, {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                              })
+                            }
+                            </span>
 
+                            <div className="text-sm text-zinc-500">
+                              {params.lang === 'ko' ? (
+                                <p>{
+                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                  ) :
+                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                  ) : (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                  )
+                                }</p>
+                              ) : (
+                                <p>{
+                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                  ) :
+                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                  ) : (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                  )
+                                }</p>
+                              )}
+                            </div>
+                          </div>
+
+                        </button>
+
+                      </td>
+                      
+                      <td className="p-2">
+
+                          <div className="flex flex-col gap-2 items-start justify-center">
+
+                            <div className="flex flex-row items-center gap-1">
+                              <Image
+                                src={item.avatar || "/icon-user.png"}
+                                alt="Avatar"
+                                width={20}
+                                height={20}
+                                className="rounded-full"
+                              />
+                              <span className="text-lg font-semibold text-zinc-500">
+                                {
+                                  //item.walletAddress === address ? 'Me' :
+                                  item?.nickname
+                                }
+                              </span>
+                            </div>
+
+                            <div className="flex flex-row items-center gap-2">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Shield"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <span className="text-sm font-semibold text-zinc-800">
+                                {item.walletAddress.slice(0, 6) + '...'}
+                              </span>
+                            </div>
+
+                            <div className="text-sm text-zinc-500">
                               {
-                                new Date(item.createdAt).toLocaleDateString(params.lang, {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                })
-                              } <br />
-                              {
-                                new Date(item.createdAt).toLocaleTimeString(params.lang, {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                })
+                                //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
+
+                                //item.walletAddress === address ? 'Me' :
+
+                                item?.buyer?.depositBankName + ' ' + item?.buyer?.depositName
+
                               }
-
-                              <div className="text-sm text-zinc-500">
-                                {params.lang === 'ko' ? (
-                                  <p>{
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) :
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }</p>
-                                ) : (
-                                  <p>{
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) :
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }</p>
-                                )}
-                              </div>
                             </div>
 
                           </div>
-                        </td>
-                        
-                        <td className="p-2">
+                      </td>
 
-                            <div className="flex flex-col gap-2 items-start justify-center">
 
-                              <div className="flex flex-row items-center gap-1">
-                                <Image
-                                  src={item.avatar || "/icon-user.png"}
-                                  alt="Avatar"
-                                  width={20}
-                                  height={20}
-                                  className="rounded-full"
-                                />
-                                <span className="text-lg font-semibold text-zinc-500">
-                                  {
-                                    //item.walletAddress === address ? 'Me' :
-                                    item?.nickname
-                                  }
-                                </span>
+
+                      <td className="p-2">
+                        <div className="flex flex-col gap-2 items-end justify-start">
+
+                          <div className="flex flex-row gap-2 items-center justify-center">
+                            <Image
+                              src="/icon-tether.png"
+                              alt="Tether"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            <span className="text-xl text-[#409192] font-semibold"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            </span>
+                          </div>
+
+
+                          <div className="flex flex-row items-center gap-1">
+                            <span className="text-xl text-yellow-600 font-semibold"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {Number(item.krwAmount)?.toLocaleString()}
+                            </span>
+                          </div>
+
+                          <span className="text-sm text-zinc-500"
+                            style={{ fontFamily: 'monospace' }}
+                          >
+                            {
+                              Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                              //Number(item.krwAmount / item.usdtAmount).toFixed(3)
+                            }
+                          </span>
+                        </div>
+                      </td>
+
+
+                      <td className="p-2">
+
+                        {item?.buyer?.nickname ? (
+
+                          <div className="flex flex-row items-center gap-2 justify-center">
+                            <div className="text-lg font-semibold text-yellow-600">
+                              {item.buyer?.nickname}
+                            </div>
+
+                            <div className="flex flex-col gap-2 items-center justify-center">
+                              <div className="text-lg font-semibold text-zinc-500">
+                                {item.buyer?.depositBankName}
+                              </div>
+                              <div className="text-lg font-semibold text-zinc-500">
+                                {item.buyer?.depositBankAccountNumber}
+                              </div>
+                              <div className="text-lg font-semibold text-zinc-500">
+                                {item.buyer?.depositName}
+                              </div>
+                            </div>
+                          </div>
+
+                        ) : (
+
+                          <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="text-lg font-semibold text-zinc-500">
+                              {item.seller?.bankInfo?.bankName}
+                            </div>
+                            <div className="text-lg font-semibold text-zinc-500">
+                              {
+                                item.seller?.bankInfo?.accountNumber
+                                && item.seller?.bankInfo?.accountNumber.length > 5
+                                ? item.seller?.bankInfo?.accountNumber.slice(0, 3) + '...' + item.seller?.bankInfo?.accountNumber.slice(-2)
+                                : item.seller?.bankInfo?.accountNumber
+                              }
+                            </div>
+                            <div className="text-lg font-semibold text-zinc-500">
+                              {item.seller?.bankInfo?.accountHolder}
+                            </div>
+                          </div>
+
+                        )}
+
+                      </td>
+
+                      {/*
+                      <td className="p-2">
+                        <div className="flex mr-2 text-right">
+                          {
+
+                            item.status === 'paymentConfirmed' ? (
+
+                              <div className=" text-[#409192] text-xl font-semibold">
+                                {
+                                  item.krwAmount
+                                  ? Number(item.krwAmount)?.toLocaleString('ko-KR', {
+                                    style: 'currency',
+                                    currency: 'KRW',
+                                  })
+                                  : '0'
+                                }
                               </div>
 
-                              <div className="flex flex-row items-center gap-2">
+                            ) : item.status === 'paymentRequested' ? (
+                              <input
+                                disabled={false}
+                                type="number"
+                                value={paymentAmounts[index]}
+                                onChange={(e) => {
+                                  setPaymentAmounts(
+                                    paymentAmounts.map((item, idx) => idx === index ? Number(e.target.value) : item)
+                                  );
+                                }}
+                                className="w-20 h-8 rounded-md text-right text-zinc-500 text-lg text-semibold"
+                              />
+                            ) : (
+                              <></>
+                            )
+
+                          }
+                        </div>
+                      </td>
+                      */}
+
+                      <td className="p-2">
+                        <div className="flex flex-row items-center gap-2 justify-center">
+                          {/* status */}
+                          {item.status === 'ordered' && (
+                            <div className="text-sm text-yellow-500 font-semibold
+                              border border-yellow-500 rounded-lg p-2
+                            ">
+                              {Buy_Order_Opened}
+                            </div>
+                          )}
+
+
+                          {item.status === 'accepted' && (
+
+                            <div className="flex flex-row gap-2 items-center justify-center">
+                              
+                              <div className="text-sm text-zinc-500
+                                border border-zinc-500 rounded-lg p-2
+                                ">
+                                {item.seller?.nickname}
+                              </div>
+
+                              <div className="text-sm text-[#409192]
+                                border border-green-600 rounded-lg p-2
+                                ">
+                                {Trade_Started}
+                              </div>
+
+
+
+
+                            </div>
+                          )}
+
+                          {item.status === 'paymentRequested' && (
+                            <div className="flex flex-row gap-2 items-center justify-center">
+                              
+                              <div className="text-sm text-zinc-500">
+                                {item.seller?.nickname}
+                              </div>
+                              
+                              <div className="text-sm text-[#409192]
+                                border border-green-600 rounded-lg p-2
+                                ">
+                                {/*Waiting_for_seller_to_deposit*/}
+
+                                결제요청
+
+
+                              </div>
+
+
+
+
+                            </div>
+                          )}
+
+                          {item.status === 'cancelled' && (
+                            <div className="flex flex-row gap-2 items-center justify-center">
+                                  <span className="text-sm text-zinc-500">
+                                  {item.seller?.nickname}
+                                </span>
+
+                                <div className="text-sm text-red-600
+                                  border border-red-600 rounded-lg p-2
+                                ">
+                                  {
+                                    Cancelled_at
+                                  }
+                                </div>
+
+
+                            </div>
+                          )}
+
+
+                          {/* if status is accepted, show payment request button */}
+                          {item.status === 'paymentConfirmed' && (
+                            <div className="flex flex-col gap-2 items-center justify-center">
+
+                              <div className="flex flex-row gap-1 items-center justify-center">
                                 <Image
                                   src="/icon-shield.png"
                                   alt="Shield"
@@ -3905,251 +4207,69 @@ export default function Index({ params }: any) {
                                   height={20}
                                   className="w-5 h-5"
                                 />
-                                <span className="text-sm font-semibold text-zinc-800">
-                                  {item.walletAddress.slice(0, 6) + '...'}
+                                <span className="text-sm text-zinc-800 font-semibold">
+                                  {
+                                    ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
+                                    item.seller?.walletAddress.slice(0, 6) + '...'
+                                  }
                                 </span>
                               </div>
 
-                              <div className="text-sm text-zinc-500">
-                                {
-                                  //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
 
-                                  //item.walletAddress === address ? 'Me' :
-
-                                  item?.buyer?.depositBankName + ' ' + item?.buyer?.depositName
-
-                                }
-                              </div>
-
-                            </div>
-                        </td>
-
-
-
-                        <td className="p-2">
-                          <div className="flex flex-col gap-2 items-end justify-start">
-
-                            <div className="flex flex-row gap-2 items-center justify-center">
-                              <Image
-                                src="/icon-tether.png"
-                                alt="Tether"
-                                width={20}
-                                height={20}
-                                className="w-5 h-5"
-                              />
-                              <span className="text-xl text-[#409192] font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                              <span className="text-lg font-semibold text-yellow-600">
+                                {Completed}
                               </span>
-                            </div>
 
+                              <button
+                                className="text-sm text-blue-600 font-semibold
+                                  border border-blue-600 rounded-lg p-2
+                                  bg-blue-100
+                                  w-full text-center
+                                  hover:bg-blue-200
+                                  cursor-pointer
+                                  transition-all duration-200 ease-in-out
+                                  hover:scale-105
+                                  hover:shadow-lg
+                                  hover:shadow-blue-500/50
+                                "
 
-                            <div className="flex flex-row items-center gap-1">
-                              <span className="text-xl text-yellow-600 font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(item.krwAmount)?.toLocaleString()}
-                              </span>
-                            </div>
-
-                            <span className="text-sm text-zinc-500"
-                              style={{ fontFamily: 'monospace' }}
-                            >
-                              {
-                                Number(item.rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                //Number(item.krwAmount / item.usdtAmount).toFixed(3)
-                              }
-                            </span>
-                          </div>
-                        </td>
-
-
-                        <td className="p-2">
-
-                          {item?.buyer?.nickname ? (
-
-                            <div className="flex flex-row items-center gap-2 justify-center">
-                              <div className="text-lg font-semibold text-yellow-600">
-                                {item.buyer?.nickname}
-                              </div>
-
-                              <div className="flex flex-col gap-2 items-center justify-center">
-                                <div className="text-lg font-semibold text-zinc-500">
-                                  {item.buyer?.depositBankName}
-                                </div>
-                                <div className="text-lg font-semibold text-zinc-500">
-                                  {item.buyer?.depositBankAccountNumber}
-                                </div>
-                                <div className="text-lg font-semibold text-zinc-500">
-                                  {item.buyer?.depositName}
-                                </div>
-                              </div>
-                            </div>
-
-                          ) : (
-
-                            <div className="flex flex-col gap-2 items-center justify-center">
-                              <div className="text-lg font-semibold text-zinc-500">
-                                {item.seller?.bankInfo?.bankName}
-                              </div>
-                              <div className="text-lg font-semibold text-zinc-500">
-                                {
-                                  item.seller?.bankInfo?.accountNumber
-                                  && item.seller?.bankInfo?.accountNumber.length > 5
-                                  ? item.seller?.bankInfo?.accountNumber.slice(0, 3) + '...' + item.seller?.bankInfo?.accountNumber.slice(-2)
-                                  : item.seller?.bankInfo?.accountNumber
-                                }
-                              </div>
-                              <div className="text-lg font-semibold text-zinc-500">
-                                {item.seller?.bankInfo?.accountHolder}
-                              </div>
-                            </div>
-
-                          )}
-
-                        </td>
-
-                        {/*
-                        <td className="p-2">
-                          <div className="flex mr-2 text-right">
-                            {
-
-                              item.status === 'paymentConfirmed' ? (
-
-                                <div className=" text-[#409192] text-xl font-semibold">
-                                  {
-                                    item.krwAmount
-                                    ? Number(item.krwAmount)?.toLocaleString('ko-KR', {
-                                      style: 'currency',
-                                      currency: 'KRW',
-                                    })
-                                    : '0'
+                                onClick={() => {
+                                  let url = '';
+                                  if (chain === "ethereum") {
+                                    url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                  } else if (chain === "polygon") {
+                                    url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                  } else if (chain === "arbitrum") {
+                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                  } else if (chain === "bsc") {
+                                    url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                  } else {
+                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
                                   }
-                                </div>
+                                  window.open(url, '_blank');
 
-                              ) : item.status === 'paymentRequested' ? (
-                                <input
-                                  disabled={false}
-                                  type="number"
-                                  value={paymentAmounts[index]}
-                                  onChange={(e) => {
-                                    setPaymentAmounts(
-                                      paymentAmounts.map((item, idx) => idx === index ? Number(e.target.value) : item)
-                                    );
-                                  }}
-                                  className="w-20 h-8 rounded-md text-right text-zinc-500 text-lg text-semibold"
-                                />
-                              ) : (
-                                <></>
-                              )
+                                }}
 
-                            }
-                          </div>
-                        </td>
-                        */}
-
-                        <td className="p-2">
-                          <div className="flex flex-row items-center gap-2 justify-center">
-                            {/* status */}
-                            {item.status === 'ordered' && (
-                              <div className="text-sm text-yellow-500 font-semibold
-                                border border-yellow-500 rounded-lg p-2
-                              ">
-                                {Buy_Order_Opened}
-                              </div>
-                            )}
-
-
-                            {item.status === 'accepted' && (
-
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                
-                                <div className="text-sm text-zinc-500
-                                  border border-zinc-500 rounded-lg p-2
-                                  ">
-                                  {item.seller?.nickname}
-                                </div>
-
-                                <div className="text-sm text-[#409192]
-                                  border border-green-600 rounded-lg p-2
-                                  ">
-                                  {Trade_Started}
-                                </div>
-
-
-
-
-                              </div>
-                            )}
-
-                            {item.status === 'paymentRequested' && (
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                
-                                <div className="text-sm text-zinc-500">
-                                  {item.seller?.nickname}
-                                </div>
-                                
-                                <div className="text-sm text-[#409192]
-                                  border border-green-600 rounded-lg p-2
-                                  ">
-                                  {/*Waiting_for_seller_to_deposit*/}
-
-                                  결제요청
-
-
-                                </div>
-
-
-
-
-                              </div>
-                            )}
-
-                            {item.status === 'cancelled' && (
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                    <span className="text-sm text-zinc-500">
-                                    {item.seller?.nickname}
-                                  </span>
-
-                                  <div className="text-sm text-red-600
-                                    border border-red-600 rounded-lg p-2
-                                  ">
-                                    {
-                                      Cancelled_at
-                                    }
-                                  </div>
-
-
-                              </div>
-                            )}
-
-
-                            {/* if status is accepted, show payment request button */}
-                            {item.status === 'paymentConfirmed' && (
-                              <div className="flex flex-col gap-2 items-center justify-center">
-
-                                <div className="flex flex-row gap-1 items-center justify-center">
+                              >
+                                <div className="flex flex-row gap-2 items-center justify-center">
                                   <Image
-                                    src="/icon-shield.png"
-                                    alt="Shield"
+                                    src={`/logo-chain-${chain}.png`}
+                                    alt="Chain"
                                     width={20}
                                     height={20}
                                     className="w-5 h-5"
                                   />
-                                  <span className="text-sm text-zinc-800 font-semibold">
-                                    {
-                                      ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
-                                      item.seller?.walletAddress.slice(0, 6) + '...'
-                                    }
+                                  <span className="text-sm">
+                                    USDT 전송내역(구매자)
                                   </span>
                                 </div>
+                              </button>
 
 
-                                <span className="text-lg font-semibold text-yellow-600">
-                                  {Completed}
-                                </span>
-
+                              {item?.settlement
+                              && item?.settlement?.txid
+                              && item?.settlement?.txid !== '0x'
+                              && (
                                 <button
                                   className="text-sm text-blue-600 font-semibold
                                     border border-blue-600 rounded-lg p-2
@@ -4166,19 +4286,20 @@ export default function Index({ params }: any) {
                                   onClick={() => {
                                     let url = '';
                                     if (chain === "ethereum") {
-                                      url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                      url = `https://etherscan.io/tx/${item.settlement.txid}`;
                                     } else if (chain === "polygon") {
-                                      url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                      url = `https://polygonscan.com/tx/${item.settlement.txid}`;
                                     } else if (chain === "arbitrum") {
-                                      url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                      url = `https://arbiscan.io/tx/${item.settlement.txid}`;
                                     } else if (chain === "bsc") {
-                                      url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                      url = `https://bscscan.com/tx/${item.settlement.txid}`;
                                     } else {
-                                      url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                      url = `https://arbiscan.io/tx/${item.settlement.txid}`;
                                     }
                                     window.open(url, '_blank');
 
                                   }}
+
 
                                 >
                                   <div className="flex flex-row gap-2 items-center justify-center">
@@ -4190,1152 +4311,188 @@ export default function Index({ params }: any) {
                                       className="w-5 h-5"
                                     />
                                     <span className="text-sm">
-                                      USDT 전송내역(구매자)
+                                      USDT 전송내역(회원)
                                     </span>
                                   </div>
                                 </button>
-
-
-                                {item?.settlement
-                                && item?.settlement?.txid
-                                && item?.settlement?.txid !== '0x'
-                                && (
-                                  <button
-                                    className="text-sm text-blue-600 font-semibold
-                                      border border-blue-600 rounded-lg p-2
-                                      bg-blue-100
-                                      w-full text-center
-                                      hover:bg-blue-200
-                                      cursor-pointer
-                                      transition-all duration-200 ease-in-out
-                                      hover:scale-105
-                                      hover:shadow-lg
-                                      hover:shadow-blue-500/50
-                                    "
-
-                                    onClick={() => {
-                                      let url = '';
-                                      if (chain === "ethereum") {
-                                        url = `https://etherscan.io/tx/${item.settlement.txid}`;
-                                      } else if (chain === "polygon") {
-                                        url = `https://polygonscan.com/tx/${item.settlement.txid}`;
-                                      } else if (chain === "arbitrum") {
-                                        url = `https://arbiscan.io/tx/${item.settlement.txid}`;
-                                      } else if (chain === "bsc") {
-                                        url = `https://bscscan.com/tx/${item.settlement.txid}`;
-                                      } else {
-                                        url = `https://arbiscan.io/tx/${item.settlement.txid}`;
-                                      }
-                                      window.open(url, '_blank');
-
-                                    }}
-
-
-                                  >
-                                    <div className="flex flex-row gap-2 items-center justify-center">
-                                      <Image
-                                        src={`/logo-chain-${chain}.png`}
-                                        alt="Chain"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                      />
-                                      <span className="text-sm">
-                                        USDT 전송내역(회원)
-                                      </span>
-                                    </div>
-                                  </button>
-                                )}
-                  
-
-                              </div>
-                            )}
-
-
-                            {item.status === 'completed' && (
-                              <div className="text-sm text-[#409192]
-                                border border-green-600 rounded-lg p-2
-                                ">
-                                {Completed_at}
-                              </div>
-                            )}
-
-                          </div>
-                        </td>
-
-
-
-                        <td className="p-2">
-
-                          <div className="
-                          flex flex-row gap-2 items-start justify-start">
-
-
-                            {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
-                              
-                              <div className="flex flex-row items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={agreementForCancelTrade[index]}
-                                  onChange={(e) => {
-                                    setAgreementForCancelTrade(
-                                      agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                    );
-                                  }}
-                                />
-                                <button
-                                  disabled={cancellings[index] || !agreementForCancelTrade[index]}
-                
-                                  className={`
-                                    w-32 h-8
-                                    flex flex-row
-                                    items-center justify-center
-                                    gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
-                                    
-                                  onClick={() => {
-                                    cancelTrade(item._id, index);
-                                  }}
-                                >
-                                  {cancellings[index] && (
-                                    <Image
-                                      src="/loading.png"
-                                      alt="Loading"
-                                      width={20}
-                                      height={20}
-                                      className="animate-spin"
-                                    />
-                                  )}
-                                  
-                                  <span className="text-sm">{Cancel_My_Trade}</span>
-                                
-                                </button>
-                              </div>
-
-                            )}
-                            {item.status === 'cancelled' && (
-                              <div className="text-sm text-red-600">
-                                
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-
-                        <td className="p-2">
-
-                          <div className="
-                            w-32
-                            flex flex-row gap-2 items-start justify-start">
-
-                            {/*item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
-                              
-                              <div className="flex flex-row items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={agreementForCancelTrade[index]}
-                                  onChange={(e) => {
-                                    setAgreementForCancelTrade(
-                                      agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                    );
-                                  }}
-                                />
-                                <button
-                                  disabled={cancellings[index] || !agreementForCancelTrade[index]}
-                
-                                  className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
-                                    
-                                  onClick={() => {
-                                    cancelTrade(item._id, index);
-                                  }}
-                                >
-                                  {cancellings[index] && (
-                                    <Image
-                                      src="/loading.png"
-                                      alt="Loading"
-                                      width={20}
-                                      height={20}
-                                      className="animate-spin"
-                                    />
-                                  )}
-                                  
-                                  <span className="text-sm">{Cancel_My_Trade}</span>
-                                
-                                </button>
-                              </div>
-
-                            )*/}
-
-
-
-
-
-                            {user && user.seller &&
-                            item.status === 'ordered' && item.walletAddress !== address && (
-                              
-                              <div className="flex flex-row items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={agreementForTrade[index]}
-                                  onChange={(e) => {
-                                    setAgreementForTrade(
-                                      agreementForTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                    );
-                                  }}
-                                />
-                                <button
-                                  disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
-                                  className={`
-                                    w-full h-8
-                                    flex flex-row 
-                                    items-center justify-center
-                                    gap-1 text-sm text-white px-2 py-1 rounded-md
-                                    ${acceptingBuyOrder[index] || !agreementForTrade[index] ?
-                                      'bg-zinc-500 text-white' :
-                                      'bg-green-500 text-white '}
-                                  `}
-                                  onClick={() => {
-                                    acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
-                                  }}
-                                >
-                                  {acceptingBuyOrder[index] && (
-                                    <Image
-                                      src="/loading.png"
-                                      alt="Loading"
-                                      width={20}
-                                      height={20}
-                                      className="w-4 h-4 animate-spin "
-                                    />
-                                  )}
-                                  <span className="text-sm">{Buy_Order_Accept}</span>
-                                  
-                                </button>
-                              </div>
-
-                            )}
-
-
-
-
-
-
-                            
-                            {
-                              item.seller && item.seller.walletAddress === address &&
-                              item.status === 'accepted' && (
-                              <div className="flex flex-row gap-2">
-
-                                {/* check box for agreement */}
-                                <input
-                                  disabled={escrowing[index] || requestingPayment[index]}
-                                  type="checkbox"
-                                  checked={requestPaymentCheck[index]}
-                                  onChange={(e) => {
-                                    setRequestPaymentCheck(
-                                      requestPaymentCheck.map((item, idx) => {
-                                        if (idx === index) {
-                                          return e.target.checked;
-                                        }
-                                        return item;
-                                      })
-                                    );
-                                  }}
-                                />
-
-                                <button
-                                  disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
-                                  
-                                  className={`
-                                    w-full h-8
-                                    flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
-                                  onClick={() => {
-
-                                    requestPayment(
-                                      index,
-                                      item._id,
-                                      item.tradeId,
-                                      item.usdtAmount
-                                    );
-                                  }}
-                                >
-                                  <Image
-                                    src="/loading.png"
-                                    alt="loading"
-                                    width={16}
-                                    height={16}
-                                    className={escrowing[index] || requestingPayment[index] ? 'animate-spin' : 'hidden'}
-                                  />
-                                  <span className="text-sm">
-                                    {Request_Payment}
-                                  </span>
-                                
-                                </button>
-
-                              </div>
-                            )}
-
-
-
-
-
-
-
-
-
-
-                            {item.seller && item.seller.walletAddress === address &&   
-                            item.status === 'paymentRequested' && (
-
-                              <div className="w-full flex flex-row gap-2">
-
-                                <div className="w-full flex flex-col gap-2 items-start justify-center">
-
-                                  {/*
-                                  <input
-                                    disabled={confirmingPayment[index]}
-                                    type="checkbox"
-                                    checked={confirmPaymentCheck[index]}
-                                    onChange={(e) => {
-                                      setConfirmPaymentCheck(
-                                        confirmPaymentCheck.map((item, idx) => {
-                                          if (idx === index) {
-                                            return e.target.checked;
-                                          }
-                                          return item;
-                                        })
-                                      );
-                                    }}
-                                  />
-                                  */}
-
-                                  <button
-                                    disabled={
-                                      //isProcessingSendTransaction
-                                      isProcessingSendTransaction.current
-                                    }
-                                    className={`
-                                      w-full h-8
-                                      flex flex-row
-                                      items-center justify-center
-                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${
-                                      //isProcessingSendTransaction
-                                      isProcessingSendTransaction.current
-                                      ? 'bg-gray-500' : 'bg-green-500'}`}
-
-
-                                    onClick={(e) => {
-
-                                      //e.preventDefault();
-                                      //e.stopPropagation();
-
-                                      confirmPayment(
-                                        index,
-                                        item._id,
-                                        //paymentAmounts[index],
-                                        item.krwAmount,
-
-                                        //paymentAmountsUsdt[index]
-                                        item.usdtAmount,
-
-                                        item.walletAddress
-                                      );
-                                    }}
-
-                                  >
-                                    
-                                    {sendingTransaction[index] ? (
-                                      <div className="flex flex-row gap-2 items-center justify-center">
-                                        <Image
-                                          src="/icon-transfer.png"
-                                          alt="Transferring"
-                                          width={20}
-                                          height={20}
-                                          className="w-4 h-4 animate-spin "
-                                        />
-                                        <span className="text-sm">
-                                          USDT 전송중...
-                                        </span>
-                                      </div>
-                                    ) : (
-                                      <span className="text-sm">
-                                        USDT 전송
-                                      </span>
-                                    )}
-
-                                  </button>
-
-                                  {/* warning message */}
-                                  {sendingTransaction[index] && (
-                                    <div className="flex flex-row gap-1 items-center justify-center">
-                                      <Image
-                                        src="/icon-warning.png"
-                                        alt="Warning"
-                                        width={16}
-                                        height={16}
-                                        className="w-4 h-4"
-                                      />
-                                      <span className="text-sm text-red-600">
-                                        전송중에 절대 새로고침하거나 뒤로가기를 하지 마세요.
-                                      </span>
-                                    </div>
-                                  )}
-
-
-                                </div>
-
-
-                                {!isWithoutEscrow && (
-                                  <div className="flex flex-row gap-2">
-
-                                    <input
-                                      disabled={rollbackingPayment[index]}
-                                      type="checkbox"
-                                      checked={rollbackPaymentCheck[index]}
-                                      onChange={(e) => {
-                                        setRollbackPaymentCheck(
-                                          rollbackPaymentCheck.map((item, idx) => {
-                                            if (idx === index) {
-                                              return e.target.checked;
-                                            }
-                                            return item;
-                                          })
-                                        );
-                                      }}
-                                    />
-
-                                    <button
-                                      disabled={rollbackingPayment[index] || !rollbackPaymentCheck[index]}
-                                      className={`
-                                        w-32 h-8
-                                        flex flex-row
-                                        items-center justify-center
-                                        gap-1 text-sm text-white px-2 py-1 rounded-md ${rollbackingPayment[index] || !rollbackPaymentCheck[index] ? 'bg-gray-500' : 'bg-red-500'}`}
-                                      onClick={() => {
-                                        rollbackPayment(
-                                          index,
-                                          item._id,
-                                          paymentAmounts[index],
-                                          paymentAmountsUsdt[index]
-                                        );
-                                      }}
-
-                                    >
-                                        
-                                        <Image
-                                          src="/loading.png"
-                                          alt="loading"
-                                          width={16}
-                                          height={16}
-                                          className={rollbackingPayment[index] ? 'animate-spin' : 'hidden'}
-                                        />
-                                        <span className="text-sm">
-                                          에스크로 취소
-                                        </span>
-
-                                    </button>
-
-                                  </div>
-                                )}
-
-
-                              </div>
-
-                            
-
-
-
-                            )}
-
-                            
-
-                          </div>
-
-
-                        </td>
-
-
-                        {/* 출금상태: buyer.depositCompleted */}
-                        <td className="p-2">
-
-                          {item.status !== 'cancelled' && (
-                            <>   
-                              {item?.buyer?.depositCompleted !== true
-                              ? (
-                                <div className="text-sm text-red-600
-                                flex flex-row items-center gap-2
-                                border border-red-600
-                                rounded-md px-2 py-1">
-                                  출금대기중
-                                </div>
-                              ) : (
-                                <div className="text-sm text-[#409192]
-                                flex flex-row items-center gap-2
-                                border border-green-600
-                                rounded-md px-2 py-1">
-                                  출금완료
-                                </div>
                               )}
-                            </>
+                
+
+                            </div>
                           )}
-                        
-                        </td>
 
 
+                          {item.status === 'completed' && (
+                            <div className="text-sm text-[#409192]
+                              border border-green-600 rounded-lg p-2
+                              ">
+                              {Completed_at}
+                            </div>
+                          )}
 
-                      </tr>
-
-                    ))}
-
-                  </tbody>
-
-                </table>
-
-              </div>
-
-
-            ) : (
-
-              <div className="w-full grid gap-4 lg:grid-cols-2 xl:grid-cols-3 justify-center ">
-
-                  {buyOrders.map((item, index) => (
-      
-                    <div
-                      key={index}
-                      className="relative flex flex-col items-center justify-center"
-                    >
-
-
-                      {item.status === 'ordered' && (new Date().getTime() - new Date(item.createdAt).getTime() > 1000 * 60 * 60 * 24) && (
-                        <div className="absolute inset-0 flex justify-center items-center z-10
-                          bg-black bg-opacity-50
-                        ">
-                          <Image
-                            src="/icon-expired.png"
-                            alt="Expired"
-                            width={100}
-                            height={100}
-                            className="opacity-20"
-                          />
                         </div>
-                      )}
-
-                      {item.status === 'cancelled' && (
-                        <div className="absolute inset-0 flex justify-center items-center z-10
-                          bg-black bg-opacity-50
-                        ">
-                          <Image
-                            src="/icon-cancelled.png"
-                            alt="Cancelled"
-                            width={100}
-                            height={100}
-                            className="opacity-20"
-                          />
-                        </div>
-                      )}
-
-
-                      <article
-                          //key={index}
-                          className={` w-96 xl:w-full h-full relative
-                            ${item.walletAddress === address ? 'border-green-500' : 'border-gray-200'}
-
-                            ${item.status === 'accepted' || item.status === 'paymentRequested' ? 'border-red-600' : 'border-gray-200'}
-
-                            p-4 rounded-md border bg-black bg-opacity-50
-                        `}
-                      >
-
-                        {item.status === 'ordered' && (
-
-
-                          <div className="w-full flex flex-col gpa-2 items-start justify-start">
-
-
-                              <div className="w-full flex flex-row items-center justify-between gap-2">
-
-                                <div className="flex flex-row items-center gap-2">
-
-                                  {/* if createdAt is recent 1 hours, show new badge */}
-                                  {new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 && (
-                                    <Image
-                                      src="/icon-new.png"
-                                      alt="New"
-                                      width={28}
-                                      height={28}
-                                    />
-                                  )}
-
-                                  <Image
-                                    src="/icon-public-sale.png"
-                                    alt="Public Sale"
-                                    width={28}
-                                    height={28}
-                                  />
-
-                                
-
-                                  {params.lang === 'ko' ? (
-
-                                    <p className="text-sm text-zinc-500">
-
-                                    
-                                      {
-
-                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                        ) :
-                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                        ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                        )
-                                      }{' '}{Buy_Order_Opened} 
-
-                                    </p>
-                                    
-                                    ) : (
-
-                                      <p className="text-sm text-zinc-500">
-
-
-                                    
-                                      {Buy_Order_Opened}{' '}{
-
-                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                        ) :
-                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                        ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                        )
-                                      }
+                      </td>
 
 
 
-                                    </p>
+                      <td className="p-2">
+
+                        <div className="
+                        flex flex-row gap-2 items-start justify-start">
 
 
-                                  )}
-
-                                </div>
-
-
-
-                                {/* share button */}
-                                {/*
-                                <button
-                                  className="text-sm bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
-                                  onClick={() => {
-
-                                    window.open(`https://gold.goodtether.com/${params.lang}/sell-usdt/${item._id}`, '_blank');
-
-                                  }}
-                                >
-                                  <Image
-                                    src="/icon-share.png"
-                                    alt="Share"
-                                    width={20}
-                                    height={20}
-                                  />
-                                </button>
-                                */}
-
-
-                              </div>
-
-
-                              {24 - Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) > 0 ? (
-
-                                <div className="mt-2 flex flex-row items-center space-x-2">
-                                  <Image
-                                    src="/icon-timer.webp"
-                                    alt="Timer"
-                                    width={28}
-                                    height={28}
-                                  />
-                                  <p className="text-sm text-zinc-500">{Expires_in} {
-  
-                                    24 - Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) - 1
-
-                                    } {hours} {
-                                      60 - Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) % 60
-                                    } {minutes}
-
-                                  </p>
-                                </div>
-
-                              ) : (
-                                <div className="mt-2 flex flex-row items-center space-x-2">
-                                  {/*
-                                  <Image
-                                    src="/icon-timer.webp"
-                                    alt="Expired"
-                                    width={28}
-                                    height={28}
-                                  />
-                                  <p className="text-sm text-zinc-500">Expired</p>
-                                  */}
-                                </div>
-                              )}
-  
-                          </div>
-
-                        )}
-
-
-
-
-
-                        { (item.status === 'accepted' || item.status === 'paymentRequested' || item.status === 'cancelled') && (
+                          {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
                             
-                          <div className={`
-                            ${item.status !== 'cancelled' && 'h-16'}
-
-                            mb-4 flex flex-row items-center bg-zinc-800 px-2 py-1 rounded-md`}>
-                              <Image
-                                src="/icon-trade.png"
-                                alt="Trade"
-                                width={32}
-                                height={32}
+                            <div className="flex flex-row items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={agreementForCancelTrade[index]}
+                                onChange={(e) => {
+                                  setAgreementForCancelTrade(
+                                    agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                  );
+                                }}
                               />
-
-
-                              <p className="text-sm font-semibold text-[#409192] ">
-                                {item.tradeId}
-                              </p>
-
-                              {item.status === 'cancelled' ? (
-                                <p className="ml-2 text-sm text-zinc-500">
-                                  {new Date(item.acceptedAt)?.toLocaleString()}
-                                </p>
-                              ) : (
-                                
-                                <>
-                                  {params.lang === 'ko' ? (
-
-                                    <p className="ml-2 text-sm text-zinc-500">
-
-                                    
-                                      {new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                      }{' '}{Trade_Started}
-
-                                    </p>
-
-
-
-                                  ) : (
-
-                                    <p className="ml-2 text-sm text-zinc-500">
-
-                                      {Trade_Started} {
-                                        new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                        ) :
-                                        new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                        ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                        )
-                                      }
-
-                                    </p>
-
-                                  )}
-
-
-
-
-                                </>
-                              
-                              )}
-
-
-
-                                {/* share button */}
-                                <button
-                                  className="ml-5 text-sm bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
-                                  onClick={() => {
-
-                                    //window.open(`https://gold.goodtether.com/${params.lang}/${params.center}/sell-usdt/${item._id}`, '_blank');
-
-                                    // copy to clipboard
-
-                                    navigator.clipboard.writeText(`https://gold.goodtether.com/${params.lang}/${params.center}/sell-usdt/${item._id}`);
-
-                                    toast.success('Link copied to clipboard');
-
-                                  }}
-                                >
-                                  <Image
-                                    src="/icon-share.png"
-                                    alt="Share"
-                                    width={20}
-                                    height={20}
-                                  />
-                                </button>
-
-
-
-                            </div>
-                        )}
-
-
-                          {/*
-                          
-                          {item.acceptedAt && (
-                            <p className="mb-2 text-sm text-zinc-500">
-                              Trade started at {new Date(item.acceptedAt).toLocaleDateString() + ' ' + new Date(item.acceptedAt).toLocaleTimeString()}
-                            </p>
-                          )}
-                          */}
-
-
-
-
-                        {item.status === 'cancelled' && (
-                            <div className="mt-4 flex flex-row items-center gap-2">
-                              <Image
-                                src='/icon-cancelled.webp'
-                                alt='cancel'
-                                width={20}
-                                height={20}
-                              />
-                              <p className="text-sm text-red-500">
-                                {Cancelled_at} {
-                                  new Date(item.cancelledAt).toLocaleDateString() + ' ' + new Date(item.cancelledAt).toLocaleTimeString()
-                                }
-                              </p>
-                            </div>
-                          )}
-
-
-
-
-                
-
-                          <div className="mt-4 flex flex-col items-start">
-
-
-
-                            <p className="text-2xl text-zinc-500">
-                              {Price}: {
-                                // currency
-                              
-                                Number(item.krwAmount)?.toLocaleString('ko-KR', {
-                                  style: 'currency',
-                                  currency: 'KRW',
-                                })
-
-                              }
-                            </p>
-
-                            <div className="mt-2 flex flex-row items-start gap-2">
-
-                              <p className="text-xl font-semibold text-zinc-500">
-                                {item.usdtAmount}{' '}USDT
-                              </p>
-                              <p className="text-lg font-semibold text-zinc-500">{Rate}: {
-
-                                Number(item.krwAmount / item.usdtAmount).toFixed(3)
-
-                                }</p>
-                            </div>
-
-
-                          </div>
-
-                  
-
-                          <div className="mb-4 flex flex-col items-start text-sm ">
-                            {Payment}: {Bank_Transfer} ({item.seller?.bankInfo?.bankName})
-                          </div>
-
-
-
-                          <div className="flex flex-col items-start justify-start gap-2">
-                            <p className="mt-2 mb-2 flex items-center gap-2">
-
-                              <Image
-                                  src={item.avatar || '/profile-default.png'}
-                                  alt="Avatar"
-                                  width={32}
-                                  height={32}
-                                  priority={true} // Added priority property
-                                  className="rounded-full"
-                                  style={{
-                                      objectFit: 'cover',
-                                      width: '32px',
-                                      height: '32px',
-                                  }}
-                              />
-
-                              <div className="flex flex-col gap-2 items-start">
-                                <div className="flex items-center space-x-2">{Buyer}:</div>
-
-                                <div className="text-sm font-semibold">
-                                  {item.walletAddress === address ? 'Me' : item.nickname}
-                                </div>
-                                <div className="text-lg text-[#409192]">
-                                  {item.buyer?.depositName}
-                                </div>
-                              </div>
-
-                              <Image
-                                src="/verified.png"
-                                alt="Verified"
-                                width={20}
-                                height={20}
-                                className="rounded-lg"
-                              />
-
-                              <Image
-                                src="/best-buyer.png"
-                                alt="Best Buyer"
-                                width={20}
-                                height={20}
-                                className="rounded-lg"
-                              />
-
-                            </p>
-
-
-                            {address && item.walletAddress !== address && item?.buyer && item?.buyer?.walletAddress === address && (
                               <button
-                                className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                                disabled={cancellings[index] || !agreementForCancelTrade[index]}
+              
+                                className={`
+                                  w-32 h-8
+                                  flex flex-row
+                                  items-center justify-center
+                                  gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                  
                                 onClick={() => {
-                                    //console.log('Buy USDT');
-                                    // go to chat
-                                    // close modal
-                                    //closeModal();
-                                    ///goChat(item._id, item.tradeId);
-
-                                    router.push(`/${params.lang}/${params.center}/sell-usdt/${item._id}`);
-
+                                  cancelTrade(item._id, index);
                                 }}
                               >
-                                {Chat_with_Buyer + ' ' + item.nickname}
+                                {cancellings[index] && (
+                                  <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                  />
+                                )}
+                                
+                                <span className="text-sm">{Cancel_My_Trade}</span>
+                              
                               </button>
-                            )}
+                            </div>
 
-
-                          </div>
-
-
-
-
-                          {/* buyer cancelled the trade */}
+                          )}
                           {item.status === 'cancelled' && (
-                            <div className="mt-4 flex flex-col gap-2 items-start justify-center">
-                              <div className="flex flex-row items-center gap-2">
-                                <Image
-                                  src={item?.buyer?.avatar || "/profile-default.png"}
-                                  alt="Profile Image"
-                                  width={32}
-                                  height={32}
-                                  priority={true} // Added priority property
-                                  className="rounded-full"
-                                  style={{
-                                      objectFit: 'cover',
-                                      width: '32px',
-                                      height: '32px',
-                                  }}
-                                />
-                                <p className="text-sm text-red-500 font-semibold">
-                                  {Buyer}: {
-                                    address && item?.buyer?.walletAddress === address ? Me :
-                                    address && item?.buyer?.nickname ? item?.buyer?.nickname : Anonymous
-                                  }
-                                </p>
-
-                              </div>
-
-
+                            <div className="text-sm text-red-600">
+                              
                             </div>
                           )}
+                        </div>
+                      </td>
 
 
+                      <td className="p-2">
 
-                          {(item.status === 'accepted' || item.status === 'paymentRequested') && (
-                      
-                            <div className="mt-4 flex flex-row items-center gap-2">
-                              <Image
-                                src={item.seller?.avatar || "/profile-default.png"}
-                                alt="Profile Image"
-                                width={32}
-                                height={32}
-                                priority={true} // Added priority property
-                                className="rounded-full"
-                                style={{
-                                    objectFit: 'cover',
-                                    width: '32px',
-                                    height: '32px',
+                        <div className="
+                          w-32
+                          flex flex-row gap-2 items-start justify-start">
+
+                          {/*item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
+                            
+                            <div className="flex flex-row items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={agreementForCancelTrade[index]}
+                                onChange={(e) => {
+                                  setAgreementForCancelTrade(
+                                    agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                  );
                                 }}
                               />
-                              <p className="text-xl text-[#409192] font-semibold">
-                                {Seller}: {
-                                  item.seller?.walletAddress === address ? Me :
-                                  item.seller?.nickname.substring(0, 1) + '***'
-                                }
-                              </p>
-                              <Image
-                                src="/verified.png"
-                                alt="Verified"
-                                width={20}
-                                height={20}
-                                className="rounded-lg"
+                              <button
+                                disabled={cancellings[index] || !agreementForCancelTrade[index]}
+              
+                                className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                  
+                                onClick={() => {
+                                  cancelTrade(item._id, index);
+                                }}
+                              >
+                                {cancellings[index] && (
+                                  <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                  />
+                                )}
+                                
+                                <span className="text-sm">{Cancel_My_Trade}</span>
+                              
+                              </button>
+                            </div>
+
+                          )*/}
+
+
+
+
+
+                          {user && user.seller &&
+                          item.status === 'ordered' && item.walletAddress !== address && (
+                            
+                            <div className="flex flex-row items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={agreementForTrade[index]}
+                                onChange={(e) => {
+                                  setAgreementForTrade(
+                                    agreementForTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                  );
+                                }}
                               />
+                              <button
+                                disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
+                                className={`
+                                  w-full h-8
+                                  flex flex-row 
+                                  items-center justify-center
+                                  gap-1 text-sm text-white px-2 py-1 rounded-md
+                                  ${acceptingBuyOrder[index] || !agreementForTrade[index] ?
+                                    'bg-zinc-500 text-white' :
+                                    'bg-green-500 text-white '}
+                                `}
+                                onClick={() => {
+                                  acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
+                                }}
+                              >
+                                {acceptingBuyOrder[index] && (
+                                  <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="w-4 h-4 animate-spin "
+                                  />
+                                )}
+                                <span className="text-sm">{Buy_Order_Accept}</span>
+                                
+                              </button>
                             </div>
+
+                          )}
+
+
+
+
+
+
                           
-                          )}
-                        
-
-                          {/* waiting for escrow */}
-                          {item.status === 'accepted' && (
-
-
-
-                            <div className="mt-4 flex flex-col gap-2 items-center justify-start">
-
-
-                                
-                                
-                              <div className="mt-4 flex flex-row gap-2 items-center justify-start">
-                                <Image
-                                  src="/loading.png"
-                                  alt="Escrow"
-                                  width={32}
-                                  height={32}
-                                  className="animate-spin"
-                                />
-
-                                <div className="flex flex-col gap-2 items-start">
-                                  <span>
-                                    {Waiting_for_seller_to_deposit} {item.usdtAmount} USDT {to_escrow}...
-                                  </span>
-
-                                  <span className="text-sm text-zinc-500">
-
-                                    {If_the_seller_does_not_deposit_the_USDT_to_escrow},
-
-                                    {this_trade_will_be_cancelled_in} {
-
-                                      (1 - Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) - 1) > 0
-                                      ? (1 - Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) - 1) + ' ' + hours
-                                      : (60 - Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) % 60) + ' ' + minutes
-
-                                    } 
-
-                                  </span>
-                                </div>
-                              </div>
-
-
-
-
-
-                              {item.buyer?.walletAddress === address && (
-
-                                <div className="mt-4 flex flex-col items-center justify-center gap-2">
-
-
-
-                                  <div className="flex flex-row items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={agreementForCancelTrade[index]}
-                                      onChange={(e) => {
-                                        setAgreementForCancelTrade(
-                                          buyOrders.map((item, idx) => {
-                                            if (idx === index) {
-                                              return e.target.checked;
-                                            } else {
-                                              return false;
-                                            }
-                                          })
-                                        );
-                                      }}
-                                    />
-                                    <label className="text-sm text-zinc-500">
-                                      {I_agree_to_cancel_the_trade}
-                                    </label>
-                                  </div>
-
-
-                                  <div className="mt-5 flex flex-row items-center gap-2">
-
-                                    <button
-                                      disabled={cancellings[index] || !agreementForCancelTrade[index]}
-                                      className={`text-sm bg-red-500 text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'}`}
-                                      onClick={() => {
-
-                                        cancelTrade(item._id, index);
-
-                                      }}
-                                    >
-
-                                      <div className="flex flex-row items-center gap-2 px-2 py-1">
-                                        {cancellings[index] ? (
-                                          <div className="
-                                            w-4 h-4
-                                            border-2 border-zinc-800
-                                            rounded-full
-                                            animate-spin
-                                          ">
-                                            <Image
-                                              src="/loading.png"
-                                              alt="loading"
-                                              width={16}
-                                              height={16}
-                                            />
-                                          </div>
-                                        ) : (
-                                          <Image
-                                            src="/icon-cancelled.png"
-                                            alt="Cancel"
-                                            width={16}
-                                            height={16}
-                                          />
-                                        )}
-                                        {Cancel_My_Trade}
-                                      </div>
-                                        
-                                    
-                                    </button>
-                                  </div>
-
-                                </div>
-
-                              )}
-
-
-                            </div>
-                          )}
-
-
-
-                          {/* if status is accepted, show payment request button */}
-                          {item.status === 'paymentConfirmed' && (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-sm font-semibold text-[#409192]">
-                                {Completed}
-                              </span>
-                              <span>{
-                                item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
-                              }</span>
-                            </div>
-                          )}
-
                           {
-                          item.seller && item.seller.walletAddress === address &&
-                          item.status === 'accepted' && (
-                            <div className="flex flex-row gap-1">
+                            item.seller && item.seller.walletAddress === address &&
+                            item.status === 'accepted' && (
+                            <div className="flex flex-row gap-2">
 
                               {/* check box for agreement */}
                               <input
@@ -5357,7 +4514,9 @@ export default function Index({ params }: any) {
                               <button
                                 disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                 
-                                className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                                className={`
+                                  w-full h-8
+                                  flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
                                 onClick={() => {
 
                                   requestPayment(
@@ -5375,7 +4534,9 @@ export default function Index({ params }: any) {
                                   height={16}
                                   className={escrowing[index] || requestingPayment[index] ? 'animate-spin' : 'hidden'}
                                 />
-                                <span>{Request_Payment}</span>
+                                <span className="text-sm">
+                                  {Request_Payment}
+                                </span>
                               
                               </button>
 
@@ -5383,247 +4544,1156 @@ export default function Index({ params }: any) {
                           )}
 
 
-                          {/* waiting for payment */}
-                          {item.status === 'paymentRequested' && (
 
-                              <div className="mt-4 flex flex-col gap-2 items-start justify-start">
+
+
+
+
+
+
+
+                          {item.seller && item.seller.walletAddress === address &&   
+                          item.status === 'paymentRequested' && (
+
+                            <div className="w-full flex flex-row gap-2">
+
+                              <div className="w-full flex flex-col gap-2 items-start justify-center">
+
+                                {/*
+                                <input
+                                  disabled={confirmingPayment[index]}
+                                  type="checkbox"
+                                  checked={confirmPaymentCheck[index]}
+                                  onChange={(e) => {
+                                    setConfirmPaymentCheck(
+                                      confirmPaymentCheck.map((item, idx) => {
+                                        if (idx === index) {
+                                          return e.target.checked;
+                                        }
+                                        return item;
+                                      })
+                                    );
+                                  }}
+                                />
+                                */}
+
+                                <button
+                                  disabled={
+                                    //isProcessingSendTransaction
+                                    isProcessingSendTransaction.current
+                                  }
+                                  className={`
+                                    w-full h-8
+                                    flex flex-row
+                                    items-center justify-center
+                                    gap-1 text-sm text-white px-2 py-1 rounded-md ${
+                                    //isProcessingSendTransaction
+                                    isProcessingSendTransaction.current
+                                    ? 'bg-gray-500' : 'bg-green-500'}`}
+
+
+                                  onClick={(e) => {
+
+                                    //e.preventDefault();
+                                    //e.stopPropagation();
+
+                                    confirmPayment(
+                                      index,
+                                      item._id,
+                                      //paymentAmounts[index],
+                                      item.krwAmount,
+
+                                      //paymentAmountsUsdt[index]
+                                      item.usdtAmount,
+
+                                      item.walletAddress
+                                    );
+                                  }}
+
+                                >
+                                  
+                                  {sendingTransaction[index] ? (
+                                    <div className="flex flex-row gap-2 items-center justify-center">
+                                      <Image
+                                        src="/icon-transfer.png"
+                                        alt="Transferring"
+                                        width={20}
+                                        height={20}
+                                        className="w-4 h-4 animate-spin "
+                                      />
+                                      <span className="text-sm">
+                                        USDT 전송중...
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm">
+                                      USDT 전송
+                                    </span>
+                                  )}
+
+                                </button>
+
+                                {/* warning message */}
+                                {sendingTransaction[index] && (
+                                  <div className="flex flex-row gap-1 items-center justify-center">
+                                    <Image
+                                      src="/icon-warning.png"
+                                      alt="Warning"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className="text-sm text-red-600">
+                                      전송중에 절대 새로고침하거나 뒤로가기를 하지 마세요.
+                                    </span>
+                                  </div>
+                                )}
+
+
+                              </div>
+
+
+                              {!isWithoutEscrow && (
+                                <div className="flex flex-row gap-2">
+
+                                  <input
+                                    disabled={rollbackingPayment[index]}
+                                    type="checkbox"
+                                    checked={rollbackPaymentCheck[index]}
+                                    onChange={(e) => {
+                                      setRollbackPaymentCheck(
+                                        rollbackPaymentCheck.map((item, idx) => {
+                                          if (idx === index) {
+                                            return e.target.checked;
+                                          }
+                                          return item;
+                                        })
+                                      );
+                                    }}
+                                  />
+
+                                  <button
+                                    disabled={rollbackingPayment[index] || !rollbackPaymentCheck[index]}
+                                    className={`
+                                      w-32 h-8
+                                      flex flex-row
+                                      items-center justify-center
+                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${rollbackingPayment[index] || !rollbackPaymentCheck[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                    onClick={() => {
+                                      rollbackPayment(
+                                        index,
+                                        item._id,
+                                        paymentAmounts[index],
+                                        paymentAmountsUsdt[index]
+                                      );
+                                    }}
+
+                                  >
+                                      
+                                      <Image
+                                        src="/loading.png"
+                                        alt="loading"
+                                        width={16}
+                                        height={16}
+                                        className={rollbackingPayment[index] ? 'animate-spin' : 'hidden'}
+                                      />
+                                      <span className="text-sm">
+                                        에스크로 취소
+                                      </span>
+
+                                  </button>
+
+                                </div>
+                              )}
+
+
+                            </div>
+
+                          
+
+
+
+                          )}
+
+                          
+
+                        </div>
+
+
+                      </td>
+
+
+                      {/* 출금상태: buyer.depositCompleted */}
+                      <td className="p-2">
+
+                        {item.status !== 'cancelled' && (
+                          <>   
+                            {item?.buyer?.depositCompleted !== true
+                            ? (
+                              <div className="text-sm text-red-600
+                              flex flex-row items-center gap-2
+                              border border-red-600
+                              rounded-md px-2 py-1">
+                                출금대기중
+                              </div>
+                            ) : (
+                              <div className="text-sm text-[#409192]
+                              flex flex-row items-center gap-2
+                              border border-green-600
+                              rounded-md px-2 py-1">
+                                출금완료
+                              </div>
+                            )}
+                          </>
+                        )}
+                      
+                      </td>
+
+
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+
+          ) : (
+
+            <div className="w-full grid gap-4 lg:grid-cols-2 xl:grid-cols-3 justify-center ">
+
+                {buyOrders.map((item, index) => (
+    
+                  <div
+                    key={index}
+                    className="relative flex flex-col items-center justify-center"
+                  >
+
+
+                    {item.status === 'ordered' && (new Date().getTime() - new Date(item.createdAt).getTime() > 1000 * 60 * 60 * 24) && (
+                      <div className="absolute inset-0 flex justify-center items-center z-10
+                        bg-black bg-opacity-50
+                      ">
+                        <Image
+                          src="/icon-expired.png"
+                          alt="Expired"
+                          width={100}
+                          height={100}
+                          className="opacity-20"
+                        />
+                      </div>
+                    )}
+
+                    {item.status === 'cancelled' && (
+                      <div className="absolute inset-0 flex justify-center items-center z-10
+                        bg-black bg-opacity-50
+                      ">
+                        <Image
+                          src="/icon-cancelled.png"
+                          alt="Cancelled"
+                          width={100}
+                          height={100}
+                          className="opacity-20"
+                        />
+                      </div>
+                    )}
+
+
+                    <article
+                        //key={index}
+                        className={` w-96 xl:w-full h-full relative
+                          ${item.walletAddress === address ? 'border-green-500' : 'border-gray-200'}
+
+                          ${item.status === 'accepted' || item.status === 'paymentRequested' ? 'border-red-600' : 'border-gray-200'}
+
+                          p-4 rounded-md border bg-black bg-opacity-50
+                      `}
+                    >
+
+                      {item.status === 'ordered' && (
+
+
+                        <div className="w-full flex flex-col gpa-2 items-start justify-start">
+
+
+                            <div className="w-full flex flex-row items-center justify-between gap-2">
+
+                              <div className="flex flex-row items-center gap-2">
+
+                                {/* if createdAt is recent 1 hours, show new badge */}
+                                {new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 && (
+                                  <Image
+                                    src="/icon-new.png"
+                                    alt="New"
+                                    width={28}
+                                    height={28}
+                                  />
+                                )}
+
+                                <Image
+                                  src="/icon-public-sale.png"
+                                  alt="Public Sale"
+                                  width={28}
+                                  height={28}
+                                />
+
+                              
+
+                                {params.lang === 'ko' ? (
+
+                                  <p className="text-sm text-zinc-500">
+
+                                  
+                                    {
+
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }{' '}{Buy_Order_Opened} 
+
+                                  </p>
+                                  
+                                  ) : (
+
+                                    <p className="text-sm text-zinc-500">
+
+
+                                  
+                                    {Buy_Order_Opened}{' '}{
+
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }
+
+
+
+                                  </p>
+
+
+                                )}
+
+                              </div>
+
+
+
+                              {/* share button */}
+                              {/*
+                              <button
+                                className="text-sm bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
+                                onClick={() => {
+
+                                  window.open(`https://gold.goodtether.com/${params.lang}/sell-usdt/${item._id}`, '_blank');
+
+                                }}
+                              >
+                                <Image
+                                  src="/icon-share.png"
+                                  alt="Share"
+                                  width={20}
+                                  height={20}
+                                />
+                              </button>
+                              */}
+
+
+                            </div>
+
+
+                            {24 - Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) > 0 ? (
+
+                              <div className="mt-2 flex flex-row items-center space-x-2">
+                                <Image
+                                  src="/icon-timer.webp"
+                                  alt="Timer"
+                                  width={28}
+                                  height={28}
+                                />
+                                <p className="text-sm text-zinc-500">{Expires_in} {
+
+                                  24 - Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) - 1
+
+                                  } {hours} {
+                                    60 - Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) % 60
+                                  } {minutes}
+
+                                </p>
+                              </div>
+
+                            ) : (
+                              <div className="mt-2 flex flex-row items-center space-x-2">
+                                {/*
+                                <Image
+                                  src="/icon-timer.webp"
+                                  alt="Expired"
+                                  width={28}
+                                  height={28}
+                                />
+                                <p className="text-sm text-zinc-500">Expired</p>
+                                */}
+                              </div>
+                            )}
+
+                        </div>
+
+                      )}
+
+
+
+
+
+                      { (item.status === 'accepted' || item.status === 'paymentRequested' || item.status === 'cancelled') && (
+                          
+                        <div className={`
+                          ${item.status !== 'cancelled' && 'h-16'}
+
+                          mb-4 flex flex-row items-center bg-zinc-800 px-2 py-1 rounded-md`}>
+                            <Image
+                              src="/icon-trade.png"
+                              alt="Trade"
+                              width={32}
+                              height={32}
+                            />
+
+
+                            <p className="text-sm font-semibold text-[#409192] ">
+                              {item.tradeId}
+                            </p>
+
+                            {item.status === 'cancelled' ? (
+                              <p className="ml-2 text-sm text-zinc-500">
+                                {new Date(item.acceptedAt)?.toLocaleString()}
+                              </p>
+                            ) : (
+                              
+                              <>
+                                {params.lang === 'ko' ? (
+
+                                  <p className="ml-2 text-sm text-zinc-500">
+
+                                  
+                                    {new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                    ) :
+                                    new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                    ) : (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                    )
+                                    }{' '}{Trade_Started}
+
+                                  </p>
+
+
+
+                                ) : (
+
+                                  <p className="ml-2 text-sm text-zinc-500">
+
+                                    {Trade_Started} {
+                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }
+
+                                  </p>
+
+                                )}
+
+
+
+
+                              </>
+                            
+                            )}
+
+
+
+                              {/* share button */}
+                              <button
+                                className="ml-5 text-sm bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
+                                onClick={() => {
+
+                                  //window.open(`https://gold.goodtether.com/${params.lang}/${params.center}/sell-usdt/${item._id}`, '_blank');
+
+                                  // copy to clipboard
+
+                                  navigator.clipboard.writeText(`https://gold.goodtether.com/${params.lang}/${params.center}/sell-usdt/${item._id}`);
+
+                                  toast.success('Link copied to clipboard');
+
+                                }}
+                              >
+                                <Image
+                                  src="/icon-share.png"
+                                  alt="Share"
+                                  width={20}
+                                  height={20}
+                                />
+                              </button>
+
+
+
+                          </div>
+                      )}
+
+
+                        {/*
+                        
+                        {item.acceptedAt && (
+                          <p className="mb-2 text-sm text-zinc-500">
+                            Trade started at {new Date(item.acceptedAt).toLocaleDateString() + ' ' + new Date(item.acceptedAt).toLocaleTimeString()}
+                          </p>
+                        )}
+                        */}
+
+
+
+
+                      {item.status === 'cancelled' && (
+                          <div className="mt-4 flex flex-row items-center gap-2">
+                            <Image
+                              src='/icon-cancelled.webp'
+                              alt='cancel'
+                              width={20}
+                              height={20}
+                            />
+                            <p className="text-sm text-red-500">
+                              {Cancelled_at} {
+                                new Date(item.cancelledAt).toLocaleDateString() + ' ' + new Date(item.cancelledAt).toLocaleTimeString()
+                              }
+                            </p>
+                          </div>
+                        )}
+
+
+
+
+              
+
+                        <div className="mt-4 flex flex-col items-start">
+
+
+
+                          <p className="text-2xl text-zinc-500">
+                            {Price}: {
+                              // currency
+                            
+                              Number(item.krwAmount)?.toLocaleString('ko-KR', {
+                                style: 'currency',
+                                currency: 'KRW',
+                              })
+
+                            }
+                          </p>
+
+                          <div className="mt-2 flex flex-row items-start gap-2">
+
+                            <p className="text-xl font-semibold text-zinc-500">
+                              {item.usdtAmount}{' '}USDT
+                            </p>
+                            <p className="text-lg font-semibold text-zinc-500">{Rate}: {
+
+                              Number(item.krwAmount / item.usdtAmount).toFixed(3)
+
+                              }</p>
+                          </div>
+
+
+                        </div>
+
+                
+
+                        <div className="mb-4 flex flex-col items-start text-sm ">
+                          {Payment}: {Bank_Transfer} ({item.seller?.bankInfo?.bankName})
+                        </div>
+
+
+
+                        <div className="flex flex-col items-start justify-start gap-2">
+                          <p className="mt-2 mb-2 flex items-center gap-2">
+
+                            <Image
+                                src={item.avatar || '/profile-default.png'}
+                                alt="Avatar"
+                                width={32}
+                                height={32}
+                                priority={true} // Added priority property
+                                className="rounded-full"
+                                style={{
+                                    objectFit: 'cover',
+                                    width: '32px',
+                                    height: '32px',
+                                }}
+                            />
+
+                            <div className="flex flex-col gap-2 items-start">
+                              <div className="flex items-center space-x-2">{Buyer}:</div>
+
+                              <div className="text-sm font-semibold">
+                                {item.walletAddress === address ? 'Me' : item.nickname}
+                              </div>
+                              <div className="text-lg text-[#409192]">
+                                {item.buyer?.depositName}
+                              </div>
+                            </div>
+
+                            <Image
+                              src="/verified.png"
+                              alt="Verified"
+                              width={20}
+                              height={20}
+                              className="rounded-lg"
+                            />
+
+                            <Image
+                              src="/best-buyer.png"
+                              alt="Best Buyer"
+                              width={20}
+                              height={20}
+                              className="rounded-lg"
+                            />
+
+                          </p>
+
+
+                          {address && item.walletAddress !== address && item?.buyer && item?.buyer?.walletAddress === address && (
+                            <button
+                              className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                              onClick={() => {
+                                  //console.log('Buy USDT');
+                                  // go to chat
+                                  // close modal
+                                  //closeModal();
+                                  ///goChat(item._id, item.tradeId);
+
+                                  router.push(`/${params.lang}/${params.center}/sell-usdt/${item._id}`);
+
+                              }}
+                            >
+                              {Chat_with_Buyer + ' ' + item.nickname}
+                            </button>
+                          )}
+
+
+                        </div>
+
+
+
+
+                        {/* buyer cancelled the trade */}
+                        {item.status === 'cancelled' && (
+                          <div className="mt-4 flex flex-col gap-2 items-start justify-center">
+                            <div className="flex flex-row items-center gap-2">
+                              <Image
+                                src={item?.buyer?.avatar || "/profile-default.png"}
+                                alt="Profile Image"
+                                width={32}
+                                height={32}
+                                priority={true} // Added priority property
+                                className="rounded-full"
+                                style={{
+                                    objectFit: 'cover',
+                                    width: '32px',
+                                    height: '32px',
+                                }}
+                              />
+                              <p className="text-sm text-red-500 font-semibold">
+                                {Buyer}: {
+                                  address && item?.buyer?.walletAddress === address ? Me :
+                                  address && item?.buyer?.nickname ? item?.buyer?.nickname : Anonymous
+                                }
+                              </p>
+
+                            </div>
+
+
+                          </div>
+                        )}
+
+
+
+                        {(item.status === 'accepted' || item.status === 'paymentRequested') && (
+                    
+                          <div className="mt-4 flex flex-row items-center gap-2">
+                            <Image
+                              src={item.seller?.avatar || "/profile-default.png"}
+                              alt="Profile Image"
+                              width={32}
+                              height={32}
+                              priority={true} // Added priority property
+                              className="rounded-full"
+                              style={{
+                                  objectFit: 'cover',
+                                  width: '32px',
+                                  height: '32px',
+                              }}
+                            />
+                            <p className="text-xl text-[#409192] font-semibold">
+                              {Seller}: {
+                                item.seller?.walletAddress === address ? Me :
+                                item.seller?.nickname.substring(0, 1) + '***'
+                              }
+                            </p>
+                            <Image
+                              src="/verified.png"
+                              alt="Verified"
+                              width={20}
+                              height={20}
+                              className="rounded-lg"
+                            />
+                          </div>
+                        
+                        )}
+                      
+
+                        {/* waiting for escrow */}
+                        {item.status === 'accepted' && (
+
+
+
+                          <div className="mt-4 flex flex-col gap-2 items-center justify-start">
+
+
+                              
+                              
+                            <div className="mt-4 flex flex-row gap-2 items-center justify-start">
+                              <Image
+                                src="/loading.png"
+                                alt="Escrow"
+                                width={32}
+                                height={32}
+                                className="animate-spin"
+                              />
+
+                              <div className="flex flex-col gap-2 items-start">
+                                <span>
+                                  {Waiting_for_seller_to_deposit} {item.usdtAmount} USDT {to_escrow}...
+                                </span>
+
+                                <span className="text-sm text-zinc-500">
+
+                                  {If_the_seller_does_not_deposit_the_USDT_to_escrow},
+
+                                  {this_trade_will_be_cancelled_in} {
+
+                                    (1 - Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) - 1) > 0
+                                    ? (1 - Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) - 1) + ' ' + hours
+                                    : (60 - Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) % 60) + ' ' + minutes
+
+                                  } 
+
+                                </span>
+                              </div>
+                            </div>
+
+
+
+
+
+                            {item.buyer?.walletAddress === address && (
+
+                              <div className="mt-4 flex flex-col items-center justify-center gap-2">
+
+
 
                                 <div className="flex flex-row items-center gap-2">
-
-                                  <Image
-                                    src="/smart-contract.png"
-                                    alt="Smart Contract"
-                                    width={32}
-                                    height={32}
+                                  <input
+                                    type="checkbox"
+                                    checked={agreementForCancelTrade[index]}
+                                    onChange={(e) => {
+                                      setAgreementForCancelTrade(
+                                        buyOrders.map((item, idx) => {
+                                          if (idx === index) {
+                                            return e.target.checked;
+                                          } else {
+                                            return false;
+                                          }
+                                        })
+                                      );
+                                    }}
                                   />
-                                  <div>{Escrow}: {item.usdtAmount} USDT</div>
+                                  <label className="text-sm text-zinc-500">
+                                    {I_agree_to_cancel_the_trade}
+                                  </label>
+                                </div>
+
+
+                                <div className="mt-5 flex flex-row items-center gap-2">
+
                                   <button
-                                    className="bg-white text-black px-2 py-2 rounded-md"
+                                    disabled={cancellings[index] || !agreementForCancelTrade[index]}
+                                    className={`text-sm bg-red-500 text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'}`}
                                     onClick={() => {
-                          
-                                        //params.center === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
-                                        
-                                        chain === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
-                                        chain === 'bsc' ? window.open(`https://bscscan.com/tx/${item.escrowTransactionHash}`) : window.open(`https://bscscan.com/tx/${item.escrowTransactionHash}`);
-                                        chain === 'polygon' ? window.open(`https://polygonscan.com/tx/${item.escrowTransactionHash}`) : window.open(`https://polygonscan.com/tx/${item.escrowTransactionHash}`);
-                                        window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`); // default to arbitrum
+
+                                      cancelTrade(item._id, index);
 
                                     }}
                                   >
-                                    <Image
-                                      src={params.center === 'arbitrum' ? '/logo-arbitrum.png' : '/logo-arbitrum.png'}
-                                      alt="Chain"
-                                      width={20}
-                                      height={20}
-                                    />
+
+                                    <div className="flex flex-row items-center gap-2 px-2 py-1">
+                                      {cancellings[index] ? (
+                                        <div className="
+                                          w-4 h-4
+                                          border-2 border-zinc-800
+                                          rounded-full
+                                          animate-spin
+                                        ">
+                                          <Image
+                                            src="/loading.png"
+                                            alt="loading"
+                                            width={16}
+                                            height={16}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <Image
+                                          src="/icon-cancelled.png"
+                                          alt="Cancel"
+                                          width={16}
+                                          height={16}
+                                        />
+                                      )}
+                                      {Cancel_My_Trade}
+                                    </div>
+                                      
+                                  
                                   </button>
                                 </div>
 
-                                <div className="flex flex-row gap-2 items-center justify-start">
+                              </div>
 
-                                  {/* rotate loading icon */}
-                                
+                            )}
+
+
+                          </div>
+                        )}
+
+
+
+                        {/* if status is accepted, show payment request button */}
+                        {item.status === 'paymentConfirmed' && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm font-semibold text-[#409192]">
+                              {Completed}
+                            </span>
+                            <span>{
+                              item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
+                            }</span>
+                          </div>
+                        )}
+
+                        {
+                        item.seller && item.seller.walletAddress === address &&
+                        item.status === 'accepted' && (
+                          <div className="flex flex-row gap-1">
+
+                            {/* check box for agreement */}
+                            <input
+                              disabled={escrowing[index] || requestingPayment[index]}
+                              type="checkbox"
+                              checked={requestPaymentCheck[index]}
+                              onChange={(e) => {
+                                setRequestPaymentCheck(
+                                  requestPaymentCheck.map((item, idx) => {
+                                    if (idx === index) {
+                                      return e.target.checked;
+                                    }
+                                    return item;
+                                  })
+                                );
+                              }}
+                            />
+
+                            <button
+                              disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
+                              
+                              className={`flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                              onClick={() => {
+
+                                requestPayment(
+                                  index,
+                                  item._id,
+                                  item.tradeId,
+                                  item.usdtAmount
+                                );
+                              }}
+                            >
+                              <Image
+                                src="/loading.png"
+                                alt="loading"
+                                width={16}
+                                height={16}
+                                className={escrowing[index] || requestingPayment[index] ? 'animate-spin' : 'hidden'}
+                              />
+                              <span>{Request_Payment}</span>
+                            
+                            </button>
+
+                          </div>
+                        )}
+
+
+                        {/* waiting for payment */}
+                        {item.status === 'paymentRequested' && (
+
+                            <div className="mt-4 flex flex-col gap-2 items-start justify-start">
+
+                              <div className="flex flex-row items-center gap-2">
+
+                                <Image
+                                  src="/smart-contract.png"
+                                  alt="Smart Contract"
+                                  width={32}
+                                  height={32}
+                                />
+                                <div>{Escrow}: {item.usdtAmount} USDT</div>
+                                <button
+                                  className="bg-white text-black px-2 py-2 rounded-md"
+                                  onClick={() => {
+                        
+                                      //params.center === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
+                                      
+                                      chain === 'arbitrum' ? window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`) : window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`);
+                                      chain === 'bsc' ? window.open(`https://bscscan.com/tx/${item.escrowTransactionHash}`) : window.open(`https://bscscan.com/tx/${item.escrowTransactionHash}`);
+                                      chain === 'polygon' ? window.open(`https://polygonscan.com/tx/${item.escrowTransactionHash}`) : window.open(`https://polygonscan.com/tx/${item.escrowTransactionHash}`);
+                                      window.open(`https://arbiscan.io/tx/${item.escrowTransactionHash}`); // default to arbitrum
+
+                                  }}
+                                >
                                   <Image
-                                    src="/loading.png"
-                                    alt="Escrow"
-                                    width={32}
-                                    height={32}
-                                    className="animate-spin"
+                                    src={params.center === 'arbitrum' ? '/logo-arbitrum.png' : '/logo-arbitrum.png'}
+                                    alt="Chain"
+                                    width={20}
+                                    height={20}
                                   />
+                                </button>
+                              </div>
 
-                                  <div>Waiting for buyer to send {
-                                  item.krwAmount?.toLocaleString('ko-KR', {
-                                    style: 'currency',
-                                    currency: 'KRW',
-                                  })} to seller...</div>
-                                
+                              <div className="flex flex-row gap-2 items-center justify-start">
+
+                                {/* rotate loading icon */}
+                              
+                                <Image
+                                  src="/loading.png"
+                                  alt="Escrow"
+                                  width={32}
+                                  height={32}
+                                  className="animate-spin"
+                                />
+
+                                <div>Waiting for buyer to send {
+                                item.krwAmount?.toLocaleString('ko-KR', {
+                                  style: 'currency',
+                                  currency: 'KRW',
+                                })} to seller...</div>
+                              
+
+                              </div>
+
+
+                            </div>
+                        )}
+
+
+
+                      
+
+
+
+
+
+                        {item.status === 'ordered' && (
+                          <>
+
+                          {acceptingBuyOrder[index] ? (
+
+                            <div className="flex flex-row items-center gap-2">
+                              <Image
+                                src='/loading.png'
+                                alt='loading'
+                                width={35}
+                                height={35}
+                                className="animate-spin"
+                              />
+                              <div>{Accepting_Order}...</div>
+                            </div>
+
+
+                          ) : (
+                            <>
+                              
+                              {item.walletAddress === address ? (
+                                <div className="flex flex-col space-y-4">
+                                  {My_Order}
+                                </div>
+                              ) : (
+                                <div className="w-full flex items-center justify-center">
+
+                                  {item.status === 'ordered' && (
+                                    
+                                    // check if the order is expired
+                                    new Date().getTime() - new Date(item.createdAt).getTime() > 1000 * 60 * 60 * 24
+
+                                  ) ? (
+
+                                    <>
+                                      {/*
+                                      <Image
+                                        src="/icon-expired.png"
+                                        alt="Expired"
+                                        width={80}
+                                        height={80}
+                                      />
+                                      */}
+                                  
+                                  </>
+                                  ) : (
+                                    <>
+
+                                      {user?.seller && user?.seller?.bankInfo && (
+
+          
+
+                                        <div className="mt-4 flex flex-col items-center justify-center">
+
+                                          {/* agreement for trade */}
+                                          <div className="flex flex-row items-center space-x-2">
+                                            <input
+                                              disabled={!address}
+                                              type="checkbox"
+                                              checked={agreementForTrade[index]}
+                                              onChange={(e) => {
+                                                  setAgreementForTrade(
+                                                      buyOrders.map((item, idx) => {
+                                                          if (idx === index) {
+                                                              return e.target.checked;
+                                                          } else {
+                                                              return false;
+                                                          }
+                                                      })
+                                                  );
+                                              }}
+                                            />
+                                            <label className="text-sm text-zinc-500">
+                                              {I_agree_to_the_terms_of_trade}
+                                            </label>
+                                          </div>
+
+
+
+                                          {/* input sms receiver mobile number */}
+
+                                          {address && agreementForTrade[index] && (
+                                            <div className="mt-8 flex flex-row items-center justify-start gap-2">
+
+                                              <span className="text-sm text-zinc-500">SMS</span>
+
+                                              <div className="flex flex-col items-start justify-start">
+                                                <input
+                                                  disabled={!address || !agreementForTrade[index]}
+                                                  type="text"
+                                                  placeholder="SMS Receiver Mobile Number"
+                                                  className={`w-full px-4 py-2 rounded-md text-black`}
+                                                  value={smsReceiverMobileNumber}
+                                                  onChange={(e) => {
+                                                      setSmsReceiverMobileNumber(e.target.value);
+                                                  }}
+                                                />
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          <button
+                                            disabled={!address || !agreementForTrade[index]}
+                                            className={`m-10 text-lg text-white px-4 py-2 rounded-md
+                                              ${!address || !agreementForTrade[index] ? 'bg-zinc-800' : 'bg-green-500 hover:bg-green-600'}
+                                              `}
+                                            onClick={() => {
+  
+                                                acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
+                                          
+
+                                            }}
+                                          >
+                                            {Buy_Order_Accept} {item.usdtAmount} USDT
+                                          </button>
+
+
+                                        </div>
+
+                                      )}
+
+                                    </>
+
+                                  )}
 
                                 </div>
 
 
-                              </div>
-                          )}
+
+                                )}
+
+                              </>
+
+                            )}
+
+                          </>
+
+                        )}
 
 
 
-                        
-
-
-
-
-
-                          {item.status === 'ordered' && (
-                            <>
-
-                            {acceptingBuyOrder[index] ? (
-
-                              <div className="flex flex-row items-center gap-2">
-                                <Image
-                                  src='/loading.png'
-                                  alt='loading'
-                                  width={35}
-                                  height={35}
-                                  className="animate-spin"
-                                />
-                                <div>{Accepting_Order}...</div>
-                              </div>
-
-
-                            ) : (
-                              <>
-                                
-                                {item.walletAddress === address ? (
-                                  <div className="flex flex-col space-y-4">
-                                    {My_Order}
-                                  </div>
-                                ) : (
-                                  <div className="w-full flex items-center justify-center">
-
-                                    {item.status === 'ordered' && (
-                                      
-                                      // check if the order is expired
-                                      new Date().getTime() - new Date(item.createdAt).getTime() > 1000 * 60 * 60 * 24
-
-                                    ) ? (
-
-                                      <>
-                                        {/*
-                                        <Image
-                                          src="/icon-expired.png"
-                                          alt="Expired"
-                                          width={80}
-                                          height={80}
-                                        />
-                                        */}
-                                    
-                                    </>
-                                    ) : (
-                                      <>
-
-                                        {user?.seller && user?.seller?.bankInfo && (
-
-            
-
-                                          <div className="mt-4 flex flex-col items-center justify-center">
-
-                                            {/* agreement for trade */}
-                                            <div className="flex flex-row items-center space-x-2">
-                                              <input
-                                                disabled={!address}
-                                                type="checkbox"
-                                                checked={agreementForTrade[index]}
-                                                onChange={(e) => {
-                                                    setAgreementForTrade(
-                                                        buyOrders.map((item, idx) => {
-                                                            if (idx === index) {
-                                                                return e.target.checked;
-                                                            } else {
-                                                                return false;
-                                                            }
-                                                        })
-                                                    );
-                                                }}
-                                              />
-                                              <label className="text-sm text-zinc-500">
-                                                {I_agree_to_the_terms_of_trade}
-                                              </label>
-                                            </div>
-
-
-
-                                            {/* input sms receiver mobile number */}
-
-                                            {address && agreementForTrade[index] && (
-                                              <div className="mt-8 flex flex-row items-center justify-start gap-2">
-
-                                                <span className="text-sm text-zinc-500">SMS</span>
-
-                                                <div className="flex flex-col items-start justify-start">
-                                                  <input
-                                                    disabled={!address || !agreementForTrade[index]}
-                                                    type="text"
-                                                    placeholder="SMS Receiver Mobile Number"
-                                                    className={`w-full px-4 py-2 rounded-md text-black`}
-                                                    value={smsReceiverMobileNumber}
-                                                    onChange={(e) => {
-                                                        setSmsReceiverMobileNumber(e.target.value);
-                                                    }}
-                                                  />
-                                                </div>
-                                              </div>
-                                            )}
-
-                                            <button
-                                              disabled={!address || !agreementForTrade[index]}
-                                              className={`m-10 text-lg text-white px-4 py-2 rounded-md
-                                                ${!address || !agreementForTrade[index] ? 'bg-zinc-800' : 'bg-green-500 hover:bg-green-600'}
-                                                `}
-                                              onClick={() => {
-    
-                                                  acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
-                                            
-
-                                              }}
-                                            >
-                                              {Buy_Order_Accept} {item.usdtAmount} USDT
-                                            </button>
-
-
-                                          </div>
-
-                                        )}
-
-                                      </>
-
-                                    )}
-
-                                  </div>
-
-
-
-                                  )}
-
-                                </>
-
-                              )}
-
-                            </>
-
-                          )}
-
-
-
-                      </article>
+                    </article>
 
 
 
 
-                      {/* status */}
-                      {/*
-                      <div className="absolute bottom-4 right-4 flex flex-row items-start justify-start">
-                        <div className="text-sm text-zinc-500">
-                          {item.status === 'ordered' ? 'Order opened at ' + new Date(item.createdAt)?.toLocaleString()
-                          : item.status === 'accepted' ? 'Trade started at ' + new Date(item.acceptedAt)?.toLocaleString()
-                          : item.status === 'paymentRequested' ? 'Payment requested at ' + new Date(item.paymentRequestedAt)?.toLocaleString()
-                          : item.status === 'cancelled' ? 'Trade cancelled at ' + new Date(item.cancelledAt)?.toLocaleString()
-                          : item.status === 'paymentConfirmed' ? 'Trade completed at ' + new Date(item.paymentConfirmedAt)?.toLocaleString()
-                          : 'Unknown'}
-                        </div>
+                    {/* status */}
+                    {/*
+                    <div className="absolute bottom-4 right-4 flex flex-row items-start justify-start">
+                      <div className="text-sm text-zinc-500">
+                        {item.status === 'ordered' ? 'Order opened at ' + new Date(item.createdAt)?.toLocaleString()
+                        : item.status === 'accepted' ? 'Trade started at ' + new Date(item.acceptedAt)?.toLocaleString()
+                        : item.status === 'paymentRequested' ? 'Payment requested at ' + new Date(item.paymentRequestedAt)?.toLocaleString()
+                        : item.status === 'cancelled' ? 'Trade cancelled at ' + new Date(item.cancelledAt)?.toLocaleString()
+                        : item.status === 'paymentConfirmed' ? 'Trade completed at ' + new Date(item.paymentConfirmedAt)?.toLocaleString()
+                        : 'Unknown'}
                       </div>
-                      */}
-
-
-
-
-
-
                     </div>
-              
-                  ))}
+                    */}
 
-              </div>
 
-            )}
+
+
+
+
+                  </div>
+            
+                ))}
+
+            </div>
+
+          )}
 
         
 

@@ -2802,9 +2802,6 @@ const fetchBuyOrders = async () => {
 
   }, [address, params.center]);
 
-
-
-      
   
   useEffect(() => {
     if (
@@ -3206,7 +3203,7 @@ const fetchBuyOrders = async () => {
 
       {/* fixed position right and vertically center */}
       <div className="
-        hidden sm:flex
+        flex
         fixed right-4 top-1/2 transform -translate-y-1/2
         z-40
         ">
@@ -4864,9 +4861,8 @@ const fetchBuyOrders = async () => {
 
 
           {/* for mobile */}
+          {/*
           <div className="sm:hidden w-full flex flex-row items-center justify-end gap-2 mt-2">
-
-
 
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
@@ -4973,11 +4969,8 @@ const fetchBuyOrders = async () => {
             </div>
             )}
 
-
-
-
           </div>
-
+          */}
 
 
 
@@ -5174,28 +5167,26 @@ const fetchBuyOrders = async () => {
                       "
                       >
 
-                        <div className="
-
-                          w-32  
-                          flex flex-col sm:flex-row items-start justify-start gap-2
-                          bg-zinc-100
-                          rounded-lg
-                          border border-zinc-800
-                          hover:bg-zinc-200
-                          cursor-pointer
-                          transition-all duration-200 ease-in-out
-                          hover:scale-105
-                          hover:shadow-lg
-                          hover:shadow-zinc-500/50
-                          hover:cursor-pointer
-                          p-2
-
+                        <div
+                          className="
+                            w-32  
+                            flex flex-col sm:flex-row items-start justify-start gap-2
+                            bg-zinc-100
+                            rounded-lg
+                            border border-zinc-800
+                            hover:bg-zinc-200
+                            cursor-pointer
+                            transition-all duration-200 ease-in-out
+                            hover:scale-105
+                            hover:shadow-lg
+                            hover:shadow-zinc-500/50
+                            hover:cursor-pointer
+                            p-2
                           "
                           onClick={() => {
                             navigator.clipboard.writeText(item.tradeId);
                             toast.success("거래번호가 복사되었습니다.");
                           }}
-                        
                         >
 
 
