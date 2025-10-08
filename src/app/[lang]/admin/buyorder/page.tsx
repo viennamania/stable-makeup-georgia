@@ -1159,7 +1159,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
             toast.success(Order_accepted_successfully);
 
-            playSong();
+            //playSong();
 
 
 
@@ -1313,7 +1313,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
         toast.success(Order_has_been_cancelled);
 
-        //playSong();
+        ////playSong();
 
         await fetch('/api/order/getAllBuyOrders', {
           method: 'POST',
@@ -1408,7 +1408,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
         toast.success(Order_has_been_cancelled);
 
-        playSong();
+        //playSong();
 
 
         await fetch('/api/order/getAllBuyOrders', {
@@ -1692,7 +1692,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
             //toast.success('Payment request has been sent');
 
-            playSong();
+            //playSong();
             
 
             
@@ -1810,7 +1810,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
           //toast.success('Payment request has been sent');
 
-          playSong();
+          //playSong();
           
           await fetch('/api/order/getAllBuyOrders', {
             method: 'POST',
@@ -2131,7 +2131,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
           );
 
           toast.success(Payment_has_been_confirmed);
-          ////playSong();
+          //////playSong();
 
 
 
@@ -2329,7 +2329,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
           ///toast.success(Payment_has_been_confirmed);
-          ///playSong();
+          /////playSong();
 
           ///toast.success('USDT 전송이 완료되었습니다.');
           alert("USDT 전송이 완료되었습니다.");
@@ -2418,7 +2418,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
         toast.success('정산이 완료되었습니다.');
 
-        playSong();
+        //playSong();
 
         // fetch Buy Orders
         await fetch('/api/order/getAllBuyOrders', {
@@ -3256,10 +3256,12 @@ const fetchBuyOrders = async () => {
 
 
 
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
             ">
               {loadingTotalNumberOfBuyOrders ? (
                 <Image
@@ -3334,10 +3336,12 @@ const fetchBuyOrders = async () => {
 
             {/* Clearance Orders */}
             {version !== 'bangbang' && (
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
             ">
 
               {loadingTotalNumberOfClearanceOrders ? (

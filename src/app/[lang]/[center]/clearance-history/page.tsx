@@ -963,7 +963,7 @@ export default function Index({ params }: any) {
 
             toast.success(Order_accepted_successfully);
 
-            playSong();
+            //playSong();
 
 
 
@@ -1083,7 +1083,7 @@ export default function Index({ params }: any) {
 
         toast.success(Order_has_been_cancelled);
 
-        playSong();
+        //playSong();
 
 
         await fetch('/api/order/getAllCollectOrdersForSeller', {
@@ -1321,7 +1321,7 @@ export default function Index({ params }: any) {
 
               //toast.success('Payment request has been sent');
 
-              playSong();
+              //playSong();
               
 
               
@@ -1414,7 +1414,7 @@ export default function Index({ params }: any) {
 
             //toast.success('Payment request has been sent');
 
-            playSong();
+            //playSong();
             
 
             
@@ -1680,7 +1680,7 @@ export default function Index({ params }: any) {
 
               alert("USDT 전송이 완료되었습니다.");
 
-              ///playSong();
+              /////playSong();
             } else {
               ///toast.error('결제확인이 실패했습니다.');
               alert("USDT 전송이 실패했습니다.");
@@ -1815,7 +1815,7 @@ export default function Index({ params }: any) {
 
         toast.success('Payment has been rollbacked');
 
-        playSong();
+        //playSong();
 
         
         ///fetchBuyOrders();

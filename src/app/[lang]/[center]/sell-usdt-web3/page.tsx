@@ -965,7 +965,7 @@ export default function Index({ params }: any) {
 
         toast.success(Order_has_been_cancelled);
 
-        playSong();
+        //playSong();
 
 
         fetchSellOrders();
@@ -1124,7 +1124,7 @@ export default function Index({ params }: any) {
 
             toast.success(Payment_request_has_been_sent);
 
-            ////playSong();
+            //////playSong();
 
 
           } else {
@@ -1236,7 +1236,7 @@ export default function Index({ params }: any) {
 
       toast.success(Payment_has_been_confirmed);
 
-      playSong();
+      //playSong();
 
     } else {
       toast.error('Payment has been failed');
@@ -1319,7 +1319,7 @@ export default function Index({ params }: any) {
 
       toast.success('Payment has been rollbacked');
 
-      playSong();
+      //playSong();
 
     }
 
@@ -1388,7 +1388,7 @@ export default function Index({ params }: any) {
         const acceptedCount = data.result.orders.filter((item: any) => item.status === 'accepted').length;
 
         if (acceptedCount !== acceptedSellOrderCount) {
-          playSong();
+          //playSong();
           setAcceptedSellOrderCount(acceptedCount);
         }
 

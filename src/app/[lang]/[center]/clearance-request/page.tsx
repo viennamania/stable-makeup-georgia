@@ -889,7 +889,7 @@ export default function Index({ params }: any) {
 
             toast.success(Order_accepted_successfully);
 
-            playSong();
+            //playSong();
 
 
 
@@ -1006,7 +1006,7 @@ export default function Index({ params }: any) {
 
       toast.success(Order_has_been_cancelled);
 
-      ///playSong();
+      /////playSong();
 
       /*
       await fetch('/api/order/getAllCollectOrdersForUser', {
@@ -1181,7 +1181,7 @@ export default function Index({ params }: any) {
 
         //toast.success('Payment request has been sent');
 
-        //playSong();
+        ////playSong();
         
 
         
@@ -1423,7 +1423,7 @@ export default function Index({ params }: any) {
               //toast.success('결제확인이 완료되었습니다.');
               alert("USDT 전송이 완료되었습니다.");
 
-              ////playSong();
+              //////playSong();
             } else {
               //toast.error('USDT 전송이 실패했습니다.');
               alert("USDT 전송이 실패했습니다.");

@@ -1005,7 +1005,7 @@ export default function Index({ params }: any) {
 
             toast.success(Order_accepted_successfully);
 
-            playSong();
+            //playSong();
 
 
 
@@ -1123,7 +1123,7 @@ export default function Index({ params }: any) {
 
         toast.success(Order_has_been_cancelled);
 
-        playSong();
+        //playSong();
 
 
         await fetch('/api/order/getAllBuyOrdersForSeller', {
@@ -1374,7 +1374,7 @@ export default function Index({ params }: any) {
 
             //toast.success('Payment request has been sent');
 
-            playSong();
+            //playSong();
             
 
             
@@ -1609,7 +1609,7 @@ export default function Index({ params }: any) {
 
         toast.success(Payment_has_been_confirmed);
 
-        playSong();
+        //playSong();
 
 
       } else {
@@ -1731,7 +1731,7 @@ export default function Index({ params }: any) {
 
         toast.success('Payment has been rollbacked');
 
-        playSong();
+        //playSong();
 
         
         ///fetchBuyOrders();
@@ -1944,7 +1944,7 @@ export default function Index({ params }: any) {
 
         // audio ding play
 
-        playSong();
+        //playSong();
 
         // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
 

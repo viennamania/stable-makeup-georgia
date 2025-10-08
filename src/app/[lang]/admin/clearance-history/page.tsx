@@ -1038,7 +1038,7 @@ export default function Index({ params }: any) {
 
             toast.success(Order_accepted_successfully);
 
-            playSong();
+            //playSong();
 
 
 
@@ -1179,7 +1179,7 @@ export default function Index({ params }: any) {
 
       toast.success(Order_has_been_cancelled);
 
-      playSong();
+      //playSong();
 
 
       await fetch('/api/order/getAllBuyOrders', {
@@ -1438,7 +1438,7 @@ export default function Index({ params }: any) {
 
           //toast.success('Payment request has been sent');
 
-          playSong();
+          //playSong();
           
 
           
@@ -1720,7 +1720,7 @@ export default function Index({ params }: any) {
 
         toast.success(Payment_has_been_confirmed);
 
-        playSong();
+        //playSong();
 
 
       } else {
@@ -1975,7 +1975,7 @@ export default function Index({ params }: any) {
 
         // audio ding play
 
-        ///playSong();
+        /////playSong();
 
         // Uncaught (in promise) NotAllowedError: play() failed because the user didn't interact with the document first.
 
@@ -2430,10 +2430,12 @@ export default function Index({ params }: any) {
           <div className="w-full flex flex-col items-end justify-center gap-4">
 
 
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
             ">
               {loadingTotalNumberOfBuyOrders ? (
                 <Image
@@ -2521,10 +2523,12 @@ export default function Index({ params }: any) {
 
             {/* Clearance Orders */}
             {version !== 'bangbang' && (
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
             ">
 
               {loadingTotalNumberOfClearanceOrders ? (
@@ -3332,12 +3336,12 @@ export default function Index({ params }: any) {
                     >
                       <tr>
                         <th className="p-2">
-                          <div className="flex flex-col items-center justify-center">
-                            <span className="text-sm">{TID}</span>
-                            <span className="text-sm">구매신청시간</span>
+                          <div className="flex flex-col items-start justify-center">
+                            ️<span className="text-sm">가맹점</span>
+                            <span className="text-sm">#{TID}</span>
+                            <span className="text-sm">신청시간</span>
                           </div>
                         </th>
-                        <th className="p-2">가맹점</th>
 
                         <th className="p-2">
                           <div className="flex flex-col items-start justify-center">
@@ -3388,117 +3392,199 @@ export default function Index({ params }: any) {
 
                           <td className="p-2">
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="
+                              w-32
+                              flex flex-col items-start justify-start gap-2
+                              bg-zinc-100
+                              rounded-lg
+                              border border-zinc-800
+                              hover:bg-zinc-200
+                              cursor-pointer
+                              transition-all duration-200 ease-in-out
+                              hover:scale-105
+                              hover:shadow-lg
+                              hover:shadow-zinc-500/50
+                              hover:cursor-pointer
+                              p-2
 
-                              <button
-                                onClick={() => {
-                                  // copy tradeId to clipboard
-                                  navigator.clipboard.writeText(item.tradeId);
-                                  toast.success('거래번호가 복사되었습니다.');
-                                }}
-                                className="text-sm text-zinc-500 font-semibold
-                                  hover:text-blue-600 cursor-pointer
-                                  hover:underline"
-                                title="거래번호 복사"
-                              >
-                                #{item?.tradeId}
-                              </button>
+                              "
+                              onClick={() => {
+                                // copy traideId to clipboard
+                                navigator.clipboard.writeText(item.tradeId);
+                                toast.success("거래번호가 복사되었습니다.");
+                              }}
+                            
+                            >
 
-                              <div className="flex flex-col gap-2 items-center justify-center">
+                              <div className="flex flex-row items-center justify-start gap-2">
+                                <Image
+                                  src={item?.store?.storeLogo || "/icon-store.png"}
+                                  alt="Store Logo"
+                                  width={35}
+                                  height={35}
+                                  className="
+                                  rounded-lg
+                                  w-8 h-8 object-cover"
+                                />
+                                
+                                <div className="flex flex-col items-start justify-start">
+                                  <span className="text-sm text-zinc-500 font-bold">
+                                    {
+                                      item?.store?.storeName?.length > 5 ?
+                                      item?.store?.storeName?.substring(0, 5) + '...' :
+                                      item?.store?.storeName
+                                    }
+                                  </span>
+                                  <span className="text-sm text-zinc-500">
+                                    {
+                                      item?.agent.agentName?.length > 5 ?
+                                      item?.agent.agentName?.substring(0, 5) + '...' :
+                                      item?.agent.agentName
+                                    }
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-row items-start justify-start gap-1">
+                                <Image
+                                  src="/icon-trade.png"
+                                  alt="Trade Icon"
+                                  width={20}
+                                  height={20}
+                                  //className="w-5 h-5"
+                                  className={`w-5 h-5
+                                    ${item?.status === 'cancelled' || (item?.status === 'paymentConfirmed' && item?.transactionHash !== '0x') ? '' : 'animate-spin'}`}
+                                />
                                 <span className="text-sm text-zinc-500 font-semibold">
-                                  {item?.createdAt && new Date(item.createdAt)?.toLocaleString('ko-KR', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                  })}
+                                {
+                                  "#" + item.tradeId
+                                }
                                 </span>
-                                <span className="text-sm text-zinc-500">
-                                  {item?.createdAt && new Date(item.createdAt)?.toLocaleString('ko-KR', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                  })}
-                                </span>
+                              </div>
+
+                              <div className="w-full flex flex-row items-center justify-start gap-2">
+
+                                <div className="w-full flex flex-col items-start justify-start">
+
+                                  <span className="text-sm text-zinc-800 font-semibold">
+                                    {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      second: '2-digit',
+                                    })}
+                                  </span>
+                                  {/*
+                                  <span className="text-sm text-zinc-500">
+                                    {new Date(item.createdAt).toLocaleDateString('ko-KR', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                    })}
+                                  </span>
+                                  */}
+
+                                  <div className="w-full flex flex-row items-center justify-between gap-1">
+                                    <span className="text-sm text-zinc-500 font-semibold">
+                                      {params.lang === 'ko' ? (
+                                        <p>{
+                                          new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                          ) :
+                                          new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                          ) : (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                          )
+                                        }</p>
+                                      ) : (
+                                        <p>{
+                                          new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                          ) :
+                                          new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                          ) : (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                          )
+                                        }</p>
+                                      )}
+                                    </span>
+                                    {/* audioOn */}
+                                    {/*
+                                    {item.status === 'ordered' || item.status === 'paymentRequested' && (
+                                      <div className="flex flex-row items-center justify-center gap-1">
+                                        <span className="text-xl text-zinc-500 font-semibold">
+                                          {item.audioOn ? (
+                                            '🔊'
+                                          ) : (
+                                            '🔇'
+                                          )}
+                                        </span>
+                                        <button
+                                          className="text-sm text-blue-600 font-semibold underline"
+                                          onClick={() => handleAudioToggle(
+                                            index,
+                                            item._id
+                                          )}
+                                        >
+                                          {item.audioOn ? '끄기' : '켜기'}
+                                        </button>
+                                      </div>
+                                    )}
+                                    */}
+                                  </div>
+
+                                </div>
                                 {/*
                                 <span className="text-sm text-zinc-500 font-semibold">
-                                  {item?.createdAt && new Date(item.createdAt)?.toLocaleString('en-US', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                  })}
+                                  {params.lang === 'ko' ? (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }</p>
+                                  ) : (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }</p>
+                                  )}
                                 </span>
                                 */}
                               </div>
 
-                              <span className="text-sm text-zinc-500 font-semibold">
-                                {params.lang === 'ko' ? (
-                                  <p>{
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) :
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }</p>
-                                ) : (
-                                  <p>{
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) :
-                                    new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }</p>
-                                )}
-                              </span>
-
-                            </div>
-                          </td>
-
-                          <td className="text-zinc-500 p-2">
-                            
-
-                            <div className="flex flex-col gap-2 items-start justify-start">
-                              
-                              <Image
-                                src={item?.store?.storeLogo || "/icon-store.png"}
-                                alt="Store"
-                                width={50}
-                                height={50}
-                                className="rounded-lg w-8 h-8 object-cover"
-                              />
-                              <div className="flex flex-col items-start justify-start">
-                                <span className="text-sm text-zinc-500 font-bold">
-                                  {
-                                    item?.store?.storeName
-                                  }
-                                </span>
-                                <span className="text-sm text-zinc-500">
-                                  {
-                                    item?.agent.agentName
-                                  }
-                                </span>
-                              </div>
                             </div>
 
                           </td>
-
-                          
 
                           <td className="p-2">
                             <div className="flex flex-col gap-1">
-                              <span className="text-lg text-zinc-600">
-                                {item?.buyer?.nickname ?
-                                  item?.buyer?.nickname
-                                  : item?.nickname || '익명'}
-                              </span>
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-user.png"
+                                  alt="User"
+                                  width={20}
+                                  height={20}
+                                  className="rounded-lg w-5 h-5"
+                                />
+                                <span className="text-lg text-zinc-600">
+                                  {item?.buyer?.nickname ?
+                                    item?.buyer?.nickname
+                                    : item?.nickname || '익명'}
+                                </span>
+                              </div>
+
                               <div className="flex flex-row items-center gap-1">
                                 <Image
                                   src="/icon-shield.png"
@@ -4193,7 +4279,9 @@ export default function Index({ params }: any) {
 
 
                           <td className="text-zinc-500 p-2">
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="
+                            w-40
+                            flex flex-col gap-2 items-center justify-center">
                               <span className="text-sm font-semibold text-zinc-500">
                                 {
                                   item.seller?.nickname
@@ -4239,6 +4327,7 @@ export default function Index({ params }: any) {
                           <td className="p-2
                             flex items-center justify-center
                             text-center
+                            w-40
                             ">
 
                             {
