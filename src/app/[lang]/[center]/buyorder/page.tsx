@@ -3210,10 +3210,12 @@ const fetchBuyOrders = async () => {
 
           <div className="w-full flex flex-col items-end justify-center gap-4">
 
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
             ">
 
               <div className="flex flex-col items-center justify-center gap-1
@@ -3313,10 +3315,12 @@ const fetchBuyOrders = async () => {
             {/* Clearance Orders */}
             
             {version !== 'bangbang' && (
-            <div className="flex flex-row items-center justify-center gap-2
-            bg-white/80
-            p-2 rounded-lg shadow-md
-            backdrop-blur-md
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
             ">
 
               {loadingPaymentRequestedCount ? (
