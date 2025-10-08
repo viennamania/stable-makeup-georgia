@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const clientInfo = await getOne(clientId || "");
 
 
-  console.log("clientInfo:", clientInfo);
+  //console.log("clientInfo:", clientInfo);
 
 
   

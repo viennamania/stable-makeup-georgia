@@ -2165,43 +2165,15 @@ export default function SettingsPage({ params }: any) {
                     </div>
 
 
-
-                    {!address && (
-                    <ConnectButton
-                        client={client}
-                        wallets={wallets}
-                        chain={arbitrum}
-                        theme={"light"}
-
-                        // button color is dark skyblue convert (49, 103, 180) to hex
-                        connectButton={{
-                            style: {
-                                backgroundColor: "#3167b4", // dark skyblue
-                                color: "#f3f4f6", // gray-300
-                                padding: "2px 10px",
-                                borderRadius: "10px",
-                                fontSize: "14px",
-                                width: "60x",
-                                height: "38px",
-                            },
-                            label: "원클릭 로그인",
-                        }}
-
-                        connectModal={{
-                        size: "wide", 
-                        //size: "compact",
-                        titleIcon: "https://www.stable.makeup/logo.png",                           
-                        showThirdwebBranding: false,
-                        }}
-
-                        locale={"ko_KR"}
-                        //locale={"en_US"}
-                    />
-                    )}
-
                     {address && !loadingUser && (
                         <div className="w-full flex flex-row items-center justify-end gap-2">
-
+                            <Image
+                                src={user?.avatar || "/icon-user.png"}
+                                alt="User Avatar"
+                                width={30}
+                                height={30}
+                                className="w-8 h-8 rounded-full"
+                            />
                             <span className="text-lg text-gray-500 font-semibold">
                             {user?.nickname || "프로필"}
                             </span>

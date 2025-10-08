@@ -43,7 +43,7 @@ import Image from 'next/image';
 import GearSetupIcon from "@/components/gearSetupIcon";
 
 
-import Uploader from '@/components/uploader';
+//import Uploader from '@/components/uploader';
 
 import { balanceOf, transfer } from "thirdweb/extensions/erc20";
  
@@ -51,6 +51,8 @@ import { balanceOf, transfer } from "thirdweb/extensions/erc20";
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
 
+
+import Uploader from '@/components/uploader-client';
 
 
 
@@ -331,322 +333,47 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    const [user, setUser] = useState(null) as any;
 
-    const [editUsdtPrice, setEditUsdtPrice] = useState(0);
-    const [usdtPriceEdit, setUsdtPriceEdit] = useState(false);
-    const [editingUsdtPrice, setEditingUsdtPrice] = useState(false);
-
-
-
-    // get usdt price
-    // api /api/order/getPrice
-
-    const [usdtPrice, setUsdtPrice] = useState(0);
-    useEffect(() => {
-
-        if (!address) {
-            return;
-        }
-
-        const fetchData = async () => {
-
-            setEditingUsdtPrice(true);
-
-            const response = await fetch("/api/order/getPrice", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    walletAddress: address,
-                }),
-            });
-
-            const data = await response.json();
-
-            ///console.log("getPrice data", data);
-
-            if (data.result) {
-                setUsdtPrice(data.result.usdtPrice);
-            }
-
-            setEditingUsdtPrice(false);
-        };
-
-        fetchData();
-    }
-
-    , [address]);
-
-
-    
-    const [nickname, setNickname] = useState("");
-    const [avatar, setAvatar] = useState("/profile-default.png");
-    const [userCode, setUserCode] = useState("");
-
-
-    const [nicknameEdit, setNicknameEdit] = useState(false);
-
-    const [editedNickname, setEditedNickname] = useState("");
-
-
-    const [avatarEdit, setAvatarEdit] = useState(false);
-
-
-
-    const [seller, setSeller] = useState(null) as any;
-
-
-
+    const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
+            
+            setLoadingUser(true);
+
             const response = await fetch("/api/user/getUser", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    storecode: storecode,
+                    storecode: "admin",
                     walletAddress: address,
                 }),
             });
 
             const data = await response.json();
 
-            ////console.log("data", data);
 
             if (data.result) {
-                setNickname(data.result.nickname);
-                
-                data.result.avatar && setAvatar(data.result.avatar);
-                
-
-                setUserCode(data.result.id);
-
-                setSeller(data.result.seller);
+                setUser(data.result);
 
             } else {
-                setNickname('');
-                setAvatar('/profile-default.png');
-                setUserCode('');
-                setSeller(null);
-                setEditedNickname('');
-                setAccountHolder('');
-                setAccountNumber('');
-
-                //setBankName('');
+                setUser(null);
             }
+            setLoadingUser(false);
 
         };
 
-        fetchData();
+        address && fetchData();
+
     }, [address]);
 
 
 
 
-
-
-    const setUserData = async () => {
-
-
-        // check nickname length and alphanumeric
-        //if (nickname.length < 5 || nickname.length > 10) {
-
-        if (editedNickname.length < 5 || editedNickname.length > 10) {
-
-            toast.error(Nickname_should_be_5_10_characters);
-            return;
-        }
-        
-        ///if (!/^[a-z0-9]*$/.test(nickname)) {
-        if (!/^[a-z0-9]*$/.test(editedNickname)) {
-            toast.error(Nickname_should_be_alphanumeric_lowercase);
-            return;
-        }
-
-        if (nicknameEdit) {
-
-
-            const response = await fetch("/api/user/updateUser", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    storecode: storecode,
-                    walletAddress: address,
-                    
-                    //nickname: nickname,
-                    nickname: editedNickname,
-
-                }),
-            });
-
-            const data = await response.json();
-
-            ///console.log("updateUser data", data);
-
-            if (data.result) {
-
-                setUserCode(data.result.id);
-                setNickname(data.result.nickname);
-
-                setNicknameEdit(false);
-                setEditedNickname('');
-
-                toast.success('아이디가 저장되었습니다');
-
-            } else {
-
-                toast.error('아이디 저장에 실패했습니다');
-            }
-
-
-        } else {
-
-            const response = await fetch("/api/user/setUserVerified", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    lang: params.lang,
-                    storecode: storecode,
-                    walletAddress: address,
-                    
-                    //nickname: nickname,
-                    nickname: editedNickname,
-
-                    mobile: phoneNumber,
-                }),
-            });
-
-            const data = await response.json();
-
-            console.log("data", data);
-
-            if (data.result) {
-
-                setUserCode(data.result.id);
-                setNickname(data.result.nickname);
-
-                setNicknameEdit(false);
-                setEditedNickname('');
-
-                toast.success('아이디가 저장되었습니다');
-
-            } else {
-                toast.error('아이디 저장에 실패했습니다');
-            }
-        }
-
-
-        
-
-        
-    }
-
-
-    // 은행명, 계좌번호, 예금주
-    const [bankName, setBankName] = useState("");
-
-    const [accountNumber, setAccountNumber] = useState("");
-    const [accountHolder, setAccountHolder] = useState("");
-
-    const [applying, setApplying] = useState(false);
-
-
-    const apply = async () => {
-      if (applying) {
-        return;
-      }
-  
-  
-      if (!bankName || !accountNumber || !accountHolder) {
-        toast.error('Please enter bank name, account number, and account holder');
-        return
-    }
-  
-      setApplying(true);
-
-
-      const toWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-      const amount = 1;
-  
-      try {
-  
-  
-        /*
-          // send USDT
-          // Call the extension function to prepare the transaction
-          const transaction = transfer({
-              contract,
-              to: toWalletAddress,
-              amount: amount,
-          });
-          
-  
-          const transactionResult = await sendAndConfirmTransaction({
-              transaction: transaction,
-              
-              account: smartAccount as any,
-          });
-
-  
-          console.log(transactionResult);
-            */
-  
-          await fetch('/api/user/updateSeller', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                storecode: storecode,
-                walletAddress: address,
-                sellerStatus: 'confirmed',
-                bankName: bankName,
-                accountNumber: accountNumber,
-                accountHolder: accountHolder,
-            }),
-          });
-          
-
-
-          await fetch('/api/user/getUser', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                storecode: storecode,
-                walletAddress: address,
-            }),
-          }).then((response) => response.json())
-            .then((data) => {
-                setSeller(data.result.seller);
-            });
-
-  
-  
-  
-          /////toast.success('USDT sent successfully');
-  
-        
-  
-  
-      } catch (error) {
-        toast.error('Failed to apply');
-      }
-  
-      setApplying(false);
-    };
-
-
-
-    const [chain, setChain] = useState("polygon");
+    const [chain, setChain] = useState("ethereum");
 
     const [clientName, setClientName] = useState("");
     const [clientDescription, setClientDescription] = useState("");
@@ -681,7 +408,7 @@ export default function SettingsPage({ params }: any) {
 
             const data = await response.json();
 
-            console.log("clientInfo", data);
+            ///console.log("clientInfo", data);
 
             if (data.result) {
 
@@ -766,21 +493,15 @@ export default function SettingsPage({ params }: any) {
             <div className="py-0 w-full">
         
 
-                {storecode && (
-                    <div className="w-full flex flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-                        <span className="text-sm text-zinc-500">
-                        {storecode}
-                        </span>
-                    </div>
-                )}
-        
-                <div className="w-full flex flex-row gap-2 items-center justify-between text-zinc-500 text-lg"
+                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
                 >
                     {/* go back button */}
-                    <div className="flex justify-start items-center gap-2">
+                    <div className="w-full flex justify-start items-center gap-2">
                         <button
                             onClick={() => window.history.back()}
-                            className="flex items-center justify-center bg-gray-200 rounded-full p-2">
+                            className="flex items-center justify-center bg-gray-200 rounded-lg p-2
+                            hover:bg-gray-300 transition duration-200 ease-in-out"
+                        >
                             <Image
                                 src="/icon-back.png"
                                 alt="Back"
@@ -788,12 +509,34 @@ export default function SettingsPage({ params }: any) {
                                 height={20}
                                 className="rounded-full"
                             />
+                            <span className="ml-2 text-sm text-gray-500 font-semibold">
+                                돌아가기
+                            </span>
                         </button>
-                        {/* title */}
-                        <span className="text-sm text-gray-500 font-semibold">
-                            돌아가기
-                        </span>
+
                     </div>
+
+                    {loadingUser && (
+                        <div className="w-full flex flex-row items-center justify-end gap-1">
+                            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+                            <div className="w-20 h-6 bg-gray-200 rounded-lg animate-pulse" />
+                        </div>
+                    )}
+
+                    {address && !loadingUser && (
+                        <div className="w-full flex flex-row items-center justify-end gap-1">
+                            <Image
+                                src={user?.avatar || "/icon-user.png"}
+                                alt="User Avatar"
+                                width={30}
+                                height={30}
+                                className="w-8 h-8 rounded-full"
+                            />
+                            <span className="text-lg text-gray-500 font-semibold">
+                            {user?.nickname || "프로필"}
+                            </span>
+                        </div>
+                    )}
 
                 </div>
 
@@ -823,15 +566,23 @@ export default function SettingsPage({ params }: any) {
 
                     {/* clientInfo */}
                     {true ? (
-                        <div className="w-full flex flex-col items-start justify-start space-y-4">
+                        <div className="
+                            mt-2
+                            w-full flex flex-col items-start justify-start gap-4">
 
-
-
-
-                            <div className="w-full flex flex-col items-start justify-start space-y-2">
-                                <span className="text-sm text-gray-500 font-semibold">
-                                    현재 체인
-                                </span>
+                            <div className="w-full flex flex-col items-start justify-start gap-2">
+                                <div className='flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src={`/icon-dot-green.png`}
+                                        alt={`Dot icon`}
+                                        width={10}
+                                        height={10}
+                                        className="h-2.5 w-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        현재 체인
+                                    </span>
+                                </div>
 
                                 <div className="flex flex-row items-center justify-center gap-4 mb-4">
                                     
@@ -921,13 +672,39 @@ export default function SettingsPage({ params }: any) {
 
 
 
+                            {/* 센터 로고 */}
+                            <div className="w-full flex flex-col items-start justify-start gap-2">
+                                <div className='flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src={`/icon-dot-green.png`}
+                                        alt={`Dot icon`}
+                                        width={10}
+                                        height={10}
+                                        className="h-2.5 w-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        센터 로고
+                                    </span>
+                                </div>
+                                <Uploader
+                                    lang={params.lang}
+                                />
+                            </div>
 
 
-
-                            <div className="w-full flex flex-col items-start justify-start space-y-2">
-                                <span className="text-sm text-gray-500 font-semibold">
-                                    센터 이름
-                                </span>
+                            <div className="w-full flex flex-col items-start justify-start gap-2">
+                                <div className='flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src={`/icon-dot-green.png`}
+                                        alt={`Dot icon`}
+                                        width={10}
+                                        height={10}
+                                        className="h-2.5 w-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        센터 이름
+                                    </span>
+                                </div>
                                 <input
                                     type="text"
                                     value={clientName}
@@ -937,10 +714,19 @@ export default function SettingsPage({ params }: any) {
                                 />
                             </div>
 
-                            <div className="w-full flex flex-col items-start justify-start space-y-2">
-                                <span className="text-sm text-gray-500 font-semibold">
-                                    센터 소개
-                                </span>
+                            <div className="w-full flex flex-col items-start justify-start gap-2">
+                                <div className='flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src={`/icon-dot-green.png`}
+                                        alt={`Dot icon`}
+                                        width={10}
+                                        height={10}
+                                        className="h-2.5 w-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        센터 소개
+                                    </span>
+                                </div>
                                 <textarea
                                     value={clientDescription}
                                     rows={4}
@@ -964,10 +750,19 @@ export default function SettingsPage({ params }: any) {
 
 
                             {/* exchange rate USDT */}
-                            <div className="w-full flex flex-col items-start justify-start space-y-2">
-                                <span className="text-sm text-gray-500 font-semibold">
-                                    환율 (USDT to ...)
-                                </span>
+                            <div className="w-full flex flex-col items-start justify-start gap-2">
+                                <div className='flex flex-row items-center justify-start gap-2'>
+                                    <Image
+                                        src={`/icon-dot-green.png`}
+                                        alt={`Dot icon`}
+                                        width={10}
+                                        height={10}
+                                        className="h-2.5 w-2.5"
+                                    />
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        환율(살때) (USDT to ...)
+                                    </span>
+                                </div>
 
                                 <div className="w-full grid grid-cols-2 gap-4">
 

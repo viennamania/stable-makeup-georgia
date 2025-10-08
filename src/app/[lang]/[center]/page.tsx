@@ -785,7 +785,7 @@ export default function Index({ params }: any) {
 
  
           <div className="w-full flex flex-col sm:flex-row items-center justify-between
-          gap-2 bg-black/10 p-2 rounded-lg mb-4">
+            gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
               
               
