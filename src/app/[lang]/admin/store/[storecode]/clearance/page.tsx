@@ -504,219 +504,133 @@ export default function Index({ params }: any) {
 
 
 
-    const router = useRouter();
+  const router = useRouter();
 
-    const activeAccount = useActiveAccount();
+  const activeAccount = useActiveAccount();
 
-    const address = activeAccount?.address;
-  
-  
+  const address = activeAccount?.address;
 
 
-    const [rate, setRate] = useState(1380);
 
 
-    /*
-    const [usdtPrice, setUsdtPrice] = useState(0);
-    useEffect(() => {
+  const [rate, setRate] = useState(1380);
 
-        if (!address) {
-            return;
+
+  // /api/client/getUsdtKRWRateSell
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch('/api/client/getUsdtKRWRateSell', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+
+        console.log('getUsdtKRWRateSell data', data);
+
+
+        if (data.result) {
+          setRate(data.result);
         }
+      } catch (error) {
+        console.error('Error fetching USDT/KRW rate:', error);
+      }
+    }
+    fetchRate();
+  } , []);
 
-        const fetchData = async () => {
 
-            const response = await fetch("/api/order/getPrice", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    walletAddress: "0x91CA2566C3345026647aBbACB56093144eAA4c16",
-                }),
-            });
 
-            const data = await response.json();
 
-            ///console.log("getPrice data", data);
 
-            if (data.result) {
-                setUsdtPrice(data.result.usdtPrice);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-                setRate(data.result.usdtPrice);
-            }
+  useEffect(() => {
 
-        };
 
-        fetchData();
+    if (address) {
+
+      //const phoneNumber = await getUserPhoneNumber({ client });
+      //setPhoneNumber(phoneNumber);
+
+
+      getUserPhoneNumber({ client }).then((phoneNumber) => {
+        setPhoneNumber(phoneNumber || "");
+      });
+
+
+
     }
 
-    , []);
-    */
+  } , [address]);
 
 
+  
 
 
+  const [nickname, setNickname] = useState("");
+  const [avatar, setAvatar] = useState("/icon-user.png");
+  const [userCode, setUserCode] = useState("");
 
 
-    const [phoneNumber, setPhoneNumber] = useState("");
-
-    useEffect(() => {
-  
-  
-      if (address) {
-  
-        //const phoneNumber = await getUserPhoneNumber({ client });
-        //setPhoneNumber(phoneNumber);
-  
-  
-        getUserPhoneNumber({ client }).then((phoneNumber) => {
-          setPhoneNumber(phoneNumber || "");
-        });
-  
-  
-  
-      }
-  
-    } , [address]);
+  const [user, setUser] = useState<any>(null);
 
 
-    
+  const [seller, setSeller] = useState(null) as any;
 
 
+  const [loadingUser, setLoadingUser] = useState(true);
 
-    const [nativeBalance, setNativeBalance] = useState(0);
-    const [balance, setBalance] = useState(0);
-    useEffect(() => {
-  
-      // get the balance
-      const getBalance = async () => {
-  
-        ///console.log('getBalance address', address);
-        if (!address) {
-          setBalance(0);
-          return;
-        }
-  
-        try {
-          const result = await balanceOf({
-            contract,
-            address: address || "",
+  useEffect(() => {
+      const fetchData = async () => {
+
+          if (!address) {
+              return;
+          }
+          setLoadingUser(true);
+
+          const response = await fetch("/api/user/getUser", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                  storecode: "admin",
+                  walletAddress: address,
+              }),
           });
-    
-      
-          if (chain === 'bsc') {
-            setBalance( Number(result) / 10 ** 18 );
-          } else {
-            setBalance( Number(result) / 10 ** 6 );
+
+          if (!response.ok) {
+              console.error("Error fetching user data");
+              setLoadingUser(false);
+              return;
+            
           }
 
+          const data = await response.json();
 
+          //console.log("data", data);
 
-        } catch (error) {
-          console.error('Error:', error);
-          setBalance(0);
-        }
-    
-  
+          if (data.result) {
+              setLoadingUser(false);
+              setNickname(data.result.nickname);
+              data.result.avatar && setAvatar(data.result.avatar);
+              setUserCode(data.result.id);
 
-        // getWalletBalance
-        const result = await getWalletBalance({
-          address: address,
-          client: client,
-          chain: chain === "ethereum" ? ethereum :
-                 chain === "polygon" ? polygon :
-                 chain === "arbitrum" ? arbitrum :
-                 chain === "bsc" ? bsc : arbitrum,
-        });
-        //console.log("getWalletBalance", result);
-        /*
-        {value: 193243898588330546n, decimals: 18, displayValue: '0.193243898588330546', symbol: 'ETH', name: 'ETH'}
-        */
-        if (result) {
-          setNativeBalance(Number(result.value) / 10 ** result.decimals);
-        }
-  
-  
-  
+              setUser(data.result);
+
+              setSeller(data.result.seller);
+
+          }
       };
-  
-      if (address) getBalance();
-  
-      const interval = setInterval(() => {
-        if (address) getBalance();
-      } , 5000);
-  
-      return () => clearInterval(interval);
-  
-    } , [address, contract]);
-  
-  
-  
-    const [escrowWalletAddress, setEscrowWalletAddress] = useState('');
+
+      fetchData();
+
+  }, [address]);
 
 
-
-
-    const [nickname, setNickname] = useState("");
-    const [avatar, setAvatar] = useState("/icon-user.png");
-    const [userCode, setUserCode] = useState("");
-  
-  
-    const [user, setUser] = useState<any>(null);
-
-
-    const [seller, setSeller] = useState(null) as any;
-  
-
-    const [loadingUser, setLoadingUser] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-
-            if (!address) {
-                return;
-            }
-            setLoadingUser(true);
-
-            const response = await fetch("/api/user/getUser", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    storecode: "admin",
-                    walletAddress: address,
-                }),
-            });
-
-            if (!response.ok) {
-                console.error("Error fetching user data");
-                setLoadingUser(false);
-                return;
-              
-            }
-  
-            const data = await response.json();
-  
-            //console.log("data", data);
-  
-            if (data.result) {
-                setLoadingUser(false);
-                setNickname(data.result.nickname);
-                data.result.avatar && setAvatar(data.result.avatar);
-                setUserCode(data.result.id);
-
-                setUser(data.result);
-  
-                setSeller(data.result.seller);
-  
-            }
-        };
-  
-        fetchData();
-  
-    }, [address]);
 
 
     const [totalClearanceCount, setTotalClearanceCount] = useState(0);

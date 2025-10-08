@@ -1480,7 +1480,7 @@ export default function Index({ params }: any) {
 
   const fetchBuyOrders = async () => {
 
-    console.log('fetchBuyOrders=========================>');
+    //console.log('fetchBuyOrders=========================>');
     //console.log("address=", address);
     //console.log("searchMyOrders=", searchMyOrders);
 
@@ -1962,7 +1962,32 @@ const [tradeSummary, setTradeSummary] = useState({
 
   const [usdtAmount, setUsdtAmount] = useState(0);
   const [krwAmount, setKrwAmount] = useState(0);
+
   const [rate, setRate] = useState(1380);
+  // /api/client/getUsdtKRWRateSell
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await fetch('/api/client/getUsdtKRWRateSell', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await response.json();
+
+        console.log('getUsdtKRWRateSell data', data);
+
+
+        if (data.result) {
+          setRate(data.result);
+        }
+      } catch (error) {
+        console.error('Error fetching USDT/KRW rate:', error);
+      }
+    }
+    fetchRate();
+  } , []);
 
 
 
