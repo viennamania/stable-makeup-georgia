@@ -947,41 +947,6 @@ export default function Index({ params }: any) {
 
 
 
-
-
-    const [clientName, setClientName] = useState("");
-    const [clientDescription, setClientDescription] = useState("");
-    const [clientLogo, setClientLogo] = useState("");
-
-    useEffect(() => {
-        const fetchClientInfo = async () => {
-            const response = await fetch("/api/client/getClientInfo", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const data = await response.json();
-
-            //console.log("clientInfo", data);
-
-            if (data.result) {
-
-                setClientName(data.result.clientInfo?.name || "");
-                setClientDescription(data.result.clientInfo?.description || "");
-                setClientLogo(data.result.clientInfo?.avatar || "/logo.png");
-            }
-
-        };
-
-        fetchClientInfo();
-    }, []);
-
-
-
-
-
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
