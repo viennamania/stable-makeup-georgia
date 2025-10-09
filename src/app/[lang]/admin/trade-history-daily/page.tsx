@@ -1950,6 +1950,7 @@ const fetchBuyOrders = async () => {
             p-4 rounded-lg shadow-md
             ">
 
+            {/*
             <div className="xl:w-2/5 w-full
               flex flex-col sm:flex-row items-start justify-start gap-4">
 
@@ -2001,14 +2002,11 @@ const fetchBuyOrders = async () => {
 
             </div>
 
-            {/* divider */}
             <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
             <div className="xl:w-3/5 w-full
               flex flex-col sm:flex-row items-start justify-end gap-4">
-
-
               <Image
                 src="/icon-payment.png"
                 alt="Payment"
@@ -2137,10 +2135,10 @@ const fetchBuyOrders = async () => {
               </div>
 
             </div>
+            */}
 
-            
-            {/* divider */}
-            {/*}
+ 
+            {/*
             <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 

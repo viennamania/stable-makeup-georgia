@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { updateAvatar } from "@/lib/api/client";
+import { updateAvatar } from "@lib/api/client";
 
 
 const clientId = process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "";
