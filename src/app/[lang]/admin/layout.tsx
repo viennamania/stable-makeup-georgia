@@ -140,15 +140,19 @@ export default function RootLayout({
 
             {/* fixed position left and vertically top */}
             <div className="
-            fixed top-2 left-2 z-50 flex flex-col items-start justify-start">
+            fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
+            ">
 
-              <div className="flex flex-row items-center justify-center">
+              <div className="flex flex-row items-center justify-center
+                bg-white bg-opacity-90
+                p-2 rounded-lg shadow-lg
+              ">
                 <Image
                   src={clientLogo || "/logo.png"}
                   alt={clientName}
                   width={50}
                   height={50}
-                  className="rounded-lg bg-white p-1 mb-2 shadow-lg"
+                  className="rounded-lg bg-white w-12 h-12 object-contain"
                 />
                 <div className="ml-2 flex flex-col items-start justify-center">
                   <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>

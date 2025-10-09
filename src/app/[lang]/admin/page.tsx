@@ -2210,11 +2210,11 @@ export default function Index({ params }: any) {
                           px-4 py-2">
                             <div className="flex flex-col sm:flex-row items-center justify-start gap-2">
                               <Image
-                                src={store.storeLogo || "/profile-default.png"}
+                                src={store.storeLogo || "/icon-store.png"}
                                 alt="Store Logo"
                                 width={40}
                                 height={40}
-                                className="rounded-lg w-10 h-10 object-cover"
+                                className="rounded-lg w-10 h-10"
                               />
                               <div className="flex flex-col items-start justify-start">
                                 <button
@@ -2542,6 +2542,7 @@ export default function Index({ params }: any) {
 
                             </button>
 
+                            {/*
                             <button
 
                               onClick={() => {
@@ -2564,7 +2565,8 @@ export default function Index({ params }: any) {
 
                               판매자 설정
 
-                              </button>
+                            </button>
+                            */}
 
                           </div>
                           
