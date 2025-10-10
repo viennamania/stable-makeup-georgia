@@ -2396,36 +2396,39 @@ const fetchBuyOrders = async () => {
   // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
+  const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
   const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
 
-  useEffect(() => {
-    const fetchTotalBuyOrders = async (): Promise<void> => {
-      if (!address) {
-        setTotalNumberOfBuyOrders(0);
-        return;
-      }
-      
-      setLoadingTotalNumberOfBuyOrders(true);
-      const response = await fetch('/api/order/getTotalNumberOfBuyOrders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-        }),
-      });
-      if (!response.ok) {
-        console.error('Failed to fetch total number of buy orders');
-        setLoadingTotalNumberOfBuyOrders(false);
-        return;
-      }
-      const data = await response.json();
-      //console.log('getTotalNumberOfBuyOrders data', data);
-      setTotalNumberOfBuyOrders(data.result.totalCount);
-      setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
 
+  // Move fetchTotalBuyOrders outside of useEffect to avoid self-reference error
+  const fetchTotalBuyOrders = async (): Promise<void> => {
+    setLoadingTotalNumberOfBuyOrders(true);
+    const response = await fetch('/api/order/getTotalNumberOfBuyOrders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      console.error('Failed to fetch total number of buy orders');
       setLoadingTotalNumberOfBuyOrders(false);
-    };
+      return;
+    }
+    const data = await response.json();
+    //console.log('getTotalNumberOfBuyOrders data', data);
+    setTotalNumberOfBuyOrders(data.result.totalCount);
+    setProcessingBuyOrders(data.result.orders);
+    setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
+
+    setLoadingTotalNumberOfBuyOrders(false);
+  };
+
+  useEffect(() => {
+    if (!address) {
+      setTotalNumberOfBuyOrders(0);
+      return;
+    }
 
     fetchTotalBuyOrders();
 
@@ -2436,6 +2439,16 @@ const fetchBuyOrders = async () => {
 
   }, [address]);
 
+      
+  /*
+  useEffect(() => {
+    if (totalNumberOfBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
+      const audio = new Audio('/notification.wav'); 
+      audio.play();
+    }
+  }, [totalNumberOfBuyOrders, loadingTotalNumberOfBuyOrders]);
+  */
+
   useEffect(() => {
     if (totalNumberOfAudioOnBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
       const audio = new Audio('/notification.wav');
@@ -2445,9 +2458,13 @@ const fetchBuyOrders = async () => {
 
 
 
+
+
+
   // totalNumberOfClearanceOrders
   const [loadingTotalNumberOfClearanceOrders, setLoadingTotalNumberOfClearanceOrders] = useState(false);
   const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
+  const [processingClearanceOrders, setProcessingClearanceOrders] = useState([] as BuyOrder[]);
   useEffect(() => {
     if (!address) {
       setTotalNumberOfClearanceOrders(0);
@@ -2471,6 +2488,7 @@ const fetchBuyOrders = async () => {
       const data = await response.json();
       //console.log('getTotalNumberOfClearanceOrders data', data);
       setTotalNumberOfClearanceOrders(data.result.totalCount);
+      setProcessingClearanceOrders(data.result.orders);
 
       setLoadingTotalNumberOfClearanceOrders(false);
     };
@@ -2490,6 +2508,7 @@ const fetchBuyOrders = async () => {
       audio.play();
     }
   }, [totalNumberOfClearanceOrders, loadingTotalNumberOfClearanceOrders]);
+
 
 
 
@@ -2598,50 +2617,18 @@ const fetchBuyOrders = async () => {
 
 
 
-
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
 
-        <h1 className="text-2xl font-bold">로그인</h1>
 
-          <ConnectButton
-            client={client}
-            wallets={wallets}
-            /*
-            chain={chain === "ethereum" ? ethereum :
-                    chain === "polygon" ? polygon :
-                    chain === "arbitrum" ? arbitrum :
-                    chain === "bsc" ? bsc : arbitrum}
-            */
-            
-            theme={"light"}
-
-            // button color is dark skyblue convert (49, 103, 180) to hex
-            connectButton={{
-              style: {
-                backgroundColor: "#3167b4", // dark skyblue
-
-                color: "#f3f4f6", // gray-300 
-                padding: "2px 2px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                //width: "40px",
-                height: "38px",
-              },
-              label: "원클릭 로그인",
-            }}
-
-            connectModal={{
-              size: "wide", 
-              //size: "compact",
-              titleIcon: "https://www.stable.makeup/logo.png",                           
-              showThirdwebBranding: false,
-            }}
-
-            locale={"ko_KR"}
-            //locale={"en_US"}
-          />
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
 
       </div>
     );
@@ -2691,17 +2678,248 @@ const fetchBuyOrders = async () => {
   }
 
 
-
-
-
-
-
-
-
-
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+      {/* fixed position right and vertically center */}
+      <div className="
+        flex
+        fixed right-4 top-1/2 transform -translate-y-1/2
+        z-40
+        ">
+
+          <div className="w-full flex flex-col items-end justify-center gap-4">
+
+
+
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+            ">
+              {loadingTotalNumberOfBuyOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-buyorder.png"
+                  alt="Buy Order"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              {/* array of processingBuyOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer.depositName || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingBuyOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingBuyOrders.length - 3}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-lg text-red-500 font-semibold">
+                {
+                totalNumberOfBuyOrders
+                }
+              </p>
+
+              {totalNumberOfBuyOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/buyorder');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      주문<br />관리
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+
+            {/* Clearance Orders */}
+            {version !== 'bangbang' && (
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+            ">
+
+              {loadingTotalNumberOfClearanceOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              {/* array of processingClearanceOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingClearanceOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer.depositName || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingClearanceOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingClearanceOrders.length - 3}
+                  </span>
+                )}
+              </div>
+
+
+              <p className="text-lg text-yellow-500 font-semibold">
+                {
+                totalNumberOfClearanceOrders
+                }
+              </p>
+
+              {totalNumberOfClearanceOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/clearance-history');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      청산<br />관리
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+            )}
+
+
+            {/* P2P 거래수 */}
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+              <Image
+                src="/icon-trade.png"
+                alt="P2P"
+                width={35}
+                height={35}
+                className="w-6 h-6"
+              />
+              <p className="text-lg text-green-500 font-semibold">
+                {
+                buyOrderStats.totalCount
+                }
+              </p>
+            </div>
+
+            {/* 가맹점 결제수 */}
+            <div className="flex flex-row items-center justify-center gap-2
+            bg-white/80
+            p-2 rounded-lg shadow-md
+            backdrop-blur-md
+            ">
+              <Image
+                src="/icon-payment.png"
+                alt="Merchant"
+                width={35}
+                height={35}
+                className="w-6 h-6"
+              />
+              <p className="text-lg text-green-500 font-semibold">
+                {
+                buyOrderStats.totalSettlementCount
+                }
+              </p>
+            </div>
+
+        
+          </div>
+
+      </div>
 
 
       <div className="py-0 w-full">
@@ -3511,6 +3729,7 @@ const fetchBuyOrders = async () => {
           </div>
 
 
+          {/*
           <div className="w-full flex flex-row items-center justify-end gap-2">
 
             <div className="flex flex-row items-center justify-center gap-2
@@ -3569,7 +3788,6 @@ const fetchBuyOrders = async () => {
             </div>
 
 
-            {/* Clearance Orders */}
             {version !== 'bangbang' && (
             <div className="flex flex-row items-center justify-center gap-2
             bg-white/80
@@ -3629,7 +3847,7 @@ const fetchBuyOrders = async () => {
 
         
           </div>
-
+          */}
 
 
 
@@ -3649,21 +3867,22 @@ const fetchBuyOrders = async () => {
                 >
                   <tr>
 
-                    <th className="p-2">
-                      <div className="flex flex-col gap-2 items-center justify-center">
-                        <span className="text-sm text-white">
-                          구매신청시간
+                    <th className="p-2 text-start">
+                      <div className="flex flex-col items-start justify-center gap-2">
+                        <span className="text-sm text-zinc-50 font-semibold">
+                          가맹점
                         </span>
-                        <span className="text-sm text-white">
-                          {TID}
+                        <span className="text-sm text-zinc-50 font-semibold">
+                          P2P거래번호
+                        </span>
+                        <span className="text-sm text-zinc-50 font-semibold">
+                          거래시작시간
                         </span>
                       </div>
                     </th>
 
-                    <th className="p-2">가맹점</th>
-
                     <th className="p-2">
-                      <div className="flex flex-col gap-2 items-center justify-center">
+                      <div className="flex flex-col gap-2 items-start justify-center">
                         <span className="text-sm text-white">
                           P2P 구매자 아이디
                         </span>
@@ -3673,7 +3892,13 @@ const fetchBuyOrders = async () => {
                       </div>
                     </th>
 
-                    <th className="p-2">입금자</th>
+                    <th className="p-2">
+                      <div className="flex flex-col gap-2 items-center justify-center">
+                        <span className="text-sm text-white">
+                          입금자
+                        </span>
+                      </div>
+                    </th>
 
                     <th className="p-2">
                       <div className="flex flex-col gap-2 items-end justify-center">
@@ -3684,14 +3909,14 @@ const fetchBuyOrders = async () => {
                           {Buy_Amount}(USDT)
                         </span>
                         <span className="text-sm text-white">
-                          단가(환율)
+                          개당금액(환율)
                         </span>
                       </div>
                     </th>
 
 
                     <th className="p-2">
-                      <div className="flex flex-col gap-2 items-center justify-center">
+                      <div className="flex flex-col gap-2 items-start justify-center">
                         <span className="text-sm text-white">
                           P2P 판매자 아이디
                         </span>
@@ -3704,7 +3929,7 @@ const fetchBuyOrders = async () => {
                     <th className="p-2">판매자 입금통장</th>
 
                     <th className="p-2">자동입금처리(원)</th>
-                    <th className="p-2">거래상태</th>
+                    <th className="p-2">USDT 전송</th>
 
                     {/*
                     <th className="p-2">자동결제 및 정산(USDT)</th>
@@ -3740,114 +3965,143 @@ const fetchBuyOrders = async () => {
                       `}>
                       
 
-                        <td className="p-2">
+
+                        <td className="
+                          p-2
+                        "
+                        >
 
                           <div className="
-                            w-24
-                            flex flex-col gap-2 items-center justify-center">
+                            w-32
+                            flex flex-col items-start justify-start gap-2
+                            bg-zinc-100
+                            rounded-lg
+                            border border-zinc-800
+                            hover:bg-zinc-200
+                            cursor-pointer
+                            transition-all duration-200 ease-in-out
+                            hover:scale-105
+                            hover:shadow-lg
+                            hover:shadow-zinc-500/50
+                            hover:cursor-pointer
+                            p-2
 
-
-
-                            <div className="flex flex-col gap-2 items-center justify-center">
-                              <span className="text-sm text-zinc-500">
-                                {item?.createdAt && new Date(item.createdAt)?.toLocaleString('ko-KR', {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                })}
-                              </span>
-                              
-                              <span className="text-sm text-zinc-500">
-                                {item?.createdAt && new Date(item.createdAt)?.toLocaleString('en-US', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                })}
-                              </span>
-                              
-                            </div>
-
-                            <span className="text-sm text-zinc-500 font-semibold">
-                              {params.lang === 'ko' ? (
-                                <p>{
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) :
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )
-                                }</p>
-                              ) : (
-                                <p>{
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) :
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                  ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )
-                                }</p>
-                              )}
-                            </span>
-
-                            <button
-                              onClick={() => {
-                                // copy tradeId to clipboard
-                                navigator.clipboard.writeText(item.tradeId);
-                                toast.success('거래번호가 복사되었습니다.');
-                              }}
-                              className="text-sm text-zinc-500 font-semibold
-                                hover:text-blue-600 cursor-pointer
-                                hover:underline"
-                              title="거래번호 복사"
-                            >
-                              #{item?.tradeId}
-                            </button>
-
-
-
-                          </div>
-                        </td>
-
-                        <td className="text-zinc-500 p-2">
+                            "
+                            onClick={() => {
+                              // copy traideId to clipboard
+                              navigator.clipboard.writeText(item.tradeId);
+                              toast.success("거래번호가 복사되었습니다.");
+                            }}
                           
+                          >
 
-                          <div className="
-                          w-32
-                          flex flex-row gap-2 items-center justify-start">
-                            
-                            <Image
-                              src={item?.store?.storeLogo || "/icon-store.png"}
-                              alt="Store"
-                              width={35}
-                              height={35}
-                              className="rounded-lg w-8 h-8 object-cover"
-                            />
-                            <div className="flex flex-col items-start justify-start">
-                              <span className="text-sm text-zinc-500 font-bold">
-                                {
-                                  item?.store?.storeName
-                                }
-                              </span>
-                              <span className="text-sm text-zinc-500">
-                                {
-                                  item?.agent.agentName
-                                }
+                            <div className="flex flex-row items-center justify-start gap-2">
+                              <Image
+                                src={item?.store?.storeLogo || "/icon-store.png"}
+                                alt="Store Logo"
+                                width={35}
+                                height={35}
+                                className="
+                                rounded-lg
+                                w-8 h-8 object-cover"
+                              />
+                              
+                              <div className="flex flex-col items-start justify-start">
+                                <span className="text-sm text-zinc-500 font-bold">
+                                  {
+                                    item?.store?.storeName?.length > 5 ?
+                                    item?.store?.storeName?.substring(0, 5) + '...' :
+                                    item?.store?.storeName
+                                  }
+                                </span>
+                                <span className="text-sm text-zinc-500">
+                                  {
+                                    item?.agent.agentName?.length > 5 ?
+                                    item?.agent.agentName?.substring(0, 5) + '...' :
+                                    item?.agent.agentName
+                                  }
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-row items-start justify-start gap-1">
+                              <Image
+                                src="/icon-trade.png"
+                                alt="Trade Icon"
+                                width={20}
+                                height={20}
+                                //className="w-5 h-5"
+                                className={`w-5 h-5
+                                  ${item?.status === 'cancelled' || (item?.status === 'paymentConfirmed' && item?.transactionHash !== '0x') ? '' : 'animate-spin'}`}
+                              />
+                              <span className="text-sm text-zinc-500 font-semibold">
+                              {
+                                "#" + item.tradeId
+                              }
                               </span>
                             </div>
+
+                            <div className="w-full flex flex-row items-center justify-start gap-2">
+
+                              <div className="w-full flex flex-col items-start justify-start">
+
+                                <span className="text-sm text-zinc-800 font-semibold">
+                                  {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                  })}
+                                </span>
+                                {/*
+                                <span className="text-sm text-zinc-500">
+                                  {new Date(item.createdAt).toLocaleDateString('ko-KR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                  })}
+                                </span>
+                                */}
+
+                                <div className="w-full flex flex-row items-center justify-between gap-1">
+                                  <span className="text-sm text-zinc-500 font-semibold">
+                                    {params.lang === 'ko' ? (
+                                      <p>{
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                        ) :
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                        ) : (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                        )
+                                      }</p>
+                                    ) : (
+                                      <p>{
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
+                                        ) :
+                                        new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                        ) : (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                        )
+                                      }</p>
+                                    )}
+                                  </span>
+                                </div>
+
+                              </div>
+
+                            </div>
+
                           </div>
 
                         </td>
-
                         
                         <td className="p-2">
                           <div className="flex flex-row items-center gap-2">
 
-                            
-                            <div className="flex flex-col gap-2 items-center">
+                            <div className="flex flex-col gap-2 items-start justify-center">
 
                               <div className="flex flex-row items-center gap-1">
                                 <Image
@@ -3929,26 +4183,33 @@ const fetchBuyOrders = async () => {
                             
                             <div className="flex flex-col gap-2 items-center">
 
-                              <div className="text-sm text-yellow-600 font-semibold">
-                                {
-                                  item?.buyer?.depositName
-
-                                }
-                              </div>
                               <div className="text-sm text-zinc-500 font-semibold">
                                 {
                                   item?.buyer?.depositBankName
 
                                 }
                               </div>
-
-                              <div className="text-sm text-zinc-500 font-semibold">
-                                {
-                                  item?.buyer?.depositBankAccountNumber &&
-                                  item?.buyer?.depositBankAccountNumber.slice(0, 5) + '...'
-                                }
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <div className="text-sm text-zinc-500 font-semibold">
+                                  {
+                                    item?.buyer?.depositBankAccountNumber &&
+                                    item?.buyer?.depositBankAccountNumber.slice(0, 5) + '...'
+                                  }
+                                </div>
                               </div>
 
+                              <div className="text-lg text-blue-600 font-semibold">
+                                {
+                                  item?.buyer?.depositName
+                                }
+                              </div>
 
                             </div>
 
@@ -3995,8 +4256,7 @@ const fetchBuyOrders = async () => {
                               }}
                             >
                               {
-                                Number(item.rate)
-                                //Number(item.krwAmount / item.usdtAmount).toFixed(3)
+                                Number(item.rate)?.toLocaleString()
                               }
                             </span>
 
@@ -4007,38 +4267,58 @@ const fetchBuyOrders = async () => {
                         <td className="text-zinc-500 p-2">
                           <div className="
                             w-32
-                            flex flex-col gap-2 items-center justify-center">
-                            <span className="text-lg font-semibold text-blue-600">
-                              {
-                                item.seller?.nickname
-                              }
-                            </span>
+                            flex flex-col gap-2 items-start justify-center">
+                            <div className="flex flex-row items-center gap-1">
+                              <Image
+                                src="/icon-user.png"
+                                alt="User"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <span className="text-lg font-semibold text-blue-600">
+                                {
+                                  item.seller?.nickname
+                                }
+                              </span>
+                            </div>
+
                             {/* seller.walletAddress */}
-                            <button
-                              className="text-sm text-zinc-500 font-semibold
-                                hover:text-blue-500
-                                hover:underline
-                                cursor-pointer
-                                "
-                              title="지갑주소 복사"
+                            <div className="flex flex-row items-center gap-1">
+                              <Image
+                                src="/icon-shield.png"
+                                alt="Wallet"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <button
+                                className="text-sm text-zinc-500 font-semibold
+                                  hover:text-blue-500
+                                  hover:underline
+                                  cursor-pointer
+                                  "
+                                title="지갑주소 복사"
 
-                              onClick={() => {
-                                
-                                // copy to clipboard
-                                //navigator.clipboard.writeText(item.seller?.walletAddress || '');
+                                onClick={() => {
+                                  
+                                  // copy to clipboard
+                                  //navigator.clipboard.writeText(item.seller?.walletAddress || '');
 
-                                navigator.clipboard.writeText(item.store.sellerWalletAddress || '');
+                                  navigator.clipboard.writeText(item.store.sellerWalletAddress || '');
 
-                                toast.success('지갑주소가 복사되었습니다.');
-                              }}
-                            >
-                              {/*item.seller?.walletAddress &&
-                                item.seller?.walletAddress.substring(0, 10) + '...'*/}
+                                  toast.success('지갑주소가 복사되었습니다.');
+                                }}
+                              >
+                                {/*item.seller?.walletAddress &&
+                                  item.seller?.walletAddress.substring(0, 10) + '...'*/}
 
-                              {item.store.sellerWalletAddress &&
-                                item.store.sellerWalletAddress.substring(0, 10) + '...'
-                              }
-                            </button>
+                                {item.store.sellerWalletAddress &&
+                                  item.store.sellerWalletAddress.substring(0, 10) + '...'
+                                }
+                              </button>
+                            </div>
+
                           </div>
                         </td>
 
@@ -4061,9 +4341,35 @@ const fetchBuyOrders = async () => {
                             </div>
 
                             {/* copy account number to clipboard */}
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(
+                            <div className="flex flex-row items-center gap-1">
+                              <Image
+                                src="/icon-bank.png"
+                                alt="Bank"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5"
+                              />
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    item?.userType === 'AAA'
+                                    ? item?.store?.bankInfoAAA?.accountNumber
+                                    : item?.userType === 'BBB'
+                                    ? item?.store?.bankInfoBBB?.accountNumber
+                                    : item?.userType === 'CCC'
+                                    ? item?.store?.bankInfoCCC?.accountNumber
+                                    : item?.userType === 'DDD'
+                                    ? item?.store?.bankInfoDDD?.accountNumber
+                                    : item?.store?.bankInfo?.accountNumber
+                                  );
+                                  toast.success('판매자 입금통장가 복사되었습니다.');
+                                }}
+                                className="text-sm text-zinc-500 font-semibold
+                                  hover:text-blue-600 cursor-pointer
+                                  hover:underline"
+                                title="판매자 입금통장 복사"
+                              >
+                                {
                                   item?.userType === 'AAA'
                                   ? item?.store?.bankInfoAAA?.accountNumber
                                   : item?.userType === 'BBB'
@@ -4073,26 +4379,10 @@ const fetchBuyOrders = async () => {
                                   : item?.userType === 'DDD'
                                   ? item?.store?.bankInfoDDD?.accountNumber
                                   : item?.store?.bankInfo?.accountNumber
-                                );
-                                toast.success('판매자 입금통장가 복사되었습니다.');
-                              }}
-                              className="text-sm text-zinc-500 font-semibold
-                                hover:text-blue-600 cursor-pointer
-                                hover:underline"
-                              title="판매자 입금통장 복사"
-                            >
-                              {
-                                item?.userType === 'AAA'
-                                ? item?.store?.bankInfoAAA?.accountNumber
-                                : item?.userType === 'BBB'
-                                ? item?.store?.bankInfoBBB?.accountNumber
-                                : item?.userType === 'CCC'
-                                ? item?.store?.bankInfoCCC?.accountNumber
-                                : item?.userType === 'DDD'
-                                ? item?.store?.bankInfoDDD?.accountNumber
-                                : item?.store?.bankInfo?.accountNumber
-                              }
-                            </button>
+                                }
+                              </button>
+                            </div>
+
 
                             <div className="text-sm font-semibold text-zinc-500">
                               {
@@ -4139,6 +4429,215 @@ const fetchBuyOrders = async () => {
                                 </span>
                               </div>
 
+
+                              <div className="flex flex-row items-center gap-2">
+                                {/* status */}
+                                {item.status === 'ordered' && (
+                                  <div className="text-sm text-yellow-500 font-semibold">
+                                    {Buy_Order_Opened}
+                                  </div>
+                                )}
+
+
+                                {item.status === 'accepted' && (
+
+                                  <div className="flex flex-row gap-2 items-center justify-start">
+                                    <div className="text-sm text-green-500">
+                                      {Trade_Started}
+                                    </div>
+                                    {/*
+                                    <div className="text-sm text-white">
+                                      {item.seller?.nickname}
+                                    </div>
+                                    */}
+                                    <div className="text-sm text-zinc-500">
+
+                                      {params.lang === 'ko' ? (
+                                        <p>{
+                                          new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                          ) :
+                                          new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                          ) : (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                          )
+                                        }</p>
+                                      ) : (
+                                        <p>{
+                                          new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                          ) :
+                                          new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                          ) : (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                          )
+                                        }</p>
+                                      )}
+
+                                    </div>
+
+
+                                  </div>
+                                )}
+
+                                {item.status === 'paymentRequested' && (
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <div className="text-sm text-green-500">
+                                      {/*Waiting_for_seller_to_deposit*/}
+
+                                      {Escrow_Completed}
+
+
+                                    </div>
+
+                                    {/*
+                                    <div className="text-sm text-white">
+                                      {item.seller?.nickname}
+                                    </div>
+                                    */}
+
+                                    <div className="text-sm text-zinc-500">
+                                      {/* from now */}
+                                      {
+                                        new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                        ) : new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                        ) : (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                        )
+                                      }
+                                    </div>
+
+
+                                  </div>
+                                )}
+
+                                {item.status === 'cancelled' && (
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+
+                                      <div className="text-sm text-red-600">
+                                        {
+                                          Cancelled_at
+                                        }
+                                      </div>
+                                      {/*
+                                      <span className="text-sm text-white">
+                                        {item.seller?.nickname}
+                                      </span>
+                                      */}
+
+                                      <div className="text-sm text-zinc-500">
+                                        {
+                                          // from now
+                                          new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 ? (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000) + ' ' + seconds_ago
+                                          ) : new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 * 60 ? (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                          ) : (
+                                            ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                          )
+                                        }
+                                      </div>
+
+                                  </div>
+                                )}
+
+
+                                {/* if status is accepted, show payment request button */}
+                                {item.status === 'paymentConfirmed' && (
+                                  <div className="
+                                    w-36  
+                                    flex flex-row gap-1 items-center justify-start">
+
+                                    {/*
+                                    <span className="text-sm font-semibold text-green-500">
+                                      {Completed}
+                                    </span>
+                                    */}
+                                    <button
+                                      className="text-sm text-green-500 font-semibold
+                                        border border-green-500 rounded-lg p-2
+                                        bg-green-100
+                                        w-full text-center
+                                        hover:bg-green-200
+                                        cursor-pointer
+                                        transition-all duration-200 ease-in-out
+                                        hover:scale-105
+                                        hover:shadow-lg
+                                        hover:shadow-green-500/50
+                                      "
+                                      onClick={() => {
+                                        // new window to complete trade
+                                        // {`https://www.cryptoss.beauty/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+
+                                        // ${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
+
+                                        window.open(
+                                          `${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`,
+                                          '_blank'
+                                        );
+
+                                      }}
+                                    >
+                                      {Completed}
+                                    </button>
+
+                                    {/*
+                                    <span className="text-sm font-semibold text-white">
+                                      {item.seller?.nickname}
+                                    </span>
+                                    */}
+                                    
+                                    <span
+                                      className="
+                                        w-28 
+                                        text-sm text-zinc-500"
+                                    >{
+                                      //item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
+                                      // from now
+                                      new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+
+                                    }</span>
+                                  
+                                  </div>
+                                )}
+
+
+
+
+
+                                {item.status === 'completed' && (
+                                  <div className="flex flex-row gap-1 items-start justify-start">
+                                    <div className="text-sm text-green-500">
+                                      {Completed_at}
+                                    </div>
+                                    {/* paymentConfirmedAt */}
+                                    <div className="text-sm text-zinc-500">
+                                      {
+                                        new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                        ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                        ) : (
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                        )
+                                      }
+                                    </div>
+                                  </div>
+                                )}
+
+                              </div>
+
+
                           </div>
                         </td>
 
@@ -4147,214 +4646,6 @@ const fetchBuyOrders = async () => {
                           <div className="
                             w-52  
                             flex flex-col gap-2 items-center justify-center">
-
-                            <div className="flex flex-row items-center gap-2">
-                              {/* status */}
-                              {item.status === 'ordered' && (
-                                <div className="text-sm text-yellow-500 font-semibold">
-                                  {Buy_Order_Opened}
-                                </div>
-                              )}
-
-
-                              {item.status === 'accepted' && (
-
-                                <div className="flex flex-row gap-2 items-center justify-center">
-                                  <div className="text-sm text-green-500">
-                                    {Trade_Started}
-                                  </div>
-                                  {/*
-                                  <div className="text-sm text-white">
-                                    {item.seller?.nickname}
-                                  </div>
-                                  */}
-                                  <div className="text-sm text-zinc-500">
-
-                                    {params.lang === 'ko' ? (
-                                      <p>{
-                                        new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                        ) :
-                                        new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                        ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                        )
-                                      }</p>
-                                    ) : (
-                                      <p>{
-                                        new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                        ) :
-                                        new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                        ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                        )
-                                      }</p>
-                                    )}
-
-                                  </div>
-
-
-                                </div>
-                              )}
-
-                              {item.status === 'paymentRequested' && (
-                                <div className="flex flex-row gap-1 items-start justify-start">
-                                  <div className="text-sm text-green-500">
-                                    {/*Waiting_for_seller_to_deposit*/}
-
-                                    {Escrow_Completed}
-
-
-                                  </div>
-
-                                  {/*
-                                  <div className="text-sm text-white">
-                                    {item.seller?.nickname}
-                                  </div>
-                                  */}
-
-                                  <div className="text-sm text-zinc-500">
-                                    {/* from now */}
-                                    {
-                                      new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) : new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }
-                                  </div>
-
-
-                                </div>
-                              )}
-
-                              {item.status === 'cancelled' && (
-                                <div className="flex flex-row gap-1 items-start justify-start">
-
-                                    <div className="text-sm text-red-600">
-                                      {
-                                        Cancelled_at
-                                      }
-                                    </div>
-                                    {/*
-                                    <span className="text-sm text-white">
-                                      {item.seller?.nickname}
-                                    </span>
-                                    */}
-
-                                    <div className="text-sm text-zinc-500">
-                                      {
-                                        // from now
-                                        new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000) + ' ' + seconds_ago
-                                        ) : new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                        ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                        )
-                                      }
-                                    </div>
-
-                                </div>
-                              )}
-
-
-                              {/* if status is accepted, show payment request button */}
-                              {item.status === 'paymentConfirmed' && (
-                                <div className="
-                                  w-36  
-                                  flex flex-row gap-1 items-start justify-start">
-
-                                  {/*
-                                  <span className="text-sm font-semibold text-green-500">
-                                    {Completed}
-                                  </span>
-                                  */}
-                                  <button
-                                    className="text-sm text-green-500 font-semibold
-                                      border border-green-500 rounded-lg p-2
-                                      bg-green-100
-                                      w-full text-center
-                                      hover:bg-green-200
-                                      cursor-pointer
-                                      transition-all duration-200 ease-in-out
-                                      hover:scale-105
-                                      hover:shadow-lg
-                                      hover:shadow-green-500/50
-                                    "
-                                    onClick={() => {
-                                      // new window to complete trade
-                                      // {`https://www.cryptoss.beauty/ko/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
-
-                                      // ${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
-
-                                      window.open(
-                                        `${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`,
-                                        '_blank'
-                                      );
-
-                                    }}
-                                  >
-                                    {Completed}
-                                  </button>
-
-                                  {/*
-                                  <span className="text-sm font-semibold text-white">
-                                    {item.seller?.nickname}
-                                  </span>
-                                  */}
-                                  
-                                  <span
-                                    className="
-                                      w-28 
-                                      text-sm text-zinc-500"
-                                  >{
-                                    //item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
-                                    // from now
-                                    new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-
-                                  }</span>
-                                
-                                </div>
-                              )}
-
-
-
-
-
-                              {item.status === 'completed' && (
-                                <div className="flex flex-row gap-1 items-start justify-start">
-                                  <div className="text-sm text-green-500">
-                                    {Completed_at}
-                                  </div>
-                                  {/* paymentConfirmedAt */}
-                                  <div className="text-sm text-zinc-500">
-                                    {
-                                      new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }
-                                  </div>
-                                </div>
-                              )}
-
-                            </div>
-
 
                             {item?.transactionHash
                             && item?.transactionHash !== '0x'
