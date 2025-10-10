@@ -1689,45 +1689,17 @@ export default function SettingsPage({ params }: any) {
                     </div>
 
 
-
-                    {!address && (
-                    <ConnectButton
-                        client={client}
-                        wallets={wallets}
-                        chain={arbitrum}
-                        theme={"light"}
-
-                        // button color is dark skyblue convert (49, 103, 180) to hex
-                        connectButton={{
-                            style: {
-                                backgroundColor: "#3167b4", // dark skyblue
-                                color: "#f3f4f6", // gray-300
-                                padding: "2px 10px",
-                                borderRadius: "10px",
-                                fontSize: "14px",
-                                width: "60x",
-                                height: "38px",
-                            },
-                            label: "원클릭 로그인",
-                        }}
-
-                        connectModal={{
-                        size: "wide", 
-                        //size: "compact",
-                        titleIcon: "https://www.stable.makeup/logo.png",                           
-                        showThirdwebBranding: false,
-                        }}
-
-                        locale={"ko_KR"}
-                        //locale={"en_US"}
-                    />
-                    )}
-
                     {address && !loadingUser && (
                         <div className="w-full flex flex-row items-center justify-end gap-2">
-
+                            <Image
+                                src={user?.avatar || "/icon-user.png"}
+                                alt="User Avatar"
+                                width={30}
+                                height={30}
+                                className="w-8 h-8 rounded-full"
+                            />
                             <span className="text-lg text-gray-500 font-semibold">
-                            {user?.nickname || "프로필"}
+                                {user?.nickname || "프로필"}
                             </span>
 
                         </div>
@@ -2198,13 +2170,14 @@ export default function SettingsPage({ params }: any) {
                                 <div className="w-full flex flex-row items-center justify-start gap-2">
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        에이전트 수수료율
+                                        에이전트 수수료율(%)
                                     </span>
-                                    <span className="text-xl text-blue-500 font-semibold">
-                                        {store?.agentFeePercent || "없음"}%
+                                    <span className="text-4xl text-blue-500 font-semibold">
+                                        {store?.agentFeePercent || "없음"}
                                     </span>
                                 </div>
 
+                                {/*
                                 <div className='flex flex-row gap-2 items-center justify-between'>
                                     <input
                                         disabled={!address || updatingAgentFeePercent}
@@ -2232,6 +2205,7 @@ export default function SettingsPage({ params }: any) {
                                         {updatingAgentFeePercent ? "수정 중..." : "수정"}
                                     </button>
                                 </div>
+                                */}
                             </div>
          
 
@@ -2265,6 +2239,7 @@ export default function SettingsPage({ params }: any) {
                             </div>
 
                             {/* new window button for store admin page */}
+                            {/*
                             <button
                                 onClick={() => {
                                     window.open(
@@ -2276,6 +2251,7 @@ export default function SettingsPage({ params }: any) {
                             >
                                 가맹점 관리자 홈페이지 열기
                             </button>
+                            */}
 
 
 
@@ -2325,6 +2301,8 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 )}
 
+
+                                {/*
                                 {fetchingStore && (
                                 <Image
                                     src="/loading.png"
@@ -2334,6 +2312,7 @@ export default function SettingsPage({ params }: any) {
                                     className="animate-spin"
                                 />
                                 )}
+
 
                                 {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
                                 
@@ -2397,7 +2376,7 @@ export default function SettingsPage({ params }: any) {
 
                                     </div>
                                 )}
-
+                                */}
 
                             </div>
 
@@ -2450,6 +2429,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 )}
 
+                                {/*
                                 {fetchingAllStoreSellers && (
                                 <Image
                                     src="/loading.png"
@@ -2463,7 +2443,6 @@ export default function SettingsPage({ params }: any) {
                                 {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
                                 
                                 <div className="w-full flex flex-row items-center justify-center gap-2">
-                                    {/* select list of all users */}
                                     <select
                                     value={selectedSettlementWalletAddress}
                                     //value={store?.settlementWalletAddress}
@@ -2518,6 +2497,7 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                 </div>
                                 )}
+                                */}
 
                             </div>
                         </div>
@@ -2596,6 +2576,8 @@ export default function SettingsPage({ params }: any) {
                                         </div>
                                     )}
 
+
+                                    {/*
                                     {fetchingAllAdminSellers && (
                                         <Image
                                             src="/loading.png"
@@ -2609,7 +2591,6 @@ export default function SettingsPage({ params }: any) {
                                     {!fetchingAllAdminSellers && allAdminSellers && allAdminSellers.length > 0 ? (
                                     
                                         <div className="flex flex-row items-center justify-center gap-2">
-                                            {/* select list of all users */}
                                             <select
                                             value={selectedSettlementFeeWalletAddress}
                                             //value={store?.settlementFeeWalletAddress}
@@ -2665,6 +2646,7 @@ export default function SettingsPage({ params }: any) {
 
 
                                     )}
+                                    */}
 
                                 </div>
                             </div>
@@ -2676,18 +2658,22 @@ export default function SettingsPage({ params }: any) {
 
                                 <div className='w-full flex flex-col gap-2 items-center justify-between'>
                                     {/* store.settlementFeePercent */}
+                                    
+                                        
                                     <div className="w-full flex flex-row items-center justify-start gap-2">
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
                                             가맹점 PG 수수료율(%)
                                         </span>
+                                        <span className="text-4xl text-blue-500 font-semibold">
+                                            {store?.settlementFeePercent || "없음"}
+                                        </span>
                                     </div>
+
+                                    {/*}
                                     <div className='w-full flex flex-row items-center justify-center gap-2'>
 
-                                        <span className="text-lg text-zinc-500">
-                                            {store && store.settlementFeePercent || 0}%
-                                        </span>
                                         <input
                                             disabled={!address}
                                             className="bg-[#1f2937] text-zinc-100 rounded-lg p-2 text-sm"
@@ -2727,9 +2713,11 @@ export default function SettingsPage({ params }: any) {
                                         </button>
 
                                     </div>
-
+                                    */}
 
                                 </div>
+
+                                {/*
                                 <div className='flex flex-row gap-2 items-center justify-between'>
                                     <Image
                                         src="/icon-info.png"
@@ -2742,6 +2730,7 @@ export default function SettingsPage({ params }: any) {
                                         가맹점 PG 수수료율은 0.01 ~ 5.00%로 설정하세요
                                     </span>
                                 </div>
+                                */}
 
 
 
@@ -2819,6 +2808,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 )}
 
+                                {/*
                                 {fetchingStore && (
                                 <Image
                                     src="/loading.png"
@@ -2828,10 +2818,6 @@ export default function SettingsPage({ params }: any) {
                                     className="animate-spin"
                                 />
                                 )}
-
-
-
-
                                 
                                 {!fetchingAllAdminSellers && allAdminSellers && allAdminSellers.length > 0 ? (
                                 
@@ -2890,7 +2876,7 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                 </div>
                                 )}
-
+                                */}
 
 
 
@@ -2966,7 +2952,7 @@ export default function SettingsPage({ params }: any) {
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg text-zinc-600">
-                                        판매자 보유금 수량(USDT)
+                                        가맹점 보유금 수량(USDT)
                                     </span>
                                 </div>
 
@@ -2980,14 +2966,18 @@ export default function SettingsPage({ params }: any) {
                                             height={20}
                                             className="w-5 h-5"
                                         />
-                                        <span className="text-xl text-[#409192] font-semibold">
+ 
+                                        <span className="text-4xl text-[#409192] font-semibold"
+                                            style={{ fontFamily: 'monospace' }}>
                                             {store && store.escrowAmountUSDT &&
                                             store.escrowAmountUSDT.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                             || 0.00}
                                         </span>
+
                                     </div>
 
                                     {/* route to daily-close page */}
+                                    {/*
                                     <button
                                         onClick={() => router.push(`/${params.lang}/admin/store/${params.storecode}/daily-close`)}
                                         className="bg-[#3167b4] text-zinc-100 rounded-lg p-2 text-sm"
@@ -2995,6 +2985,8 @@ export default function SettingsPage({ params }: any) {
                                     >
                                         보유금 관리
                                     </button>
+                                    */}
+
 
                                     {/*
                                     <input
@@ -3091,6 +3083,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
 
                                 {/* divider */}
+                                {/*
                                 <div className='w-full h-[1px] bg-zinc-300'></div>
 
                                 <div className='w-64 flex flex-col gap-2 items-center justify-between'>
@@ -3161,6 +3154,7 @@ export default function SettingsPage({ params }: any) {
                                     </button>
 
                                 </div>
+                                */}
 
                             </div>
                         </div>
@@ -3223,9 +3217,8 @@ export default function SettingsPage({ params }: any) {
                                 </div>
 
                                 {/* divider */}
+                                {/*
                                 <div className='w-full h-[1px] bg-zinc-300'></div>
-
-
 
                                 <div className='w-64 flex flex-col gap-2 items-center justify-between'>
                                     
@@ -3298,6 +3291,7 @@ export default function SettingsPage({ params }: any) {
                                     </button>
 
                                 </div>
+                                */}
 
                             </div>
 
@@ -3318,14 +3312,13 @@ export default function SettingsPage({ params }: any) {
                             };
                             */  }
                         {/* 가맹점 결제용 통장 설정 */}
+                        {/*
                         <div className='w-full flex flex-col items-start justify-center gap-2
                             border border-gray-400 p-4 rounded-lg'>
 
                             <div className='w-full flex flex-col items-center justify-between gap-2
                                 border-b border-gray-300 pb-2'>
 
-                                {/* store payactionKey */}
-                                
                                 <div className="w-full flex flex-row items-center justify-start gap-2
                                     border-b border-gray-300 pb-2">
                                     <Image
@@ -3343,7 +3336,6 @@ export default function SettingsPage({ params }: any) {
                                 <div className='w-full flex flex-col items-start gap-2'>
                                     
                                     <div className='flex flex-row items-center justify-center gap-2'>
-                                        {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
                                         payactionApiKey:{' '}{store && store.payactionKey && store.payactionKey.payactionApiKey}
@@ -3365,7 +3357,6 @@ export default function SettingsPage({ params }: any) {
                                     </div>
                                 </div>
 
-                                {/* divider */}
                                 <div className='w-full h-[1px] bg-zinc-300'></div>
 
                                 <div className='w-64 flex flex-col items-center justify-center gap-2'>
@@ -3415,7 +3406,6 @@ export default function SettingsPage({ params }: any) {
                                     </button>
 
                                     <div className='mt-2 w-full flex flex-col items-center justify-center gap-2'>
-                                        {/* button for reset update */}
                                         <span className="text-sm text-red-500">
                                             자동입금기능을 사용하지 않을 경우 <br />
                                             아래 버튼을 눌러 초기화 해주세요.
@@ -3437,6 +3427,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                             </div>
                         </div>
+                        */}
                     
 
                         

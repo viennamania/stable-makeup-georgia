@@ -3017,7 +3017,7 @@ export default function SettingsPage({ params }: any) {
                                 <div className='w-full flex flex-row items-center justify-start gap-2'>
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg text-zinc-500">
-                                        판매자 보유금 수량(USDT)
+                                        가맹점 보유금 수량(USDT)
                                     </span>
                                 </div>
 
