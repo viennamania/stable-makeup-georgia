@@ -3972,7 +3972,7 @@ const fetchBuyOrders = async () => {
                         >
 
                           <div className="
-                            w-32
+                            w-48
                             flex flex-col items-start justify-start gap-2
                             bg-zinc-100
                             rounded-lg
@@ -4047,6 +4047,9 @@ const fetchBuyOrders = async () => {
 
                                 <span className="text-sm text-zinc-800 font-semibold">
                                   {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
                                     hour: '2-digit',
                                     minute: '2-digit',
                                     second: '2-digit',
