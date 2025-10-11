@@ -30,7 +30,7 @@
 		"react-dom": "^18.3",
 		"react-hot-toast": "^2.4.1",
 		"talkjs": "^0.22.0",
-		"thirdweb": "^5.105.5",
+		"thirdweb": "^5.105.37",
 		"twilio": "^5.2.2",
 		"use-sound": "^4.0.3",
 		"xlsx": "^0.18.5"
