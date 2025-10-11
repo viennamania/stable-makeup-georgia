@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     fromDate,
     toDate,
 
+    manualConfirmPayment,
 
   } = body;
 
@@ -85,6 +86,8 @@ export async function POST(request: NextRequest) {
     fromDate: fromDate || "",
 
     toDate: toDate || "",
+
+    manualConfirmPayment: manualConfirmPayment || false,
 
   });
 

@@ -2139,6 +2139,7 @@ export async function getBuyOrders(
     fromDate,
     toDate,
 
+    manualConfirmPayment,
   }: {
 
     limit: number;
@@ -2161,6 +2162,8 @@ export async function getBuyOrders(
 
     fromDate: string;
     toDate: string;
+
+    manualConfirmPayment: boolean;
   }
 
 ): Promise<any> {
@@ -2228,6 +2231,8 @@ export async function getBuyOrders(
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
         
+        // if manualConfirmPayment is true, autoConfirmPayment is not true
+        ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
 
@@ -2279,6 +2284,9 @@ export async function getBuyOrders(
         // seller?.bankInfo?.accountNumber
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
+
+        // if manualConfirmPayment is true, autoConfirmPayment is not true
+        ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
 
@@ -2370,6 +2378,8 @@ export async function getBuyOrders(
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
 
+        // if manualConfirmPayment is true, autoConfirmPayment is not true
+        ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
 
@@ -2406,7 +2416,7 @@ export async function getBuyOrders(
 
 
 
-
+    /*
     const totalCount = await collection.countDocuments(
       {
         ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
@@ -2434,6 +2444,8 @@ export async function getBuyOrders(
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
 
+        // if manualConfirmPayment is true, autoConfirmPayment is not true
+        ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
         // filter by fromDate and toDate
@@ -2446,6 +2458,10 @@ export async function getBuyOrders(
 
       }
     );
+    */
+
+
+
 
 
     /*
@@ -2536,6 +2552,10 @@ export async function getBuyOrders(
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
 
+          // if manualConfirmPayment is true, autoConfirmPayment is not true
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+
+
 
           //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -2604,6 +2624,10 @@ export async function getBuyOrders(
           ///'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
           // seller?.bankInfo?.accountNumber
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+
+          // if manualConfirmPayment is true, autoConfirmPayment is not true
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
 

@@ -863,6 +863,7 @@ export default function Index({ params }: any) {
   // search store bank account number
   const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState("");
 
+  const [manualConfirmPayment, setManualConfirmPayment] = useState(false);
   
 
 
@@ -1035,6 +1036,7 @@ export default function Index({ params }: any) {
                     fromDate: searchFromDate,
                     toDate: searchToDate,
 
+                    manualConfirmPayment: manualConfirmPayment,
                   }
                 ),
             })
@@ -1183,6 +1185,8 @@ export default function Index({ params }: any) {
 
               fromDate: searchFromDate,
               toDate: searchToDate,
+
+              manualConfirmPayment: manualConfirmPayment,
             }
           )
         }).then(async (response) => {
@@ -1461,6 +1465,8 @@ export default function Index({ params }: any) {
 
                   fromDate: searchFromDate,
                   toDate: searchToDate,
+
+                  manualConfirmPayment: manualConfirmPayment,
                 }
               ),
             })
@@ -1687,6 +1693,7 @@ export default function Index({ params }: any) {
               fromDate: searchFromDate,
               toDate: searchToDate,
         
+              manualConfirmPayment: manualConfirmPayment,
             }
           ),
         })
@@ -1865,6 +1872,8 @@ export default function Index({ params }: any) {
 
               fromDate: searchFromDate,
               toDate: searchToDate,
+
+              manualConfirmPayment: manualConfirmPayment,
             }
           ),
         })
@@ -2042,6 +2051,7 @@ export default function Index({ params }: any) {
               fromDate: searchFromDate,
               toDate: searchToDate,
 
+              manualConfirmPayment: manualConfirmPayment,
             }
 
         ),
@@ -2165,6 +2175,8 @@ export default function Index({ params }: any) {
 
     searchFromDate,
     searchToDate,
+
+    manualConfirmPayment,
 ]);
 
 
@@ -2203,6 +2215,7 @@ const fetchBuyOrders = async () => {
         fromDate: searchFromDate,
         toDate: searchToDate,
 
+        manualConfirmPayment: manualConfirmPayment,
       }
 
     ),
@@ -2541,6 +2554,8 @@ const fetchBuyOrders = async () => {
 
             fromDate: searchFromDate,
             toDate: searchToDate,
+
+            manualConfirmPayment: manualConfirmPayment,
           }),
       });
 
@@ -3338,6 +3353,8 @@ const fetchBuyOrders = async () => {
                   className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                 />
               </div>
+              
+              <span className="text-sm text-gray-500">~</span>
 
               <div className="flex flex-row items-center gap-2">
                 <Image
@@ -3386,7 +3403,6 @@ const fetchBuyOrders = async () => {
                 </div>
 
             </div>
-            
 
             {/* search depositName */}
             <div className="flex flex-col items-center gap-2">
@@ -3492,17 +3508,26 @@ const fetchBuyOrders = async () => {
                 >
                     {isExporting ? "Exporting..." : "엑셀"}
                 </button>
-
-
               </div>
-
-
 
             </div>
 
-
           </div>
 
+
+          {/* manualConfirmPayment checkbox */}
+          <div className="flex flex-row items-center gap-2">
+            <input
+              type="checkbox"
+              checked={manualConfirmPayment}
+              onChange={(e) => setManualConfirmPayment(e.target.checked)}
+              className="w-4 h-4"
+              id="manualConfirmPaymentCheckbox"
+            />
+            <label htmlFor="manualConfirmPaymentCheckbox" className="text-sm text-zinc-500">
+              수동입금만 보기
+            </label>
+          </div>
 
 
           {/* trade summary */}
