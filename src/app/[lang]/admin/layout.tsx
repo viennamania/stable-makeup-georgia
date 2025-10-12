@@ -132,6 +132,7 @@ export default function RootLayout({
   }, []);
 
 
+  const [totalCurrentUsdtBalance, setTotalCurrentUsdtBalance] = useState(0);
 
   // list of stores
   const [stores, setStores] = useState<Array<any>>([]);
@@ -154,7 +155,10 @@ export default function RootLayout({
 
           if (data.result) {
               setStores(data.result.stores || []);
+              setTotalCurrentUsdtBalance(data.result.totalCurrentUsdtBalance || 0);
           }
+
+
 
       };
 
@@ -194,7 +198,8 @@ export default function RootLayout({
           totalUsdtAmount: 93.96,
           currentUsdtBalance: 2098.3850755020003
         },
-      ]
+      ],
+      totalCurrentUsdtBalance: 4196.7701510040006
     }
   */
 
@@ -264,10 +269,36 @@ export default function RootLayout({
                   bg-white bg-opacity-90
                   p-2 rounded-lg shadow-lg
                 ">
+
+                  {/* totalCurrentUsdtBalance */}
+                  <div className="
+                  w-28 h-20 flex flex-col items-start justify-between
+                  bg-gray-100 p-2 rounded-lg shadow-md mr-4
+                  ">
+                    <p className="text-xs text-gray-800 font-bold mb-1">Total USDT</p>
+
+                    {/* monospaced font for amount */}
+                    
+                    <div className="
+                      w-full flex flex-row items-center justify-end gap-1">
+                      <Image
+                        src={`/icon-tether.png`}
+                        alt={`USDT`}
+                        width={18}  
+                        height={18}
+                      />
+                      <span className="text-lg text-green-600 font-mono">
+                        {totalCurrentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                      </span>
+                    </div>
+
+                  </div>
+
+
                   {stores.map((store) => (
                     <div
                       key={store._id}
-                      className="flex flex-col items-center justify-center
+                      className="flex flex-col items-start justify-between
                       bg-gray-100 p-2 rounded-lg shadow-md
                       w-24 h-20
                       "
@@ -314,6 +345,9 @@ export default function RootLayout({
                       </div>
                     </div>
                   ))}
+
+
+
                 </div>
               )}
 

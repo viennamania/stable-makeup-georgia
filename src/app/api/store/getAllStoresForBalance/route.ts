@@ -136,6 +136,14 @@ export async function POST(request: NextRequest) {
 
   ///console.log("getAllStoresForBalance result with balances", result);
 
+  // sum of currentUsdtBalance
+  let totalCurrentUsdtBalance = 0;
+  for (let i = 0; i < result.stores.length; i++) {
+    const store = result.stores[i];
+    totalCurrentUsdtBalance += store.currentUsdtBalance || 0;
+  }
+
+  result.totalCurrentUsdtBalance = totalCurrentUsdtBalance;
  
   return NextResponse.json({
 
