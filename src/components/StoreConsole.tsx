@@ -1,44 +1,80 @@
 'use client';
 
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { ThirdwebProvider } from "thirdweb/react";
+///import type { Metadata } from "next";
+///import { Inter } from "next/font/google";
 
-import { Toaster } from "react-hot-toast";
+///import "./globals.css";
+
+///import { ThirdwebProvider } from "thirdweb/react";
 
 import { useState, useEffect } from "react";
 
 
-import Script from "next/script";
+//import Script from "next/script";
 
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+//import { Analytics } from '@vercel/analytics/next';
+//import { SpeedInsights } from '@vercel/speed-insights/next';
 
 
 //const inter = Inter({ subsets: ["latin"] });
 
-import localFont from "next/font/local";
+////import localFont from "next/font/local";
+
+
+
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import { Button, Menu, MenuItem, Typography } from "@mui/material";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+
+import { langs } from "@/utils/langs";
+
 
 
 
 import Image from "next/image";
-import { useRouter }from "next//navigation";
 
 
 
-// import components
-import StabilityConsole from '@/components/StabilityConsole';
-
-import CenterConsole from '@/components/CenterConsole';
-
-import StoreConsole from '@/components/StoreConsole';
 
 
 import {
-  clientId,
-  client,
-} from "../../client";
+  getContract,
+} from "thirdweb";
 
+import {
+  ConnectButton,
+  useActiveAccount,
+  useActiveWallet,
+  useWalletBalance,
+
+  useSetActiveWallet,
+
+  useConnectedWallets,
+
+
+} from "thirdweb/react";
+
+
+
+import {
+  inAppWallet,
+  createWallet,
+  getWalletBalance,
+} from "thirdweb/wallets";
+
+
+import {
+  getUserPhoneNumber,
+  getUserEmail,
+} from "thirdweb/wallets/in-app";
+
+
+import {
+  balanceOf,
+  transfer,
+} from "thirdweb/extensions/erc20";
 
 
 import {
@@ -50,6 +86,11 @@ import {
 
 
 import {
+  clientId,
+  client,
+} from "./../app/client";
+
+import {
   chain,
   ethereumContractAddressUSDT,
   polygonContractAddressUSDT,
@@ -58,18 +99,11 @@ import {
 
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
+import { add } from "thirdweb/extensions/farcaster/keyGateway";
+import { toast } from "react-hot-toast";
 
 
-import {
-  ConnectButton,
-  useActiveAccount,
-  AutoConnect,
-} from "thirdweb/react";
 
-
-import {
-  inAppWallet,
-} from "thirdweb/wallets";
 
 const wallets = [
   inAppWallet({
@@ -88,42 +122,22 @@ const wallets = [
       ],
     },
   }),
+  createWallet("com.coinbase.wallet"),
+  createWallet("me.rainbow"),
+  createWallet("io.rabby"),
+  createWallet("io.zerion.wallet"),
+  createWallet("io.metamask"),
+  createWallet("com.bitget.web3"),
+  createWallet("com.trustwallet.app"),
+  createWallet("com.okex.wallet"),
 
 ];
 
 
 
-/*
-export const metadata: Metadata = {
-  title: "WEB3 Starter",
-  description:
-    "Starter for  WEB3 Wallet.",
-};
-*/
-
-
-const wallet = inAppWallet({
-	smartAccount: {
-		sponsorGas: false,
-		chain: chain === "bsc" ? bsc : chain === "polygon" ? polygon : chain === "arbitrum" ? arbitrum : ethereum,
-	}
-});
-
-
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+const StoreConsole = () => {
 
   const router = useRouter();
-
-  const activeAccount = useActiveAccount();
-
-  const address = activeAccount?.address;
-
-  console.log("address", address);
 
 
   /*
@@ -137,46 +151,120 @@ export default function RootLayout({
    */
 
 
-  const [showChain, setShowChain] = useState(false);
-
-  const [showCenter, setShowCenter] = useState(false);
+  //const [showChain, setShowChain] = useState(false);
 
 
 
+  const activeAccount = useActiveAccount();
+
+  const address = activeAccount?.address;
+
+  console.log("StoreConsole address", address);
 
 
- 
-  const [clientName, setClientName] = useState("");
-  const [clientDescription, setClientDescription] = useState("");
-  const [clientLogo, setClientLogo] = useState("");
+
+
+
+  const contract = getContract({
+    // the client you have created via `createThirdwebClient()`
+    client,
+    // the chain the contract is deployed on
+    
+    
+    //chain: arbitrum,
+    chain:  chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
+  
+  
+  
+    // the contract's address
+    ///address: contractAddressArbitrum,
+
+    address: chain === "ethereum" ? ethereumContractAddressUSDT :
+            chain === "polygon" ? polygonContractAddressUSDT :
+            chain === "arbitrum" ? arbitrumContractAddressUSDT :
+            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
+
+
+    // OPTIONAL: the contract's abi
+    //abi: [...],
+  });
+
+
+
+
+  const [balance, setBalance] = useState(0);
+  const [nativeBalance, setNativeBalance] = useState(0);
 
   useEffect(() => {
-      const fetchClientInfo = async () => {
-          const response = await fetch("/api/client/getClientInfo", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-          });
 
-          const data = await response.json();
-
-          //console.log("clientInfo", data);
-
-          if (data.result) {
-
-              setClientName(data.result.clientInfo?.name || "");
-              setClientDescription(data.result.clientInfo?.description || "");
-              setClientLogo(data.result.clientInfo?.avatar || "/logo.png");
-          }
-
-      };
-
-      fetchClientInfo();
-  }, []);
+    if (!address) return;
+    // get the balance
 
 
-  /*
+    if (!contract) {
+      return;
+    }
+
+    const getBalance = async () => {
+
+      try {
+        const result = await balanceOf({
+          contract,
+          address: address,
+        });
+
+        if (chain === 'bsc') {
+          setBalance( Number(result) / 10 ** 18 );
+        } else {
+          setBalance( Number(result) / 10 ** 6 );
+        }
+
+      } catch (error) {
+        console.error("Error getting balance", error);
+      }
+
+
+      // getWalletBalance
+      const result = await getWalletBalance({
+        address: address,
+        client: client,
+        chain: chain === "ethereum" ? ethereum :
+                chain === "polygon" ? polygon :
+                chain === "arbitrum" ? arbitrum :
+                chain === "bsc" ? bsc : arbitrum,
+      });
+
+      if (result) {
+        setNativeBalance(Number(result.value) / 10 ** result.decimals);
+      }
+
+      
+
+    };
+
+    if (address) getBalance();
+
+    // get the balance in the interval
+
+    const interval = setInterval(() => {
+      if (address) getBalance();
+    }, 5000);
+
+
+    return () => clearInterval(interval);
+
+  } , [address, contract]);
+
+
+
+
+
+
+
+
 
   // check admin
   const [isAdmin, setIsAdmin] = useState(false);
@@ -199,6 +287,11 @@ export default function RootLayout({
           // setIsAdmin(data.result?.role === "admin");
           setIsAdmin(data.result?.isAdmin === true);
 
+          /*
+          if (data.result?.isAdmin !== true) {
+            router.push(`/${"en"}/admin/login`);
+          }
+          */
 
       };
 
@@ -210,6 +303,7 @@ export default function RootLayout({
 
   //}, [address, router]);
   }, [address]);
+
 
 
 
@@ -243,19 +337,16 @@ export default function RootLayout({
 
       };
 
-      address && fetchStores();
+      fetchStores();
 
       // poll every 10 seconds
       const interval = setInterval(() => {
-        address && fetchStores();
+        fetchStores();
       }, 10000);
 
       return () => clearInterval(interval);
 
-  }, [address]);
-  */
-
-
+  }, []);
 
   /*
     {
@@ -291,7 +382,6 @@ export default function RootLayout({
   */
 
 
-  /*
   // liveOnAndOff
   // /api/store/toggleLive
   // toggling array of objects in state
@@ -337,78 +427,21 @@ export default function RootLayout({
 
   };
 
-  */
 
-  
+
+
+
+
+
 
 
 
   return (
 
-    <div className="w-full flex flex-col items-center justify-center pt-24 bg-gray-100 rounded-lg shadow-md mb-4">
+    <div className="flex flex-col items-center justify-center">
 
-      {/*
-      <AutoConnect
-          client={client}
-          wallets={[wallet]}
-      />
-      */}
 
-      {/* fixed position left and vertically top */}
-      <div className="
-      fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
-      ">
-
-        <div className="flex flex-row items-center justify-center
-          bg-white bg-opacity-90
-          p-2 rounded-lg shadow-lg
-        ">
-          <Image
-            src={clientLogo || "/logo.png"}
-            alt={clientName}
-            width={50}
-            height={50}
-            className="rounded-lg bg-white w-12 h-12 object-contain"
-          />
-          <div className="ml-2 flex flex-col items-start justify-center">
-            <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>
-            <p className="text-sm text-gray-600">{clientDescription || "Manage your application settings"}</p>
-          </div>
-        </div>
-
-        <button
-          className="
-          w-32
-          flex flex-row items-center justify-center gap-2
-          mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
-          onClick={() => setShowCenter(!showCenter)}
-        >
-            <Image
-              src={`/icon-shield.png`}
-              alt={`Shield`}
-              width={25}
-              height={25}
-            />
-
-            <span className="text-sm text-white">
-              {showCenter ? 'Hide Wallet' : 'Show Wallet'}
-            </span>
-        </button>
-
-        <div className={`flex flex-col items-center justify-center
-          ${showCenter ? 'bg-white' : 'hidden'}
-          p-2 rounded-lg shadow-lg
-        `}>
-          <CenterConsole />
-        </div>
-      </div>
-
-      <StoreConsole />
-
-      {/* fixed position top and horizontally center */}
-      {/* horizontal list of stores */}
-      {/*
-      {address && isAdmin && (
+      {true && (
         <div className="
         w-full max-w-6xl
         p-2
@@ -465,7 +498,7 @@ export default function RootLayout({
                       className="rounded-lg bg-white w-6 h-6"
                     />
                     <p className="text-xs text-gray-800 font-bold">
-                      {store.storeName.length > 5 ? store.storeName.substring(0, 5) + '...' : store.storeName || 'Store'}
+                      {store.storeName.length > 4 ? store.storeName.substring(0, 4) + '...' : store.storeName || 'Store'}
                     </p>
                   </div>
 
@@ -515,15 +548,16 @@ export default function RootLayout({
 
         </div>
       )}
-      */}
-
-
-            
-      {children}
 
     </div>
 
   );
 
 
-}
+};
+
+
+
+StoreConsole.displayName = "StoreConsole";
+
+export default StoreConsole;

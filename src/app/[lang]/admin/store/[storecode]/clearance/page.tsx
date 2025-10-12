@@ -539,7 +539,13 @@ export default function Index({ params }: any) {
       }
     }
     fetchRate();
-  } , []);
+
+    // fetch rate every 10 seconds
+    const interval = setInterval(() => {
+      fetchRate();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
 
 

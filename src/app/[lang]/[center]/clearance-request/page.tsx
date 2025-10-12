@@ -1976,7 +1976,7 @@ const [tradeSummary, setTradeSummary] = useState({
         });
         const data = await response.json();
 
-        console.log('getUsdtKRWRateSell data', data);
+        ///console.log('getUsdtKRWRateSell data', data);
 
 
         if (data.result) {
@@ -1987,7 +1987,14 @@ const [tradeSummary, setTradeSummary] = useState({
       }
     }
     fetchRate();
-  } , []);
+
+    // fetch rate every 10 seconds
+    const interval = setInterval(() => {
+      fetchRate();
+    }, 10000);
+    return () => clearInterval(interval);
+
+  }, []);
 
 
 
