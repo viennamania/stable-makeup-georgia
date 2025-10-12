@@ -90,60 +90,68 @@ export async function POST(request: NextRequest) {
   */
 
 
-  const client = createThirdwebClient({
-    secretKey: process.env.THIRDWEB_SECRET_KEY || "",
-  });
+  try {
 
-  // get a contract
-  const contract = getContract({
-      // the client you have created via `createThirdwebClient()`
-      client,
-      // the chain the contract is deployed on
-      chain: bsc,
-      // the contract's address
-      address: bscContractAddressUSDT,
-      // OPTIONAL: the contract's abi
-      //abi: [...],
-  });
+    const client = createThirdwebClient({
+      secretKey: process.env.THIRDWEB_SECRET_KEY || "",
+    });
 
-  // for each store, get the balance of settlementWalletAddress
-  for (let i = 0; i < result.stores.length; i++) {
-    const store = result.stores[i];
-    if (store.settlementWalletAddress) {
-      try {
+    // get a contract
+    const contract = getContract({
+        // the client you have created via `createThirdwebClient()`
+        client,
+        // the chain the contract is deployed on
+        chain: bsc,
+        // the contract's address
+        address: bscContractAddressUSDT,
+        // OPTIONAL: the contract's abi
+        //abi: [...],
+    });
 
-        const result = await balanceOf({
-          contract,
-          address: store.settlementWalletAddress,
-        });
+    // for each store, get the balance of settlementWalletAddress
+    for (let i = 0; i < result.stores.length; i++) {
+      const store = result.stores[i];
+      if (store.settlementWalletAddress) {
+        try {
 
-        store.currentUsdtBalance = Number(result) / 10 ** 18;
+          const result = await balanceOf({
+            contract,
+            address: store.settlementWalletAddress,
+          });
 
-      } catch (error) {
-        console.error(`Error getting balance for store ${store.storeName} (${store.settlementWalletAddress}):`, error);
+          store.currentUsdtBalance = Number(result) / 10 ** 18;
+
+        } catch (error) {
+          console.error(`Error getting balance for store ${store.storeName} (${store.settlementWalletAddress}):`, error);
+          store.currentUsdtBalance = 0;
+        }
+      } else {
         store.currentUsdtBalance = 0;
       }
-    } else {
-      store.currentUsdtBalance = 0;
     }
+
+    // sort by currentUsdtBalance desc
+    result.stores.sort(
+      (a: { currentUsdtBalance?: number }, b: { currentUsdtBalance?: number }) =>
+        (b.currentUsdtBalance || 0) - (a.currentUsdtBalance || 0)
+    );
+
+    ///console.log("getAllStoresForBalance result with balances", result);
+
+    // sum of currentUsdtBalance
+    let totalCurrentUsdtBalance = 0;
+    for (let i = 0; i < result.stores.length; i++) {
+      const store = result.stores[i];
+      totalCurrentUsdtBalance += store.currentUsdtBalance || 0;
+    }
+
+    result.totalCurrentUsdtBalance = totalCurrentUsdtBalance;
+
+  } catch (error) {
+    console.error("Error in getAllStoresForBalance:", JSON.stringify(error));
   }
 
-  // sort by currentUsdtBalance desc
-  result.stores.sort(
-    (a: { currentUsdtBalance?: number }, b: { currentUsdtBalance?: number }) =>
-      (b.currentUsdtBalance || 0) - (a.currentUsdtBalance || 0)
-  );
 
-  ///console.log("getAllStoresForBalance result with balances", result);
-
-  // sum of currentUsdtBalance
-  let totalCurrentUsdtBalance = 0;
-  for (let i = 0; i < result.stores.length; i++) {
-    const store = result.stores[i];
-    totalCurrentUsdtBalance += store.currentUsdtBalance || 0;
-  }
-
-  result.totalCurrentUsdtBalance = totalCurrentUsdtBalance;
  
   return NextResponse.json({
 

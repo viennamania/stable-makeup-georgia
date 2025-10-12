@@ -330,7 +330,7 @@ const StoreConsole = () => {
 
           if (data.result) {
               setStores(data.result.stores || []);
-              setTotalCurrentUsdtBalance(data.result.totalCurrentUsdtBalance || 0);
+              setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
           }
 
 
@@ -443,7 +443,7 @@ const StoreConsole = () => {
 
       {true && (
         <div className="
-        w-full max-w-6xl
+        container max-w-screen-2xl mx-auto pl-16 pr-16
         p-2
         bg-white bg-opacity-90
         rounded-lg shadow-lg
@@ -517,22 +517,22 @@ const StoreConsole = () => {
                   <div className="w-full flex flex-row items-center justify-center">
                     <button
                       className={`${isToggling.includes(store.storecode) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={store.liveOnAndOff ? 'Live On' : 'Live Off'}
-                      onClick={() => toggleLiveOnAndOff(store.storecode, !store.liveOnAndOff)}
+                      title={store?.liveOnAndOff ? 'Live On' : 'Live Off'}
+                      onClick={() => toggleLiveOnAndOff(store.storecode, !store?.liveOnAndOff)}
                     >
                       {isToggling.includes(store.storecode) ? (
                         <div className="flex flex-row items-center justify-center">
                           <div className="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 mr-2"></div>
                           <span className="text-xs text-gray-600">
-                            {store.liveOnAndOff ? 'Turning Off' : 'Turning On'}
+                            {store?.liveOnAndOff ? 'Turning Off' : 'Turning On'}
                           </span>
                         </div>
                       ) : (
                         <Image
-                          src={store.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
-                          alt={store.liveOnAndOff ? `Live On` : `Live Off`}
-                          width={30}
-                          height={20}
+                          src={store?.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
+                          alt={store?.liveOnAndOff ? `Live On` : `Live Off`}
+                          width={35}
+                          height={25}
                           className="object-contain"
                         />
                       )}

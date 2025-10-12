@@ -400,7 +400,7 @@ export default function RootLayout({
 
             </div>
             
-          {children}
+            {children}
 
           </div>
 
