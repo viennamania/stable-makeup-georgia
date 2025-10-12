@@ -1141,6 +1141,9 @@ export async function getAllStoresForBalanceInquiry(
 
           settlementWalletAddress: 1,
 
+          //liveOnAndOff: 1,
+          // if liveOnAndOff is not exist, set it to true
+          liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
        
         },
       },
@@ -1414,3 +1417,32 @@ export async function updateStoreEscrowAmountUSDT(
 }
 
 
+
+
+// updateLiveOnAndOff
+export async function updateLiveOnAndOff(
+  {
+    storecode,
+    liveOnAndOff,
+  }: {
+    storecode: string;
+    liveOnAndOff: boolean;
+  }
+): Promise<boolean> {
+
+  console.log('updateLiveOnAndOff', storecode, liveOnAndOff);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { liveOnAndOff: liveOnAndOff } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}

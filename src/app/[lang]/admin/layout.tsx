@@ -185,7 +185,8 @@ export default function RootLayout({
           backgroundColor: 'yellow-100',
           settlementWalletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
           totalUsdtAmount: 118.19,
-          currentUsdtBalance: 2098.3850755020003
+          currentUsdtBalance: 2098.3850755020003,
+          liveOnAndOff: true
         },
         {
           _id: new ObjectId('68ad00d15359024833432764'),
@@ -196,7 +197,8 @@ export default function RootLayout({
           backgroundColor: 'blue-100',
           settlementWalletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
           totalUsdtAmount: 93.96,
-          currentUsdtBalance: 2098.3850755020003
+          currentUsdtBalance: 2098.3850755020003,
+          liveOnAndOff: false
         },
       ],
       totalCurrentUsdtBalance: 4196.7701510040006
@@ -204,160 +206,217 @@ export default function RootLayout({
   */
 
 
+  // liveOnAndOff
+  // /api/store/toggleLive
+
+  const toggleLiveOnAndOff = async (storecode: string, liveOnAndOff: boolean) => {
+    const response = await fetch("/api/store/toggleLive", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        storecode,
+        liveOnAndOff,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.result) {
+      // Update the store's liveOnAndOff status in the local state
+      setStores((prevStores) =>
+        prevStores.map((store) =>
+          store.storecode === storecode
+            ? { ...store, liveOnAndOff }
+            : store
+        )
+      );
+    }
+  };
+
+
+
+
 
   return (
 
-        <div className="w-full flex flex-col items-center justify-center pt-20 bg-gray-100 rounded-lg shadow-md mb-4">
+    <div className="w-full flex flex-col items-center justify-center pt-24 bg-gray-100 rounded-lg shadow-md mb-4">
 
-            {/* fixed position left and vertically top */}
-            <div className="
-            fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
-            ">
+      {/* fixed position left and vertically top */}
+      <div className="
+      fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
+      ">
 
-              <div className="flex flex-row items-center justify-center
-                bg-white bg-opacity-90
-                p-2 rounded-lg shadow-lg
-              ">
-                <Image
-                  src={clientLogo || "/logo.png"}
-                  alt={clientName}
-                  width={50}
-                  height={50}
-                  className="rounded-lg bg-white w-12 h-12 object-contain"
-                />
-                <div className="ml-2 flex flex-col items-start justify-center">
-                  <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>
-                  <p className="text-sm text-gray-600">{clientDescription || "Manage your application settings"}</p>
-                </div>
-              </div>
-
-              <button
-                className="
-                w-32
-                flex flex-row items-center justify-center gap-2
-                mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
-                onClick={() => setShowCenter(!showCenter)}
-              >
-                  <Image
-                    src={`/icon-shield.png`}
-                    alt={`Shield`}
-                    width={25}
-                    height={25}
-                  />
-
-                  <span className="text-sm text-white">
-                    {showCenter ? 'Hide Wallet' : 'Show Wallet'}
-                  </span>
-              </button>
-
-              <div className={`flex flex-col items-center justify-center
-                ${showCenter ? 'bg-white' : 'hidden'}
-                p-2 rounded-lg shadow-lg
-              `}>
-                <CenterConsole />
-              </div>
-            </div>
-
-            {/* fixed position top and horizontally center */}
-            {/* horizontal list of stores */}
-            <div className="
-            fixed top-2 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center justify-center gap-2
-            ">
-
-              {stores.length > 0 && (
-                <div className="flex flex-row items-center justify-center gap-2
-                  bg-white bg-opacity-90
-                  p-2 rounded-lg shadow-lg
-                ">
-
-                  {/* totalCurrentUsdtBalance */}
-                  <div className="
-                  w-28 h-20 flex flex-col items-start justify-between
-                  bg-gray-100 p-2 rounded-lg shadow-md mr-4
-                  ">
-                    <p className="text-xs text-gray-800 font-bold mb-1">Total USDT</p>
-
-                    {/* monospaced font for amount */}
-                    
-                    <div className="
-                      w-full flex flex-row items-center justify-end gap-1">
-                      <Image
-                        src={`/icon-tether.png`}
-                        alt={`USDT`}
-                        width={18}  
-                        height={18}
-                      />
-                      <span className="text-lg text-green-600 font-mono">
-                        {totalCurrentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
-                      </span>
-                    </div>
-
-                  </div>
-
-
-                  {stores.map((store) => (
-                    <div
-                      key={store._id}
-                      className="flex flex-col items-start justify-between
-                      bg-gray-100 p-2 rounded-lg shadow-md
-                      w-24 h-20
-                      "
-                    >
-                      {/* store logo and name */}
-                      {/* horizontal flexbox */}
-                      {/* gap between logo and name */}
-                      {/* fixed width for logo and name */}
-                      {/* if store logo is not available, use default logo */}
-                      {/* if store name is not available, use 'Store' */}
-                      {/* amount in monospaced font */}
-                      {/* if amount is not available, use 0.00 */}
-                      {/* amount with 2 decimal places */}
-                      {/* amount with comma as thousand separator */}
-                      {/* e.g. 1,234.56 */}
-                      {/* if amount is null or undefined, show 0.00 */}
-                      {/* if amount is negative, show in red color */}
-                      {/* if amount is positive, show in green color */}
-
-                      <div className="w-full flex flex-row items-center justify-between mb-1">
-                        <Image
-                          src={store.storeLogo || "/icon-store.png"}
-                          alt={store.storeName}
-                          width={15}
-                          height={15}
-                          className="rounded-lg bg-white w-6 h-6"
-                        />
-                        <p className="text-xs text-gray-800 font-bold">
-                          {store.storeName.length > 5 ? store.storeName.substring(0, 5) + '...' : store.storeName || 'Store'}
-                        </p>
-                      </div>
-
-                      {/* monospaced font for amount */}
-                      <div className="flex flex-row items-center justify-end w-full gap-1">
-                        <Image
-                          src={`/icon-tether.png`}
-                          alt={`USDT`}
-                          width={12}
-                          height={12}
-                        />
-                        <span className="text-sm text-green-600 font-mono">
-                          {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-
-
-
-                </div>
-              )}
-
-            </div>
-
-
-            
-          {children}
-
+        <div className="flex flex-row items-center justify-center
+          bg-white bg-opacity-90
+          p-2 rounded-lg shadow-lg
+        ">
+          <Image
+            src={clientLogo || "/logo.png"}
+            alt={clientName}
+            width={50}
+            height={50}
+            className="rounded-lg bg-white w-12 h-12 object-contain"
+          />
+          <div className="ml-2 flex flex-col items-start justify-center">
+            <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>
+            <p className="text-sm text-gray-600">{clientDescription || "Manage your application settings"}</p>
+          </div>
         </div>
+
+        <button
+          className="
+          w-32
+          flex flex-row items-center justify-center gap-2
+          mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
+          onClick={() => setShowCenter(!showCenter)}
+        >
+            <Image
+              src={`/icon-shield.png`}
+              alt={`Shield`}
+              width={25}
+              height={25}
+            />
+
+            <span className="text-sm text-white">
+              {showCenter ? 'Hide Wallet' : 'Show Wallet'}
+            </span>
+        </button>
+
+        <div className={`flex flex-col items-center justify-center
+          ${showCenter ? 'bg-white' : 'hidden'}
+          p-2 rounded-lg shadow-lg
+        `}>
+          <CenterConsole />
+        </div>
+      </div>
+
+      {/* fixed position top and horizontally center */}
+      {/* horizontal list of stores */}
+      <div className="
+      w-full max-w-6xl
+      p-2
+      bg-white bg-opacity-90
+      rounded-lg shadow-lg
+      fixed top-2
+      z-20 flex flex-col items-center justify-center gap-2
+      ">
+
+        {/* scrollable horizontal list of stores */}
+
+        {stores.length > 0 && (
+
+          <div className="w-full flex flex-row items-center justify-start gap-2 overflow-x-auto
+            scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
+            py-2
+          ">
+
+            {/* totalCurrentUsdtBalance */}
+            <div className="
+            w-28 h-20
+            flex flex-col items-start justify-between
+            bg-gray-100 p-1 rounded-lg shadow-md mr-4
+            ">
+              <p className="text-xs text-gray-800 font-bold mb-1">Total USDT</p>
+
+              {/* monospaced font for amount */}
+              
+              <div className="
+                w-full flex flex-row items-center justify-end gap-1">
+                <Image
+                  src={`/icon-tether.png`}
+                  alt={`USDT`}
+                  width={18}  
+                  height={18}
+                />
+                <span className="text-lg text-green-600 font-mono">
+                  {totalCurrentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                </span>
+              </div>
+
+            </div>
+
+
+            {stores.map((store) => (
+              <div
+                key={store._id}
+                className="flex flex-col items-start justify-between
+                bg-gray-100 p-1 rounded-lg shadow-md
+                w-24 h-20
+                "
+              >
+                {/* store logo and name */}
+                {/* horizontal flexbox */}
+                {/* gap between logo and name */}
+                {/* fixed width for logo and name */}
+                {/* if store logo is not available, use default logo */}
+                {/* if store name is not available, use 'Store' */}
+                {/* amount in monospaced font */}
+                {/* if amount is not available, use 0.00 */}
+                {/* amount with 2 decimal places */}
+                {/* amount with comma as thousand separator */}
+                {/* e.g. 1,234.56 */}
+                {/* if amount is null or undefined, show 0.00 */}
+                {/* if amount is negative, show in red color */}
+                {/* if amount is positive, show in green color */}
+
+                <div className="w-full flex flex-row items-center justify-between gap-1">
+                  <Image
+                    src={store.storeLogo || "/icon-store.png"}
+                    alt={store.storeName}
+                    width={24}
+                    height={24}
+                    className="rounded-lg bg-white w-8 h-8"
+                  />
+                  <p className="text-xs text-gray-800 font-bold">
+                    {store.storeName.length > 5 ? store.storeName.substring(0, 5) + '...' : store.storeName || 'Store'}
+                  </p>
+                </div>
+
+                {/* monospaced font for amount */}
+                <div className="flex flex-row items-center justify-end w-full gap-1">
+                  <Image
+                    src={`/icon-tether.png`}
+                    alt={`USDT`}
+                    width={12}
+                    height={12}
+                  />
+                  <span className="text-sm text-green-600 font-mono">
+                    {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                  </span>
+                </div>
+
+                {/* liveOnAndOff toggle button */}
+                {/* icon-on.png and icon-off.png */}
+                <div className="w-full flex flex-row items-center justify-center">
+                  <button
+                    className="flex flex-row items-center justify-center"
+                    title={store.liveOnAndOff ? 'Live On' : 'Live Off'}
+                    onClick={() => toggleLiveOnAndOff(store.storecode, !store.liveOnAndOff)}
+                  >
+                    <Image
+                      src={store.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
+                      alt={store.liveOnAndOff ? `Live On` : `Live Off`}
+                      width={30}
+                      height={20}
+                      className="object-contain"
+                    />
+                  </button>
+                </div>
+                
+              </div>
+            ))}
+
+          </div>
+
+        )}
+
+      </div>
+            
+      {children}
+
+    </div>
 
   );
 
