@@ -365,9 +365,9 @@ export default function RootLayout({
                   <Image
                     src={store.storeLogo || "/icon-store.png"}
                     alt={store.storeName}
-                    width={24}
-                    height={24}
-                    className="rounded-lg bg-white w-8 h-8"
+                    width={18}
+                    height={18}
+                    className="rounded-lg bg-white w-6 h-6"
                   />
                   <p className="text-xs text-gray-800 font-bold">
                     {store.storeName.length > 5 ? store.storeName.substring(0, 5) + '...' : store.storeName || 'Store'}
