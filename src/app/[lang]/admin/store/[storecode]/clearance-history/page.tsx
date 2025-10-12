@@ -568,7 +568,7 @@ export default function Index({ params }: any) {
       
           setBalance( Number(result) / 10 ** 6 );
         } catch (error) {
-          console.error('Error:', error);
+          console.error('Error:', JSON.stringify(error));
           setBalance(0);
         }
     
@@ -1280,7 +1280,7 @@ export default function Index({ params }: any) {
 
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
 
         toast.error('Payment request has been failed');
 

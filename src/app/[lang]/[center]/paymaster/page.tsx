@@ -1054,7 +1054,7 @@ export default function Index({ params }: any) {
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         })
         .finally(() => {
             setAcceptingSellOrder (
@@ -1236,7 +1236,7 @@ export default function Index({ params }: any) {
 
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
 
         toast.error('Payment request has been failed');
 
@@ -1507,7 +1507,7 @@ export default function Index({ params }: any) {
           setUser(data.result);
       })
       .catch((error) => {
-          console.error('Error:', error);
+          console.error('Error:', JSON.stringify(error));
       });
       */
 

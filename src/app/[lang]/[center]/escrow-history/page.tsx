@@ -624,7 +624,7 @@ export default function Index({ params }: any) {
 
     })
     .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
         setUser(null);
         setIsAdmin(false);
     });

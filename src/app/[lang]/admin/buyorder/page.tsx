@@ -870,7 +870,7 @@ export default function Index({ params }: any) {
 
     })
     .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
     });
 
 
@@ -1212,7 +1212,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         })
         .finally(() => {
 
@@ -1751,7 +1751,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
 
         toast.error('Payment request has been failed');
       }
@@ -1863,7 +1863,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         }
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
 
         toast.error('결제요청이 실패했습니다.');
       }
@@ -2143,7 +2143,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', JSON.stringify(error));
       //toast.error('결제확인이 실패했습니다.');
     }
 
@@ -2341,7 +2341,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', JSON.stringify(error));
       //toast.error('결제확인이 실패했습니다.');
       alert('USDT 전송이 실패했습니다. ' + error);
     }
@@ -2470,7 +2470,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', JSON.stringify(error));
       toast.error('Settlement has been failed');
     }
 

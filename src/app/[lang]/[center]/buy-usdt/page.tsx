@@ -401,7 +401,7 @@ export default function Index({ params }: any) {
     
         setBalance( Number(result) / 10 ** 6 );
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
         setBalance(0);
       }
 
@@ -560,7 +560,7 @@ export default function Index({ params }: any) {
         setUser(data.result);
     })
     .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
     });
   } , [address]);
 
@@ -605,7 +605,7 @@ export default function Index({ params }: any) {
             setSellOrders(data.result.orders);
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         });
         */
 
@@ -766,7 +766,7 @@ export default function Index({ params }: any) {
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         })
         .finally(() => {
             setAcceptingSellOrder (

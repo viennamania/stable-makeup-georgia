@@ -682,7 +682,7 @@ export default function Index({ params }: any) {
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         });
 
         setLoadingUser(false);
@@ -1266,7 +1266,7 @@ export default function Index({ params }: any) {
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         })
         .finally(() => {
             setAcceptingSellOrder (
@@ -1352,7 +1352,7 @@ export default function Index({ params }: any) {
           setUser(data.result);
       })
       .catch((error) => {
-          console.error('Error:', error);
+          console.error('Error:', JSON.stringify(error));
       });
       */
 

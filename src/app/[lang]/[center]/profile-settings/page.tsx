@@ -1008,7 +1008,7 @@ export default function SettingsPage({ params }: any) {
         }
 
         } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
         toast.error('Transfer escrow balance has been failed');
         }
 

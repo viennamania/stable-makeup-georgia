@@ -765,7 +765,7 @@ export default function Index({ params }: any) {
 
     })
     .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
     });
 
 
@@ -1021,7 +1021,7 @@ export default function Index({ params }: any) {
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         })
         .finally(() => {
 
@@ -1440,7 +1440,7 @@ export default function Index({ params }: any) {
 
 
         } catch (error) {
-          console.error('Error:', error);
+          console.error('Error:', JSON.stringify(error));
 
           toast.error('Payment request has been failed');
         }
@@ -1542,7 +1542,7 @@ export default function Index({ params }: any) {
           }
  
         } catch (error) {
-          console.error('Error:', error);
+          console.error('Error:', JSON.stringify(error));
 
           toast.error('결제요청이 실패했습니다.');
         }
@@ -1869,7 +1869,7 @@ export default function Index({ params }: any) {
           }
 
         } catch (error) {
-          console.error('Error:', error);
+          console.error('Error:', JSON.stringify(error));
           toast.error('결제확인이 실패했습니다.');
         }
 
@@ -1883,7 +1883,7 @@ export default function Index({ params }: any) {
 
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', JSON.stringify(error));
       toast.error('결제확인이 실패했습니다.');
     }
 
@@ -2036,7 +2036,7 @@ export default function Index({ params }: any) {
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', JSON.stringify(error));
       toast.error('Rollback payment has been failed');
     }
 
@@ -2102,7 +2102,7 @@ export default function Index({ params }: any) {
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', JSON.stringify(error));
       toast.error('Transfer escrow balance has been failed');
     }
 

@@ -1135,7 +1135,7 @@ export default function Index({ params }: any) {
 
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
 
         toast.error('Payment request has been failed');
 

@@ -180,7 +180,7 @@ const P2PTable = () => {
         setUser(data.result);
     })
     .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error:', JSON.stringify(error));
     });
   } , [address]);
 
@@ -302,7 +302,7 @@ const P2PTable = () => {
             setSellOrders(data.result.orders);
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         });
     } , [address]);
 
@@ -363,7 +363,7 @@ const P2PTable = () => {
 
         })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Error:', JSON.stringify(error));
         });
 
         setAcceptingSellOrder(false);
