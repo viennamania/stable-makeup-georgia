@@ -301,10 +301,17 @@ export default function RootLayout({
                       </div>
 
                       {/* monospaced font for amount */}
-                      <p className="text-sm text-green-600 font-mono">
-                        {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
-                      </p>
-
+                      <div className="flex flex-row items-center justify-end w-full gap-1">
+                        <Image
+                          src={`/icon-tether.png`}
+                          alt={`USDT`}
+                          width={12}
+                          height={12}
+                        />
+                        <span className="text-sm text-green-600 font-mono">
+                          {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
