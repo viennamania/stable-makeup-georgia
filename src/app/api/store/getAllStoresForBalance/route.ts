@@ -5,6 +5,40 @@ import {
 } from '@lib/api/store';
 
 
+import {
+  createThirdwebClient,
+  eth_getTransactionByHash,
+  getContract,
+  sendAndConfirmTransaction,
+  
+  sendBatchTransaction,
+
+
+} from "thirdweb";
+
+//import { polygonAmoy } from "thirdweb/chains";
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+ } from "thirdweb/chains";
+
+import {
+  balanceOf,
+} from "thirdweb/extensions/erc20";
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
+
+
 
 export async function POST(request: NextRequest) {
 
@@ -56,6 +90,51 @@ export async function POST(request: NextRequest) {
   */
 
 
+  const client = createThirdwebClient({
+    secretKey: process.env.THIRDWEB_SECRET_KEY || "",
+  });
+
+  // get a contract
+  const contract = getContract({
+      // the client you have created via `createThirdwebClient()`
+      client,
+      // the chain the contract is deployed on
+      chain: bsc,
+      // the contract's address
+      address: bscContractAddressUSDT,
+      // OPTIONAL: the contract's abi
+      //abi: [...],
+  });
+
+  // for each store, get the balance of settlementWalletAddress
+  for (let i = 0; i < result.stores.length; i++) {
+    const store = result.stores[i];
+    if (store.settlementWalletAddress) {
+      try {
+
+        const result = await balanceOf({
+          contract,
+          address: store.settlementWalletAddress,
+        });
+
+        store.currentUsdtBalance = Number(result) / 10 ** 18;
+
+      } catch (error) {
+        console.error(`Error getting balance for store ${store.storeName} (${store.settlementWalletAddress}):`, error);
+        store.currentUsdtBalance = 0;
+      }
+    } else {
+      store.currentUsdtBalance = 0;
+    }
+  }
+
+  // sort by currentUsdtBalance desc
+  result.stores.sort(
+    (a: { currentUsdtBalance?: number }, b: { currentUsdtBalance?: number }) =>
+      (b.currentUsdtBalance || 0) - (a.currentUsdtBalance || 0)
+  );
+
+  ///console.log("getAllStoresForBalance result with balances", result);
 
  
   return NextResponse.json({

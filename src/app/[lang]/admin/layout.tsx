@@ -73,6 +73,7 @@ export const metadata: Metadata = {
 
 
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -132,11 +133,76 @@ export default function RootLayout({
 
 
 
+  // list of stores
+  const [stores, setStores] = useState<Array<any>>([]);
+
+  useEffect(() => {
+      const fetchStores = async () => {
+          const response = await fetch("/api/store/getAllStoresForBalance", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                clientId,
+              }),
+          });
+
+          const data = await response.json();
+
+          //console.log("stores", data);
+
+          if (data.result) {
+              setStores(data.result.stores || []);
+          }
+
+      };
+
+      fetchStores();
+
+      // poll every 10 seconds
+      const interval = setInterval(() => {
+        fetchStores();
+      }, 10000);
+
+      return () => clearInterval(interval);
+  }, []);
+
+  /*
+    {
+      totalCount: 5,
+      stores: [
+        {
+          _id: new ObjectId('68ad0cced375320e8a69b2ea'),
+          storecode: 'krbdscsd',
+          storeName: 'confection',
+          storeLogo: 'https://t0gqytzvlsa2lapo.public.blob.vercel-storage.com/P7DIjS7-DxG2zcp7o3qGKniSLTi1UDFehe0akM.png',
+          createdAt: '2025-08-26T01:24:30.959Z',
+          backgroundColor: 'yellow-100',
+          settlementWalletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
+          totalUsdtAmount: 118.19,
+          currentUsdtBalance: 2098.3850755020003
+        },
+        {
+          _id: new ObjectId('68ad00d15359024833432764'),
+          storecode: 'jysmbsco',
+          storeName: 'macaron',
+          storeLogo: 'https://t0gqytzvlsa2lapo.public.blob.vercel-storage.com/IYigWCF-vj1meScA5QItw3RRVaqxCkEWI98Ay1.png',
+          createdAt: '2025-08-26T00:33:21.613Z',
+          backgroundColor: 'blue-100',
+          settlementWalletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
+          totalUsdtAmount: 93.96,
+          currentUsdtBalance: 2098.3850755020003
+        },
+      ]
+    }
+  */
+
 
 
   return (
 
-        <div className="w-full flex flex-col items-center justify-center p-0 bg-gray-100 rounded-lg shadow-md mb-4">
+        <div className="w-full flex flex-col items-center justify-center pt-20 bg-gray-100 rounded-lg shadow-md mb-4">
 
             {/* fixed position left and vertically top */}
             <div className="
@@ -186,6 +252,66 @@ export default function RootLayout({
                 <CenterConsole />
               </div>
             </div>
+
+            {/* fixed position top and horizontally center */}
+            {/* horizontal list of stores */}
+            <div className="
+            fixed top-2 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center justify-center gap-2
+            ">
+
+              {stores.length > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2
+                  bg-white bg-opacity-90
+                  p-2 rounded-lg shadow-lg
+                ">
+                  {stores.map((store) => (
+                    <div
+                      key={store._id}
+                      className="flex flex-col items-center justify-center
+                      bg-gray-100 p-2 rounded-lg shadow-md
+                      w-24 h-20
+                      "
+                    >
+                      {/* store logo and name */}
+                      {/* horizontal flexbox */}
+                      {/* gap between logo and name */}
+                      {/* fixed width for logo and name */}
+                      {/* if store logo is not available, use default logo */}
+                      {/* if store name is not available, use 'Store' */}
+                      {/* amount in monospaced font */}
+                      {/* if amount is not available, use 0.00 */}
+                      {/* amount with 2 decimal places */}
+                      {/* amount with comma as thousand separator */}
+                      {/* e.g. 1,234.56 */}
+                      {/* if amount is null or undefined, show 0.00 */}
+                      {/* if amount is negative, show in red color */}
+                      {/* if amount is positive, show in green color */}
+
+                      <div className="w-full flex flex-row items-center justify-between mb-1">
+                        <Image
+                          src={store.storeLogo || "/icon-store.png"}
+                          alt={store.storeName}
+                          width={15}
+                          height={15}
+                          className="rounded-lg bg-white w-6 h-6"
+                        />
+                        <p className="text-xs text-gray-800 font-bold">
+                          {store.storeName.length > 5 ? store.storeName.substring(0, 5) + '...' : store.storeName || 'Store'}
+                        </p>
+                      </div>
+
+                      {/* monospaced font for amount */}
+                      <p className="text-sm text-green-600 font-mono">
+                        {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                      </p>
+
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
+
 
             
           {children}
