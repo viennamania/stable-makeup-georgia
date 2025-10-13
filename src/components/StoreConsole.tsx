@@ -328,8 +328,17 @@ const StoreConsole = () => {
 
           //console.log("stores", data);
 
+
           if (data.result) {
-              setStores(data.result.stores || []);
+              
+              //setStores(data.result.stores || []);
+              // if count is more than 10, slice to 10
+              if (data.result.stores.length > 10) {
+                setStores(data.result.stores.slice(0, 10) || []);
+              } else {
+                setStores(data.result.stores || []);
+              }
+
               setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
           }
 
@@ -459,7 +468,7 @@ const StoreConsole = () => {
               //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               //py-2"
 
-              className="w-full grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-14 gap-2
+              className="w-full grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-11 gap-2
               overflow-x-auto
               scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               py-2
