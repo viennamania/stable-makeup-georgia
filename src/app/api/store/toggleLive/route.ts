@@ -19,14 +19,21 @@ export async function POST(request: NextRequest) {
       liveOnAndOff,
     });
 
-    //console.log("Updated order:", updatedOrder);
+    console.log("Updated order:", updatedOrder);
 
 
-    return NextResponse.json({
-      success: true,
-      message: "Live status updated successfully",
-      ///order: updatedOrder,
-    });
+    if (updatedOrder) {
+      return NextResponse.json({
+        success: true,
+        message: "Live status updated successfully",
+        ///order: updatedOrder,
+      });
+    } else {
+      return NextResponse.json({
+        success: false,
+        message: "No order found with the provided ID",
+      });
+    }
 
   } catch (error) {
     console.error("Error updating live status:", error);

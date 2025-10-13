@@ -410,8 +410,9 @@ const StoreConsole = () => {
     });
 
     const data = await response.json();
+    //console.log("toggleLiveOnAndOff", data);
 
-    if (data.result) {
+    if (data.success) {
       
       // Update the store's liveOnAndOff status in the local state
       setStores((prevStores => 
@@ -516,26 +517,22 @@ const StoreConsole = () => {
 
                   <div className="w-full flex flex-row items-center justify-center">
                     <button
-                      className={`${isToggling.includes(store.storecode) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={isToggling.includes(store.storecode)}
+                      className="w-full flex flex-row items-center justify-center"
                       title={store?.liveOnAndOff ? 'Live On' : 'Live Off'}
                       onClick={() => toggleLiveOnAndOff(store.storecode, !store?.liveOnAndOff)}
                     >
-                      {isToggling.includes(store.storecode) ? (
-                        <div className="flex flex-row items-center justify-center">
-                          <div className="loader ease-linear rounded-full border-2 border-t-2 border-gray-200 h-5 w-5 mr-2"></div>
-                          <span className="text-xs text-gray-600">
-                            {store?.liveOnAndOff ? 'Turning Off' : 'Turning On'}
-                          </span>
-                        </div>
-                      ) : (
-                        <Image
-                          src={store?.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
-                          alt={store?.liveOnAndOff ? `Live On` : `Live Off`}
-                          width={35}
-                          height={25}
-                          className="object-contain"
-                        />
-                      )}
+                      <Image
+                        src={store?.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
+                        alt={store?.liveOnAndOff ? `Live On` : `Live Off`}
+                        width={40}
+                        height={15}
+                        className={`
+                          ${isToggling.includes(store.storecode) ?
+                          'opacity-50 cursor-not-allowed animate-pulse' : ''
+                        }`}
+                      />
+                      
                     </button>
                   </div>
                   
