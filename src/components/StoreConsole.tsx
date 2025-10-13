@@ -485,11 +485,17 @@ const StoreConsole = () => {
               {stores.map((store) => (
                 <div
                   key={store._id}
-                  className="flex flex-col items-start justify-between
-                  bg-gray-100 p-1 rounded-lg shadow-md
+
+                  //className="flex flex-col items-start justify-between
+                  //bg-gray-100 p-1 rounded-lg shadow-md
+                  //w-24 h-20
+                  //"
+                  className={`${store?.liveOnAndOff ? 'bg-green-50' : 'bg-red-50'
+                  } flex flex-col items-start justify-between
+                  p-1 rounded-lg shadow-md
                   w-24 h-20
-                  "
-                >
+                  `}>
+
                   <div className="w-full flex flex-row items-center justify-between gap-1">
                     <Image
                       src={store.storeLogo || "/icon-store.png"}
