@@ -1092,7 +1092,7 @@ export async function getAllStoresForAgent(
 
 
 
-// getAllStores
+// getAllStoresForBalanceInquiry
 export async function getAllStoresForBalanceInquiry(
   {
     limit,

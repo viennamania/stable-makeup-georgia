@@ -454,10 +454,17 @@ const StoreConsole = () => {
 
           {stores.length > 0 && (
 
-            <div className="w-full flex flex-row items-center justify-start gap-2 overflow-x-auto
+            <div
+              //className="w-full flex flex-row items-center justify-start gap-2 overflow-x-auto
+              //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
+              //py-2"
+
+              className="w-full grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 2xl:grid-cols-14 gap-2
+              overflow-x-auto
               scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               py-2
-            ">
+              "
+            >
 
               <div className="
               w-28 h-20

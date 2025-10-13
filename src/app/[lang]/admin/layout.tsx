@@ -345,7 +345,9 @@ export default function RootLayout({
 
   return (
 
-    <div className="w-full flex flex-col items-center justify-center pt-24 bg-gray-100 rounded-lg shadow-md mb-4">
+    <div className="w-full flex flex-col items-center justify-center bg-gray-100 rounded-lg shadow-md mb-4
+      pt-48 xl:pt-24
+    ">
 
       {/*
       <AutoConnect
