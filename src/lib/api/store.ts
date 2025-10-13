@@ -203,6 +203,8 @@ export async function getStoreByStorecode(
 
         accessToken: 1,
 
+        liveOnAndOff: 1,
+
       },
     },
   ]).toArray();
