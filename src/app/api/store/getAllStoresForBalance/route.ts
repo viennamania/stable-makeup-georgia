@@ -101,9 +101,18 @@ export async function POST(request: NextRequest) {
         // the client you have created via `createThirdwebClient()`
         client,
         // the chain the contract is deployed on
-        chain: bsc,
+        chain: chain === 'ethereum' ? ethereum
+                : chain === 'polygon' ? polygon
+                : chain === 'arbitrum' ? arbitrum
+                : chain === 'bsc' ? bsc
+                : bsc,
         // the contract's address
-        address: bscContractAddressUSDT,
+        address: chain === 'ethereum' ? ethereumContractAddressUSDT
+                  : chain === 'polygon' ? polygonContractAddressUSDT
+                  : chain === 'arbitrum' ? arbitrumContractAddressUSDT
+                  : chain === 'bsc' ? bscContractAddressUSDT
+                  : bscContractAddressMKRW,
+
         // OPTIONAL: the contract's abi
         //abi: [...],
     });
@@ -119,7 +128,15 @@ export async function POST(request: NextRequest) {
             address: store.settlementWalletAddress,
           });
 
-          store.currentUsdtBalance = Number(result) / 10 ** 18;
+          if (chain === 'bsc') {
+            // USDT has 18 decimals
+            store.currentUsdtBalance = Number(result) / 10 ** 18;
+          } else {
+            // USDT has 6 decimals
+            store.currentUsdtBalance = Number(result) / 10 ** 6;
+          }
+
+
 
         } catch (error) {
           console.error(`Error getting balance for store ${store.storeName} (${store.settlementWalletAddress}):`, error);
