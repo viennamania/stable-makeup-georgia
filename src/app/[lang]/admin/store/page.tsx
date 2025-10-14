@@ -2933,11 +2933,8 @@ export default function Index({ params }: any) {
                         
 
                             <div className=" h-56 
-                              w-28
+                              w-24 
                               flex flex-col items-between justify-between gap-2">
-
-
-
 
                               <div className="w-full flex flex-col items-center justify-between gap-2"> 
                                 
@@ -2951,7 +2948,7 @@ export default function Index({ params }: any) {
 
                                   />
                                   <div className="flex flex-col items-start justify-center gap-1">
-                                    <span className="text-sm font-bold text-gray-700">
+                                    <span className="text-sm font-bold text-gray-800">
                                       {item.storeName.length > 8 ? item.storeName.slice(0, 8) + '...' : item.storeName}
                                     </span>
                                     <button
@@ -2959,20 +2956,18 @@ export default function Index({ params }: any) {
                                         navigator.clipboard.writeText(item.storecode);
                                         toast.success('가맹점 코드가 복사되었습니다.');
                                       }}
-                                      className="text-sm text-gray-500 hover:text-blue-500
+                                      className="text-sm text-gray-800 hover:text-blue-500
                                       hover:underline"
                                     >
                                       {item.storecode}
                                     </button>
 
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-gray-800">
                                       {item?.agentName?.slice(0, 5) || '에이전트 없음'}
                                     </span>
 
                                   </div>
                                 </div>
-
-
 
                               </div>
 
