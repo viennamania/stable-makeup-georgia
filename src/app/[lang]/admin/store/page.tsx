@@ -127,6 +127,8 @@ interface BuyOrder {
   agentcode: string;
   agentName: string;
   agentLogo: string;
+
+  store: any;
 }
 
 
@@ -1127,8 +1129,71 @@ export default function Index({ params }: any) {
       return;
     }
     fetchAllStore();
+
   } , [address, limitValue, pageValue, paramAgentcode, ]);
   
+
+
+
+
+
+  const [totalCurrentUsdtBalance, setTotalCurrentUsdtBalance] = useState(0);
+
+  // list of stores
+  //const [stores, setStores] = useState<Array<any>>([]);
+
+  useEffect(() => {
+      const fetchStores = async () => {
+          const response = await fetch("/api/store/getAllStoresForBalance", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                clientId,
+              }),
+          });
+
+          const data = await response.json();
+
+          //console.log("stores", data);
+
+
+          if (data.result) {
+
+              //setStores(data.result.stores || []);
+              // updat allStore usdtBalance
+              setAllStore((prev) => {
+                return prev.map((store) => {
+                  const found = data.result.stores.find((s: any) => s.storecode === store.storecode);
+                  if (found) {
+                    return {
+                      ...store,
+                      currentUsdtBalance: found.currentUsdtBalance || 0,
+                    };
+                  }
+                  return store;
+                });
+              });
+
+              // total current usdt balance
+              setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
+          }
+      };
+
+      address && fetchStores();
+
+      // poll every 10 seconds
+      const interval = setInterval(() => {
+        address && fetchStores();
+      }, 10000);
+
+      return () => clearInterval(interval);
+
+  }, [address]);
+
+
+
 
 
 
@@ -1618,39 +1683,43 @@ export default function Index({ params }: any) {
   };
 
 
+
   // totalNumberOfBuyOrders
   const [loadingTotalNumberOfBuyOrders, setLoadingTotalNumberOfBuyOrders] = useState(false);
   const [totalNumberOfBuyOrders, setTotalNumberOfBuyOrders] = useState(0);
+  const [processingBuyOrders, setProcessingBuyOrders] = useState([] as BuyOrder[]);
   const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
 
-  useEffect(() => {
-    const fetchTotalBuyOrders = async (): Promise<void> => {
-      if (!address) {
-        setTotalNumberOfBuyOrders(0);
-        return;
-      }
-      
-      setLoadingTotalNumberOfBuyOrders(true);
-      const response = await fetch('/api/order/getTotalNumberOfBuyOrders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-        }),
-      });
-      if (!response.ok) {
-        console.error('Failed to fetch total number of buy orders');
-        setLoadingTotalNumberOfBuyOrders(false);
-        return;
-      }
-      const data = await response.json();
-      //console.log('getTotalNumberOfBuyOrders data', data);
-      setTotalNumberOfBuyOrders(data.result.totalCount);
-      setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
 
+  // Move fetchTotalBuyOrders outside of useEffect to avoid self-reference error
+  const fetchTotalBuyOrders = async (): Promise<void> => {
+    setLoadingTotalNumberOfBuyOrders(true);
+    const response = await fetch('/api/order/getTotalNumberOfBuyOrders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      console.error('Failed to fetch total number of buy orders');
       setLoadingTotalNumberOfBuyOrders(false);
-    };
+      return;
+    }
+    const data = await response.json();
+    //console.log('getTotalNumberOfBuyOrders data', data);
+    setTotalNumberOfBuyOrders(data.result.totalCount);
+    setProcessingBuyOrders(data.result.orders);
+    setTotalNumberOfAudioOnBuyOrders(data.result.audioOnCount);
+
+    setLoadingTotalNumberOfBuyOrders(false);
+  };
+
+  useEffect(() => {
+    if (!address) {
+      setTotalNumberOfBuyOrders(0);
+      return;
+    }
 
     fetchTotalBuyOrders();
 
@@ -1660,6 +1729,7 @@ export default function Index({ params }: any) {
     return () => clearInterval(interval);
 
   }, [address]);
+
 
   useEffect(() => {
     if (totalNumberOfAudioOnBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
@@ -1671,9 +1741,12 @@ export default function Index({ params }: any) {
 
 
 
+
+
   // totalNumberOfClearanceOrders
   const [loadingTotalNumberOfClearanceOrders, setLoadingTotalNumberOfClearanceOrders] = useState(false);
   const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
+  const [processingClearanceOrders, setProcessingClearanceOrders] = useState([] as BuyOrder[]);
   useEffect(() => {
     if (!address) {
       setTotalNumberOfClearanceOrders(0);
@@ -1697,6 +1770,7 @@ export default function Index({ params }: any) {
       const data = await response.json();
       //console.log('getTotalNumberOfClearanceOrders data', data);
       setTotalNumberOfClearanceOrders(data.result.totalCount);
+      setProcessingClearanceOrders(data.result.orders);
 
       setLoadingTotalNumberOfClearanceOrders(false);
     };
@@ -1721,48 +1795,17 @@ export default function Index({ params }: any) {
 
 
 
-
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
 
-        <h1 className="text-2xl font-bold">로그인</h1>
-
-          <ConnectButton
-            client={client}
-            wallets={wallets}
-            chain={chain === "ethereum" ? ethereum :
-                    chain === "polygon" ? polygon :
-                    chain === "arbitrum" ? arbitrum :
-                    chain === "bsc" ? bsc : arbitrum}
-            
-            theme={"light"}
-
-            // button color is dark skyblue convert (49, 103, 180) to hex
-            connectButton={{
-              style: {
-                backgroundColor: "#3167b4", // dark skyblue
-
-                color: "#f3f4f6", // gray-300 
-                padding: "2px 2px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                //width: "40px",
-                height: "38px",
-              },
-              label: "원클릭 로그인",
-            }}
-
-            connectModal={{
-              size: "wide", 
-              //size: "compact",
-              titleIcon: "https://www.stable.makeup/logo.png",                           
-              showThirdwebBranding: false,
-            }}
-
-            locale={"ko_KR"}
-            //locale={"en_US"}
-          />
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
 
       </div>
     );
@@ -1817,6 +1860,204 @@ export default function Index({ params }: any) {
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+
+      {/* fixed position right and vertically center */}
+      <div className="
+        flex
+        fixed right-4 top-1/2 transform -translate-y-1/2
+        z-40
+        ">
+
+          <div className="w-full flex flex-col items-end justify-center gap-4">
+
+
+
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+            ">
+              {loadingTotalNumberOfBuyOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-buyorder.png"
+                  alt="Buy Order"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              {/* array of processingBuyOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingBuyOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer.depositName || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingBuyOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingBuyOrders.length - 3}
+                  </span>
+                )}
+              </div>
+
+              <p className="text-lg text-red-500 font-semibold">
+                {
+                totalNumberOfBuyOrders
+                }
+              </p>
+
+              {totalNumberOfBuyOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/buyorder');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      주문<br />관리
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+
+            {/* Clearance Orders */}
+            {version !== 'bangbang' && (
+            <div className="
+              h-20
+              flex flex-row items-center justify-center gap-2
+              bg-white/80
+              p-2 rounded-lg shadow-md
+              backdrop-blur-md
+            ">
+
+              {loadingTotalNumberOfClearanceOrders ? (
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="w-6 h-6 animate-spin"
+                />
+              ) : (
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance"
+                  width={35}
+                  height={35}
+                  className="w-6 h-6"
+                />
+              )}
+
+              {/* array of processingClearanceOrders store logos */}
+              <div className="flex flex-row items-center justify-center gap-1">
+                {processingClearanceOrders.slice(0, 3).map((order: BuyOrder, index: number) => (
+
+                  <div className="flex flex-col items-center justify-center
+                  bg-white p-1 rounded-lg shadow-md
+                  "
+                  key={index}>
+                    <Image
+                      src={order?.store?.storeLogo || '/logo.png'}
+                      alt={order?.store?.storeName || 'Store'}
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 rounded-lg object-cover"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {order?.store?.storeName || 'Store'}
+                    </span>
+                    <span className="text-sm text-gray-800 font-semibold">
+                      {order?.buyer.depositName || 'Buyer'}
+                    </span>
+                  </div>
+
+                ))}
+
+                {processingClearanceOrders.length > 3 && (
+                  <span className="text-sm text-gray-500">
+                    +{processingClearanceOrders.length - 3}
+                  </span>
+                )}
+              </div>
+
+
+              <p className="text-lg text-yellow-500 font-semibold">
+                {
+                totalNumberOfClearanceOrders
+                }
+              </p>
+
+              {totalNumberOfClearanceOrders > 0 && (
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-notification.gif"
+                    alt="Notification"
+                    width={50}
+                    height={50}
+                    className="w-15 h-15 object-cover"
+                    
+                  />
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/clearance-history');
+                    }}
+                    className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <span className="text-sm">
+                      청산<br />관리
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+            )}
+        
+          </div>
+
+      </div>
 
 
       <div className="py-0 w-full">
@@ -2485,128 +2726,6 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-row items-center justify-end gap-2">
-
-                <div className="flex flex-row items-center justify-center gap-2
-                bg-white/80
-                p-2 rounded-lg shadow-md
-                backdrop-blur-md
-                ">
-                  {loadingTotalNumberOfBuyOrders ? (
-                    <Image
-                      src="/loading.png"
-                      alt="Loading"
-                      width={20}
-                      height={20}
-                      className="w-6 h-6 animate-spin"
-                    />
-                  ) : (
-                    <Image
-                      src="/icon-buyorder.png"
-                      alt="Buy Order"
-                      width={35}
-                      height={35}
-                      className="w-6 h-6"
-                    />
-                  )}
-
-
-                  <p className="text-lg text-red-500 font-semibold">
-                    {
-                    totalNumberOfBuyOrders
-                    }
-                  </p>
-
-                  {totalNumberOfBuyOrders > 0 && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                        src="/icon-notification.gif"
-                        alt="Notification"
-                        width={50}
-                        height={50}
-                        className="w-15 h-15 object-cover"
-                        
-                      />
-                      <button
-                        onClick={() => {
-                          router.push('/' + params.lang + '/admin/buyorder');
-                        }}
-                        className="flex items-center justify-center gap-2
-                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                      >
-                        <span className="text-sm">
-                          구매주문관리
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-
-                {/* Clearance Orders */}
-                {version !== 'bangbang' && (
-                <div className="flex flex-row items-center justify-center gap-2
-                bg-white/80
-                p-2 rounded-lg shadow-md
-                backdrop-blur-md
-                ">
-
-                  {loadingTotalNumberOfClearanceOrders ? (
-                    <Image
-                      src="/loading.png"
-                      alt="Loading"
-                      width={20}
-                      height={20}
-                      className="w-6 h-6 animate-spin"
-                    />
-                  ) : (
-                    <Image
-                      src="/icon-clearance.png"
-                      alt="Clearance"
-                      width={35}
-                      height={35}
-                      className="w-6 h-6"
-                    />
-                  )}
-
-                  <p className="text-lg text-yellow-500 font-semibold">
-                    {
-                    totalNumberOfClearanceOrders
-                    }
-                  </p>
-
-                  {totalNumberOfClearanceOrders > 0 && (
-                    <div className="flex flex-row items-center justify-center gap-2">
-                      <Image
-                        src="/icon-notification.gif"
-                        alt="Notification"
-                        width={50}
-                        height={50}
-                        className="w-15 h-15 object-cover"
-                        
-                      />
-                      <button
-                        onClick={() => {
-                          router.push('/' + params.lang + '/admin/clearance-history');
-                        }}
-                        className="flex items-center justify-center gap-2
-                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                      >
-                        <span className="text-sm">
-                          청산관리
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-                )}
-
-            
-              </div>
-
-
-
-
               {/*
               {"storecode":"teststorecode","storeName":"테스트상점","storeType":"test","storeUrl":"https://test.com","storeDescription":"설명입니다.","storeLogo":"https://test.com/logo.png","storeBanner":"https://test.com/banner.png"}
               */}
@@ -2689,19 +2808,20 @@ export default function Index({ params }: any) {
                           </div>
                         </th>
 
+                        {/* USDT지갑 잔고 */}
+                        {version !== 'bangbang' && (
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
-                              P2P 거래수(건)
+                              결제용 USDT지갑
                             </span>
                             <span className="text-center">
-                              P2P 거래금액(원)
+                              결제용 지갑 잔고(USDT)
                             </span>
-                            <span className="text-center">
-                              P2P 거래량(USDT)
-                            </span>
+
                           </div>
                         </th>
+                        )}
 
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
@@ -2721,6 +2841,22 @@ export default function Index({ params }: any) {
 
                           </div>
                         </th>
+
+                        <th className="p-2">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <span className="text-center">
+                              P2P 거래수(건)
+                            </span>
+                            <span className="text-center">
+                              P2P 거래금액(원)
+                            </span>
+                            <span className="text-center">
+                              P2P 거래량(USDT)
+                            </span>
+                          </div>
+                        </th>
+
+
 
                         <th className="p-2">
                           <div className="flex flex-col items-center justify-center gap-2">
@@ -2770,23 +2906,6 @@ export default function Index({ params }: any) {
                           </div>
                         </th>
                         )}
-
-
-                        {/* USDT지갑 잔고 */}
-                        {version !== 'bangbang' && (
-                        <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <span className="text-center">
-                              결제용 USDT지갑
-                            </span>
-                            <span className="text-center">
-                              결제용 USDT지갑 잔고
-                            </span>
-
-                          </div>
-                        </th>
-                        )}
-
 
 
                       </tr>
@@ -3261,6 +3380,201 @@ export default function Index({ params }: any) {
 
                           </td>
 
+                          {/* USDT 잔액 */}
+                          {version !== 'bangbang' && (
+                          <td className="p-2">
+                            <div className="w-44
+                              h-56
+                              flex flex-col items-between justify-between gap-2">
+
+                              <div className="w-full flex flex-col items-center justify-center gap-2">
+
+                                {/* settlementWalletAddress */}
+                                <span className="text-sm text-gray-500">
+                                  {item.settlementWalletAddress ? (
+                                    <div className="flex flex-row items-center gap-1">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={15}
+                                        height={15}
+                                        className="w-4 h-4"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            item.settlementWalletAddress
+                                          );
+                                          toast.success('결제용 USDT지갑주소가 복사되었습니다.');
+                                        }}
+                                        className="text-sm text-blue-500 hover:underline"
+                                      >
+                                        { item.settlementWalletAddress.substring(0, 6) + '...' + item.settlementWalletAddress.substring(item.settlementWalletAddress.length - 4)
+                                        }
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-red-500">
+                                      결제용 USDT지갑 없음
+                                    </span>
+                                  )}
+                                </span>
+
+                                {/* USDT 잔액 표시 */}
+                                <div className="w-full flex flex-row items-center justify-center gap-1">
+                                  <Image
+                                    src="/icon-tether.png"
+                                    alt="Tether"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-xl text-[#409192] font-semibold"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {/*
+                                    {item?.usdtBalance ? item?.usdtBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
+                                    */}
+                                    {item?.currentUsdtBalance ? item?.currentUsdtBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
+
+                                  </span>
+                                </div>
+
+                                {/*
+                                <span className="text-lg text-[#409192]"
+                                  style={{ fontFamily: 'monospace' }}
+                                >
+                                  {item?.nativeBalance ? item?.nativeBalance.toFixed(3).toLocaleString('us-US') : 0}{' '}ETH
+                                </span>
+                                */}
+
+                              
+                              </div>
+
+
+                              {/* button to getBalance of USDT */}
+                              {/*
+                              <button
+                                //disabled={!isAdmin || insertingStore}
+                                onClick={() => {
+                                  //if (!isAdmin || insertingStore) return;
+                                  //getBalance(item.storecode);
+
+                                  getBalanceOfStoreSettlementWalletAddress(item.storecode);
+          
+
+                                  toast.success('잔액을 가져왔습니다.');
+                                }}
+                                className={`
+                                  ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
+                                  w-full mb-2
+                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80
+                                `}
+                              >
+                                잔액 확인하기
+                              </button>
+                              */}
+
+                            </div>
+
+                          </td>
+                          )}
+
+
+                          <td className="p-2">
+                            <div className="h-56
+                              w-32
+                              flex flex-col items-end justify-start gap-2">
+
+                              <div className="flex flex-row items-center gap-2">
+
+                                {item.settlementFeeWalletAddress ? (
+
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="flex flex-row items-center gap-1">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={15}
+                                        height={15}
+                                        className="w-4 h-4"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            item.settlementFeeWalletAddress
+                                          );
+                                          toast.success('복사되었습니다');
+                                        }
+                                      }
+                                      className="text-sm text-blue-500 hover:underline"
+                                      >
+                                        {item.settlementFeeWalletAddress.substring(0, 6) + '...' + item.settlementFeeWalletAddress.substring(item.settlementFeeWalletAddress.length - 4)
+                                        }
+                                      </button>
+                                    </div>
+
+
+                                    <span className="text-2xl text-gray-500 font-semibold">
+                                      {
+                                        item.settlementFeePercent ? item.settlementFeePercent : 0.00
+                                      }
+                                    </span>
+
+
+                                  </div>
+
+                                ) : (
+                                  <span className="text-sm text-red-500">
+                                    가맹점 수수료 USDT지갑 없음
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col items-center gap-2">
+
+                                {item.agentFeeWalletAddress ? (
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={15}
+                                      height={15}
+                                      className="w-4 h-4"
+                                    />
+                                    <button
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(
+                                          item.agentFeeWalletAddress
+                                        );
+                                        toast.success('복사되었습니다');
+                                      }
+                                    }
+                                    // underline text
+                                    className="text-sm text-blue-500 hover:underline"
+                                    >
+                                      {item.agentFeeWalletAddress?.substring(0, 6) + '...' + item.agentFeeWalletAddress?.substring(item.agentFeeWalletAddress?.length - 4)
+                                      }
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-red-500">
+                                    에이전트 USDT지갑 없음
+                                  </span>
+                                )}
+
+                                {' '}
+                                <span className="text-2xl text-gray-500 font-semibold">
+                                  {
+                                    item.agentFeePercent ? item.agentFeePercent : 0.00
+                                  }
+                                </span>
+                              </div>
+                 
+                            </div>
+                          </td>
+
 
                           <td className="p-2">
                             <div className=" h-56
@@ -3329,106 +3643,6 @@ export default function Index({ params }: any) {
 
                             </div>
 
-                          </td>
-
-
-
-                          <td className="p-2">
-                            <div className="h-56
-                              w-32
-                              flex flex-col items-between justify-between gap-2">
-
-
-                              <div className="flex flex-col items-center gap-2">
-      
-                                <div className="flex flex-row items-center gap-2">
-
-                                  {item.settlementFeeWalletAddress ? (
-
-                                    <div className="flex flex-col items-center gap-2">
-                                      <div className="flex flex-row items-center gap-1">
-                                        <Image
-                                          src="/icon-shield.png"
-                                          alt="Shield"
-                                          width={15}
-                                          height={15}
-                                          className="w-4 h-4"
-                                        />
-                                        <button
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(
-                                              item.settlementFeeWalletAddress
-                                            );
-                                            toast.success('복사되었습니다');
-                                          }
-                                        }
-                                        className="text-sm text-blue-500 hover:underline"
-                                        >
-                                          {item.settlementFeeWalletAddress.substring(0, 6) + '...'
-                                          }
-                                        </button>
-                                      </div>
-
-
-                                      <span className="text-2xl text-gray-500 font-semibold">
-                                        {
-                                          item.settlementFeePercent ? item.settlementFeePercent : 0.00
-                                        }
-                                      </span>
-
-
-                                    </div>
-
-                                  ) : (
-                                    <span className="text-sm text-red-500">
-                                      가맹점 수수료 USDT지갑 없음
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="flex flex-col items-center gap-2">
-
-                                  {item.agentFeeWalletAddress ? (
-                                    <div className="flex flex-row items-center gap-1">
-                                      <Image
-                                        src="/icon-shield.png"
-                                        alt="Shield"
-                                        width={15}
-                                        height={15}
-                                        className="w-4 h-4"
-                                      />
-                                      <button
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(
-                                            item.agentFeeWalletAddress
-                                          );
-                                          toast.success('복사되었습니다');
-                                        }
-                                      }
-                                      // underline text
-                                      className="text-sm text-blue-500 hover:underline"
-                                      >
-                                        {item.agentFeeWalletAddress?.substring(0, 6) + '...'
-                                        }
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-red-500">
-                                      에이전트 USDT지갑 없음
-                                    </span>
-                                  )}
-
-                                  {' '}
-                                  <span className="text-2xl text-gray-500 font-semibold">
-                                    {
-                                      item.agentFeePercent ? item.agentFeePercent : 0.00
-                                    }
-                                  </span>
-                                </div>
-
-                              </div>
-                 
-                            </div>
                           </td>
 
 
@@ -3653,98 +3867,6 @@ export default function Index({ params }: any) {
 
                             </div>
 
-
-                          </td>
-                          )}
-
-                          {/* USDT 잔액 */}
-                          {version !== 'bangbang' && (
-                          <td className="p-2">
-                            <div className="w-44
-                              h-56
-                              flex flex-col items-between justify-between gap-2">
-
-                              <div className="w-full flex flex-col items-center justify-center gap-2">
-
-                                {/* settlementWalletAddress */}
-                                <span className="text-sm text-gray-500">
-                                  {item.settlementWalletAddress ? (
-                                    <div className="flex flex-row items-center gap-1">
-                                      <Image
-                                        src="/icon-shield.png"
-                                        alt="Shield"
-                                        width={15}
-                                        height={15}
-                                        className="w-4 h-4"
-                                      />
-                                      <button
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(
-                                            item.settlementWalletAddress
-                                          );
-                                          toast.success('결제용 USDT지갑주소가 복사되었습니다.');
-                                        }}
-                                        className="text-sm text-blue-500 hover:underline"
-                                      >
-                                        { item.settlementWalletAddress.substring(0, 6) + '...' + item.settlementWalletAddress.substring(item.settlementWalletAddress.length - 4)
-                                        }
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-sm text-red-500">
-                                      결제용 USDT지갑 없음
-                                    </span>
-                                  )}
-                                </span>
-
-                                {/* USDT 잔액 표시 */}
-                                <div className="w-full flex flex-row items-center justify-center gap-1">
-                                  <Image
-                                    src="/icon-tether.png"
-                                    alt="Tether"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
-                                  />
-                                  <span className="text-lg text-[#409192]"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {item?.usdtBalance ? item?.usdtBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
-                                  </span>
-                                </div>
-
-                                <span className="text-lg text-[#409192]"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
-                                  {item?.nativeBalance ? item?.nativeBalance.toFixed(3).toLocaleString('us-US') : 0}{' '}ETH
-                                </span>
-                              
-                              </div>
-
-
-                              {/* button to getBalance of USDT */}
-                              <button
-                                //disabled={!isAdmin || insertingStore}
-                                onClick={() => {
-                                  //if (!isAdmin || insertingStore) return;
-                                  //getBalance(item.storecode);
-
-                                  getBalanceOfStoreSettlementWalletAddress(item.storecode);
-          
-
-                                  toast.success('잔액을 가져왔습니다.');
-                                }}
-                                className={`
-                                  ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
-                                  w-full mb-2
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80
-                                `}
-                              >
-                                잔액 확인하기
-                              </button>
-
-                            </div>
 
                           </td>
                           )}
