@@ -517,13 +517,6 @@ export default function SettingsPage({ params }: any) {
 
 
 
-    // getOneStore
-    
-
-
-
-
-
     // set storeName
 
     const [storeName, setStoreName] = useState("");
@@ -2129,6 +2122,58 @@ export default function SettingsPage({ params }: any) {
     }
 
 
+
+
+
+  const [isToggling, setIsToggling] = useState(false)
+
+
+  const toggleViewOnAndOff = async (viewOnAndOff: boolean) => {
+
+    if (isToggling) {
+        return;
+    }
+
+    if (!store) {
+        toast.error("가맹점 정보가 없습니다");
+        return;
+    }
+
+
+    setIsToggling(true);
+
+    const response = await fetch("/api/store/toggleView", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        storecode: params.storecode,
+        viewOnAndOff,
+      }),
+    });
+
+    const data = await response.json();
+    //console.log("toggleViewOnAndOff", data);
+
+    if (data.success) {
+
+        // Update the store's viewOnAndOff status in the local state
+        setStore({
+            ...store,
+            viewOnAndOff: viewOnAndOff,
+        });
+
+        toast.success(`가맹점 ${viewOnAndOff ? "노출" : "비노출"} 설정이 변경되었습니다.`);
+
+
+    }
+
+
+    setIsToggling(false);
+
+  };
+
         
 
 
@@ -2212,11 +2257,6 @@ export default function SettingsPage({ params }: any) {
 
                         <>
 
-
-
-
-
-
                         <div className="w-full flex flex-row gap-5 items-center justify-center">
 
                                 <button
@@ -2272,6 +2312,88 @@ export default function SettingsPage({ params }: any) {
 
 
 
+
+                        </div>
+
+                        {/* viewOnAndOff toggle button */}
+                        <div className="w-full flex flex-row items-center justify-start gap-2">
+
+                            <Image
+                                src="/icon-visibility.png"
+                                alt="Visibility"
+                                width={35}
+                                height={35}
+                                className="w-8 h-8"
+                            />
+                            <div className="text-lg font-semibold">
+                                가맹점 노출 설정:
+                            </div>
+
+                            {store.viewOnAndOff ? (
+                                <button
+                                    onClick={() => toggleViewOnAndOff(false)}
+                                    className="bg-green-500 text-white px-3 py-1 rounded-lg
+                                    hover:bg-green-600 transition duration-200 ease-in-out
+                                    flex flex-row items-center gap-2"
+                                    disabled={isToggling}
+                                >
+                                    <span>노출중</span>
+                                    {isToggling && (
+                                        <svg
+                                            className="animate-spin h-5 w-5 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v8H4z"
+                                            ></path>
+                                        </svg>
+                                    )}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => toggleViewOnAndOff(true)}
+                                    className="bg-red-500 text-white px-3 py-1 rounded-lg
+                                    hover:bg-red-600 transition duration-200 ease-in-out
+                                    flex flex-row items-center gap-2"
+                                    disabled={isToggling}
+                                >
+                                    <span>비노출중</span>
+                                    {isToggling && (
+                                        <svg
+                                            className="animate-spin h-5 w-5 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            ></circle>
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v8H4z"
+                                            ></path>
+                                        </svg>
+                                    )}
+                                </button>
+                            )}
 
                         </div>
 

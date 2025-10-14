@@ -204,6 +204,7 @@ export async function getStoreByStorecode(
         accessToken: 1,
 
         liveOnAndOff: 1,
+        viewOnAndOff: 1,
 
       },
     },
@@ -1448,3 +1449,33 @@ export async function updateLiveOnAndOff(
     return false;
   }
 }
+
+
+// updateViewOnAndOff
+export async function updateViewOnAndOff(
+  {
+    storecode,
+    viewOnAndOff,
+  }: {
+    storecode: string;
+    viewOnAndOff: boolean;
+  }
+): Promise<boolean> {
+
+  console.log('updateViewOnAndOff', storecode, viewOnAndOff);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { viewOnAndOff: viewOnAndOff } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
