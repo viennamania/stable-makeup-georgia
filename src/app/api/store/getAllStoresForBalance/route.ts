@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
   });
 
   //console.log("getAllStoresForBalanceInquiry result", result);
+
   /*
     {
       totalCount: 5,
@@ -73,7 +74,9 @@ export async function POST(request: NextRequest) {
           createdAt: '2025-08-26T01:24:30.959Z',
           backgroundColor: 'yellow-100',
           settlementWalletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
-          totalUsdtAmount: 118.19
+          totalUsdtAmount: 118.19,
+          liveOnAndOff: true,
+          viewOnAndOff: true,
         },
         {
           _id: new ObjectId('68ad00d15359024833432764'),
@@ -83,7 +86,9 @@ export async function POST(request: NextRequest) {
           createdAt: '2025-08-26T00:33:21.613Z',
           backgroundColor: 'blue-100',
           settlementWalletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
-          totalUsdtAmount: 93.96
+          totalUsdtAmount: 93.96,
+          liveOnAndOff: true,
+          viewOnAndOff: true,
         },
       ]
     }

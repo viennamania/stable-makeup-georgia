@@ -1147,6 +1147,8 @@ export async function getAllStoresForBalanceInquiry(
           //liveOnAndOff: 1,
           // if liveOnAndOff is not exist, set it to true
           liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+
+          viewOnAndOff: { $ifNull: ['$viewOnAndOff', true]  },
        
         },
       },

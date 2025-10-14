@@ -330,20 +330,36 @@ const StoreConsole = () => {
 
 
           if (data.result) {
-              
-              //setStores(data.result.stores || []);
-              // if count is more than 10, slice to 10
-              if (data.result.stores.length > 10) {
-                setStores(data.result.stores.slice(0, 10) || []);
-              } else {
-                setStores(data.result.stores || []);
-              }
+            // set list if viewOnAndOff is true
+            const filteredStores = data.result.stores.filter((store: { viewOnAndOff: boolean }) => store.viewOnAndOff === true);
 
-              setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
+
+            //alert("filteredStores.length: " + filteredStores.length);
+
+
+            //console.log("filteredStores", filteredStores);
+
+            /*
+            //setStores(data.result.stores || []);
+            // if count is more than 10, slice to 10
+            if (data.result.stores.length > 10) {
+              setStores(data.result.stores.slice(0, 10) || []);
+            } else {
+              setStores(data.result.stores || []);
+            }
+            */
+
+            if (filteredStores.length > 10) {
+              setStores(filteredStores.slice(0, 10) || []);
+            } else {
+              setStores(filteredStores || []);
+            }
+
+            setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
+          } else {
+            setStores([]);
+            setTotalCurrentUsdtBalance(0);
           }
-
-
-
       };
 
       fetchStores();
@@ -468,7 +484,7 @@ const StoreConsole = () => {
               //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               //py-2"
 
-              className="w-full grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-11 gap-2
+              className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 4xl:grid-cols-11 gap-2
               overflow-x-auto
               scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               py-2
