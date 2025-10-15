@@ -1037,7 +1037,7 @@ export default function SettingsPage({ params }: any) {
 
 
     // update usdtKRWRate
-    // 1300 - 1500
+    // 1300 - 1600
     const [updatingUsdtKRWRate, setUpdatingUsdtKRWRate] = useState(false);
     const [usdtKRWRate, setUsdtKRWRate] = useState(agent?.usdtKRWRate || 0.0);
 
@@ -1050,8 +1050,8 @@ export default function SettingsPage({ params }: any) {
             toast.error("USDT-KRW 환율을 입력하세요");
             return;
         }
-        if (usdtKRWRate < 1300 || usdtKRWRate > 1500) {
-            toast.error("USDT-KRW 환율은 1300 ~ 1500으로 설정하세요");
+        if (usdtKRWRate < 1300 || usdtKRWRate > 1600) {
+            toast.error("USDT-KRW 환율은 1300 ~ 1600으로 설정하세요");
             return;
         }
         if (usdtKRWRate === agent?.usdtKRWRate) {
@@ -1596,18 +1596,18 @@ export default function SettingsPage({ params }: any) {
                                 </div>
 
                                 {/* updateUsdtKRWRate */}
-                                {/* 1300 - 1500 */}
+                                {/* 1300 - 1600 */}
                                 {/* step 1 */}
                                 {/*
                                 <div className='w-full flex flex-row items-center justify-start gap-2'>
                                     <input
                                         disabled={!address || updatingUsdtKRWRate}
                                         className="bg-white text-zinc-500 rounded-lg p-2 text-sm"
-                                        placeholder="USDT-KRW 환율을 입력하세요 (1300 ~ 1500)"
+                                        placeholder="USDT-KRW 환율을 입력하세요 (1300 ~ 1600)"
                                         value={usdtKRWRate}
                                         type='number'
                                         min={1300}
-                                        max={1500}
+                                        max={1600}
                                         step={1}
                                         onChange={(e) => {
                                             if (e.target.value === '') {
