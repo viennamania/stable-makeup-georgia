@@ -57,6 +57,8 @@ export interface UserProps {
 
   buyOrderAudioOn: boolean,
 
+  liveOnAndOff: boolean;
+
 }
 
 export interface ResultProps {
@@ -1659,6 +1661,8 @@ export async function getUserByNickname(
       totalPaymentConfirmedKrwAmount: 1,
       totalPaymentConfirmedUsdtAmount: 1,
       userType: 1,
+
+      liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] }
     } }
   )
 }
