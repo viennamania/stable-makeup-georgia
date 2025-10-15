@@ -137,15 +137,13 @@ export default function RootLayout({
    */
 
 
-  const [showChain, setShowChain] = useState(false);
+  //const [showChain, setShowChain] = useState(false);
 
+
+  /*
   const [showCenter, setShowCenter] = useState(false);
 
 
-
-
-
- 
   const [clientName, setClientName] = useState("");
   const [clientDescription, setClientDescription] = useState("");
   const [clientLogo, setClientLogo] = useState("");
@@ -174,6 +172,7 @@ export default function RootLayout({
 
       fetchClientInfo();
   }, []);
+  */
 
 
   return (
@@ -189,7 +188,10 @@ export default function RootLayout({
       />
       */}
 
+      <CenterConsole />
+
       {/* fixed position left and vertically top */}
+      {/*
       <div className="
       fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
       ">
@@ -237,8 +239,14 @@ export default function RootLayout({
           <CenterConsole />
         </div>
       </div>
+      */}
 
+
+
+      {/*}
       <StoreConsole />
+      */}
+
             
       {children}
 

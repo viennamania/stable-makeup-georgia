@@ -362,16 +362,16 @@ const StoreConsole = () => {
           }
       };
 
-      fetchStores();
+      address && isAdmin && fetchStores();
 
       // poll every 10 seconds
       const interval = setInterval(() => {
-        fetchStores();
+        address && isAdmin && fetchStores();
       }, 10000);
 
       return () => clearInterval(interval);
 
-  }, []);
+  }, [address, isAdmin]);
 
   /*
     {
@@ -466,7 +466,7 @@ const StoreConsole = () => {
 
     <div className="flex flex-col items-center justify-center">
 
-
+      
       {true && (
         <div className="
         container max-w-screen-2xl mx-auto pl-16 pr-16
@@ -583,6 +583,7 @@ const StoreConsole = () => {
 
         </div>
       )}
+      
 
     </div>
 
