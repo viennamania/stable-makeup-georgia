@@ -284,8 +284,8 @@ const StoreConsole = () => {
 
           const data = await response.json();
 
-          // setIsAdmin(data.result?.role === "admin");
-          setIsAdmin(data.result?.isAdmin === true);
+          setIsAdmin(data.result?.role === "admin");
+          //setIsAdmin(data.result?.isAdmin === true);
 
           /*
           if (data.result?.isAdmin !== true) {

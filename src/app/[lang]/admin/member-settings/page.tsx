@@ -489,6 +489,55 @@ export default function SettingsPage({ params }: any) {
 
 
 
+  const [isToggling, setIsToggling] = useState(false)
+
+
+  const toggleLiveOnAndOff = async (liveOnAndOff: boolean) => {
+
+    if (isToggling) {
+        return;
+    }
+
+
+
+    setIsToggling(true);
+
+    const response = await fetch("/api/user/toggleLive", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        walletAddress: userWalletAddress,
+        liveOnAndOff,
+      }),
+    });
+
+    const data = await response.json();
+    //console.log("toggleViewOnAndOff", data);
+
+    if (data.success) {
+
+        // Update the store's viewOnAndOff status in the local state
+        setMemberData({
+            ...memberData,
+            liveOnAndOff: liveOnAndOff,
+        });
+
+        toast.success(`회원 ${liveOnAndOff ? "허용" : "차단"} 설정이 성공적으로 업데이트되었습니다.`);
+
+
+    }
+
+
+    setIsToggling(false);
+
+  };
+
+
+
+
+
     return (
 
         <main className="p-4 min-h-[100vh] flex items-start justify-center container max-w-screen-sm mx-auto">
@@ -521,6 +570,90 @@ export default function SettingsPage({ params }: any) {
                 </div>
 
 
+
+                {/* liveOnAndOff toggle button */}
+                <div className='
+                    mt-4 mb-4 w-full
+                    flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
+
+                    <Image
+                        src="/icon-visibility.png"
+                        alt="Visibility"
+                        width={35}
+                        height={35}
+                        className="w-8 h-8"
+                    />
+                    <div className="text-lg font-semibold">
+                        회원 상태
+                    </div>
+
+                    {memberData?.liveOnAndOff ? (
+                        <button
+                            onClick={() => toggleLiveOnAndOff(false)}
+                            className="bg-green-500 text-white px-3 py-1 rounded-lg
+                            hover:bg-green-600 transition duration-200 ease-in-out
+                            flex flex-row items-center gap-2"
+                            disabled={isToggling}
+                        >
+                            <span>정상상태</span>
+                            {isToggling && (
+                                <svg
+                                    className="animate-spin h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8H4z"
+                                    ></path>
+                                </svg>
+                            )}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => toggleLiveOnAndOff(true)}
+                            className="bg-red-500 text-white px-3 py-1 rounded-lg
+                            hover:bg-red-600 transition duration-200 ease-in-out
+                            flex flex-row items-center gap-2"
+                            disabled={isToggling}
+                        >
+                            <span>차단상태</span>
+                            {isToggling && (
+                                <svg
+                                    className="animate-spin h-5 w-5 text-white"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    ></circle>
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v8H4z"
+                                    ></path>
+                                </svg>
+                            )}
+                        </button>
+                    )}
+
+                </div>
 
             
 

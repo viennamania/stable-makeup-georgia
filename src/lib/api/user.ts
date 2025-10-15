@@ -835,6 +835,11 @@ export async function getOneByStorecodeAndWalletAddress(
         createdAt: 1,
         updatedAt: 1,
         userType: 1,
+
+        // liveOnAndOff
+        // if liveOnAndOff is not exist, set it to true
+        liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+
       }
     }
   );
@@ -2169,4 +2174,35 @@ export async function updateBuyOrderAudioNotification(data: any) {
     return false;
   }
 
+}
+
+
+
+
+// updateLiveOnAndOff
+export async function updateLiveOnAndOff(
+  {
+    walletAddress,
+    liveOnAndOff,
+  }: {
+    walletAddress: string;
+    liveOnAndOff: boolean;
+  }
+): Promise<boolean> {
+
+  console.log('updateLiveOnAndOff', walletAddress, liveOnAndOff);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  // update walletAddress
+  const result = await collection.updateOne(
+    { walletAddress: walletAddress },
+    { $set: { liveOnAndOff: liveOnAndOff } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
 }
