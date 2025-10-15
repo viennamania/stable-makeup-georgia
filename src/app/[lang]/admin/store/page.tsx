@@ -1534,7 +1534,7 @@ export default function Index({ params }: any) {
       return () => clearInterval(interval);
     }, [allStore]);
 
-    console.log('walletBalanceArray', walletBalanceArray);
+    ///console.log('walletBalanceArray', walletBalanceArray);
 
    
 

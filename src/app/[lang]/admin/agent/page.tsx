@@ -1043,6 +1043,77 @@ export default function Index({ params }: any) {
 
 
 
+
+
+
+
+  const [totalCurrentUsdtBalance, setTotalCurrentUsdtBalance] = useState(0);
+
+  // list of stores
+  //const [stores, setStores] = useState<Array<any>>([]);
+
+  useEffect(() => {
+      const fetchAgents = async () => {
+          const response = await fetch("/api/agent/getAllAgentsForBalance", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+              }),
+          });
+
+          const data = await response.json();
+
+          //console.log("agents", data);
+
+
+          if (data.result) {
+
+              //setStores(data.result.agents || []);
+              // updat allStore usdtBalance
+              setAllAgent((prev) => {
+                return prev.map((agent) => {
+                  const found = data.result.agents.find((s: any) => s.agentcode === agent.agentcode);
+                  if (found) {
+                    return {
+                      ...agent,
+                      currentUsdtBalance: found.currentUsdtBalance || 0,
+                    };
+                  }
+                  return agent;
+                });
+              });
+
+              // total current usdt balance
+              setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
+          }
+      };
+
+      address && fetchAgents();
+
+      // poll every 10 seconds
+      const interval = setInterval(() => {
+        address && fetchAgents();
+      }, 10000);
+
+      return () => clearInterval(interval);
+
+  }, [address]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   {/*
   {"agentcode":"testagentcode","agentName":"테스트상점","agentType":"test","agentUrl":"https://test.com","agentDescription":"설명입니다.","agentLogo":"https://test.com/logo.png","agentBanner":"https://test.com/banner.png"}
   */}
@@ -1259,47 +1330,18 @@ export default function Index({ params }: any) {
     return (
       <div className="flex flex-col items-center justify-center">
 
-        <h1 className="text-2xl font-bold">로그인</h1>
-
-          <ConnectButton
-            client={client}
-            wallets={wallets}
-            chain={chain === "ethereum" ? ethereum :
-                    chain === "polygon" ? polygon :
-                    chain === "arbitrum" ? arbitrum :
-                    chain === "bsc" ? bsc : arbitrum}
-            
-            theme={"light"}
-
-            // button color is dark skyblue convert (49, 103, 180) to hex
-            connectButton={{
-              style: {
-                backgroundColor: "#3167b4", // dark skyblue
-
-                color: "#f3f4f6", // gray-300 
-                padding: "2px 2px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                //width: "40px",
-                height: "38px",
-              },
-              label: "원클릭 로그인",
-            }}
-
-            connectModal={{
-              size: "wide", 
-              //size: "compact",
-              titleIcon: "https://www.stable.makeup/logo.png",                           
-              showThirdwebBranding: false,
-            }}
-
-            locale={"ko_KR"}
-            //locale={"en_US"}
-          />
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
 
       </div>
     );
   }
+
 
 
   if (address && !loadingUser && !isAdmin) {
@@ -1934,7 +1976,8 @@ export default function Index({ params }: any) {
 
                         <th className="p-2">
                           관리자 지갑주소<br/>
-                          수수료 수납용 USDT지갑 주소
+                          수수료 수납용 USDT지갑 주소<br/>
+                          수수료 수납용 지갑 잔액(USDT)
                         </th>
                         
                         <th className="p-2">관리자 홈페이지</th>
@@ -2085,6 +2128,31 @@ export default function Index({ params }: any) {
                                   </span>
                                 )}
                                 
+
+
+                                {/* USDT 잔액 표시 */}
+                                <div className="w-full flex flex-row items-center justify-center gap-1">
+                                  <Image
+                                    src="/icon-tether.png"
+                                    alt="Tether"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-xl text-[#409192] font-semibold"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {/*
+                                    {item?.usdtBalance ? item?.usdtBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
+                                    */}
+                                    {item?.currentUsdtBalance ? item?.currentUsdtBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0}
+
+                                  </span>
+                                </div>
+
+
+
+
                               
                             </div>
                           </td>

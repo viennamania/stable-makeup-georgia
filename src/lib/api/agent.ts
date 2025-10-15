@@ -721,3 +721,98 @@ export async function getUsdtKRWRate(
   }
 
 }
+
+
+
+
+
+// getAllAgentsForBalanceInquiry
+export async function getAllAgentsForBalanceInquiry(
+  {
+    limit,
+    page,
+    search,
+  }: {
+    limit: number;
+    page: number;
+    search: string;
+  }
+): Promise<any> {
+
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('agents');
+
+  const query: any = {};
+
+  if (search) {
+    query.agentName = { $regex: String(search), $options: 'i' };
+  }
+
+
+  // exclude if agentcode is 'admin' or 'head'
+
+  query.agentcode = { $nin: ['admin', 'head'] };
+
+
+  const totalCount = await collection.countDocuments(query);
+
+  //console.log('getAllStores totalCount', totalCount);
+
+
+  try {
+    const agents = await collection.aggregate([
+      { $match: query },
+      {
+        
+        $project: {
+          createdAt: 1,
+          agentcode: 1,
+          agentName: 1,
+          agentLogo: 1,
+          //backgroundColor: 1,
+
+          totalUsdtAmount: 1,
+
+          //settlementWalletAddress: 1,
+          agentFeeWalletAddress: 1,
+          adminWalletAddress: 1,
+
+          //liveOnAndOff: 1,
+          // if liveOnAndOff is not exist, set it to true
+          liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+
+          viewOnAndOff: { $ifNull: ['$viewOnAndOff', true]  },
+       
+        },
+      },
+      
+      //{ $sort: { createdAt: -1 } }, // Sort by createdAt in descending order
+      // sort by totalUsdtAmount in descending order
+      { $sort: { totalUsdtAmount: -1, createdAt: -1 } }, // Sort by totalUsdtAmount in descending order and then by createdAt in descending order
+
+
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+    ]).toArray();
+
+
+
+
+
+    //console.log('getAllStores stores', stores);
+
+
+
+    return {
+      totalCount,
+      agents,
+    };
+
+  } catch (error) {
+    console.error('Error fetching agents:', error);
+    throw new Error('Failed to fetch agents');
+  }
+}
+
+
