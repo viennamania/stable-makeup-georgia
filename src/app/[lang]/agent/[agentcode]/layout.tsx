@@ -1,0 +1,268 @@
+'use client';
+
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { ThirdwebProvider } from "thirdweb/react";
+
+import { Toaster } from "react-hot-toast";
+
+import { useState, useEffect } from "react";
+
+
+import Script from "next/script";
+
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
+
+//const inter = Inter({ subsets: ["latin"] });
+
+import localFont from "next/font/local";
+
+
+
+import Image from "next/image";
+import { useRouter }from "next//navigation";
+
+
+
+// import components
+import StabilityConsole from '@/components/StabilityConsole';
+
+import AgentConsole from '@/components/AgentConsole';
+
+import StoreConsole from '@/components/StoreConsole';
+
+
+import {
+  clientId,
+  client,
+} from "../../../client";
+
+
+
+import {
+  ethereum,
+  polygon,
+  arbitrum,
+  bsc,
+} from "thirdweb/chains";
+
+
+import {
+  chain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
+
+
+import {
+  ConnectButton,
+  useActiveAccount,
+  AutoConnect,
+} from "thirdweb/react";
+
+
+import {
+  inAppWallet,
+} from "thirdweb/wallets";
+
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: [
+        "google",
+        "discord",
+        "email",
+        "x",
+        //"passkey",
+        //"phone",
+        "facebook",
+        "line",
+        "apple",
+        "coinbase",
+      ],
+    },
+  }),
+
+];
+
+
+
+/*
+export const metadata: Metadata = {
+  title: "WEB3 Starter",
+  description:
+    "Starter for  WEB3 Wallet.",
+};
+*/
+
+
+const wallet = inAppWallet({
+	smartAccount: {
+		sponsorGas: false,
+		chain: chain === "bsc" ? bsc : chain === "polygon" ? polygon : chain === "arbitrum" ? arbitrum : ethereum,
+	}
+});
+
+
+
+
+
+export default function RootLayout({
+  params,
+  children,
+}: Readonly<{
+  params: { lang: string; agentcode: string; };
+  children: React.ReactNode;
+}>) {
+
+
+
+  console.log("RootLayout params", params);
+
+  const router = useRouter();
+
+  const activeAccount = useActiveAccount();
+
+  const address = activeAccount?.address;
+
+  console.log("address", address);
+
+
+  /*
+  useEffect(() => {
+  
+    window.googleTranslateElementInit = () => {
+     new window.google.translate.TranslateElement({ pageLanguage: 'en' }, 'google_translate_element');
+    };
+  
+   }, []);
+   */
+
+
+  //const [showChain, setShowChain] = useState(false);
+
+
+  /*
+  const [showCenter, setShowCenter] = useState(false);
+
+
+  const [clientName, setClientName] = useState("");
+  const [clientDescription, setClientDescription] = useState("");
+  const [clientLogo, setClientLogo] = useState("");
+
+  useEffect(() => {
+      const fetchClientInfo = async () => {
+          const response = await fetch("/api/client/getClientInfo", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+          });
+
+          const data = await response.json();
+
+          //console.log("clientInfo", data);
+
+          if (data.result) {
+
+              setClientName(data.result.clientInfo?.name || "");
+              setClientDescription(data.result.clientInfo?.description || "");
+              setClientLogo(data.result.clientInfo?.avatar || "/logo.png");
+          }
+
+      };
+
+      fetchClientInfo();
+  }, []);
+  */
+
+
+  return (
+
+    <div className="w-full flex flex-col items-center justify-center bg-gray-100 rounded-lg shadow-md mb-4
+      pt-48 xl:pt-24
+    ">
+
+      {/*
+      <AutoConnect
+          client={client}
+          wallets={[wallet]}
+      />
+      */}
+
+      <AgentConsole
+        agentcode={params.agentcode}
+      />
+
+      {/* fixed position left and vertically top */}
+      {/*
+      <div className="
+      fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
+      ">
+
+        <div className="flex flex-row items-center justify-center
+          bg-white bg-opacity-90
+          p-2 rounded-lg shadow-lg
+        ">
+          <Image
+            src={clientLogo || "/logo.png"}
+            alt={clientName}
+            width={50}
+            height={50}
+            className="rounded-lg bg-white w-12 h-12 object-contain"
+          />
+          <div className="ml-2 flex flex-col items-start justify-center">
+            <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>
+            <p className="text-sm text-gray-600">{clientDescription || "Manage your application settings"}</p>
+          </div>
+        </div>
+
+        <button
+          className="
+          w-32
+          flex flex-row items-center justify-center gap-2
+          mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
+          onClick={() => setShowCenter(!showCenter)}
+        >
+            <Image
+              src={`/icon-shield.png`}
+              alt={`Shield`}
+              width={25}
+              height={25}
+            />
+
+            <span className="text-sm text-white">
+              {showCenter ? 'Hide Wallet' : 'Show Wallet'}
+            </span>
+        </button>
+
+        <div className={`flex flex-col items-center justify-center
+          ${showCenter ? 'bg-white' : 'hidden'}
+          p-2 rounded-lg shadow-lg
+        `}>
+          <CenterConsole />
+        </div>
+      </div>
+      */}
+
+
+
+      {/*}
+      <StoreConsole />
+      */}
+
+            
+      {children}
+
+    </div>
+
+  );
+
+
+}

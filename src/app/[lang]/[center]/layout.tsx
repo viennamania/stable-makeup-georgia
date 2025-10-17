@@ -27,9 +27,11 @@ import { useRouter }from "next//navigation";
 
 
 // import components
-import StabilityConsole from '@/components/StabilityConsole';
+//import StabilityConsole from '@/components/StabilityConsole';
 
-import CenterConsole from '@/components/CenterConsole';
+//import CenterConsole from '@/components/CenterConsole';
+
+import WalletConsole from '@/components/WalletConsole';
 
 
 import {
@@ -163,20 +165,28 @@ export default function RootLayout({
 
             {/* storeLogo and storeName and storecode */}
             {store && (
-              <div className="flex flex-row items-center justify-center">
-                {store.storeLogo && (
-                  <Image
-                    src={store.storeLogo}
-                    alt={store.storeName}
-                    width={50}
-                    height={50}
-                    className="
-                    w-10 h-10 mr-2
-                    rounded-lg object-cover mb-2"
-                  />
-                )}
-                <h1 className="text-2xl font-bold">{store.storeName}</h1>
-              </div>
+              <button
+                className="
+                w-full
+                flex flex-col items-center justify-center
+                mb-2 px-4 py-2 bg-white bg-opacity-90 text-black rounded hover:bg-opacity-75"
+                onClick={() => {
+                  router.push(`/${params.lang}/${store.storecode}/center`);
+                }}
+              >
+                <div className="flex flex-row items-center justify-center gap-2">
+                  {store.storeLogo && (
+                    <Image
+                      src={store.storeLogo}
+                      alt={store.storeName}
+                      width={50}
+                      height={50}
+                      className="w-10 h-10 rounded-lg object-cover"
+                    />
+                  )}
+                  <h1 className="text-2xl font-bold">{store.storeName}</h1>
+                </div>
+              </button>
             )}
 
 
@@ -203,7 +213,15 @@ export default function RootLayout({
               ${showCenter ? 'bg-white' : 'hidden'}
               p-2 rounded-lg shadow-lg
             `}>
+
+
+              {/*
               <CenterConsole />
+              */}
+
+              <WalletConsole />
+
+
             </div>
           </div>
 

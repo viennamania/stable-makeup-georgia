@@ -135,8 +135,13 @@ const wallets = [
 
 
 
-const CenterConsole = () => {
+const AgentConsole = (
+  { agentcode } : { agentcode: string }
+) => {
 
+  console.log("AgentConsole agentcode", agentcode);
+
+  
   const router = useRouter();
 
 
@@ -339,6 +344,57 @@ const CenterConsole = () => {
 
 
 
+  const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
+
+  const [fetchingAgent, setFetchingAgent] = useState(true);
+  const [agent, setAgent] = useState(null) as any;
+  useEffect(() => {
+      const fetchAgent = async () => {
+          const response = await fetch("/api/agent/getOneAgent", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                agentcode,
+              }),
+          });
+
+          const data = await response.json();
+
+          //console.log("agent", data);
+
+          if (data.result) {
+
+            setAgent(data.result);
+
+            setAgentAdminWalletAddress(data.result?.adminWalletAddress);
+
+            ///console.log("data.result.adminWalletAddress", data.result.adminWalletAddress);
+
+            if (data.result?.adminWalletAddress === address) {
+              setIsAdmin(true);
+            }
+          } else {
+            setAgent(null);
+            setAgentAdminWalletAddress("");
+          }
+
+          setFetchingAgent(false);
+
+      };
+
+      if (address && agentcode) {
+        fetchAgent();
+      } else {
+        setFetchingAgent(false);
+        //router.push(`/${"en"}/admin/login`);
+      }
+
+  //}, [address, router]);
+  }, [address, agentcode]);
+
+
   const [totalCurrentUsdtBalance, setTotalCurrentUsdtBalance] = useState(0);
 
   // list of stores
@@ -504,20 +560,18 @@ const CenterConsole = () => {
           p-2 rounded-lg shadow-lg
         ">
           <Image
-            src={clientLogo || "/logo.png"}
-            alt={clientName}
+            src={agent?.agentLogo || "/icon-agent.png"}
+            alt={agent?.agentName || "Agent Console"}
             width={50}
             height={50}
             className="rounded-lg bg-white w-12 h-12 object-contain"
           />
           <div className="ml-2 flex flex-col items-start justify-center">
-            <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>
-            <p className="text-sm text-gray-600">{clientDescription || "Manage your application settings"}</p>
+            <h1 className="text-lg font-bold text-black">{agent?.agentName || "Admin Console"}</h1>
+            <p className="text-sm text-gray-600">{agent?.agentDescription || "Manage your application settings"}</p>
           </div>
         </div>
 
-        
-        
         <button
           className="
           w-32
@@ -609,6 +663,7 @@ const CenterConsole = () => {
                 </div>
 
                 <div className="flex flex-col gap-2 justify-center items-center">
+                  {/* if pol balance is 0, comment out the text */}
                   {nativeBalance < 0.0001 && (
                     <p className="text-sm text-red-500">
                       가스비용이 부족합니다.<br/>가스비용이 부족하면<br/>입금은 가능하지만<br/>출금은 불가능합니다.
@@ -671,6 +726,7 @@ const CenterConsole = () => {
                   //locale={"en_US"}
                 />
 
+                {/* 로그인하고 나의 자산을 확인하세요 */}
                 <span className="text-sm text-zinc-600">
                   로그인하고 나의 지갑주소에서 자산을 확인하세요.
                 </span>
@@ -683,9 +739,6 @@ const CenterConsole = () => {
           </div>
 
         </div>
-        
-
-
         
       </div>
 
@@ -830,6 +883,6 @@ const CenterConsole = () => {
 
 
 
-CenterConsole.displayName = "CenterConsole";
+AgentConsole.displayName = "AgentConsole";
 
-export default CenterConsole;
+export default AgentConsole;
