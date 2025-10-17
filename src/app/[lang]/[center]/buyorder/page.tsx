@@ -3462,16 +3462,6 @@ const fetchBuyOrders = async () => {
             "bg-black/10"
           }`}>
             
-            <button
-              onClick={() => {
-                router.push('/' + params.lang + '/' + params.center + '/center');
-              }}
-              className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-            >
-              <span className="text-sm text-zinc-50 font-bold">
-                홈
-              </span>
-            </button>
 
             <div className="flex flex-row items-center gap-2">
               
