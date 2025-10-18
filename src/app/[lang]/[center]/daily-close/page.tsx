@@ -1547,6 +1547,7 @@ export default function Index({ params }: any) {
               )}  
 
               {/* 가맹점 거래 */}
+              {/*
               <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -1593,11 +1594,11 @@ export default function Index({ params }: any) {
                   </span>
                 </div>
               </div>
-
-
+              */}
 
 
               {/* 가맹점 정산금 */}
+              {/*
               <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
                   <Image
@@ -1644,9 +1645,10 @@ export default function Index({ params }: any) {
                   </span>
                 </div>
               </div>
-
+              */}
 
               {/* 가맹점 판매금 */}
+              {/*
               {version !== 'bangbang' && (
               <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
                 <div className="flex flex-row gap-2 items-center">
@@ -1696,6 +1698,7 @@ export default function Index({ params }: any) {
 
               </div>
               )}
+              */}
 
             </div>
 
