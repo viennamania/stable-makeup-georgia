@@ -499,10 +499,13 @@ const CenterConsole = () => {
       fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
       ">
 
-        <div className="flex flex-row items-center justify-center
+        <button className="flex flex-row items-center justify-center
           bg-white bg-opacity-90
           p-2 rounded-lg shadow-lg
-        ">
+          hover:shadow-xl transition-shadow duration-300
+        "
+          onClick={() => router.push(`/${"ko"}/admin`)}
+        >
           <Image
             src={clientLogo || "/logo.png"}
             alt={clientName}
@@ -514,7 +517,7 @@ const CenterConsole = () => {
             <h1 className="text-lg font-bold text-black">{clientName || "Admin Console"}</h1>
             <p className="text-sm text-gray-600">{clientDescription || "Manage your application settings"}</p>
           </div>
-        </div>
+        </button>
 
         
         

@@ -3434,6 +3434,7 @@ const fetchBuyOrders = async () => {
 
         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
             
+          {/*
           <div className="w-full flex flex-row items-center justify-start gap-2">
             <button
               onClick={() => router.push('/' + params.lang + '/admin')}
@@ -3454,6 +3455,7 @@ const fetchBuyOrders = async () => {
               />
             </button>
           </div>
+          */}
 
 
           {address && !loadingUser && (
@@ -6726,6 +6728,7 @@ const fetchBuyOrders = async () => {
                         && (
                           <button
                             className="
+                              w-full
                               flex flex-row gap-2 items-center justify-between
                               text-sm text-[#409192] font-semibold
                               border border-[#409192] rounded-lg p-2
@@ -6815,6 +6818,7 @@ const fetchBuyOrders = async () => {
                         (!item?.transactionHash || item?.transactionHash === '0x') && (
                           <div
                             className="
+                              w-full
                               flex flex-row gap-2 items-center justify-between
                               text-sm text-[#409192] font-semibold
                               border border-[#409192] rounded-lg p-2
@@ -7002,7 +7006,8 @@ const fetchBuyOrders = async () => {
                       <td className="p-2">
                         <div className="w-full
                           flex flex-col gap-2 items-start justify-center
-                          border border-dashed border-zinc-300 rounded-lg p-2">
+                          border border-dashed border-zinc-600
+                          rounded-lg p-2">
 
                           {item.status === "paymentConfirmed" &&
                             (!item?.transactionHash || item?.transactionHash === '0x') &&
