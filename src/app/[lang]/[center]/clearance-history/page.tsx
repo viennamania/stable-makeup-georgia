@@ -2831,7 +2831,7 @@ export default function Index({ params }: any) {
                   />
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/buyorder');
+                      router.push('/' + params.lang + '/' + params.center + '/buyorder');
                     }}
                     className="flex items-center justify-center gap-2
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
