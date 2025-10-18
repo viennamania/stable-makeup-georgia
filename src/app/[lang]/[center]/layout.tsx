@@ -156,8 +156,9 @@ export default function RootLayout({
 
   return (
 
-        <div className="w-full flex flex-col items-center justify-center p-0 bg-gray-100 rounded-lg shadow-md mb-4">
-
+        <div className="w-full flex flex-col items-center justify-center p-0 bg-gray-100 rounded-lg shadow-md mb-4
+          pt-12 
+        ">
 
           {/* fixed position left and vertically top */}
           <div className="
