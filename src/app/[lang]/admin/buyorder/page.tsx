@@ -3809,7 +3809,7 @@ const fetchBuyOrders = async () => {
                 {/* 거래취소 */}
                 {/* 거래완료 */}
                 {/* only one checkbox can be checked */}
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-1">
                   <input
                     type="checkbox"
                     checked={searchOrderStatusCancelled}
@@ -3822,7 +3822,7 @@ const fetchBuyOrders = async () => {
                   />
                   <label className="text-sm text-zinc-500">거래취소</label>
                 </div>
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-1">
                   <input
                     type="checkbox"
                     checked={searchOrderStatusCompleted}
@@ -4451,7 +4451,7 @@ const fetchBuyOrders = async () => {
 
 
                     <th className="p-2">
-                      <div className="flex flex-col items-center justify-center gap-2">
+                      <div className="w-full flex flex-col items-start justify-center gap-2">
 
                         <div className="flex flex-row items-center justify-center gap-2">
                           <span>
@@ -4476,11 +4476,12 @@ const fetchBuyOrders = async () => {
                           </span>
 
                         </div>
-
-                        <div className="w-full flex flex-col items-end justify-center gap-2">
+                        <div className="w-full flex flex-col items-start justify-center gap-2">
                           <span className="text-sm text-zinc-50 font-semibold">
                             입금통장
                           </span>
+                        </div>
+                        <div className="w-full flex flex-col items-end justify-center gap-2">
                           <span className="text-sm text-zinc-50 font-semibold">
                             입금액(원)
                           </span>
@@ -4967,7 +4968,7 @@ const fetchBuyOrders = async () => {
                           w-32
                           flex flex-col gap-2 items-end justify-start">
 
-                          <div className="flex flex-row items-center justify-end gap-2">
+                          <div className="flex flex-row items-center justify-end gap-1">
                             <Image
                               src="/icon-tether.png"
                               alt="Tether"
@@ -5030,7 +5031,7 @@ const fetchBuyOrders = async () => {
                             </div>
 
                             {item.paymentMethod === 'mkrw' && item?.escrowWallet?.address && (
-                              <div className="flex flex-col items-end justify-center gap-2">
+                              <div className="flex flex-col items-end justify-center gap-1">
 
                                 <div className="flex flex-row items-center justify-center gap-2">
                                   <Image
@@ -5171,7 +5172,7 @@ const fetchBuyOrders = async () => {
 
                             <div className="flex flex-col gap-2 items-start justify-start">
 
-                              <div className="flex flex-row items-center justify-center gap-2"> 
+                              <div className="flex flex-row items-center justify-center gap-1"> 
                                 <Image
                                   src={item?.seller?.avatar || "/icon-seller.png"}
                                   alt="Avatar"
@@ -5219,7 +5220,7 @@ const fetchBuyOrders = async () => {
                               </span>
                               */}
 
-                              <div className="h-14 flex flex-row items-center justify-center gap-2">
+                              <div className="h-14 flex flex-row items-center justify-center gap-1">
                                 <Image
                                   src="/icon-matching-completed.png"
                                   alt="Matching Completed"
@@ -5527,7 +5528,7 @@ const fetchBuyOrders = async () => {
                             
                             {item?.autoConfirmPayment === true ? (
                             
-                              <div className="flex flex-row gap-2 items-center justify-end">
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
                                 <Image
                                   src="/icon-payaction.png"
                                   alt="Bank Check"
@@ -5542,7 +5543,7 @@ const fetchBuyOrders = async () => {
 
                             ) : (
 
-                              <div className="flex flex-row gap-2 items-center justify-end">
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
                                 <Image
                                   src="/icon-bank-check.png"
                                   alt="Bank Check"
@@ -5559,64 +5560,102 @@ const fetchBuyOrders = async () => {
 
                             {/* seller bank info */}
                             {item?.userType === '' ? (
-                              <div className="flex flex-row gap-2 items-center justify-end">
-                                <span className="text-sm text-zinc-500">
-                                  {item.store?.bankInfo?.bankName}
-                                </span>
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
                                 <span className="text-lg text-gray-800 font-bold">
                                   {item.store?.bankInfo?.accountHolder}
+                                </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfo?.bankName}
                                 </span>
                               </div>
                             ) : (item?.userType === 'AAA' ? (
-                              <div className="flex flex-row gap-2 items-center justify-end">
-                                <span className="text-sm text-zinc-500">
-                                  {item.store?.bankInfoAAA?.bankName}
-                                </span>
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
                                 <span className="text-lg text-gray-800 font-bold">
                                   {item.store?.bankInfoAAA?.accountHolder}
                                 </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoAAA?.bankName}
+                                </span>
                               </div>
                             ) : (item?.userType === 'BBB' ? (
-                              <div className="flex flex-row gap-2 items-center justify-end">
-                                <span className="text-sm text-zinc-500">
-                                  {item.store?.bankInfoBBB?.bankName}
-                                </span>
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
                                 <span className="text-lg text-gray-800 font-bold">
                                   {item.store?.bankInfoBBB?.accountHolder}
                                 </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoBBB?.bankName}
+                                </span>
                               </div>
                             ) : (item?.userType === 'CCC' ? (
-                              <div className="flex flex-row gap-2 items-center justify-end">
-                                <span className="text-sm text-zinc-500">
-                                  {item.store?.bankInfoCCC?.bankName}
-                                </span>
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
                                 <span className="text-lg text-gray-800 font-bold">
                                   {item.store?.bankInfoCCC?.accountHolder}
                                 </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoCCC?.bankName}
+                                </span>
                               </div>
                             ) : (item?.userType === 'DDD' ? (
-                              <div className="flex flex-row gap-2 items-center justify-end">
-                                <span className="text-sm text-zinc-500">
-                                  {item.store?.bankInfoDDD?.bankName}
-                                </span>
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
                                 <span className="text-lg text-gray-800 font-bold">
                                   {item.store?.bankInfoDDD?.accountHolder}
                                 </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfoDDD?.bankName}
+                                </span>
                               </div>
                             ) : (
-                              <div className="flex flex-row gap-2 items-center justify-end">
-                                <span className="text-sm text-zinc-500">
-                                  {item.store?.bankInfo?.bankName}
-                                </span>
+                              <div className="w-full flex flex-row gap-1 items-center justify-start">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
                                 <span className="text-lg text-gray-800 font-bold">
                                   {item.store?.bankInfo?.accountHolder}
                                 </span>
+                                <span className="text-sm text-zinc-500">
+                                  {item.store?.bankInfo?.bankName}
+                                </span>
                               </div>
                             )))))}
-
-
-
-
 
 
                             {/* paymentAmount */}
@@ -5679,9 +5718,9 @@ const fetchBuyOrders = async () => {
                               </div>
                             ) : (
 
-                              <div className="flex flex-col gap-2 items-end justify-center">
+                              <div className="w-full flex flex-col gap-2 items-start justify-center">
 
-                                <div className="flex flex-row gap-2 items-center justify-end">
+                                <div className="flex flex-row gap-1 items-center justify-end">
                                   <Image
                                     src="/icon-search-bank.gif"
                                     alt="Bank Auto"
@@ -5701,83 +5740,123 @@ const fetchBuyOrders = async () => {
 
                                 </div>
 
-
-
                                 {item?.userType === '' ? (
                                   <div className="flex flex-row gap-1 items-center justify-end">
-                                    <span className="text-sm text-zinc-500">
-                                      {
-                                        item.store?.bankInfo?.bankName
-                                      }
-                                    </span>
+                                    <Image
+                                      src="/icon-bank.png"
+                                      alt="Bank"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
                                     <span className="text-lg text-gray-800 font-bold">
                                       {
                                         item.store?.bankInfo?.accountHolder
+                                      }
+                                    </span>
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfo?.bankName
                                       }
                                     </span>
                                   </div>
                                 ) : (item?.userType === 'AAA' ? (
                                   <div className="flex flex-row gap-1 items-center justify-end">
-                                    <span className="text-sm text-zinc-500">
-                                      {
-                                        item.store?.bankInfoAAA?.bankName
-                                      }
-                                    </span>
+                                    <Image
+                                      src="/icon-bank.png"
+                                      alt="Bank"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
                                     <span className="text-lg text-gray-800 font-bold">
                                       {
                                         item.store?.bankInfoAAA?.accountHolder
                                       }
                                     </span>
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoAAA?.bankName
+                                      }
+                                    </span>
                                   </div>
                                 ) : (item?.userType === 'BBB' ? (
                                   <div className="flex flex-row gap-1 items-center justify-end">
-                                    <span className="text-sm text-zinc-500">
-                                      {
-                                        item.store?.bankInfoBBB?.bankName
-                                      }
-                                    </span>
+                                    <Image
+                                      src="/icon-bank.png"
+                                      alt="Bank"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
                                     <span className="text-lg text-gray-800 font-bold">
                                       {
                                         item.store?.bankInfoBBB?.accountHolder
                                       }
                                     </span>
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoBBB?.bankName
+                                      }
+                                    </span>
                                   </div>
                                 ) : (item?.userType === 'CCC' ? (
                                   <div className="flex flex-row gap-1 items-center justify-end">
-                                    <span className="text-sm text-zinc-500">
-                                      {
-                                        item.store?.bankInfoCCC?.bankName
-                                      }
-                                    </span>
+                                    <Image
+                                      src="/icon-bank.png"
+                                      alt="Bank"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
                                     <span className="text-lg text-gray-800 font-bold">
                                       {
                                         item.store?.bankInfoCCC?.accountHolder
                                       }
                                     </span>
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoCCC?.bankName
+                                      }
+                                    </span>
                                   </div>
                                 ) : (item?.userType === 'DDD' ? (
                                   <div className="flex flex-row gap-1 items-center justify-end">
-                                    <span className="text-sm text-zinc-500">
-                                      {
-                                        item.store?.bankInfoDDD?.bankName
-                                      }
-                                    </span>
+                                    <Image
+                                      src="/icon-bank.png"
+                                      alt="Bank"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
                                     <span className="text-lg text-gray-800 font-bold">
                                       {
                                         item.store?.bankInfoDDD?.accountHolder
                                       }
                                     </span>
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfoDDD?.bankName
+                                      }
+                                    </span>
                                   </div>
                                 ) : (
                                   <div className="flex flex-row gap-1 items-center justify-end">
-                                    <span className="text-sm text-zinc-500">
-                                      {
-                                        item.store?.bankInfo?.bankName
-                                      }
-                                    </span>
+                                    <Image
+                                      src="/icon-bank.png"
+                                      alt="Bank"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
                                     <span className="text-lg text-gray-800 font-bold">
                                       {
                                         item.store?.bankInfo?.accountHolder
+                                      }
+                                    </span>
+                                    <span className="text-sm text-zinc-500">
+                                      {
+                                        item.store?.bankInfo?.bankName
                                       }
                                     </span>
                                   </div>
@@ -5796,7 +5875,7 @@ const fetchBuyOrders = async () => {
                                 */}
                                 
                                 {/* paymentAmount */}
-                                <div className="flex flex-row gap-1 items-center justify-center">
+                                <div className="w-full flex flex-row gap-1 items-center justify-end">
                                   <span className="text-lg text-yellow-600 font-semibold"
                                     style={{ fontFamily: 'monospace' }}>
                                     {
@@ -5808,7 +5887,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                                <div className="flex flex-col items-between justify-center">
+                                <div className="w-full flex flex-col items-between justify-center">
 
                                   <span className="text-sm text-purple-600 font-semibold">
                                     {params.lang === 'ko' ? (
@@ -5844,59 +5923,55 @@ const fetchBuyOrders = async () => {
 
                                   && (
 
-                                    <div className="flex flex-col gap-2 items-center justify-center">
+                                    <div className="w-full flex flex-col gap-2 items-center justify-center">
 
-                                      <div className="flex flex-row gap-2">
+                                      <button
+
+                                        disabled={confirmingPayment[index]}
                                         
-                                        <button
+                                        className={`
+                                          ${confirmingPayment[index]
+                                          ? 'text-gray-400 border-gray-400 bg-gray-100 cursor-not-allowed'
+                                          : 'text-blue-600 border-blue-600 bg-blue-100 hover:bg-blue-200 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50'
+                                          } bg-blue-100 border border-blue-600 rounded-lg p-2
+                                          w-full text-center
+                                        `}
 
-                                          disabled={confirmingPayment[index]}
-                                          
-                                          className={`
-                                            ${confirmingPayment[index]
-                                            ? 'text-gray-400 border-gray-400 bg-gray-100 cursor-not-allowed'
-                                            : 'text-blue-600 border-blue-600 bg-blue-100 hover:bg-blue-200 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50'
-                                            } bg-blue-100 border border-blue-600 rounded-lg p-2
-                                          `}
+                                        onClick={() => {
+                                          confirm("정말 입금확인 하시겠습니까?") &&
+                                          confirmPayment(
+                                            index,
+                                            item._id,
+                                            //paymentAmounts[index],
+                                            //paymentAmountsUsdt[index],
 
-                                          onClick={() => {
-                                            confirm("정말 입금확인 하시겠습니까?") &&
-                                            confirmPayment(
-                                              index,
-                                              item._id,
-                                              //paymentAmounts[index],
-                                              //paymentAmountsUsdt[index],
+                                            item.krwAmount,
+                                            item.usdtAmount,
+                                            
+                                            item.walletAddress,
 
-                                              item.krwAmount,
-                                              item.usdtAmount,
-                                              
-                                              item.walletAddress,
+                                            item.paymentMethod,
+                                          );
+                                        }}
 
-                                              item.paymentMethod,
-                                            );
-                                          }}
+                                      >
+                                        <div className="w-full flex flex-row gap-1 items-center justify-center">
+                                          { confirmingPayment[index] && (
+                                              <Image
+                                                src="/loading.png"
+                                                alt="Loading"
+                                                width={20}
+                                                height={20}
+                                                className="w-5 h-5
+                                                animate-spin"
+                                              />
+                                          )}
+                                          <span className="text-sm">
+                                            {confirmingPayment[index] ? '처리중...' : '입금완료처리'}
+                                          </span>
+                                        </div>
 
-                                        >
-                                          <div className="flex flex-row gap-2 items-center justify-center">
-                                            { confirmingPayment[index] && (
-                                                <Image
-                                                  src="/loading.png"
-                                                  alt="Loading"
-                                                  width={20}
-                                                  height={20}
-                                                  className="w-5 h-5
-                                                  animate-spin"
-                                                />
-                                            )}
-                                            <span className="text-sm">
-                                              수동입금확인
-                                            </span>
-                                          </div>
-
-                                        </button>
-
-
-                                      </div>
+                                      </button>
 
                                     </div>
 
@@ -5980,7 +6055,7 @@ const fetchBuyOrders = async () => {
 
                               </div>
 
-                              <div className="flex flex-row gap-2 items-center justify-center">
+                              <div className="flex flex-row gap-1 items-center justify-center">
                                 <Image
                                   src={user?.avatar || "/icon-seller.png"}
                                   alt="User"
@@ -6032,7 +6107,7 @@ const fetchBuyOrders = async () => {
                               // TODO: implement return to escrow logic
                             }}
                           >
-                            <div className="flex flex-row gap-2 items-center justify-start ml-2">
+                            <div className="flex flex-row gap-1 items-center justify-start ml-2">
                               <Image
                                 src={`/token-mkrw-icon.png`}
                                 alt="MKRW Logo"
@@ -6212,8 +6287,17 @@ const fetchBuyOrders = async () => {
                                   />
                                   {/* warning message */}
                                   {/* 취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다. */}
-                                  <div className="text-xs text-red-500">
-                                    취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다.
+                                  <div className="w-full flex flex-row items-center justify-center gap-1">
+                                    <Image
+                                      src="/icon-warning.png"
+                                      alt="Warning"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-xs text-red-500">
+                                      취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다.
+                                    </span>
                                   </div>
 
 
@@ -6359,7 +6443,7 @@ const fetchBuyOrders = async () => {
 
                                     </div>
                                   ) : (
-                                    <div className="flex flex-row gap-2 items-center justify-center">
+                                    <div className="flex flex-row gap-1 items-center justify-center">
                                       <Image
                                         src="/icon-bank.png"
                                         alt="Bank"
@@ -6676,7 +6760,7 @@ const fetchBuyOrders = async () => {
 
                                       {/* warning message */}
                                       {sendingTransaction[index] && (
-                                        <div className="flex flex-row gap-2 items-center justify-center">
+                                        <div className="flex flex-row gap-1 items-center justify-center">
                                           <Image
                                             src="/icon-warning.png"
                                             alt="Warning"
@@ -6758,13 +6842,17 @@ const fetchBuyOrders = async () => {
 
                             }}
                           >
-                              <div className="flex flex-col gap-2 items-start justify-start ml-2">
-                                <div className="flex flex-col gap-1 items-start justify-start
-                                border-b border-dashed border-zinc-300 pb-1">
-                                  <span className="text-sm text-zinc-500 font-normal">
-                                    회원지갑으로 전송한 테더
-                                  </span>
+                              <div className="w-full flex flex-col gap-2 items-start justify-start ml-2">
+                                
+                                <div className="w-full flex flex-col gap-1 items-start justify-start
+                                  border-b border-dashed border-zinc-300 pb-1">
                                   <div className="flex flex-row gap-1 items-center justify-start">
+                                    <div className="w-2 h-2 rounded-full bg-[#409192]" />
+                                    <span className="text-sm text-zinc-500 font-normal">
+                                      회원지갑으로 전송한 테더
+                                    </span>
+                                  </div>
+                                  <div className="w-full flex flex-row gap-1 items-center justify-end">
                                     <Image
                                       src={`/icon-tether.png`}
                                       alt="USDT Logo"
@@ -6781,17 +6869,21 @@ const fetchBuyOrders = async () => {
                                   </div>
                                 </div>
 
-                                <div className="flex flex-col gap-1 items-start justify-start">
-                                  {/*
-                                  <span className="text-sm text-zinc-500">
-                                    테더(USDT) 전송내역
-                                  </span>
-                                  */}
-                                  {/* sellerWalletAddressBalance */}
-                                  <div className="flex flex-col gap-1 items-start justify-start">
+                                <div className="w-full flex flex-col gap-1 items-start justify-start">
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <div className="w-2 h-2 rounded-full bg-[#409192]" />
                                     <span className="text-sm text-zinc-500 font-normal">
                                       판매자지갑 잔액
                                     </span>
+                                  </div>
+                                  <div className="w-full flex flex-row gap-1 items-center justify-end">
+                                    <Image
+                                      src={`/icon-tether.png`}
+                                      alt="USDT Logo"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5"
+                                    />
                                     <span className="text-lg text-[#409192] font-semibold"
                                       style={{
                                         fontFamily: 'monospace',
@@ -6802,6 +6894,7 @@ const fetchBuyOrders = async () => {
                                 </div>
 
                               </div>
+
                               {/* chain logo */}
                               <Image
                                 src={`/logo-chain-${chain}.png`}
@@ -6906,7 +6999,7 @@ const fetchBuyOrders = async () => {
 
                             }}
                           >
-                            <div className="flex flex-row gap-2 items-center justify-start ml-2">
+                            <div className="flex flex-row gap-1 items-center justify-start ml-2">
                               <Image
                                 src={`/token-mkrw-icon.png`}
                                 alt="MKRW Logo"
