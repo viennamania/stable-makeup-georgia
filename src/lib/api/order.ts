@@ -4307,7 +4307,7 @@ export async function cancelTradeBySeller(
 
 
 
-export async function getOneBuyOrderByObjectId(orderId: string): Promise<UserProps | null> {
+export async function getOneBuyOrderByOrderId(orderId: string): Promise<UserProps | null> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
 
