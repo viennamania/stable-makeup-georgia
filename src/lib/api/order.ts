@@ -4307,6 +4307,23 @@ export async function cancelTradeBySeller(
 
 
 
+export async function getOneBuyOrderByObjectId(orderId: string): Promise<UserProps | null> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+
+  if (!ObjectId.isValid(orderId)) {
+    return null;
+  }
+
+  const result = await collection.findOne<UserProps>(
+    { _id: new ObjectId(orderId) }
+  );
+  if (result) {
+    return result;
+  } else {
+    return null;
+  }
+}
 
 
 
