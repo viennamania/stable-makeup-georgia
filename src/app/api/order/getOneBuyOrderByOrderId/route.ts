@@ -12,14 +12,13 @@ export async function POST(request: NextRequest) {
 
   if (!body.orderId) return NextResponse.json({ error: 'orderId is required' }, { status: 400 });
 
-  return await getOneBuyOrderByOrderId(body.orderId);
 
-  /*
+  
   const result = await getOneBuyOrderByOrderId(body.orderId);
  
   return NextResponse.json({
     result,
   });
-  */
+  
   
 }
