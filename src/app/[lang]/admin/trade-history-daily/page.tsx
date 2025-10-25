@@ -809,7 +809,7 @@ export default function Index({ params }: any) {
     fetchBuyOrders();
 
     
-    
+    /*
     const interval = setInterval(() => {
 
       fetchBuyOrders();
@@ -819,6 +819,7 @@ export default function Index({ params }: any) {
   
 
     return () => clearInterval(interval);
+    */
     
     
     
@@ -1010,11 +1011,11 @@ const fetchBuyOrders = async () => {
     , 5000);
     return () => clearInterval(interval);
 
-  } , [searchStorecode]);
+  } , [searchStorecode, address]);
 
 
 
-
+  /*
   const [tradeSummary, setTradeSummary] = useState({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -1047,17 +1048,7 @@ const fetchBuyOrders = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        /*
-        storecode: params.storecode,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-        //searchBuyer: searchBuyer,
-        //searchDepositName: searchDepositName,
-
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-        */
+ 
 
         agentcode: params.agentcode,
         storecode: searchStorecode,
@@ -1096,9 +1087,6 @@ const fetchBuyOrders = async () => {
     return data.result;
   }
 
-
-
-
   useEffect(() => {
 
     if (!address || !searchFromDate || !searchToDate) {
@@ -1117,7 +1105,7 @@ const fetchBuyOrders = async () => {
   } , [address, searchMyOrders, searchStorecode,
     searchFromDate, searchToDate,
   ]);
-
+  */
 
 
   
