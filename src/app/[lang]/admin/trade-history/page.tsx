@@ -856,12 +856,26 @@ export default function Index({ params }: any) {
 
 
   const [searchBuyer, setSearchBuyer] = useState("");
+  /*
+  useEffect(() => {
+    setSearchBuyer(searchParams.get('buyer') || "");
+  }, [searchParams]);
+  */
+
+
 
   const [searchDepositName, setSearchDepositName] = useState("");
 
 
   // search store bank account number
   const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState("");
+  /*
+  useEffect(() => {
+    setSearchStoreBankAccountNumber(searchParams.get('storeBankAccountNumber') || "");
+  }, [searchParams]);
+  */
+
+
 
   const [manualConfirmPayment, setManualConfirmPayment] = useState(false);
   
@@ -3409,6 +3423,20 @@ const fetchBuyOrders = async () => {
                       
                       fetchBuyOrders();
 
+                      /*
+                      router.push('/' + params.lang + '/admin/trade-history?storecode=' + searchStorecode
+                        + '&page=' + pageValue
+                        + '&limit=' + limitValue
+                        + '&fromDate=' + searchFromDate
+                        + '&toDate=' + searchToDate
+                        + '&buyer=' + searchBuyer
+                        + '&depositName=' + searchDepositName
+                        + '&storeBankAccountNumber=' + searchStoreBankAccountNumber
+                      );
+                      */
+
+
+
                       ///getTradeSummary();
                     }}
                     //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
@@ -3453,7 +3481,7 @@ const fetchBuyOrders = async () => {
                 >
                     {isExporting ? "Exporting..." : "엑셀"}
                 </button>
-                
+
               </div>
 
             </div>

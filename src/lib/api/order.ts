@@ -2186,6 +2186,8 @@ export async function getBuyOrders(
   //console.log('getBuyOrders page: ' + page);
 
 
+  // searchStoreBankAccountNumber
+  //console.log('getBuyOrders searchStoreBankAccountNumber: ' + searchStoreBankAccountNumber);
 
 
 

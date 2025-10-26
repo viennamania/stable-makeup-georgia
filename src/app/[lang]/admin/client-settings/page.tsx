@@ -500,6 +500,49 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // /api/client/getAllServerWallets
+    const [serverWallets, setServerWallets] = useState<any[]>([]);
+    useEffect(() => {
+        const fetchServerWallets = async () => {
+            const response = await fetch("/api/client/getAllServerWallets", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            const data = await response.json();
+            if (data.result) {
+                setServerWallets(data.result);
+            }
+        };
+        fetchServerWallets();
+    }, []);
+
+
+
+    // serverWalletTransfer
+    const [serverWalletTransferring, setServerWalletTransferring] = useState(false);
+    const serverWalletTransfer = async () => {
+        if (serverWalletTransferring) {
+            return;
+        }
+        setServerWalletTransferring(true);
+        const response = await fetch("/api/client/serverWalletTransfer", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+            }),
+        });
+        const data = await response.json();
+        if (data.result) {
+            toast.success("Transfer successful");
+        } else {
+            toast.error("Transfer failed");
+        }
+        setServerWalletTransferring(false);
+    };
 
 
 
@@ -728,8 +771,11 @@ export default function SettingsPage({ params }: any) {
 
 
                             <div className="w-full flex flex-col items-start justify-start gap-2
-                            border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
+                                background-gray-50 p-4 rounded-lg border border-gray-500">
+
+                                {/* 센터 정보 변경 */}
+                                <div className='flex flex-row items-center justify-start gap-2 mb-4
+                                border-b border-gray-200 pb-2'>
                                     <Image
                                         src={`/icon-dot-green.png`}
                                         alt={`Dot icon`}
@@ -737,293 +783,332 @@ export default function SettingsPage({ params }: any) {
                                         height={10}
                                         className="h-2.5 w-2.5"
                                     />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        센터 이름
+                                    <span className="text-lg text-gray-500 font-semibold">
+                                        센터 정보 변경
                                     </span>
                                 </div>
-                                <input
-                                    type="text"
-                                    value={clientName}
-                                    onChange={(e) => setClientName(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-lg"
-                                    placeholder="센터 이름"
-                                />
-                            </div>
 
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                            border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
+                                <div className="w-full flex flex-col items-start justify-start gap-2
+                                border-b border-gray-200 pb-4">
+                                    <div className='flex flex-row items-center justify-start gap-2'>
+                                        <Image
+                                            src={`/icon-dot-green.png`}
+                                            alt={`Dot icon`}
+                                            width={10}
+                                            height={10}
+                                            className="h-2.5 w-2.5"
+                                        />
+                                        <span className="text-sm text-gray-500 font-semibold">
+                                            센터 이름
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={clientName}
+                                        onChange={(e) => setClientName(e.target.value)}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                        placeholder="센터 이름"
                                     />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        센터 소개
-                                    </span>
                                 </div>
-                                <textarea
-                                    value={clientDescription}
-                                    rows={4}
-                                    onChange={(e) => setClientDescription(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-lg"
-                                    placeholder="센터 소개"
-                                />
+
+                                <div className="w-full flex flex-col items-start justify-start gap-2
+                                border-b border-gray-200 pb-4">
+                                    <div className='flex flex-row items-center justify-start gap-2'>
+                                        <Image
+                                            src={`/icon-dot-green.png`}
+                                            alt={`Dot icon`}
+                                            width={10}
+                                            height={10}
+                                            className="h-2.5 w-2.5"
+                                        />
+                                        <span className="text-sm text-gray-500 font-semibold">
+                                            센터 소개
+                                        </span>
+                                    </div>
+                                    <textarea
+                                        value={clientDescription}
+                                        rows={4}
+                                        onChange={(e) => setClientDescription(e.target.value)}
+                                        className="w-full p-2 border border-gray-300 rounded-lg"
+                                        placeholder="센터 소개"
+                                    />
+                                </div>
+
+                                {/*
+                                <div className="w-full flex flex-col items-start justify-start space-y-2">
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        센터 로고
+                                    </span>
+                                    <Uploader
+                                        value={clientInfo.logo || ''}
+                                        onChange={(value) => updateClientInfo({ logo: value })}
+                                    />
+                                </div>
+                                */}
+
+
+                                {/* exchange rate USDT */}
+                                <div className="w-full flex flex-col items-start justify-start gap-2
+                                border-b border-gray-200 pb-4">
+                                    <div className='flex flex-row items-center justify-start gap-2'>
+                                        <Image
+                                            src={`/icon-dot-green.png`}
+                                            alt={`Dot icon`}
+                                            width={10}
+                                            height={10}
+                                            className="h-2.5 w-2.5"
+                                        />
+                                        <span className="text-sm text-gray-500 font-semibold">
+                                            환율(살때) (USDT to ...)
+                                        </span>
+                                    </div>
+
+                                    <div className="w-full grid grid-cols-5 gap-4">
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                USD
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDT.USD}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, USD: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                KRW
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDT.KRW}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, KRW: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                JPY
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDT.JPY}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, JPY: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                CNY
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDT.CNY}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, CNY: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                EUR
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDT.EUR}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, EUR: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+
+                                </div>
+        
+
+                                {/*  환율(팔때) (USDT to ...) */}
+                                <div className="w-full flex flex-col items-start justify-start gap-2 border-b border-gray-200 pb-4">
+                                    <div className='flex flex-row items-center justify-start gap-2'>
+                                        <Image
+                                            src={`/icon-dot-green.png`}
+                                            alt={`Dot icon`}
+                                            width={10}
+                                            height={10}
+                                            className="h-2.5 w-2.5"
+                                        />
+                                        <span className="text-sm text-gray-500 font-semibold">
+                                            환율(팔때) (USDT to ...)
+                                        </span>
+                                    </div>
+                                    <div className="w-full grid grid-cols-5 gap-4">
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                USD
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDTSell.USD}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, USD: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                KRW
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDTSell.KRW}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, KRW: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                JPY
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDTSell.JPY}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, JPY: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                CNY
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDTSell.CNY}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, CNY: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col items-start justify-start space-y-1">
+                                            <span className="text-sm text-gray-500">
+                                                EUR
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={exchangeRateUSDTSell.EUR}
+                                                onChange={(e) => {
+                                                    // check number character only
+                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
+                                                        return;
+                                                    }
+
+                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, EUR: Number(e.target.value) })
+                                                }}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    disabled={updatingClientInfo}
+                                    onClick={() => updateClientInfo()}
+                                    className={`w-full bg-blue-500 text-white p-2 rounded-lg ${updatingClientInfo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
+                                >
+                                    {updatingClientInfo ? '저장 중...' : '저장하기'}
+                                </button>
+
                             </div>
 
+                            {/* 판매자 정보 */}
+
+                            {/* servier wallet transfer */}
                             {/*
-                            <div className="w-full flex flex-col items-start justify-start space-y-2">
-                                <span className="text-sm text-gray-500 font-semibold">
-                                    센터 로고
-                                </span>
-                                <Uploader
-                                    value={clientInfo.logo || ''}
-                                    onChange={(value) => updateClientInfo({ logo: value })}
-                                />
+                            <div className="w-full flex flex-col items-start justify-start gap-2
+                                background-gray-50 p-4 rounded-lg border border-gray-500">
+
+                               <button
+                                    disabled={serverWalletTransferring}
+                                    onClick={() => serverWalletTransfer()}
+                                    className={`
+                                        ${serverWalletTransferring ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}
+                                        w-full bg-blue-500 text-white p-2 rounded-lg
+                                    `}
+                                >
+                                    서버 월렛 USDT 1 전송 테스트
+                                </button>
+
                             </div>
                             */}
 
 
-                            {/* exchange rate USDT */}
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                            border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        환율(살때) (USDT to ...)
-                                    </span>
-                                </div>
 
-                                <div className="w-full grid grid-cols-2 gap-4">
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            USD
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDT.USD}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDT({ ...exchangeRateUSDT, USD: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            KRW
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDT.KRW}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDT({ ...exchangeRateUSDT, KRW: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            JPY
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDT.JPY}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDT({ ...exchangeRateUSDT, JPY: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            CNY
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDT.CNY}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDT({ ...exchangeRateUSDT, CNY: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            EUR
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDT.EUR}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDT({ ...exchangeRateUSDT, EUR: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-                                </div>
-
-                            </div>
-    
-
-                            {/*  환율(팔때) (USDT to ...) */}
-                            <div className="w-full flex flex-col items-start justify-start gap-2 border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        환율(팔때) (USDT to ...)
-                                    </span>
-                                </div>
-                                <div className="w-full grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            USD
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDTSell.USD}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, USD: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            KRW
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDTSell.KRW}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, KRW: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            JPY
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDTSell.JPY}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, JPY: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            CNY
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDTSell.CNY}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, CNY: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-
-                                    <div className="flex flex-col items-start justify-start space-y-1">
-                                        <span className="text-sm text-gray-500">
-                                            EUR
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={exchangeRateUSDTSell.EUR}
-                                            onChange={(e) => {
-                                                // check number character only
-                                                if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                    return;
-                                                }
-
-                                                setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, EUR: Number(e.target.value) })
-                                            }}
-                                            className="w-full p-2 border border-gray-300 rounded-lg"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-
-
-                            <button
-                                disabled={updatingClientInfo}
-                                onClick={() => updateClientInfo()}
-                                className={`w-full bg-blue-500 text-white p-2 rounded-lg ${updatingClientInfo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
-                            >
-                                {updatingClientInfo ? '저장 중...' : '저장하기'}
-                            </button>
 
                         </div>
                     ) : (

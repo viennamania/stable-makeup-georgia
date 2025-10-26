@@ -2394,6 +2394,8 @@ export default function Index({ params }: any) {
 
             'USDT 금액': item.usdtAmount || 0,
             'KRW 금액': item.krwAmount || 0,
+
+            '거래 해시': item.transactionHash || '',
             //'기타1': item. || '',
             //'기타2': item. || '',
         });
