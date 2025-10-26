@@ -175,6 +175,9 @@ import {
 } from "@/app/config/contractAddresses";
 
 
+import * as XLSX from "xlsx";
+
+
 
 export default function Index({ params }: any) {
 
@@ -2318,6 +2321,115 @@ export default function Index({ params }: any) {
 
 
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportToCSV = async (fileName: string) => {
+
+      setIsExporting(true);
+
+      const response = await fetch('/api/order/getAllBuyOrders', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            {
+              storecode: searchStorecode,
+              limit: Number(limitValue),
+              page: Number(pageValue),
+              walletAddress: address,
+              searchMyOrders: searchMyOrders,
+
+              searchOrderStatusCompleted: true,
+
+              searchBuyer: searchBuyer,
+              searchDepositName: searchDepositName,
+
+              searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+
+              privateSale: true,
+
+              fromDate: searchFromDate,
+              toDate: searchToDate,
+
+
+            }
+          ),
+      })
+
+      if (!response.ok) {
+          setIsExporting(false);
+          console.error('Error fetching data');
+          return;
+      }
+
+      const post = await response.json();
+
+  
+      const items = post.result.orders;
+
+
+
+      const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+
+      const fileExtension = '.xlsx';
+
+
+      const formattedData  = [] as any[];
+
+      //items.map((item, index ) => {
+      items.map((item: any, index: number) => {
+
+        formattedData.push({
+            
+            'No': index + 1,
+            '주문번호': item.tradeId,
+            '주문일시': item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '',
+            '가맹점명': item.store?.storeName || '',
+
+            '판매자 지갑주소': item.seller?.walletAddress || '',
+            '판매자 예금주명': item.seller?.bankInfo?.accountHolder || '',
+            '판매자 은행명': item.seller?.bankInfo?.bankName || '',
+            '판매자 계좌번호': item.seller?.bankInfo?.accountNumber || '',
+
+            'USDT 금액': item.usdtAmount || 0,
+            'KRW 금액': item.krwAmount || 0,
+            //'기타1': item. || '',
+            //'기타2': item. || '',
+        });
+
+      });
+
+
+
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+
+    const wb = { Sheets: { data: ws }, SheetNames: ['data'] };
+
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+    const data = new Blob([excelBuffer], { type: fileType });
+
+    const now = new Date();
+
+    const date = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+
+    const time = `${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}`;
+
+    const dateTime = `${date}_${time}`;
+
+    const fileNameExtension = `${fileName}_${dateTime}${fileExtension}`;
+
+    ///XLSX.writeFile(data  , fileNameExtension);
+
+    ///XLSX.writeFile(data, fileNameExtension);
+
+    XLSX.writeFile(wb, fileNameExtension);
+      
+  
+    setIsExporting(false);
+
+  }
 
 
 
@@ -3076,6 +3188,22 @@ export default function Index({ params }: any) {
                 </button>
               </div>
               */}
+
+
+              {/* export button */}
+              <button
+                onClick={() => {
+                    exportToCSV('청산내역');
+                }}
+                disabled={isExporting}
+                className={`${isExporting ? "bg-gray-500" : "bg-green-500"} text-white p-2 rounded-lg
+                    hover:bg-green-600
+                `}
+              >
+                  {isExporting ? "Exporting..." : "엑셀"}
+              </button>
+
+
 
             </div>
 

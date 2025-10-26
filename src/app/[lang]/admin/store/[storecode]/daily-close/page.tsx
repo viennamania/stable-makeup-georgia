@@ -1107,6 +1107,7 @@ const fetchBuyOrders = async () => {
     }
 
     // get escrow history
+    /*
     const fetchEscrowHistory = async () => {
       const response = await fetch('/api/escrow/history', {
         method: 'POST',
@@ -1128,6 +1129,30 @@ const fetchBuyOrders = async () => {
     };
 
     fetchEscrowHistory();
+    */
+
+    
+    const responseEscrowHistory = await fetch('/api/escrow/history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        storecode: params.storecode,
+        limit: 100,
+        page: 1,
+      }),
+    });
+
+
+
+    const dataEscrowHistory = await responseEscrowHistory.json();
+
+    setEscrowHistory(dataEscrowHistory.result.escrows || []);
+
+
+
+
 
     setWithdrawingEscrow(
       withdrawingEscrow.map((item: boolean, idx: number): boolean => idx === index ? false : item)
@@ -1421,52 +1446,6 @@ const fetchBuyOrders = async () => {
 
                 </div>
 
-
-
-                {!address && (
-                <ConnectButton
-                    client={client}
-                    wallets={wallets}
-                    chain={arbitrum}
-                    theme={"light"}
-
-                    // button color is dark skyblue convert (49, 103, 180) to hex
-                    connectButton={{
-                        style: {
-                            backgroundColor: "#3167b4", // dark skyblue
-                            color: "#f3f4f6", // gray-300
-                            padding: "2px 10px",
-                            borderRadius: "10px",
-                            fontSize: "14px",
-                            width: "60x",
-                            height: "38px",
-                        },
-                        label: "원클릭 로그인",
-                    }}
-
-                    connectModal={{
-                    size: "wide", 
-                    //size: "compact",
-                    titleIcon: "https://www.stable.makeup/logo.png",                           
-                    showThirdwebBranding: false,
-                    }}
-
-                    locale={"ko_KR"}
-                    //locale={"en_US"}
-                />
-                )}
-
-                {/*
-                {address && !loadingUser && (
-                    <div className="w-full flex flex-row items-center justify-end gap-2">
-
-                        <span className="text-lg text-gray-500 font-semibold">
-                        {user?.nickname || "프로필"}
-                        </span>
-
-                    </div>
-                )}
-                */}
 
             </div>
 
@@ -1861,8 +1840,7 @@ const fetchBuyOrders = async () => {
                           <td className="px-4 py-2 text-sm text-blue-600 font-semibold text-right">
                             {order.totalEscrowCount && order.totalEscrowCount > 0 ? (
                               <span className="text-[#409192]">
-                                {Number(order.totalEscrowWithdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USDT
-                                정산완료
+                                {Number(order.totalEscrowWithdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USDT 정산완료
                               </span>
                             ) : (
 
