@@ -689,7 +689,7 @@ export default function Index({ params }: any) {
 
         setLoadingUser(false);
 
-    } , [address, "admin"]);
+    } , [address]);
 
 
 

@@ -1387,7 +1387,7 @@ export async function getAllSellersForBalanceInquiry(
   const client = await clientPromise;
   const collection = client.db(dbName).collection('users');
   // walletAddress is not empty and not null
-  // seller is not empty and the value of seller is true
+  // seller is not empty and status is 'confirmed'
   // order by nickname asc
   // if storecode is empty, return all users
   // projection: id, nickname, walletAddress
@@ -1396,7 +1396,8 @@ export async function getAllSellersForBalanceInquiry(
     .find<UserProps>(
       {
         walletAddress: { $exists: true, $ne: null },
-        seller: true,
+        seller: { $exists: true  , $ne: null},
+        'seller.status': 'confirmed',
       },
       {
         projection: {
@@ -1414,7 +1415,8 @@ export async function getAllSellersForBalanceInquiry(
   const totalCount = await collection.countDocuments(
     {
       walletAddress: { $exists: true, $ne: null },
-      seller: true,
+      seller: { $exists: true  , $ne: null},
+      'seller.status': 'confirmed',
     }
   );
 
