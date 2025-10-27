@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
   });
   */
  
-  /*
+  
   const wallet = Engine.serverWallet({
     client,
     vaultAccessToken,
@@ -63,13 +63,14 @@ export async function POST(request: NextRequest) {
     
     address: "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79", // your server wallet signer (EOA) address
   });
-  */
+  
 
-
+  /*
   const wallet = Engine.serverWallet({
     client,
     address: "0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3", // your server wallet signer (EOA) address
   });
+  */
 
 
   const contract = getContract({
