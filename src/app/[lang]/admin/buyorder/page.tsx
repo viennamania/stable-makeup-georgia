@@ -5915,8 +5915,10 @@ const fetchBuyOrders = async () => {
                                     )}
                                   </span>
 
-                                  {item.seller
-                                  && item.seller.walletAddress === address
+                                  {
+                                  
+                                  (item.seller.walletAddress === address || isAdmin)
+
                                   && item.status === 'paymentRequested'
                                   
                                   ///////////////&& item?.autoConfirmPayment
