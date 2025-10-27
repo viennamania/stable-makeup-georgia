@@ -2335,8 +2335,8 @@ export default function Index({ params }: any) {
           body: JSON.stringify(
             {
               storecode: searchStorecode,
-              limit: Number(limitValue),
-              page: Number(pageValue),
+              limit: 10000,
+              page: 1,
               walletAddress: address,
               searchMyOrders: searchMyOrders,
 
