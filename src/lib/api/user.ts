@@ -1374,6 +1374,57 @@ export async function getAllSellersByStorecode(
 }
 
 
+// getAllSellersForBalanceInquiry
+export async function getAllSellersForBalanceInquiry(
+  {
+    limit,
+    page,
+  }: {
+    limit: number;
+    page: number;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+  // walletAddress is not empty and not null
+  // seller is not empty and the value of seller is true
+  // order by nickname asc
+  // if storecode is empty, return all users
+  // projection: id, nickname, walletAddress
+
+  const users = await collection
+    .find<UserProps>(
+      {
+        walletAddress: { $exists: true, $ne: null },
+        seller: true,
+      },
+      {
+        projection: {
+          id: 1,
+          nickname: 1,
+          walletAddress: 1,
+        },
+      }
+    )
+    .sort({ nickname: 1 })
+    .limit(limit)
+    .skip((page - 1) * limit)
+    .toArray();
+
+  const totalCount = await collection.countDocuments(
+    {
+      walletAddress: { $exists: true, $ne: null },
+      seller: true,
+    }
+  );
+
+
+  return {
+    totalCount,
+    users ,
+  };
+}
+
 
 
 

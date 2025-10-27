@@ -3110,6 +3110,46 @@ const fetchBuyOrders = async () => {
 
 
 
+  // /api/user/getAllSellersForBalance
+  const [sellersBalance, setSellersBalance] = useState([] as any[]);
+  const fetchSellersBalance = async () => {
+    const response = await fetch('/api/user/getAllSellersForBalance', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(
+        {
+          limit: 100,
+          page: 1,
+        }
+      )
+    });
+
+    const data = await response.json();
+    if (data.result) {
+      setSellersBalance(data.result.users);
+    } else {
+      console.error('Error fetching sellers balance');
+    }
+  };
+  useEffect(() => {
+    if (!address) {
+      setSellersBalance([]);
+      return;
+    }
+    fetchSellersBalance();
+    // interval to fetch every 10 seconds
+    const interval = setInterval(() => {
+      fetchSellersBalance();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [address]);
+
+
+  //console.log('sellersBalance', sellersBalance);
+
+
 
 
   if (!address) {
@@ -3193,6 +3233,8 @@ const fetchBuyOrders = async () => {
       </div>
     );
   }
+
+
 
 
 
@@ -4339,6 +4381,79 @@ const fetchBuyOrders = async () => {
           </div>
           */}
 
+          {/* sellersBalance array row */}
+          {/*
+            users: [
+              {
+                _id: new ObjectId('68acfb7bb8c1f34ff993f85e'),
+                id: 5284419,
+                nickname: 'cryptoss',
+                walletAddress: '0x4429A977379fdd42b54A543E91Da81Abe7bb52FD',
+                currentUsdtBalance: 200.189869
+              },
+              {
+                _id: new ObjectId('68fec05162e030d977139b30'),
+                id: 5644419,
+                nickname: 'seller1',
+                walletAddress: '0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3',
+                currentUsdtBalance: 4
+              }
+            ],
+          */}
+
+          {sellersBalance.length > 0 && (
+            <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
+              mt-4
+              ">
+
+              {sellersBalance.map((seller, index) => (
+                <div key={index}
+                  className="flex flex-row items-center justify-between gap-4
+                  bg-white/80
+                  p-4 rounded-lg shadow-md
+                  backdrop-blur-md
+                  ">
+                  <div className="flex flex-row items-center gap-4">
+                    <Image
+                      src="/icon-seller.png"
+                      alt="Seller"
+                      width={40}
+                      height={40}
+                      className="w-10 h-10"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold">
+                        {seller.nickname}
+                      </span>
+                      <button
+                        className="text-sm text-zinc-600 underline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(seller.walletAddress);
+                          toast.success(Copied_Wallet_Address);
+                        } }
+                      >
+                        {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-row items-center gap-2">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="USDT"
+                      width={30}
+                      height={30}
+                      className="w-7 h-7"
+                    />
+                    <span className="text-2xl font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}>
+                      {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+            </div>
+          )}
 
           {/* table view is horizontal scroll */}
           {tableView ? (
