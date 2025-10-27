@@ -2387,6 +2387,13 @@ export default function Index({ params }: any) {
             '주문일시': item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '',
             '가맹점명': item.store?.storeName || '',
 
+            '구매자 아이디': item?.buyer?.nickname ? item.buyer?.nickname : item.nickname || '',
+            '구매자 지갑주소': item.walletAddress || '',     
+
+            '구매자 예금주명': item.buyer?.depositName || '',
+            '구매자 은행명': item.buyer?.depositBankName || '',
+            '구매자 계좌번호': item.buyer?.depositBankAccountNumber || '',
+
             '판매자 지갑주소': item.seller?.walletAddress || '',
             '판매자 예금주명': item.seller?.bankInfo?.accountHolder || '',
             '판매자 은행명': item.seller?.bankInfo?.bankName || '',
@@ -2395,9 +2402,8 @@ export default function Index({ params }: any) {
             'USDT 금액': item.usdtAmount || 0,
             'KRW 금액': item.krwAmount || 0,
 
-            '거래 해시': item.transactionHash || '',
-            //'기타1': item. || '',
-            //'기타2': item. || '',
+            '구매자에게 USDT 전송한 내역': item.transactionHash || '',
+            '구매자가 USDT 전송한 내역': item?.settlement?.txid || '',
         });
 
       });
@@ -3670,7 +3676,7 @@ export default function Index({ params }: any) {
                                 <span className="text-lg text-zinc-600">
                                   {item?.buyer?.nickname ?
                                     item?.buyer?.nickname
-                                    : item?.nickname || '익명'}
+                                    : item.nickname || '익명'}
                                 </span>
                               </div>
 

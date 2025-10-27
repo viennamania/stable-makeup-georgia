@@ -1089,7 +1089,7 @@ export default function SettingsPage({ params }: any) {
                             {/* 판매자 정보 */}
 
                             {/* servier wallet transfer */}
-                            {/*
+                            
                             <div className="w-full flex flex-col items-start justify-start gap-2
                                 background-gray-50 p-4 rounded-lg border border-gray-500">
 
@@ -1105,7 +1105,7 @@ export default function SettingsPage({ params }: any) {
                                 </button>
 
                             </div>
-                            */}
+                            
 
 
 
