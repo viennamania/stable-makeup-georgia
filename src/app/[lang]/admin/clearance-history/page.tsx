@@ -2394,10 +2394,10 @@ export default function Index({ params }: any) {
             '구매자 은행명': item.buyer?.depositBankName || '',
             '구매자 계좌번호': item.buyer?.depositBankAccountNumber || '',
 
-            '판매자 지갑주소': item.seller?.walletAddress || '',
-            '판매자 예금주명': item.seller?.bankInfo?.accountHolder || '',
-            '판매자 은행명': item.seller?.bankInfo?.bankName || '',
-            '판매자 계좌번호': item.seller?.bankInfo?.accountNumber || '',
+            '판매자 지갑주소': item?.seller?.walletAddress || '',
+            '판매자 예금주명': item?.seller?.bankInfo?.accountHolder || '',
+            '판매자 은행명': item?.seller?.bankInfo?.bankName || '',
+            '판매자 계좌번호': item?.seller?.bankInfo?.accountNumber || '',
 
             'USDT 금액': item.usdtAmount || 0,
             'KRW 금액': item.krwAmount || 0,
@@ -3785,19 +3785,19 @@ export default function Index({ params }: any) {
                               ) : (
                                 <div className="flex flex-col items-start justify-center gap-1">
                                   <span className="text-lg text-zinc-400 font-semibold">
-                                    {item.seller?.bankInfo?.bankName}
+                                    {item?.seller?.bankInfo?.bankName}
                                   </span>
                                   <button
                                     className="text-lg text-zinc-400 font-semibold hover:text-blue-500"
                                     onClick={() => {
-                                      navigator.clipboard.writeText(item.seller?.bankInfo?.accountNumber);
+                                      navigator.clipboard.writeText(item?.seller?.bankInfo?.accountNumber);
                                       alert('계좌번호가 클립보드에 복사되었습니다.');
                                     }}
                                   >
-                                    {item.seller?.bankInfo?.accountNumber}
+                                    {item?.seller?.bankInfo?.accountNumber}
                                   </button>
                                   <span className="text-lg text-zinc-400 font-semibold">
-                                    {item.seller?.bankInfo?.accountHolder}
+                                    {item?.seller?.bankInfo?.accountHolder}
                                     </span>
                                 </div>
                               )}
@@ -3856,7 +3856,7 @@ export default function Index({ params }: any) {
                                     </div>
                                     {/*
                                     <div className="text-sm text-white">
-                                      {item.seller?.nickname}
+                                      {item?.seller?.nickname}
                                     </div>
                                     */}
                                     <div className="text-sm text-zinc-500">
@@ -3903,7 +3903,7 @@ export default function Index({ params }: any) {
 
                                     {/*
                                     <div className="text-sm text-white">
-                                      {item.seller?.nickname}
+                                      {item?.seller?.nickname}
                                     </div>
                                     */}
 
@@ -3934,7 +3934,7 @@ export default function Index({ params }: any) {
                                       </div>
                                       {/*
                                       <span className="text-sm text-white">
-                                        {item.seller?.nickname}
+                                        {item?.seller?.nickname}
                                       </span>
                                       */}
 
@@ -3964,7 +3964,7 @@ export default function Index({ params }: any) {
                                     </span>
                                     {/*
                                     <span className="text-sm font-semibold text-white">
-                                      {item.seller?.nickname}
+                                      {item?.seller?.nickname}
                                     </span>
                                     */}
 
@@ -4104,13 +4104,13 @@ export default function Index({ params }: any) {
 
                             <div className="flex flex-col gap-2 items-start justify-start">
 
-                              {item.status === 'accepted' && item.seller && item.seller.walletAddress !== address && (
+                              {item.status === 'accepted' && item.seller && item?.seller?.walletAddress !== address && (
                                 <span className="text-sm text-white">
-                                  {item.seller.nickname}
+                                  {item?.seller?.nickname}
                                 </span>
                               )}
 
-                              {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
+                              {item.status === 'accepted' && item.seller && item?.seller?.walletAddress === address && (
                                 
                                 <div className="flex flex-row items-center gap-2">
                                   <input
@@ -4199,7 +4199,7 @@ export default function Index({ params }: any) {
 
                               
                               {
-                                item.seller && item.seller.walletAddress === address &&
+                                item.seller && item?.seller?.walletAddress === address &&
                                 item.status === 'accepted' && (
                                 <div className="flex flex-row gap-2">
 
@@ -4251,7 +4251,7 @@ export default function Index({ params }: any) {
 
 
 
-                              {item.seller && item.seller.walletAddress === address &&   
+                              {item.seller && item?.seller?.walletAddress === address &&   
                               item.status === 'paymentRequested' && (
 
                                 <div className="flex flex-col gap-2">
@@ -4379,7 +4379,7 @@ export default function Index({ params }: any) {
                             flex flex-col gap-2 items-center justify-center">
                               <span className="text-sm font-semibold text-zinc-500">
                                 {
-                                  item.seller?.nickname
+                                  item?.seller?.nickname
                                 }
                               </span>
 
@@ -4403,13 +4403,13 @@ export default function Index({ params }: any) {
                                   onClick={() => {
                                     
                                     // copy to clipboard
-                                    navigator.clipboard.writeText(item.seller?.walletAddress || '');
+                                    navigator.clipboard.writeText(item?.seller?.walletAddress || '');
 
                                     toast.success('지갑주소가 복사되었습니다.');
                                   }}
                                 >
-                                  {item.seller?.walletAddress &&
-                                    item.seller?.walletAddress.substring(0, 6) + '...' + item.seller?.walletAddress.substring(item.seller?.walletAddress.length - 4)}
+                                  {item?.seller?.walletAddress &&
+                                    item?.seller?.walletAddress.substring(0, 6) + '...' + item?.seller?.walletAddress.substring(item?.seller?.walletAddress.length - 4)}
                                 </button>
                               </div>
 
@@ -4886,7 +4886,7 @@ export default function Index({ params }: any) {
                     
 
                             <div className="mb-4 flex flex-col items-start text-sm ">
-                              {Payment}: {Bank_Transfer} ({item.seller?.bankInfo?.bankName})
+                              {Payment}: {Bank_Transfer} ({item?.seller?.bankInfo?.bankName})
                             </div>
 
 
@@ -4997,7 +4997,7 @@ export default function Index({ params }: any) {
                         
                               <div className="mt-4 flex flex-row items-center gap-2">
                                 <Image
-                                  src={item.seller?.avatar || "/profile-default.png"}
+                                  src={item?.seller?.avatar || "/profile-default.png"}
                                   alt="Profile Image"
                                   width={32}
                                   height={32}
@@ -5011,7 +5011,7 @@ export default function Index({ params }: any) {
                                 />
                                 <p className="text-xl text-green-500 font-semibold">
                                   {Seller}: {
-                                    item.seller?.nickname
+                                    item?.seller?.nickname
                                   }
                                 </p>
                                 <Image
@@ -5163,7 +5163,7 @@ export default function Index({ params }: any) {
                             )}
 
                             {
-                            item.seller && item.seller.walletAddress === address &&
+                            item.seller && item?.seller?.walletAddress === address &&
                             item.status === 'accepted' && (
                               <div className="flex flex-row gap-1">
 
