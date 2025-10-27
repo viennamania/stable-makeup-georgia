@@ -880,11 +880,11 @@ export default function Index({ params }: any) {
 
 
 
-          walletAddress: address,
+          ////////////walletAddress: address,
 
+          walletAddress: store.sellerWalletAddress,
+          //nickname: nickname,
 
-
-          nickname: nickname,
           //storecode: storecode,
           usdtAmount: orderUsdtAmount,
           krwAmount: krwAmount,
