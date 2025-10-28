@@ -3997,12 +3997,27 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
   return {
     success: result.modifiedCount === 1,
   };
-  
+
 }
 
-
-
-
+// buyOrderConfirmPaymentReverted
+export async function buyOrderConfirmPaymentReverted(data: any) {
+  // tradeId
+  if (!data.tradeId) {
+    return null;
+  }
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const result = await collection.updateOne(
+    { tradeId: data.tradeId },
+    { $set: {
+      queueId: null,
+    } }
+  );
+  return {
+    success: result.modifiedCount === 1,
+  };
+}
 
 
 
