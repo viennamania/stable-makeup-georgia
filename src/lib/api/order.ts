@@ -2189,6 +2189,9 @@ export async function getBuyOrders(
   // searchStoreBankAccountNumber
   //console.log('getBuyOrders searchStoreBankAccountNumber: ' + searchStoreBankAccountNumber);
 
+  // searchDepositName
+  // 일렉스파크
+  console.log('getBuyOrders searchDepositName: ' + searchDepositName);
 
 
   const client = await clientPromise;
@@ -2224,7 +2227,11 @@ export async function getBuyOrders(
 
         //...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
         // searchDepositName is buyer.depositName or seller.bankInfo.accountHolder
-        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+
+        ...(searchDepositName ? {
+          $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } },
+            { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' }
+          }] } : {}),
 
         
         ///...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
@@ -2279,7 +2286,9 @@ export async function getBuyOrders(
         
         
         //...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
-        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } },
+          { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' }
+        }] } : {}),
 
 
         /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
@@ -2370,9 +2379,16 @@ export async function getBuyOrders(
         // search buyer name
         ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
         
+        
+        
         // search deposit name
         ///...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
-        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+
+        ...(searchDepositName ? { $or: [
+          { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } },
+          { "seller.bankInfo.accountHolder": { $regex: String(searchDepositName), $options: 'i' } }
+        ] } : {}),
+
 
         // search store bank account number
         /////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
@@ -2399,13 +2415,6 @@ export async function getBuyOrders(
           $lte: toDateValue,
         }
 
-
-
-      
-          
-
-
-
       },
       
       //{ projection: { _id: 0, emailVerified: 0 } }
@@ -2415,112 +2424,6 @@ export async function getBuyOrders(
     .limit(limit).skip((page - 1) * limit)
     .toArray();
     //).sort({ paymentConfirmedAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
-
-
-
-    /*
-    const totalCount = await collection.countDocuments(
-      {
-        ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
-
-
-        storecode: storecode || { $ne: null },
-        status: (searchOrderStatusCancelled && searchOrderStatusCompleted ? { $in: ['cancelled', 'paymentConfirmed'] }
-          : (searchOrderStatusCancelled ? 'cancelled'
-          : (searchOrderStatusCompleted ? 'paymentConfirmed'
-          : { $ne: 'nothing' }))),
-
-        //privateSale: { $ne: true },
-        privateSale: privateSale || { $ne: true },
-
-        ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
-
-        ...(searchBuyer ? { nickname: { $regex: String(searchBuyer), $options: 'i' } } : {}),
-
-        ///...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
-        ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
-
-        
-        ////...(searchStoreBankAccountNumber ? { 'store.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
-        // seller?.bankInfo?.accountNumber
-        ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
-
-
-        // if manualConfirmPayment is true, autoConfirmPayment is not true
-        ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
-
-
-        // filter by fromDate and toDate
-        
-        createdAt: {
-          $gte: fromDateValue,
-          $lte: toDateValue,
-        }
-
-
-      }
-    );
-    */
-
-
-
-
-
-    /*
-      const totalResult = await collection.aggregate([
-      {
-        $match: {
-          
-          //'seller.walletAddress': walletAddress,
-
-          //nickname: { $regex: searchNickname, $options: 'i' },
-
-
-          status: 'paymentConfirmed',
-
-          ///privateSale: { $ne: true },
-          privateSale: privateSale,
-
-
-          agentcode: { $regex: agentcode, $options: 'i' },
-          //storecode: storecode,
-          storecode: { $regex: storecode, $options: 'i' },
-
-          nickname: { $regex: searchBuyer, $options: 'i' },
-
-          'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-          'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-          //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-          createdAt: { $gte: fromDateValue, $lt: toDateValue },
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          
-
-          totalCount: { $sum: 1 },
-          totalKrwAmount: { $sum: '$krwAmount' },
-          totalUsdtAmount: { $sum: '$usdtAmount' },
-
-          totalSettlementCount: { $sum: 1 },
-          totalSettlementAmount: { $sum: { $toDouble: '$settlement.settlementAmount' } },
-          totalSettlementAmountKRW: { $sum: { $toDouble: '$settlement.settlementAmountKRW' } },
-
-          totalFeeAmount: { $sum: { $toDouble: '$settlement.feeAmount' } },
-          totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
-
-          totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
-          totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
-
-        }
-      }
-    ]).toArray();
-    */
-
 
     const totalResult = await collection.aggregate([
       {

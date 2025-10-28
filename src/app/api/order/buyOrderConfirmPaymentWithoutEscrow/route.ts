@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
     storecode,
     orderId,
     paymentAmount,
+    queueId,
     transactionHash,
     isSmartAccount
   } = body;
@@ -190,8 +191,6 @@ export async function POST(request: NextRequest) {
     }
 
 
-
-    const queueId = "queueId";
 
     const result = await buyOrderConfirmPayment({
       lang: lang,
