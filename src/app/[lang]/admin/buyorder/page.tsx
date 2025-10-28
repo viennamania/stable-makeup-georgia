@@ -7344,7 +7344,7 @@ const fetchBuyOrders = async () => {
                           <div className="flex flex-row gap-2 items-between justify-center">
 
                             {item?.settlement && (
-                              <div className="flex flex-col gap-2 items-end justify-center">
+                              <div className="flex flex-col gap-1 items-end justify-center">
 
                                 <div className="w-full flex flex-row gap-2 items-center justify-center">
                                   <span className="
@@ -7678,7 +7678,7 @@ const fetchBuyOrders = async () => {
                                 >
 
 
-                                  <div className="flex flex-col gap-2 items-end justify-center"
+                                  <div className="flex flex-col gap-1 items-end justify-center"
                                     style={{
                                       fontFamily: 'monospace',
                                     }}
@@ -7731,7 +7731,7 @@ const fetchBuyOrders = async () => {
                                       navigator.clipboard.writeText(item.nickname);
                                       toast.success('회원 아이디가 복사되었습니다.');
                                     }}
-                                    className="flex flex-col gap-1 items-center justify-center p-2
+                                    className="flex flex-row gap-1 items-center justify-center p-2
                                     bg-transparent border-none cursor-pointer
                                     hover:border hover:border-blue-600 hover:border-dashed
                                     hover:bg-blue-100 hover:shadow-lg"
