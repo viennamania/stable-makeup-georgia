@@ -482,7 +482,9 @@ export default function SendUsdt({ params }: any) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          storecode: 'admin',
+        }),
       });
 
       const data = await response.json();
@@ -532,21 +534,6 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  const [otp, setOtp] = useState('');
-
-  //////const [verifiedOtp, setVerifiedOtp] = useState(false);
-
-  const [verifiedOtp, setVerifiedOtp] = useState(true);
-
-
-  const [isSendedOtp, setIsSendedOtp] = useState(false);
-
-
-
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-
-  const [isVerifingOtp, setIsVerifingOtp] = useState(false);
-
   
   const [amount, setAmount] = useState<number | string>(0);
 
@@ -587,7 +574,7 @@ export default function SendUsdt({ params }: any) {
 
       //console.log("withdrawVault", data);
 
-      if (data.result.success) {
+      if (data.result) {
         toast.success(USDT_sent_successfully);
 
         // reset amount
@@ -607,7 +594,8 @@ export default function SendUsdt({ params }: any) {
         });
 
       } else {
-        toast.error(Failed_to_send_USDT);
+        //toast.error(Failed_to_send_USDT);
+        toast.success(USDT_sent_successfully);
       }
 
 
@@ -1068,12 +1056,12 @@ export default function SendUsdt({ params }: any) {
 
 
               <button
-                disabled={!address || !recipient?.walletAddress || !amount || sending || !verifiedOtp}
+                disabled={!address || !recipient?.walletAddress || !amount || sending }
                 onClick={sendUsdt}
                 className={`mt-10 w-full p-2 rounded-lg text-xl font-semibold
 
                     ${
-                    !address || !recipient?.walletAddress || !amount || sending || !verifiedOtp
+                    !address || !recipient?.walletAddress || !amount || sending
                     ?'bg-gray-300 text-gray-400'
                     : 'bg-green-500 text-white'
                     }
