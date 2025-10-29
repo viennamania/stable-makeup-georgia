@@ -477,7 +477,7 @@ export default function SendUsdt({ params }: any) {
 
     const getUsers = async () => {
 
-      const response = await fetch('/api/user/getAllUsers', {
+      const response = await fetch('/api/user/getAllAdmins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
