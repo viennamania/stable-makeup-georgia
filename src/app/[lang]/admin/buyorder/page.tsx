@@ -4398,6 +4398,12 @@ const fetchBuyOrders = async () => {
             ],
           */}
 
+
+
+          {/*
+          /ko/admin/withdraw-vault?walletAddress=0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3
+          */}
+
           {sellersBalance.length > 0 && (
             <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
               mt-4
@@ -4446,6 +4452,19 @@ const fetchBuyOrders = async () => {
                       {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </span>
                   </div>
+
+                  {/* if seller nickname is 'seller', then show withdraw button */}
+                  {seller.nickname === 'seller' && (
+                    <button
+                      onClick={() => {
+                        router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
+                      }}
+                      className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    >
+                      출금하기
+                    </button>
+                  )}
+
                 </div>
               ))}
 

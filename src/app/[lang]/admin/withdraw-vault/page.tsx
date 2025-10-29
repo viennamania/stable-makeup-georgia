@@ -125,9 +125,9 @@ export default function SendUsdt({ params }: any) {
   //console.log("params", params);
 
   const searchParams = useSearchParams();
- 
-  const wallet = searchParams.get('wallet');
-  
+
+  // vault wallet address
+  const walletAddress = searchParams.get('walletAddress');
   
   const contract = getContract({
     // the client you have created via `createThirdwebClient()`
@@ -149,9 +149,6 @@ export default function SendUsdt({ params }: any) {
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
-
-
-
 
   const [data, setData] = useState({
     title: "",
@@ -264,50 +261,6 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  const [amount, setAmount] = useState(0);
-
-
-
-
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [balance, setBalance] = useState(0);
-  useEffect(() => {
-
-    // get the balance
-    const getBalance = async () => {
-
-
-      const result = await balanceOf({
-        //contract,
-        contract: contract,
-        address: address || "",
-      });
-
-      if (chain === "bsc") {
-        setBalance( Number(result) / 10 ** 18 );
-      } else {
-        setBalance( Number(result) / 10 ** 6 );
-      }
-
-    };
-
-    if (address) getBalance();
-
-    const interval = setInterval(() => {
-      if (address) getBalance();
-    } , 5000);
-
-    return () => clearInterval(interval);
-
-  //} , [address, contract, params.center]);
-
-  } , [address, contract]);
-
-
-
-
-
-
 
 
   const [user, setUser] = useState(
@@ -323,12 +276,17 @@ export default function SendUsdt({ params }: any) {
       settlementAmountOfFee: '',
     }
   );
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  // if role is admin
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
 
     if (!address) return;
 
     const getUser = async () => {
+      setLoadingUser(true);
 
       const response = await fetch('/api/user/getUserByWalletAddress', {
         method: 'POST',
@@ -343,14 +301,155 @@ export default function SendUsdt({ params }: any) {
 
       const data = await response.json();
 
+      //console.log("getUserByWalletAddress", data);
+
 
       setUser(data.result);
 
+      if (data.result && data.result?.role === 'admin') {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+
+      setLoadingUser(false);
+
     };
 
-    getUser();
+    address && getUser();
 
   }, [address]);
+
+
+
+
+
+  const [walletBalance, setWalletBalance] = useState(0);
+  useEffect(() => {
+
+    // get the balance
+    const getBalance = async () => {
+
+
+      const result = await balanceOf({
+        //contract,
+        contract: contract,
+        address: walletAddress as string,
+      });
+
+      if (chain === "bsc") {
+        setWalletBalance( Number(result) / 10 ** 18 );
+      } else {
+        setWalletBalance( Number(result) / 10 ** 6 );
+      }
+
+    };
+
+    if (walletAddress) getBalance();
+
+    const interval = setInterval(() => {
+      if (walletAddress) getBalance();
+    } , 5000);
+
+    return () => clearInterval(interval);
+
+  //} , [walletAddress, contract, params.center]);
+
+  } , [walletAddress, contract]);
+
+  // get user info by wallet address
+  /*
+  {
+    "_id": "68fec05162e030d977139b30",
+    "id": 5663419,
+    "email": null,
+    "nickname": "seller",
+    "mobile": "",
+    "storecode": "admin",
+    "store": {
+        "_id": "68acfb572a08ad7c665d6fed",
+        "storecode": "admin",
+        "storeName": "당근",
+        "storeType": "test",
+        "storeUrl": "https://test.com",
+        "storeDescription": "일반구매가맹점입니다.",
+        "storeLogo": "https://t0gqytzvlsa2lapo.public.blob.vercel-storage.com/oVV0onv-eTf0qyR7lklOPyK7p27EkfD4pif5Kk.png",
+        "storeBanner": "https://cryptopay.beauty/logo.png",
+        "createdAt": "2025-05-06T07:14:00.744Z",
+        "totalBuyerCount": 4,
+        "settlementFeeWalletAddress": "0x4c4Df6ADe9a534c6fD4F46217012B8A13679673f",
+        "totalKrwAmount": 352000,
+        "totalPaymentConfirmedCount": 75,
+        "totalUsdtAmount": 255.036,
+        "adminWalletAddress": "0x4c4Df6ADe9a534c6fD4F46217012B8A13679673f",
+        "settlementWalletAddress": "0x4c4Df6ADe9a534c6fD4F46217012B8A13679673f",
+        "settlementFeePercent": 0.4,
+        "sellerWalletAddress": "0xDF5106958d5639395498B021052f22b482093813",
+        "bankInfo": {
+            "bankName": "카카오뱅크",
+            "accountNumber": "9802938402",
+            "accountHolder": "김이정"
+        },
+        "agentcode": "ogsxorrs",
+        "agentFeePercent": 0.1,
+        "backgroundColor": "red-500",
+        "payactionKey": {
+            "payactionApiKey": "305OP202EEOP",
+            "payactionWebhookKey": "24AMJQ378JFO",
+            "payactionShopId": "1746684776128x428338616198234100"
+        },
+        "totalKrwAmountClearance": 0,
+        "totalPaymentConfirmedClearanceCount": 0,
+        "totalUsdtAmountClearance": 0,
+        "withdrawalBankInfo": {
+            "bankName": "전북은행",
+            "accountNumber": "4902304032",
+            "accountHolder": "장정수",
+            "accountBankCode": null,
+            "createdAt": "2025-07-17T15:36:25.405Z"
+        },
+        "storeMemo": "<script src=\"https://cryptoss.beauty/ko/mgorlkxu/payment?storeUser=matoto44&depositBankName=카카오뱅크&depositBankAccountNumber=3333338246503&depositName=허경수&depositAmountKrw=10000\">결제하기</script>"
+    },
+    "walletAddress": "0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3",
+    "createdAt": "2025-08-26T00:10:35.718Z",
+    "settlementAmountOfFee": "0",
+    "verified": true,
+    "seller": {
+        "status": "confirmed"
+    }
+  }
+  */
+  const [userInfo, setUserInfo] = useState(null as any);
+  useEffect(() => {
+
+    const getUserInfo = async () => {
+
+      const response = await fetch('/api/user/getUserByWalletAddress', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storecode: 'admin',
+          walletAddress: walletAddress,
+        }),
+      });
+
+      const data = await response.json();
+
+      //console.log("getUserInfo", data);
+
+      setUserInfo(data.result);
+
+    };
+
+    if (walletAddress) getUserInfo();
+
+  } , [walletAddress]);
+
+
+
+
 
 
 
@@ -368,6 +467,7 @@ export default function SendUsdt({ params }: any) {
       settlementAmountOfFee: '',
     }
   ]);
+
 
   const [totalCountOfUsers, setTotalCountOfUsers] = useState(0);
 
@@ -448,7 +548,7 @@ export default function SendUsdt({ params }: any) {
   const [isVerifingOtp, setIsVerifingOtp] = useState(false);
 
   
-
+  const [amount, setAmount] = useState<number | string>(0);
 
   const [sending, setSending] = useState(false);
   const sendUsdt = async () => {
@@ -467,107 +567,49 @@ export default function SendUsdt({ params }: any) {
       return;
     }
 
-    //console.log('amount', amount, "balance", balance);
-
-    if (Number(amount) > balance) {
-      toast.error('Insufficient balance');
-      return;
-    }
 
     setSending(true);
 
     try {
+      const response = await fetch('/api/vault/withdrawVault', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress: walletAddress,
+          toAddress: recipient.walletAddress,
+          amount: amount,
+        }),
+      });
 
+      const data = await response.json();
 
+      //console.log("withdrawVault", data);
 
-        // send USDT
-        // Call the extension function to prepare the transaction
-        const transaction = transfer({
-            //contract,
+      if (data.result.success) {
+        toast.success(USDT_sent_successfully);
 
-            contract: contract,
+        // reset amount
+        setAmount(0);
 
-            to: recipient.walletAddress,
-            amount: amount,
-        });
-        
-
-        /*
-        const transactionResult = await sendAndConfirmTransaction({
-
-            transaction: transaction,
-            
-            account: smartAccount as any,
-        });
-
-        console.log("transactionResult", transactionResult);
-        
-        if (transactionResult.status !== "success") {
-          toast.error(Failed_to_send_USDT);
-          return;
-        }
-        */
-
-        /*
-        const { transactionHash } = await sendTransaction({
-          
-          account: activeAccount as any,
-
-          transaction,
-        });
-        */
-        // sendAndConfirmTransaction
-        const { transactionHash } = await sendAndConfirmTransaction({
-          transaction: transaction,
-          account: activeAccount as any,
+        // reset recipient
+        setRecipient({
+          _id: '',
+          id: 0,
+          email: '',
+          nickname: '',
+          avatar: '',
+          mobile: '',
+          walletAddress: '',
+          createdAt: '',
+          settlementAmountOfFee: '',
         });
 
-        
-        if (transactionHash) {
+      } else {
+        toast.error(Failed_to_send_USDT);
+      }
 
-
-          await fetch('/api/transaction/setTransfer', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              lang: params.lang,
-              chain: params.center,
-              walletAddress: address,
-              amount: amount,
-              toWalletAddress: recipient.walletAddress,
-            }),
-          });
-
-
-
-          toast.success(USDT_sent_successfully);
-
-          setAmount(0); // reset amount
-
-          // refresh balance
-
-          // get the balance
-
-          const result = await balanceOf({
-            contract,
-            address: address || "",
-          });
-
-          if (chain === "bsc") {
-            setBalance( Number(result) / 10 ** 18 );
-          } else {
-            setBalance( Number(result) / 10 ** 6 );
-          }
-
-
-        } else {
-
-          toast.error(Failed_to_send_USDT);
-
-        }
-      
 
     } catch (error) {
       toast.error(Failed_to_send_USDT);
@@ -602,7 +644,7 @@ export default function SendUsdt({ params }: any) {
   ///const [wantToReceiveWalletAddress, setWantToReceiveWalletAddress] = useState(false);
 
 
-  const [wantToReceiveWalletAddress, setWantToReceiveWalletAddress] = useState(true);
+  const [wantToReceiveWalletAddress, setWantToReceiveWalletAddress] = useState(false);
 
 
 
@@ -652,8 +694,37 @@ export default function SendUsdt({ params }: any) {
     });
 
   } , [recipient?.walletAddress]);
-  
 
+
+  if (!address) {
+    return (
+      <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
+        <div className="text-lg font-semibold">
+          {Please_connect_your_wallet_first}
+        </div>
+      </main>
+    );
+  }
+
+  if (loadingUser) {
+    return (
+      <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
+        <div className="text-lg font-semibold">
+          회원 정보를 불러오는 중...
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
+        <div className="text-red-500 text-lg font-semibold">
+          You do not have permission to access this page.
+        </div>
+      </main>
+    );
+  }
 
 
 
@@ -672,8 +743,7 @@ export default function SendUsdt({ params }: any) {
             </div>
         )}
 
-        <div className="w-full flex flex-col gap-2 items-center justify-start text-zinc-500 text-lg"
-        >
+        <div className="w-full flex flex-col gap-2 items-center justify-start text-zinc-500 text-lg">
             {/* go back button */}
             <div className="w-full flex justify-start items-center gap-2">
                 <button
@@ -693,104 +763,14 @@ export default function SendUsdt({ params }: any) {
                 </span>
             </div>
 
-            
-            {/*
-            {!address && (
-            */}
-
-
-
-                <ConnectButton
-                  client={client}
-                  wallets={wallets}
-                  chain={chain === "ethereum" ? ethereum :
-                          chain === "polygon" ? polygon :
-                          chain === "arbitrum" ? arbitrum :
-                          chain === "bsc" ? bsc : arbitrum}
-
-                  theme={"light"}
-
-                  // button color is dark skyblue convert (49, 103, 180) to hex
-                  connectButton={{
-                      style: {
-                          backgroundColor: "#3167b4", // dark skyblue
-                          color: "#f3f4f6", // gray-300
-                          padding: "2px 10px",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          width: "60x",
-                          height: "38px",
-                      },
-                      label: "원클릭 로그인",
-                  }}
-
-                  connectModal={{
-                      size: "wide", 
-                      //size: "compact",
-                      titleIcon: "https://www.stable.makeup/logo.png",                           
-                      showThirdwebBranding: false,
-                  }}
-
-                  locale={"ko_KR"}
-                  //locale={"en_US"}
-                />
-
-            {/*
-            )}
-            */}
-
-
-
-
-
-            {address && (
-                <div className="w-full flex flex-col items-end justify-center gap-2">
-
-                    <div className="flex flex-row items-center justify-center gap-2">
-
-                        <button
-                            className="text-lg text-zinc-600 underline"
-                            onClick={() => {
-                                navigator.clipboard.writeText(address);
-                                toast.success(Copied_Wallet_Address);
-                            } }
-                        >
-                            {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                        </button>
-                        
-                        <Image
-                            src="/icon-shield.png"
-                            alt="Wallet"
-                            width={100}
-                            height={100}
-                            className="w-6 h-6"
-                        />
-
-                    </div>
-
-                    <div className="flex flex-row items-center justify-end  gap-2">
-                        <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                            {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                        </span>
-                        {' '}
-                        <span className="text-sm">USDT</span>
-                    </div>
-
-                </div>
-            )}
-
         </div>
 
-        
 
+        <div className="mt-4 w-full flex flex-col items-start justify-center gap-6">
 
-        <div className="flex flex-col items-start justify-center space-y-4">
+            <div className='flex flex-row items-center gap-4'>
 
-            <div className='flex flex-row items-center space-x-4'>
-
-              <div className='flex flex-row items-center space-x-2'>
+              <div className='flex flex-row items-center gap-2'>
                 <Image
                   src="/logo-tether.svg"
                   alt="USDT"
@@ -808,12 +788,77 @@ export default function SendUsdt({ params }: any) {
 
 
 
+            {/* walletAddress and userInfo and walletBalance */}
+            <div className='w-full flex flex-col gap-2 items-start justify-between'>
 
-            <div className='w-full  flex flex-col gap-5 border border-gray-300 p-4 rounded-lg'>
+              <div className='w-full flex flex-row gap-2 items-center justify-between'>
+
+                <div className='flex flex-col gap-1 items-start justify-center'>
+
+                  <div className='flex flex-row items-start justify-start gap-1'>
+                    <Image
+                      src="/icon-shield.png"
+                      alt="shield"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className='text-sm text-gray-800 font-semibold'>
+                      {walletAddress}
+                    </span>
+                  </div>
+
+                  {userInfo ? (
+                    <div className='text-lg font-semibold flex flex-row gap-2 items-center justify-center'>
+
+                      <Image
+                        src='/icon-seller.png'
+                        alt='seller'
+                        width={20}
+                        height={20}
+                      />
+
+                      <span>
+                        {userInfo?.nickname || Anonymous}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className='text-lg font-semibold'>
+                      {Anonymous}
+                    </div>
+                  )}
+
+                </div>
+
+                <div className='flex flex-row items-center justify-start gap-1'>
+                  <Image
+                    src="/token-usdt-icon.png"
+                    alt="USDT"
+                    width={30}
+                    height={30}
+                    className="rounded-full"
+                  />
+                  {/* monospace font for wallet balance */}
+                  <span className='text-4xl font-semibold text-green-600'
+                    style={{
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    {walletBalance && Number(walletBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  </span>
+                </div>
+
+              </div>
+
+            </div>
+           
 
 
 
-              <div className="text-lg">{Enter_the_amount_and_recipient_address}</div>
+
+              <div className="text-lg">
+                보낼 금액과 받는 사람을 선택하세요.
+              </div>
 
 
               <div className='mb-5 flex flex-col gap-5 items-start justify-between'>
@@ -885,15 +930,13 @@ export default function SendUsdt({ params }: any) {
 
                     <div className=" w-full flex flex-row gap-2 items-center justify-center">
                       <Image
-                        src={recipient?.avatar || '/profile-default.png'}
+                        src={recipient?.avatar || '/icon-user.png'}
                         alt="profile"
                         width={38}
                         height={38}
-                        className="rounded-full"
+                        className="w-9 h-9 rounded-full"
                         style={{
                           objectFit: 'cover',
-                          width: '38px',
-                          height: '38px',
                         }}
                       />
 
@@ -920,7 +963,7 @@ export default function SendUsdt({ params }: any) {
                       disabled={true}
                       type="text"
                       placeholder={User_wallet_address}
-                      className=" w-80  xl:w-full p-2 border border-gray-300 rounded text-white text-xs xl:text-lg font-semibold"
+                      className=" w-80 xl:w-96 p-2 border border-gray-300 rounded text-white bg-black text-sm xl:text-sm font-semibold mt-2"
                       value={recipient?.walletAddress}
                       onChange={(e) => {
       
@@ -1023,77 +1066,6 @@ export default function SendUsdt({ params }: any) {
 
               </div>
 
-              {/* otp verification */}
-              {/*
-              {verifiedOtp ? (
-                <div className="w-full flex flex-row gap-2 items-center justify-center">
-                  <Image
-                    src="/verified.png"
-                    alt="check"
-                    width={30}
-                    height={30}
-                  />
-                  <div className="text-white">OTP verified</div>
-                </div>
-              ) : (
-             
-        
-                <div className="w-full flex flex-row gap-2 items-start">
-
-                  <button
-                    disabled={!address || !recipient?.walletAddress || !amount || isSendingOtp}
-                    onClick={sendOtp}
-                    className={`
-                      
-                      ${isSendedOtp && 'hidden'}
-
-                      w-32 p-2 rounded-lg text-sm font-semibold
-
-                        ${
-                        !address || !recipient?.walletAddress || !amount || isSendingOtp
-                        ?'bg-gray-300 text-gray-400'
-                        : 'bg-green-500 text-white'
-                        }
-                      
-                      `}
-                  >
-                      Send OTP
-                  </button>
-
-                  <div className={`flex flex-row gap-2 items-center justify-center ${!isSendedOtp && 'hidden'}`}>
-                    <input
-                      type="text"
-                      placeholder="Enter OTP"
-                      className=" w-40 p-2 border border-gray-300 rounded text-black text-sm font-semibold"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                    />
-
-                    <button
-                      disabled={!otp || isVerifingOtp}
-                      onClick={verifyOtp}
-                      className={`w-32 p-2 rounded-lg text-sm font-semibold
-
-                          ${
-                          !otp || isVerifingOtp
-                          ?'bg-gray-300 text-gray-400'
-                          : 'bg-green-500 text-white'
-                          }
-                        
-                        `}
-                    >
-                        Verify OTP
-                    </button>
-                  </div>
-
-                </div>
-
-              )}
-                */}
-
-              
-
-
 
               <button
                 disabled={!address || !recipient?.walletAddress || !amount || sending || !verifiedOtp}
@@ -1135,13 +1107,9 @@ export default function SendUsdt({ params }: any) {
 
               </div>
 
-            </div>
-
-
-
         </div>
 
-       </div>
+      </div>
 
     </main>
 
