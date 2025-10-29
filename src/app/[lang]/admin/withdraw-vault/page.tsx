@@ -495,7 +495,7 @@ export default function SendUsdt({ params }: any) {
       ///setUsers(data.result.users);
       // set users except the current user
 
-      setUsers(data.result.users);
+      setUsers(data.result.users.filter((user: any) => user.walletAddress === address));
  
       setTotalCountOfUsers(data.result.totalCount);
 
