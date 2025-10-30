@@ -1126,40 +1126,6 @@ export default function SettingsPage({ params }: any) {
                     </div>
 
 
-
-                    {!address && (
-                    <ConnectButton
-                        client={client}
-                        wallets={wallets}
-                        chain={arbitrum}
-                        theme={"light"}
-
-                        // button color is dark skyblue convert (49, 103, 180) to hex
-                        connectButton={{
-                            style: {
-                                backgroundColor: "#3167b4", // dark skyblue
-                                color: "#f3f4f6", // gray-300
-                                padding: "2px 10px",
-                                borderRadius: "10px",
-                                fontSize: "14px",
-                                width: "60x",
-                                height: "38px",
-                            },
-                            label: "원클릭 로그인",
-                        }}
-
-                        connectModal={{
-                        size: "wide", 
-                        //size: "compact",
-                        titleIcon: "https://www.stable.makeup/logo.png",                           
-                        showThirdwebBranding: false,
-                        }}
-
-                        locale={"ko_KR"}
-                        //locale={"en_US"}
-                    />
-                    )}
-
                     {address && !loadingUser && (
                         <div className="w-full flex flex-row items-center justify-end gap-2">
 
@@ -1337,7 +1303,7 @@ export default function SettingsPage({ params }: any) {
                                     />
                                     <button
                                         disabled={!address || !storeDescription}
-                                        className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!storeDescription ? "opacity-50" : ""}`}
+                                        className={`w-32 bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!storeDescription ? "opacity-50" : ""}`}
                                         onClick={() => {
                                             if (!storeDescription) {
                                                 toast.error("가맹점 설명을 입력하세요");
@@ -1781,10 +1747,10 @@ export default function SettingsPage({ params }: any) {
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            가맹점 수수료율
+                                            가맹점 수수료율(%) 현재값
                                         </span>
-                                        <span className="text-lg text-zinc-500">
-                                            {store && store.settlementFeePercent}%
+                                        <span className="text-xl text-zinc-500 font-bold">
+                                            {store && store.settlementFeePercent}
                                         </span>
                                     </div>
                                     <div className='hidden flex-col gap-2'>

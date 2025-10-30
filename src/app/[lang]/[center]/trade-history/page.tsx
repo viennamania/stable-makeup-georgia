@@ -2405,71 +2405,71 @@ const fetchBuyOrders = async () => {
   const [fetchingStore, setFetchingStore] = useState(false);
   const [store, setStore] = useState(null) as any;
 
-  useEffect(() => {
+    useEffect(() => {
+  
+      setFetchingStore(true);
+  
+      const fetchData = async () => {
+          const response = await fetch("/api/store/getOneStore", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                storecode: params.center,
+                ////walletAddress: address,
+              }),
+          });
+  
+          const data = await response.json();
+  
+          //console.log("data", data);
+  
+          if (data.result) {
+  
+            setStore(data.result);
+  
+            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
+            if (data.result?.adminWalletAddress === address) {
+              setIsAdmin(true);
+            }
+  
 
-    setFetchingStore(true);
-
-    const fetchData = async () => {
-        const response = await fetch("/api/store/getOneStore", {
+        } else {
+          // get store list
+          const response = await fetch("/api/store/getAllStores", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              storecode: params.center,
-              ////walletAddress: address,
             }),
-        });
+          });
+          const data = await response.json();
+          //console.log("getStoreList data", data);
+          setStoreList(data.result.stores);
+          setStore(null);
+          setStoreAdminWalletAddress("");
+        }
+  
+          setFetchingStore(false);
+      };
 
-        const data = await response.json();
-
-        //console.log("data", data);
-
-        if (data.result) {
-
-          setStore(data.result);
-
-          setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-          if (data.result?.adminWalletAddress === address) {
-            setIsAdmin(true);
-          }
-
-      } else {
-        // get store list
-        const response = await fetch("/api/store/getAllStores", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-          }),
-        });
-        const data = await response.json();
-        //console.log("getStoreList data", data);
-        setStoreList(data.result.stores);
-        setStore(null);
-        setStoreAdminWalletAddress("");
+      if (!params.center) {
+        return;
       }
-
-        setFetchingStore(false);
-    };
-
-    if (!params.center) {
-      return;
-    }
-
-    fetchData();
-
-    // interval to fetch store data every 10 seconds
-    const interval = setInterval(() => {
+  
       fetchData();
-    }
-    , 5000);
-    return () => clearInterval(interval);
 
-  } , [params.center]);
+      // interval
+      const interval = setInterval(() => {
+        fetchData();
+      }
+      , 5000);
+      return () => clearInterval(interval);
+  
+    } , [params.center, address]);
 
 
 

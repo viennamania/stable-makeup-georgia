@@ -729,7 +729,7 @@ export default function Index({ params }: any) {
     .then(response => response.json())
     .then(data => {
         
-        //console.log('data.result', data.result);
+        /////console.log('data.result', data.result);
 
 
         setUser(data.result);
@@ -749,7 +749,8 @@ export default function Index({ params }: any) {
     setLoadingUser(false);
 
 
-  } , [address]);
+  } , [address, params.center]);
+
 
 
 
@@ -983,31 +984,36 @@ export default function Index({ params }: any) {
   const [fetchingStore, setFetchingStore] = useState(false);
   const [store, setStore] = useState(null) as any;
 
-  useEffect(() => {
+    useEffect(() => {
+  
+      setFetchingStore(true);
+  
+      const fetchData = async () => {
+          const response = await fetch("/api/store/getOneStore", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                storecode: params.center,
+                ////walletAddress: address,
+              }),
+          });
+  
+          const data = await response.json();
+  
+          //console.log("data", data);
+  
+          if (data.result) {
+  
+            setStore(data.result);
+  
+            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
-    setFetchingStore(true);
-
-    const fetchData = async () => {
-        const response = await fetch("/api/store/getOneStore", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              storecode: params.center,
-              /////walletAddress: address,
-            }),
-        });
-
-        const data = await response.json();
-
-        //console.log("data", data);
-
-        if (data.result) {
-
-          setStore(data.result);
-
-          setStoreAdminWalletAddress(data.result?.adminWalletAddress);
+            if (data.result?.adminWalletAddress === address) {
+              setIsAdmin(true);
+            }
+  
 
         } else {
           // get store list
@@ -1025,24 +1031,24 @@ export default function Index({ params }: any) {
           setStore(null);
           setStoreAdminWalletAddress("");
         }
+  
+          setFetchingStore(false);
+      };
 
-
-        setFetchingStore(false);
-    };
-
-    if (!params.center) {
-      return;
-    }
-
-    fetchData();
-
-    // interval to fetch store every 10 seconds
-    const interval = setInterval(() => {
+      if (!params.center) {
+        return;
+      }
+  
       fetchData();
-    } , 5000);
-    return () => clearInterval(interval);
 
-  } , [params.center]);
+      // interval
+      const interval = setInterval(() => {
+        fetchData();
+      }
+      , 5000);
+      return () => clearInterval(interval);
+  
+    } , [params.center, address]);
 
 
 

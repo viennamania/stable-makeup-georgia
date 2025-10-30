@@ -818,22 +818,20 @@ export default function Index({ params }: any) {
     .then(response => response.json())
     .then(data => {
         
-        //console.log('data.result', data.result);
+        /////console.log('data.result', data.result);
 
 
         setUser(data.result);
-
-        setSeller(data.result.seller);
 
         setEscrowWalletAddress(data.result.escrowWalletAddress);
 
         setIsAdmin(data.result?.role === "admin");
 
+
     })
     .catch((error) => {
         console.error('Error:', JSON.stringify(error));
         setUser(null);
-        setSeller(null);
         setEscrowWalletAddress('');
         setIsAdmin(false);
     });
@@ -841,7 +839,8 @@ export default function Index({ params }: any) {
     setLoadingUser(false);
 
 
-  } , [address]);
+  } , [address, params.center]);
+
 
 
 
@@ -1106,53 +1105,71 @@ export default function Index({ params }: any) {
 
 
 
-  useEffect(() => {
+    useEffect(() => {
+  
+      setFetchingStore(true);
+  
+      const fetchData = async () => {
+          const response = await fetch("/api/store/getOneStore", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                storecode: params.center,
+                ////walletAddress: address,
+              }),
+          });
+  
+          const data = await response.json();
+  
+          //console.log("data", data);
+  
+          if (data.result) {
+  
+            setStore(data.result);
+  
+            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
-    setFetchingStore(true);
+            if (data.result?.adminWalletAddress === address) {
+              setIsAdmin(true);
+            }
+  
 
-    const fetchData = async () => {
-        const response = await fetch("/api/store/getOneStore", {
+        } else {
+          // get store list
+          const response = await fetch("/api/store/getAllStores", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              storecode: params.center,
-              ////walletAddress: address,
             }),
-        });
-
-        const data = await response.json();
-
-        //console.log("data", data);
-
-        if (data.result) {
-
-          setStore(data.result);
-
-          setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-          //setStoreBackgroundColor(data.result?.backgroundColor || "blue-500");
-
-        } else {
-          toast.error("가맹점 정보를 불러오는데 실패했습니다.");
-
+          });
+          const data = await response.json();
+          //console.log("getStoreList data", data);
+          setStoreList(data.result.stores);
           setStore(null);
           setStoreAdminWalletAddress("");
-
-          fetchStoreList();
-
-
         }
+  
+          setFetchingStore(false);
+      };
 
+      if (!params.center) {
+        return;
+      }
+  
+      fetchData();
 
-
-        setFetchingStore(false);
-    };
-
-    fetchData();
-
-  } , [params.center]);
+      // interval
+      const interval = setInterval(() => {
+        fetchData();
+      }
+      , 5000);
+      return () => clearInterval(interval);
+  
+    } , [params.center, address]);
 
 
 
@@ -2063,7 +2080,6 @@ export default function Index({ params }: any) {
                         bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                       >
                         <div className="
-                          w-40 xl:w-48
                           flex flex-col sm:flex-row items-center justify-center gap-2">
                           <span className="text-sm text-zinc-50">
                             {user?.nickname || "프로필"}
@@ -2084,6 +2100,25 @@ export default function Index({ params }: any) {
                           )}
                         </div>
                       </button>
+
+
+                      {isAdmin && (
+                        <div className="flex flex-row items-center justify-center gap-2">
+                          {/* setting button */}
+                          {/* router push to /{lang}/{center}/settings */}
+                          <button
+                            onClick={() => {
+                              router.push('/' + params.lang + '/' + params.center + '/settings');
+                            }}
+                            className="
+                              flex items-center justify-center gap-2
+                              bg-[#409192] text-sm text-[#f3f4f6] px-2 py-1 rounded-lg hover:bg-[#409192]/80"
+                          >
+                              설정
+                          </button>
+                        </div>
+                      )}
+
 
                       {/* logout button */}
                       <button
