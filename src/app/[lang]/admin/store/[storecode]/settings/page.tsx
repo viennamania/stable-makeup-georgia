@@ -3893,7 +3893,7 @@ export default function SettingsPage({ params }: any) {
 
 
                             {/* 1등급 */}
-                            {/* BBB */}
+                            {/* AAA */}
                             <div className='mt-5
                                 w-full flex flex-col items-center justify-between gap-2
                                 border-t border-gray-300 pt-2

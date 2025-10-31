@@ -7089,7 +7089,7 @@ const fetchBuyOrders = async () => {
                                     </span>
                                   </div>
                                   <span className="text-sm text-zinc-500">
-                                    TXID 저장누락
+                                    TXID 확인중...
                                   </span>
                                 </div>
                               </div>
