@@ -5380,7 +5380,7 @@ const fetchBuyOrders = async () => {
 
                           {item.status === 'accepted' && (
 
-                            <div className="w-full flex flex-row gap-2 items-start justify-center">
+                            <div className="w-full flex flex-row gap-2 items-center justify-start">
                               <button
                                 className="text-sm text-blue-600 font-semibold
                                   border border-blue-600 rounded-lg p-2
@@ -6272,8 +6272,8 @@ const fetchBuyOrders = async () => {
                           (!item?.transactionHash || item?.transactionHash === '0x') && (
                             <div className="flex flex-row gap-2 items-center justify-center">
                               <Image
-                                src="/loading.png"
-                                alt="Loading Icon"
+                                src="/icon-sending.png"
+                                alt="Sending"
                                 width={20}
                                 height={20}
                                 className="w-5 h-5 animate-spin"
