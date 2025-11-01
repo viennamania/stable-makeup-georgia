@@ -1113,7 +1113,7 @@ export default function Index({ params }: any) {
       return;
     }
     fetchAllBuyer();
-  } , [address, limitValue, pageValue]);
+  } , [address, params.center, limitValue, pageValue]);
 
 
 
@@ -1302,7 +1302,7 @@ export default function Index({ params }: any) {
       fetchAllUsers();
     } , 5000);
     return () => clearInterval(interval);
-  } , [address]);
+  } , [address, params.center]);
 
   /*
   {
