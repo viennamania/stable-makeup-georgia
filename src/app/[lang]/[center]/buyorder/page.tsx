@@ -3864,7 +3864,7 @@ const fetchBuyOrders = async () => {
                 </span>
               </div>
 
-              <div className="w-56 flex flex-row items-start justify-start gap-1">
+              <div className="w-60 flex flex-row items-start justify-start gap-1">
                 <Image
                   src="/icon-bank.png"
                   alt="Bank"
@@ -5682,12 +5682,12 @@ const fetchBuyOrders = async () => {
                       <td className="p-2">
 
                         <div className="
-                          w-56  
-                          flex flex-row items-start justify-start gap-5">
+                          w-40
+                          flex flex-col items-start justify-start gap-2">
 
                           {/* status */}
                           {item.status === 'ordered' && (
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="w-full flex flex-col gap-2 items-start justify-start">
 
                               <div className="flex flex-row items-center justify-center gap-2">
                                 <Image
@@ -5748,7 +5748,7 @@ const fetchBuyOrders = async () => {
                             </span>
                           ) : (
 
-                            <div className="flex flex-col gap-2 items-start justify-start">
+                            <div className="w-full flex flex-col gap-2 items-start justify-start">
 
                               <div className="flex flex-row items-center justify-center gap-2"> 
                                 <Image
@@ -5810,12 +5810,12 @@ const fetchBuyOrders = async () => {
 
                           {item.status === 'accepted' && (
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="w-full flex flex-row gap-2 items-center justify-start">
                               <button
                                 className="text-sm text-blue-600 font-semibold
                                   border border-blue-600 rounded-lg p-2
                                   bg-blue-100
-                                  w-full text-center
+                                  text-center
                                   hover:bg-blue-200
                                   cursor-pointer
                                   transition-all duration-200 ease-in-out
@@ -5875,13 +5875,13 @@ const fetchBuyOrders = async () => {
 
                           {item.status === 'paymentRequested' && (
 
-                            <div className="flex flex-col gap-2 items-start justify-start">
+                            <div className="w-full flex flex-row gap-2 items-center justify-start">
 
                               <button
                                 className="text-sm text-yellow-600 font-semibold
                                   border border-yellow-600 rounded-lg p-2
                                   bg-yellow-100
-                                  w-full text-center
+                                  text-center
                                   hover:bg-yellow-200
                                   cursor-pointer
                                   transition-all duration-200 ease-in-out
@@ -5925,12 +5925,12 @@ const fetchBuyOrders = async () => {
                           )}
 
                           {item.status === 'cancelled' && (
-                              <div className="flex flex-col gap-2 items-start justify-start">
+                              <div className="w-full flex flex-col gap-2 items-center justify-start">
                                 <button
                                   className="text-sm text-red-600 font-semibold
                                     border border-red-600 rounded-lg p-2
                                     bg-red-100
-                                    w-full text-center
+                                    text-center
                                     hover:bg-red-200
                                     cursor-pointer
                                     transition-all duration-200 ease-in-out
@@ -5975,12 +5975,12 @@ const fetchBuyOrders = async () => {
 
                           {/* if status is accepted, show payment request button */}
                           {item.status === 'paymentConfirmed' && (
-                            <div className="flex flex-col gap-2 items-start justify-start">
+                            <div className="w-full flex flex-row gap-2 items-center justify-start">
                               <button
                                 className="text-sm text-[#409192] font-semibold
                                   border border-green-600 rounded-lg p-2
                                   bg-green-100
-                                  w-full text-center
+                                  text-center
                                   hover:bg-green-200
                                   cursor-pointer
                                   transition-all duration-200 ease-in-out
@@ -6340,8 +6340,8 @@ const fetchBuyOrders = async () => {
                               (!item?.transactionHash || item?.transactionHash === '0x') && (
                                 <div className="flex flex-row gap-2 items-center justify-center">
                                   <Image
-                                    src="/loading.png"
-                                    alt="Loading Icon"
+                                    src="/icon-sending.png"
+                                    alt="Sending"
                                     width={20}
                                     height={20}
                                     className="w-5 h-5 animate-spin"

@@ -5236,7 +5236,7 @@ const fetchBuyOrders = async () => {
                           flex flex-col items-start justify-start gap-2">
                           {/* status */}
                           {item.status === 'ordered' && (
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="w-full flex flex-col gap-2 items-start justify-start">
 
                               <div className="flex flex-row items-center justify-center gap-2">
                                 <Image
@@ -5610,7 +5610,7 @@ const fetchBuyOrders = async () => {
                         //!item?.escrowTransactionHash &&
                         item?.status === 'paymentConfirmed' && (
                           <div className="
-                            w-32
+                            w-32 
                             flex flex-col gap-2 items-end justify-start">
                             
                             {item?.autoConfirmPayment === true ? (
@@ -6083,7 +6083,7 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2">
                         <div className="
-                        w-56   
+                        w-50
                         flex flex-col gap-2 items-center justify-center">
 
 
@@ -6095,7 +6095,7 @@ const fetchBuyOrders = async () => {
                           <div className="bg-gray-500/10
                             rounded-md
                             p-2
-                            flex flex-col sm:flex-row gap-2 items-start justify-start">
+                            w-full flex flex-col sm:flex-row gap-2 items-start justify-start">
                             <div className="
                               w-full
                               flex flex-col gap-2 items-end justify-center">
