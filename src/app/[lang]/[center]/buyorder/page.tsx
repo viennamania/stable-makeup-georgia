@@ -5925,7 +5925,7 @@ const fetchBuyOrders = async () => {
                           )}
 
                           {item.status === 'cancelled' && (
-                              <div className="w-full flex flex-col gap-2 items-center justify-start">
+                              <div className="w-full flex flex-row gap-2 items-center justify-start">
                                 <button
                                   className="text-sm text-red-600 font-semibold
                                     border border-red-600 rounded-lg p-2
