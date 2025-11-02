@@ -488,7 +488,7 @@ const CenterConsole = () => {
 
 
 
-
+ const [showStores, setShowStores] = useState(false);
 
 
 
@@ -702,13 +702,31 @@ const CenterConsole = () => {
         bg-white bg-opacity-90
         rounded-lg shadow-lg
         fixed top-2
-        z-20 flex flex-col items-center justify-center gap-2
+        z-20 flex flex-row items-start justify-start gap-2
         ">
 
 
-          {/* stores */}
+          {/* showStores toggle button */}
+          <button
+            className="
+            w-32
+            flex flex-row items-center justify-center gap-2
+            mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
+            onClick={() => setShowStores(!showStores)}
+          >
+              <Image
+                src={`/icon-store.png`}
+                alt={`Store`}
+                width={25}
+                height={25}
+              />
 
-          {stores.length > 0 && (
+              <span className="text-sm text-white">
+                {showStores ? 'Hide Stores' : 'Show Stores'}
+              </span>
+          </button>
+
+          {stores.length > 0 && showStores && (
 
             <div
               //className="w-full flex flex-row items-center justify-start gap-2 overflow-x-auto
