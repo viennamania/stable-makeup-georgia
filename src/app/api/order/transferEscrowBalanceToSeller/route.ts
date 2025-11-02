@@ -177,15 +177,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-
-
-
     let transactionHashResult = "";
-    let queueId = "";
-
-
-
-  
+    let queueId = null;
 
     return NextResponse.json({
       result: {
@@ -194,20 +187,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-
-
-
-
   } catch (error) {
       
     console.log(" error=====>" + error);
 
-
-
   }
-
-  
-
 
  
   return NextResponse.json({

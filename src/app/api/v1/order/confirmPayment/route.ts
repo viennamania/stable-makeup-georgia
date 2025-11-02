@@ -212,7 +212,7 @@ export async function GET(request: NextRequest) {
 
 
     let transactionHashResult = "";
-    let queueId = "";
+    let queueId = null;
 
 
 

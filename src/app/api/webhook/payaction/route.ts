@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
   const storecode = buyOrder?.storecode;
   const orderId = buyOrder?._id;
   const paymentAmount = buyOrder?.krwAmount;
-  const queueId = "0x";
+  const queueId = null;
   const transactionHash = "0x";
 
   const buyerDepositName = buyOrder?.buyer?.depositName || "익명";
