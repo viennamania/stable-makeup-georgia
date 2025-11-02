@@ -6233,21 +6233,10 @@ const fetchBuyOrders = async () => {
                           </div>                    
 
                           <div className={`
-                            ${
-                            //item.status === 'accepted' ? 'bg-blue-500/10'
-                            //: item.status === 'paymentRequested' ? 'bg-blue-500/10'
-                            //: item.status === 'paymentConfirmed' ? 'bg-blue-500/10'
-                            //: item.status === 'cancelled' ? 'bg-red-500/10'
-                            //: item.status === 'paymentConfirmed' ? 'bg-green-500/10'
-                            //: 'bg-gray-500/10'
-                            <></>
-                            }
                             rounded-md
                             p-2 
                             w-full flex flex-col sm:flex-row gap-2 items-start justify-start
                             `}>
-
-
                             
                             <div className="
                               w-full

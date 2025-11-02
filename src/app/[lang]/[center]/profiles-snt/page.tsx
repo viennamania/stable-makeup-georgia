@@ -1109,6 +1109,9 @@ export default function SettingsPage({ params }: any) {
                                                     <option value="002" selected={buyer?.bankInfo?.bankName === "002"}>
                                                         외환은행
                                                     </option>
+                                                    <option value="023" selected={buyer?.bankInfo?.bankName === "023"}>
+                                                        SC제일은행
+                                                    </option>
                                                     <option value="032" selected={buyer?.bankInfo?.bankName === "032"}>
                                                         부산은행
                                                     </option>

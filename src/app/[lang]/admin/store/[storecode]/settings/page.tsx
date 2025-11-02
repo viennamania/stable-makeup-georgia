@@ -3699,6 +3699,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="기업은행">기업은행</option>
                                         <option value="하나은행">하나은행</option>
                                         <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
                                         <option value="부산은행">부산은행</option>
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
@@ -3832,6 +3833,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="기업은행">기업은행</option>
                                         <option value="하나은행">하나은행</option>
                                         <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
                                         <option value="부산은행">부산은행</option>
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
@@ -3959,6 +3961,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="기업은행">기업은행</option>
                                         <option value="하나은행">하나은행</option>
                                         <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
                                         <option value="부산은행">부산은행</option>
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
@@ -4086,6 +4089,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="기업은행">기업은행</option>
                                         <option value="하나은행">하나은행</option>
                                         <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
                                         <option value="부산은행">부산은행</option>
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
@@ -4215,6 +4219,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="기업은행">기업은행</option>
                                         <option value="하나은행">하나은행</option>
                                         <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
                                         <option value="부산은행">부산은행</option>
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>
@@ -4342,6 +4347,7 @@ export default function SettingsPage({ params }: any) {
                                         <option value="기업은행">기업은행</option>
                                         <option value="하나은행">하나은행</option>
                                         <option value="외환은행">외환은행</option>
+                                        <option value="SC제일은행">SC제일은행</option>
                                         <option value="부산은행">부산은행</option>
                                         <option value="대구은행">대구은행</option>
                                         <option value="전북은행">전북은행</option>

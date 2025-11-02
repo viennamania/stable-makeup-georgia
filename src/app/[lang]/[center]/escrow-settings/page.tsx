@@ -1507,6 +1507,9 @@ export default function SettingsPage({ params }: any) {
                                         <option value="외환은행" selected={bankName === "외환은행"}>
                                             외환은행
                                         </option>
+                                        <option value="SC제일은행" selected={bankName === "SC제일은행"}>
+                                            SC제일은행
+                                        </option>
                                         <option value="부산은행" selected={bankName === "부산은행"}>
                                             부산은행
                                         </option>

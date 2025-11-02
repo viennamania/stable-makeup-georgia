@@ -2318,9 +2318,6 @@ export default function Index({ params }: any) {
                 <option value="산림조합">
                   산림조합
                 </option>
-                <option value="SC제일은행">
-                  SC제일은행
-                </option>
                 <option value="기업은행">
                   기업은행
                 </option>
@@ -2329,6 +2326,9 @@ export default function Index({ params }: any) {
                 </option>
                 <option value="외환은행">
                   외환은행
+                </option>
+                <option value="SC제일은행">
+                  SC제일은행
                 </option>
                 <option value="부산은행">
                   부산은행

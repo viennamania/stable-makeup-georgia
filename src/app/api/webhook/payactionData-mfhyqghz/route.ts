@@ -154,6 +154,7 @@ export async function POST(request: NextRequest) {
     bank_code === '003' ? '기업은행' :
     bank_code === '081' ? '하나은행' :
     bank_code === '002' ? '외환은행' :
+    bank_code === '090' ? 'SC제일은행' :
     bank_code === '032' ? '부산은행' :
     bank_code === '031' ? '대구은행' :
     bank_code === '037' ? '전북은행' :

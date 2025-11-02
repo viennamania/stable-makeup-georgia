@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     buyer?.bankInfo?.bankName === '기업은행' ? '003' :
     buyer?.bankInfo?.bankName === '하나은행' ? '081' :
     buyer?.bankInfo?.bankName === '외환은행' ? '002' :
+    buyer?.bankInfo?.bankName === 'SC제일은행' ? '090' :
     buyer?.bankInfo?.bankName === '부산은행' ? '032' :
     buyer?.bankInfo?.bankName === '대구은행' ? '031' :
     buyer?.bankInfo?.bankName === '전북은행' ? '037' :
