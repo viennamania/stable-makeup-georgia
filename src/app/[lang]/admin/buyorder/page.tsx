@@ -5484,22 +5484,11 @@ const fetchBuyOrders = async () => {
                           {item.status === 'cancelled' && (
                             <div className="w-full flex flex-row gap-2 items-start justify-center">
 
-                                {/*
-                                <div className="text-lg text-red-600 font-semibold
-                                  border border-red-600 rounded-lg p-2
-                                  bg-red-100
-                                  w-full text-center
-                                  ">
-                                  {
-                                    Cancelled_at
-                                  }
-                                </div>
-                                */}
                                 <button
                                   className="text-sm text-red-600 font-semibold
                                     border border-red-600 rounded-lg p-2
                                     bg-red-100
-                                    w-full text-center
+                                    text-center
                                     hover:bg-red-200
                                     cursor-pointer
                                     transition-all duration-200 ease-in-out
@@ -6257,13 +6246,7 @@ const fetchBuyOrders = async () => {
 
                           </>
 
-
-                        )}
-
-
-
-
-                        
+                        )}   
 
                         <div className="flex flex-col gap-2 items-center justify-center">
 
@@ -6308,7 +6291,6 @@ const fetchBuyOrders = async () => {
                           <div className="
                             w-full
                             flex flex-col gap-2 items-start justify-start">
-
 
                             {
                             (item.status === 'accepted' || item.status === 'paymentRequested')
@@ -6733,10 +6715,6 @@ const fetchBuyOrders = async () => {
                               <div className="
                                 w-56
                                 flex flex-col gap-2 items-center justify-center">
-
-
-
-
 
                                 {/* 자동입금처리일경우 */}
                                 {/* 수동으로 결제완료처리 버튼 */}

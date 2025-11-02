@@ -3562,7 +3562,6 @@ export async function buyOrderRequestPayment(data: any) {
 
 
 export async function buyOrderConfirmPayment(data: any) {
-  
 
   if (!data.orderId) {
     return null;
@@ -3573,9 +3572,6 @@ export async function buyOrderConfirmPayment(data: any) {
   }
 
   const paymentAmount = data.paymentAmount || 0;
-
-
-
 
   const autoConfirmPayment = data.autoConfirmPayment;
 
@@ -3999,6 +3995,7 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
   };
 
 }
+
 
 // buyOrderConfirmPaymentReverted
 export async function buyOrderConfirmPaymentReverted(data: any) {
