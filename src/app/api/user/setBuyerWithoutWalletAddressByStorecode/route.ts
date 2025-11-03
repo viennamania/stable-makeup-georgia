@@ -133,6 +133,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 원클릭 스텔스 (alwmkqst) 일경우
+    // 등록된 회원이 아닐경우 오류처리
+
+    if (!user && storecode === 'alwmkqst') {
+      return NextResponse.json({
+        result: "User not found",
+        walletAddress: null,
+        storecode: null,
+        buyOrderStatus: null,
+        userType: null,
+        liveOnAndOff: null,
+      });
+    }
+
+
 
     
     const userWalletPrivateKey = ethers.Wallet.createRandom().privateKey;
