@@ -2956,6 +2956,7 @@ export default function Index({ params }: any) {
                                     + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
                                     + '&depositName=' + item?.buyer?.depositName
                                     + '&depositAmountKrw=' + depositAmountKrw[index]
+                                    + '&accessToken=' + store?.accessToken
                                   );
                                   toast.success('회원 홈페이지 링크가 복사되었습니다.');
                                 }}
@@ -2975,7 +2976,8 @@ export default function Index({ params }: any) {
                                     + '&depositBankName=' + item?.buyer?.depositBankName
                                     + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
                                     + '&depositName=' + item?.buyer?.depositName
-                                    + '&depositAmountKrw=' + depositAmountKrw[index],
+                                    + '&depositAmountKrw=' + depositAmountKrw[index]
+                                    + '&accessToken=' + store?.accessToken,
                                     '_blank'
                                   );
                                   toast.success('회원 홈페이지를 새창으로 열었습니다.');
