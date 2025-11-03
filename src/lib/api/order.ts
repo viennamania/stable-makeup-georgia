@@ -76,6 +76,8 @@ export interface UserProps {
   latestBuyOrder: any,
 
   userType: string,
+
+  returnUrl: string,
 }
 
 export interface ResultProps {
@@ -3663,6 +3665,7 @@ export async function buyOrderConfirmPayment(data: any) {
         storecode: 1,
         agentcode: 1,
         walletAddress: 1,
+        returnUrl: 1,
       } }
     );
 
@@ -3703,6 +3706,35 @@ export async function buyOrderConfirmPayment(data: any) {
           );
         } catch (error) {
           console.error('Error calling external API for storecode qibgieiu:', error);
+        }
+      }
+
+      if (order.returnUrl) {
+        ///shop/influ_coin/orderform.php?oid=123456&paystate=4&pay_date=2025-10-2414:30:25&mul_no=1
+        try {
+
+          // parse get prams from returnUrl
+          const url = new URL(order.returnUrl);
+          const existingParams = Object.fromEntries(url.searchParams);
+          // merge existing get prams with get prams
+          const mergedParams = {
+            ...existingParams,
+            paystate: '4',
+            pay_date: new Date().toISOString().replace('T', '').substring(0, 19),
+            mul_no: '1',
+          };
+          // set merged get prams to url
+          const finalUrl = url.origin + url.pathname + '?' + new URLSearchParams(mergedParams).toString();
+
+          console.log('Calling returnUrl API: ' + finalUrl);
+
+          await fetch(finalUrl,
+            {
+              method: 'GET',
+            }
+          );
+        } catch (error) {
+          console.error('Error calling returnUrl API:', error);
         }
       }
 
