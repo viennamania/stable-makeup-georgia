@@ -726,7 +726,7 @@ export default function SettingsPage({ params }: any) {
         }
         const data = await response.json();
         
-        console.log('getOneStore data', data);
+        //console.log('getOneStore data', data);
 
         setStore(data.result);
 
@@ -1084,7 +1084,238 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // update paymentUrl
+    const [paymentUrl, setPaymentUrl] = useState("");
+    const [updatingPaymentUrl, setUpdatingPaymentUrl] = useState(false);
+    const updatePaymentUrl = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
 
+        if (paymentUrl.length < 5 || paymentUrl.length > 100) {
+            toast.error("결제 URL을 5자 이상 100자 이하로 설정하세요");
+            return;
+        }
+
+        setUpdatingPaymentUrl(true);
+
+        const response = await fetch('/api/store/updateStorePaymentUrl', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.center,
+                paymentUrl: paymentUrl,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('결제 URL이 설정되었습니다');
+            setPaymentUrl('');
+
+            setStore({
+                ...store,
+                paymentUrl: paymentUrl,
+            });
+
+            //fetchStore();
+        } else {
+            toast.error('결제 URL 설정에 실패하였습니다');
+        }
+        setUpdatingPaymentUrl(false);
+    }
+
+
+
+    
+
+    // maxPaymentAmountKRW
+    const [maxPaymentAmountKRW, setMaxPaymentAmountKRW] = useState(0);
+    const [updatingMaxPaymentAmountKRW, setUpdatingMaxPaymentAmountKRW] = useState(false);
+    const updateMaxPaymentAmountKRW = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        if (!maxPaymentAmountKRW || maxPaymentAmountKRW < 1000 || maxPaymentAmountKRW > 10000000) {
+            toast.error("최대 결제 금액을 1,000 ~ 10,000,000 KRW로 설정하세요");
+            return;
+        }
+        setUpdatingMaxPaymentAmountKRW(true);
+        const response = await fetch('/api/store/updateMaxPaymentAmountKRW', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.center,
+                maxPaymentAmountKRW: maxPaymentAmountKRW,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('최대 결제 금액이 설정되었습니다');
+            setMaxPaymentAmountKRW(0);
+            setStore({
+                ...store,
+                maxPaymentAmountKRW: maxPaymentAmountKRW,
+            });
+            //fetchStore();
+        } else {
+            toast.error('최대 결제 금액 설정에 실패하였습니다');
+        }
+        setUpdatingMaxPaymentAmountKRW(false);
+    }
+
+
+
+    // update accessToken
+    const [accessToken, setAccessToken] = useState("");
+    const [updatingAccessToken, setUpdatingAccessToken] = useState(false);
+    const updateStoreAccessToken = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        if (accessToken.length < 5 || accessToken.length > 100) {
+            toast.error("엑세스 토큰을 5자 이상 100자 이하로 설정하세요");
+            return;
+        }
+        setUpdatingAccessToken(true);
+        const response = await fetch('/api/store/updateStoreAccessToken', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.center,
+                accessToken: accessToken,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('엑세스 토큰이 설정되었습니다');
+            setAccessToken('');
+            setStore({
+                ...store,
+                accessToken: accessToken,
+            });
+            //fetchStore();
+        } else {
+            toast.error('엑세스 토큰 설정에 실패하였습니다');
+        }
+        setUpdatingAccessToken(false);
+    }
+
+    // generateAccessToken
+    // generate a random string of 20 characters
+  
+    const generateAccessToken = async () => {
+
+        // generate a random string of 20 characters
+        const newAccessToken = Array(20)
+            .fill(null)
+            .map(() => Math.random().toString(36).charAt(2))
+            .join('');
+
+        setAccessToken(newAccessToken);
+    }
+
+
+    // resetAccessToken
+    const resetAccessToken = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        setUpdatingAccessToken(true);
+        const response = await fetch('/api/store/updateStoreAccessToken', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.center,
+                accessToken: '',
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('엑세스 토큰이 초기화되었습니다');
+            setAccessToken('');
+            setStore({
+                ...store,
+                accessToken: '',
+            });
+            //fetchStore();
+        } else {
+            toast.error('엑세스 토큰 초기화에 실패하였습니다');
+        }
+        setUpdatingAccessToken(false);
+    }
+
+
+
+
+
+    const [isToggling, setIsToggling] = useState(false)
+
+
+    const toggleViewOnAndOff = async (viewOnAndOff: boolean) => {
+
+    if (isToggling) {
+        return;
+    }
+
+    if (!store) {
+        toast.error("가맹점 정보가 없습니다");
+        return;
+    }
+
+
+    setIsToggling(true);
+
+    const response = await fetch("/api/store/toggleView", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+        storecode: params.center,
+        viewOnAndOff,
+        }),
+    });
+
+    const data = await response.json();
+    //console.log("toggleViewOnAndOff", data);
+
+    if (data.success) {
+
+        // Update the store's viewOnAndOff status in the local state
+        setStore({
+            ...store,
+            viewOnAndOff: viewOnAndOff,
+        });
+
+        toast.success(`가맹점 ${viewOnAndOff ? "노출" : "비노출"} 설정이 변경되었습니다.`);
+
+
+    }
+
+
+    setIsToggling(false);
+
+    };
 
 
 
@@ -1167,190 +1398,177 @@ export default function SettingsPage({ params }: any) {
 
                         <>
 
-                            <div className='w-full flex flex-col items-start justify-center gap-2
-                                border border-gray-300 p-4 rounded-lg'>
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
 
-                                <div className='w-full flex flex-row items-center justify-between gap-2'>
+                            <div className='w-full flex flex-row items-center justify-between gap-2'>
+
+
+                                <div className="flex flex-row items-center gap-2">
+                                    {/* dot */}
+                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                    <span className="text-lg">
+                                        가맹점 이름
+                                    </span>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+
+                                        nicknameEdit ? setNicknameEdit(false) : setNicknameEdit(true);
+
+                                    } }
+                                    className="bg-[#3167b4] text-zinc-100 rounded-lg p-2"
+                                    disabled={!address}
+                                >
+                                    {nicknameEdit ? Cancel : Edit}
+                                </button>
+
+                                <Image
+                                src="/verified.png"
+                                alt="Verified"
+                                width={20}
+                                height={20}
+                                className="rounded-lg"
+                                />
+                                
+                            </div>
+
+
+                            { (address && (nicknameEdit || !userCode)) && (
+                                <div className='w-full flex flex-col gap-2 items-start justify-start'>
 
 
                                     <div className="flex flex-row items-center gap-2">
                                         {/* dot */}
                                         <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                         <span className="text-lg">
-                                            가맹점 이름
+                                            {nicknameEdit ? "가맹점 이름 수정" : "가맹점 이름 설정"}
                                         </span>
                                     </div>
 
-                                    <button
-                                        onClick={() => {
 
-                                            nicknameEdit ? setNicknameEdit(false) : setNicknameEdit(true);
+                                    <div className='flex flex-row gap-2 items-center justify-between'>
+                                        <div className='flex flex-col gap-2'>
+                                            <input
+                                                disabled={!address}
+                                                className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded text-xl font-semibold"
+                                                placeholder="가맹점 이름을 입력하세요"
+                                                
+                                                //value={nickname}
+                                                value={editedNickname}
 
-                                        } }
-                                        className="bg-[#3167b4] text-zinc-100 rounded-lg p-2"
-                                        disabled={!address}
-                                    >
-                                        {nicknameEdit ? Cancel : Edit}
-                                    </button>
-
-                                    <Image
-                                    src="/verified.png"
-                                    alt="Verified"
-                                    width={20}
-                                    height={20}
-                                    className="rounded-lg"
-                                    />
+                                                type='text'
+                                                onChange={(e) => {
 
 
+                                                    //setNickname(e.target.value);
+
+                                                    setEditedNickname(e.target.value);
+
+                                                } }
+
+
+                                            />
+                                            <div className='flex flex-row gap-2 items-center justify-between'>
+                                                <span className='text-sm font-semibold'>
+                                                    {nicknameEdit ? "가맹점 이름을 수정하세요" : "가맹점 이름을 설정하세요"}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            disabled={!address || !editedNickname}
+                                            className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!editedNickname ? "opacity-50" : ""}`}
+                                            onClick={() => {
+                                                if (!editedNickname) {
+                                                    toast.error("가맹점 이름을 입력하세요");
+                                                    return;
+                                                }
+                                                setStoreName();
+                                                setNicknameEdit(false);
+                                                setEditedNickname('');
+                                            }}
+                                        >
+                                            {Save}
+                                        </button>
+                                    
+                                    </div>
 
                                     
+
                                 </div>
+                            )}
+
+                        </div>
 
 
+                        {/* storeDescription */}
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
 
-
-
-
-
-                                { (address && (nicknameEdit || !userCode)) && (
-                                    <div className='w-full flex flex-col gap-2 items-start justify-start'>
-
-
-                                        <div className="flex flex-row items-center gap-2">
-                                            {/* dot */}
-                                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                            <span className="text-lg">
-                                                {nicknameEdit ? "가맹점 이름 수정" : "가맹점 이름 설정"}
-                                            </span>
-                                        </div>
-
-
-                                        <div className='flex flex-row gap-2 items-center justify-between'>
-                                            <div className='flex flex-col gap-2'>
-                                                <input
-                                                    disabled={!address}
-                                                    className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded text-xl font-semibold"
-                                                    placeholder="가맹점 이름을 입력하세요"
-                                                    
-                                                    //value={nickname}
-                                                    value={editedNickname}
-
-                                                    type='text'
-                                                    onChange={(e) => {
-
-
-                                                        //setNickname(e.target.value);
-
-                                                        setEditedNickname(e.target.value);
-
-                                                    } }
-
-
-                                                />
-                                                <div className='flex flex-row gap-2 items-center justify-between'>
-                                                    <span className='text-sm font-semibold'>
-                                                        {nicknameEdit ? "가맹점 이름을 수정하세요" : "가맹점 이름을 설정하세요"}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                disabled={!address || !editedNickname}
-                                                className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!editedNickname ? "opacity-50" : ""}`}
-                                                onClick={() => {
-                                                    if (!editedNickname) {
-                                                        toast.error("가맹점 이름을 입력하세요");
-                                                        return;
-                                                    }
-                                                    setStoreName();
-                                                    setNicknameEdit(false);
-                                                    setEditedNickname('');
-                                                }}
-                                            >
-                                                {Save}
-                                            </button>
-                                        
-                                        </div>
-
-                                        
-
-                                    </div>
-                                )}
-
-                            </div>
-
-                            {/* storeDescription */}
-                            <div className='w-full flex flex-col items-start justify-center gap-2
-                                border border-gray-300 p-4 rounded-lg'>
-
-                                <div className='w-full flex flex-row items-center justify-between gap-2'>
-                                    <div className="w-full flex flex-row items-center justify-start gap-2">
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            가맹점 설명
-                                        </span>
-                                    </div>
-                                    <input
-                                        disabled={!address}
-                                        className="bg-[#1f2937] text-zinc-100 rounded-lg p-2 w-full text-sm"
-                                        placeholder="가맹점 설명을 입력하세요"
-                                        value={storeDescription}
-                                        type='text'
-                                        onChange={(e) => {
-                                            setStoreDescription(e.target.value);
-                                        } }
-                                    />
-                                    <button
-                                        disabled={!address || !storeDescription}
-                                        className={`w-32 bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!storeDescription ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!storeDescription) {
-                                                toast.error("가맹점 설명을 입력하세요");
-                                                return;
-                                            }
-                                            writeStoreDescription();
-                                        }}
-                                    >
-                                        {Save}
-                                    </button>
-                                </div>
-                            
-                            </div>
-
-
-    
-                            <div className='w-full flex flex-row gap-2 items-center justify-between border border-gray-300 p-4 rounded-lg'>
-
-                                <div className="flex flex-row items-center gap-2">
+                            <div className='w-full flex flex-row items-center justify-between gap-2'>
+                                <div className="w-full flex flex-row items-center justify-start gap-2">
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
                                     <span className="text-lg">
-                                        가맹점 로고
+                                        가맹점 설명
                                     </span>
                                 </div>
+                                <input
+                                    disabled={!address}
+                                    className="bg-[#1f2937] text-zinc-100 rounded-lg p-2 w-full text-sm"
+                                    placeholder="가맹점 설명을 입력하세요"
+                                    value={storeDescription}
+                                    type='text'
+                                    onChange={(e) => {
+                                        setStoreDescription(e.target.value);
+                                    } }
+                                />
+                                <button
+                                    disabled={!address || !storeDescription}
+                                    className={`w-32 bg-[#3167b4] text-zinc-100 rounded-lg p-2 ${!storeDescription ? "opacity-50" : ""}`}
+                                    onClick={() => {
+                                        if (!storeDescription) {
+                                            toast.error("가맹점 설명을 입력하세요");
+                                            return;
+                                        }
+                                        writeStoreDescription();
+                                    }}
+                                >
+                                    {Save}
+                                </button>
+                            </div>
+                        
+                        </div>
 
-                                <div className="p-2 bg-zinc-800 rounded text-zinc-100 text-xl font-semibold">
-                                    <Uploader
-                                        lang={params.lang}
-                                        storecode={params.center as string}
-                                    />
-                                </div>
 
+    
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
+
+                            <div className="flex flex-row items-center gap-2">
+                                {/* dot */}
+                                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                <span className="text-lg">
+                                    가맹점 로고
+                                </span>
                             </div>
 
+                            <div className="p-2 bg-zinc-800 rounded text-zinc-100 text-xl font-semibold">
+                                <Uploader
+                                    lang={params.lang}
+                                    storecode={params.center as string}
+                                />
+                            </div>
 
-
-
-
-
+                        </div>
 
 
 
                         {/* store adminWalletAddress */}
-                        
-                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-300 p-4 rounded-lg">
-                            
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>   
 
                             <div className='w-full flex flex-row items-start gap-2'>
                                 <Image
@@ -1469,7 +1687,7 @@ export default function SettingsPage({ params }: any) {
                                         <button
                                             onClick={() => {
                                                 window.open(
-                                                    `/${params.lang}/${params.storecode}/center`,
+                                                    `/${params.lang}/${params.center}/center`,
                                                     '_blank'
                                                 );
                                             }}
@@ -1490,8 +1708,8 @@ export default function SettingsPage({ params }: any) {
                         
 
                         {/* store settlementWalletAddress */}
-                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-300 p-4 rounded-lg">
-                            
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>   
 
                             <div className='w-full flex flex-row items-start gap-2'>
                                 <Image
@@ -1593,7 +1811,7 @@ export default function SettingsPage({ params }: any) {
                                     height={20}
                                     className="w-5 h-5"
                                     />
-                                    <span className="text-lg text-red-500">
+                                    <span className="text-sm text-red-500">
                                     {store && store.storeName}의 회원이 없습니다.
                                     <br />
                                     가맹점 홈페이지에서 회원가입 후 가맹점 자동결제용 USDT지갑을 설정하세요.
@@ -1603,14 +1821,9 @@ export default function SettingsPage({ params }: any) {
                             </div>
                         </div>
 
-
-
-
-
                         
-                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-300 p-4 rounded-lg">
-                            
-
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
                             {/* store settlementFeeWalletAddress */}
 
                             <div className='w-full flex flex-col items-start justify-center gap-2'>
@@ -1822,18 +2035,9 @@ export default function SettingsPage({ params }: any) {
 
 
 
-
-
-
-
-
-
-
-
-
                         {/* store sellerWalletAddress */}
-                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-300 p-4 rounded-lg">
-                            
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
 
                             <div className='w-full flex flex-row items-start gap-2'>
                                 <Image
@@ -2011,25 +2215,16 @@ export default function SettingsPage({ params }: any) {
                                 */}
 
 
-
-
-
-
-
-
                             </div>
 
                         </div>
 
 
 
-
-
-
                         {/* store bankInfo settings */}
                         {/* 가맹점 결제용 통장 설정 */}
                         <div className='w-full flex flex-col items-start justify-center gap-2
-                            border border-gray-300 p-4 rounded-lg'>
+                            border border-gray-400 p-4 rounded-lg'>
 
                             <div className='w-full flex flex-col items-center justify-between gap-2'>
                                 
@@ -2116,21 +2311,284 @@ export default function SettingsPage({ params }: any) {
                         </div>
 
                         
+                        {/* 결제 URL settings */}
+                        {/* store paymentUrl */}
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
+
+                            <div className='w-full flex flex-col items-center justify-between gap-2
+                                border-b border-gray-300 pb-2'>
+
+                                {/* store paymentUrl */}
+                                
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
+                                    <Image
+                                        src="/icon-url.png"
+                                        alt="Payment URL"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-zinc-500">
+                                        결제 URL 설정
+                                    </span>
+                                </div>
+
+                                {/* information */}
+                                {/* url format */}
+                                <div className='w-full text-sm text-zinc-500'>
+                                    <span>
+                                        결제 URL은 https:// 또는 http:// 로 시작해야 합니다. <br />
+                                        예시: https://yourstore.com/pay
+                                    </span>
+                                </div>
+
+                                <div className='w-full flex flex-col items-start gap-2'>
+                                    
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        {/* information */}
+                                        <Image
+                                            src="/icon-info.png"
+                                            alt="Info"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-zinc-500">
+                                        결제 URL:{' '}{store && store.paymentUrl
+                                            ? <a href={store.paymentUrl} target="_blank" className="text-blue-500 underline">
+                                                {store.paymentUrl}
+                                              </a>
+                                            : '설정된 결제 URL이 없습니다.'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* divider */}
+                                <div className='mt-4 w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                    <input
+                                        type="text"
+                                        className="
+                                        w-full
+                                        bg-white text-zinc-500 rounded-lg p-2 text-sm"
+                                        placeholder="결제 URL을 입력하세요"
+                                        value={paymentUrl}
+                                        onChange={(e) => setPaymentUrl(e.target.value)}
+                                    />
+                                    <button
+                                        disabled={!address || !paymentUrl || updatingPaymentUrl}
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!paymentUrl || updatingPaymentUrl
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                            if (!paymentUrl) {
+                                                toast.error("결제 URL을 입력하세요");
+                                                return;
+                                            }
+
+                                            // check url format
+                                            const urlPattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+                                                '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+                                                '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+                                                '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+                                                '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+                                                '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+                                            if (!urlPattern.test(paymentUrl)) {
+                                                toast.error("올바른 URL 형식이 아닙니다.");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${paymentUrl}로 가맹점 결제 URL을 변경하시겠습니까?`
+                                            ) && updatePaymentUrl();
+                                        }}
+                                    >
+                                        {updatingPaymentUrl ? '변경 중...' : '변경하기'}
+                                    </button>
+
+                                </div>
 
 
+                                {/* 결제 상한 금액 KRW 설정 */}
+
+                                {/* divider */}
+                                <div className='mt-4 w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                    <div className="w-full flex flex-row items-center justify-start gap-2
+                                        border-b border-gray-300 pb-2">
+                                        {/* dot */}
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg text-zinc-500">
+                                            결제 상한 금액(원) 설정
+                                        </span>
+                                    </div>
 
 
+                                    <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                        {/* information icon */}
+                                        <Image
+                                            src="/icon-info.png"
+                                            alt="Info"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-zinc-500">
+                                            현재 결제 상한 금액: {store?.maxPaymentAmountKRW
+                                                ? store?.maxPaymentAmountKRW.toLocaleString() + ' 원'
+                                                : '설정된 결제 상한 금액이 없습니다. (기본값: 3,000,000 원)'}
+                                        </span>
+                                    </div>
+
+                                    <div className='w-full flex flex-row items-center justify-between'>
+                                        <input
+                                            type="text"
+                                            className="flex-1 bg-white text-zinc-500 rounded-lg p-2 text-sm"
+                                            placeholder="결제 상한 금액(KRW)을 입력하세요"
+                                            value={maxPaymentAmountKRW}
+                                            onChange={(e) => {
+                                                // only number input with comma
+                                                const value = e.target.value;
+                                                const numericValue = value.replace(/[^0-9]/g, '');
+                                                const formattedValue = Number(numericValue).toLocaleString();
+                                                setMaxPaymentAmountKRW(Number(numericValue));
+                                            }}
+
+                                        />
+                                        <span className="text-zinc-500 ml-2">
+                                            {maxPaymentAmountKRW ? Number(maxPaymentAmountKRW).toLocaleString() : '0'} 원
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        disabled={!address || !maxPaymentAmountKRW || updatingMaxPaymentAmountKRW}
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!address || !maxPaymentAmountKRW || updatingMaxPaymentAmountKRW
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
 
 
+                                            if (!maxPaymentAmountKRW) {
+                                                toast.error("결제 상한 금액(KRW)을 입력하세요");
+                                                return;
+                                            }
+                                            if (Number(maxPaymentAmountKRW) <= 0) {
+                                                toast.error("결제 상한 금액(KRW)은 0보다 커야 합니다");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${Number(maxPaymentAmountKRW).toLocaleString()} KRW로 결제 상한 금액을 변경하시겠습니까?`
+                                            ) && updateMaxPaymentAmountKRW();
+                                        }}
+                                    >
+                                        {updatingMaxPaymentAmountKRW ? '변경 중...' : '변경하기'}
+                                    </button>
+
+                                </div>
 
 
+                                {/* 결제 URL accessToken settings */}
+                                {/* divider */}
+                                <div className='mt-4 w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                    <div className="w-full flex flex-row items-center justify-start gap-2
+                                        border-b border-gray-300 pb-2">
+                                        {/* dot */}
+                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                        <span className="text-lg text-zinc-500">
+                                            결제 URL Access Token 설정
+                                        </span>
+                                    </div>
+                                    <div className='w-full flex flex-row items-center justify-start gap-2'>
+                                        {/* information icon */}
+                                        <Image
+                                            src="/icon-info.png"
+                                            alt="Info"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-zinc-500">
+                                            현재 결제 URL Access Token: {store?.accessToken
+                                                ? store?.accessToken
+                                                : '설정된 Access Token이 없습니다.'}
+                                        </span>
+                                    </div>
+
+                                    <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                        <div className="w-full flex flex-row items-between justify-center gap-2">
+                                            <input
+                                                type="text"
+                                                className="bg-white text-zinc-500 rounded-lg p-2 text-sm flex-1"
+                                                placeholder="결제 URL Access Token을 입력하세요"
+                                                value={accessToken}
+                                                onChange={(e) => setAccessToken(e.target.value)}
+                                            />
+                                            {/* button for random accessToken */}
+                                            <button
+                                                className="bg-gray-300 text-zinc-700 rounded-lg p-2 text-sm"
+                                                onClick={() => {
+                                                    generateAccessToken();
+                                                }}
+                                            >
+                                                자동생성하기
+                                            </button>
+                                        </div>
+                                        <button
+                                            disabled={!address || !accessToken || updatingAccessToken}
+                                            className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!accessToken || updatingAccessToken
+                                                ? "opacity-50" : ""}`}
+                                            onClick={() => {
+                                                if (!accessToken) {
+                                                    toast.error("가맹점 Access Token을 입력하세요");
+                                                    return;
+                                                }
+
+                                                confirm(
+                                                    `정말 ${accessToken}로 가맹점 Access Token을 변경하시겠습니까?`
+                                                ) && updateStoreAccessToken();
+                                            }}
+                                        >
+                                            {updatingAccessToken ? '변경 중...' : '변경하기'}
+                                        </button>
+
+                                    </div>
+
+                                    {/* 초기화 하기 resetAccessToken */}
+                                    <div className="flex flex-row items-center justify-start gap-2">
+                                        <button
+                                            disabled={updatingAccessToken}
+                                            className={`bg-red-500 text-zinc-100 rounded-lg p-2 text-sm
+                                                ${updatingAccessToken
+                                                ? "opacity-50" : ""}`}
+                                            style={{ marginTop: '8px' }}
+                                            onClick={() => {
+                                                confirm(
+                                                    `정말 ${accessToken}로 가맹점 Access Token을 초기화하시겠습니까?`
+                                                ) && resetAccessToken();
+                                            }}
+                                        >
+                                            {updatingAccessToken ? '초기화 중...' : '초기화 하기'}
+                                        </button>
+                                    </div>
+
+                                </div>
+                                
 
 
-
-
-
-
-
+                            </div>
+                        </div>
 
 
 

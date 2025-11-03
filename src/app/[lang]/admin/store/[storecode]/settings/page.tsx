@@ -1957,7 +1957,7 @@ export default function SettingsPage({ params }: any) {
 
         setUpdatingPaymentUrl(true);
 
-        const response = await fetch('/api/store/updatePaymentUrl', {
+        const response = await fetch('/api/store/updateStorePaymentUrl', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -4570,7 +4570,7 @@ export default function SettingsPage({ params }: any) {
                                         className="w-5 h-5"
                                     />
                                     <span className="text-lg text-zinc-500">
-                                        가맹점 결제 설정
+                                        결제 URL 설정
                                     </span>
                                 </div>
 
@@ -4601,7 +4601,7 @@ export default function SettingsPage({ params }: any) {
                                 {/* divider */}
                                 <div className='w-full h-[1px] bg-zinc-300'></div>
 
-                                <div className='w-64 flex flex-col items-center justify-center gap-2'>
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
 
                                     <input
                                         type="text"

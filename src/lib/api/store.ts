@@ -200,8 +200,8 @@ export async function getStoreByStorecode(
 
         paymentUrl: 1,
         maxPaymentAmountKRW: 1,
-
         accessToken: 1,
+ 
 
         liveOnAndOff: 1,
         viewOnAndOff: 1,
@@ -788,7 +788,30 @@ export async function updateStoreAccessToken(
   }
 }
 
+// updateStorePaymentUrl
+export async function updateStorePaymentUrl(
+  {
+    storecode,
+    paymentUrl,
+  }: {
+    storecode: string;
+    paymentUrl: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
 
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { paymentUrl: paymentUrl } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 
 
