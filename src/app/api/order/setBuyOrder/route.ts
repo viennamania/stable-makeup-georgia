@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
     rate,
     privateSale,
     buyer,
-    paymentMethod
+    paymentMethod,
+    returnUrl,
   } = body;
 
   console.log("setBuyOrder =====  body", body);
@@ -177,6 +178,8 @@ export async function POST(request: NextRequest) {
       address: escrowWalletAddress,
       privateKey: escrowWalletPrivateKey,
     },
+
+    returnUrl: returnUrl,
   });
 
   ///console.log("setBuyOrder =====  result", result);

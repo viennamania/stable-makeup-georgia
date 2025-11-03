@@ -1683,6 +1683,8 @@ export async function insertBuyOrder(data: any) {
       escrowWallet: data.escrowWallet || '', // optional, can be empty
 
       audioOn: true, // default true
+
+      returnUrl: data.returnUrl || '', // optional, can be empty
     }
   );
 
