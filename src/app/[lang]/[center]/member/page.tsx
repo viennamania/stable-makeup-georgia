@@ -124,6 +124,8 @@ interface BuyOrder {
 
   store: any,
   storecode: string;
+
+  paymentUrl: string;
 }
 
 
@@ -973,6 +975,7 @@ export default function Index({ params }: any) {
     */
 
 
+  const [storePaymentUrl, setStorePaymentUrl] = useState("");
 
 
   // array of stores
@@ -1014,6 +1017,7 @@ export default function Index({ params }: any) {
               setIsAdmin(true);
             }
   
+            setStorePaymentUrl(data.result?.paymentUrl || paymentUrl);    
 
         } else {
           // get store list
@@ -2639,859 +2643,848 @@ export default function Index({ params }: any) {
             </div>
 
 
-
-
             <div className="w-full flex flex-col xl:flwx-row items-start justify-center gap-2 mt-4">
 
-
-  
-                <div className="flex flex-row items-center justify-start gap-2">  
+              <div className="flex flex-row items-center justify-start gap-2">  
+                <Image
+                  src="/icon-homepage.png"
+                  alt="Homepage"
+                  width={20}
+                  height={20}
+                  className="rounded-lg w-6 h-6"
+                />
+                <span className="text-sm text-zinc-500">
+                  회원 결제페이지 링크
+                </span>
+              </div>
+              <div className="flex flex-row items-center justify-start gap-2">
+                <button
+                  onClick={() => {
+                    window.open(`${storePaymentUrl}`, '_blank');
+                    //navigator.clipboard.writeText(`${storePaymentUrl}`);
+                    //toast.success('회원 결제페이지 링크가 복사되었습니다.');
+                  }}
+                  className="text-sm text-zinc-500 underline"
+                >
+                  {
+                  //storePaymentUrl + '/' + params.lang + '/' + clientId + '/' + store?.storecode + '/paymaster'
+                  storePaymentUrl
+                  }
+                </button>
+                {/* 복사 button */}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${storePaymentUrl}`);
+                    toast.success('회원 결제페이지 링크가 복사되었습니다.');
+                  }}
+                  className="text-sm text-zinc-500 underline"
+                >
                   <Image
-                    src="/icon-homepage.png"
-                    alt="Homepage"
+                    src="/icon-copy.png"
+                    alt="Copy"
                     width={20}
                     height={20}
-                    className="rounded-lg w-6 h-6"
+                    className="rounded-lg w-5 h-5"
                   />
-                  <span className="text-sm text-zinc-500">
-                    회원 홈페이지
-                  </span>
-                </div>
-                <div className="flex flex-row items-center justify-start gap-2">
-                  <button
-                    onClick={() => {
-                      window.open(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/paymaster`, '_blank');
-                    }}
-                    className="text-sm text-zinc-500 underline"
-                  >
-                    {paymentUrl + '/' + params.lang + '/' + clientId + '/' + store?.storecode + '/paymaster'}
-                  </button>
+                </button>
+              </div>
 
-                  {/* 복사 버튼 */}
+            </div>
+
+
+            <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
+
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">{Total}</div>
+                <div className="flex flex-row items-center gap-2">
+                  {
+                    fetchingAllBuyer ? (
+                      <Image
+                        src="/loading.png"
+                        alt="Loading"
+                        width={20}
+                        height={20}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      totalCount
+                    )
+                  }
+                </div>
+              </div>
+
+            </div>
+
+
+            <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5 mt-4">
+
+              {/* 바이어 추가 input and button */}
+              <div className="
+                w-full xl:w-1/2
+                flex flex-col sm:flex-col items-center justify-center gap-2">
+
+
+                <div className="w-full flex flex-row items-center justify-between gap-2">
+
+                  <input
+                    disabled={insertingUserCode}
+                    type="text"
+                    value={userCode}
+                    onChange={(e) => {
+
+
+                      setUserCode(e.target.value);
+
+                    } }
+                    placeholder="회원 아이디"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  {/* userPassword */}
+                  <input
+                    disabled={insertingUserCode}
+                    type="text"
+                    value={userPassword}
+                    onChange={(e) => setUserPassword(e.target.value)}
+                    placeholder="회원 비밀번호"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+
+      
+                  <input
+                    disabled={insertingUserCode}
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="회원 이름"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                </div>
+
+
+                <div className="w-full flex flex-row items-center justify-between gap-2">
+
+
+                  {/* userBankDepositName */}
+                  <input
+                    disabled={insertingUserCode}
+                    type="text"
+                    value={userBankDepositName}
+                    onChange={(e) => setUserBankDepositName(e.target.value)}
+                    placeholder="회원 입금자명"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+
+
+                  {/* userBankName */}
+                  <select
+                    disabled={insertingUserCode}
+                    value={userBankName}
+                    onChange={(e) => setUserBankName(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="" selected={userBankName === ""}>
+                      은행선택
+                    </option>
+                    <option value="카카오뱅크" selected={userBankName === "카카오뱅크"}>
+                      카카오뱅크
+                    </option>
+                    <option value="케이뱅크" selected={userBankName === "케이뱅크"}>
+                      케이뱅크
+                    </option>
+                    <option value="토스뱅크" selected={userBankName === "토스뱅크"}>
+                      토스뱅크
+                    </option>
+                    <option value="국민은행" selected={userBankName === "국민은행"}>
+                      국민은행
+                    </option>
+                    <option value="우리은행" selected={userBankName === "우리은행"}>
+                      우리은행
+                    </option>
+                    <option value="신한은행" selected={userBankName === "신한은행"}>
+                      신한은행
+                    </option>
+                    <option value="농협" selected={userBankName === "농협"}>
+                      농협
+                    </option>
+                    <option value="새마을금고" selected={userBankName === "새마을금고"}>
+                      새마을금고
+                    </option>
+                    <option value="우체국" selected={userBankName === "우체국"}>
+                      우체국
+                    </option>
+                    <option value="산림조합" selected={userBankName === "산림조합"}>
+                      산림조합
+                    </option>
+                    <option value="기업은행" selected={userBankName === "기업은행"}>
+                      기업은행
+                    </option>
+                    <option value="하나은행" selected={userBankName === "하나은행"}>
+                      하나은행
+                    </option>
+                    <option value="외환은행" selected={userBankName === "외환은행"}>
+                      외환은행
+                    </option>
+                    {/* SC제일은행 */}
+                    <option value="SC제일은행" selected={userBankName === "SC제일은행"}>
+                      SC제일은행
+                    </option>
+                    <option value="부산은행" selected={userBankName === "부산은행"}>
+                      부산은행
+                    </option>
+                    <option value="경남은행" selected={userBankName === "경남은행"}>
+                      경남은행
+                    </option>
+                    <option value="대구은행" selected={userBankName === "대구은행"}>
+                      대구은행
+                    </option>
+                    <option value="전북은행" selected={userBankName === "전북은행"}>
+                      전북은행
+                    </option>
+                    <option value="경북은행" selected={userBankName === "경북은행"}>
+                      경북은행
+                    </option>
+                    <option value="경남은행" selected={userBankName === "경남은행"}>
+                        경남은행
+                    </option>
+                    <option value="광주은행" selected={userBankName === "광주은행"}>
+                      광주은행
+                    </option>
+                    <option value="제주은행" selected={userBankName === "제주은행"}>
+                      제주은행
+                    </option>
+                    <option value="수협" selected={userBankName === "수협"}>
+                      수협
+                    </option>
+                    <option value="신협" selected={userBankName === "신협"}>
+                      신협
+                    </option>
+                    <option value="저축은행" selected={userBankName === "저축은행"}>
+                      저축은행
+                    </option>
+                    <option value="씨티은행" selected={userBankName === "씨티은행"}>
+                      씨티은행
+                    </option>
+                    <option value="대신은행" selected={userBankName === "대신은행"}>
+                      대신은행
+                    </option>
+                    <option value="동양종합금융" selected={userBankName === "동양종합금융"}>
+                      동양종합금융
+                    </option>
+                    <option value="산업은행" selected={userBankName === "산업은행"}>
+                      산업은행
+                    </option>
+                  </select>
+
+                  {/* userBankAccountNumber */}
+                  <input
+                    disabled={insertingUserCode}
+                    type="text"
+                    value={userBankAccountNumber}
+                    
+                    //onChange={(e) => setUserBankAccountNumber(e.target.value)}
+                    // check only number, not hyphen
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const regex = /^[0-9]*$/; // 숫자만 허용하는 정규식
+                      if (regex.test(value)) {
+                        setUserBankAccountNumber(value);
+                      }
+                    }}
+                    
+
+                    placeholder="회원 계좌번호"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  {/* userType */}
+                  {/* select box */}
+                  {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
+                  <select
+                    disabled={insertingUserCode}
+                    value={userType}
+                    onChange={(e) => setUserType(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="" selected={userType === ""}>
+                      일반 회원
+                    </option>
+                    <option value="AAA" selected={userType === "AAA"}>
+                      1등급 회원
+                    </option>
+                    <option value="BBB" selected={userType === "BBB"}>
+                      2등급 회원
+                    </option>
+                    <option value="CCC" selected={userType === "CCC"}>
+                      3등급 회원
+                    </option>
+                    <option value="DDD" selected={userType === "DDD"}>
+                      4등급 회원
+                    </option>
+                  </select>
+
+                </div>
+
+            
+                
+                <button
+                  disabled={insertingUserCode}
+                  onClick={() => {
+
+                    // check if store name length is less than 2
+                    if (userName.length < 2) {
+                      toast.error('회원 이름은 2자 이상이어야 합니다.');
+                      return;
+                    }
+                    // check if store name length is less than 20
+                    if (userName.length > 10) {
+                      toast.error('회원 이름은 10자 이하여야 합니다.');
+                      return;
+                    }
+
+                    confirm(
+                      `정말 ${userCode} (${userName})을 추가하시겠습니까?`
+                    ) && insertBuyer();
+
+                  }}
+                  className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg w-full
+                    ${insertingUserCode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {insertingUserCode ? '회원추가 중...' : '회원추가'}
+                </button>
+              </div>
+
+
+
+
+
+
+              <div className="flex flex-row items-center gap-2">
+
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                  {/* search nickname */}
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchBuyer}
+                      onChange={(e) => setSearchBuyer(e.target.value)}
+                      placeholder="회원 아이디"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+
+                  </div>
+
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchDepositName}
+                      onChange={(e) => setSearchDepositName(e.target.value)}
+                      placeholder="입금자명"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+
+                  </div>
+                </div>
+
+
+                {/* 검색 버튼 */}
+                <div className="
+                w-32
+                flex flex-row items-center gap-2">
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${paymentUrl}/${params.lang}/${clientId}/${store?.storecode}/center`);
-                      toast.success('가맹점 홈페이지 링크가 복사되었습니다.');
+                      setPageValue(1);
+                      fetchAllBuyer();
                     }}
-                    className="bg-[#3167b4] text-sm text-[#f3f4f6] px-2 py-1 rounded-lg hover:bg-[#3167b4]/80"
+                    className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+                    disabled={fetchingAllBuyer}
                   >
-                    복사
+                    <div className="flex flex-row items-center justify-between gap-2">
+                      <Image
+                        src="/icon-search.png"
+                        alt="Search"
+                        width={20}
+                        height={20}
+                        className="rounded-lg w-5 h-5"
+                      />
+                      <span className="text-sm">
+                        {fetchingAllBuyer ? '검색중...' : '검색'}
+                      </span>
+                    </div>
+
                   </button>
                 </div>
+                
+              </div>
+
 
 
             </div>
 
 
+            {/*
+            {"storecode":"teststorecode","storeName":"테스트상점","storeType":"test","storeUrl":"https://test.com","storeDescription":"설명입니다.","storeLogo":"https://test.com/logo.png","storeBanner":"https://test.com/banner.png"}
+            */}
+
+            {/* table view is horizontal scroll */}
+            {tableView ? (
 
 
+              <div className="w-full overflow-x-auto">
 
-              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
+                <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
 
-     
-
-
-
-
-                <div className="w-full flex flex-row items-center justify-end gap-5">
-
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">{Total}</div>
-                    <div className="flex flex-row items-center gap-2">
-                      {
-                        fetchingAllBuyer ? (
-                          <Image
-                            src="/loading.png"
-                            alt="Loading"
-                            width={20}
-                            height={20}
-                            className="animate-spin"
-                          />
-                        ) : (
-                          totalCount
-                        )
-                      }
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-
-
-              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5 mt-4">
-
-                {/* 바이어 추가 input and button */}
-                <div className="
-                  w-full xl:w-1/2
-                  flex flex-col sm:flex-col items-center justify-center gap-2">
-
-
-                  <div className="w-full flex flex-row items-center justify-between gap-2">
-
-                    <input
-                      disabled={insertingUserCode}
-                      type="text"
-                      value={userCode}
-                      onChange={(e) => {
-
-
-                        setUserCode(e.target.value);
-
-                      } }
-                      placeholder="회원 아이디"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-                    {/* userPassword */}
-                    <input
-                      disabled={insertingUserCode}
-                      type="text"
-                      value={userPassword}
-                      onChange={(e) => setUserPassword(e.target.value)}
-                      placeholder="회원 비밀번호"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-
-        
-                    <input
-                      disabled={insertingUserCode}
-                      type="text"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      placeholder="회원 이름"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-                  </div>
-
-
-                  <div className="w-full flex flex-row items-center justify-between gap-2">
-
-
-                    {/* userBankDepositName */}
-                    <input
-                      disabled={insertingUserCode}
-                      type="text"
-                      value={userBankDepositName}
-                      onChange={(e) => setUserBankDepositName(e.target.value)}
-                      placeholder="회원 입금자명"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-
-
-                    {/* userBankName */}
-                    <select
-                      disabled={insertingUserCode}
-                      value={userBankName}
-                      onChange={(e) => setUserBankName(e.target.value)}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="" selected={userBankName === ""}>
-                        은행선택
-                      </option>
-                      <option value="카카오뱅크" selected={userBankName === "카카오뱅크"}>
-                        카카오뱅크
-                      </option>
-                      <option value="케이뱅크" selected={userBankName === "케이뱅크"}>
-                        케이뱅크
-                      </option>
-                      <option value="토스뱅크" selected={userBankName === "토스뱅크"}>
-                        토스뱅크
-                      </option>
-                      <option value="국민은행" selected={userBankName === "국민은행"}>
-                        국민은행
-                      </option>
-                      <option value="우리은행" selected={userBankName === "우리은행"}>
-                        우리은행
-                      </option>
-                      <option value="신한은행" selected={userBankName === "신한은행"}>
-                        신한은행
-                      </option>
-                      <option value="농협" selected={userBankName === "농협"}>
-                        농협
-                      </option>
-                      <option value="새마을금고" selected={userBankName === "새마을금고"}>
-                        새마을금고
-                      </option>
-                      <option value="우체국" selected={userBankName === "우체국"}>
-                        우체국
-                      </option>
-                      <option value="산림조합" selected={userBankName === "산림조합"}>
-                        산림조합
-                      </option>
-                      <option value="기업은행" selected={userBankName === "기업은행"}>
-                        기업은행
-                      </option>
-                      <option value="하나은행" selected={userBankName === "하나은행"}>
-                        하나은행
-                      </option>
-                      <option value="외환은행" selected={userBankName === "외환은행"}>
-                        외환은행
-                      </option>
-                      {/* SC제일은행 */}
-                      <option value="SC제일은행" selected={userBankName === "SC제일은행"}>
-                        SC제일은행
-                      </option>
-                      <option value="부산은행" selected={userBankName === "부산은행"}>
-                        부산은행
-                      </option>
-                      <option value="경남은행" selected={userBankName === "경남은행"}>
-                        경남은행
-                      </option>
-                      <option value="대구은행" selected={userBankName === "대구은행"}>
-                        대구은행
-                      </option>
-                      <option value="전북은행" selected={userBankName === "전북은행"}>
-                        전북은행
-                      </option>
-                      <option value="경북은행" selected={userBankName === "경북은행"}>
-                        경북은행
-                      </option>
-                      <option value="경남은행" selected={userBankName === "경남은행"}>
-                          경남은행
-                      </option>
-                      <option value="광주은행" selected={userBankName === "광주은행"}>
-                        광주은행
-                      </option>
-                      <option value="제주은행" selected={userBankName === "제주은행"}>
-                        제주은행
-                      </option>
-                      <option value="수협" selected={userBankName === "수협"}>
-                        수협
-                      </option>
-                      <option value="신협" selected={userBankName === "신협"}>
-                        신협
-                      </option>
-                      <option value="저축은행" selected={userBankName === "저축은행"}>
-                        저축은행
-                      </option>
-                      <option value="씨티은행" selected={userBankName === "씨티은행"}>
-                        씨티은행
-                      </option>
-                      <option value="대신은행" selected={userBankName === "대신은행"}>
-                        대신은행
-                      </option>
-                      <option value="동양종합금융" selected={userBankName === "동양종합금융"}>
-                        동양종합금융
-                      </option>
-                      <option value="산업은행" selected={userBankName === "산업은행"}>
-                        산업은행
-                      </option>
-                    </select>
-
-                    {/* userBankAccountNumber */}
-                    <input
-                      disabled={insertingUserCode}
-                      type="text"
-                      value={userBankAccountNumber}
-                      
-                      //onChange={(e) => setUserBankAccountNumber(e.target.value)}
-                      // check only number, not hyphen
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        const regex = /^[0-9]*$/; // 숫자만 허용하는 정규식
-                        if (regex.test(value)) {
-                          setUserBankAccountNumber(value);
-                        }
-                      }}
-                     
-
-                      placeholder="회원 계좌번호"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-                    {/* userType */}
-                    {/* select box */}
-                    {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
-                    <select
-                      disabled={insertingUserCode}
-                      value={userType}
-                      onChange={(e) => setUserType(e.target.value)}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="" selected={userType === ""}>
-                        일반 회원
-                      </option>
-                      <option value="AAA" selected={userType === "AAA"}>
-                        1등급 회원
-                      </option>
-                      <option value="BBB" selected={userType === "BBB"}>
-                        2등급 회원
-                      </option>
-                      <option value="CCC" selected={userType === "CCC"}>
-                        3등급 회원
-                      </option>
-                      <option value="DDD" selected={userType === "DDD"}>
-                        4등급 회원
-                      </option>
-                    </select>
-
-                  </div>
-
-              
-                  
-                  <button
-                    disabled={insertingUserCode}
-                    onClick={() => {
-
-                      // check if store name length is less than 2
-                      if (userName.length < 2) {
-                        toast.error('회원 이름은 2자 이상이어야 합니다.');
-                        return;
-                      }
-                      // check if store name length is less than 20
-                      if (userName.length > 10) {
-                        toast.error('회원 이름은 10자 이하여야 합니다.');
-                        return;
-                      }
-
-                      confirm(
-                        `정말 ${userCode} (${userName})을 추가하시겠습니까?`
-                      ) && insertBuyer();
-
+                  <thead
+                    className="bg-zinc-800 text-white text-sm font-semibold"
+                    style={{
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
                     }}
-                    className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg w-full
-                      ${insertingUserCode ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
-                    {insertingUserCode ? '회원추가 중...' : '회원추가'}
-                  </button>
-                </div>
+                    <tr>
+                      <th className="p-2">등록일</th>
+                      <th className="p-2">회원 아이디</th>
+                      <th className="p-2">회원등급</th>
+                      <th className="p-2">회원 통장</th>
+                      <th className="p-2">구매수(건)</th>
+                      <th className="p-2 text-right">
+                        구매량(USDT)
+                        <br />
+                        구매금액(원)
+                      </th>
+                      <th className="p-2">충전금액</th>
+                      <th className="p-2">회원 결제페이지</th>
+                      <th className="p-2">회원 USDT지갑</th>
+                      <th className="p-2">주문상태</th>
+                      <th className="p-2">잔액확인</th>
+                    </tr>
+                  </thead>
 
+                  {/* if my trading, then tr has differenc color */}
+                  <tbody>
 
+                    {allBuyer.map((item, index) => (
 
+                      
+                      <tr key={index} className={`
+                        ${
+                          index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
+                        }
+                      `}>
+                      
+                        <td className="p-2">
+                          <div className="
+                            w-24
+                            flex flex-col items-start justify-center">
+                            <span className="text-sm font-semibold">
+                              {new Date(item.createdAt).toLocaleDateString('ko-KR', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                              })}
+                            </span>
+                            <span className="text-sm font-semibold">
+                              {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </td>
 
+                        <td className="p-2">
+                          {item.nickname}
+                        </td>
 
+                        {/* userType */}
+                        {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
+                        {/* if '' or not exists then '일반회원' */}
+                        <td className="p-2">
+                          <div className="
+                          w-20
+                          flex flex-col items-center justify-center">
+                            {
+                              item?.userType === 'AAA' ? (
+                                <div className="
+                                  text-xs text-white bg-red-500 px-1 rounded-md
+                                  ">
+                                  1등급
+                                </div>
+                              )
+                              : item?.userType === 'BBB' ? (
+                                <div className="
+                                  text-xs text-white bg-orange-500 px-1 rounded-md
+                                  ">
+                                  2등급
+                                </div>
+                              )
+                              : item?.userType === 'CCC' ? (
+                                <div className="
+                                  text-xs text-white bg-yellow-500 px-1 rounded-md
+                                  ">
+                                  3등급
+                                </div>
+                              )
+                              : item?.userType === 'DDD' ? (
+                                <div className="
+                                  text-xs text-white bg-green-500 px-1 rounded-md
+                                  ">
+                                  4등급
+                                </div>
+                              )
+                              : (
+                                <div className="
+                                  text-xs text-white bg-gray-500 px-1 rounded-md
+                                  ">
+                                  일반
+                                </div>
+                              )
+                            }
 
-                <div className="flex flex-row items-center gap-2">
+                            <button
+                              onClick={() => {
+                                router.push(
+                                  `/${params.lang}/admin/member-grade-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
+                                );
+                              }}
+                              className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                hover:bg-[#3167b4]/80"
+                            >
+                              변경하기
+                            </button>
 
+                          </div>
+                        </td>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                    {/* search nickname */}
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchBuyer}
-                        onChange={(e) => setSearchBuyer(e.target.value)}
-                        placeholder="회원 아이디"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      />
+                        <td className="p-2">
+                          <div className="flex flex-col items-end justify-center gap-1">
+                            
+                            <span className="text-sm text-zinc-500">
+                              {item?.buyer?.depositBankName}
+                            </span>
+                            <span className="text-sm text-zinc-500">
+                              {item?.buyer?.depositBankAccountNumber}
+                            </span>
+                            <span className="text-sm text-zinc-500">
+                              {item?.buyer?.depositName}
+                            </span>
 
-                    </div>
+                          </div>
+                        </td>
 
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchDepositName}
-                        onChange={(e) => setSearchDepositName(e.target.value)}
-                        placeholder="입금자명"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      />
+                        <td className="p-2">
+                          <div className="w-20 flex flex-col items-end justify-center gap-1">
+                            {item?.totalPaymentConfirmedCount || 0}
+                          </div>
+                        </td>
+                        <td className="p-2">
+                          <div className="
+                            mr-5
+                            w-48
+                            flex flex-col items-end justify-center gap-1">
 
-                    </div>
-                  </div>
-
-
-                  {/* 검색 버튼 */}
-                  <div className="
-                  w-32
-                  flex flex-row items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setPageValue(1);
-                        fetchAllBuyer();
-                      }}
-                      className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                      disabled={fetchingAllBuyer}
-                    >
-                      <div className="flex flex-row items-center justify-between gap-2">
-                        <Image
-                          src="/icon-search.png"
-                          alt="Search"
-                          width={20}
-                          height={20}
-                          className="rounded-lg w-5 h-5"
-                        />
-                        <span className="text-sm">
-                          {fetchingAllBuyer ? '검색중...' : '검색'}
-                        </span>
-                      </div>
-
-                    </button>
-                  </div>
-                  
-                </div>
-
-
-
-              </div>
-
-
-
-
-              {/*
-              {"storecode":"teststorecode","storeName":"테스트상점","storeType":"test","storeUrl":"https://test.com","storeDescription":"설명입니다.","storeLogo":"https://test.com/logo.png","storeBanner":"https://test.com/banner.png"}
-              */}
-
-              {/* table view is horizontal scroll */}
-              {tableView ? (
-
-
-                <div className="w-full overflow-x-auto">
-
-                  <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
-
-                    <thead
-                      className="bg-zinc-800 text-white text-sm font-semibold"
-                      style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      }}
-                    >
-                      <tr>
-                        <th className="p-2">등록일</th>
-                        <th className="p-2">회원 아이디</th>
-                        <th className="p-2">회원등급</th>
-                        <th className="p-2">회원 통장</th>
-                        <th className="p-2">구매수(건)</th>
-                        <th className="p-2 text-right">
-                          구매량(USDT)
-                          <br />
-                          구매금액(원)
-                        </th>
-                        <th className="p-2">충전금액</th>
-                        <th className="p-2">회원 결제페이지</th>
-                        <th className="p-2">회원 USDT지갑</th>
-                        <th className="p-2">주문상태</th>
-                        <th className="p-2">잔액확인</th>
-                      </tr>
-                    </thead>
-
-                    {/* if my trading, then tr has differenc color */}
-                    <tbody>
-
-                      {allBuyer.map((item, index) => (
-
-                        
-                        <tr key={index} className={`
-                          ${
-                            index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-                          }
-                        `}>
-                        
-                          <td className="p-2">
-                            <div className="
-                              w-24
-                              flex flex-col items-start justify-center">
-                              <span className="text-sm font-semibold">
-                                {new Date(item.createdAt).toLocaleDateString('ko-KR', {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                })}
-                              </span>
-                              <span className="text-sm font-semibold">
-                                {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                })}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="p-2">
-                            {item.nickname}
-                          </td>
-
-                          {/* userType */}
-                          {/* '', 'AAA', 'BBB', 'CCC', 'DDD', 'EEE' */}
-                          {/* if '' or not exists then '일반회원' */}
-                          <td className="p-2">
-                            <div className="
-                            w-20
-                            flex flex-col items-center justify-center">
-                              {
-                                item?.userType === 'AAA' ? (
-                                  <div className="
-                                    text-xs text-white bg-red-500 px-1 rounded-md
-                                    ">
-                                    1등급
-                                  </div>
-                                )
-                                : item?.userType === 'BBB' ? (
-                                  <div className="
-                                    text-xs text-white bg-orange-500 px-1 rounded-md
-                                    ">
-                                    2등급
-                                  </div>
-                                )
-                                : item?.userType === 'CCC' ? (
-                                  <div className="
-                                    text-xs text-white bg-yellow-500 px-1 rounded-md
-                                    ">
-                                    3등급
-                                  </div>
-                                )
-                                : item?.userType === 'DDD' ? (
-                                  <div className="
-                                    text-xs text-white bg-green-500 px-1 rounded-md
-                                    ">
-                                    4등급
-                                  </div>
-                                )
-                                : (
-                                  <div className="
-                                    text-xs text-white bg-gray-500 px-1 rounded-md
-                                    ">
-                                    일반
-                                  </div>
-                                )
-                              }
-
-                              <button
-                                onClick={() => {
-                                  router.push(
-                                    `/${params.lang}/admin/member-grade-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
-                                  );
-                                }}
-                                className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                              >
-                                변경하기
-                              </button>
-
-                            </div>
-                          </td>
-
-                          <td className="p-2">
-                            <div className="flex flex-col items-end justify-center gap-1">
-                              
-                              <span className="text-sm text-zinc-500">
-                                {item?.buyer?.depositBankName}
-                              </span>
-                              <span className="text-sm text-zinc-500">
-                                {item?.buyer?.depositBankAccountNumber}
-                              </span>
-                              <span className="text-sm text-zinc-500">
-                                {item?.buyer?.depositName}
-                              </span>
-
-                            </div>
-                          </td>
-
-                          <td className="p-2">
-                            <div className="w-20 flex flex-col items-end justify-center gap-1">
-                              {item?.totalPaymentConfirmedCount || 0}
-                            </div>
-                          </td>
-                          <td className="p-2">
-                            <div className="
-                              mr-5
-                              w-48
-                              flex flex-col items-end justify-center gap-1">
-
-                              <div className="w-full flex flex-row items-center justify-end gap-1">
-                                <Image
-                                  src="/icon-tether.png"
-                                  alt="Tether"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-lg text-[#409192] font-semibold"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
-                                {
-                                Number(item?.totalPaymentConfirmedUsdtAmount ?
-                                  item?.totalPaymentConfirmedUsdtAmount
-                                  : 0)
-                                  .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                }
-                                </span>
-                              </div>
-                              <div className="w-full flex flex-row items-center justify-end gap-1">
-                                <span className="text-lg text-yellow-600 font-semibold"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
-                                {item?.totalPaymentConfirmedKrwAmount && item?.totalPaymentConfirmedKrwAmount.toLocaleString('ko-KR') || 0}
-                                </span>
-                              </div>
-
-                            </div>
-                          </td>
-
-                          <td className="p-2">
-                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
-                              <input
-                                type="text"
-                                value={depositAmountKrw[index]}
-                                onChange={(e) => {
-                                  setDepositAmountKrw((prev) => {
-                                    const newDepositAmountKrw = [...prev];
-                                    newDepositAmountKrw[index] = Number(e.target.value);
-                                    return newDepositAmountKrw;
-                                  });
-                                }}
-                                placeholder="충전금액"
-                                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                              />
-                            </div>
-                          </td>
-
-
-
-                          <td className="p-2">
-
-                            <div className="
-                              w-64
-                              flex flex-col items-center justify-center gap-2">
-
-                              <div className="w-full flex flex-row items-center justify-between gap-2">
-
-                                {/* Modal open */}
-                                <button
-                                  onClick={() => {
-                                    setSelectedItem({
-                                      ...item,
-                                      depositAmountKrw: depositAmountKrw[index],
-                                    });
-                                    openModal();
-                                  }}
-                                  className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80"
-                                >
-                                  보기
-                                </button>
-
-
-
-                                {/* 복사 버튼 */}
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
-                                      + 'storeUser=' + item.nickname
-                                      + '&depositBankName='+ item?.buyer?.depositBankName
-                                      + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
-                                      + '&depositName=' + item?.buyer?.depositName
-                                      + '&depositAmountKrw=' + depositAmountKrw[index]
-                                      + '&accessToken=' + store?.accessToken
-                                    );
-                                    toast.success('회원 결제페이지 링크가 복사되었습니다.');
-                                  }}
-                                  className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80"
-                                >
-                                  링크 복사
-                                </button>
-
-                              </div>
-
-                              <div className="w-full flex flex-row items-center justify-between gap-2">
-
-
-                                {/* copy javascript code */}
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(
-                                      `<script src="${paymentUrl}/${params.lang}/${clientId}/${item.storecode}/payment?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}&accessToken=${store?.accessToken}">결제하기</script>`
-                                    );
-                                    toast.success('회원 결제페이지 스크립트가 복사되었습니다.');
-                                  }}
-                                  className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80"
-                                >
-                                  스크립트 복사
-                                </button>
-                                      
-
-
-                                {/* 새창 열기 버튼 */}
-                                <button
-                                  onClick={() => {
-                                    window.open(
-                                      paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
-                                      + 'storeUser=' + item.nickname
-                                      + '&depositBankName=' + item?.buyer?.depositBankName
-                                      + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
-                                      + '&depositName=' + item?.buyer?.depositName
-                                      + '&depositAmountKrw=' + depositAmountKrw[index]
-                                      + '&accessToken=' + store?.accessToken
-                                      ,
-                                      '_blank'
-                                    );
-                                    toast.success('회원 홈페이지를 새창으로 열었습니다.');
-                                  }}
-                                  className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80"
-                                >
-                                  새창열기
-                                </button>
-
-                              </div>
-
-
-                            </div>
-
-                          </td>
-
-
-                          <td className="p-2">
-                            <div className="flex flex-row items-center justify-center gap-1">
+                            <div className="w-full flex flex-row items-center justify-end gap-1">
                               <Image
-                                src="/icon-shield.png"
-                                alt="Wallet"
+                                src="/icon-tether.png"
+                                alt="Tether"
                                 width={20}
                                 height={20}
                                 className="w-5 h-5"
                               />
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item?.walletAddress);
-                                  toast.success(Copied_Wallet_Address);
-                                } }
-                                className="text-sm text-zinc-500 underline"
+                              <span className="text-lg text-[#409192] font-semibold"
+                                style={{ fontFamily: 'monospace' }}
                               >
                               {
-                                  item?.walletAddress && (
-                                    item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
-                                  )
-                                }
-                              </button>
-                            </div>
-                          </td>
-
- 
-                          <td className="p-2">
-                            <div className="
-                              w-32
-                              flex flex-col sm:flex-row items-start justify-center gap-2">
-                              <span className="text-sm text-zinc-500">
-                                {
-                                item?.buyOrderStatus === 'ordered' ? (
-                                  <span className="text-lg text-yellow-500 font-semibold">
-                                    구매주문
-                                  </span>
-                                ) : item?.buyOrderStatus === 'accepted' ? (
-                                  <span className="text-lg text-green-500 font-semibold">
-                                    판매자확정
-                                  </span>
-                                ) : item?.buyOrderStatus === 'paymentRequested' ? (
-                                  <span className="text-lg text-red-500 font-semibold">
-                                    결제요청
-                                  </span>
-                                ) : item?.buyOrderStatus === 'paymentConfirmed' ? (
-                                  <span className="text-lg text-green-500 font-semibold">
-                                    결제완료
-                                  </span>
-                                ) : item?.buyOrderStatus === 'cancelled' ? (
-                                  <span className="text-lg text-red-500 font-semibold">
-                                    거래취소
-                                  </span>
-                                ) : ''
-                                }
-
+                              Number(item?.totalPaymentConfirmedUsdtAmount ?
+                                item?.totalPaymentConfirmedUsdtAmount
+                                : 0)
+                                .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              }
                               </span>
                             </div>
-                          </td>
-
-                          {/* 잔고확인 버튼 */}
-                          {/* USDT 잔액 */}
-                          <td className="p-2">
-                            <div className="w-24
-                              flex flex-col items-between justify-between gap-2">
-
-                              {/*
-                              <div className="w-full flex flex-col items-center justify-center gap-2">
-
-                                <span className="text-lg text-[#409192]"
-                                  style={{ fontFamily: 'monospace' }}
-                                >
-                                  {usdtBalance[index] ?
-                                    usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}{' USDT'}
-                                </span>
-         
-                              </div>
-                              */}
-
-
-                              {/* button to getBalance of USDT */}
-                              <button
-                                //disabled={!isAdmin || insertingStore}
-                                onClick={() => {
-                                  //if (!isAdmin || insertingStore) return;
-                                  //getBalance(item.storecode);
-
-                                  getBalanceOfWalletAddress(item.walletAddress);
-          
-
-                                  //toast.success('잔액을 가져왔습니다.');
-
-                                  // toast usdtBalance[index] is updated
-                                  //toast.success(`잔액을 가져왔습니다. 현재 잔액: ${usdtBalance[index] ? usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'} USDT`);
-
-                                }}
-                                className={`
-                                  w-full mb-2
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80
-                                `}
+                            <div className="w-full flex flex-row items-center justify-end gap-1">
+                              <span className="text-lg text-yellow-600 font-semibold"
+                                style={{ fontFamily: 'monospace' }}
                               >
-                                잔액 확인하기
-                              </button>
+                              {item?.totalPaymentConfirmedKrwAmount && item?.totalPaymentConfirmedKrwAmount.toLocaleString('ko-KR') || 0}
+                              </span>
+                            </div>
+
+                          </div>
+                        </td>
+
+                        <td className="p-2">
+                          <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
+                            <input
+                              type="text"
+                              value={depositAmountKrw[index]}
+                              onChange={(e) => {
+                                setDepositAmountKrw((prev) => {
+                                  const newDepositAmountKrw = [...prev];
+                                  newDepositAmountKrw[index] = Number(e.target.value);
+                                  return newDepositAmountKrw;
+                                });
+                              }}
+                              placeholder="충전금액"
+                              className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                            />
+                          </div>
+                        </td>
 
 
-                              {/* function call button clearanceWalletAddress */}
+
+                        <td className="p-2">
+
+                          <div className="
+                            w-64
+                            flex flex-col items-center justify-center gap-2">
+
+                            <div className="w-full flex flex-row items-center justify-between gap-2">
+
+                              {/* Modal open */}
                               <button
                                 onClick={() => {
-                                  clearanceWalletAddress(item.walletAddress);
-                                  toast.success('잔액을 회수했습니다.');
+                                  setSelectedItem({
+                                    ...item,
+                                    depositAmountKrw: depositAmountKrw[index],
+                                  });
+                                  openModal();
                                 }}
-                                className={`
-                                  w-full mb-2
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80
-                                `}
+                                className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
                               >
-                                잔액 회수하기
+                                보기
                               </button>
 
 
 
+                              {/* 복사 버튼 */}
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    storePaymentUrl + '?'
+                                    + 'storeUser=' + item.nickname
+                                    + '&depositBankName='+ item?.buyer?.depositBankName
+                                    + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
+                                    + '&depositName=' + item?.buyer?.depositName
+                                    + '&depositAmountKrw=' + depositAmountKrw[index]
+                                    + '&accessToken=' + store?.accessToken
+                                  );
+                                  toast.success('회원 결제페이지 링크가 복사되었습니다.');
+                                }}
+                                className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
+                              >
+                                링크 복사
+                              </button>
 
                             </div>
-                          </td>
+
+                            <div className="w-full flex flex-row items-center justify-between gap-2">
 
 
-                        </tr>
+                              {/* copy javascript code */}
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    `<script src="${storePaymentUrl}?storeUser=${item.nickname}&depositBankName=${item?.buyer?.depositBankName}&depositBankAccountNumber=${item?.buyer?.depositBankAccountNumber}&depositName=${item?.buyer?.depositName}&depositAmountKrw=${depositAmountKrw[index]}&accessToken=${store?.accessToken}">결제하기</script>`
+                                  );
+                                  toast.success('회원 결제페이지 스크립트가 복사되었습니다.');
+                                }}
+                                className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
+                              >
+                                스크립트 복사
+                              </button>
+                                    
 
-                      ))}
 
-                    </tbody>
+                              {/* 새창 열기 버튼 */}
+                              <button
+                                onClick={() => {
+                                  window.open(
+                                    storePaymentUrl + '?'
+                                    + 'storeUser=' + item.nickname
+                                    + '&depositBankName=' + item?.buyer?.depositBankName
+                                    + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
+                                    + '&depositName=' + item?.buyer?.depositName
+                                    + '&depositAmountKrw=' + depositAmountKrw[index]
+                                    + '&accessToken=' + store?.accessToken
+                                    ,
+                                    '_blank'
+                                  );
+                                  toast.success('회원 홈페이지를 새창으로 열었습니다.');
+                                }}
+                                className="w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:bg-[#3167b4]/80"
+                              >
+                                새창열기
+                              </button>
 
-                  </table>
-
-                </div>
+                            </div>
 
 
-              ) : (
+                          </div>
 
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        </td>
 
-                  {allBuyer.map((item, index) => (
-                    <div key={index} className="bg-white shadow-md rounded-lg p-4">
-                      <h2 className="text-lg font-semibold">{item.nickname}</h2>
 
-                    </div>
-                  ))}
+                        <td className="p-2">
+                          <div className="flex flex-row items-center justify-center gap-1">
+                            <Image
+                              src="/icon-shield.png"
+                              alt="Wallet"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(item?.walletAddress);
+                                toast.success(Copied_Wallet_Address);
+                              } }
+                              className="text-sm text-zinc-500 underline"
+                            >
+                            {
+                                item?.walletAddress && (
+                                  item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
+                                )
+                              }
+                            </button>
+                          </div>
+                        </td>
 
-                </div>
 
-              )}
+                        <td className="p-2">
+                          <div className="
+                            w-32
+                            flex flex-col sm:flex-row items-start justify-center gap-2">
+                            <span className="text-sm text-zinc-500">
+                              {
+                              item?.buyOrderStatus === 'ordered' ? (
+                                <span className="text-lg text-yellow-500 font-semibold">
+                                  구매주문
+                                </span>
+                              ) : item?.buyOrderStatus === 'accepted' ? (
+                                <span className="text-lg text-green-500 font-semibold">
+                                  판매자확정
+                                </span>
+                              ) : item?.buyOrderStatus === 'paymentRequested' ? (
+                                <span className="text-lg text-red-500 font-semibold">
+                                  결제요청
+                                </span>
+                              ) : item?.buyOrderStatus === 'paymentConfirmed' ? (
+                                <span className="text-lg text-green-500 font-semibold">
+                                  결제완료
+                                </span>
+                              ) : item?.buyOrderStatus === 'cancelled' ? (
+                                <span className="text-lg text-red-500 font-semibold">
+                                  거래취소
+                                </span>
+                              ) : ''
+                              }
 
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* 잔고확인 버튼 */}
+                        {/* USDT 잔액 */}
+                        <td className="p-2">
+                          <div className="w-24
+                            flex flex-col items-between justify-between gap-2">
+
+                            {/*
+                            <div className="w-full flex flex-col items-center justify-center gap-2">
+
+                              <span className="text-lg text-[#409192]"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {usdtBalance[index] ?
+                                  usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}{' USDT'}
+                              </span>
+        
+                            </div>
+                            */}
+
+
+                            {/* button to getBalance of USDT */}
+                            <button
+                              //disabled={!isAdmin || insertingStore}
+                              onClick={() => {
+                                //if (!isAdmin || insertingStore) return;
+                                //getBalance(item.storecode);
+
+                                getBalanceOfWalletAddress(item.walletAddress);
+        
+
+                                //toast.success('잔액을 가져왔습니다.');
+
+                                // toast usdtBalance[index] is updated
+                                //toast.success(`잔액을 가져왔습니다. 현재 잔액: ${usdtBalance[index] ? usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'} USDT`);
+
+                              }}
+                              className={`
+                                w-full mb-2
+                                bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                hover:bg-[#3167b4]/80
+                              `}
+                            >
+                              잔액 확인하기
+                            </button>
+
+
+                            {/* function call button clearanceWalletAddress */}
+                            <button
+                              onClick={() => {
+                                clearanceWalletAddress(item.walletAddress);
+                                toast.success('잔액을 회수했습니다.');
+                              }}
+                              className={`
+                                w-full mb-2
+                                bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                                hover:bg-[#3167b4]/80
+                              `}
+                            >
+                              잔액 회수하기
+                            </button>
+
+
+
+
+                          </div>
+                        </td>
+
+
+                      </tr>
+
+                    ))}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+
+            ) : (
+
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                {allBuyer.map((item, index) => (
+                  <div key={index} className="bg-white shadow-md rounded-lg p-4">
+                    <h2 className="text-lg font-semibold">{item.nickname}</h2>
+
+                  </div>
+                ))}
+
+              </div>
+
+            )}
 
 
           </div>
