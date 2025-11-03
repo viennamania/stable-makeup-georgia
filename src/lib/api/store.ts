@@ -201,6 +201,7 @@ export async function getStoreByStorecode(
         paymentUrl: 1,
         maxPaymentAmountKRW: 1,
         accessToken: 1,
+        paymentCallbackUrl: 1,
  
 
         liveOnAndOff: 1,
@@ -813,7 +814,30 @@ export async function updateStorePaymentUrl(
   }
 }
 
+// updateStorePaymentCallbackUrl
+export async function updateStorePaymentCallbackUrl(
+  {
+    storecode,
+    paymentCallbackUrl,
+  }: {
+    storecode: string;
+    paymentCallbackUrl: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
 
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { paymentCallbackUrl: paymentCallbackUrl } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 
 

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-	updateStorePaymentUrl,
+	updateStorePaymentCallbackUrl,
 } from '@lib/api/store';
 
 
@@ -12,18 +12,18 @@ export async function POST(request: NextRequest) {
   const {
     walletAddress,
     storecode,
-    paymentUrl,
+    paymentCallbackUrl,
   } = body;
 
   console.log("storecode:", storecode);
-  console.log("paymentUrl:", paymentUrl);
+  console.log("paymentCallbackUrl:", paymentCallbackUrl);
 
-  const result = await updateStorePaymentUrl({
+  const result = await updateStorePaymentCallbackUrl({
     storecode,
-    paymentUrl,
+    paymentCallbackUrl,
   });
 
-  //console.log("result:", result);
+  ///console.log("result:", result);
  
   return NextResponse.json({
 

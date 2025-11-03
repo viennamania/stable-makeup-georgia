@@ -1093,8 +1093,8 @@ export default function SettingsPage({ params }: any) {
             return;
         }
 
-        if (paymentUrl.length < 5 || paymentUrl.length > 100) {
-            toast.error("결제 URL을 5자 이상 100자 이하로 설정하세요");
+        if (paymentUrl.length < 5 || paymentUrl.length > 500) {
+            toast.error("결제 URL을 5자 이상 500자 이하로 설정하세요");
             return;
         }
 
@@ -1129,7 +1129,45 @@ export default function SettingsPage({ params }: any) {
         setUpdatingPaymentUrl(false);
     }
 
-
+    // update paymentCallbackUrl
+    const [paymentCallbackUrl, setPaymentCallbackUrl] = useState("");
+    const [updatingPaymentCallbackUrl, setUpdatingPaymentCallbackUrl] = useState(false);
+    const updatePaymentCallbackUrl = async () => {
+        if (!address) {
+            toast.error(Please_connect_your_wallet_first);
+            return;
+        }
+        if (paymentCallbackUrl.length < 5 || paymentCallbackUrl.length > 500) {
+            toast.error("결제 콜백 URL을 5자 이상 500자 이하로 설정하세요");
+            return;
+        }
+        setUpdatingPaymentCallbackUrl(true);
+        const response = await fetch('/api/store/updateStorePaymentCallbackUrl', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                walletAddress: address,
+                storecode: params.center,
+                paymentCallbackUrl: paymentCallbackUrl,
+            }),
+        });
+        const data = await response.json();
+        //console.log("data", data);
+        if (data.result) {
+            toast.success('결제 콜백 URL이 설정되었습니다');
+            setPaymentCallbackUrl('');
+            setStore({
+                ...store,
+                paymentCallbackUrl: paymentCallbackUrl,
+            });
+            //fetchStore();
+        } else {
+            toast.error('결제 콜백 URL 설정에 실패하였습니다');
+        }
+        setUpdatingPaymentCallbackUrl(false);
+    }
 
     
 
@@ -2591,6 +2629,124 @@ export default function SettingsPage({ params }: any) {
                         </div>
 
 
+                        {/* 콜백 URL settings */}
+                        {/* store paymentCallbackUrl */}
+                        <div className='w-full flex flex-col items-start justify-center gap-2
+                            border border-gray-400 p-4 rounded-lg'>
+
+                            <div className='w-full flex flex-col items-center justify-between gap-2
+                                border-b border-gray-300 pb-2'>
+
+                                {/* store paymentCallbackUrl */}
+                                
+                                <div className="w-full flex flex-row items-center justify-start gap-2
+                                    border-b border-gray-300 pb-2">
+                                    <Image
+                                        src="/icon-url.png"
+                                        alt="Payment Callback URL"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-lg text-zinc-500">
+                                        결제 콜백 URL 설정
+                                    </span>
+                                </div>
+
+                                {/* information */}
+                                {/* url format */}
+                                <div className='w-full text-sm text-zinc-500'>
+                                    <span>
+                                        결제 콜백 URL은 https:// 또는 http:// 로 시작해야 합니다. <br />
+                                        예시: https://yourstore.com/payment-callback
+                                    </span>
+                                </div>
+
+                                {/* current paymentCallbackUrl */}
+                                <div className='w-full flex flex-col items-start gap-2'>
+                                    
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        {/* information */}
+                                        <Image
+                                            src="/icon-info.png"
+                                            alt="Info"
+                                            width={16}
+                                            height={16}
+                                            className="w-4 h-4"
+                                        />
+                                        <span className="text-zinc-500">
+                                        현재 결제 콜백 URL:{' '}{store && store.paymentCallbackUrl
+                                            ? <a href={store.paymentCallbackUrl} target="_blank" className="text-blue-500 underline">
+                                                {store.paymentCallbackUrl}
+                                              </a>
+                                            : '설정된 결제 콜백 URL이 없습니다.'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* divider */}
+                                <div className='mt-4 w-full h-[1px] bg-zinc-300'></div>
+
+                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+
+                                    <input
+                                        type="text"
+                                        className="
+                                        w-full
+                                        bg-white text-zinc-500 rounded-lg p-2 text-sm"
+                                        placeholder="결제 콜백 URL을 입력하세요"
+                                        value={paymentCallbackUrl}
+                                        onChange={(e) => setPaymentCallbackUrl(e.target.value)}
+                                    />
+                                    <button
+                                        disabled={!address || !paymentCallbackUrl || updatingPaymentCallbackUrl}
+                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                            ${!paymentCallbackUrl || updatingPaymentCallbackUrl
+                                            ? "opacity-50" : ""}`}
+                                        onClick={() => {
+                                            if (!paymentCallbackUrl) {
+                                                toast.error("결제 콜백 URL을 입력하세요");
+                                                return;
+                                            }
+
+                                            // check url format
+                                            const urlPattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+                                                '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+                                                '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+                                                '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+                                                '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+                                                '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+                                            if (!urlPattern.test(paymentCallbackUrl)) {
+                                                toast.error("올바른 URL 형식이 아닙니다.");
+                                                return;
+                                            }
+
+                                            confirm(
+                                                `정말 ${paymentCallbackUrl}로 가맹점 결제 콜백 URL을 변경하시겠습니까?`
+                                            ) && updatePaymentCallbackUrl();
+                                        }}
+                                    >
+                                        {updatingPaymentCallbackUrl ? '변경 중...' : '변경하기'}
+                                    </button>
+                                    <div className='w-full flex flex-col items-center justify-center gap-2'>
+                                        <span className="text-zinc-500 text-sm">
+                                            결제 콜백 URL은 결제 완료 후 결제 결과를 통보받는 URL입니다.
+                                        </span>
+                                    </div>
+                                    <div className='w-full flex flex-col items-center justify-center gap-2'>
+                                        <span className="text-zinc-500 text-sm">
+                                            결제 콜백 URL을 설정하지 않으면 결제 완료 후 결과 통보가 이루어지지 않습니다.
+                                        </span>
+                                    </div>
+                                    <div className='w-full flex flex-col items-center justify-center gap-2'>
+                                        <span className="text-zinc-500 text-sm">
+                                            결제 콜백 URL 설정 후에는 반드시 테스트 결제를 통해 정상 동작 여부를 확인하시기 바랍니다.
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
 
                         </>
 
