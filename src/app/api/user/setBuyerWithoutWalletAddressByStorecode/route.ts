@@ -130,6 +130,8 @@ export async function POST(request: NextRequest) {
         userType: user?.userType || '',
 
         liveOnAndOff: user?.liveOnAndOff,
+
+        isBlack: user?.isBlack || false,
       });
     }
 

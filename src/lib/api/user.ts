@@ -59,6 +59,8 @@ export interface UserProps {
 
   liveOnAndOff: boolean;
 
+  isBlack: boolean;
+
 }
 
 export interface ResultProps {
@@ -1769,7 +1771,9 @@ export async function getUserByNickname(
       totalPaymentConfirmedUsdtAmount: 1,
       userType: 1,
 
-      liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] }
+      liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+
+      isBlack: { $ifNull: ['$isBlack', false] }
     } }
   )
 }
