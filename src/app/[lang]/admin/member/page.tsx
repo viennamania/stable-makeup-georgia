@@ -1302,7 +1302,7 @@ export default function Index({ params }: any) {
 
 
     setInsertingUserCode(true);
-    const response = await fetch('/api/user/setBuyerWithoutWalletAddressByStorecode', {
+    const response = await fetch('/api/user/insertBuyerWithoutWalletAddressByStorecode', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
