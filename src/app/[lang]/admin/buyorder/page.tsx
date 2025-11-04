@@ -5384,7 +5384,6 @@ const fetchBuyOrders = async () => {
                               <button
                                 className="text-sm text-blue-600 font-semibold
                                   border border-blue-600 rounded-lg p-2
-                                  bg-blue-100
                                   text-center
                                   hover:bg-blue-200
                                   cursor-pointer
@@ -5447,7 +5446,6 @@ const fetchBuyOrders = async () => {
                               <button
                                 className="text-sm text-yellow-600 font-semibold
                                   border border-yellow-600 rounded-lg p-2
-                                  bg-yellow-100
                                   text-center
                                   hover:bg-yellow-200
                                   cursor-pointer
@@ -5482,12 +5480,11 @@ const fetchBuyOrders = async () => {
                           )}
 
                           {item.status === 'cancelled' && (
-                            <div className="w-full flex flex-row gap-2 items-start justify-center">
+                            <div className="w-full flex flex-row gap-2 items-center justify-start">
 
                                 <button
                                   className="text-sm text-red-600 font-semibold
                                     border border-red-600 rounded-lg p-2
-                                    bg-red-100
                                     text-center
                                     hover:bg-red-200
                                     cursor-pointer
@@ -5538,7 +5535,7 @@ const fetchBuyOrders = async () => {
                                 className="
                                   text-sm text-[#409192] font-semibold
                                   border border-green-600 rounded-lg p-2
-                                  bg-green-100text-center
+                                  text-center
                                   hover:bg-green-200
                                   cursor-pointer
                                   transition-all duration-200 ease-in-out
@@ -5744,7 +5741,7 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
 
-                            <span className="text-sm text-purple-600 font-semibold">
+                            <span className="text-sm text-zinc-500">
                               {params.lang === 'ko' ? (
                                 <p>{
                                   new Date(item.paymentConfirmedAt).getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
@@ -5806,11 +5803,11 @@ const fetchBuyOrders = async () => {
                                   />
                                   {item?.autoConfirmPayment === true ? (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      확인중입니다.
+                                      입금 확인중입니다.
                                     </span>
                                   ) : (
                                     <span className="text-sm font-semibold text-zinc-500">
-                                      확인중입니다.
+                                      입금 확인중입니다.
                                     </span>
                                   )}
 
@@ -5963,29 +5960,29 @@ const fetchBuyOrders = async () => {
 
 
 
-                                <div className="w-full flex flex-col items-between justify-center">
+                                <div className="w-full flex flex-row items-center justify-between gap-2">
 
-                                  <span className="text-sm text-purple-600 font-semibold">
+                                  <span className="text-xs text-zinc-500">
                                     {params.lang === 'ko' ? (
                                       <p>{
                                         new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 전'
                                         ) :
                                         new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 전'
                                         ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 전'
                                         )
                                       }</p>
                                     ) : (
                                       <p>{
                                         new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 경과'
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + '초 전'
                                         ) :
                                         new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 경과'
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + '분 전'
                                         ) : (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 경과'
+                                          ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + '시간 전'
                                         )
                                       }</p>
                                     )}
@@ -6001,7 +5998,7 @@ const fetchBuyOrders = async () => {
 
                                   && (
 
-                                    <div className="w-full flex flex-col gap-2 items-center justify-center">
+                                    <div className="flex flex-col gap-2 items-center justify-center">
 
                                       <button
 
@@ -6012,7 +6009,7 @@ const fetchBuyOrders = async () => {
                                           ? 'text-gray-400 border-gray-400 bg-gray-100 cursor-not-allowed'
                                           : 'text-blue-600 border-blue-600 bg-blue-100 hover:bg-blue-200 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50'
                                           } bg-blue-100 border border-blue-600 rounded-lg p-2
-                                          w-full text-center
+                                          w-24 text-center
                                         `}
 
                                         onClick={() => {
@@ -6045,7 +6042,7 @@ const fetchBuyOrders = async () => {
                                               />
                                           )}
                                           <span className="text-sm">
-                                            {confirmingPayment[index] ? '완료중...' : '입금완료하기'}
+                                            {confirmingPayment[index] ? '완료중...' : '완료하기'}
                                           </span>
                                         </div>
 
@@ -6211,147 +6208,135 @@ const fetchBuyOrders = async () => {
 
                           )}   
 
+                          {/*
                           <div className="w-full flex flex-col gap-2 items-center justify-center">
+                          */}
 
-                            {item.status === 'paymentConfirmed' &&
-                            !item?.settlement &&
-                            (!item?.transactionHash || item?.transactionHash === '0x') && (
-                              <div className="w-full flex flex-row gap-2 items-center justify-center">
-                                <Image
-                                  src="/icon-sending.png"
-                                  alt="Sending"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5 animate-spin"
-                                />
-                                <span className="text-sm text-zinc-500">
-                                  판매자(<b>{item.seller?.nickname}</b>)가 <b>{item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b> USDT를 회원(<b>{item.nickname}</b>)에게 보내는 중입니다.
-                                </span>
-                              </div>
-                            )}
+                          {item.status === 'paymentConfirmed' &&
+                          !item?.settlement &&
+                          (!item?.transactionHash || item?.transactionHash === '0x') && (
+                            <div className="w-full flex flex-row gap-2 items-center justify-center">
+                              <Image
+                                src="/icon-sending.png"
+                                alt="Sending"
+                                width={20}
+                                height={20}
+                                className="w-5 h-5 animate-spin"
+                              />
+                              <span className="text-sm text-zinc-500">
+                                판매자(<b>{item.seller?.nickname}</b>)가 <b>{item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b> USDT를 회원(<b>{item.nickname}</b>)에게 보내는 중입니다.
+                              </span>
+                            </div>
+                          )}
 
-                          </div>                    
+                          {/*
+                          </div>   
+                          */}                 
 
+                          {/*
                           <div className={`
                             rounded-md
                             p-2 
-                            w-full flex flex-col sm:flex-row gap-2 items-start justify-start
+                            w-full flex flex-col gap-2 items-start justify-start
                             `}>
+                          */}
                             
+
+                          {
+                          (item.status === 'accepted' || item.status === 'paymentRequested')
+                          //&& item.seller && item.seller.walletAddress === address
+                          && isAdmin
+                          && (
+
+                            <div className="w-full flex flex-col items-center gap-2">
+
+                              <input
+                                type="text"
+                                value={cancelTradeReason[index]}
+                                onChange={(e) => {
+                                  setCancelTradeReason(
+                                    cancelTradeReason.map((item, idx) => idx === index ? e.target.value : item)
+                                  );
+                                }}
+                                placeholder="거래취소 사유"
+                                className="w-full h-8
+                                text-center rounded-md text-sm text-zinc-500 font-semibold bg-zinc-100 border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+
+                              <div className="flex flex-row items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={agreementForCancelTrade[index]}
+                                  onChange={(e) => {
+                                    setAgreementForCancelTrade(
+                                      agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
+                                    );
+                                  }}
+                                />
+                                <button
+                                  disabled={cancellings[index] || !agreementForCancelTrade[index]}
+              
+                                  className="
+                                    w-full flex flex-row gap-1
+                                    text-sm text-red-600 font-semibold
+                                    border border-red-600 rounded-lg p-2
+                                    bg-red-100
+                                    text-center
+                                    hover:bg-red-200
+                                    cursor-pointer
+                                    transition-all duration-200 ease-in-out
+                                    hover:scale-105
+                                    hover:shadow-lg
+                                    hover:shadow-red-500/50
+                                  "  
+                                  onClick={() => {
+                                    cancelTrade(item._id, index);
+                                  }}
+                                >
+                                  <div className="w-full flex flex-row gap-2 items-center justify-center">
+                                    {cancellings[index] && (
+                                      <Image
+                                        src="/loading.png"
+                                        alt="Loading"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5
+                                        animate-spin"
+                                      />
+                                    )}
+                                    <span className="text-sm">{Cancel_My_Trade}</span>
+                                  </div>
+                                
+                                </button>
+                              </div>
+
+
+                              {/* warning message */}
+                              {/* 취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다. */}
+                              <div className="w-full flex flex-row items-center justify-center gap-1">
+                                <Image
+                                  src="/icon-warning.png"
+                                  alt="Warning"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 rounded-full"
+                                />
+                                <span className="text-xs text-red-500">
+                                  취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다.
+                                </span>
+                              </div>
+
+
+
+                            </div>
+
+                          )}
+                            
+                            {/*
                             <div className="
                               w-full
                               flex flex-col gap-2 items-start justify-start">
-
-                              {
-                              (item.status === 'accepted' || item.status === 'paymentRequested')
-                              //&& item.seller && item.seller.walletAddress === address
-                              && isAdmin
-                              && (
-
-                                <div className="w-44 flex flex-col items-center gap-2">
-
-                                  <input
-                                    type="text"
-                                    value={cancelTradeReason[index]}
-                                    onChange={(e) => {
-                                      setCancelTradeReason(
-                                        cancelTradeReason.map((item, idx) => idx === index ? e.target.value : item)
-                                      );
-                                    }}
-                                    placeholder="거래취소 사유"
-                                    className="w-full h-8
-                                    text-center rounded-md text-sm text-zinc-500 font-semibold bg-zinc-100 border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  />
-
-                                  <div className="flex flex-row items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={agreementForCancelTrade[index]}
-                                      onChange={(e) => {
-                                        setAgreementForCancelTrade(
-                                          agreementForCancelTrade.map((item, idx) => idx === index ? e.target.checked : item)
-                                        );
-                                      }}
-                                    />
-                                    <button
-                                      disabled={cancellings[index] || !agreementForCancelTrade[index]}
-                  
-                                      className="
-                                        w-full flex flex-row gap-1
-                                        text-sm text-red-600 font-semibold
-                                        border border-red-600 rounded-lg p-2
-                                        bg-red-100
-                                        text-center
-                                        hover:bg-red-200
-                                        cursor-pointer
-                                        transition-all duration-200 ease-in-out
-                                        hover:scale-105
-                                        hover:shadow-lg
-                                        hover:shadow-red-500/50
-                                      "  
-                                      onClick={() => {
-                                        cancelTrade(item._id, index);
-                                      }}
-                                    >
-                                      <div className="w-full flex flex-row gap-2 items-center justify-center">
-                                        {cancellings[index] && (
-                                          <Image
-                                            src="/loading.png"
-                                            alt="Loading"
-                                            width={20}
-                                            height={20}
-                                            className="w-5 h-5
-                                            animate-spin"
-                                          />
-                                        )}
-                                        <span className="text-sm">{Cancel_My_Trade}</span>
-                                      </div>
-                                    
-                                    </button>
-                                  </div>
-
-
-                                  {/* warning message */}
-                                  {/* 취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다. */}
-                                  <div className="w-full flex flex-row items-center justify-center gap-1">
-                                    <Image
-                                      src="/icon-warning.png"
-                                      alt="Warning"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5 rounded-full"
-                                    />
-                                    <span className="text-xs text-red-500">
-                                      취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다.
-                                    </span>
-                                  </div>
-
-
-
-                                </div>
-
-                              )}
-
-                              {/*
-                              {item.status === 'cancelled' && (
-
-                                <div className="w-full flex flex-col gap-2 items-center justify-center">
-                                  <span className="text-sm text-red-600">
-                                    {item.cancelTradeReason ? item.cancelTradeReason :
-                                      "거래취소사유 없음"
-                                    }
-                                  </span>
-                                </div>
-
-                              )}
-                              */}
-
-                            </div>
-                            
-
-                            <div className="
-                            w-full
-                            flex flex-col gap-2 items-start justify-start">
+                            */}
 
                               {/*
                               {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
@@ -6807,11 +6792,13 @@ const fetchBuyOrders = async () => {
                                 </div>
                               )}
 
-
+                            {/*
                             </div>
+                            */}
 
-
+                          {/*
                           </div>
+                          */}
 
                           {item.status === 'cancelled' && (
 
@@ -6896,7 +6883,7 @@ const fetchBuyOrders = async () => {
                                     <div className="flex flex-row gap-1 items-center justify-start">
                                       <div className="w-2 h-2 rounded-full bg-[#409192]" />
                                       <span className="text-sm text-zinc-500 font-normal">
-                                        판매자지갑 잔액
+                                        판매자 지갑 잔액
                                       </span>
                                     </div>
                                     <div className="w-full flex flex-row gap-1 items-center justify-end">
