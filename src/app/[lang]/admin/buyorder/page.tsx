@@ -7506,7 +7506,9 @@ const fetchBuyOrders = async () => {
 
                             {item?.settlement && item?.settlement?.settlementAmount ? (
 
-                              <div className="flex flex-row gap-2 items-center justify-center">
+                              <div className="
+                                w-full
+                                flex flex-row gap-2 items-center justify-center">
 
                                 <button
                                   /*
@@ -7530,7 +7532,7 @@ const fetchBuyOrders = async () => {
 
                                   className={`
                                     ${item.settlement.txid === "0x" || !item.settlement.txid ? "bg-gray-500 cursor-not-allowed" : "bg-[#AFE4AB] hover:bg-[#9BCDA5] cursor-pointer"}
-                                    w-44 
+                                    w-full  
                                     flex flex-col gap-2 items-center justify-center
 
                                     bg-[#AFE4AB] hover:bg-[#9BCDA5]
@@ -7564,7 +7566,9 @@ const fetchBuyOrders = async () => {
                                 >
 
 
-                                  <div className="flex flex-col gap-1 items-end justify-center"
+                                  <div className="
+                                    w-40   
+                                    flex flex-col gap-1 items-end justify-center"
                                     style={{
                                       fontFamily: 'monospace',
                                     }}
@@ -7607,8 +7611,8 @@ const fetchBuyOrders = async () => {
                                 </button>
                          
                                 <div className="  
-                                w-20
-                                flex flex-col gap-2 items-end justify-center"
+                                  w-32
+                                  flex flex-col gap-2 items-end justify-center"
                                 >
                                   <button
                                     onClick={() => {
@@ -7630,7 +7634,11 @@ const fetchBuyOrders = async () => {
                                       className="w-5 h-5"
                                     />
                                     <span className="text-sm font-semibold text-blue-600">
-                                      {item.nickname}
+                                      {
+                                        item.nickname.length > 5
+                                        ? item.nickname.slice(0, 5) + '...'
+                                        : item.nickname
+                                      }
                                     </span>
                                   </button>
 
