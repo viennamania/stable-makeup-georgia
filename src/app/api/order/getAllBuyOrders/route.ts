@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   } = body;
 
   // searchStoreBankAccountNumber
-  console.log("getAllBuyOrders searchStoreBankAccountNumber", searchStoreBankAccountNumber);
+  //console.log("getAllBuyOrders searchStoreBankAccountNumber", searchStoreBankAccountNumber);
 
 
   //console.log("getAllBuyOrders fromDate", fromDate);

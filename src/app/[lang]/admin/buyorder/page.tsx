@@ -4716,7 +4716,7 @@ const fetchBuyOrders = async () => {
                         //item.walletAddress === address ?
                         
 
-                      }
+                      }  
                     `}>
                     
 
@@ -4726,6 +4726,7 @@ const fetchBuyOrders = async () => {
                       >
 
                         <div className="
+                          h-40
                           w-32
                           flex flex-col items-start justify-start gap-2
                           bg-zinc-100
@@ -6822,6 +6823,7 @@ const fetchBuyOrders = async () => {
                           && (
                             <button
                               className="
+                                h-40
                                 w-full
                                 flex flex-row gap-2 items-center justify-between
                                 text-sm text-[#409192] font-semibold
@@ -7103,7 +7105,9 @@ const fetchBuyOrders = async () => {
 
 
                       <td className="p-2">
-                        <div className="w-full
+                        <div className="
+                          h-40
+                          w-full
                           flex flex-col gap-2 items-start justify-center
                           border border-dashed border-zinc-600
                           rounded-lg p-2">
