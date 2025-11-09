@@ -199,7 +199,7 @@ export default function Index({ params }: any) {
 
 
 
-    const activeWallet = useActiveWallet();
+  const activeWallet = useActiveWallet();
     
 
   const contract = getContract({
