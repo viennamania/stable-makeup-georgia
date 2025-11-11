@@ -17,7 +17,10 @@ import { useRouter }from "next//navigation";
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
+import {
+  client,
+  clientId,
+} from "../../client";
 
 
 
@@ -80,7 +83,7 @@ import { add } from "thirdweb/extensions/farcaster/keyGateway";
 
 
 import AppBarComponent from "@/components/Appbar/AppBar";
-import { getDictionary } from "../../../dictionaries";
+import { getDictionary } from "../../dictionaries";
 //import Chat from "@/components/Chat";
 import { ClassNames } from "@emotion/react";
 
@@ -194,10 +197,13 @@ export default function Index({ params }: any) {
 
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
+  //const wallet = searchParams.get('wallet');
 
 
   // limit, page number params
+
+  const center = searchParams.get('center');
+
 
   const limit = searchParams.get('limit') || 20;
   const page = searchParams.get('page') || 1;
@@ -645,7 +651,7 @@ export default function Index({ params }: any) {
       },
       body: JSON.stringify({
         lang: params.lang,
-        storecode: params.center,
+        storecode: center,
         walletAddress: address,
         //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
         isSmartAccount: false,
@@ -713,7 +719,7 @@ export default function Index({ params }: any) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          storecode: params.center,
+          storecode: center,
           walletAddress: escrowWalletAddress,
         }),
       })
@@ -741,7 +747,7 @@ export default function Index({ params }: any) {
 
     return () => clearInterval(interval);
 
-  } , [address, escrowWalletAddress, contract, params.center]);
+  } , [address, escrowWalletAddress, contract, center]);
   
 
   //console.log('escrowBalance', escrowBalance);
@@ -776,7 +782,7 @@ export default function Index({ params }: any) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            storecode: params.center,
+            storecode: center,
             walletAddress: address,
         }),
     })
@@ -800,7 +806,7 @@ export default function Index({ params }: any) {
 
     setLoadingUser(false);
 
-  } , [address, params.center]);
+  } , [address, center]);
 
 
 
@@ -822,6 +828,54 @@ export default function Index({ params }: any) {
 
 
 
+  // list of stores
+  const [stores, setStores] = useState<Array<any>>([]);
+
+  useEffect(() => {
+      const fetchStores = async () => {
+          const response = await fetch("/api/store/getAllStoresForBalance", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                clientId,
+              }),
+          });
+
+          const data = await response.json();
+
+          //console.log("stores", data);
+
+
+          if (data.result) {
+            
+            setStores(data.result?.stores || []);
+
+            //setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
+          } else {
+            setStores([]);
+            //setTotalCurrentUsdtBalance(0);
+          }
+      };
+
+      fetchStores();
+
+      // poll every 10 seconds
+      const interval = setInterval(() => {
+        fetchStores();
+      }, 10000);
+
+      return () => clearInterval(interval);
+
+  }, []);
+
+
+
+
+
+
+
 
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -829,7 +883,12 @@ export default function Index({ params }: any) {
   const openModal = () => setModalOpen(true);
 
   
-  const [searchStorecode, setSearchStorecode] = useState(params.center || "");
+  const [searchStorecode, setSearchStorecode] = useState(center || "");
+
+  useEffect(() => {
+    setSearchStorecode(center || "");
+  }, [center]);
+
   const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(false);
   const [searchOrderStatusCompleted, setSearchOrderStatusCompleted] = useState(false);
 
@@ -2198,7 +2257,7 @@ export default function Index({ params }: any) {
           body: JSON.stringify(
 
             {
-              storecode: params.center,
+              storecode: center,
               limit: Number(limitValue),
               page: Number(pageValue),
               walletAddress: address,
@@ -2270,7 +2329,7 @@ export default function Index({ params }: any) {
     searchToDate,
     //playSong,
 
-    params.center,
+    center,
 ]);
 
 
@@ -2382,7 +2441,7 @@ const fetchBuyOrders = async () => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              storecode: params.center,
+              storecode: center,
               ////walletAddress: address,
             }),
         });
@@ -2403,7 +2462,7 @@ const fetchBuyOrders = async () => {
 
     fetchData();
 
-  } , [params.center]);
+  } , [center]);
 
 
 
@@ -2485,7 +2544,6 @@ const fetchBuyOrders = async () => {
   return (
 
     <main className="
-      pt-20 
       pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto
       bg-white dark:bg-zinc-900 text-black dark:text-white
       ">
@@ -2494,7 +2552,116 @@ const fetchBuyOrders = async () => {
       <div className="py-0 w-full">
 
 
-        <div className="flex flex-col items-start justify-start gap-2">
+
+        <div className="
+        container max-w-screen-2xl mx-auto pl-16 pr-16
+        p-2
+        bg-white bg-opacity-90
+        rounded-lg shadow-lg
+        fixed top-2
+        z-20 flex flex-row items-start justify-start gap-2
+        ">
+
+
+          {stores.length > 0 && (
+
+            <div
+              //className="w-full flex flex-row items-center justify-start gap-2 overflow-x-auto
+              //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
+              //py-2"
+
+              className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 4xl:grid-cols-11 gap-2
+              overflow-x-auto
+              scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
+              py-2
+              "
+            >
+              {/*}
+              <div className="
+              w-28 h-20
+              flex flex-col items-start justify-between
+              bg-gray-100 p-1 rounded-lg shadow-md mr-4
+              ">
+                <p className="text-xs text-gray-800 font-bold mb-1">Total USDT</p>
+
+                <div className="
+                  w-full flex flex-row items-center justify-end gap-1">
+                  <Image
+                    src={`/icon-tether.png`}
+                    alt={`USDT`}
+                    width={18}  
+                    height={18}
+                  />
+                  <span className="text-lg text-green-600 font-mono">
+                    {totalCurrentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                  </span>
+                </div>
+
+              </div>
+              */}
+
+
+              {stores.map((store) => (
+                <button
+                  onClick={() => {
+                    router.push('/' + params.lang + '/homepage?center=' + store.storecode);
+                  }}
+                  key={store._id}
+
+                  //className="flex flex-col items-start justify-between
+                  //bg-gray-100 p-1 rounded-lg shadow-md
+                  //w-24 h-20
+                  //"
+                  className={`${store.storecode === center ?
+                    'bg-blue-100 dark:bg-blue-900'
+                    :
+                    'bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 cursor-pointer'
+                  } flex flex-col items-start justify-between
+                  p-1 rounded-lg shadow-md
+                  w-24 h-20
+                  `}>
+
+                  <div className="w-full flex flex-row items-center justify-between gap-1">
+                    <Image
+                      src={store.storeLogo || "/icon-store.png"}
+                      alt={store.storeName}
+                      width={28}
+                      height={28}
+                      className="rounded-lg bg-white w-7 h-7 object-cover"
+                    />
+                    <p className="text-xs text-gray-800 font-bold">
+                      {store.storeName.length > 4 ? store.storeName.substring(0, 4) + '...' : store.storeName || 'Store'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-row items-center justify-end w-full gap-1">
+                    <Image
+                      src={`/icon-tether.png`}
+                      alt={`USDT`}
+                      width={12}
+                      height={12}
+                    />
+                    <span className="text-sm text-green-600 font-mono">
+                      {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
+                    </span>
+                  </div>
+                  
+                </button>
+              ))}
+
+            </div>
+
+          )}
+
+        </div>
+
+
+
+
+
+        <div className="
+          mt-28 
+          flex flex-col items-start justify-start gap-2">
 
           <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
             h-20
@@ -2527,7 +2694,7 @@ const fetchBuyOrders = async () => {
               <div className="flex flex-row items-center gap-2">
                 
 
-                {/*
+                
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   {!address && (
 
@@ -2539,7 +2706,8 @@ const fetchBuyOrders = async () => {
                                chain === "polygon" ? polygon :
                                chain === "arbitrum" ? arbitrum :
                                chain === "bsc" ? bsc : arbitrum,
-                        sponsorGas: true
+                        //sponsorGas: true
+                        sponsorGas: false,
                       }}
                       
                       theme={"light"}
@@ -2572,7 +2740,7 @@ const fetchBuyOrders = async () => {
 
                   )}
                 </div>
-                */}
+                
 
             
                 {address && !loadingUser && (
@@ -2580,7 +2748,7 @@ const fetchBuyOrders = async () => {
 
                       <button
                         onClick={() => {
-                          router.push('/' + params.lang + '/' + params.center + '/profile-settings');
+                          router.push('/' + params.lang + '/' + center + '/profile-settings');
                         }}
                         className="
                         w-32 h-10 items-center justify-center
@@ -2599,7 +2767,7 @@ const fetchBuyOrders = async () => {
                                   toast.success('로그아웃 되었습니다');
 
                                   //router.push(
-                                  //    "/admin/" + params.center
+                                  //    "/admin/" + center
                                   //);
                               });
                           } }
@@ -2651,7 +2819,7 @@ const fetchBuyOrders = async () => {
               onChange={(e) => {
                 const lang = e.target.value;
                 router.push(
-                  "/" + lang + "/" + params.center + "/center"
+                  "/" + lang + "/" + center + "/center"
                 );
               }}
             >
@@ -2838,7 +3006,7 @@ const fetchBuyOrders = async () => {
 
                     <button
                       onClick={() => {
-                        router.push('/' + params.lang + '/' + params.center + '/paymaster');
+                        router.push('/' + params.lang + '/' + center + '/paymaster');
                         //window.open(
                         //  '/'+ params.lang + '/home/paymaster',
                         //</div>  '_blank'
@@ -2863,7 +3031,7 @@ const fetchBuyOrders = async () => {
                     {/* 출금하기 버튼 */}
                     <button
                       onClick={() => {
-                        router.push('/' + params.lang + '/' + params.center + '/withdraw-usdt');
+                        router.push('/' + params.lang + '/' + center + '/withdraw-usdt');
                         //window.open(
                         //  '/'+ params.lang + '/home/withdraw',
                         //  '_blank'
@@ -3358,7 +3526,7 @@ const fetchBuyOrders = async () => {
                     {/* 판매자 등록 버튼 */}
                     <button
                       onClick={() => {
-                        router.push('/' + params.lang + '/' + params.center + '/seller-settings');
+                        router.push('/' + params.lang + '/' + center + '/seller-settings');
                       }}
                       className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                     >
@@ -3379,7 +3547,7 @@ const fetchBuyOrders = async () => {
                     {/* KYC 버튼 */}
                     <button
                       onClick={() => {
-                        router.push('/' + params.lang + '/' + params.center + '/my-page-kyc');
+                        router.push('/' + params.lang + '/' + center + '/my-page-kyc');
                       }}
                       className="bg-yellow-500 text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-yellow-400"
                     >
@@ -6133,7 +6301,7 @@ const fetchBuyOrders = async () => {
                   value={limit}
                   onChange={(e) =>
 
-                    router.push(`/${params.lang}/${params.center}/homepage?limit=${Number(e.target.value)}&page=${page}`)
+                    router.push(`/${params.lang}/${center}/homepage?limit=${Number(e.target.value)}&page=${page}`)
 
                   }
 
@@ -6153,7 +6321,7 @@ const fetchBuyOrders = async () => {
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
 
-                  router.push(`/${params.lang}/${params.center}/homepage?limit=${Number(limit)}&page=1`);
+                  router.push(`/${params.lang}/${center}/homepage?limit=${Number(limit)}&page=1`);
 
                 }}
               >
@@ -6165,7 +6333,7 @@ const fetchBuyOrders = async () => {
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
 
-                  router.push(`/${params.lang}/${params.center}/homepage?limit=${Number(limit)}&page=${Number(page) - 1}`);
+                  router.push(`/${params.lang}/${center}/homepage?limit=${Number(limit)}&page=${Number(page) - 1}`);
 
                 }}
               >
@@ -6183,7 +6351,7 @@ const fetchBuyOrders = async () => {
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
 
-                  router.push(`/${params.lang}/${params.center}/homepage?limit=${Number(limit)}&page=${Number(page) + 1}`);
+                  router.push(`/${params.lang}/${center}/homepage?limit=${Number(limit)}&page=${Number(page) + 1}`);
 
                 }}
               >
@@ -6196,7 +6364,7 @@ const fetchBuyOrders = async () => {
                 className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                 onClick={() => {
 
-                  router.push(`/${params.lang}/${params.center}/homepage?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
+                  router.push(`/${params.lang}/${center}/homepage?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
 
                 }}
               >
