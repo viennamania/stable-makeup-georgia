@@ -5595,8 +5595,9 @@ const fetchBuyOrders = async () => {
                                       width={24}
                                       height={24}
                                     />
-                                    <p className="text-4xl font-semibold text-[#409192]">
-                                      {item.usdtAmount}
+                                    <p className="text-4xl font-semibold text-[#409192]"
+                                      style={{ fontFamily: 'monospace' }}>
+                                      {item.usdtAmount?.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                     </p>
                                   </div>
 
@@ -5887,7 +5888,7 @@ const fetchBuyOrders = async () => {
                               */}
 
 
-
+                              {/*}
                               {(item.status === 'accepted' || item.status === 'paymentRequested') && (
                           
                                 <div className="mt-4 flex flex-row items-center gap-2">
@@ -5919,6 +5920,7 @@ const fetchBuyOrders = async () => {
                                 </div>
                               
                               )}
+                              */}
                             
 
                               {/* waiting for escrow */}
@@ -6049,6 +6051,7 @@ const fetchBuyOrders = async () => {
                                                
 
                               {/* 판매하기 버튼 */}
+                              {/*
                               {item.status === 'accepted' && item.seller && item.seller.walletAddress !== address && (
                                 <div className="w-full flex flex-col items-center justify-center gap-2">
                                   <button
@@ -6064,6 +6067,7 @@ const fetchBuyOrders = async () => {
                                   }</span>
                                 </div>
                               )}
+                              */}
 
 
                               {
@@ -6321,6 +6325,114 @@ const fetchBuyOrders = async () => {
                                 </>
 
                               )}
+
+                            {item.status === 'paymentRequested' && (
+                                <div className="w-full flex flex-col gap-2 items-start justify-start
+                                  border-t pt-2 border-zinc-200
+                                ">
+                                  <span className="text-sm text-yellow-600 font-semibold">
+                                    구매자가 판매자 계좌로 {item.krwAmount?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} 원을 송금중입니다...
+                                  </span>
+                                </div>
+                            )}
+
+                            {item.status === 'paymentConfirmed'
+                            && item?.transactionHash === '0x' && (
+                              <div className="w-full flex flex-col gap-2 items-start justify-start
+                                border-t pt-2 border-zinc-200
+                              ">
+                                <span className="text-sm text-[#409192] font-semibold">
+                                  판매자가 구매자 지갑으로 {item.usdtAmount?.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} USDT를 전송중입니다...
+                                </span>
+                              </div>
+                            )}
+
+                            {item.status === 'paymentConfirmed'
+                            && item?.transactionHash !== '0x'
+                            && (
+                              <button
+                                className="
+                                  w-full
+                                  flex flex-row gap-2 items-center justify-between
+                                  text-sm text-[#409192] font-semibold
+                                  border border-[#409192] rounded-lg p-2
+                                  bg-blue-100
+                                  text-center
+                                  hover:bg-blue-200
+                                  cursor-pointer
+                                  transition-all duration-200 ease-in-out
+                                  hover:scale-105
+                                  hover:shadow-lg
+                                  hover:shadow-blue-500/50
+                                "
+                                onClick={() => {
+                                  let url = '';
+                                  if (chain === "ethereum") {
+                                    url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                  } else if (chain === "polygon") {
+                                    url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                  } else if (chain === "arbitrum") {
+                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                  } else if (chain === "bsc") {
+                                    url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                  } else {
+                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                  }
+                                  window.open(url, '_blank');
+
+                                }}
+                              >
+                                  <div className="w-full flex flex-col gap-2 items-start justify-start ml-2">
+                                    
+                                    <div className="w-full flex flex-col gap-1 items-start justify-start
+                                      border-b border-dashed border-zinc-300 pb-1">
+                                      <div className="flex flex-row gap-1 items-center justify-start">
+                                        <div className="w-2 h-2 rounded-full bg-[#409192]" />
+                                        <span className="text-sm text-zinc-500 font-normal">
+                                          구매자 지갑으로 전송한 테더
+                                        </span>
+                                      </div>
+                                      <div className="w-full flex flex-row gap-1 items-center justify-end">
+                                        <Image
+                                          src={`/icon-tether.png`}
+                                          alt="USDT Logo"
+                                          width={20}
+                                          height={20}
+                                          className="w-5 h-5"
+                                        />
+                                        <span className="text-lg text-[#409192] font-semibold"
+                                          style={{
+                                            fontFamily: 'monospace',
+                                          }}>
+                                          {item?.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* tx hash */}
+                                    <div className="w-full flex flex-row gap-2 items-center justify-start">
+                                      <span className="text-sm text-zinc-500 font-normal">
+                                        Tx Hash:
+                                      </span>
+                                      <span className="text-sm text-blue-500 underline underline-offset-2
+                                        cursor-pointer"
+                                        >
+                                        {item.transactionHash.slice(0, 6) + '...' + item.transactionHash.slice(-4)}
+                                      </span>
+                                    </div>
+
+                                  </div>
+
+                                  {/* chain logo */}
+                                  <Image
+                                    src={`/logo-chain-${chain}.png`}
+                                    alt={`${chain} Logo`}
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                              </button>
+                            )}
 
 
 
