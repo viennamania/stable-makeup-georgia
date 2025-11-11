@@ -5442,7 +5442,11 @@ const fetchBuyOrders = async () => {
                                     alt="Trade"
                                     width={32}
                                     height={32}
-                                    className={`${item.status === 'ordered' || item.status === 'accepted' || item.status === 'paymentRequested' ? 'animate-spin' : ''}`}
+                                    className={`${item.status === 'ordered'
+                                      || item.status === 'accepted'
+                                      || item.status === 'paymentRequested'
+                                      || item?.transactionHash === '0x'
+                                      ? 'animate-spin' : ''}`}
                                   />
 
                                   <div className="flex flex-col items-start justify-start">
