@@ -2700,14 +2700,10 @@ const fetchBuyOrders = async () => {
                     <ConnectButton
                       client={client}
                       wallets={wallets}
-                      accountAbstraction={{
-                        chain: chain === "ethereum" ? ethereum :
-                               chain === "polygon" ? polygon :
-                               chain === "arbitrum" ? arbitrum :
-                               chain === "bsc" ? bsc : arbitrum,
-                        //sponsorGas: true
-                        sponsorGas: false,
-                      }}
+                      chain={chain === "ethereum" ? ethereum :
+                              chain === "polygon" ? polygon :
+                              chain === "arbitrum" ? arbitrum :
+                              chain === "bsc" ? bsc : arbitrum}
                       
                       theme={"light"}
 
