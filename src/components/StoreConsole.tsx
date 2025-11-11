@@ -349,11 +349,15 @@ const StoreConsole = () => {
             }
             */
 
+            /*
             if (filteredStores.length > 10) {
               setStores(filteredStores.slice(0, 10) || []);
             } else {
               setStores(filteredStores || []);
             }
+            */
+           
+            setStores(filteredStores || []);
 
             setTotalCurrentUsdtBalance(data.result?.totalCurrentUsdtBalance || 0);
           } else {
@@ -484,7 +488,7 @@ const StoreConsole = () => {
               //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               //py-2"
 
-              className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 4xl:grid-cols-11 gap-2
+              className="w-full flex flex-row items-center justify-start gap-2
               overflow-x-auto
               scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               py-2
