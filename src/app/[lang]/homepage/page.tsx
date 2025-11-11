@@ -5447,66 +5447,95 @@ const fetchBuyOrders = async () => {
                                     alt="Trade"
                                     width={32}
                                     height={32}
+                                    className={`${item.status === 'ordered' || item.status === 'accepted' || item.status === 'paymentRequested' ? 'animate-spin' : ''}`}
                                   />
 
+                                  <div className="flex flex-col items-start justify-start">
 
-                                  <p className="text-sm font-semibold text-[#409192] ">
-                                    {item.tradeId}
-                                  </p>
+                                    <div className="flex flex-row items-center gap-2">
+                                      <p className="text-sm font-semibold text-[#409192] ">
+                                        #{item.tradeId}
+                                      </p>
 
-                                  {item.status === 'cancelled'
-                                  || item.status === 'paymentConfirmed' ? (
-                                    <p className="ml-2 text-sm text-zinc-500">
-                                      {new Date(item.acceptedAt)?.toLocaleString()}
-                                    </p>
-                                  ) : (
-                                    
-                                    <>
-                                      {params.lang === 'ko' ? (
-
+                                      {item.status === 'cancelled'
+                                      || item.status === 'paymentConfirmed' ? (
                                         <p className="ml-2 text-sm text-zinc-500">
-
-                                        
-                                          {new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                          ) :
-                                          new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                          ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                          ) : (
-                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                          )
-                                          }{' '}{Trade_Started}
-
+                                          {new Date(item.acceptedAt)?.toLocaleString()}
                                         </p>
-
-
-
                                       ) : (
+                                        
+                                        <>
+                                          {params.lang === 'ko' ? (
 
-                                        <p className="ml-2 text-sm text-zinc-500">
+                                            <p className="ml-2 text-sm text-zinc-500">
 
-                                          {Trade_Started} {
-                                            new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                              ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                            ) :
-                                            new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                            ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                            ) : (
-                                              ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                            )
-                                          }
+                                            
+                                              {new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                                ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                              ) :
+                                              new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                              ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                              ) : (
+                                                ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                              )
+                                              }{' '}{Trade_Started}
 
-                                        </p>
+                                            </p>
 
+
+
+                                          ) : (
+
+                                            <p className="ml-2 text-sm text-zinc-500">
+
+                                              {Trade_Started} {
+                                                new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                                  ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                                ) :
+                                                new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                                ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                                ) : (
+                                                  ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                                )
+                                              }
+
+                                            </p>
+
+                                          )}
+
+
+
+
+                                        </>
+                                      
                                       )}
 
+                                    </div>
+
+
+                                    {item.status === 'paymentConfirmed' && (
+                                      <div className="flex flex-row items-center gap-2">
+                                        <Image
+                                          src="/icon-completed.png"
+                                          alt="Completed"
+                                          width={16}
+                                          height={16}
+                                        />
+                                        <span className="text-sm font-semibold text-[#409192]">
+                                          {Completed}
+                                        </span>
+                                        <span className="text-sm text-zinc-500">
+                                          {
+                                            item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
+                                          }
+                                        </span>
+                                      </div>
+                                    )}
 
 
 
-                                    </>
-                                  
-                                  )}
 
+                                  </div>
 
 
 
@@ -5514,22 +5543,7 @@ const fetchBuyOrders = async () => {
                             )}
 
 
-                              {item.status === 'paymentConfirmed' && (
-                                <div className="flex flex-row items-center gap-2 mt-4">
-                                  <Image
-                                    src="/icon-completed.png"
-                                    alt="Completed"
-                                    width={32}
-                                    height={32}
-                                  />
-                                  <span className="text-sm font-semibold text-[#409192]">
-                                    {Completed}
-                                  </span>
-                                  <span>{
-                                    item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
-                                  }</span>
-                                </div>
-                              )}
+
 
 
 
@@ -5678,7 +5692,9 @@ const fetchBuyOrders = async () => {
 
 
 
-                              <div className="flex flex-col items-start justify-start gap-2">
+                              <div className="flex flex-col items-start justify-start gap-2
+                                border-t pt-2 border-zinc-200 w-full
+                              ">
                                 <p className="mt-2 mb-2 flex items-center gap-2">
 
                                   <Image
@@ -5686,22 +5702,20 @@ const fetchBuyOrders = async () => {
                                       alt="Avatar"
                                       width={32}
                                       height={32}
-                                      className="rounded-full w-6 h-6 object-cover"
+                                      className="rounded-full w-8 h-8"
                                   />
 
                                   <div className="flex flex-col gap-2 items-start">
+
+                                    <div className="text-lg font-semibold text-[#409192]">
+                                      구매자: {item.nickname}
+                                    </div>
+
                                     <div className="flex items-center space-x-2">
-                                      구매자 지갑주소:{' '}
+                                      지갑주소:{' '}
                                         {item.walletAddress.slice(0, 5) + '...' + item.walletAddress.slice(-4)}
 
                                     </div>
-
-                                    
-                                    <div className="text-sm font-semibold">
-                                      {item.nickname}
-                                    </div>
-
-
                                     <div className="flex flex-row items-center gap-2">
                                       <div className="text-lg text-[#409192]">
                                         {item.buyer?.depositName?.slice(0, 2) + "*".repeat(item.buyer?.depositName?.length - 2)}
@@ -5726,11 +5740,11 @@ const fetchBuyOrders = async () => {
                                     </div>
 
 
-                                    {item?.userStats?.totalPaymentConfirmedCount > 0 && (
+                                    {item?.userStats?.totalPaymentConfirmedCount >= 0 && (
                                       <div className="flex flex-row items-center gap-2">
                                         <div className="flex flex-row items-center gap-1">
                                           <div className="text-lg text-[#409192] font-semibold">
-                                            {item?.userStats?.totalPaymentConfirmedCount}
+                                            {item?.userStats?.totalPaymentConfirmedCount + 1}
                                           </div>
                                           <span className="text-sm text-gray-500">회 구매</span>
                                         </div>
@@ -5782,10 +5796,61 @@ const fetchBuyOrders = async () => {
 
                               </div>
 
+                              {/* seller bank info */}
+                              <div className="flex flex-col items-start justify-start gap-2 border-t pt-2 border-zinc-200 w-full">
+                                <div className="flex flex-row items-center gap-2">
+                                  <Image
+                                    src="/icon-seller.png"
+                                    alt="Seller"
+                                    width={32}
+                                    height={32}
+                                    className="rounded-lg"
+                                  />
+                                  <div className="flex flex-col gap-2 items-start">
+
+                                    <div className="flex flex-row items-center gap-2">
+                                      <p className="text-sm text-[#409192] font-semibold">
+                                        {Seller}: {
+                                          item.seller?.nickname
+                                        }
+                                      </p>
+                                      <Image
+                                        src="/verified.png"
+                                        alt="Verified"
+                                        width={20}
+                                        height={20}
+                                        className="rounded-lg"
+                                      />
+                                    </div>
+                                    {/* 지갑주소 */}
+                                    <p className="text-sm text-zinc-500">
+                                      지갑주소: {item.seller?.walletAddress ? item.seller?.walletAddress.slice(0, 5) + '...' + item.seller?.walletAddress.slice(-4) : ''}
+                                    </p>
+
+                                    {item.seller?.bankInfo && (
+                                      <div className="flex flex-col items-start justify-start gap-2">
+                                        <p className="text-sm text-zinc-500 underline underline-offset-2">
+                                          {item.seller?.bankInfo?.bankName} {item.seller?.bankInfo?.accountNumber.length > 4 ? (<span>{item.seller?.bankInfo?.accountNumber.slice(0, 4)}****</span>) : (<span>{item.seller?.bankInfo?.accountNumber}</span>)}
+                                        </p>
+                                        <p className="text-lg text-yellow-600 font-semibold">
+                                          {item.seller?.bankInfo?.accountHolder.slice(0, 1) + "*".repeat(item.seller?.bankInfo?.accountHolder.length - 1)}
+                                        </p>
+                                      </div>
+                                    )}
+
+
+                                  </div>
+
+                                </div>
+
+                              </div>
+
+
 
 
 
                               {/* buyer cancelled the trade */}
+                              {/*
                               {item.status === 'cancelled' && (
                                 <div className="mt-4 flex flex-col gap-2 items-start justify-center">
                                   <div className="flex flex-row items-center gap-2">
@@ -5813,6 +5878,7 @@ const fetchBuyOrders = async () => {
 
                                 </div>
                               )}
+                              */}
 
 
 
