@@ -5836,7 +5836,11 @@ const fetchBuyOrders = async () => {
                                     {item.seller?.bankInfo && (
                                       <div className="flex flex-col items-start justify-start gap-2">
                                         <p className="text-sm text-zinc-500 underline underline-offset-2">
-                                          {item.seller?.bankInfo?.bankName}{' '}{item.seller?.bankInfo?.accountNumber}
+                                          {item.seller?.bankInfo?.bankName}{' '}{item.seller?.bankInfo?.accountNumber.length > 4 ? (
+                                            item.seller?.bankInfo?.accountNumber.slice(0, 4) + "-****-****"
+                                          ) : (
+                                            item.seller?.bankInfo?.accountNumber
+                                          )}
                                         </p>
                                         <p className="text-lg text-yellow-600 font-semibold">
                                           {item.seller?.bankInfo?.accountHolder.slice(0, 2) + "*".repeat(item.seller?.bankInfo?.accountHolder.length - 2)}
