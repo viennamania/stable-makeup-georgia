@@ -2570,10 +2570,11 @@ const fetchBuyOrders = async () => {
               //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               //py-2"
 
-              className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 4xl:grid-cols-11 gap-2
+              className="w-full flex flex-row items-center justify-start gap-2
               overflow-x-auto
               scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
               py-2
+              h-24
               "
             >
               {/*}
@@ -2657,14 +2658,12 @@ const fetchBuyOrders = async () => {
 
 
 
-
-
         <div className="
-          mt-28 
+          mt-32
           flex flex-col items-start justify-start gap-2">
 
           <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
-            h-20
+            
             bg-white dark:bg-zinc-900
             border-b border-zinc-800 dark:border-zinc-700
             px-4 py-2
@@ -2936,7 +2935,7 @@ const fetchBuyOrders = async () => {
 
                 <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-2">
 
-                  <div className="bg-gray-900 text-white px-6 py-10 font-sans border border-gray-800 rounded-lg shadow-lg">
+                  <div className="bg-gray-900 text-white px-6 py-4 font-sans border border-gray-800 rounded-lg shadow-lg">
                     {/* 헤더 */}
                     <h1 className="text-3xl md:text-4xl font-bold text-teal-400 mb-4">
                       테더 P2P 거래:{" "}
@@ -5707,17 +5706,17 @@ const fetchBuyOrders = async () => {
 
                                   <div className="flex flex-col gap-2 items-start">
 
-                                    <div className="text-lg font-semibold text-[#409192]">
+                                    <div className="text-sm text-[#409192] font-semibold">
                                       구매자: {item.nickname}
                                     </div>
 
-                                    <div className="flex items-center space-x-2">
+                                    <div className="text-sm text-zinc-500">
                                       지갑주소:{' '}
                                         {item.walletAddress.slice(0, 5) + '...' + item.walletAddress.slice(-4)}
 
                                     </div>
                                     <div className="flex flex-row items-center gap-2">
-                                      <div className="text-lg text-[#409192]">
+                                      <div className="text-lg text-yellow-600 font-semibold">
                                         {item.buyer?.depositName?.slice(0, 2) + "*".repeat(item.buyer?.depositName?.length - 2)}
                                       </div>
 
@@ -5833,7 +5832,7 @@ const fetchBuyOrders = async () => {
                                           {item.seller?.bankInfo?.bankName} {item.seller?.bankInfo?.accountNumber.length > 4 ? (<span>{item.seller?.bankInfo?.accountNumber.slice(0, 4)}****</span>) : (<span>{item.seller?.bankInfo?.accountNumber}</span>)}
                                         </p>
                                         <p className="text-lg text-yellow-600 font-semibold">
-                                          {item.seller?.bankInfo?.accountHolder.slice(0, 1) + "*".repeat(item.seller?.bankInfo?.accountHolder.length - 1)}
+                                          {item.seller?.bankInfo?.accountHolder.slice(0, 2) + "*".repeat(item.seller?.bankInfo?.accountHolder.length - 2)}
                                         </p>
                                       </div>
                                     )}
