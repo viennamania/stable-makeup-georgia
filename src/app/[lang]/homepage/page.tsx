@@ -5606,13 +5606,13 @@ const fetchBuyOrders = async () => {
 
                                   <p className="text-lg font-semibold text-zinc-500">{Rate}: {
 
-                                    Number(item.krwAmount / item.usdtAmount).toFixed(3)
+                                    Number(item.rate)?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 
                                     }</p>
                                 </div>
 
                                 {/* 구매금액 */}
-                                <div className="mt-2 flex flex-row items-center gap-2">
+                                <div className="mt-2 w-full flex flex-row items-center justify-end gap-2">
                                   <span className="text-sm text-zinc-500 underline underline-offset-2">
                                     {Price}
                                   </span>
@@ -5621,10 +5621,13 @@ const fetchBuyOrders = async () => {
                                     {
                                       // currency
                                     
-                                      Number(item.krwAmount)?.toLocaleString() + '원'
+                                      Number(item.krwAmount)?.toLocaleString()
 
                                     }
                                   </p>
+                                  <span className="text-sm text-zinc-500">
+                                    {'  '}원
+                                  </span>
 
                                 </div>
 
@@ -5706,8 +5709,8 @@ const fetchBuyOrders = async () => {
 
                                   <div className="flex flex-col gap-2 items-start">
 
-                                    <div className="text-sm text-[#409192] font-semibold">
-                                      구매자: {item.nickname}
+                                    <div className="text-sm text-yellow-600 font-semibold">
+                                      구매자 아이다: {item.nickname}
                                     </div>
 
                                     <div className="text-sm text-zinc-500">
@@ -5809,7 +5812,8 @@ const fetchBuyOrders = async () => {
 
                                     <div className="flex flex-row items-center gap-2">
                                       <p className="text-sm text-[#409192] font-semibold">
-                                        {Seller}: {
+                                        판매자 아이디:{' '}
+                                        {
                                           item.seller?.nickname
                                         }
                                       </p>
@@ -5823,13 +5827,16 @@ const fetchBuyOrders = async () => {
                                     </div>
                                     {/* 지갑주소 */}
                                     <p className="text-sm text-zinc-500">
-                                      지갑주소: {item.seller?.walletAddress ? item.seller?.walletAddress.slice(0, 5) + '...' + item.seller?.walletAddress.slice(-4) : ''}
+                                      지갑주소:{' '}
+                                      {
+                                        item.seller?.walletAddress ? item.seller?.walletAddress.slice(0, 5) + '...' + item.seller?.walletAddress.slice(-4) : ''
+                                      }
                                     </p>
 
                                     {item.seller?.bankInfo && (
                                       <div className="flex flex-col items-start justify-start gap-2">
                                         <p className="text-sm text-zinc-500 underline underline-offset-2">
-                                          {item.seller?.bankInfo?.bankName} {item.seller?.bankInfo?.accountNumber.length > 4 ? (<span>{item.seller?.bankInfo?.accountNumber.slice(0, 4)}****</span>) : (<span>{item.seller?.bankInfo?.accountNumber}</span>)}
+                                          {item.seller?.bankInfo?.bankName}{' '}{item.seller?.bankInfo?.accountNumber}
                                         </p>
                                         <p className="text-lg text-yellow-600 font-semibold">
                                           {item.seller?.bankInfo?.accountHolder.slice(0, 2) + "*".repeat(item.seller?.bankInfo?.accountHolder.length - 2)}
