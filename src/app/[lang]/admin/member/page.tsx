@@ -1113,7 +1113,11 @@ export default function Index({ params }: any) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              storecode: "admin",
+              
+              //storecode: "admin",
+
+              storecode: searchParamsStorecode,
+
               ////walletAddress: address,
             }),
         });
@@ -1135,7 +1139,7 @@ export default function Index({ params }: any) {
 
     fetchData();
 
-  } , []);
+  } , [searchParamsStorecode]);
 
 
 

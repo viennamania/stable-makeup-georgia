@@ -1932,31 +1932,17 @@ export default function Index({ params }: any) {
                       <td className="p-2">
                         <div className="flex flex-row items-center mr-2 justify-between gap-2">
 
-                          {item?.totalBuyCount ? (
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              {item?.totalPaymentConfirmedCount}
-                            </div>
-                          ) : (
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              0 건
-                            </div>
-                          )}
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            {
+                              item?.totalPaymentConfirmedCount || 0
+                            }
+                          </div>
 
-
-                          {item?.totalPaymentConfirmedKrwAmount ? (
-
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              {Number(item?.totalPaymentConfirmedKrwAmount)?.toLocaleString('ko-KR')}
-                            </div>
-                          ) : (
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              0
-                            </div>
-                          )}
-
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            {Number(item?.totalPaymentConfirmedKrwAmount || 0)?.toLocaleString('ko-KR')}
+                          </div>
 
                         </div>
-                        
                       </td>
 
                       <td className="

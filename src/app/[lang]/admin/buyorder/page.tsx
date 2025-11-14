@@ -215,8 +215,7 @@ export default function Index({ params }: any) {
 
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
-
+  
 
   // limit, page number params
   /*
@@ -1046,8 +1045,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   } , [buyOrders.length]);
 
 
-    
-  // initialize false array of 100
+
   const [acceptingBuyOrder, setAcceptingBuyOrder] = useState([] as boolean[]);
   useEffect(() => {
     setAcceptingBuyOrder([]);

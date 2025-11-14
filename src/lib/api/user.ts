@@ -61,6 +61,11 @@ export interface UserProps {
 
   isBlack: boolean;
 
+
+  totalPaymentConfirmedCount: number;
+  totalPaymentConfirmedKrwAmount: number;
+  totalPaymentConfirmedUsdtAmount: number;
+
 }
 
 export interface ResultProps {

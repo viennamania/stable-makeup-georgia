@@ -830,6 +830,7 @@ const AgentConsole = (
                     </span>
                   </div>
 
+                  {/*
                   <div className="w-full flex flex-row items-center justify-center">
                     <button
                       disabled={isToggling.includes(store.storecode)}
@@ -850,6 +851,7 @@ const AgentConsole = (
                       
                     </button>
                   </div>
+                  */}
                   
                 </div>
               ))}
