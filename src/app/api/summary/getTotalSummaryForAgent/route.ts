@@ -60,6 +60,8 @@ export async function POST(request: NextRequest) {
   const buyers = await getAllBuyersForAgent({
     storecode: "",
     agentcode: agentcode,
+    search: "",
+    depositName: "",
     limit: 5,
     page: 1,
   });
