@@ -397,18 +397,20 @@ const AgentConsole = (
 
   const [totalCurrentUsdtBalance, setTotalCurrentUsdtBalance] = useState(0);
 
+  
   // list of stores
   const [stores, setStores] = useState<Array<any>>([]);
 
   useEffect(() => {
       const fetchStores = async () => {
-          const response = await fetch("/api/store/getAllStoresForBalance", {
+          const response = await fetch("/api/agent/getAllStoresForBalance", {
               method: "POST",
               headers: {
                   "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 clientId,
+                agentcode,
               }),
           });
 
@@ -421,21 +423,6 @@ const AgentConsole = (
             // set list if viewOnAndOff is true
             const filteredStores = data.result.stores.filter((store: { viewOnAndOff: boolean }) => store.viewOnAndOff === true);
 
-
-            //alert("filteredStores.length: " + filteredStores.length);
-
-
-            //console.log("filteredStores", filteredStores);
-
-            /*
-            //setStores(data.result.stores || []);
-            // if count is more than 10, slice to 10
-            if (data.result.stores.length > 10) {
-              setStores(data.result.stores.slice(0, 10) || []);
-            } else {
-              setStores(data.result.stores || []);
-            }
-            */
 
             if (filteredStores.length > 10) {
               setStores(filteredStores.slice(0, 10) || []);
@@ -460,6 +447,9 @@ const AgentConsole = (
       return () => clearInterval(interval);
 
   }, [address, isAdmin]);
+  
+
+
 
   /*
     {
@@ -555,10 +545,16 @@ const AgentConsole = (
       fixed top-2 left-2 z-50 flex flex-col items-start justify-start gap-2
       ">
 
-        <div className="flex flex-row items-center justify-center
+        <button
+          className="flex flex-row items-center justify-center
           bg-white bg-opacity-90
           p-2 rounded-lg shadow-lg
-        ">
+          hover:bg-gray-100 transition-colors duration-200
+          "
+          onClick={() => {
+            router.push(`/${"ko"}/agent/${agentcode}`);
+          }}
+        >
           <Image
             src={agent?.agentLogo || "/icon-agent.png"}
             alt={agent?.agentName || "Agent Console"}
@@ -570,7 +566,7 @@ const AgentConsole = (
             <h1 className="text-lg font-bold text-black">{agent?.agentName || "Admin Console"}</h1>
             <p className="text-sm text-gray-600">{agent?.agentDescription || "Manage your application settings"}</p>
           </div>
-        </div>
+        </button>
 
         <button
           className="

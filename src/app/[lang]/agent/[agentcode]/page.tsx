@@ -1392,6 +1392,23 @@ export default function Index({ params }: any) {
 
 
 
+
+  useEffect(() => {
+    // Dynamically load the Binance widget script
+    const script = document.createElement("script");
+    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      // Cleanup the script when the component unmounts
+      document.body.removeChild(script);
+    };
+  }, [!fetchingAgent && agent]); // Only run this effect when fetchingAgent is false
+
+
+
+
   // if loadinAgent is true, show loading
   if (fetchingAgent) {
     return (
@@ -1480,7 +1497,7 @@ export default function Index({ params }: any) {
                       <td className="px-4 py-2 border">{agent.agentType}</td>
                       <td className="px-4 py-2 border">
                         <a
-                          href={`/${params.lang}/admin/agent/${agent.agentcode}`}
+                          href={`/${params.lang}/agent/${agent.agentcode}`}
                           className="text-blue-500 hover:underline"
                         >
                           이동하기
@@ -1533,13 +1550,47 @@ export default function Index({ params }: any) {
             p-2 rounded-lg mb-4
               "bg-black/10"
             }`}>
+                
+              <div className="w-full flex flex-row items-center justify-start gap-2">
+                <div className="flex flex-row items-center justify-start gap-2">
+                  <Image
+                    src={agent?.agentLogo || "/logo.png"}
+                    alt="logo"
+                    width={50}
+                    height={50}
+                    className="rounded-lg w-16 h-16"
+                  />
+                  <div className="flex flex-col items-start justify-start">
+                    <span className="text-sm text-[#3167b4] font-bold">
+                      {agent?.agentName || "에이전트 이름"}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {agent?.agentcode || "에이전트 코드"}
+                    </span>
+                  </div>
+                </div>
+
+                {address && address === agentAdminWalletAddress && (
+                  <div className="text-sm text-[#3167b4] font-bold">
+                    {agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
+                  </div>
+                )}
+                {address && address !== agentAdminWalletAddress && (
+                  <div className="text-sm text-[#3167b4] font-bold">
+                    {agent?.agentName + " (" + agent?.agentcode + ")"}
+                  </div>
+                )}
+
+              </div>
+
 
               {address && !loadingUser && (
+
 
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/profile-settings');
+                      router.push('/' + params.lang + '/profile-settings');
                     }}
                     className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                   >
@@ -1555,9 +1606,6 @@ export default function Index({ params }: any) {
 
                               toast.success('로그아웃 되었습니다');
 
-                              //router.push(
-                              //    "/admin/" + params.agentcode
-                              //);
                           });
                       } }
 
@@ -1580,6 +1628,49 @@ export default function Index({ params }: any) {
 
 
               )}
+
+
+              {!address && (
+                <ConnectButton
+                  client={client}
+                  wallets={wallets}
+
+                  /*
+                  accountAbstraction={{
+                    chain: arbitrum,
+                    sponsorGas: true
+                  }}
+                  */
+                  
+                  theme={"light"}
+
+                  // button color is dark skyblue convert (49, 103, 180) to hex
+                  connectButton={{
+                      style: {
+                          backgroundColor: "#3167b4", // dark skyblue
+                          color: "#f3f4f6", // gray-300
+                          padding: "2px 10px",
+                          borderRadius: "10px",
+                          fontSize: "14px",
+                          width: "60x",
+                          height: "38px",
+                      },
+                      label: "원클릭 로그인",
+                  }}
+
+                  connectModal={{
+                    size: "wide", 
+                    //size: "compact",
+                    titleIcon: "https://www.stable.makeup/logo.png",                           
+                    showThirdwebBranding: false,
+                  }}
+
+                  locale={"ko_KR"}
+                  //locale={"en_US"}
+                />
+              )}
+
+
 
 
             </div>
@@ -1706,6 +1797,28 @@ export default function Index({ params }: any) {
             }`}>
 
 
+            <div className="w-full flex flex-row items-center justify-start gap-2">
+              <Image
+                src={agent?.agentLogo || "/logo.png"}
+                alt="logo"
+                width={50}
+                height={50}
+                className="rounded-lg w-16 h-16"
+              />
+              <div className="flex flex-col items-start justify-start">
+                <span className="text-sm text-[#3167b4] font-bold">
+                  {agent?.agentName || "에이전트 이름"}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {agent?.agentcode || "에이전트 코드"}
+                </span>
+              </div>
+            </div>
+              
+
+
+        
+
             {/* 로그아웃 버튼 */}
             <div className="w-full flex flex-row items-center justify-end gap-2">
               <button
@@ -1715,9 +1828,6 @@ export default function Index({ params }: any) {
 
                       toast.success('로그아웃 되었습니다');
 
-                      //router.push(
-                      //    "/admin/" + params.agentcode
-                      //);
                   });
                 } }
 
@@ -1762,7 +1872,7 @@ export default function Index({ params }: any) {
             <div className="flex flex-row items-center justify-center gap-2">
               <button
                 onClick={() => {
-                  router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/profile-settings');
+                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/profile-settings');
                   //router.push('/' + params.lang + '/' + params.agentcode + '/profile-settings');
                 }}
                 className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
@@ -1828,8 +1938,32 @@ export default function Index({ params }: any) {
                 "bg-black/10"
               }`}>
 
+            {/*
+            <div className="w-full flex flex-row items-center justify-start gap-2">
+              <Image
+                src={agent?.agentLogo || "/logo.png"}
+                alt="logo"
+                width={50}
+                height={50}
+                className="rounded-lg w-16 h-16"
+              />
+              {address && address === agentAdminWalletAddress && (
+                <div className="text-sm text-[#3167b4] font-bold">
+                  {agent && agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
+                </div>
+              )}
+              {address && address !== agentAdminWalletAddress && (
+                <div className="text-sm text-[#3167b4] font-bold">
+                  {agent && agent?.agentName + " (" + agent?.agentcode + ")"}
+                </div>
+              )}
+
+            </div>
+            */}
+
 
               {/* 에이전트 설정 */}
+              {/*
               {
               ///address === agent?.adminWalletAddress && (
               isAdmin && (
@@ -1838,7 +1972,7 @@ export default function Index({ params }: any) {
                   flex flex-row items-center gap-2">
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/my-settings');
+                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/my-settings');
                     }}
                     className="
                       items-center justify-center
@@ -1848,6 +1982,7 @@ export default function Index({ params }: any) {
                   </button>
                 </div>
               )}
+              */}
 
 
 
@@ -1858,7 +1993,7 @@ export default function Index({ params }: any) {
 
                 <button
                   onClick={() => {
-                    router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/profile-settings');
+                    router.push('/' + params.lang + '/agent/' + params.agentcode + '/profile-settings');
                   }}
                   className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
                 >
@@ -1894,9 +2029,7 @@ export default function Index({ params }: any) {
 
                             toast.success('로그아웃 되었습니다');
 
-                            //router.push(
-                            //    "/admin/" + params.agentcode
-                            //);
+                            
                         });
                     } }
 
@@ -2055,7 +2188,7 @@ export default function Index({ params }: any) {
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/store');
+                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/store');
                     }}
                     className="
                       w-full
@@ -2158,7 +2291,7 @@ export default function Index({ params }: any) {
                               />
                               <button
                                 onClick={() => {
-                                  router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/store/')
+                                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/store/')
                                 }}
                                 className="text-blue-500 hover:underline"
                               >
@@ -2246,7 +2379,7 @@ export default function Index({ params }: any) {
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/member');
+                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/member');
                     }}
                     className="
                       w-full
@@ -2389,7 +2522,7 @@ export default function Index({ params }: any) {
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/trade-history');
+                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history');
                     }}
                     className="
                       w-full
@@ -2659,7 +2792,7 @@ export default function Index({ params }: any) {
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   <button
                     onClick={() => {
-                      router.push('/' + params.lang + '/admin/agent/' + params.agentcode + '/buyorder');
+                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder');
                     }}
                     className="
                       w-full
@@ -2996,7 +3129,7 @@ export default function Index({ params }: any) {
 
                                 // redirect to settings page
                                 router.push(
-                                  "/" + params.lang + "/admin/agent/" + params.agentcode + "/profile-settings"
+                                  "/" + params.lang + "/agent/" + params.agentcode + "/profile-settings"
                                 );
 
 

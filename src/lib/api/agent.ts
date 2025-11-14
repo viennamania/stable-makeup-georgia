@@ -816,3 +816,79 @@ export async function getAllAgentsForBalanceInquiry(
 }
 
 
+// getAllStoresForBalanceInquiry
+export async function getAllStoresForBalanceInquiry(
+  {
+    agentcode,
+  }: {
+    agentcode: string;
+  }
+): Promise<any> {
+
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const query: any = {};
+
+  if (agentcode) {
+    query.agentcode = { $regex: String(agentcode), $options: 'i' };
+  }
+
+
+
+  const totalCount = await collection.countDocuments(query);
+
+  //console.log('getAllStores totalCount', totalCount);
+
+
+  try {
+    const stores = await collection.aggregate([
+      { $match: query },
+      {
+        
+        $project: {
+          createdAt: 1,
+          storecode: 1,
+          storeName: 1,
+          storeLogo: 1,
+          backgroundColor: 1,
+
+          totalUsdtAmount: 1,
+
+          settlementWalletAddress: 1,
+
+          //liveOnAndOff: 1,
+          // if liveOnAndOff is not exist, set it to true
+          liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+
+          viewOnAndOff: { $ifNull: ['$viewOnAndOff', true]  },
+       
+        },
+      },
+      
+      //{ $sort: { createdAt: -1 } }, // Sort by createdAt in descending order
+      // sort by totalUsdtAmount in descending order
+      { $sort: { totalUsdtAmount: -1, createdAt: -1 } }, // Sort by totalUsdtAmount in descending order and then by createdAt in descending order
+
+    ]).toArray();
+
+
+
+
+
+    //console.log('getAllStores stores', stores);
+
+
+
+    return {
+      totalCount,
+      stores,
+    };
+
+  } catch (error) {
+    console.error('Error fetching stores:', error);
+    throw new Error('Failed to fetch stores');
+  }
+}
+
