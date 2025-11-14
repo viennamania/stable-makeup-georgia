@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const {
-    walletAddress,
     agentcode,
     storecode,
     search,
@@ -28,6 +27,8 @@ export async function POST(request: NextRequest) {
   const result = await getAllBuyersForAgent({
     storecode: storecode || '',
     agentcode: agentcode || '',
+    search: search || '',
+    depositName: depositName || '',
     limit: limit || 100,
     page: page || 1,
   });

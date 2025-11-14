@@ -1173,19 +1173,21 @@ export async function getAllBuyersForAgent(
   {
     storecode,
     agentcode,
+    search,
+    depositName,
     limit,
     page,
   }: {
     storecode: string;
     agentcode: string;
+    search: string;
+    depositName: string;
     limit: number;
     page: number;
   }
 ): Promise<ResultProps> {
 
-  console.log('getAllBuyersForAgent agentcode: ' + agentcode);
-  console.log('getAllBuyersForAgent limit: ' + limit);
-  console.log('getAllBuyersForAgent page: ' + page);
+
   
  
   const client = await clientPromise;
@@ -1206,6 +1208,8 @@ export async function getAllBuyersForAgent(
     },
     {
       $match: {
+        nickname: { $regex: String(search), $options: 'i' },
+        'buyer.depositName': { $regex: String(depositName), $options: 'i' },
         'storecode': { $regex: String(storecode), $options: 'i' },
         'storeInfo.agentcode': { $regex: String(agentcode), $options: 'i' },
         walletAddress: { $exists: true, $ne: null },
@@ -1242,10 +1246,6 @@ export async function getAllBuyersForAgent(
   ]).toArray();
       
 
-
-
-
-  console.log('getAllBuyersForAgent users: ' + users.length);
   const totalCount = users.length;
 
   return {

@@ -175,14 +175,8 @@ const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; //
 
 export default function Index({ params }: any) {
 
-
-
-
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
-
-
   // limit, page number params
 
   const limit = searchParams.get('limit') || 20;
@@ -212,9 +206,6 @@ export default function Index({ params }: any) {
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
-
-
-
 
 
 
@@ -1195,102 +1186,6 @@ export default function Index({ params }: any) {
   } , [params.agentcode]);
 
 
-  
-
-
-
-
-
-    const [tradeSummary, setTradeSummary] = useState({
-      totalCount: 0,
-      totalKrwAmount: 0,
-      totalUsdtAmount: 0,
-      totalSettlementCount: 0,
-      totalSettlementAmount: 0,
-      totalSettlementAmountKRW: 0,
-      totalFeeAmount: 0,
-      totalFeeAmountKRW: 0,
-      orders: [] as BuyOrder[],
-    });
-    const [loadingTradeSummary, setLoadingTradeSummary] = useState(false);
-
-
-    const getTradeSummary = async () => {
-      if (!address) {
-        return;
-      }
-      setLoadingTradeSummary(true);
-      const response = await fetch('/api/summary/getTradeSummary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          agentcode: params.agentcode,
-          //storecode: searchStorecode,
-          walletAddress: address,
-          searchMyOrders: searchMyOrders,
-          searchOrderStatusCompleted: true,
-          //searchBuyer: searchBuyer,
-          //searchDepositName: searchDepositName,
-
-          //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-          fromDate: searchFromDate,
-          toDate: searchToDate,
-        })
-      });
-      if (!response.ok) {
-        setLoadingTradeSummary(false);
-        toast.error('Failed to fetch trade summary');
-        return;
-      }
-      const data = await response.json();
-      //console.log('getTradeSummary data', data);
-      setTradeSummary(data.result);
-      setLoadingTradeSummary(false);
-      return data.result;
-    }
-
-
-
-
-    useEffect(() => {
-
-      if (!address) {
-        return;
-      }
-
-      getTradeSummary();
-
-    } , [address, searchMyOrders,
-
-        searchFromDate,
-        searchToDate,
-    ]);
-
-
-
-
-
-  // check table view or card view
-  const [tableView, setTableView] = useState(true);
-
-
-  useEffect(() => {
-    // Dynamically load the Binance widget script
-    const script = document.createElement("script");
-    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup the script when the component unmounts
-      document.body.removeChild(script);
-    };
-  }, [!fetchingAgent && agent]);
-
-
 
   return (
 
@@ -1302,41 +1197,6 @@ export default function Index({ params }: any) {
 
         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
             
-          <div className="w-full flex flex-row items-center justify-start gap-2">
-
-             <button
-               onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/')}
-               className="flex items-center justify-center gap-2
-                rounded-lg p-2
-                hover:bg-black/20
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out"
-
-             >
-                <Image
-                  src={agent?.agentLogo || "/logo.png"}
-                  alt="logo"
-                  width={35}
-                  height={35}
-                  className="rounded-lg w-6 h-6"
-                />
-             </button>
-
-              {address && address === agentAdminWalletAddress && (
-                <div className="text-sm text-[#3167b4] font-bold">
-                  {agent && agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
-                </div>
-              )}
-              {address && address !== agentAdminWalletAddress && (
-                <div className="text-sm text-[#3167b4] font-bold">
-                  {agent && agent?.agentName + " (" + agent?.agentcode + ")"}
-                </div>
-              )}
-
-          </div>
-
-
           {address && !loadingUser && (
 
 
@@ -1401,49 +1261,6 @@ export default function Index({ params }: any) {
               </button>
             </div>
 
-
-          )}
-
-
-          {!address && (
-            <ConnectButton
-              client={client}
-              wallets={wallets}
-
-              /*
-              accountAbstraction={{
-                chain: arbitrum,
-                sponsorGas: true
-              }}
-              */
-              
-              theme={"light"}
-
-              // button color is dark skyblue convert (49, 103, 180) to hex
-              connectButton={{
-                style: {
-                  backgroundColor: "#3167b4", // dark skyblue
-
-                  color: "#f3f4f6", // gray-300 
-                  padding: "2px 2px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  //width: "40px",
-                  height: "38px",
-                },
-                label: "원클릭 로그인",
-              }}
-
-              connectModal={{
-                size: "wide", 
-                //size: "compact",
-                titleIcon: "https://www.stable.makeup/logo.png",                           
-                showThirdwebBranding: false,
-              }}
-
-              locale={"ko_KR"}
-              //locale={"en_US"}
-            />
 
           )}
 
@@ -1575,704 +1392,493 @@ export default function Index({ params }: any) {
 
 
 
+            <div className="w-full flex flex-row items-center justify-end gap-2">
 
-            {/* trade summary */}
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2
-              w-full
-              bg-zinc-100/50
-              p-4 rounded-lg shadow-md
-              ">
-
-              <div className="w-full flex flex-row items-center justify-center gap-2">
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 P2P 거래수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalCount?.toLocaleString()}
-                  </div>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">전체수</div>
+                <div className="flex flex-row items-center gap-2">
+                  {
+                    fetchingAllStore ? (
+                      <Image
+                        src="/loading.png"
+                        alt="Loading"
+                        width={20}
+                        height={20}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      totalCount || 0
+                    )
+                  }
                 </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 P2P 거래량(USDT)</div>
-                  <div className="text-xl font-semibold text-[#409192]">
-                    {Number(tradeSummary.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  </div>
-                </div>
-
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 P2P 거래금액(원)</div>
-                  <div className="text-xl font-semibold text-yellow-600">
-                    {tradeSummary.totalKrwAmount?.toLocaleString()}
-                  </div>
-                </div>
-
-
-
               </div>
 
-              {/* divider */}
-              <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-
-              <div className="w-full flex flex-row items-center justify-center gap-2">
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 결제수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()}
-                  </div>
+              {/*
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">검색수량</div>
+                <div className="flex flex-row items-center gap-2">
+                  {
+                    fetchingAllStore ? (
+                      <Image
+                        src="/loading.png"
+                        alt="Loading"
+                        width={20}
+                        height={20}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      searchCount || 0
+                    )
+                  }
                 </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 결제량(USDT)</div>
-                  <div className="text-xl font-semibold text-[#409192]">
-                    {Number(tradeSummary.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 결제금액(원)</div>
-                  <div className="text-xl font-semibold text-yellow-600">
-                    {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
-                  </div>
-                </div>
-
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 수수료수량(USDT)</div>
-                  <div className="text-xl font-semibold text-[#409192]">
-                    {Number(tradeSummary.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 수수료금액(원)</div>
-                  <div className="text-xl font-semibold text-yellow-600">
-                    {tradeSummary.totalFeeAmountKRW?.toLocaleString()}
-                  </div>
-                </div>
-
               </div>
+              */}
+
+            </div>
               
+
+            <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
+
+              {/* 가맹점 추가 input and button */}
+              <div className="flex flex-row items-center gap-2">
+                <input
+                  disabled={insertingStore}
+                  type="text"
+                  value={storeName}
+                  onChange={(e) => {
+
+                    setStoreName(e.target.value)
+
+                  } }
+                  placeholder="가맹점 이름"
+                  className="w-52 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                
+                <button
+                  disabled={insertingStore}
+                  onClick={() => {
+
+                    // check if store code already exists
+                    if (allStore.find((item) => item.storecode === storeCode)) {
+                      toast.error('가맹점 코드가 이미 존재합니다.');
+                      return;
+                    }
+
+                    // check if store name length is less than 2
+                    if (storeName.length < 2) {
+                      toast.error('가맹점 이름은 2자 이상이어야 합니다.');
+                      return;
+                    }
+                    // check if store name length is less than 20
+                    if (storeName.length > 10) {
+                      toast.error('가맹점 이름은 10자 이하여야 합니다.');
+                      return;
+                    }
+
+                    insertStore();
+                  }}
+                  className={`bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full
+                    ${insertingStore ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {insertingStore ? '가맹점 추가 중...' : '가맹점 추가'}
+                </button>
+              </div>
+
+
+
+
+              {/* serach fromDate and toDate */}
+              {/* DatePicker for fromDate and toDate */}
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-2">
+                  <Image
+                    src="/icon-calendar.png"
+                    alt="Calendar"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <input
+                    type="date"
+                    value={searchFromDate}
+                    onChange={(e) => setSearchFormDate(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  />
+                </div>
+
+                <div className="flex flex-row items-center gap-2">
+                  <Image
+                    src="/icon-calendar.png"
+                    alt="Calendar"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <input
+                    type="date"
+                    value={searchToDate}
+                    onChange={(e) => setSearchToDate(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  />
+                </div>
+              </div>
+
+
+
+
+
+
+              {/* search bar */}
+              {/* searchStore */}
+              <div className="flex flex-row items-center gap-2">
+                <input
+                  disabled={fetchingAllStore}
+                  type="text"
+                  value={searchStore}
+                  onChange={(e) => setSearchStorecode(e.target.value)}
+                  placeholder="가맹점 코드, 이름"
+                  className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                />
+
+                <button
+                  onClick={() => {
+                    setPageValue(1);
+                    fetchAllStore();
+                  }}
+                  //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+                  className={`
+                    bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full
+                    ${fetchingAllStore ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                  
+
+                  disabled={fetchingAllStore}
+                >
+                  {fetchingAllStore ? '검색중...' : '검색'}
+                </button>
+
+              </div>
+
             </div>
 
 
 
-
-              <div className="w-full flex flex-row items-center justify-end gap-2">
-
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">전체수</div>
-                  <div className="flex flex-row items-center gap-2">
-                    {
-                      fetchingAllStore ? (
-                        <Image
-                          src="/loading.png"
-                          alt="Loading"
-                          width={20}
-                          height={20}
-                          className="animate-spin"
-                        />
-                      ) : (
-                        totalCount || 0
-                      )
-                    }
-                  </div>
-                </div>
-
-                {/*
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">검색수량</div>
-                  <div className="flex flex-row items-center gap-2">
-                    {
-                      fetchingAllStore ? (
-                        <Image
-                          src="/loading.png"
-                          alt="Loading"
-                          width={20}
-                          height={20}
-                          className="animate-spin"
-                        />
-                      ) : (
-                        searchCount || 0
-                      )
-                    }
-                  </div>
-                </div>
-                */}
-
-              </div>
-               
-
-              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
-
-                {/* 가맹점 추가 input and button */}
-                <div className="flex flex-row items-center gap-2">
-                  <input
-                    disabled={insertingStore}
-                    type="text"
-                    value={storeName}
-                    onChange={(e) => {
-
-                      setStoreName(e.target.value)
-
-                    } }
-                    placeholder="가맹점 이름"
-                    className="w-52 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  
-                  <button
-                    disabled={insertingStore}
-                    onClick={() => {
-
-                      // check if store code already exists
-                      if (allStore.find((item) => item.storecode === storeCode)) {
-                        toast.error('가맹점 코드가 이미 존재합니다.');
-                        return;
-                      }
-
-                      // check if store name length is less than 2
-                      if (storeName.length < 2) {
-                        toast.error('가맹점 이름은 2자 이상이어야 합니다.');
-                        return;
-                      }
-                      // check if store name length is less than 20
-                      if (storeName.length > 10) {
-                        toast.error('가맹점 이름은 10자 이하여야 합니다.');
-                        return;
-                      }
-
-                      insertStore();
-                    }}
-                    className={`bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full
-                      ${insertingStore ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {insertingStore ? '가맹점 추가 중...' : '가맹점 추가'}
-                  </button>
-                </div>
-
-
-
-
-                {/* serach fromDate and toDate */}
-                {/* DatePicker for fromDate and toDate */}
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-calendar.png"
-                      alt="Calendar"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <input
-                      type="date"
-                      value={searchFromDate}
-                      onChange={(e) => setSearchFormDate(e.target.value)}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
-
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-calendar.png"
-                      alt="Calendar"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <input
-                      type="date"
-                      value={searchToDate}
-                      onChange={(e) => setSearchToDate(e.target.value)}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
-                </div>
-
-
-
-
-
-
-                {/* search bar */}
-                {/* searchStore */}
-                <div className="flex flex-row items-center gap-2">
-                  <input
-                    disabled={fetchingAllStore}
-                    type="text"
-                    value={searchStore}
-                    onChange={(e) => setSearchStorecode(e.target.value)}
-                    placeholder="가맹점 코드, 이름"
-                    className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  />
-
-                  <button
-                    onClick={() => {
-                      setPageValue(1);
-                      fetchAllStore();
-                    }}
-                    //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                    className={`
-                      bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full
-                      ${fetchingAllStore ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                    
-
-                    disabled={fetchingAllStore}
-                  >
-                    {fetchingAllStore ? '검색중...' : '검색'}
-                  </button>
-
-                </div>
-
-              </div>
-
-
-
-              {/*
-              {"storecode":"teststorecode","storeName":"테스트상점","storeType":"test","storeUrl":"https://test.com","storeDescription":"설명입니다.","storeLogo":"https://test.com/logo.png","storeBanner":"https://test.com/banner.png"}
-              */}
-
-              {/* table view is horizontal scroll */}
-              {tableView ? (
-
-                <div className="w-full overflow-x-auto">
-
-                  <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
-
-                    <thead
-                      className="bg-zinc-800 text-white text-sm font-semibold w-full"
-                      style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      }}
-                    >
-                      <tr>
-                        <th className="p-2">가맹점</th>
-                        {/*
-                        <th className="p-2">가맹점타입</th>
-                        */}
-                        <th className="p-2">
-                          회원수
-                        </th>
-                        {/*
-                        <th className="p-2">통장수</th>
-                        */}
-
-
-                        <th className="p-2">
-                          회원 홈페이지
-                        </th>
-                        <th className="p-2">
-                          관리자 홈페이지
-                        </th>
-
-                        <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <span className="text-center">
-                              에이전트 수수료율(%)
-                            </span>
-                            <span className="text-center">
-                              수납용 USDT 지갑주소
-                            </span>
-                          </div>
-                        </th>
-
-
-                        <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <span className="text-center">
-                              P2P 거래수(건)
-                            </span>
-                            <span className="text-center">
-                              P2P 거래량(USDT)
-                            </span>
-                            <span className="text-center">
-                              P2P 거래액(원)
-                            </span>
-
-                          </div>
-                        </th>
-
-                        <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
-                            <div className="flex flex-row items-center justify-center gap-2">
-                              <span className="text-center">
-                                결제수(건)
-                              </span>
-                            </div>
-
-                            <div className="flex flex-row items-center justify-center gap-2">
-
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <span>결제량(USDT)</span>
-                                <span>결제액(원)</span>
-                              </div>
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <span>수수료수량(USDT)</span>
-                                <span>수수료금액(원)</span>
-                              </div>
-
-                            </div>
-                            
-                          </div>
-                        </th>
-
-                      </tr>
-                    </thead>
-
-                    {/* if my trading, then tr has differenc color */}
-                    <tbody>
-
-                      {allStore?.map((item, index) => (
-
-                        
-                        <tr key={index} className={`
-                          ${
-                            index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-                          }
-                        `}>
-
-                          <td className="p-2">
-                          
-
-                            <div className="
-                              w-48 
-                              flex flex-col items-center justify-center gap-2">
-
-                              <div className="w-full flex flex-row items-center justify-start gap-2"> 
-                                
-                                <div className="w-full flex flex-row items-center justify-start gap-2">
-                                  <Image
-                                    src={item.storeLogo || '/icon-store.png'}
-                                    alt="Store Logo"
-                                    width={100}
-                                    height={100}
-                                    className="
-                                      rounded-lg w-20 h-20
-                                      object-cover
-                                      "
-                                  />
-                                  <div className="flex flex-col items-start justify-center">
-                                    <span className="text-lg font-semibold">
-                                      {item.storeName.length > 8 ? item.storeName.slice(0, 8) + '...' : item.storeName}
-                                    </span>
-                                    
-                                    {/*
-                                    <span className="text-sm text-gray-500">
-                                      {item.storecode}
-                                    </span>
-                                    */}
-                                    {/* 복사하기 */}
-                                    <button
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(item.storecode);
-                                        toast.success('가맹점 코드가 복사되었습니다.');
-                                      }}
-                                      className="text-sm text-gray-500 hover:text-blue-500
-                                      hover:underline"
-                                    >
-                                      {item.storecode}
-                                    </button>
-
-
-                                  </div>
-                                </div>
-
-
-                              </div>
-
-                              {/* 설정하기 */}
-                              <div className="w-full flex flex-row items-center justify-center gap-2">
-                                <button
-                                  onClick={() => {
-                                    
-                                    if (version  === 'bangbang') {
-                                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/' + item.storecode + '/settings-bangbang');
-                                    } else {
-                                      router.push('/' + params.lang + '/agent/' + params.agentcode + '/' + item.storecode + '/settings');
-                                    }
-
-                                  }}
-                                  className="w-full
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                                >
-                                  설정하기
-                                </button>
-                              </div>
-
-
-                            </div>
-                            
-                          </td>
-         
-                          <td className="p-2">
-                            <div className="flex flex-col items-center justify-center gap-2">
-                              <span className="text-lg text-gray-500">
-                                {
-                                  item.totalBuyerCount ? item.totalBuyerCount : 0
-                                }{' '}명
-                              </span>
-                              
-                            </div>
-                          </td>
-
-
-
-
-                          <td className="p-2">
-
-                            <div className="flex-col items-center justify-center gap-2">
-
-                              {/* 회원 홈페이지 */}
-                              <div className="flex flex-row items-center gap-2">
-
-                                <a
-                                  href={
-                                    '/' + params.lang + '/' + item.storecode + '/homepage'
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-blue-500 hover:underline"
-                                >
-                                  새창
-                                </a>
-                              </div>
-
-                            </div>
-
-                          </td>
-
-                          <td className="p-2">
-
-                            <div className="flex-col items-center justify-center gap-2">
-
-                              {/* 관리자 홈페이지 */}
-                              <div className="flex flex-row items-center gap-2">
-   
-                                <a
-                                  href={
-                                    '/' + params.lang + '/' + item.storecode + '/center'
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-blue-500 hover:underline"
-                                >
-                                  새창
-                                </a>
-                              </div>
-
-                            </div>
-
-                          </td>
-
-
-                          <td className="p-2">
-                            <div className="flex flex-col items-center justify-center gap-2">
-
-                              <div className="flex flex-col items-center justify-center gap-2">
-
-                                <span className="text-xl text-gray-500 font-semibold">
-                                  {
-                                    item.agentFeePercent ? item.agentFeePercent : 0.00
-                                  }%
-                                </span>
-
-                                {item.agentFeeWalletAddress ? (
-                                  <button
-                                    onClick={() => {
-                                      navigator.clipboard.writeText(
-                                        item.agentFeeWalletAddress
-                                      );
-                                      toast.success('복사되었습니다');
-                                    }
-                                  }
-                                  className="text-sm text-blue-500 hover:underline"
-                                  >
-                                    {item.agentFeeWalletAddress.substring(0, 6) + '...' + item.agentFeeWalletAddress.substring(item.agentFeeWalletAddress.length - 4)
-                                    }
-                                  </button>
-                                ) : (
-                                  <span className="text-sm text-red-500">
-                                    에이전트 USDT지갑 없음
-                                  </span>
-                                )}
-
-                         
-
-                              </div>
-
-                              
-                            </div>
-                          </td>
-
-
-
-
-
-                          <td className="p-2">
-                            <div className="
-                              w-40 h-36
-                              flex flex-col items-end justify-start gap-2">
-
-      
-                                <div className="w-full flex flex-row items-center justify-center gap-2
-                                border-b border-gray-300 pb-2">
-                                  <span className="text-sm text-gray-500">
-                                    {
-                                      item.totalPaymentConfirmedCount ? item.totalPaymentConfirmedCount : 0
-                                    }
-                                  </span>
-                                </div>
-
-                                <div className="flex flex-col items-end gap-2">
-
-
-                                  <span className="text-lg text-[#409192] font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {
-                                      Number(item.totalUsdtAmount ? item.totalUsdtAmount : 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                    }
-                                  </span>
-                                  <span className="text-lg text-yellow-600 font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {
-                                      Number(item.totalKrwAmount ? item.totalKrwAmount : 0)
-                                      ?.toLocaleString('ko-KR')
-                                    }
-                                  </span>
-
-
-                                </div>
-
-
-                        
-
-                                {/* 거래내역 */}
-                                <button
-                                  onClick={() => {
-                                    router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history?storecode=' + item.storecode);
-                                  }}
-                                  className="
-                                  w-full
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                                >
-                                  P2P 거래내역
-                                </button>
-
-                            </div>
-                             
-
-                          </td>
-
-                          <td className="p-2">
-                            <div className="
-                              w-80 h-36
-                              flex flex-col items-end justify-start gap-2">
-
-                              <div className="w-full flex flex-row items-center justify-center gap-2
-                              border-b border-gray-300 pb-2">
-                                <span className="text-sm text-gray-500">
-                                  {
-                                    item.totalSettlementCount ? item.totalSettlementCount : 0
-                                  }
-                                </span>
-                              </div>
-
-                              <div className="w-full flex flex-row items-center justify-center gap-2">
-
-                                <div className="w-full flex flex-col items-end gap-2">
-                                  
-                                  <span className="text-lg text-[#409192] font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {
-                                      (Number(item.totalSettlementAmount ? item.totalSettlementAmount : 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ","))
-                                    }
-                                  </span>
-                                  <span className="text-xl text-yellow-600 font-bold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {
-                                      Number(item.totalSettlementAmountKRW ? item.totalSettlementAmountKRW : 0)
-                                        ?.toLocaleString('ko-KR')
-                                    }
-                                  </span>
-
-                                </div>
-
-
-                                <div className="w-full flex flex-col items-end gap-2">
-
-                                  <span className="text-lg text-[#409192] font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {
-                                      Number(item.totalFeeAmount ? item.totalFeeAmount : 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                    }
-                                  </span>
-                                  <span className="text-lg text-yellow-600 font-semibold"
-                                    style={{ fontFamily: 'monospace' }}
-                                  >
-                                    {
-                                      Number(item.totalFeeAmountKRW ? item.totalFeeAmountKRW : 0)
-                                        ?.toLocaleString('ko-KR')
-                                    }
-                                  </span>
-
-                                </div>
-
-                              </div>
-
-
-                              <button
-                                onClick={() => {
-                                  alert('준비중입니다.');
-                                }}
-                                className="
-                                w-full
-                                bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                hover:bg-[#3167b4]/80"
-                              >
-                                결제 및 정산내역
-                              </button>
-
-
-                            </div>
-
-                          </td>
-
-
-                        </tr>
-
-                      ))}
-
-                    </tbody>
-
-                  </table>
-
-                </div>
-
-
-              ) : (
-
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/*
+            {"storecode":"teststorecode","storeName":"테스트상점","storeType":"test","storeUrl":"https://test.com","storeDescription":"설명입니다.","storeLogo":"https://test.com/logo.png","storeBanner":"https://test.com/banner.png"}
+            */}
+
+
+            <div className="w-full overflow-x-auto">
+
+              <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
+
+                <thead
+                  className="bg-zinc-800 text-white text-sm font-semibold w-full"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  }}
+                >
+                  <tr>
+                    <th className="p-2">가맹점</th>
+                    {/*
+                    <th className="p-2">가맹점타입</th>
+                    */}
+                    <th className="p-2">
+                      회원수
+                    </th>
+                    {/*
+                    <th className="p-2">통장수</th>
+                    */}
+
+
+                    <th className="p-2">
+                      회원 홈페이지
+                    </th>
+                    <th className="p-2">
+                      관리자 홈페이지
+                    </th>
+
+                    <th className="p-2">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="text-center">
+                          에이전트 수수료율(%)
+                        </span>
+                        <span className="text-center">
+                          수납용 USDT 지갑주소
+                        </span>
+                      </div>
+                    </th>
+
+
+                    <th className="p-2">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="text-center">
+                          P2P 거래
+                        </span>
+                      </div>
+                    </th>
+
+                    <th className="p-2">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="text-center">
+                          가맹점 결제
+                        </span>
+                      </div>
+                    </th>
+
+                  </tr>
+                </thead>
+
+                {/* if my trading, then tr has differenc color */}
+                <tbody>
 
                   {allStore?.map((item, index) => (
-                    <div key={index} className="bg-white shadow-md rounded-lg p-4">
-                      <h2 className="text-lg font-semibold">{item.storeName}</h2>
-                      <p className="text-sm text-gray-500">{item.storeDescription}</p>
-                    </div>
+
+                    
+                    <tr key={index} className={`
+                      ${
+                        index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
+                      }
+                    `}>
+
+                      <td className="p-2">
+                      
+
+                        <div className="
+                          w-48 
+                          flex flex-col items-center justify-center gap-2">
+
+                          <div className="w-full flex flex-row items-center justify-start gap-2"> 
+                            
+                            <div className="w-full flex flex-row items-center justify-start gap-2">
+                              <Image
+                                src={item.storeLogo || '/icon-store.png'}
+                                alt="Store Logo"
+                                width={100}
+                                height={100}
+                                className="
+                                  rounded-lg w-20 h-20
+                                  object-cover
+                                  "
+                              />
+                              <div className="flex flex-col items-start justify-center">
+                                <span className="text-lg font-semibold">
+                                  {item.storeName.length > 8 ? item.storeName.slice(0, 8) + '...' : item.storeName}
+                                </span>
+                                
+                                {/*
+                                <span className="text-sm text-gray-500">
+                                  {item.storecode}
+                                </span>
+                                */}
+                                {/* 복사하기 */}
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.storecode);
+                                    toast.success('가맹점 코드가 복사되었습니다.');
+                                  }}
+                                  className="text-sm text-gray-500 hover:text-blue-500
+                                  hover:underline"
+                                >
+                                  {item.storecode}
+                                </button>
+
+
+                              </div>
+                            </div>
+
+
+                          </div>
+
+                          {/* 설정하기 */}
+                          <div className="w-full flex flex-row items-center justify-center gap-2">
+                            <button
+                              onClick={() => {
+                                
+                                if (version  === 'bangbang') {
+                                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/' + item.storecode + '/settings-bangbang');
+                                } else {
+                                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/' + item.storecode + '/settings');
+                                }
+
+                              }}
+                              className="w-full
+                              bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                              hover:bg-[#3167b4]/80"
+                            >
+                              설정하기
+                            </button>
+                          </div>
+
+
+                        </div>
+                        
+                      </td>
+      
+                      <td className="p-2">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <span className="text-lg text-gray-500">
+                            {
+                              item.totalBuyerCount ? item.totalBuyerCount : 0
+                            }{' '}명
+                          </span>
+                          
+                        </div>
+                      </td>
+
+
+
+
+                      <td className="p-2">
+
+                        <div className="flex-col items-center justify-center gap-2">
+
+                          {/* 회원 홈페이지 */}
+                          <div className="flex flex-row items-center gap-2">
+
+                            <a
+                              href={
+                                '/' + params.lang + '/' + item.storecode + '/homepage'
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-500 hover:underline"
+                            >
+                              새창
+                            </a>
+                          </div>
+
+                        </div>
+
+                      </td>
+
+                      <td className="p-2">
+
+                        <div className="flex-col items-center justify-center gap-2">
+
+                          {/* 관리자 홈페이지 */}
+                          <div className="flex flex-row items-center gap-2">
+
+                            <a
+                              href={
+                                '/' + params.lang + '/' + item.storecode + '/center'
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-500 hover:underline"
+                            >
+                              새창
+                            </a>
+                          </div>
+
+                        </div>
+
+                      </td>
+
+
+                      <td className="p-2">
+                        <div className="flex flex-col items-center justify-center gap-2">
+
+                          <div className="flex flex-col items-center justify-center gap-2">
+
+                            <span className="text-xl text-gray-500 font-semibold">
+                              {
+                                item.agentFeePercent ? item.agentFeePercent : 0.00
+                              }%
+                            </span>
+
+                            {item.agentFeeWalletAddress ? (
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    item.agentFeeWalletAddress
+                                  );
+                                  toast.success('복사되었습니다');
+                                }
+                              }
+                              className="text-sm text-blue-500 hover:underline"
+                              >
+                                {item.agentFeeWalletAddress.substring(0, 6) + '...' + item.agentFeeWalletAddress.substring(item.agentFeeWalletAddress.length - 4)
+                                }
+                              </button>
+                            ) : (
+                              <span className="text-sm text-red-500">
+                                에이전트 USDT지갑 없음
+                              </span>
+                            )}
+
+                      
+
+                          </div>
+
+                          
+                        </div>
+                      </td>
+
+
+
+
+
+                      <td className="p-2">
+                        <div className="
+                          w-40 h-36
+                          flex flex-col items-end justify-start gap-2">
+
+
+                            {/* 거래내역 */}
+                            <button
+                              onClick={() => {
+                                router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history?storecode=' + item.storecode);
+                              }}
+                              className="
+                              w-full
+                              bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                              hover:bg-[#3167b4]/80"
+                            >
+                              P2P 거래내역
+                            </button>
+
+                        </div>
+                          
+
+                      </td>
+
+                      <td className="p-2">
+                        <div className="
+                          w-80 h-36
+                          flex flex-col items-end justify-start gap-2">
+
+                          <button
+                            onClick={() => {
+                              alert('준비중입니다.');
+                            }}
+                            className="
+                            w-full
+                            bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
+                            hover:bg-[#3167b4]/80"
+                          >
+                            결제 및 정산내역
+                          </button>
+
+
+                        </div>
+
+                      </td>
+
+
+                    </tr>
+
                   ))}
 
-                </div>
+                </tbody>
 
-              )}
+              </table>
+
+            </div>
+
+
+
 
 
 
