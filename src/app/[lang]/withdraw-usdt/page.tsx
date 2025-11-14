@@ -5,7 +5,7 @@
 import React, { use, useEffect, useState } from 'react';
 
 import { toast } from 'react-hot-toast';
-import { client } from '../../../client';
+import { client } from '../../client';
 
 import {
     //ThirdwebProvider,
@@ -50,7 +50,7 @@ import {
 import Image from 'next/image';
 
 import AppBarComponent from "@/components/Appbar/AppBar";
-import { getDictionary } from "../../../dictionaries";
+import { getDictionary } from "../../dictionaries";
 
 
 
@@ -71,24 +71,33 @@ import {
 
 
 
-
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["phone", "email"],
+      options: [
+        "google",
+        "discord",
+        "email",
+        "x",
+        //"passkey",
+        //"phone",
+        "facebook",
+        "line",
+        "apple",
+        "coinbase",
+      ],
     },
   }),
+  createWallet("com.coinbase.wallet"),
+  createWallet("me.rainbow"),
+  createWallet("io.rabby"),
+  createWallet("io.zerion.wallet"),
+  createWallet("io.metamask"),
+  createWallet("com.bitget.web3"),
+  createWallet("com.trustwallet.app"),
+  createWallet("com.okex.wallet"),
+
 ];
-
-
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-
-
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
 
 
 
@@ -126,8 +135,6 @@ export default function SendUsdt({ params }: any) {
 
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
-  
   
   const contract = getContract({
     // the client you have created via `createThirdwebClient()`

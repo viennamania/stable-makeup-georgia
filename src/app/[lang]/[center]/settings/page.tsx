@@ -1373,13 +1373,14 @@ export default function SettingsPage({ params }: any) {
             <div className="py-0 w-full">
         
 
-                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
-                >
+                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg">
                     {/* go back button */}
                     <div className="w-full flex justify-start items-center gap-2">
                         <button
                             onClick={() => window.history.back()}
-                            className="flex items-center justify-center bg-gray-200 rounded-full p-2">
+                            className="flex items-center justify-center bg-gray-200 rounded-lg p-2
+                            hover:bg-gray-300 transition duration-200 ease-in-out"
+                        >
                             <Image
                                 src="/icon-back.png"
                                 alt="Back"
@@ -1387,30 +1388,31 @@ export default function SettingsPage({ params }: any) {
                                 height={20}
                                 className="rounded-full"
                             />
+                            <span className="ml-2 text-sm text-gray-500 font-semibold">
+                                돌아가기
+                            </span>
                         </button>
-                        {/* title */}
-                        <span className="text-sm text-gray-500 font-semibold">
-                            돌아가기
-                        </span>
                     </div>
-
 
                     {address && !loadingUser && (
                         <div className="w-full flex flex-row items-center justify-end gap-2">
-
-                            <span className="text-sm text-zinc-500">
+                            <Image
+                                src={user?.avatar || "/icon-user.png"}
+                                alt="User Avatar"
+                                width={30}
+                                height={30}
+                                className="w-8 h-8 rounded-full"
+                            />
+                            <span className="text-lg text-gray-500 font-semibold">
                             {user?.nickname || "프로필"}
                             </span>
 
                         </div>
                     )}
-
                 </div>
 
 
-
-
-                <div className="flex flex-col items-start justify-center space-y-4">
+                <div className="mt-4 flex flex-col items-start justify-center space-y-4">
 
                     <div className='flex flex-row items-center space-x-4'>
                         <Image
@@ -1628,15 +1630,24 @@ export default function SettingsPage({ params }: any) {
 
 
                                 {!fetchingStore && store && store.adminWalletAddress ? (
-                                <button
-                                    onClick={() => {
-                                    navigator.clipboard.writeText(store.adminWalletAddress);
-                                    toast.success(Copied_Wallet_Address);
-                                    } }
-                                    className="text-lg text-zinc-500 underline"
-                                >
-                                    {store && store.adminWalletAddress.substring(0, 6)}...{store && store.adminWalletAddress.substring(store.adminWalletAddress.length - 4)}
-                                </button>
+                                <div className='flex flex-row items-center justify-center gap-1'>
+                                    <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                        navigator.clipboard.writeText(store.adminWalletAddress);
+                                        toast.success(Copied_Wallet_Address);
+                                        } }
+                                        className="text-lg text-zinc-500 underline"
+                                    >
+                                        {store && store.adminWalletAddress.substring(0, 6)}...{store && store.adminWalletAddress.substring(store.adminWalletAddress.length - 4)}
+                                    </button>
+                                </div>
                                 ) : (
                                 <div className="flex flex-row items-center justify-start gap-2">
                                     <Image
@@ -1751,8 +1762,8 @@ export default function SettingsPage({ params }: any) {
 
                             <div className='w-full flex flex-row items-start gap-2'>
                                 <Image
-                                    src="/icon-settlement.png"
-                                    alt="Settlement"
+                                    src="/icon-payment.png"
+                                    alt="Payment"
                                     width={20}
                                     height={20}
                                     className="w-5 h-5"
@@ -1765,15 +1776,24 @@ export default function SettingsPage({ params }: any) {
 
 
                                 {!fetchingStore && store && store.settlementWalletAddress ? (
-                                <button
-                                    onClick={() => {
-                                    navigator.clipboard.writeText(store.settlementWalletAddress);
-                                    toast.success(Copied_Wallet_Address);
-                                    } }
-                                    className="text-lg text-zinc-500 underline"
-                                >
-                                    {store && store.settlementWalletAddress.substring(0, 6)}...{store && store.settlementWalletAddress.substring(store.settlementWalletAddress.length - 4)}
-                                </button>
+                                <div className='flex flex-row items-center justify-center gap-1'>
+                                    <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />    
+                                    <button
+                                        onClick={() => {
+                                        navigator.clipboard.writeText(store.settlementWalletAddress);
+                                        toast.success(Copied_Wallet_Address);
+                                        } }
+                                        className="text-lg text-zinc-500 underline"
+                                    >
+                                        {store && store.settlementWalletAddress.substring(0, 6)}...{store && store.settlementWalletAddress.substring(store.settlementWalletAddress.length - 4)}
+                                    </button>
+                                </div>
                                 ) : (
                                 <div className="flex flex-row items-center justify-start gap-2">
                                     <Image
@@ -1878,17 +1898,26 @@ export default function SettingsPage({ params }: any) {
                                         가맹점 수수료 USDT지갑 설정
                                     </span>
                                 </div>
-                                <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2">
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                                     {!fetchingStore && store && store.settlementFeeWalletAddress ? (
-                                    <button
-                                        onClick={() => {
-                                        navigator.clipboard.writeText(store.settlementFeeWalletAddress);
-                                        toast.success(Copied_Wallet_Address);
-                                        } }
-                                        className="text-lg text-zinc-500 underline"
-                                    >
-                                        {store && store.settlementFeeWalletAddress.substring(0, 6)}...{store && store.settlementFeeWalletAddress.substring(store.settlementFeeWalletAddress.length - 4)}
-                                    </button>
+                                    <div className='flex flex-row items-center justify-center gap-1'>
+                                    <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                        <button
+                                            onClick={() => {
+                                            navigator.clipboard.writeText(store.settlementFeeWalletAddress);
+                                            toast.success(Copied_Wallet_Address);
+                                            } }
+                                            className="text-lg text-zinc-500 underline"
+                                        >
+                                            {store && store.settlementFeeWalletAddress.substring(0, 6)}...{store && store.settlementFeeWalletAddress.substring(store.settlementFeeWalletAddress.length - 4)}
+                                        </button>
+                                    </div>
                                     ) : (
                                     <div className="flex flex-row items-center justify-start gap-2">
                                         <Image
@@ -1973,10 +2002,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                             </div>
 
-
-
-
-                            <div className='w-full flex flex-col items-start justify-center gap-2'>
+                            <div className='mt-4 w-full flex flex-col items-start justify-center gap-2'>
                                 {/* settlementFeePercent */}
                                 {/* 0.01 ~ 5.00 */}
                                 <div className='w-full flex flex-row items-start gap-2'>
@@ -1992,7 +2018,7 @@ export default function SettingsPage({ params }: any) {
                                     </span>
                                 </div>
 
-                                <div className='w-full flex flex-col gap-2 items-center justify-between'>
+                                <div className='flex flex-col gap-2 items-center justify-between'>
                                     {/* store.settlementFeePercent */}
                                     <div className="flex flex-row items-center gap-2">
                                         {/* dot */}
@@ -2004,7 +2030,8 @@ export default function SettingsPage({ params }: any) {
                                             {store && store.settlementFeePercent}
                                         </span>
                                     </div>
-                                    <div className='hidden flex-col gap-2'>
+                                    {/*
+                                    <div className='flex flex-col gap-2'>
                                         <input
                                             disabled={!address}
                                             className="p-2 w-64 text-zinc-100 bg-zinc-800 rounded text-xl font-semibold"
@@ -2058,6 +2085,7 @@ export default function SettingsPage({ params }: any) {
                                     >
                                         {Save}
                                     </button>
+                                    */}
                                 </div>
                                 <div className='flex flex-row gap-2 items-center justify-between'>
                                     <span className='text-sm font-semibold'>
@@ -2090,22 +2118,27 @@ export default function SettingsPage({ params }: any) {
                                 </span>
                             </div>
 
-
-
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                    
-
 
                                 {!fetchingStore && store && store.sellerWalletAddress ? (
-                                <button
-                                    onClick={() => {
-                                    navigator.clipboard.writeText(store.sellerWalletAddress);
-                                    toast.success(Copied_Wallet_Address);
-                                    } }
-                                    className="text-lg text-zinc-500 underline"
-                                >
-                                    {store && store.sellerWalletAddress.substring(0, 6)}...{store && store.sellerWalletAddress.substring(store.sellerWalletAddress.length - 4)}
-                                </button>
+                                <div className='flex flex-row items-center justify-center gap-1'>
+                                    <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                        navigator.clipboard.writeText(store.sellerWalletAddress);
+                                        toast.success(Copied_Wallet_Address);
+                                        } }
+                                        className="text-lg text-zinc-500 underline"
+                                    >
+                                        {store && store.sellerWalletAddress.substring(0, 6)}...{store && store.sellerWalletAddress.substring(store.sellerWalletAddress.length - 4)}
+                                    </button>
+                                </div>
                                 ) : (
                                 <div className="flex flex-row items-center justify-start gap-2">
                                     <Image

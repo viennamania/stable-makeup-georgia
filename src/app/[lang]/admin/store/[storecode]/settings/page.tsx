@@ -2186,8 +2186,7 @@ export default function SettingsPage({ params }: any) {
             ">
         
 
-                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
-                >
+                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg">
                     {/* go back button */}
                     <div className="w-full flex justify-start items-center gap-2">
                         <button
@@ -2206,9 +2205,7 @@ export default function SettingsPage({ params }: any) {
                                 돌아가기
                             </span>
                         </button>
-
                     </div>
-
 
                     {address && !loadingUser && (
                         <div className="w-full flex flex-row items-center justify-end gap-2">
@@ -2225,7 +2222,6 @@ export default function SettingsPage({ params }: any) {
 
                         </div>
                     )}
-
                 </div>
 
 

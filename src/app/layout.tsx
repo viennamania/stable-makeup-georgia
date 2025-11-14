@@ -381,7 +381,7 @@ export default function RootLayout({
                       className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors duration-200"
                       onClick={() => {
 
-                        router.push('/ko/admin/withdraw-usdt');
+                        router.push('/ko/withdraw-usdt');
 
                         setShowChain(false);
 

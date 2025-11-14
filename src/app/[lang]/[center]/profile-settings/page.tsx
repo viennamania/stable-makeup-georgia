@@ -458,6 +458,7 @@ export default function SettingsPage({ params }: any) {
 
 
     const [loadingUser, setLoadingUser] = useState(true);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -478,6 +479,8 @@ export default function SettingsPage({ params }: any) {
             ////console.log("data", data);
 
             if (data.result) {
+                setUser(data.result);
+
                 setNickname(data.result.nickname);
                 
                 data.result.avatar && setAvatar(data.result.avatar);
@@ -506,7 +509,7 @@ export default function SettingsPage({ params }: any) {
         };
 
         address && fetchData();
-    }, [address]);
+    }, [address, params.center]);
 
 
 
@@ -1026,21 +1029,14 @@ export default function SettingsPage({ params }: any) {
             <div className="py-0 w-full">
         
 
-                {params.center && (
-                    <div className="w-full flex flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-                        <span className="text-sm text-zinc-500">
-                        {params.center}
-                        </span>
-                    </div>
-                )}
-        
-                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
-                >
+                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg">
                     {/* go back button */}
                     <div className="w-full flex justify-start items-center gap-2">
                         <button
                             onClick={() => window.history.back()}
-                            className="flex items-center justify-center bg-gray-200 rounded-full p-2">
+                            className="flex items-center justify-center bg-gray-200 rounded-lg p-2
+                            hover:bg-gray-300 transition duration-200 ease-in-out"
+                        >
                             <Image
                                 src="/icon-back.png"
                                 alt="Back"
@@ -1048,94 +1044,31 @@ export default function SettingsPage({ params }: any) {
                                 height={20}
                                 className="rounded-full"
                             />
+                            <span className="ml-2 text-sm text-gray-500 font-semibold">
+                                돌아가기
+                            </span>
                         </button>
-                        {/* title */}
-                        <span className="text-sm text-gray-500 font-semibold">
-                            돌아가기
-                        </span>
                     </div>
 
-                    {!address && (
-                        <ConnectButton
-                        client={client}
-                        wallets={wallets}
-
-                        /*
-                        accountAbstraction={{
-                            chain: arbitrum,
-                            sponsorGas: true
-                        }}
-                        */
-                        
-                        theme={"light"}
-
-                        // button color is dark skyblue convert (49, 103, 180) to hex
-                        connectButton={{
-                            style: {
-                                backgroundColor: "#3167b4", // dark skyblue
-                                color: "#f3f4f6", // gray-300
-                                padding: "2px 10px",
-                                borderRadius: "10px",
-                                fontSize: "14px",
-                                width: "60x",
-                                height: "38px",
-                            },
-                            label: "원클릭 로그인",
-                        }}
-
-                        connectModal={{
-                            size: "wide", 
-                            //size: "compact",
-                            titleIcon: "https://www.stable.makeup/logo.png",                           
-                            showThirdwebBranding: false,
-                        }}
-
-                        locale={"ko_KR"}
-                        //locale={"en_US"}
-                        />
-                    )}
-
-                    {address && (
-                        <div className="hidden w-full flex-col items-end justify-center gap-2">
-
-                            <div className="flex flex-row items-center justify-center gap-2">
-
-                                <button
-                                    className="text-lg text-zinc-600 underline"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(address);
-                                        toast.success(Copied_Wallet_Address);
-                                    } }
-                                >
-                                    {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                                </button>
-                                
-                                <Image
-                                    src="/icon-shield.png"
-                                    alt="Wallet"
-                                    width={100}
-                                    height={100}
-                                    className="w-6 h-6"
-                                />
-
-                            </div>
-
-                            <div className="flex flex-row items-center justify-end  gap-2">
-                                <span className="text-2xl xl:text-4xl font-semibold text-[#409192]">
-                                    {Number(balance).toFixed(2)}
-                                </span>
-                                {' '}
-                                <span className="text-sm">USDT</span>
-                            </div>
+                    {address && !loadingUser && (
+                        <div className="w-full flex flex-row items-center justify-end gap-2">
+                            <Image
+                                src={user?.avatar || "/icon-user.png"}
+                                alt="User Avatar"
+                                width={30}
+                                height={30}
+                                className="w-8 h-8 rounded-full"
+                            />
+                            <span className="text-lg text-gray-500 font-semibold">
+                            {user?.nickname || "프로필"}
+                            </span>
 
                         </div>
                     )}
-
                 </div>
 
 
-
-                <div className="flex flex-col items-start justify-center space-y-4">
+                <div className="mt-4 flex flex-col items-start justify-center space-y-4">
 
                     <div className='flex flex-row items-center space-x-4'>
                         <Image

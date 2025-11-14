@@ -3395,7 +3395,7 @@ export default function Index({ params }: any) {
 
                                     // redirect to settings page
                                     router.push(
-                                      "/" + params.lang + "/admin/profile-settings"
+                                      "/" + params.lang + "/" + params.center + "/profile-settings"
                                     );
 
 
