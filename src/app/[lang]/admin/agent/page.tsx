@@ -1360,9 +1360,6 @@ export default function Index({ params }: any) {
 
                           toast.success('로그아웃 되었습니다');
 
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
                       });
                   } }
 
@@ -1467,9 +1464,6 @@ export default function Index({ params }: any) {
 
                           toast.success('로그아웃 되었습니다');
 
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
                       });
                   } }
 
@@ -2017,7 +2011,7 @@ export default function Index({ params }: any) {
                                   disabled={!isAdmin}
                                   onClick={() => {
                                     router.push(
-                                      '/' + params.lang + '/admin/agent/' + item.agentcode + '/settings'
+                                      '/' + params.lang + '/agent/' + item.agentcode + '/settings'
                                     );
                                   }}
                                   className={`${
@@ -2121,7 +2115,7 @@ export default function Index({ params }: any) {
                                   onClick={() => {
 
                                     window.open(
-                                      `/${params.lang}/admin/agent/${item.agentcode}`,
+                                      `/${params.lang}/agent/${item.agentcode}`,
                                       "_blank"
                                     );
                                   }}
