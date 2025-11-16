@@ -1150,7 +1150,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         .then(response => response.json())
         .then(data => {
 
-            console.log('data', data);
+            //console.log('data', data);
 
             //setBuyOrders(data.result.orders);
             //openModal();
@@ -2487,12 +2487,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
 
-
-
-
-
-
-
   //const [latestBuyOrder, setLatestBuyOrder] = useState<BuyOrder | null>(null);
 
 
@@ -2633,6 +2627,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     
 
     //searchStoreName,
+
 
     limitValue,
     pageValue,

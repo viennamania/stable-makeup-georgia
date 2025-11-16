@@ -2429,6 +2429,8 @@ export async function getBuyOrders(
     .toArray();
     //).sort({ paymentConfirmedAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
 
+    
+    
     const totalResult = await collection.aggregate([
       {
         $match: {
@@ -2444,7 +2446,11 @@ export async function getBuyOrders(
           privateSale: privateSale,
 
 
-          agentcode: { $regex: agentcode, $options: 'i' },
+          //agentcode: { $regex: agentcode, $options: 'i' },
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+
+
+
           //storecode: storecode,
           storecode: { $regex: storecode, $options: 'i' },
 
@@ -2518,7 +2524,10 @@ export async function getBuyOrders(
           privateSale: privateSale,
 
 
-          agentcode: { $regex: agentcode, $options: 'i' },
+          //agentcode: { $regex: agentcode, $options: 'i' },
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+
+
           //storecode: storecode,
           storecode: { $regex: storecode, $options: 'i' },
 
