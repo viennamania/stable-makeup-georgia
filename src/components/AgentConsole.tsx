@@ -362,7 +362,7 @@ const AgentConsole = (
 
           const data = await response.json();
 
-          //console.log("agent", data);
+          console.log("agent data", data);
 
           if (data.result) {
 
@@ -384,7 +384,7 @@ const AgentConsole = (
 
       };
 
-      if (address && agentcode) {
+      if (agentcode) {
         fetchAgent();
       } else {
         setFetchingAgent(false);

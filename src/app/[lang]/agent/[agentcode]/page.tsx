@@ -1550,42 +1550,9 @@ export default function Index({ params }: any) {
             p-2 rounded-lg mb-4
               "bg-black/10"
             }`}>
-                
-              <div className="w-full flex flex-row items-center justify-start gap-2">
-                <div className="flex flex-row items-center justify-start gap-2">
-                  <Image
-                    src={agent?.agentLogo || "/logo.png"}
-                    alt="logo"
-                    width={50}
-                    height={50}
-                    className="rounded-lg w-16 h-16"
-                  />
-                  <div className="flex flex-col items-start justify-start">
-                    <span className="text-sm text-[#3167b4] font-bold">
-                      {agent?.agentName || "에이전트 이름"}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {agent?.agentcode || "에이전트 코드"}
-                    </span>
-                  </div>
-                </div>
-
-                {address && address === agentAdminWalletAddress && (
-                  <div className="text-sm text-[#3167b4] font-bold">
-                    {agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
-                  </div>
-                )}
-                {address && address !== agentAdminWalletAddress && (
-                  <div className="text-sm text-[#3167b4] font-bold">
-                    {agent?.agentName + " (" + agent?.agentcode + ")"}
-                  </div>
-                )}
-
-              </div>
 
 
               {address && !loadingUser && (
-
 
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   <button
@@ -1626,48 +1593,6 @@ export default function Index({ params }: any) {
 
                 </div>
 
-
-              )}
-
-
-              {!address && (
-                <ConnectButton
-                  client={client}
-                  wallets={wallets}
-
-                  /*
-                  accountAbstraction={{
-                    chain: arbitrum,
-                    sponsorGas: true
-                  }}
-                  */
-                  
-                  theme={"light"}
-
-                  // button color is dark skyblue convert (49, 103, 180) to hex
-                  connectButton={{
-                      style: {
-                          backgroundColor: "#3167b4", // dark skyblue
-                          color: "#f3f4f6", // gray-300
-                          padding: "2px 10px",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          width: "60x",
-                          height: "38px",
-                      },
-                      label: "원클릭 로그인",
-                  }}
-
-                  connectModal={{
-                    size: "wide", 
-                    //size: "compact",
-                    titleIcon: "https://www.stable.makeup/logo.png",                           
-                    showThirdwebBranding: false,
-                  }}
-
-                  locale={"ko_KR"}
-                  //locale={"en_US"}
-                />
               )}
 
 

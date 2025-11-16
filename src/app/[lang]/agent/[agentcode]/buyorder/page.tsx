@@ -2705,7 +2705,7 @@ const fetchBuyOrders = async () => {
 
     const data = await response.json();
     
-    console.log('getAllStores data', data);
+    ///console.log('getAllStores data', data);
 
 
 
@@ -3057,59 +3057,50 @@ const fetchBuyOrders = async () => {
               "bg-black/10"
             }`}>
 
-
-            <div className="w-full flex flex-row items-center justify-start gap-2">
-              <Image
-                src={agent?.agentLogo || "/logo.png"}
-                alt="logo"
-                width={50}
-                height={50}
-                className="rounded-lg w-16 h-16"
-              />
-              <div className="flex flex-col items-start justify-start">
-                <span className="text-sm text-[#3167b4] font-bold">
-                  {agent?.agentName || "에이전트 이름"}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {agent?.agentcode || "에이전트 코드"}
-                </span>
-              </div>
-            </div>
-              
-
-
         
 
-            {/* 로그아웃 버튼 */}
-            <div className="w-full flex flex-row items-center justify-end gap-2">
-              <button
-                onClick={() => {
-                  confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                  .then(() => {
+              {address && !loadingUser && (
 
-                      toast.success('로그아웃 되었습니다');
+                <div className="w-full flex flex-row items-center justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/profile-settings');
+                    }}
+                    className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    {user?.nickname || "프로필"}
+                  </button>
 
-                      //router.push(
-                      //    "/admin/" + params.agentcode
-                      //);
-                  });
-                } }
 
-                className="flex items-center justify-center gap-2
-                  bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
-            </div>
+                  {/* logout button */}
+                  <button
+                      onClick={() => {
+                          confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                          .then(() => {
+
+                              toast.success('로그아웃 되었습니다');
+
+                          });
+                      } }
+
+                      className="flex items-center justify-center gap-2
+                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <Image
+                      src="/icon-logout.webp"
+                      alt="Logout"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <span className="text-sm">
+                      로그아웃
+                    </span>
+                  </button>
+
+                </div>
+
+              )}
 
 
 
