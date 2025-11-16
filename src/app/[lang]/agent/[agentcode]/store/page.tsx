@@ -1440,7 +1440,7 @@ export default function Index({ params }: any) {
 
             <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
 
-              {/* 가맹점 추가 input and button */}
+              {/*
               <div className="flex flex-row items-center gap-2">
                 <input
                   disabled={insertingStore}
@@ -1484,6 +1484,7 @@ export default function Index({ params }: any) {
                   {insertingStore ? '가맹점 추가 중...' : '가맹점 추가'}
                 </button>
               </div>
+              */}
 
 
 
