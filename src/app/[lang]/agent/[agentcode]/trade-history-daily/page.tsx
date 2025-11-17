@@ -1005,43 +1005,7 @@ export default function Index({ params }: any) {
 
           <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
               
-            <div className="w-full flex flex-row items-center justify-start gap-2">
-
-              <button
-                onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/')}
-                className="flex items-center justify-center gap-2
-                  rounded-lg p-2
-                  hover:bg-black/20
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out"
-
-              >
-                  <Image
-                    src={agent?.agentLogo || "/logo.png"}
-                    alt="logo"
-                    width={35}
-                    height={35}
-                    className="rounded-lg w-6 h-6"
-                  />
-              </button>
-
-                {address && address === agentAdminWalletAddress && (
-                  <div className="text-sm text-[#3167b4] font-bold">
-                    {agent && agent?.agentName + " (" + agent?.agentcode + ") 에이전트"}
-                  </div>
-                )}
-                {address && address !== agentAdminWalletAddress && (
-                  <div className="text-sm text-[#3167b4] font-bold">
-                    {agent && agent?.agentName + " (" + agent?.agentcode + ")"}
-                  </div>
-                )}
-
-            </div>
-
-
             {address && !loadingUser && (
-
 
               <div className="w-full flex flex-row items-center justify-end gap-2">
                 
@@ -1482,13 +1446,13 @@ export default function Index({ params }: any) {
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
 
-                      {/*
+                      
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
 
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
                       <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
-                      */}
+                      
 
 
                     </tr>
@@ -1537,7 +1501,7 @@ export default function Index({ params }: any) {
 
 
 
-                        {/*
+                        
                         <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                           style={{ fontFamily: 'monospace' }}
                         >
@@ -1559,7 +1523,7 @@ export default function Index({ params }: any) {
                         >
                           {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </td>
-                        */}
+                        
 
 
                       </tr>
