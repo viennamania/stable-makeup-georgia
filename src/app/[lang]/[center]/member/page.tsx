@@ -975,7 +975,8 @@ export default function Index({ params }: any) {
     */
 
 
-  const [storePaymentUrl, setStorePaymentUrl] = useState("");
+  const [storePaymentUrl, setStorePaymentUrl]
+    = useState(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
 
 
   // array of stores
@@ -1017,7 +1018,7 @@ export default function Index({ params }: any) {
               setIsAdmin(true);
             }
   
-            setStorePaymentUrl(data.result?.paymentUrl || paymentUrl);    
+            data.result?.paymentUrl && setStorePaymentUrl(data.result?.paymentUrl);
 
         } else {
           // get store list
@@ -1044,13 +1045,6 @@ export default function Index({ params }: any) {
       }
   
       fetchData();
-
-      // interval
-      const interval = setInterval(() => {
-        fetchData();
-      }
-      , 5000);
-      return () => clearInterval(interval);
   
     } , [params.center, address]);
 
@@ -3246,6 +3240,7 @@ export default function Index({ params }: any) {
                             <div className="w-full flex flex-row items-center justify-between gap-2">
 
                               {/* Modal open */}
+                              {/*
                               <button
                                 onClick={() => {
                                   setSelectedItem({
@@ -3259,6 +3254,7 @@ export default function Index({ params }: any) {
                               >
                                 보기
                               </button>
+                              */}
 
 
 

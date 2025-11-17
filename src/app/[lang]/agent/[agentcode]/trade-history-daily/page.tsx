@@ -1182,8 +1182,8 @@ export default function Index({ params }: any) {
  
             {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
             {/* memnu buttons same width left side */}
-            <div className="w-full flex flex-row itmes-start justify-start gap-2 mb-4">
-              <div className="grid grid-cols-3 xl:grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+
                 <button
                     onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
                     className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
@@ -1243,9 +1243,7 @@ export default function Index({ params }: any) {
                     통계(월별)
                   </div>
                 </div>
-                
 
-              </div>
             </div>
 
 

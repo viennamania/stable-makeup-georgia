@@ -1305,9 +1305,7 @@ export default function Index({ params }: any) {
 
             {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
             {/* memnu buttons same width left side */}
-
-            <div className="w-full flex flex-row itmes-start justify-start gap-2 mb-4">
-              <div className="grid grid-cols-3 xl:grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
 
                   <div className='flex w-32 items-center justify-center gap-2
                   bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
@@ -1368,8 +1366,6 @@ export default function Index({ params }: any) {
                       통계(일별)
                   </button>
 
-
-              </div>
             </div>
 
 
@@ -1603,7 +1599,19 @@ export default function Index({ params }: any) {
                     <th className="p-2">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <span className="text-center">
-                          에이전트 수수료율(%)
+                          AG 수수료율(%)
+                        </span>
+                        <span className="text-center">
+                          수납용 USDT 지갑주소
+                        </span>
+                      </div>
+                    </th>
+
+                    {/* 가맹점 결제 수수료율(%) */}
+                    <th className="p-2">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="text-center">
+                          PG 수수료율(%)
                         </span>
                         <span className="text-center">
                           수납용 USDT 지갑주소
@@ -1786,7 +1794,7 @@ export default function Index({ params }: any) {
                             <span className="text-xl text-gray-500 font-semibold">
                               {
                                 item.agentFeePercent ? item.agentFeePercent : 0.00
-                              }%
+                              }
                             </span>
 
                             {item.agentFeeWalletAddress ? (
@@ -1805,14 +1813,47 @@ export default function Index({ params }: any) {
                               </button>
                             ) : (
                               <span className="text-sm text-red-500">
-                                에이전트 USDT지갑 없음
+                                AG USDT지갑 없음
                               </span>
                             )}
 
-                      
+                          </div>
+                          
+                        </div>
+                      </td>
+
+                      <td className="p-2">
+                        <div className="flex flex-col items-center justify-center gap-2">
+
+                          <div className="flex flex-col items-center justify-center gap-2">
+
+                            <span className="text-xl text-gray-500 font-semibold">
+                              {
+                                item.settlementFeePercent ? item.settlementFeePercent : 0.00
+                              }
+                            </span>
+
+                            {item.settlementFeeWalletAddress ? (
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    item.settlementFeeWalletAddress
+                                  );
+                                  toast.success('복사되었습니다');
+                                }
+                              }
+                              className="text-sm text-blue-500 hover:underline"
+                              >
+                                {item.settlementFeeWalletAddress.substring(0, 6) + '...' + item.settlementFeeWalletAddress.substring(item.settlementFeeWalletAddress.length - 4)
+                                }
+                              </button>
+                            ) : (
+                              <span className="text-sm text-red-500">
+                                PG USDT지갑 없음
+                              </span>
+                            )}
 
                           </div>
-
                           
                         </div>
                       </td>

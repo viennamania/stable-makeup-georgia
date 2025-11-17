@@ -1721,27 +1721,6 @@ export default function Index({ params }: any) {
               "bg-black/10"
             }`}>
 
-
-            <div className="w-full flex flex-row items-center justify-start gap-2">
-              <Image
-                src={agent?.agentLogo || "/logo.png"}
-                alt="logo"
-                width={50}
-                height={50}
-                className="rounded-lg w-16 h-16"
-              />
-              <div className="flex flex-col items-start justify-start">
-                <span className="text-sm text-[#3167b4] font-bold">
-                  {agent?.agentName || "에이전트 이름"}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {agent?.agentcode || "에이전트 코드"}
-                </span>
-              </div>
-            </div>
-              
-
-
         
 
             {/* 로그아웃 버튼 */}

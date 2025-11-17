@@ -1559,79 +1559,73 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
-          >
 
       
-              {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-              {/* memnu buttons same width left side */}
-            <div className="w-full flex flex-row itmes-start justify-start gap-2 mb-4">
-              <div className="grid grid-cols-3 xl:grid-cols-4 gap-2 mb-4">
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover: scale-105
-                      transition-all duration-200 ease-in-out
-                      ">
-                      가맹점관리
-                  </button>
+            {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
+            {/* memnu buttons same width left side */}
+            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover: scale-105
+                    transition-all duration-200 ease-in-out
+                    ">
+                    가맹점관리
+                </button>
 
 
-                  <div className='flex w-32 items-center justify-center gap-2
-                  bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                    <Image
-                      src="/icon-user.png"
-                      alt="Buyer"
-                      width={35}
-                      height={35}
-                      className="w-4 h-4"
-                    />
-                    <div className="text-sm font-semibold">
-                      회원관리
-                    </div>
-                </div>
-
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover: scale-105
-                      transition-all duration-200 ease-in-out
-                      ">
-                      구매주문관리
-                  </button>
-
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover: scale-105
-                      transition-all duration-200 ease-in-out
-                      ">
-                      P2P 거래내역
-                  </button>
-
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-daily')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover: scale-105
-                      transition-all duration-200 ease-in-out
-                      ">
-                      통계(일별)
-                  </button>
-
+                <div className='flex w-32 items-center justify-center gap-2
+                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                  <Image
+                    src="/icon-user.png"
+                    alt="Buyer"
+                    width={35}
+                    height={35}
+                    className="w-4 h-4"
+                  />
+                  <div className="text-sm font-semibold">
+                    회원관리
+                  </div>
               </div>
 
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover: scale-105
+                    transition-all duration-200 ease-in-out
+                    ">
+                    구매주문관리
+                </button>
+
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover: scale-105
+                    transition-all duration-200 ease-in-out
+                    ">
+                    P2P 거래내역
+                </button>
+
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-daily')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover: scale-105
+                    transition-all duration-200 ease-in-out
+                    ">
+                    통계(일별)
+                </button>
+
             </div>
-          </div>
 
-
+   
  
             <div className='flex flex-row items-center space-x-4'>
                 <Image

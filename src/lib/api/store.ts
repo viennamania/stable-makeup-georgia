@@ -204,8 +204,8 @@ export async function getStoreByStorecode(
         paymentCallbackUrl: 1,
  
 
-        liveOnAndOff: 1,
-        viewOnAndOff: 1,
+        liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+        viewOnAndOff: { $ifNull: ['$viewOnAndOff', true] },
 
       },
     },

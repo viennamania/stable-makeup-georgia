@@ -189,14 +189,8 @@ const wallets = [
 
 export default function Index({ params }: any) {
 
-
-
-
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
-
-
   // limit, page number params
 
   const limit = searchParams.get('limit') || 20;
@@ -237,24 +231,6 @@ export default function Index({ params }: any) {
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
-
-
- 
-
-
-  useEffect(() => {
-    // Dynamically load the Binance widget script
-    const script = document.createElement("script");
-    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup the script when the component unmounts
-      document.body.removeChild(script);
-    };
-  }, []);
-
 
 
 
@@ -546,199 +522,6 @@ export default function Index({ params }: any) {
   
 
 
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [balance, setBalance] = useState(0);
-  useEffect(() => {
-
-    // get the balance
-    const getBalance = async () => {
-
-      if (!address) {
-        setBalance(0);
-        return;
-      }
-
-      
-      const result = await balanceOf({
-        contract,
-        address: address,
-      });
-
-  
-      if (chain === 'bsc') {
-        setBalance( Number(result) / 10 ** 18 );
-      } else {
-        setBalance( Number(result) / 10 ** 6 );
-      }
-
-
-    };
-
-
-    if (address) getBalance();
-
-    
-    const interval = setInterval(() => {
-      if (address) getBalance();
-    } , 5000);
-
-    return () => clearInterval(interval);
-    
-
-  } , [address, contract]);
-
-
-
-
-
-
-
-
-
-  const [escrowWalletAddress, setEscrowWalletAddress] = useState('');
-  const [makeingEscrowWallet, setMakeingEscrowWallet] = useState(false);
-
-  const makeEscrowWallet = async () => {
-      
-    if (!address) {
-      toast.error('Please connect your wallet');
-      return;
-    }
-
-
-    setMakeingEscrowWallet(true);
-
-    fetch('/api/order/getEscrowWalletAddress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        lang: params.lang,
-        storecode: "admin",
-        walletAddress: address,
-        //isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
-        isSmartAccount: false,
-      }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        
-        //console.log('getEscrowWalletAddress data.result', data.result);
-
-
-        if (data.result) {
-          setEscrowWalletAddress(data.result.escrowWalletAddress);
-          toast.success(Escrow_Wallet_Address_has_been_created);
-        } else {
-          toast.error(Failed_to_create_Escrow_Wallet_Address);
-        }
-    })
-    .finally(() => {
-      setMakeingEscrowWallet(false);
-    });
-
-  }
-
-  //console.log("escrowWalletAddress", escrowWalletAddress);
-
-
-
-
-  // get escrow wallet address and balance
-  
-  const [escrowBalance, setEscrowBalance] = useState(0);
-  const [escrowNativeBalance, setEscrowNativeBalance] = useState(0);
-
-  
-  useEffect(() => {
-
-    const getEscrowBalance = async () => {
-
-      if (!address) {
-        setEscrowBalance(0);
-        return;
-      }
-
-      if (!escrowWalletAddress || escrowWalletAddress === '') return;
-
-
-      
-      const result = await balanceOf({
-        contract,
-        address: escrowWalletAddress,
-      });
-
-      //console.log('escrowWalletAddress balance', result);
-
-  
-      setEscrowBalance( Number(result) / 10 ** 6 );
-            
-
-
-      /*
-      await fetch('/api/user/getUSDTBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: "admin",
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-        console.log('getUSDTBalanceByWalletAddress data.result.displayValue', data.result?.displayValue);
-
-        setEscrowBalance(data.result?.displayValue);
-
-      } );
-       */
-
-
-
-
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: "admin",
-          walletAddress: escrowWalletAddress,
-        }),
-      })
-      .then(response => response?.json())
-      .then(data => {
-
-
-        ///console.log('getBalanceByWalletAddress data', data);
-
-
-        setEscrowNativeBalance(data.result?.displayValue);
-
-      });
-      
-
-
-
-    };
-
-    getEscrowBalance();
-
-    const interval = setInterval(() => {
-      getEscrowBalance();
-    } , 5000);
-
-    return () => clearInterval(interval);
-
-  } , [address, escrowWalletAddress, contract]);
-  
-
-  //console.log('escrowBalance', escrowBalance);
-
 
 
 
@@ -853,11 +636,7 @@ export default function Index({ params }: any) {
     .then(data => {
         
         //console.log('data.result', data.result);
-
-
         setUser(data.result);
-
-        setEscrowWalletAddress(data.result.escrowWalletAddress);
 
         setIsAdmin(data.result?.role === "admin");
 
@@ -865,7 +644,6 @@ export default function Index({ params }: any) {
     .catch((error) => {
         console.error('Error:', JSON.stringify(error));
         setUser(null);
-        setEscrowWalletAddress('');
         setIsAdmin(false);
     });
 
@@ -1094,6 +872,10 @@ export default function Index({ params }: any) {
 
 
 
+  const [storePaymentUrl, setStorePaymentUrl]
+    = useState(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
+
+
 
 
 
@@ -1131,6 +913,8 @@ export default function Index({ params }: any) {
           setStore(data.result);
 
           setStoreAdminWalletAddress(data.result?.adminWalletAddress);
+
+          data.result?.paymentUrl && setStorePaymentUrl(data.result?.paymentUrl);
 
         }
 
@@ -2931,6 +2715,7 @@ export default function Index({ params }: any) {
  
 
                               {/* Modal open */}
+                              {/*
                               <button
                                 onClick={() => {
                                   
@@ -2946,6 +2731,7 @@ export default function Index({ params }: any) {
                               >
                                 보기
                               </button>
+                              */}
 
 
 
@@ -2954,7 +2740,7 @@ export default function Index({ params }: any) {
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText(
-                                    paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
+                                    storePaymentUrl + '?'
                                     + 'storeUser=' + item.nickname
                                     + '&depositBankName=' + item?.buyer?.depositBankName
                                     + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
@@ -2975,7 +2761,7 @@ export default function Index({ params }: any) {
                               <button
                                 onClick={() => {
                                   window.open(
-                                    paymentUrl + '/' + params.lang + '/' + clientId + '/' + item.storecode + '/payment?'
+                                    storePaymentUrl + '?'
                                     + 'storeUser=' + item.nickname
                                     + '&depositBankName=' + item?.buyer?.depositBankName
                                     + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
