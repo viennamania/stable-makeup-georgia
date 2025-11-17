@@ -87,7 +87,10 @@ import { version } from "../../../../config/version";
 
 interface BuyOrder {
 
-  date: string,
+  //date: string,
+  storecode: string,
+  storeName: string,
+  storeLogo: string,
 
   totalCount: number, // Count the number of orders
   totalUsdtAmount: number,
@@ -587,35 +590,13 @@ export default function Index({ params }: any) {
 
 
 
+  const today = new Date();
+  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
   // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState("");
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-
-    //const today = new Date();
-    //first day of the year
-    const today = new Date( new Date().getFullYear(), 0, 1);
-
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-
-
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchFormDate(formattedDate);
-  }, []);
-
-
-
-
-  const [searchToDate, setSearchToDate] = useState("");
-
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-    const today = new Date();
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchToDate(formattedDate);
-  }, []);
+  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+  const [searchToDate, setSearchToDate] = useState(formattedDate);
 
 
 
@@ -667,7 +648,7 @@ export default function Index({ params }: any) {
 
       setLoadingBuyOrders(true);
 
-      const response = await fetch('/api/order/getAllBuyOrdersByAgentcodeDaily', {
+      const response = await fetch('/api/order/getAllBuyOrdersByAgentcodeStores', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -698,13 +679,19 @@ export default function Index({ params }: any) {
         return;
       }
 
+
+
       const data = await response.json();
+
 
       setBuyOrders(data.result.orders);
 
       setTotalCount(data.result.totalCount);
       
+
+
     }
+
 
     fetchBuyOrders();
 
@@ -1313,74 +1300,76 @@ export default function Index({ params }: any) {
           {/* memnu buttons same width left side */}
           <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
 
-            <button
-                onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
-                가맹점관리
-            </button>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  가맹점관리
+              </button>
 
-            <button
-                onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/member')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
-                회원관리
-            </button>
 
-            <button
-                onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
-                구매주문관리
-            </button>
 
-            <button
-                onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover: scale-105
-                transition-all duration-200 ease-in-out
-                ">
-                P2P 거래내역
-            </button>
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/member')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  회원관리
+              </button>
 
-            <div className='flex w-32 items-center justify-center gap-2
-            bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-              <Image
-                src="/icon-statistics.png"
-                alt="Statistics"
-                width={35}
-                height={35}
-                className="w-4 h-4"
-              />
-              <div className="text-sm font-semibold">
-                통계(일별)
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  구매주문관리
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover: scale-105
+                  transition-all duration-200 ease-in-out
+                  ">
+                  P2P 거래내역
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-daily')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover: scale-105
+                  transition-all duration-200 ease-in-out
+                  ">
+                  통계(일별)
+              </button>
+
+              <div className='flex w-32 items-center justify-center gap-2
+              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                <Image
+                  src="/icon-statistics.png"
+                  alt="Statistics"
+                  width={35}
+                  height={35}
+                  className="w-4 h-4"
+                />
+                <div className="text-sm font-semibold">
+                  통계(가맹점별)
+                </div>
               </div>
-            </div>
-
-            <button
-                onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-stores')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
-                통계(가맹점별)
-            </button>
 
           </div>
 
@@ -1395,7 +1384,7 @@ export default function Index({ params }: any) {
               />
 
               <div className="text-xl font-semibold">
-                통계(일별)
+                통계(가맹점별)
               </div>
 
           </div>
@@ -1403,71 +1392,13 @@ export default function Index({ params }: any) {
 
 
 
+
+
             <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
-
-
-
-              {/* select agentcode */}
-              {/*
-              <div className="flex flex-row items-center gap-2">
-
-                  <Image
-                    src="/icon-store.png"
-                    alt="Store"
-                    width={20}
-                    height={20}
-                    className="rounded-lg w-5 h-5"
-                  />
-
-                  <span className="
-                    w-32
-                    text-sm font-semibold">
-                    에이전트 선택
-                  </span>
-
-
-                  <select
-                    value={searchAgentcode}
-
-                    //onChange={(e) => setSearchStorecode(e.target.value)}
-
-                    // storecode parameter is passed to fetchBuyOrders
-                    onChange={(e) => {
-                      router.push('/' + params.lang + '/admin/trade-history-daily-agent?agentcode=' + e.target.value);
-                      setSearchAgentcode(e.target.value);
-                    }}
-
-
-
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  >
-                    <option value="">에이전트 선택</option>
-
-                    {fetchingAllAgents && (
-                      <option value="" disabled>
-                        에이전트 검색중...
-                      </option>
-                    )}
-
-                    {!fetchingAllAgents && allAgents && allAgents.map((item, index) => (
-                      <option key={index} value={item.agentcode}
-                        className="flex flex-row items-center justify-start gap-2"
-                      >
-
-                        {item.agentName}{' '}({item.agentcode})
-
-                      </option>
-                    ))}
-                  </select>
-              
-              </div>
-              */}
-
 
 
               {/* serach fromDate and toDate */}
               {/* DatePicker for fromDate and toDate */}
-              {/*
               <div className="flex flex-col sm:flex-row items-center gap-2">
                 <div className="flex flex-row items-center gap-2">
                   <Image
@@ -1502,94 +1433,38 @@ export default function Index({ params }: any) {
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
                 </div>
-              </div>
-              */}
 
-
-              {/*
-              <div className="flex flex-col items-center gap-2">
-
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-
-                  <div className="flex flex-row items-center gap-2">
-                    <input
-                      type="text"
-                      value={searchBuyer}
-                      onChange={(e) => setSearchBuyer(e.target.value)}
-                      placeholder="회원 아이디"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
-
-                  <div className="flex flex-row items-center gap-2">
-                    <input
-                      type="text"
-                      value={searchDepositName}
-                      onChange={(e) => setSearchDepositName(e.target.value)}
-                      placeholder="입금자명"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
-
-                  <div className="flex flex-row items-center gap-2">
-                    <input
-                      type="text"
-                      value={searchStoreBankAccountNumber}
-                      onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                      placeholder="입금통장번호"
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    /> 
-                  </div>
-
-                  <div className="
-                    w-28  
-                    flex flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-2">
+                    {/* 오늘, 어제 */}
                     <button
                       onClick={() => {
-                        setPageValue(1);
-                        
-                        fetchBuyOrders();
-
-                        getTradeSummary();
+                        // korea time
+                        const today = new Date();
+                        today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                        setSearchFormDate(today.toISOString().split("T")[0]);
+                        setSearchToDate(today.toISOString().split("T")[0]);
                       }}
-                      //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                      className={`${
-                        fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
-                      }
-                      text-white px-4 py-2 rounded-lg w-full
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover:scale-105
-                      transition-transform duration-200 ease-in-out`}
-                      title="검색"
-
-                      disabled={fetchingBuyOrders}
+                      className="text-sm text-zinc-500 underline"
                     >
-                      <div className="flex flex-row items-center justify-between gap-2">
-                        <Image
-                          src="/icon-search.png"
-                          alt="Search"
-                          width={20}
-                          height={20}
-                          className="rounded-lg w-5 h-5"
-                        />
-                        <span className="text-sm">
-                          {fetchingBuyOrders ? '검색중...' : '검색'}
-                        </span>
-                      </div>
-
+                      오늘
+                    </button>
+                    <button
+                      onClick={() => {
+                        // korea time yesterday
+                        const today = new Date();
+                        today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        setSearchFormDate(yesterday.toISOString().split("T")[0]);
+                        setSearchToDate(yesterday.toISOString().split("T")[0]);
+                      }}
+                      className="text-sm text-zinc-500 underline"
+                    >
+                      어제
                     </button>
                   </div>
 
-                </div>
-
-
-
               </div>
-              */}
-
-
-
 
 
 
@@ -1606,7 +1481,7 @@ export default function Index({ params }: any) {
                 <thead className="bg-zinc-200">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                      날짜
+                      가맹점
                     </th>
                     {/* align right */}
                     <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
@@ -1634,8 +1509,22 @@ export default function Index({ params }: any) {
                 <tbody>
                   {buyOrders?.map((order, index) => (
                     <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
-                      <td className="px-4 py-2 text-sm text-zinc-700">
-                        {new Date(order.date).toLocaleDateString('ko-KR')}
+                      <td className="px-4 flex flex-row items-center gap-2 py-2 text-sm text-zinc-700">
+                        <Image
+                          src={order.storeLogo || "/logo.png"}
+                          alt="Store Logo"
+                          width={30}
+                          height={30}
+                          className="rounded-lg w-8 h-8"
+                        />
+                        <div className="flex flex-row items-center justify-center gap-2">
+                          <span className="text-lg font-semibold">
+                            {order.storeName}
+                          </span>
+                          <span className="text-sm text-zinc-500">
+                            ({order.storecode})
+                          </span>
+                        </div>  
                       </td>
                       {/* align right */}
                       <td className="px-4 py-2 text-sm text-zinc-700 text-right">

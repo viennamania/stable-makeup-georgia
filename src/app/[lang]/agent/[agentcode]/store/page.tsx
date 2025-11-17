@@ -1563,64 +1563,75 @@ export default function Index({ params }: any) {
             {/* memnu buttons same width left side */}
             <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
 
-                  <div className='flex w-32 items-center justify-center gap-2
-                  bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                    <Image
-                      src="/icon-store.png"
-                      alt="Store"
-                      width={35}
-                      height={35}
-                      className="w-4 h-4"
-                    />
-                    <div className="text-sm font-semibold">
-                      가맹점관리
-                    </div>
+                <div className='flex w-32 items-center justify-center gap-2
+                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                  <Image
+                    src="/icon-store.png"
+                    alt="Store"
+                    width={35}
+                    height={35}
+                    className="w-4 h-4"
+                  />
+                  <div className="text-sm font-semibold">
+                    가맹점관리
                   </div>
+                </div>
 
 
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/member')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover:scale-105
-                      transition-transform duration-200 ease-in-out
-                      ">
-                      회원관리
-                  </button>
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/member')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    회원관리
+                </button>
 
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover:scale-105
-                      transition-transform duration-200 ease-in-out
-                      ">
-                      구매주문관리
-                  </button>
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    구매주문관리
+                </button>
 
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover:scale-105
-                      transition-transform duration-200 ease-in-out
-                      ">
-                      P2P 거래내역
-                  </button>
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    P2P 거래내역
+                </button>
 
-                  <button
-                      onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-daily')}
-                      className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                      hover:bg-[#3167b4]/80
-                      hover:cursor-pointer
-                      hover: scale-105
-                      transition-all duration-200 ease-in-out
-                      ">
-                      통계(일별)
-                  </button>
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-daily')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    통계(일별)
+                </button>
+
+                <button
+                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-stores')}
+                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                    hover:bg-[#3167b4]/80
+                    hover:cursor-pointer
+                    hover:scale-105
+                    transition-transform duration-200 ease-in-out
+                    ">
+                    통계(가맹점별)
+                </button>
 
             </div>
 

@@ -2966,6 +2966,106 @@ export async function getBuyOrdersGroupByAgentcodeDaily(
 
 
 
+// getBuyOrdersGroupByAgentcodeStores
+// group by storecode under the agentcode
+// storecode join stores collection to get storeName, storeLogo
+export async function getBuyOrdersGroupByAgentcodeStores(
+  {
+    agentcode,
+    fromDate,
+    toDate,
+  }: {
+    agentcode: string;
+    fromDate: string;
+    toDate: string;
+  }
+): Promise<any> {
+
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const fromDateValue = fromDate ? new Date(fromDate + 'T00:00:00+09:00').toISOString() : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
+  const pipeline = [
+    {
+      $match: {
+        agentcode: agentcode ? { $regex: agentcode, $options: 'i' } : { $ne: null },
+        status: 'paymentConfirmed',
+        privateSale: { $ne: true },
+        createdAt: {
+          $gte: fromDateValue,
+          $lte: toDateValue,
+        }
+      }
+    },
+    {
+      $group: {
+        _id: "$storecode",
+        totalCount: { $sum: 1 }, // Count the number of orders
+        totalUsdtAmount: { $sum: "$usdtAmount" },
+        totalKrwAmount: { $sum: "$krwAmount" },
+        totalSettlementCount: { $sum: { $cond: [{ $ifNull: ["$settlement", false] }, 1, 0] } },
+        totalSettlementAmount: { $sum: "$settlement.settlementAmount" },
+        totalSettlementAmountKRW: { $sum: { $toDouble: "$settlement.settlementAmountKRW" } },
+        totalAgentFeeAmount: { $sum: "$settlement.agentFeeAmount" },
+        totalAgentFeeAmountKRW: { $sum: { $toDouble: "$settlement.agentFeeAmountKRW" } },
+        totalFeeAmount: { $sum: "$settlement.feeAmount" },
+        totalFeeAmountKRW: { $sum: { $toDouble: "$settlement.feeAmountKRW" } },
+        
+      }
+    },
+    {
+      $sort: { totalKrwAmount: -1 } // Sort by totalKrwAmount descending
+    }
+  ];
+
+  const results = await collection.aggregate(pipeline).toArray();
+
+  const storesCollection = client.db(dbName).collection('stores');
+  // join stores collection to get storeName, storeLogo
+  for (let i = 0; i < results.length; i++) {
+    const store = await storesCollection.findOne({ storecode: results[i]._id });
+    if (store) {
+      results[i].storeName = store.storeName;
+      results[i].storeLogo = store.storeLogo;
+    } else {
+      results[i].storeName = '';
+      results[i].storeLogo = '';
+    }
+  }
+
+
+
+  return {
+    agentcode: agentcode,
+    fromDate: fromDate,
+    toDate: toDate,
+    orders: results.map(result => ({
+      storecode: result._id,
+      storeName: result.storeName,
+      storeLogo: result.storeLogo,
+      totalCount: result.totalCount,
+      totalUsdtAmount: result.totalUsdtAmount,
+      totalKrwAmount: result.totalKrwAmount,
+      totalSettlementCount: result.totalSettlementCount,
+      totalSettlementAmount: result.totalSettlementAmount,
+      totalSettlementAmountKRW: result.totalSettlementAmountKRW,
+      totalAgentFeeAmount: result.totalAgentFeeAmount,
+      totalAgentFeeAmountKRW: result.totalAgentFeeAmountKRW,
+      totalFeeAmount: result.totalFeeAmount,
+      totalFeeAmountKRW: result.totalFeeAmountKRW,
+    }))
+  };
+
+}
+
+
+
+
+
+
+
+
 
 // deleete sell order by orderId
 export async function deleteBuyOrder(

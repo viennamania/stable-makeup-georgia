@@ -3221,10 +3221,21 @@ const fetchBuyOrders = async () => {
                   className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
                   hover:bg-[#3167b4]/80
                   hover:cursor-pointer
-                  hover: scale-105
-                  transition-all duration-200 ease-in-out
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
                   ">
                   통계(일별)
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history-stores')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  통계(가맹점별)
               </button>
 
           </div>
@@ -3401,9 +3412,6 @@ const fetchBuyOrders = async () => {
 
             </div>
 
-
-
-
             {/* serach fromDate and toDate */}
             {/* DatePicker for fromDate and toDate */}
             <div className="flex flex-col sm:flex-row items-center gap-2">
@@ -3472,10 +3480,6 @@ const fetchBuyOrders = async () => {
                 </div>
 
             </div>
-
-
-
-
 
           </div>
 
