@@ -1343,49 +1343,51 @@ export default function Index({ params }: any) {
 
 
 
+  const [agentList, setAgentList] = useState([] as any[]);
 
-   const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
-  
-    const [fetchingAgent, setFetchingAgent] = useState(false);
-    const [agent, setAgent] = useState(null) as any;
-  
-    useEffect(() => {
-  
-      setFetchingAgent(true);
-  
-      const fetchData = async () => {
-          const response = await fetch("/api/agent/getOneAgent", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                agentcode: params.agentcode,
-                ////walletAddress: address,
-              }),
-          });
-  
-          const data = await response.json();
-  
-  
-          if (data.result) {
-  
-            setAgent(data.result);
-  
-            setAgentAdminWalletAddress(data.result?.adminWalletAddress);
 
-            if (data.result?.adminWalletAddress === address) {
-              setIsAdmin(true);
-            }
+  const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
   
+  const [fetchingAgent, setFetchingAgent] = useState(false);
+  const [agent, setAgent] = useState(null) as any;
+
+  useEffect(() => {
+
+    setFetchingAgent(true);
+
+    const fetchData = async () => {
+        const response = await fetch("/api/agent/getOneAgent", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              agentcode: params.agentcode,
+              ////walletAddress: address,
+            }),
+        });
+
+        const data = await response.json();
+
+
+        if (data.result) {
+
+          setAgent(data.result);
+
+          setAgentAdminWalletAddress(data.result?.adminWalletAddress);
+
+          if (data.result?.adminWalletAddress === address) {
+            setIsAdmin(true);
           }
-  
-          setFetchingAgent(false);
-      };
-  
-      fetchData();
-  
-    } , [params.agentcode, address]);
+
+        }
+
+        setFetchingAgent(false);
+    };
+
+    fetchData();
+
+  } , [params.agentcode, address]);
 
 
 
@@ -1445,6 +1447,12 @@ export default function Index({ params }: any) {
   }, [address, params.agentcode]);
 
 
+
+
+
+
+
+  
 
 
   // if loadinAgent is true, show loading

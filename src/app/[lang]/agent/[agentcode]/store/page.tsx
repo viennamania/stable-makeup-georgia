@@ -1145,7 +1145,8 @@ export default function Index({ params }: any) {
 
 
 
-
+  const [agentList, setAgentList] = useState([] as any[]);
+  
   const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
 
   const [fetchingAgent, setFetchingAgent] = useState(false);

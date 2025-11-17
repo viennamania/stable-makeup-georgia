@@ -2424,7 +2424,7 @@ const fetchBuyOrders = async () => {
 
 
 
-
+  const [agentList, setAgentList] = useState([] as any[]);
 
   const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
 
