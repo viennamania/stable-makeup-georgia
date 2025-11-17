@@ -2927,8 +2927,6 @@ const fetchBuyOrders = async () => {
 
 
 
-
-
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
@@ -2945,9 +2943,6 @@ const fetchBuyOrders = async () => {
       </div>
     );
   }
-
-
-
 
 
   // if agent.adminWalletAddress is same as address, return "에이전트 관리자" else return "에이전트"

@@ -1377,38 +1377,6 @@ export default function Index({ params }: any) {
 
 
 
-
-
-
-
-
-
-  // check table view or card view
-  const [tableView, setTableView] = useState(true);
-
-
-
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-
-
-
-
-  useEffect(() => {
-    // Dynamically load the Binance widget script
-    const script = document.createElement("script");
-    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup the script when the component unmounts
-      document.body.removeChild(script);
-    };
-  }, [!fetchingAgent && agent]); // Only run this effect when fetchingAgent is false
-
-
-
-
   // if loadinAgent is true, show loading
   if (fetchingAgent) {
     return (
@@ -1528,10 +1496,6 @@ export default function Index({ params }: any) {
       </main>
     );
   }
-
-
-
-
 
 
 

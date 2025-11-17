@@ -1447,6 +1447,129 @@ export default function Index({ params }: any) {
 
 
 
+  // if loadinAgent is true, show loading
+  if (fetchingAgent) {
+    return (
+      <main className="w-full p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+        <div className="py-0 w-full">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Image
+              src="/banner-loading.gif"
+              alt="Loading"
+              width={100}
+              height={100}
+              className="rounded-lg w-40 h-40"
+            />
+            <span className="text-lg text-gray-500 ml-2">
+              에이전트 정보를 불러오는 중...
+            </span>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+
+  if (!fetchingAgent && !agent) {
+    return (
+      <main className="w-full p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+        <div className="py-0 w-full">
+          
+          
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Image
+              src="/banner-404.gif"
+              alt="Error"
+              width={100}
+              height={100}
+              className="rounded-lg w-20 h-20"
+            />
+            <div className="flex flex-row items-center justify-center gap-2">
+              <span className="text-lg text-gray-500 ml-2">
+                에이전트 정보를 찾을 수 없습니다.
+              </span>   
+            </div> 
+          </div>
+
+          {/* agent list */}
+          {/* table view */}
+          <div className="mt-8">
+            
+            <div className="flex flex-row items-center justify-start mb-4">
+              <Image
+                src="/icon-agent.png"
+                alt="Agent Icon"
+                width={50}
+                height={50}
+                className="rounded-lg w-10 h-10"
+              />
+              <span className="text-xl font-bold">에이전트 목록</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 border">에이전트 로고</th>
+                    <th className="px-4 py-2 border">에이전트 이름</th>
+                    <th className="px-4 py-2 border">에이전트 코드</th>
+                    <th className="px-4 py-2 border">에이전트 타입</th>
+                    <th className="px-4 py-2 border">에이전트 URL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agentList.map((agent) => (
+                    <tr key={agent.agentcode}>
+
+                      <td className="px-4 py-2 border">
+                        <Image
+                          src={agent.agentLogo || "/logo.png"}
+                          alt="Agent Logo"
+                          width={50}
+                          height={50}
+                          className="rounded-lg w-10 h-10"
+                        />
+                      </td>
+                      <td className="px-4 py-2 border">{agent.agentName}</td>
+                      <td className="px-4 py-2 border">{agent.agentcode}</td>
+                      <td className="px-4 py-2 border">{agent.agentType}</td>
+                      <td className="px-4 py-2 border">
+                        <a
+                          href={`/${params.lang}/agent/${agent.agentcode}`}
+                          className="text-blue-500 hover:underline"
+                        >
+                          이동하기
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex flex-row items-center justify-between gap-2">
+              <Image
+                src="/icon-info.png"
+                alt="Info Icon"
+                width={30}
+                height={30}
+                className="rounded-lg w-6 h-6"
+              />
+              <span className="text-sm text-gray-500">
+                에이전트 목록을 확인하고, 원하는 에이전트를 선택하여 거래를 시작하세요.
+              </span>
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </main>
+    );
+  }
+
+
+
 
   if (!address) {
     return (
