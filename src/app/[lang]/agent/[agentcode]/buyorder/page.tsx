@@ -2929,105 +2929,20 @@ const fetchBuyOrders = async () => {
 
 
 
-
-
   if (!address) {
     return (
-   <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+      <div className="flex flex-col items-center justify-center">
 
 
-      <div className="py-0 w-full">
-
-
-        <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">
-   
-
-          <div className="w-full flex flex-row gap-2 justify-end items-center">
-
-
-          {/* right space */}
-          {/* background transparent */}
-          <select
-            //className="p-2 text-sm bg-zinc-800 text-white rounded"
-
-
-            className="p-2 text-sm bg-transparent text-zinc-800 rounded"
-
-            onChange={(e) => {
-              const lang = e.target.value;
-              router.push(
-                "/" + lang + "/" + params.agentcode + "/center"
-              );
-            }}
-          >
-            <option
-              value="en"
-              selected={params.lang === "en"}
-            >
-              English(US)
-            </option>
-            <option
-              value="ko"
-              selected={params.lang === "ko"}
-            >
-              한국어(KR)
-            </option>
-            <option
-              value="zh"
-              selected={params.lang === "zh"}
-            >
-              中文(ZH)
-            </option>
-            <option
-              value="ja"
-              selected={params.lang === "ja"}
-            >
-              日本語(JP)
-            </option>
-          </select>
-
-          {/* icon-language */}
-          {/* color is tone down */}
-          <Image
-            src="/icon-language.png"
-            alt="Language"
-            width={20}
-            height={20}
-            className="rounded-lg w-6 h-6
-              opacity-50
-              "
-          />
-
-          </div>
-
-        </div>
-
-
-
-        {/* USDT 가격 binance market price */}
-        {/*
-        <div
-          className="binance-widget-marquee
-          w-full flex flex-row items-center justify-center gap-2
-          p-2
-          "
-
-
-          data-cmc-ids="1,1027,52,5426,3408,74,20947,5994,24478,13502,35336,825"
-          data-theme="dark"
-          data-transparent="true"
-          data-locale="ko"
-          data-fiat="KRW"
-          //data-powered-by="Powered by OneClick USDT"
-          //data-disclaimer="Disclaimer"
-        ></div>
-        */}
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
 
       </div>
-
-    </main>
-
-
     );
   }
 
@@ -3041,9 +2956,8 @@ const fetchBuyOrders = async () => {
   if (
     (address
     && agent
-    //&&  address !== agent.adminWalletAddress)
-    && !isAdmin)
-    
+    &&  address !== agent.adminWalletAddress
+    && user?.role !== "admin")
   ) {
     return (
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
@@ -3146,21 +3060,9 @@ const fetchBuyOrders = async () => {
   }
 
 
-
-
-
-
-
-
-
-
-
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
-
-
-
 
       <div className="py-0 w-full">
 
@@ -3329,7 +3231,7 @@ const fetchBuyOrders = async () => {
                   ">
                   통계(일별)
               </button>
-              
+
           </div>
 
 

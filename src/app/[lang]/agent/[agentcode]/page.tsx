@@ -1537,164 +1537,20 @@ export default function Index({ params }: any) {
 
   if (!address) {
     return (
-   <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+      <div className="flex flex-col items-center justify-center">
 
 
-      <div className="py-0 w-full">
-
-
-
-
-        {params.agentcode && (
-          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
-            p-2 rounded-lg mb-4
-              "bg-black/10"
-            }`}>
-
-
-              {address && !loadingUser && (
-
-                <div className="w-full flex flex-row items-center justify-end gap-2">
-                  <button
-                    onClick={() => {
-                      router.push('/' + params.lang + '/profile-settings');
-                    }}
-                    className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  >
-                    {user?.nickname || "프로필"}
-                  </button>
-
-
-                  {/* logout button */}
-                  <button
-                      onClick={() => {
-                          confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                          .then(() => {
-
-                              toast.success('로그아웃 되었습니다');
-
-                          });
-                      } }
-
-                      className="flex items-center justify-center gap-2
-                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  >
-                    <Image
-                      src="/icon-logout.webp"
-                      alt="Logout"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <span className="text-sm">
-                      로그아웃
-                    </span>
-                  </button>
-
-                </div>
-
-              )}
-
-
-
-
-            </div>
-        )}
-
-
-        <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">
-   
-
-          <div className="w-full flex flex-row gap-2 justify-end items-center">
-
-
-          {/* right space */}
-          {/* background transparent */}
-          <select
-            //className="p-2 text-sm bg-zinc-800 text-white rounded"
-
-
-            className="p-2 text-sm bg-transparent text-zinc-800 rounded"
-
-            onChange={(e) => {
-              const lang = e.target.value;
-              router.push(
-                "/" + lang + "/" + params.agentcode + "/center"
-              );
-            }}
-          >
-            <option
-              value="en"
-              selected={params.lang === "en"}
-            >
-              English(US)
-            </option>
-            <option
-              value="ko"
-              selected={params.lang === "ko"}
-            >
-              한국어(KR)
-            </option>
-            <option
-              value="zh"
-              selected={params.lang === "zh"}
-            >
-              中文(ZH)
-            </option>
-            <option
-              value="ja"
-              selected={params.lang === "ja"}
-            >
-              日本語(JP)
-            </option>
-          </select>
-
-          {/* icon-language */}
-          {/* color is tone down */}
-          <Image
-            src="/icon-language.png"
-            alt="Language"
-            width={20}
-            height={20}
-            className="rounded-lg w-6 h-6
-              opacity-50
-              "
-          />
-
-          </div>
-
-        </div>
-
-
-
-        {/* USDT 가격 binance market price */}
-        {/*
-        <div
-          className="binance-widget-marquee
-          w-full flex flex-row items-center justify-center gap-2
-          p-2
-          "
-
-
-          data-cmc-ids="1,1027,52,5426,3408,74,20947,5994,24478,13502,35336,825"
-          data-theme="dark"
-          data-transparent="true"
-          data-locale="ko"
-          data-fiat="KRW"
-          //data-powered-by="Powered by OneClick USDT"
-          //data-disclaimer="Disclaimer"
-        ></div>
-        */}
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
 
       </div>
-
-    </main>
-
-
     );
   }
-
-
 
 
 
@@ -1704,10 +1560,8 @@ export default function Index({ params }: any) {
   if (
     (address
     && agent
-    //&&  address !== agent.adminWalletAddress)
-    && !isAdmin)
-    
-
+    &&  address !== agent.adminWalletAddress
+    && user?.role !== "admin")
   ) {
     return (
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">

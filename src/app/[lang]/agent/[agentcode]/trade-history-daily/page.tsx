@@ -995,593 +995,677 @@ export default function Index({ params }: any) {
 
 
 
+
+  if (!address) {
     return (
+      <div className="flex flex-col items-center justify-center">
 
+
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
+
+      </div>
+    );
+  }
+
+
+  if (
+    (address
+    && agent
+    &&  address !== agent.adminWalletAddress
+    && user?.role !== "admin")
+  ) {
+    return (
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
-
 
         <div className="py-0 w-full">
 
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
+            p-2 rounded-lg mb-4
+            ${agent?.backgroundColor ?
+              "bg-[#"+agent?.backgroundColor+"]" :
+              "bg-black/10"
+            }`}>
 
-          <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-              
-            {address && !loadingUser && (
+        
 
-              <div className="w-full flex flex-row items-center justify-end gap-2">
-                
-                <button
-                  onClick={() => {
-                    router.push('/' + params.lang + '/agent/' + params.agentcode + '/profile-settings');
-                  }}
-                  className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                >
-                  <div className="flex flex-row items-center justify-center gap-2">
+              {address && !loadingUser && (
 
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <Image
-                          src="/icon-agent.png"
-                          alt="Agent"
-                          width={20}
-                          height={20}
-                          className="rounded-lg w-5 h-5"
-                        />
-                        <span className="text-sm text-yellow-500">
-                          에이전트 관리자
-                        </span>
-                      </div>
-
-                    <span className="text-sm text-[#f3f4f6]">
-                      {user?.nickname || "프로필"}
-                    </span>
-
-                  </div>
-                </button>
-
-
-                {/* logout button */}
-                <button
+                <div className="w-full flex flex-row items-center justify-end gap-2">
+                  <button
                     onClick={() => {
-                        confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                        .then(() => {
+                      router.push('/' + params.lang + '/profile-settings');
+                    }}
+                    className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    {user?.nickname || "프로필"}
+                  </button>
 
-                            toast.success('로그아웃 되었습니다');
 
-                            //router.push(
-                            //    "/admin/" + params.center
-                            //);
-                        });
-                    } }
+                  {/* logout button */}
+                  <button
+                      onClick={() => {
+                          confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                          .then(() => {
 
-                    className="flex items-center justify-center gap-2
-                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                >
+                              toast.success('로그아웃 되었습니다');
+
+                          });
+                      } }
+
+                      className="flex items-center justify-center gap-2
+                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <Image
+                      src="/icon-logout.webp"
+                      alt="Logout"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <span className="text-sm">
+                      로그아웃
+                    </span>
+                  </button>
+
+                </div>
+
+              )}
+
+
+
+
+          </div>
+
+
+
+          {/* 에이전트 관리자가 아닙니다. 회원가입한후 센터에 문의하세요. */}
+          <div className="w-full flex flex-col items-center justify-center gap-4 mt-8">
+            <Image
+              src="/banner-404.gif"
+              alt="Error"
+              width={100}
+              height={100}
+              className="rounded-lg w-20 h-20"
+            />
+            <span className="text-lg text-gray-500 ml-2">
+              에이전트 관리자가 아닙니다. 회원가입한후 센터에 문의하세요.
+            </span>
+
+
+            {/* 회원가입하러 가기 */}
+            <div className="flex flex-row items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/profile-settings');
+                  //router.push('/' + params.lang + '/' + params.agentcode + '/profile-settings');
+                }}
+                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+              >
+                회원가입하러 가기
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+    );
+
+  }
+
+
+
+  return (
+
+    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+
+      <div className="py-0 w-full">
+
+
+        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+            
+          {address && !loadingUser && (
+
+            <div className="w-full flex flex-row items-center justify-end gap-2">
+              
+              <button
+                onClick={() => {
+                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/profile-settings');
+                }}
+                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+              >
+                <div className="flex flex-row items-center justify-center gap-2">
+
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <Image
+                        src="/icon-agent.png"
+                        alt="Agent"
+                        width={20}
+                        height={20}
+                        className="rounded-lg w-5 h-5"
+                      />
+                      <span className="text-sm text-yellow-500">
+                        에이전트 관리자
+                      </span>
+                    </div>
+
+                  <span className="text-sm text-[#f3f4f6]">
+                    {user?.nickname || "프로필"}
+                  </span>
+
+                </div>
+              </button>
+
+
+              {/* logout button */}
+              <button
+                  onClick={() => {
+                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                      .then(() => {
+
+                          toast.success('로그아웃 되었습니다');
+
+                          //router.push(
+                          //    "/admin/" + params.center
+                          //);
+                      });
+                  } }
+
+                  className="flex items-center justify-center gap-2
+                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+              >
+                <Image
+                  src="/icon-logout.webp"
+                  alt="Logout"
+                  width={20}
+                  height={20}
+                  className="rounded-lg w-5 h-5"
+                />
+                <span className="text-sm">
+                  로그아웃
+                </span>
+              </button>
+            </div>
+
+
+          )}
+
+        </div>
+
+
+
+
+
+
+        <div className="flex flex-col items-start justify-center gap-2 mt-4">
+          
+          {/* USDT 가격 binance market price */}
+          {/*
+          <div
+            className="
+              w-full flex
+              binance-widget-marquee
+            flex-row items-center justify-center gap-2
+            p-2
+            "
+
+
+            data-cmc-ids="1,1027,52,5426,3408,74,20947,5994,24478,13502,35336,825"
+            data-theme="dark"
+            data-transparent="true"
+            data-locale="ko"
+            data-fiat="KRW"
+            //data-powered-by="Powered by OneClick USDT"
+            //data-disclaimer="Disclaimer"
+          ></div>
+          */}
+
+          {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
+          {/* memnu buttons same width left side */}
+          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  가맹점관리
+              </button>
+
+
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/member')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  회원관리
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover:scale-105
+                  transition-transform duration-200 ease-in-out
+                  ">
+                  구매주문관리
+              </button>
+
+              <button
+                  onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
+                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
+                  hover:bg-[#3167b4]/80
+                  hover:cursor-pointer
+                  hover: scale-105
+                  transition-all duration-200 ease-in-out
+                  ">
+                  P2P 거래내역
+              </button>
+
+              <div className='flex w-32 items-center justify-center gap-2
+              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+                <Image
+                  src="/icon-statistics.png"
+                  alt="Statistics"
+                  width={35}
+                  height={35}
+                  className="w-4 h-4"
+                />
+                <div className="text-sm font-semibold">
+                  통계(월별)
+                </div>
+              </div>
+
+          </div>
+
+
+          <div className='flex flex-row items-center space-x-4'>
+              <Image
+                src="/icon-trade.png"
+                alt="Trade"
+                width={35}
+                height={35}
+                className="w-6 h-6"
+              />
+
+              <div className="text-xl font-semibold">
+                통계(일별)
+              </div>
+
+          </div>
+
+
+
+
+            <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
+
+
+
+              {/* select agentcode */}
+              {/*
+              <div className="flex flex-row items-center gap-2">
+
                   <Image
-                    src="/icon-logout.webp"
-                    alt="Logout"
+                    src="/icon-store.png"
+                    alt="Store"
                     width={20}
                     height={20}
                     className="rounded-lg w-5 h-5"
                   />
-                  <span className="text-sm">
-                    로그아웃
+
+                  <span className="
+                    w-32
+                    text-sm font-semibold">
+                    에이전트 선택
                   </span>
-                </button>
-              </div>
 
 
-            )}
+                  <select
+                    value={searchAgentcode}
 
+                    //onChange={(e) => setSearchStorecode(e.target.value)}
 
-            {!address && (
-              <ConnectButton
-                client={client}
-                wallets={wallets}
-
-                /*
-                accountAbstraction={{
-                  chain: arbitrum,
-                  sponsorGas: true
-                }}
-                */
-                
-                theme={"light"}
-
-                // button color is dark skyblue convert (49, 103, 180) to hex
-                connectButton={{
-                  style: {
-                    backgroundColor: "#3167b4", // dark skyblue
-
-                    color: "#f3f4f6", // gray-300 
-                    padding: "2px 2px",
-                    borderRadius: "10px",
-                    fontSize: "14px",
-                    //width: "40px",
-                    height: "38px",
-                  },
-                  label: "원클릭 로그인",
-                }}
-
-                connectModal={{
-                  size: "wide", 
-                  //size: "compact",
-                  titleIcon: "https://www.stable.makeup/logo.png",                           
-                  showThirdwebBranding: false,
-                }}
-
-                locale={"ko_KR"}
-                //locale={"en_US"}
-              />
-
-            )}
-
-          </div>
-
-
- 
- 
-
-
-          <div className="flex flex-col items-start justify-center gap-2 mt-4">
-            
-            {/* USDT 가격 binance market price */}
-            {/*
-            <div
-              className="
-                w-full flex
-                binance-widget-marquee
-              flex-row items-center justify-center gap-2
-              p-2
-              "
-
-
-              data-cmc-ids="1,1027,52,5426,3408,74,20947,5994,24478,13502,35336,825"
-              data-theme="dark"
-              data-transparent="true"
-              data-locale="ko"
-              data-fiat="KRW"
-              //data-powered-by="Powered by OneClick USDT"
-              //data-disclaimer="Disclaimer"
-            ></div>
-            */}
- 
-            {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-            {/* memnu buttons same width left side */}
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/store')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    가맹점관리
-                </button>
+                    // storecode parameter is passed to fetchBuyOrders
+                    onChange={(e) => {
+                      router.push('/' + params.lang + '/admin/trade-history-daily-agent?agentcode=' + e.target.value);
+                      setSearchAgentcode(e.target.value);
+                    }}
 
 
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/member')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    회원관리
-                </button>
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  >
+                    <option value="">에이전트 선택</option>
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/buyorder')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    구매주문관리
-                </button>
+                    {fetchingAllAgents && (
+                      <option value="" disabled>
+                        에이전트 검색중...
+                      </option>
+                    )}
 
-                <button
-                    onClick={() => router.push('/' + params.lang + '/agent/' + params.agentcode + '/trade-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover: scale-105
-                    transition-all duration-200 ease-in-out
-                    ">
-                    P2P 거래내역
-                </button>
-
-                <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                  <Image
-                    src="/icon-statistics.png"
-                    alt="Statistics"
-                    width={35}
-                    height={35}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-sm font-semibold">
-                    통계(월별)
-                  </div>
-                </div>
-
-            </div>
-
-
-            <div className='flex flex-row items-center space-x-4'>
-                <Image
-                  src="/icon-trade.png"
-                  alt="Trade"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
-                />
-
-                <div className="text-xl font-semibold">
-                  통계(일별)
-                </div>
-
-            </div>
-
-
-
-
-              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
-
-
-
-                {/* select agentcode */}
-                {/*
-                <div className="flex flex-row items-center gap-2">
-
-                    <Image
-                      src="/icon-store.png"
-                      alt="Store"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-
-                    <span className="
-                      w-32
-                      text-sm font-semibold">
-                      에이전트 선택
-                    </span>
-
-
-                    <select
-                      value={searchAgentcode}
-
-                      //onChange={(e) => setSearchStorecode(e.target.value)}
-
-                      // storecode parameter is passed to fetchBuyOrders
-                      onChange={(e) => {
-                        router.push('/' + params.lang + '/admin/trade-history-daily-agent?agentcode=' + e.target.value);
-                        setSearchAgentcode(e.target.value);
-                      }}
-
-
-
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    >
-                      <option value="">에이전트 선택</option>
-
-                      {fetchingAllAgents && (
-                        <option value="" disabled>
-                          에이전트 검색중...
-                        </option>
-                      )}
-
-                      {!fetchingAllAgents && allAgents && allAgents.map((item, index) => (
-                        <option key={index} value={item.agentcode}
-                          className="flex flex-row items-center justify-start gap-2"
-                        >
-
-                          {item.agentName}{' '}({item.agentcode})
-
-                        </option>
-                      ))}
-                    </select>
-                
-                </div>
-                */}
-
-
-
-                {/* serach fromDate and toDate */}
-                {/* DatePicker for fromDate and toDate */}
-                {/*
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-calendar.png"
-                      alt="Calendar"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <input
-                      type="date"
-                      value={searchFromDate}
-                      onChange={(e) => setSearchFormDate(e.target.value)}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
-
-                  <span className="text-sm text-gray-500">~</span>
-
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-calendar.png"
-                      alt="Calendar"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <input
-                      type="date"
-                      value={searchToDate}
-                      onChange={(e) => setSearchToDate(e.target.value)}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                    />
-                  </div>
-                </div>
-                */}
-
-
-                {/*
-                <div className="flex flex-col items-center gap-2">
-
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchBuyer}
-                        onChange={(e) => setSearchBuyer(e.target.value)}
-                        placeholder="회원 아이디"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      />
-                    </div>
-
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchDepositName}
-                        onChange={(e) => setSearchDepositName(e.target.value)}
-                        placeholder="입금자명"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      />
-                    </div>
-
-                    <div className="flex flex-row items-center gap-2">
-                      <input
-                        type="text"
-                        value={searchStoreBankAccountNumber}
-                        onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                        placeholder="입금통장번호"
-                        className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                      /> 
-                    </div>
-
-                    <div className="
-                      w-28  
-                      flex flex-row items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setPageValue(1);
-                          
-                          fetchBuyOrders();
-
-                          getTradeSummary();
-                        }}
-                        //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                        className={`${
-                          fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
-                        }
-                        text-white px-4 py-2 rounded-lg w-full
-                        hover:bg-[#3167b4]/80
-                        hover:cursor-pointer
-                        hover:scale-105
-                        transition-transform duration-200 ease-in-out`}
-                        title="검색"
-
-                        disabled={fetchingBuyOrders}
+                    {!fetchingAllAgents && allAgents && allAgents.map((item, index) => (
+                      <option key={index} value={item.agentcode}
+                        className="flex flex-row items-center justify-start gap-2"
                       >
-                        <div className="flex flex-row items-center justify-between gap-2">
-                          <Image
-                            src="/icon-search.png"
-                            alt="Search"
-                            width={20}
-                            height={20}
-                            className="rounded-lg w-5 h-5"
-                          />
-                          <span className="text-sm">
-                            {fetchingBuyOrders ? '검색중...' : '검색'}
-                          </span>
-                        </div>
 
-                      </button>
-                    </div>
+                        {item.agentName}{' '}({item.agentcode})
 
+                      </option>
+                    ))}
+                  </select>
+              
+              </div>
+              */}
+
+
+
+              {/* serach fromDate and toDate */}
+              {/* DatePicker for fromDate and toDate */}
+              {/*
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-2">
+                  <Image
+                    src="/icon-calendar.png"
+                    alt="Calendar"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <input
+                    type="date"
+                    value={searchFromDate}
+                    onChange={(e) => setSearchFormDate(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  />
+                </div>
+
+                <span className="text-sm text-gray-500">~</span>
+
+                <div className="flex flex-row items-center gap-2">
+                  <Image
+                    src="/icon-calendar.png"
+                    alt="Calendar"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <input
+                    type="date"
+                    value={searchToDate}
+                    onChange={(e) => setSearchToDate(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  />
+                </div>
+              </div>
+              */}
+
+
+              {/*
+              <div className="flex flex-col items-center gap-2">
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchBuyer}
+                      onChange={(e) => setSearchBuyer(e.target.value)}
+                      placeholder="회원 아이디"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
                   </div>
 
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchDepositName}
+                      onChange={(e) => setSearchDepositName(e.target.value)}
+                      placeholder="입금자명"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    />
+                  </div>
 
+                  <div className="flex flex-row items-center gap-2">
+                    <input
+                      type="text"
+                      value={searchStoreBankAccountNumber}
+                      onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
+                      placeholder="입금통장번호"
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    /> 
+                  </div>
+
+                  <div className="
+                    w-28  
+                    flex flex-row items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setPageValue(1);
+                        
+                        fetchBuyOrders();
+
+                        getTradeSummary();
+                      }}
+                      //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+                      className={`${
+                        fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
+                      }
+                      text-white px-4 py-2 rounded-lg w-full
+                      hover:bg-[#3167b4]/80
+                      hover:cursor-pointer
+                      hover:scale-105
+                      transition-transform duration-200 ease-in-out`}
+                      title="검색"
+
+                      disabled={fetchingBuyOrders}
+                    >
+                      <div className="flex flex-row items-center justify-between gap-2">
+                        <Image
+                          src="/icon-search.png"
+                          alt="Search"
+                          width={20}
+                          height={20}
+                          className="rounded-lg w-5 h-5"
+                        />
+                        <span className="text-sm">
+                          {fetchingBuyOrders ? '검색중...' : '검색'}
+                        </span>
+                      </div>
+
+                    </button>
+                  </div>
 
                 </div>
-                */}
 
 
-
-
-  
 
               </div>
+              */}
 
 
 
 
 
-              <div className="w-full overflow-x-auto">
 
-                <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+            </div>
 
-                  <thead className="bg-zinc-200">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                        날짜
-                      </th>
+
+
+
+
+            <div className="w-full overflow-x-auto">
+
+              <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+
+                <thead className="bg-zinc-200">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
+                      날짜
+                    </th>
+                    {/* align right */}
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래량(USDT)</th>
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
+
+                    {/*
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
+                    */}
+                    
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
+
+                    
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
+
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
+                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
+                    
+
+
+                  </tr>
+                </thead>
+                <tbody>
+                  {buyOrders.map((order, index) => (
+                    <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
+                      <td className="px-4 py-2 text-sm text-zinc-700">
+                        {new Date(order.date).toLocaleDateString('ko-KR')}
+                      </td>
                       {/* align right */}
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
+                      <td className="px-4 py-2 text-sm text-zinc-700 text-right">
+                        {order.totalCount ? order.totalCount.toLocaleString() : 0}
+                      </td>
+
+
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
 
                       {/*
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
-                      */}
-                      
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
-
-                      
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
-                      
-
-
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {buyOrders.map((order, index) => (
-                      <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
-                        <td className="px-4 py-2 text-sm text-zinc-700">
-                          {new Date(order.date).toLocaleDateString('ko-KR')}
-                        </td>
-                        {/* align right */}
-                        <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                          {order.totalCount ? order.totalCount.toLocaleString() : 0}
-                        </td>
-
-
-                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-
-                        {/*
-                        <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                          {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
-                          {' / '}
-                          {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
-                        </td>
-                        */}
-
-                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-
-
-
-                        
-                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-
-                        <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-                        <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </td>
-                        
-
-
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={4} className="px-4 py-2 text-sm text-zinc-500">
-                        
+                      <td className="px-4 py-2 text-sm text-zinc-700 text-right">
+                        {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
+                        {' / '}
+                        {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
                       </td>
-                    </tr>
-                  </tfoot>
-                </table>
+                      */}
 
-              </div>
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+
+
+
+                      
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+
+                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </td>
+                      
+
+
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-2 text-sm text-zinc-500">
+                      
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
 
             </div>
 
-      
-
-            
-            <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
-              <div className="text-sm text-zinc-600">
-                © 2024 Stable Makeup. All rights reserved.
-              </div>
-              <div className="text-sm text-zinc-600">
-                <a href={`/${params.lang}/terms-of-service`} className="text-blue-500 hover:underline">
-                  이용약관
-                </a>
-                {' | '}
-                <a href={`/${params.lang}/privacy-policy`} className="text-blue-500 hover:underline">
-                  개인정보처리방침
-                </a>
-                {' | '}
-                <a href={`/${params.lang}/contact`} className="text-blue-500 hover:underline">
-                  고객센터
-                </a>
-              </div>
-            </div> 
-
-
-
-
-            
           </div>
 
+    
 
-          <Modal isOpen={isModalOpen} onClose={closeModal}>
-              <TradeDetail
-                  closeModal={closeModal}
-                  //goChat={goChat}
-              />
-          </Modal>
+          
+          <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
+            <div className="text-sm text-zinc-600">
+              © 2024 Stable Makeup. All rights reserved.
+            </div>
+            <div className="text-sm text-zinc-600">
+              <a href={`/${params.lang}/terms-of-service`} className="text-blue-500 hover:underline">
+                이용약관
+              </a>
+              {' | '}
+              <a href={`/${params.lang}/privacy-policy`} className="text-blue-500 hover:underline">
+                개인정보처리방침
+              </a>
+              {' | '}
+              <a href={`/${params.lang}/contact`} className="text-blue-500 hover:underline">
+                고객센터
+              </a>
+            </div>
+          </div> 
 
 
-        </main>
 
-    );
+
+          
+        </div>
+
+
+        <Modal isOpen={isModalOpen} onClose={closeModal}>
+            <TradeDetail
+                closeModal={closeModal}
+                //goChat={goChat}
+            />
+        </Modal>
+
+
+      </main>
+
+  );
 
 
 };

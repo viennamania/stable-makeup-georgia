@@ -2426,6 +2426,47 @@ const fetchBuyOrders = async () => {
 
 
 
+  const [agentAdminWalletAddress, setAgentAdminWalletAddress] = useState("");
+
+  const [fetchingAgent, setFetchingAgent] = useState(false);
+  const [agent, setAgent] = useState(null) as any;
+
+  useEffect(() => {
+
+    setFetchingAgent(true);
+
+    const fetchData = async () => {
+        const response = await fetch("/api/agent/getOneAgent", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              agentcode: params.agentcode,
+              ////walletAddress: address,
+            }),
+        });
+
+        const data = await response.json();
+
+
+        if (data.result) {
+
+          setAgent(data.result);
+
+          setAgentAdminWalletAddress(data.result?.adminWalletAddress);
+
+        }
+
+        setFetchingAgent(false);
+    };
+
+    fetchData();
+
+  } , [params.agentcode]);
+
+
+
 
   /*
   // totalNumberOfBuyOrders
@@ -2665,47 +2706,113 @@ const fetchBuyOrders = async () => {
   }
 
 
-  if (address && !loadingUser && !isAdmin) {
+  if (
+    (address
+    && agent
+    &&  address !== agent.adminWalletAddress
+    && user?.role !== "admin")
+  ) {
     return (
-      <div className="flex flex-col items-center justify-center">
+      <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
 
-        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
-        <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
-        <div className="text-lg text-gray-500">{address}</div>
+        <div className="py-0 w-full">
 
-              {/* logout button */}
+          <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
+            p-2 rounded-lg mb-4
+            ${agent?.backgroundColor ?
+              "bg-[#"+agent?.backgroundColor+"]" :
+              "bg-black/10"
+            }`}>
+
+        
+
+              {address && !loadingUser && (
+
+                <div className="w-full flex flex-row items-center justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/profile-settings');
+                    }}
+                    className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    {user?.nickname || "프로필"}
+                  </button>
+
+
+                  {/* logout button */}
+                  <button
+                      onClick={() => {
+                          confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
+                          .then(() => {
+
+                              toast.success('로그아웃 되었습니다');
+
+                          });
+                      } }
+
+                      className="flex items-center justify-center gap-2
+                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  >
+                    <Image
+                      src="/icon-logout.webp"
+                      alt="Logout"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <span className="text-sm">
+                      로그아웃
+                    </span>
+                  </button>
+
+                </div>
+
+              )}
+
+
+
+
+          </div>
+
+
+
+          {/* 에이전트 관리자가 아닙니다. 회원가입한후 센터에 문의하세요. */}
+          <div className="w-full flex flex-col items-center justify-center gap-4 mt-8">
+            <Image
+              src="/banner-404.gif"
+              alt="Error"
+              width={100}
+              height={100}
+              className="rounded-lg w-20 h-20"
+            />
+            <span className="text-lg text-gray-500 ml-2">
+              에이전트 관리자가 아닙니다. 회원가입한후 센터에 문의하세요.
+            </span>
+
+
+            {/* 회원가입하러 가기 */}
+            <div className="flex flex-row items-center justify-center gap-2">
               <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                onClick={() => {
+                  router.push('/' + params.lang + '/agent/' + params.agentcode + '/profile-settings');
+                  //router.push('/' + params.lang + '/' + params.agentcode + '/profile-settings');
+                }}
+                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
               >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
+                회원가입하러 가기
               </button>
+            </div>
 
+          </div>
 
-      </div>
+        </div>
+
+      </main>
     );
+
   }
+
+
 
 
   return (
