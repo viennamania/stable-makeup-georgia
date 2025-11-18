@@ -1456,6 +1456,7 @@ export async function getAllSellersForBalanceInquiry(
   const users = await collection
     .find<UserProps>(
       {
+        storecode: 'admin',
         walletAddress: { $exists: true, $ne: null },
         seller: { $exists: true  , $ne: null},
         'seller.status': 'confirmed',
@@ -1475,6 +1476,7 @@ export async function getAllSellersForBalanceInquiry(
 
   const totalCount = await collection.countDocuments(
     {
+      storecode: 'admin',
       walletAddress: { $exists: true, $ne: null },
       seller: { $exists: true  , $ne: null},
       'seller.status': 'confirmed',
