@@ -3764,12 +3764,12 @@ export default function Index({ params }: any) {
 
 
 
-          {sellersBalance.length > 0 && (
+          {sellersBalance?.length > 0 && (
             <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
               mt-4
               ">
 
-              {sellersBalance.map((seller, index) => (
+              {sellersBalance?.map((seller, index) => (
                 <div key={index}
                   className="flex flex-row items-center justify-between gap-4
                   bg-white/80
