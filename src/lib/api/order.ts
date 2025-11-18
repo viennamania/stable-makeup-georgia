@@ -3109,6 +3109,7 @@ export async function getBuyOrdersGroupByStores(
     }
   ];
   const results = await collection.aggregate(pipeline).toArray();
+
   const storesCollection = client.db(dbName).collection('stores');
   // join stores collection to get storeName, storeLogo
   for (let i = 0; i < results.length; i++) {
@@ -3121,6 +3122,7 @@ export async function getBuyOrdersGroupByStores(
       results[i].storeLogo = '';
     }
   }
+
   return {
     fromDate: fromDate,
     toDate: toDate,

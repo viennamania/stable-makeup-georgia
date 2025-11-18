@@ -1264,21 +1264,16 @@ export default function Index({ params }: any) {
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
 
-                  {/*
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
-                  */}
-                  
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
-
-                  
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)<br />미결제수(건)</th>
 
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
-                  
 
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
+                  
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
 
                 </tr>
               </thead>
@@ -1293,7 +1288,7 @@ export default function Index({ params }: any) {
                         height={30}
                         className="rounded-lg w-8 h-8"
                       />
-                      <div className="flex flex-row items-center justify-center gap-2">
+                      <div className="flex flex-col items-start justify-center">
                         <span className="text-lg font-semibold">
                           {order.storeName}
                         </span>
@@ -1319,37 +1314,10 @@ export default function Index({ params }: any) {
                       {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
 
-                    {/*
                     <td className="px-4 py-2 text-sm text-zinc-700 text-right">
                       {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
                       {' / '}
                       {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
-                    </td>
-                    */}
-
-                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </td>
-
-
-
-                    
-                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
 
                     <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
@@ -1362,17 +1330,91 @@ export default function Index({ params }: any) {
                     >
                       {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
-                    
 
+                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
+                    
+                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
 
                   </tr>
                 ))}
               </tbody>
+              {/* sum row */}
               <tfoot>
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-sm text-zinc-500">
-                    
+                <tr className="bg-zinc-200 border-t border-zinc-800">
+                  <td className="px-4 py-2 text-sm font-semibold text-zinc-700">
+                    합계
                   </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-zinc-700 text-right">
+                    {buyOrders.reduce((sum, order) => sum + (order.totalCount || 0), 0).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-[#409192] text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalUsdtAmount || 0), 0)).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-yellow-600 text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalKrwAmount || 0), 0)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+
+                  <td className="px-4 py-2 text-sm font-semibold text-zinc-700 text-right">
+                    {buyOrders.reduce((sum, order) => sum + (order.totalSettlementCount || 0), 0).toLocaleString()}
+                    {' / '}
+                    {buyOrders.reduce((sum, order) => sum + ((order.totalCount || 0) - (order.totalSettlementCount || 0)), 0).toLocaleString()}
+                  </td>
+                  
+                  <td className="px-4 py-2 text-sm font-semibold text-[#409192] text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalSettlementAmount || 0), 0)).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-yellow-600 text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalSettlementAmountKRW || 0), 0)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+
+
+                  <td className="px-4 py-2 text-sm font-semibold text-[#409192] text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalAgentFeeAmount || 0), 0)).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-yellow-600 text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalAgentFeeAmountKRW || 0), 0)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-[#409192] text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalFeeAmount || 0), 0)).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+                  <td className="px-4 py-2 text-sm font-semibold text-yellow-600 text-right"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {Number(buyOrders.reduce((sum, order) => sum + Number(order.totalFeeAmountKRW || 0), 0)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </td>
+
                 </tr>
               </tfoot>
             </table>
