@@ -80,21 +80,17 @@ import { get } from "http";
 import { useSearchParams } from 'next/navigation';
 
 
+
 import { version } from "../../../config/version";
 
 
-/*
-    {
-      date: '2025-07-25',
-      storecode: 'repruuqp',
-      totalUsdtAmount: 19339.14,
-      totalKrwAmount: 26688000
-    },
-    */
 
 interface BuyOrder {
 
-  date: string,
+  //date: string,
+  storecode: string,
+  storeName: string,
+  storeLogo: string,
 
   totalCount: number, // Count the number of orders
   totalUsdtAmount: number,
@@ -148,13 +144,9 @@ export default function Index({ params }: any) {
   const page = searchParams.get('page') || 1;
 
 
-  const searchParamsStorecode = searchParams.get('storecode') || "";
 
+  //const [searchAgentcode, setSearchAgentcode] = useState(params.agentcode || "");
 
-  const [searchStorecode, setSearchStorecode] = useState("");
-  useEffect(() => {
-    setSearchStorecode(searchParamsStorecode || "");
-  }, [searchParamsStorecode]);
 
 
 
@@ -477,26 +469,6 @@ export default function Index({ params }: any) {
       setBalance( Number(result) / 10 ** 6 );
 
 
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: searchStorecode,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
-
 
     };
 
@@ -519,76 +491,6 @@ export default function Index({ params }: any) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-
-
-  useEffect(() => {
-
-    if (address) {
-
-      getUserEmail({ client }).then((email) => {
-        console.log('email', email);
-
-        if (email) {
-          
-
-          fetch('/api/user/setUserVerified', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            // storecode, walletAddress, nickname, mobile, email
-            body: JSON.stringify({
-              storecode: searchStorecode,
-              walletAddress: address,
-              nickname: email,
-              mobile: '+82',
-              email: email,
-            }),
-          })
-          .then(response => response.json())
-          .then(data => {
-              //console.log('data', data);
-
-
-
-              fetch('/api/user/getUser', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  storecode: searchStorecode,
-                  walletAddress: address,
-                }),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  //console.log('data', data);
-                  setUser(data.result);
-              })
-
-          });
-
-
-
-        }
-
-      });
-
-  
-
-      //const phoneNumber = await getUserPhoneNumber({ client });
-      //setPhoneNumber(phoneNumber);
-
-
-      getUserPhoneNumber({ client }).then((phoneNumber) => {
-        setPhoneNumber(phoneNumber || "");
-      });
-
-    }
-
-  } , [address]);
-
 
 
   
@@ -688,35 +590,13 @@ export default function Index({ params }: any) {
 
 
 
+  const today = new Date();
+  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
   // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState("");
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-
-    //const today = new Date();
-    //first day of the year
-    const today = new Date( new Date().getFullYear(), 0, 1);
-
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-
-
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchFormDate(formattedDate);
-  }, []);
-
-
-
-
-  const [searchToDate, setSearchToDate] = useState("");
-
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-    const today = new Date();
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchToDate(formattedDate);
-  }, []);
+  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+  const [searchToDate, setSearchToDate] = useState(formattedDate);
 
 
 
@@ -749,10 +629,6 @@ export default function Index({ params }: any) {
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
-
-
-   
-
   useEffect(() => {
 
 
@@ -761,15 +637,13 @@ export default function Index({ params }: any) {
 
       setLoadingBuyOrders(true);
 
-      const response = await fetch('/api/order/getAllBuyOrdersByStorecodeDaily', {
+      const response = await fetch('/api/order/getAllBuyOrdersStores', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
           },
           body: JSON.stringify(
-
             {
-              storecode: searchStorecode,
               limit: Number(limit),
               page: Number(page),
               walletAddress: address,
@@ -792,39 +666,16 @@ export default function Index({ params }: any) {
         return;
       }
 
-
-
       const data = await response.json();
-
 
       setBuyOrders(data.result.orders);
 
       setTotalCount(data.result.totalCount);
-      
-
 
     }
 
 
     fetchBuyOrders();
-
-    
-    /*
-    const interval = setInterval(() => {
-
-      fetchBuyOrders();
-
-
-    }, 5000);
-  
-
-    return () => clearInterval(interval);
-    */
-    
-    
-    
-    
-
 
   } , [
     limit,
@@ -832,296 +683,16 @@ export default function Index({ params }: any) {
     address,
     searchMyOrders,
 
-    searchStorecode,
     searchFromDate,
     searchToDate,
     searchBuyer,
     searchDepositName,
     searchStoreBankAccountNumber
-]);
-
-
-///console.log('agreementForTrade', agreementForTrade);
-
-
-const [fetchingBuyOrders, setFetchingBuyOrders] = useState(false);
-
-const fetchBuyOrders = async () => {
-
-
-  if (fetchingBuyOrders) {
-    return;
-  }
-  setFetchingBuyOrders(true);
-
-  const response = await fetch('/api/order/getAllBuyOrdersByStorecodeDaily', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(
-      {
-        storecode: searchStorecode,
-        limit: Number(limitValue),
-        page: Number(pageValue),
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-
-        searchOrderStatusCompleted: true,
-
-        searchBuyer: searchBuyer,
-        searchDepositName: searchDepositName,
-
-        searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-
-      }
-
-    ),
-  });
-
-  if (!response.ok) {
-    setFetchingBuyOrders(false);
-    toast.error('Failed to fetch buy orders');
-    return;
-  }
-  const data = await response.json();
-  //console.log('data', data);
-
-  setBuyOrders(data.result.orders);
-  setTotalCount(data.result.totalCount);
-  setFetchingBuyOrders(false);
-
-  return data.result.orders;
-}
-
-
-
-
-  
-
-
-  // check table view or card view
-  const [tableView, setTableView] = useState(true);
-
-
-
-
-  const [storeCodeNumber, setStoreCodeNumber] = useState('');
-
-  useEffect(() => {
-
-    const fetchStoreCode = async () => {
-
-      const response = await fetch('/api/order/getStoreCodeNumber', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      //console.log('getStoreCodeNumber data', data);
-
-      setStoreCodeNumber(data?.storeCodeNumber);
-
-    }
-
-    fetchStoreCode();
-
-  } , []);
-    
-
-
-
-      // array of stores
-  const [storeList, setStoreList] = useState([] as any[]);
-
-
-  const [storeAdminWalletAddress, setStoreAdminWalletAddress] = useState("");
-
-  const [fetchingStore, setFetchingStore] = useState(false);
-  const [store, setStore] = useState(null) as any;
-
-  useEffect(() => {
-
-
-    setFetchingStore(true);
-
-    const fetchData = async () => {
-        const response = await fetch("/api/store/getOneStore", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              storecode: searchStorecode,
-              ////walletAddress: address,
-            }),
-        });
-
-        const data = await response.json();
-
-        //console.log("data", data);
-
-        if (data.result) {
-
-          setStore(data.result);
-
-          setStoreAdminWalletAddress(data.result?.adminWalletAddress);
-
-          if (data.result?.adminWalletAddress === address) {
-            setIsAdmin(true);
-          }
-
-      } else {
-        // get store list
-        const response = await fetch("/api/store/getAllStores", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-          }),
-        });
-        const data = await response.json();
-        //console.log("getStoreList data", data);
-        setStoreList(data.result.stores);
-        setStore(null);
-        setStoreAdminWalletAddress("");
-      }
-
-        setFetchingStore(false);
-    };
-
-    if (!searchStorecode) {
-      return;
-    }
-
-    fetchData();
-
-    // interval to fetch store data every 10 seconds
-    const interval = setInterval(() => {
-      fetchData();
-    }
-    , 5000);
-    return () => clearInterval(interval);
-
-  } , [searchStorecode, address]);
-
-
-
-  /*
-  const [tradeSummary, setTradeSummary] = useState({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-    orders: [] as BuyOrder[],
-
-    totalClearanceCount: 0,
-    totalClearanceAmount: 0,
-    totalClearanceAmountUSDT: 0,
-  });
-  const [loadingTradeSummary, setLoadingTradeSummary] = useState(false);
-
-
-  const getTradeSummary = async () => {
-    if (!address) {
-      return;
-    }
-
-    setLoadingTradeSummary(true);
-    const response = await fetch('/api/summary/getTradeSummary', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
- 
-
-        agentcode: params.agentcode,
-        storecode: searchStorecode,
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-        searchOrderStatusCompleted: true,
-        
-        //searchBuyer: searchBuyer,
-        searchBuyer: '',
-        //searchDepositName: searchDepositName,
-        searchDepositName: '',
-        //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-        searchStoreBankAccountNumber: '',
-
-
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-
-
-
-      })
-    });
-    if (!response.ok) {
-      setLoadingTradeSummary(false);
-      toast.error('Failed to fetch trade summary');
-      return;
-    }
-    const data = await response.json();
-    
-    console.log('getTradeSummary data', data);
-
-
-    setTradeSummary(data.result);
-    setLoadingTradeSummary(false);
-    return data.result;
-  }
-
-  useEffect(() => {
-
-    if (!address || !searchFromDate || !searchToDate) {
-      return;
-    }
-
-    getTradeSummary();
-
-    // fetch trade summary every 10 seconds
-    const interval = setInterval(() => {
-      getTradeSummary();
-    }, 10000);
-    return () => clearInterval(interval);
-
-
-  } , [address, searchMyOrders, searchStorecode,
-    searchFromDate, searchToDate,
   ]);
-  */
 
 
-  
 
-  useEffect(() => {
-    // Dynamically load the Binance widget script
-    const script = document.createElement("script");
-    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-    script.async = true;
-    document.body.appendChild(script);
 
-    return () => {
-      // Cleanup the script when the component unmounts
-      document.body.removeChild(script);
-    };
-  }, [address, store]);
 
 
 
@@ -1168,7 +739,6 @@ const fetchBuyOrders = async () => {
   useEffect(() => {
     fetchAllStores();
   }, []); 
-
 
 
 
@@ -1278,49 +848,19 @@ const fetchBuyOrders = async () => {
 
 
 
+
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
 
-        <h1 className="text-2xl font-bold">로그인</h1>
 
-          <ConnectButton
-            client={client}
-            wallets={wallets}
-            /*
-            chain={chain === "ethereum" ? ethereum :
-                    chain === "polygon" ? polygon :
-                    chain === "arbitrum" ? arbitrum :
-                    chain === "bsc" ? bsc : arbitrum}
-            */
-            
-            theme={"light"}
-
-            // button color is dark skyblue convert (49, 103, 180) to hex
-            connectButton={{
-              style: {
-                backgroundColor: "#3167b4", // dark skyblue
-
-                color: "#f3f4f6", // gray-300 
-                padding: "2px 2px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                //width: "40px",
-                height: "38px",
-              },
-              label: "원클릭 로그인",
-            }}
-
-            connectModal={{
-              size: "wide", 
-              //size: "compact",
-              titleIcon: "https://www.stable.makeup/logo.png",                           
-              showThirdwebBranding: false,
-            }}
-
-            locale={"ko_KR"}
-            //locale={"en_US"}
-          />
+        {/* banner-igor-bastidas-7.gif */}
+        <Image
+          src="/banner-igor-bastidas-7.gif"
+          alt="Banner"
+          width={500}
+          height={200}
+        />
 
       </div>
     );
@@ -1370,8 +910,6 @@ const fetchBuyOrders = async () => {
   }
 
 
-
-
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
@@ -1379,31 +917,9 @@ const fetchBuyOrders = async () => {
 
       <div className="py-0 w-full">
 
+
         <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-          {/*
-          <div className="w-full flex flex-row items-center justify-start gap-2">
-            <button
-              onClick={() => router.push('/' + params.lang + '/admin')}
-              className="flex items-center justify-center gap-2
-              rounded-lg p-2
-              hover:bg-black/20
-              hover:cursor-pointer
-              hover:scale-105
-              transition-transform duration-200 ease-in-out"
-
-            >
-              <Image
-                src="/logo.png"
-                alt="logo"
-                width={100}
-                height={100}
-                className="h-10 w-10 rounded-full"
-              />
-            </button>
-          </div>
-          */}
-
-
+            
           {address && !loadingUser && (
 
 
@@ -1468,19 +984,19 @@ const fetchBuyOrders = async () => {
               
             </div>
           )}
-
         </div>
 
 
-        <div className="flex flex-col items-start justify-center gap-2">
 
+
+
+
+        <div className="flex flex-col items-start justify-center gap-2 mt-4">
           
-
           {/* USDT 가격 binance market price */}
           {/*
           <div
             className="
-            h-20
               w-full flex
               binance-widget-marquee
             flex-row items-center justify-center gap-2
@@ -1497,7 +1013,6 @@ const fetchBuyOrders = async () => {
             //data-disclaimer="Disclaimer"
           ></div>
           */}
-
 
           {/* memnu buttons same width left side */}
           <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
@@ -1613,7 +1128,6 @@ const fetchBuyOrders = async () => {
           </div>
 
 
-
           <div className='flex flex-row items-center space-x-4'>
             <Image
               src="/icon-statistics.png"
@@ -1629,17 +1143,17 @@ const fetchBuyOrders = async () => {
 
             {/* 일별, 가맹점별 */}
             <div className="flex flex-row items-start justify-start gap-2">
-              <span className="text-sm font-semibold bg-blue-500 text-white px-2 py-1 rounded-lg">
-                일별
-              </span>
               <button
                 onClick={() => {
-                  router.push('/' + params.lang + '/admin/trade-history-stores');
+                  router.push('/' + params.lang + '/admin/trade-history-daily');
                 }}
                 className="text-sm font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-300"
               >
-                가맹점별
+                일별
               </button>
+              <span className="text-sm font-semibold bg-blue-500 text-white px-2 py-1 rounded-lg">
+                가맹점별
+              </span>
             </div>
             
             <Image
@@ -1653,105 +1167,14 @@ const fetchBuyOrders = async () => {
 
 
 
-          <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-3">
 
 
 
-            {/* select storecode */}
-            <div className="flex flex-row items-center gap-2">
-
-                <Image
-                  src="/icon-store.png"
-                  alt="Store"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-
-                <span className="
-                  w-32
-                  text-sm font-semibold">
-                  가맹점선택
-                </span>
-
-
-                <select
-                  value={searchStorecode}
-                  
-                  //onChange={(e) => setSearchStorecode(e.target.value)}
-
-                  // storecode parameter is passed to fetchBuyOrders
-                  onChange={(e) => {
-                    router.push('/' + params.lang + '/admin/trade-history-daily?storecode=' + e.target.value);
-                  }}
-
-
-
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                >
-                  <option value="">전체</option>
-
-                  {fetchingAllStores && (
-                    <option value="" disabled>
-                      가맹점 검색중...
-                    </option>
-                  )}
-
-                  {!fetchingAllStores && allStores && allStores.map((item, index) => (
-                    <option key={index} value={item.storecode}
-                      className="flex flex-row items-center justify-start gap-2"
-                    >
-                      
-                      {item.storeName}{' '}({item.storecode})
-
-                    </option>
-                  ))}
-                </select>
-
-            </div>
-
-            {/* 가맹점 정보 */}
-            <div className="flex flex-col items-center gap-2">
-
-              <div className="flex flex-row items-center justify-start gap-2">
-                <Image
-                  src="/icon-info.png"
-                  alt="Store Info"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-
-                <span className="text-sm font-semibold">
-                  가맹점 수수료 설정
-                </span>
-              </div>
-              <span className="text-sm text-zinc-500">
-                {!fetchingAllStores ? (searchStorecode && store && store.storeName) ? (
-                  <div className="flex flex-row items-center justify-start gap-2">
-                    <span className="text-sm font-semibold">
-                      AG 수수료율: {store.agentFeePercent ? store.agentFeePercent + '%' : '없음'}
-                    </span>
-                    <span className="text-sm font-semibold">
-                      PG 수수료율: {store.settlementFeePercent ? store.settlementFeePercent + '%' : '없음'}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-red-500">
-                    가맹점 정보가 없습니다.
-                  </span>
-                ) : (
-                  <span className="text-sm text-gray-500">
-                    가맹점 정보를 불러오는 중...
-                  </span>
-                )}
-              </span>
-            </div>
+          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
 
 
             {/* serach fromDate and toDate */}
             {/* DatePicker for fromDate and toDate */}
-            {/*
             <div className="flex flex-col sm:flex-row items-center gap-2">
               <div className="flex flex-row items-center gap-2">
                 <Image
@@ -1786,98 +1209,43 @@ const fetchBuyOrders = async () => {
                   className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                 />
               </div>
-            </div>
-            */}
 
-
-            {/*
-            <div className="flex flex-col items-center gap-2">
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-
-                <div className="flex flex-row items-center gap-2">
-                  <input
-                    type="text"
-                    value={searchBuyer}
-                    onChange={(e) => setSearchBuyer(e.target.value)}
-                    placeholder="회원 아이디"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  />
-                </div>
-
-                <div className="flex flex-row items-center gap-2">
-                  <input
-                    type="text"
-                    value={searchDepositName}
-                    onChange={(e) => setSearchDepositName(e.target.value)}
-                    placeholder="입금자명"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  />
-                </div>
-
-                <div className="flex flex-row items-center gap-2">
-                  <input
-                    type="text"
-                    value={searchStoreBankAccountNumber}
-                    onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                    placeholder="입금통장번호"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  /> 
-                </div>
-
-                <div className="
-                  w-28  
-                  flex flex-row items-center gap-2">
+              <div className="flex flex-row items-center gap-2">
+                  {/* 오늘, 어제 */}
                   <button
                     onClick={() => {
-                      setPageValue(1);
-                      
-                      fetchBuyOrders();
-
-                      getTradeSummary();
+                      // korea time
+                      const today = new Date();
+                      today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                      setSearchFormDate(today.toISOString().split("T")[0]);
+                      setSearchToDate(today.toISOString().split("T")[0]);
                     }}
-                    //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                    className={`${
-                      fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
-                    }
-                    text-white px-4 py-2 rounded-lg w-full
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out`}
-                    title="검색"
-
-                    disabled={fetchingBuyOrders}
+                    className="text-sm text-zinc-500 underline"
                   >
-                    <div className="flex flex-row items-center justify-between gap-2">
-                      <Image
-                        src="/icon-search.png"
-                        alt="Search"
-                        width={20}
-                        height={20}
-                        className="rounded-lg w-5 h-5"
-                      />
-                      <span className="text-sm">
-                        {fetchingBuyOrders ? '검색중...' : '검색'}
-                      </span>
-                    </div>
-
+                    오늘
+                  </button>
+                  <button
+                    onClick={() => {
+                      // korea time yesterday
+                      const today = new Date();
+                      today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+                      const yesterday = new Date(today);
+                      yesterday.setDate(yesterday.getDate() - 1);
+                      setSearchFormDate(yesterday.toISOString().split("T")[0]);
+                      setSearchToDate(yesterday.toISOString().split("T")[0]);
+                    }}
+                    className="text-sm text-zinc-500 underline"
+                  >
+                    어제
                   </button>
                 </div>
 
-              </div>
-
-
-
             </div>
-            */}
-
-
-
 
 
 
           </div>
+
 
 
 
@@ -1889,34 +1257,50 @@ const fetchBuyOrders = async () => {
               <thead className="bg-zinc-200">
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                    날짜
+                    가맹점
                   </th>
                   {/* align right */}
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래수(건)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
 
-                  
+                  {/*
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
-
+                  */}
                   
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">AG 수수료금액(원)</th>
 
+                  
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
 
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
+                  
 
 
                 </tr>
               </thead>
               <tbody>
-                {buyOrders.map((order, index) => (
+                {buyOrders?.map((order, index) => (
                   <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
-                    <td className="px-4 py-2 text-sm text-zinc-700">
-                      {new Date(order.date).toLocaleDateString('ko-KR')}
+                    <td className="px-4 flex flex-row items-center gap-2 py-2 text-sm text-zinc-700">
+                      <Image
+                        src={order.storeLogo || "/logo.png"}
+                        alt="Store Logo"
+                        width={30}
+                        height={30}
+                        className="rounded-lg w-8 h-8"
+                      />
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <span className="text-lg font-semibold">
+                          {order.storeName}
+                        </span>
+                        <span className="text-sm text-zinc-500">
+                          ({order.storecode})
+                        </span>
+                      </div>  
                     </td>
                     {/* align right */}
                     <td className="px-4 py-2 text-sm text-zinc-700 text-right">
@@ -1935,26 +1319,13 @@ const fetchBuyOrders = async () => {
                       {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
 
-                    
+                    {/*
                     <td className="px-4 py-2 text-sm text-zinc-700 text-right">
                       {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
                       {' / '}
                       {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
                     </td>
-                    
-
-
-                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </td>
-
+                    */}
 
                     <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                       style={{ fontFamily: 'monospace' }}
@@ -1967,6 +1338,9 @@ const fetchBuyOrders = async () => {
                       {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
 
+
+
+                    
                     <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                       style={{ fontFamily: 'monospace' }}
                     >
@@ -1978,6 +1352,17 @@ const fetchBuyOrders = async () => {
                       {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
 
+                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
+                    
 
 
                   </tr>
@@ -1996,9 +1381,9 @@ const fetchBuyOrders = async () => {
 
         </div>
 
-      
+    
 
-            
+          
         <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
           <div className="text-sm text-zinc-600">
             © 2024 Stable Makeup. All rights reserved.
@@ -2021,9 +1406,7 @@ const fetchBuyOrders = async () => {
 
 
 
-            
           
-      
       </div>
 
 
@@ -2035,10 +1418,9 @@ const fetchBuyOrders = async () => {
       </Modal>
 
 
-    
     </main>
 
-    );
+  );
 
 
 };
