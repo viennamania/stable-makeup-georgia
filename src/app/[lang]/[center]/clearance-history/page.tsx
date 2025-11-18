@@ -2455,17 +2455,13 @@ export default function Index({ params }: any) {
     }
   };
   useEffect(() => {
-    if (!address) {
-      setSellersBalance([]);
-      return;
-    }
     fetchSellersBalance();
     // interval to fetch every 10 seconds
     const interval = setInterval(() => {
       fetchSellersBalance();
     }, 10000);
     return () => clearInterval(interval);
-  }, [address]);
+  }, [params.center]);
 
 
 
