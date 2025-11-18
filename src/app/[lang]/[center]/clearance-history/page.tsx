@@ -2430,10 +2430,8 @@ export default function Index({ params }: any) {
 
 
 
-  // /api/user/getAllSellersForBalance
   const [sellersBalance, setSellersBalance] = useState([] as any[]);
   
-
   useEffect(() => {
 
     const fetchSellersBalance = async () => {
@@ -3450,7 +3448,7 @@ export default function Index({ params }: any) {
 
             {/* trade summary */}
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2
               w-full
               bg-zinc-100/50
               p-4 rounded-lg shadow-md
