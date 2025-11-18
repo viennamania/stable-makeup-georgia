@@ -52,6 +52,17 @@ export async function POST(request: NextRequest) {
 
   //console.log("getAllStores request body", body);
 
+  if (!storecode) {
+    return NextResponse.json(
+      {
+        error: "storecode is required",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
 
   const result = await getAllStoreSellersForBalanceInquiry({
     storecode: storecode,

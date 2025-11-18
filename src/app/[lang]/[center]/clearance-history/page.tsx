@@ -2432,30 +2432,44 @@ export default function Index({ params }: any) {
 
   // /api/user/getAllSellersForBalance
   const [sellersBalance, setSellersBalance] = useState([] as any[]);
-  const fetchSellersBalance = async () => {
-    const response = await fetch('/api/user/getAllStoreSellersForBalance', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        {
-          storecode: params.center,
-          limit: 100,
-          page: 1,
-        }
-      )
-    });
+  
 
-    const data = await response.json();
-    if (data.result) {
-      setSellersBalance(data.result.users);
-    } else {
-      console.error('Error fetching sellers balance');
-    }
-  };
   useEffect(() => {
+
+    const fetchSellersBalance = async () => {
+
+      if (!params.center) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/getAllStoreSellersForBalance', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            {
+              storecode: params.center,
+              limit: 100,
+              page: 1,
+            }
+          )
+        });
+
+        const data = await response.json();
+        if (data.result) {
+          setSellersBalance(data.result.users);
+        } else {
+          console.error('Error fetching sellers balance');
+        }
+      } catch (error) {
+        console.error('Error fetching sellers balance:', error);
+      }
+    };    
+
     fetchSellersBalance();
+
     // interval to fetch every 10 seconds
     const interval = setInterval(() => {
       fetchSellersBalance();
