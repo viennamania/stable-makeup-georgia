@@ -3237,17 +3237,17 @@ export default function Index({ params }: any) {
                         <div className="flex flex-col sm:flex-row gap-2">
                           <span className="text-sm">
                             {
-                              user && user.seller?.bankInfo.bankName
+                              user && user.seller?.bankInfo?.bankName
                             }
                           </span>
                           <span className="text-sm">
                             {
-                              user && user.seller?.bankInfo.accountNumber
+                              user && user.seller?.bankInfo?.accountNumber
                             }
                           </span>
                           <span className="text-sm">
                             {
-                              user && user.seller?.bankInfo.accountHolder
+                              user && user.seller?.bankInfo?.accountHolder
                             }
                           </span>
                         </div>
