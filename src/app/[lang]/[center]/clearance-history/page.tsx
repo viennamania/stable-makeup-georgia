@@ -3216,67 +3216,6 @@ export default function Index({ params }: any) {
 
           <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-5">
 
-    
-            <div className="hidden flex-row items-start gap-3">
-
-
-
-
-              {address && !loadingUser && (
-
-                <div className="flex flex-row gap-5 items-center p-2">
-
-                  <div className="flex flex-row items-center gap-2">
-
-
-                    <div className="flex flex-row items-center gap-2">
-                
-                      
-                      <div className="flex flex-col gap-2">
-
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <span className="text-sm">
-                            {
-                              user && user.seller?.bankInfo?.bankName
-                            }
-                          </span>
-                          <span className="text-sm">
-                            {
-                              user && user.seller?.bankInfo?.accountNumber
-                            }
-                          </span>
-                          <span className="text-sm">
-                            {
-                              user && user.seller?.bankInfo?.accountHolder
-                            }
-                          </span>
-                        </div>
-
-                        {/* go to profile */}
-                        {!user?.seller && (
-                          <button
-                            onClick={() => {
-                              router.push('/' + params.lang + '/' + params.center + '/seller-settings');
-                            }}
-                            className="text-sm text-zinc-500 underline"
-                          >
-                            판매를 위해서 판매자 설정을 해야합니다.
-                          </button>
-                        )}
-
-                      </div>
-
-                    </div>
-
-                  </div>
-
-
-                </div>
-
-              )}
-
-            </div>
-
 
             {/*
             {address && (
