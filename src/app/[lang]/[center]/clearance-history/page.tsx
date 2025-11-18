@@ -2429,21 +2429,43 @@ export default function Index({ params }: any) {
 
 
 
+
+  // /api/user/getAllSellersForBalance
+  const [sellersBalance, setSellersBalance] = useState([] as any[]);
+  const fetchSellersBalance = async () => {
+    const response = await fetch('/api/user/getAllStoreSellersForBalance', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(
+        {
+          storecode: params.center,
+          limit: 100,
+          page: 1,
+        }
+      )
+    });
+
+    const data = await response.json();
+    if (data.result) {
+      setSellersBalance(data.result.users);
+    } else {
+      console.error('Error fetching sellers balance');
+    }
+  };
   useEffect(() => {
-    // Dynamically load the Binance widget script
-    const script = document.createElement("script");
-    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup the script when the component unmounts
-      document.body.removeChild(script);
-    };
-  }, [address, store]);
-    
-
-
+    if (!address) {
+      setSellersBalance([]);
+      return;
+    }
+    fetchSellersBalance();
+    // interval to fetch every 10 seconds
+    const interval = setInterval(() => {
+      fetchSellersBalance();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [address]);
 
 
 
@@ -3740,6 +3762,74 @@ export default function Index({ params }: any) {
 
           */}
 
+
+
+          {sellersBalance.length > 0 && (
+            <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
+              mt-4
+              ">
+
+              {sellersBalance.map((seller, index) => (
+                <div key={index}
+                  className="flex flex-row items-center justify-between gap-4
+                  bg-white/80
+                  p-4 rounded-lg shadow-md
+                  backdrop-blur-md
+                  ">
+                  <div className="flex flex-row items-center gap-4">
+                    <Image
+                      src="/icon-seller.png"
+                      alt="Seller"
+                      width={40}
+                      height={40}
+                      className="w-10 h-10"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold">
+                        {seller.nickname}
+                      </span>
+                      <button
+                        className="text-sm text-zinc-600 underline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(seller.walletAddress);
+                          toast.success(Copied_Wallet_Address);
+                        } }
+                      >
+                        {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-row items-center gap-2">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="USDT"
+                      width={30}
+                      height={30}
+                      className="w-7 h-7"
+                    />
+                    <span className="text-2xl font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}>
+                      {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </span>
+                  </div>
+
+                  {/* if seller nickname is 'seller', then show withdraw button */}
+                  {seller.nickname === 'seller' && (
+                    <button
+                      onClick={() => {
+                        router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
+                      }}
+                      className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    >
+                      출금하기
+                    </button>
+                  )}
+
+                </div>
+              ))}
+
+            </div>
+          )}
 
 
 
