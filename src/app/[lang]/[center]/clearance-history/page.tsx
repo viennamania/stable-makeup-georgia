@@ -3837,7 +3837,16 @@ export default function Index({ params }: any) {
                     <th className="p-2">{Payment_Amount}</th>
                     */}
 
-                    <th className="p-2">{Seller} / {Status}</th>
+                    <th className="p-2">
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm">
+                          {Seller}
+                        </span>
+                        <span className="text-sm">
+                          {Status}
+                        </span>
+                      </div>
+                    </th>
                     <th className="p-2">거래취소</th>
                     <th className="p-2">
                       {
@@ -3992,7 +4001,7 @@ export default function Index({ params }: any) {
                                 className="w-5 h-5"
                               />
                               <span className="text-sm font-semibold text-zinc-800">
-                                {item.walletAddress.slice(0, 6) + '...'}
+                                {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
                               </span>
                             </div>
 
@@ -4368,7 +4377,7 @@ export default function Index({ params }: any) {
                         flex flex-row gap-2 items-start justify-start">
 
 
-                          {item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
+                          {item.status === 'accepted' && store?.adminWalletAddress === address && (
                             
                             <div className="flex flex-row items-center gap-2">
                               <input
@@ -4517,7 +4526,7 @@ export default function Index({ params }: any) {
 
                           
                           {
-                            item.seller && item.seller.walletAddress === address &&
+                            store?.adminWalletAddress === address &&
                             item.status === 'accepted' && (
                             <div className="flex flex-row gap-2">
 
@@ -4736,10 +4745,13 @@ export default function Index({ params }: any) {
 
                             </div>
 
-                          
+                          )}
 
-
-
+                          {item.seller && item.seller.walletAddress !== address &&   
+                          item.status === 'paymentRequested' && (
+                            <div className="text-sm text-yellow-600 font-semibold">
+                              구매자에개 {item.usdtAmount.toFixed(3).replace(/\.?0+$/, '')} USDT 전송중...
+                            </div>
                           )}
 
                           

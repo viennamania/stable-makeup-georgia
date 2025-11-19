@@ -2769,35 +2769,41 @@ export default function Index({ params }: any) {
 
 
                             <td className="p-2">
-                              <div className="flex flex-col items-start justify-center gap-1">
+                              {item?.seller?.walletAddress ? (
+                                <div className="flex flex-col items-start justify-center gap-1">
 
-                                <div className="flex flex-row items-center gap-1">
-                                  <Image
-                                    src="/icon-seller.png"
-                                    alt="Seller"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5 rounded-full"
-                                  />
-                                  <span className="text-lg text-zinc-600">
-                                    {item?.seller?.nickname || '익명'}
-                                  </span>
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-seller.png"
+                                      alt="Seller"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-600">
+                                      {item?.seller?.nickname || '익명'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-sm">
+                                      {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
+                                    </span>
+                                  </div>
+
                                 </div>
-
-                                <div className="flex flex-row items-center gap-1">
-                                  <Image
-                                    src="/icon-shield.png"
-                                    alt="Shield"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5 rounded-full"
-                                  />
-                                  <span className="text-sm">
-                                    {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
-                                  </span>
-                                </div>
-
-                              </div>
+                              ) : (
+                                <span className="text-lg text-zinc-600">
+                                  판매자 확인중...
+                                </span>
+                              )}
                             </td>
 
 
@@ -3104,7 +3110,7 @@ export default function Index({ params }: any) {
 
                               {item.status === 'paymentRequested' && (
 
-                                <div className="flex flex-row gap-1">
+                                <div className="flex flex-col items-center justify-center gap-2">
 
                                   <span className="text-lg font-semibold text-yellow-600">
                                     결제요청
