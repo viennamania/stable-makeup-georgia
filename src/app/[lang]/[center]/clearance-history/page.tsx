@@ -3746,6 +3746,7 @@ export default function Index({ params }: any) {
                       </button>
                     </div>
                   </div>
+                  {/*
                   <div className="flex flex-row items-center gap-2">
                     <Image
                       src="/icon-tether.png"
@@ -3759,8 +3760,10 @@ export default function Index({ params }: any) {
                       {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </span>
                   </div>
+                  */}
 
                   {/* if seller nickname is 'seller', then show withdraw button */}
+                  {/*
                   {seller.nickname === 'seller' && (
                     <button
                       onClick={() => {
@@ -3771,6 +3774,7 @@ export default function Index({ params }: any) {
                       출금하기
                     </button>
                   )}
+                  */}
 
                 </div>
               ))}

@@ -3660,6 +3660,7 @@ const [tradeSummary, setTradeSummary] = useState({
                       </button>
                     </div>
                   </div>
+                  {/*
                   <div className="flex flex-row items-center gap-2">
                     <Image
                       src="/icon-tether.png"
@@ -3673,8 +3674,10 @@ const [tradeSummary, setTradeSummary] = useState({
                       {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </span>
                   </div>
+                  */}
 
                   {/* if seller nickname is 'seller', then show withdraw button */}
+                  {/*
                   {seller.nickname === 'seller' && (
                     <button
                       onClick={() => {
@@ -3685,6 +3688,7 @@ const [tradeSummary, setTradeSummary] = useState({
                       출금하기
                     </button>
                   )}
+                  */}
 
                 </div>
               ))}
