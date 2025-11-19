@@ -4317,7 +4317,7 @@ const [tradeSummary, setTradeSummary] = useState({
 
                             {
                             (item.status === 'accepted' || item.status === 'paymentRequested')
-                            && item.seller && item.seller.walletAddress === address && (
+                            && store.adminWalletAddress === address && (
                               
                               <div className="flex flex-row items-center gap-2">
                                 {/*}

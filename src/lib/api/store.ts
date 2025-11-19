@@ -1528,3 +1528,29 @@ export async function updateViewOnAndOff(
   }
 }
 
+
+
+
+
+// getPrivateSellerWalletAddressFromStorecode
+export async function getPrivateSellerWalletAddressFromStorecode(
+  {
+    storecode,
+  }: {
+    storecode: string;
+  }
+): Promise<string | null> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  // get storecode
+  const result = await collection.findOne<any>(
+    { storecode: storecode },
+    { projection: { privateSellerWalletAddress: 1 } }
+  );
+  if (result && result.privateSellerWalletAddress) {
+    return result.privateSellerWalletAddress;
+  } else {
+    return null;
+  }
+}

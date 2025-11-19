@@ -4,18 +4,26 @@ import {
 	insertBuyOrderForUser,
 } from '@lib/api/order';
 
-/*
 import {
-  getAgentByStorecode,
-} from '@lib/api/agent';
-*/
+  getPrivateSellerWalletAddressFromStorecode,
+} from '@lib/api/store';
 
 
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const { storecode, walletAddress, nickname, usdtAmount, krwAmount, rate, privateSale, buyer, seller } = body;
+  const {
+    storecode,
+    walletAddress,
+    nickname,
+    usdtAmount,
+    krwAmount,
+    rate,
+    privateSale,
+    buyer,
+    seller
+  } = body;
 
 
 
@@ -35,13 +43,21 @@ export async function POST(request: NextRequest) {
   */
 
 
-  const result = await insertBuyOrderForUser({
-   
+  let sellerInfo = seller;
+  // get private seller wallet address from storecode
 
+  const privateSellerWalletAddress = await getPrivateSellerWalletAddressFromStorecode({ storecode });
+  if (privateSale && privateSellerWalletAddress) {
+    sellerInfo = {
+      walletAddress: privateSellerWalletAddress,
+    };
+  }
+
+
+  const result = await insertBuyOrderForUser({
     storecode: storecode,
     
     walletAddress: walletAddress,
-
 
     nickname: nickname,
     usdtAmount: usdtAmount,
@@ -49,7 +65,7 @@ export async function POST(request: NextRequest) {
     rate: rate,
     privateSale: privateSale,
     buyer: buyer,
-    seller: seller,
+    seller: sellerInfo,
   });
 
 
