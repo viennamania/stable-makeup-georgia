@@ -151,6 +151,7 @@ export async function getStoreByStorecode(
 
         adminWalletAddress: 1,
         settlementWalletAddress: 1,
+        privateSellerWalletAddress: 1,
         agentFeePercent: 1,
         agentFeeWalletAddress: 1,
 
@@ -431,6 +432,32 @@ export async function updateStoreSettlementWalletAddress(
     return false;
   }
 }
+
+
+// updateStorePrivateSellerWalletAddress
+export async function updateStorePrivateSellerWalletAddress(
+  {
+    storecode,
+    privateSellerWalletAddress,
+  }: {
+    storecode: string;
+    privateSellerWalletAddress: string;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { privateSellerWalletAddress: privateSellerWalletAddress } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 
 
 //  updateStoreSettlementFeeWalletAddress

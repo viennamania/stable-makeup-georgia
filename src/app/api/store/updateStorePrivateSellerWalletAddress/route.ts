@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-	getStoreByStorecode ,
+	updateStorePrivateSellerWalletAddress,
 } from '@lib/api/store';
 
 
@@ -11,12 +11,13 @@ export async function POST(request: NextRequest) {
 
   const {
     storecode,
-    walletAddress,
+    privateSellerWalletAddress,
   } = body;
 
 
-  const result = await getStoreByStorecode({
+  const result = await updateStorePrivateSellerWalletAddress({
     storecode,
+    privateSellerWalletAddress,
   });
 
  
