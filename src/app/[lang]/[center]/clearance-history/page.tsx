@@ -4170,11 +4170,22 @@ export default function Index({ params }: any) {
                           )}
 
                           {item.status === 'paymentRequested' && (
-                            <div className="flex flex-row gap-2 items-center justify-center">
-                              
-                              <div className="text-sm text-zinc-500">
-                                {item.seller?.nickname}
+                            <div className="flex flex-col gap-2 items-center justify-center">
+                              <div className="flex flex-row gap-2 items-center justify-center">
+                                <Image
+                                  src="/icon-shield.png"
+                                  alt="Shield"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <span className="text-sm text-zinc-800 font-semibold">
+                                  {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
+                                </span>
                               </div>
+                              <span className="text-sm text-zinc-500">
+                                {item.seller?.nickname}
+                              </span>
                               
                               <div className="text-sm text-[#409192]
                                 border border-green-600 rounded-lg p-2
