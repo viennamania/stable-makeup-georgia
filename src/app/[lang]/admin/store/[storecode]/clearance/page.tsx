@@ -852,7 +852,9 @@ export default function Index({ params }: any) {
           storecode: params.storecode,
 
           ////////////walletAddress: address,
-          walletAddress: store.sellerWalletAddress,
+          //walletAddress: store.sellerWalletAddress,
+          walletAddress: store?.privateSaleWalletAddress || store?.sellerWalletAddress,
+
 
           usdtAmount: orderUsdtAmount,
           krwAmount: krwAmount,

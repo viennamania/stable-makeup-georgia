@@ -101,7 +101,12 @@ export async function POST(request: NextRequest) {
 
     if (buyorder.privateSale) {
 
-      sellerWalletAddress = store?.adminWalletAddress;
+      
+      ////////////////sellerWalletAddress = store?.adminWalletAddress;
+      // privateSellerWalletAddress
+      sellerWalletAddress = store?.privateSellerWalletAddress || store?.settlementWalletAddress || store?.adminWalletAddress;
+
+
 
     } else {
 
