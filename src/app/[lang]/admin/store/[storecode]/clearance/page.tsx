@@ -3004,6 +3004,7 @@ export default function Index({ params }: any) {
                                     }
                                   </span>
 
+                                  {item.transactionHash && item.transactionHash !== '0x' && (
                                   <button
                                     className="text-sm text-blue-600 font-semibold
                                       border border-blue-600 rounded-lg p-2
@@ -3048,8 +3049,7 @@ export default function Index({ params }: any) {
                                       </span>
                                     </div>
                                   </button>
-
-
+                                  )}
 
                                 </div>
                               )}

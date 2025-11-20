@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const {
-    lang,
+    //lang,
     storecode,
     orderId,
     paymentAmount,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
   } = body;
 
 
-  console.log("lang", lang);
+  //console.log("lang", lang);
   console.log("storecode", storecode);
 
   console.log("orderId", orderId);
@@ -195,8 +195,8 @@ export async function POST(request: NextRequest) {
 
 
     const result = await buyOrderConfirmPayment({
-      lang: lang,
-      storecode: storecode,
+      //lang: lang,
+      //storecode: storecode,
       orderId: orderId,
       paymentAmount: paymentAmount,
       
