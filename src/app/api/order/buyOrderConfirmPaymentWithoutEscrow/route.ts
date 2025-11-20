@@ -152,6 +152,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    /*
     // check seller exists
     const user = await checkSellerByWalletAddress(
       storecode,
@@ -165,6 +166,7 @@ export async function POST(request: NextRequest) {
         result: null,
       });
     }
+    */
 
 
     // get balance of seller wallet address
