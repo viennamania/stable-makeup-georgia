@@ -3004,7 +3004,7 @@ export default function Index({ params }: any) {
                                     }
                                   </span>
 
-                                  {item.transactionHash && item.transactionHash !== '0x' && (
+                                  {item.transactionHash && item.transactionHash !== '0x' ? (
                                   <button
                                     className="text-sm text-blue-600 font-semibold
                                       border border-blue-600 rounded-lg p-2
@@ -3049,6 +3049,12 @@ export default function Index({ params }: any) {
                                       </span>
                                     </div>
                                   </button>
+                                  ) : (
+                                  <div className="text-sm text-green-600 font-semibold
+                                    border border-green-600 rounded-lg p-2
+                                    ">
+                                    TXID 업데이트 중...
+                                  </div>
                                   )}
 
                                 </div>
@@ -3113,7 +3119,7 @@ export default function Index({ params }: any) {
                                 <div className="flex flex-col items-center justify-center gap-2">
 
                                   <span className="text-lg font-semibold text-yellow-600">
-                                    결제요청
+                                    USDT 전송요청
                                   </span>
 
                                   {/* cancelTrade button */}

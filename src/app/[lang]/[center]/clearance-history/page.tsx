@@ -4211,14 +4211,10 @@ export default function Index({ params }: any) {
 
 
                               
-                              <div className="text-sm text-[#409192]
-                                border border-green-600 rounded-lg p-2
+                              <div className="text-sm text-yellow-600
+                                border border-yellow-600 rounded-lg p-2
                                 ">
-                                {/*Waiting_for_seller_to_deposit*/}
-
-                                결제요청
-
-
+                                USDT 전송요청
                               </div>
 
 
@@ -4250,6 +4246,21 @@ export default function Index({ params }: any) {
                           {item.status === 'paymentConfirmed' && (
                             <div className="flex flex-col gap-2 items-center justify-center">
 
+                              {item.seller?.nickname && (
+                                <div className="flex flex-row gap-1 items-center justify-center">
+                                  <Image
+                                    src="/icon-seller.png"
+                                    alt="Seller"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <span className="text-lg font-semibold text-zinc-500">
+                                    {item.seller?.nickname}
+                                  </span>
+                                </div>
+                              )}
+
                               <div className="flex flex-row gap-1 items-center justify-center">
                                 <Image
                                   src="/icon-shield.png"
@@ -4260,18 +4271,19 @@ export default function Index({ params }: any) {
                                 />
                                 <span className="text-sm text-zinc-800 font-semibold">
                                   {
-                                    ///item.store.sellerWalletAddress.slice(0, 6) + '...' + item.store.sellerWalletAddress.slice(-4)
-                                    item.seller?.walletAddress.slice(0, 6) + '...'
+                                    item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
                                   }
                                 </span>
                               </div>
 
 
-                              <span className="text-lg font-semibold text-yellow-600">
+                              <span className="text-sm text-green-600
+                                border border-green-600 rounded-lg p-2
+                                ">
                                 {Completed}
                               </span>
 
-                              {item.transactionHash && item.transactionHash !== '0x' && (
+                              {item.transactionHash && item.transactionHash !== '0x' ? (
                               <button
                                 className="text-sm text-blue-600 font-semibold
                                   border border-blue-600 rounded-lg p-2
@@ -4316,6 +4328,12 @@ export default function Index({ params }: any) {
                                   </span>
                                 </div>
                               </button>
+                              ) : (
+                                  <div className="text-sm text-green-600 font-semibold
+                                    border border-green-600 rounded-lg p-2
+                                    ">
+                                    TXID 업데이트 중...
+                                  </div>
                               )}
 
 
