@@ -130,69 +130,124 @@ export async function POST(request: NextRequest) {
     }
 
 
-    const sellerStorecode = "admin";
+    let sellerStorecode = "";
 
     let sellerMemo = "";
 
-
+    // 프라이빗 세일인 경우, 판매자의 은행 정보가 있는지 확인한다.
     // 프라이빗 세일이 아닌 경우, 판매자의 은행 정보가 있는지 확인한다.
-    if (!buyorder.privateSale) {
+    if (buyorder.privateSale) {
+
+      sellerStorecode = storecode;
     
-        const userSeller = await getOneByWalletAddress(
-          sellerStorecode,
-          sellerWalletAddress
-        );
+      const userSeller = await getOneByWalletAddress(
+        sellerStorecode,
+        sellerWalletAddress
+      );
+      if (!userSeller
+        
+        //|| !userSeller.seller
+
+        //|| !userSeller.seller.bankInfo
+        //|| !userSeller.seller.bankInfo.bankName
+        //|| !userSeller.seller.bankInfo.accountNumber
+        //|| !userSeller.seller.bankInfo.accountHolder
+      ) {
+        console.log("error");
+        console.log("userSeller is null");
+        console.log("userSeller", userSeller);
+
+        // delete order
+        //await collectionOrders.deleteOne({ _id: order._id });
+
+        //console.log("order deleted");
+        /*
+          // update order set status = "cancelled"
+          await collectionOrders.updateOne(
+            { _id: orderId },
+            { $set: {
+              statusUpdater: "acceptBuyOrderTask",
+              status: "cancelled",
+              cancelledAt: new Date(),
+              cancelTradeReason: "판매자 정보가 없습니다.",
+
+            } }
+          );
+          */
+
+        await cancelTradeBySeller({
+          storecode: sellerStorecode,
+          orderId: buyorder._id,
+          walletAddress: sellerWalletAddress,
+          cancelTradeReason: "등록된 판매자 정보가 없습니다.",
+        });
+
+        console.log("order cancelled");
+        
+        continue;
+      }
+
+      sellerMemo = userSeller?.seller?.bankInfo?.bankName + " " + userSeller?.seller?.bankInfo?.accountNumber + " " + userSeller?.seller?.bankInfo?.accountHolder;
 
 
-        if (!userSeller
-          
-          //|| !userSeller.seller
-
-          //|| !userSeller.seller.bankInfo
-          //|| !userSeller.seller.bankInfo.bankName
-          //|| !userSeller.seller.bankInfo.accountNumber
-          //|| !userSeller.seller.bankInfo.accountHolder
-        ) {
-          console.log("error");
-          console.log("userSeller is null");
-          console.log("userSeller", userSeller);
-
-          // delete order
-          //await collectionOrders.deleteOne({ _id: order._id });
-
-          //console.log("order deleted");
-          /*
-
-            // update order set status = "cancelled"
-            await collectionOrders.updateOne(
-              { _id: orderId },
-              { $set: {
-                statusUpdater: "acceptBuyOrderTask",
-                status: "cancelled",
-                cancelledAt: new Date(),
-                cancelTradeReason: "판매자 정보가 없습니다.",
-
-              } }
-            );
-            */
-
-          await cancelTradeBySeller({
-            storecode: sellerStorecode,
-            orderId: buyorder._id,
-            walletAddress: sellerWalletAddress,
-            cancelTradeReason: "등록된 판매자 정보가 없습니다.",
-          });
 
 
-          console.log("order cancelled");
-          
-          continue;
-        }
+    } else {
+
+      sellerStorecode = "admin";
+    
+      const userSeller = await getOneByWalletAddress(
+        sellerStorecode,
+        sellerWalletAddress
+      );
 
 
-        sellerMemo = userSeller?.seller?.bankInfo?.bankName + " " + userSeller?.seller?.bankInfo?.accountNumber + " " + userSeller?.seller?.bankInfo?.accountHolder;
+      if (!userSeller
+        
+        //|| !userSeller.seller
 
-  
+        //|| !userSeller.seller.bankInfo
+        //|| !userSeller.seller.bankInfo.bankName
+        //|| !userSeller.seller.bankInfo.accountNumber
+        //|| !userSeller.seller.bankInfo.accountHolder
+      ) {
+        console.log("error");
+        console.log("userSeller is null");
+        console.log("userSeller", userSeller);
+
+        // delete order
+        //await collectionOrders.deleteOne({ _id: order._id });
+
+        //console.log("order deleted");
+        /*
+
+          // update order set status = "cancelled"
+          await collectionOrders.updateOne(
+            { _id: orderId },
+            { $set: {
+              statusUpdater: "acceptBuyOrderTask",
+              status: "cancelled",
+              cancelledAt: new Date(),
+              cancelTradeReason: "판매자 정보가 없습니다.",
+
+            } }
+          );
+          */
+
+        await cancelTradeBySeller({
+          storecode: sellerStorecode,
+          orderId: buyorder._id,
+          walletAddress: sellerWalletAddress,
+          cancelTradeReason: "등록된 판매자 정보가 없습니다.",
+        });
+
+
+        console.log("order cancelled");
+        
+        continue;
+      }
+
+      sellerMemo = userSeller?.seller?.bankInfo?.bankName + " " + userSeller?.seller?.bankInfo?.accountNumber + " " + userSeller?.seller?.bankInfo?.accountHolder;
 
     } 
 

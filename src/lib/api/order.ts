@@ -1894,6 +1894,9 @@ export async function insertBuyOrderForClearance(data: any) {
       buyer: data.buyer,
 
       tradeId: tradeId,
+
+      transactionHash: '0x',
+      queueId: null,
     }
   );
 
@@ -3391,27 +3394,11 @@ export async function getBuyOrdersForSeller(
 // accept buy order
 // update order status to accepted
 
+
 export async function acceptBuyOrder(data: any) {
-  
-  //console.log('acceptBuyOrder data: ' + JSON.stringify(data));
-
-
-  
-
-  /*
-  acceptBuyOrder data: {"lang":"kr","chain":"polygon",
-  "orderId":"66cbe428254954dcc8929528",
-  "sellerWalletAddress":"0x919eB871C4F99b860Da992f51260790BF6dc25a7",
-  "sellerNickname":"",
-  "sellerAvatar":""}
-  */
-
-
-
-
+ 
   if (!data.orderId || !data.storecode || !data.sellerWalletAddress
     || !data.sellerStorecode
-
   ) {
     return null;
   }
@@ -3419,39 +3406,11 @@ export async function acceptBuyOrder(data: any) {
   const sellerMemo = data.sellerMemo || '';
 
 
-  //const bankInfo = data?.seller?.bankInfo || {};
-
-
-  ///console.log('acceptBuyOrder bankInfo: ' + JSON.stringify(bankInfo));
-
-
-
-  /*
-    if (!data.walletAddress || !data.sellerStatus || !data.bankName || !data.accountNumber || !data.accountHolder) {
-    return null;
-  }
-
-  const seller = {
-    status: data.sellerStatus,
-    bankInfo: {
-      bankName: data.bankName,
-      accountNumber: data.accountNumber,
-      accountHolder: data.accountHolder,
-    }
-  };
-  */
-
-
   const client = await clientPromise;
 
-
-
   const buyorderCollection = client.db(dbName).collection('buyorders');
-
   const storeCollection = client.db(dbName).collection('stores');
   const userCollection = client.db(dbName).collection('users');
-
-
 
   const store = await storeCollection.findOne<any>(
     {
@@ -3459,20 +3418,13 @@ export async function acceptBuyOrder(data: any) {
     },
   );
   if (!store) {
-
     console.log('acceptBuyOrder storecode is not valid: ' + data.storecode);
     return null;
   }
 
 
-
   // get user by wallet address
   let user: UserProps | null = null;
-
-
-
-
-
 
 
   // if privateSale is false, then get user by storecode and walletAddress
@@ -3486,27 +3438,20 @@ export async function acceptBuyOrder(data: any) {
       } }
     );
 
-
-  if (order && order?.privateSale === false) {
+  //if (order?.privateSale === false) {
     
-
-
     user = await userCollection.findOne<UserProps>(
       {
         walletAddress: data.sellerWalletAddress,
         storecode: data.sellerStorecode,
       },
     );
-
     if (!user) {
-
       console.log('acceptBuyOrder user is null: ' + JSON.stringify(user));
-
-
       return null;
     }
 
-  }
+  //}
 
 
 
