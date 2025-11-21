@@ -2740,7 +2740,7 @@ export default function Index({ params }: any) {
                        
 
                         {/* if seller nickname is 'seller', then show withdraw button */}
-                        {/*
+                        
                         {seller.nickname === 'seller' && (
                           <button
                             onClick={() => {
@@ -2751,7 +2751,7 @@ export default function Index({ params }: any) {
                             출금하기
                           </button>
                         )}
-                        */}
+                        
 
                       </div>
                     ))}
