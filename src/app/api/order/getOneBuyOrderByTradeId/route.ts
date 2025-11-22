@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
   if (!body.tradeId) return NextResponse.json({ error: 'tradeId is required' }, { status: 400 });
 
 
-  const result = await getOneBuyOrderByTradeId(body.tradeId);
+  const result = await getOneBuyOrderByTradeId({
+    tradeId: body.tradeId,
+  });
  
   return NextResponse.json({
     result,
