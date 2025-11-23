@@ -1631,7 +1631,7 @@ export async function insertBuyOrder(data: any) {
 
 
 
-  const tradeId = Math.floor(Math.random() * 90000000) + 10000000 + '';
+  const tradeId = Math.floor(Math.random() * 900000000) + 100000000 + '';
 
   ///console.log('insertBuyOrder tradeId: ' + tradeId);
 
@@ -1858,7 +1858,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
 
 
-  const tradeId = Math.floor(Math.random() * 90000000) + 10000000 + '';
+  const tradeId = Math.floor(Math.random() * 900000000) + 100000000 + '';
 
   ///console.log('insertBuyOrder tradeId: ' + tradeId);
 
@@ -2043,7 +2043,7 @@ export async function insertBuyOrderForUser(data: any) {
 
 
 
-  const tradeId = Math.floor(Math.random() * 90000000) + 10000000 + '';
+  const tradeId = Math.floor(Math.random() * 900000000) + 100000000 + '';
 
   ///console.log('insertBuyOrder tradeId: ' + tradeId);
 
