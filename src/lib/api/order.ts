@@ -4727,15 +4727,15 @@ export async function getAllBuyOrdersBySellerAccountNumber(
   {
     limit,
     page,
-    startDate, // 2025-04-01
-    endDate,   // 2025-04-30
+    fromDate,
+    toDate,
     privateSale,
     accountNumber,
   }: {
     limit: number;
     page: number;
-    startDate: string;
-    endDate: string;
+    fromDate: string;
+    toDate: string;
     privateSale: boolean;
     accountNumber: string;
   }
@@ -4747,7 +4747,7 @@ export async function getAllBuyOrdersBySellerAccountNumber(
       'seller.bankInfo.accountNumber': accountNumber,
       status: 'paymentConfirmed',
       privateSale: privateSale,
-      paymentConfirmedAt: { $gte: startDate, $lt: endDate },
+      paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
     }
   ).sort({ paymentConfirmedAt: -1 })
     .limit(limit).skip((page - 1) * limit).toArray();
@@ -4757,7 +4757,7 @@ export async function getAllBuyOrdersBySellerAccountNumber(
       'seller.bankInfo.accountNumber': accountNumber,
       status: 'paymentConfirmed',
       privateSale: privateSale,
-      paymentConfirmedAt: { $gte: startDate, $lt: endDate },
+      paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
     }
   );
   return {
