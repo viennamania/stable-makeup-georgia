@@ -4722,7 +4722,51 @@ export async function getAllBuyOrdersBySeller(
 }
 
 
+// getAllBuyOrdersBySellerAccountNumber
+export async function getAllBuyOrdersBySellerAccountNumber(
+  {
+    limit,
+    page,
+    startDate, // 2025-04-01
+    endDate,   // 2025-04-30
+    privateSale,
+    accountNumber,
+  }: {
+    limit: number;
+    page: number;
+    startDate: string;
+    endDate: string;
+    privateSale: boolean;
+    accountNumber: string;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const results = await collection.find<UserProps>(
+    {
+      'seller.bankInfo.accountNumber': accountNumber,
+      status: 'paymentConfirmed',
+      privateSale: privateSale,
+      paymentConfirmedAt: { $gte: startDate, $lt: endDate },
+    }
+  ).sort({ paymentConfirmedAt: -1 })
+    .limit(limit).skip((page - 1) * limit).toArray();
+  // get total count of orders
+  const totalCount = await collection.countDocuments(
+    {
+      'seller.bankInfo.accountNumber': accountNumber,
+      status: 'paymentConfirmed',
+      privateSale: privateSale,
+      paymentConfirmedAt: { $gte: startDate, $lt: endDate },
+    }
+  );
+  return {
+    totalCount: totalCount,
+    orders: results,
+  };
 
+
+}
 
 
 
