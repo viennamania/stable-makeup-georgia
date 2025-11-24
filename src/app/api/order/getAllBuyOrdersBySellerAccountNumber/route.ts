@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-	getAllBuyOrdersBySeller
+	getAllBuyOrdersBySellerAccountNumber
 } from '@lib/api/order';
 
 
@@ -15,17 +15,19 @@ export async function POST(request: NextRequest) {
     page,
     startDate,
     endDate,
-    walletAddress
+    privateSale,
+    accountNumber,
   } = body;
 
 
 
-  const result = await getAllBuyOrdersBySeller({
+  const result = await getAllBuyOrdersBySellerAccountNumber({
     limit: limit || 10,
     page: page || 1,
     startDate,
     endDate,
-    walletAddress,
+    privateSale,
+    accountNumber,
   });
 
 
