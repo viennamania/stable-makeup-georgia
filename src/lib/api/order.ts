@@ -4745,11 +4745,11 @@ export async function getAllBuyOrdersBySellerAccountNumber(
   const results = await collection.find<UserProps>(
     {
       
-      //'seller.bankInfo.accountNumber': accountNumber,
+      'seller.bankInfo.accountNumber': accountNumber,
       // if seller.bankInfo.accountNumber has spaces, remove spaces before compare
-      'seller.bankInfo.accountNumber': {
-        $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
-      },
+      //'seller.bankInfo.accountNumber': {
+      //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
+      //},
 
 
       status: 'paymentConfirmed',
@@ -4763,12 +4763,11 @@ export async function getAllBuyOrdersBySellerAccountNumber(
   // get total count of orders
   const totalCount = await collection.countDocuments(
     {
-      //'seller.bankInfo.accountNumber': accountNumber,
+      'seller.bankInfo.accountNumber': accountNumber,
       // if seller.bankInfo.accountNumber has spaces, remove spaces before compare
-      'seller.bankInfo.accountNumber': {
-        $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
-      },
-
+      //'seller.bankInfo.accountNumber': {
+      //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
+      //},
 
       status: 'paymentConfirmed',
       
