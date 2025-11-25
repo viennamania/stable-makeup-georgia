@@ -4744,9 +4744,18 @@ export async function getAllBuyOrdersBySellerAccountNumber(
   const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<UserProps>(
     {
-      'seller.bankInfo.accountNumber': accountNumber,
+      
+      //'seller.bankInfo.accountNumber': accountNumber,
+      // if seller.bankInfo.accountNumber has spaces, remove spaces before compare
+      'seller.bankInfo.accountNumber': {
+        $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
+      },
+
+
       status: 'paymentConfirmed',
-      privateSale: privateSale,
+      
+      //privateSale: privateSale,
+
       paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
     }
   ).sort({ paymentConfirmedAt: -1 })
@@ -4754,9 +4763,17 @@ export async function getAllBuyOrdersBySellerAccountNumber(
   // get total count of orders
   const totalCount = await collection.countDocuments(
     {
-      'seller.bankInfo.accountNumber': accountNumber,
+      //'seller.bankInfo.accountNumber': accountNumber,
+      // if seller.bankInfo.accountNumber has spaces, remove spaces before compare
+      'seller.bankInfo.accountNumber': {
+        $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
+      },
+
+
       status: 'paymentConfirmed',
-      privateSale: privateSale,
+      
+      //privateSale: privateSale,
+
       paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
     }
   );
