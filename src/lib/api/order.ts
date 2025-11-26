@@ -4825,13 +4825,13 @@ export async function getAllBuyOrdersBySellerAccountNumber(
 
 
 // getAllBuyOrdersByStorecode
-export async function getAllBuyOrdersByStorecode(
+export async function getAllBuyOrdersByStorecodePrivateSale(
   {
     limit,
     page,
     fromDate,
     toDate,
-    privateSale,
+    //privateSale,
     storecode,
 
     searchBuyer,
@@ -4841,7 +4841,7 @@ export async function getAllBuyOrdersByStorecode(
     page: number;
     fromDate: string;
     toDate: string;
-    privateSale: boolean;
+    //privateSale: boolean;
     storecode: string;
 
     searchBuyer?: string;

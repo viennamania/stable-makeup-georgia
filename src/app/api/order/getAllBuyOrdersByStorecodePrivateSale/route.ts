@@ -1,22 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-	getAllBuyOrdersByStorecode
+	getAllBuyOrdersByStorecodePrivateSale
 } from '@lib/api/order';
 
-
-/*
-{
-  accountNumber: '3560545924843',
-  fromDate: '2025-10-25',
-  toDate: '2025-11-24',
-  limit: 10,
-  page: 1,
-  privateSale: false,
-  sortBy: 'createdAt',
-  sortOrder: 'desc'
-}
-*/
 
 
 export async function POST(request: NextRequest) {
@@ -35,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     searchStoreName,
 
-    privateSale,
+    //privateSale,
 
     searchBuyer,
     searchDepositName,
@@ -53,12 +40,12 @@ export async function POST(request: NextRequest) {
 
 
 
-  const result = await getAllBuyOrdersByStorecode({
+  const result = await getAllBuyOrdersByStorecodePrivateSale({
     limit: limit || 10,
     page: page || 1,
     fromDate,
     toDate,
-    privateSale,
+    //privateSale,
     storecode,
 
     searchBuyer,
