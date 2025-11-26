@@ -4750,6 +4750,11 @@ export async function getAllBuyOrdersBySellerAccountNumber(
     searchDepositName?: string;
   }
 ): Promise<any> {
+
+
+  console.log('getAllBuyOrdersBySellerAccountNumber searchBuyer: ' + searchBuyer);
+  console.log('getAllBuyOrdersBySellerAccountNumber searchDepositName: ' + searchDepositName);
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
   const results = await collection.find<OrderProps>(
@@ -4761,8 +4766,22 @@ export async function getAllBuyOrdersBySellerAccountNumber(
       //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
       //},
 
-      'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
-      'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
+      //'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
+      //'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
+
+
+      /*
+              ...(searchDepositName ? {
+          $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } },
+            { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' }
+          }] } : {}),
+      */
+
+      ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
+      ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
+
+
+
 
 
       status: 'paymentConfirmed',
@@ -4782,8 +4801,12 @@ export async function getAllBuyOrdersBySellerAccountNumber(
       //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
       //},
 
-      'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
-      'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
+      //'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
+      //'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
+
+      ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
+      ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
+
 
       status: 'paymentConfirmed',
       
