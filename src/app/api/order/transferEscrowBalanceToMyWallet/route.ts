@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  UserProps,
+  OrderProps,
 	buyOrderRollbackPayment,
   buyOrderGetOrderById,
 } from '@lib/api/order';

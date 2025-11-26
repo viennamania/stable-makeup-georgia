@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  UserProps,
+  OrderProps,
 	deleteSellOrder,
 } from '@lib/api/order';
 

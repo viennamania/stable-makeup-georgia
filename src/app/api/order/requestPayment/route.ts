@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  UserProps,
+  OrderProps,
 	requestPayment,
   getOneBuyOrder,
 } from '@lib/api/order';
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
     buyer: buyer,
     tradeId: tradeId,
     krwAmount: krwAmount,
-  } = result as UserProps;
+  } = result as OrderProps;
   */
 
 

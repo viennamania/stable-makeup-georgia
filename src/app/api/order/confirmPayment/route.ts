@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  UserProps,
+  OrderProps,
 	confirmPayment,
   getOrderById,
   getOneSellOrder,
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       walletAddress: walletAddress,
       usdtAmount: usdtAmount,
       buyer: buyer,
-    } = order as UserProps;
+    } = order as OrderProps;
 
     if (status !== "paymentRequested") {
       return NextResponse.json({
@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
     const {
       nickname: nickname,
       tradeId: tradeId,
-    } = result as UserProps;
+    } = result as OrderProps;
 
     return NextResponse.json({
       result: result,

@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     buyer,
     paymentMethod,
     returnUrl,
+    orderNumber,
   } = body;
 
   console.log("setBuyOrder =====  body", body);
@@ -180,6 +181,7 @@ export async function POST(request: NextRequest) {
     },
 
     returnUrl: returnUrl,
+    orderNumber: orderNumber,
   });
 
   ///console.log("setBuyOrder =====  result", result);

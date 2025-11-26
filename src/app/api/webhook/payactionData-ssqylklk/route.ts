@@ -9,7 +9,7 @@ import {
 
 
 import {
-  UserProps,
+  OrderProps,
 	acceptBuyOrder,
   updateBuyOrderByQueueId,
 

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  UserProps,
+  OrderProps,
 	acceptSellOrder,
 } from '@lib/api/order';
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     seller: seller,
     buyer: buyer,
     tradeId: tradeId,
-  } = result as UserProps;
+  } = result as OrderProps;
 
 
   // if mobile number is not prefix with country code don't send sms
