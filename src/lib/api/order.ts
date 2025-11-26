@@ -4824,6 +4824,61 @@ export async function getAllBuyOrdersBySellerAccountNumber(
 }
 
 
+// getAllBuyOrdersByStorecode
+export async function getAllBuyOrdersByStorecode(
+  {
+    limit,
+    page,
+    fromDate,
+    toDate,
+    privateSale,
+    storecode,
+
+    searchBuyer,
+    searchDepositName,
+  }: {
+    limit: number;
+    page: number;
+    fromDate: string;
+    toDate: string;
+    privateSale: boolean;
+    storecode: string;
+
+    searchBuyer?: string;
+    searchDepositName?: string;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const results = await collection.find<OrderProps>(
+    {
+      storecode: storecode,
+      status: 'paymentConfirmed',
+      privateSale: true,
+      paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
+      ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
+      ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
+    }
+  ).sort({ paymentConfirmedAt: -1 })
+    .limit(limit).skip((page - 1) * limit).toArray();
+  // get total count of orders
+  const totalCount = await collection.countDocuments(
+    {
+      storecode: storecode,
+      status: 'paymentConfirmed',
+      privateSale: true,
+      paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
+      ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
+      ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
+    }
+  );
+  return {
+    totalCount: totalCount,
+    orders: results,
+  };
+}
+
+
 
 
 
