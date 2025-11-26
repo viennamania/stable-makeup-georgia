@@ -60,6 +60,9 @@ export async function POST(request: NextRequest) {
     toDate,
     privateSale,
     accountNumber,
+
+    searchBuyer,
+    searchDepositName,
   });
 
 

@@ -4735,6 +4735,9 @@ export async function getAllBuyOrdersBySellerAccountNumber(
     toDate,
     privateSale,
     accountNumber,
+
+    searchBuyer,
+    searchDepositName,
   }: {
     limit: number;
     page: number;
@@ -4742,6 +4745,9 @@ export async function getAllBuyOrdersBySellerAccountNumber(
     toDate: string;
     privateSale: boolean;
     accountNumber: string;
+
+    searchBuyer?: string;
+    searchDepositName?: string;
   }
 ): Promise<any> {
   const client = await clientPromise;
@@ -4754,6 +4760,9 @@ export async function getAllBuyOrdersBySellerAccountNumber(
       //'seller.bankInfo.accountNumber': {
       //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
       //},
+
+      'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
+      'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
 
 
       status: 'paymentConfirmed',
@@ -4772,6 +4781,9 @@ export async function getAllBuyOrdersBySellerAccountNumber(
       //'seller.bankInfo.accountNumber': {
       //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
       //},
+
+      'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
+      'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
 
       status: 'paymentConfirmed',
       
