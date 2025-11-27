@@ -3488,7 +3488,7 @@ export default function Index({ params }: any) {
                           <td className="p-2">
 
                             <div className="
-                              w-32
+                              w-48
                               flex flex-col items-start justify-start gap-2
                               bg-zinc-100
                               rounded-lg
@@ -3563,20 +3563,14 @@ export default function Index({ params }: any) {
 
                                   <span className="text-sm text-zinc-800 font-semibold">
                                     {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
                                       hour: '2-digit',
                                       minute: '2-digit',
                                       second: '2-digit',
                                     })}
                                   </span>
-                                  {/*
-                                  <span className="text-sm text-zinc-500">
-                                    {new Date(item.createdAt).toLocaleDateString('ko-KR', {
-                                      year: 'numeric',
-                                      month: '2-digit',
-                                      day: '2-digit',
-                                    })}
-                                  </span>
-                                  */}
 
                                   <div className="w-full flex flex-row items-center justify-between gap-1">
                                     <span className="text-sm text-zinc-500 font-semibold">
@@ -3679,6 +3673,27 @@ export default function Index({ params }: any) {
                                     : item.nickname || '익명'}
                                 </span>
                               </div>
+
+                              {/* item?.buyer?.bankInfo?.bankName, item?.buyer?.bankInfo?.accountNumber, item?.buyer?.bankInfo?.accountHolder */}
+                              <div className="flex flex-row items-center gap-1">
+                                <Image
+                                  src="/icon-bank.png"
+                                  alt="Bank"
+                                  width={20}
+                                  height={20}
+                                  className="rounded-lg w-5 h-5"
+                                />
+                                <span className="text-lg text-zinc-600 font-semibold">
+                                  {item?.buyer?.bankInfo?.bankName}
+                                </span>
+                                <span className="text-lg text-zinc-600 font-semibold">
+                                  {item?.buyer?.bankInfo?.accountNumber}
+                                </span>
+                                <span className="text-lg text-zinc-600 font-semibold">
+                                  {item?.buyer?.bankInfo?.accountHolder}
+                                </span>
+                              </div>
+
 
                               <div className="flex flex-row items-center gap-1">
                                 <Image

@@ -22,8 +22,6 @@ export async function POST(request: NextRequest) {
 
     searchStoreName,
 
-    //privateSale,
-
     searchBuyer,
     searchDepositName,
 
@@ -45,7 +43,7 @@ export async function POST(request: NextRequest) {
     page: page || 1,
     fromDate,
     toDate,
-    //privateSale,
+
     storecode,
 
     searchBuyer,

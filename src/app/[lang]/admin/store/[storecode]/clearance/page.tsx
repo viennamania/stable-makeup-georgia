@@ -822,6 +822,14 @@ export default function Index({ params }: any) {
     // check input krw amount at sell order
     const [checkInputKrwAmount, setCheckInputKrwAmount] = useState(true);
 
+
+    const [buyerBankInfo, setBuyerBankInfo] = useState({
+      depositName: "",
+      bankName: "",
+      accountNumber: "",
+      accountHolder: "",
+    });
+
     const buyOrder = async () => {
 
       if (buyOrdering) {
@@ -861,8 +869,11 @@ export default function Index({ params }: any) {
           rate: rate,
           privateSale: true,
           buyer: {
-            depositBankName: "",
             depositName: "",
+
+            //bankName: buyerBankInfo.bankName,
+            //accountNumber: buyerBankInfo.accountNumber,
+            //accountHolder: buyerBankInfo.accountHolder,
           }
         })
 
@@ -1412,9 +1423,19 @@ export default function Index({ params }: any) {
         }
         const data = await response.json();
         
-        //console.log('getAllUsersByStorecode data', data);
+        //console.log('getOneStore data', data);
 
         setStore(data.result);
+
+        setBuyerBankInfo({
+          depositName: "",
+          bankName: data.result?.bankInfo?.bankName || "",
+          accountNumber: data.result?.bankInfo?.accountNumber || "",
+          accountHolder: data.result?.bankInfo?.accountHolder || "",
+        });
+
+
+
         setFetchingStore(false);
 
         return data.result;
@@ -1424,89 +1445,6 @@ export default function Index({ params }: any) {
 
         fetchStore();
     } , [params.storecode]);
-
-
-
-
-
-
-
-
-
-
-    const [tradeSummary, setTradeSummary] = useState({
-      totalCount: 0,
-      totalKrwAmount: 0,
-      totalUsdtAmount: 0,
-      totalSettlementCount: 0,
-      totalSettlementAmount: 0,
-      totalSettlementAmountKRW: 0,
-      totalFeeAmount: 0,
-      totalFeeAmountKRW: 0,
-      orders: [] as BuyOrder[],
-
-      totalClearanceCount: 0,
-      totalClearanceAmount: 0,
-      totalClearanceAmountUSDT: 0,
-    });
-    const [loadingTradeSummary, setLoadingTradeSummary] = useState(false);
-
-
-    const getTradeSummary = async () => {
-      if (!address) {
-        return;
-      }
-      setLoadingTradeSummary(true);
-      const response = await fetch('/api/summary/getTradeSummary', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          storecode: params.storecode,
-          walletAddress: address,
-          searchMyOrders: searchMyOrders,
-          searchOrderStatusCompleted: true,
-          //searchBuyer: searchBuyer,
-          //searchDepositName: searchDepositName,
-
-          //searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-        })
-      });
-      if (!response.ok) {
-        setLoadingTradeSummary(false);
-        toast.error('Failed to fetch trade summary');
-        return;
-      }
-      const data = await response.json();
-      
-      console.log('getTradeSummary data', data);
-
-
-      setTradeSummary(data.result);
-      setLoadingTradeSummary(false);
-      return data.result;
-    }
-
-
-
-
-    useEffect(() => {
-
-      if (!address) {
-        return;
-      }
-
-      getTradeSummary();
-
-      // fetch trade summary every 10 seconds
-      const interval = setInterval(() => {
-        getTradeSummary();
-      }, 10000);
-      return () => clearInterval(interval);
-
-
-    } , [address, searchMyOrders, params.storecode,]);
 
 
 
@@ -1991,6 +1929,184 @@ export default function Index({ params }: any) {
 
 
 
+                  {/* 구매자 계좌 */}
+                  {/*
+                    store
+                    bankInfo
+                      accountHolder
+                      accountNumber
+                      bankName
+                    bankInfoAAA
+
+                    bankInfoBBB
+                    bankInfoCCC
+                    bankInfoDDD
+                  */}
+
+
+                  {/* select one of bankInfo, bankInfoAAA, bankInfoBBB */}
+                  {/*
+                  <div className="mt-10 w-full flex flex-col gap-4">
+                    <h2 className="text-2xl font-bold text-zinc-600">
+                      구매자 계좌 정보
+                    </h2>
+                    {fetchingStore ? (
+                      <div className="flex flex-row items-center gap-2">
+                          <div className="
+                            w-6 h-6
+                            border-2 border-zinc-800
+                            rounded-full
+                            animate-spin
+                          ">
+                            <Image
+                              src="/loading.png"
+                              alt="loading"
+                              width={24}
+                              height={24}
+                            />
+                          </div>
+                          <div className="text-zinc-400">
+                            로딩중...
+                          </div>
+                      </div>
+                    ) : (
+                      <div className="w-full flex flex-row items-center justify-start gap-4">
+
+                        {store && store.bankInfo ? (
+                          <button className={`
+                            ${buyerBankInfo.accountNumber === store.bankInfo.accountNumber ? 'sm:col-span-4 border-blue-400 bg-blue-50' : 'sm:col-span-4'}
+                            flex flex-col gap-2
+                            border border-zinc-300/50
+                            bg-white/50
+                            p-4 rounded-lg shadow-md
+                            w-full
+                            `}
+                            onClick={() => {
+                              setBuyerBankInfo({
+                                ...buyerBankInfo,
+                                bankName: store.bankInfo.bankName,
+                                accountNumber: store.bankInfo.accountNumber,
+                                accountHolder: store.bankInfo.accountHolder,
+                              });
+                            }}
+                          >
+                            <div className="flex flex-row items-center gap-4">
+                              <Image
+                                src="/icon-bank.png"
+                                alt="Bank"
+                                width={40}
+                                height={40}
+                                className="w-10 h-10"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-lg font-semibold text-zinc-600">
+                                  {store.bankInfo.bankName}
+                                </span>
+                                <span className="text-xl font-bold text-zinc-800">
+                                  {store.bankInfo.accountNumber}
+                                </span>
+                                <span className="text-sm text-zinc-500">
+                                  {store.bankInfo.accountHolder}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                         
+                        ) : (
+                          <div className="text-zinc-400">
+                            구매자 계좌 정보가 없습니다.
+                          </div>
+                        )}
+
+
+                        {store && store.bankInfoAAA && (
+                          <button className={`
+                            ${buyerBankInfo.accountNumber === store.bankInfoAAA.accountNumber ? 'sm:col-span-4 border-blue-400 bg-blue-50' : 'sm:col-span-4'}
+                            flex flex-col gap-2
+                            border border-zinc-300/50
+                            bg-white/50
+                            p-4 rounded-lg shadow-md
+                            w-full
+                            `}
+                            onClick={() => {
+                              setBuyerBankInfo({
+                                ...buyerBankInfo,
+                                bankName: store.bankInfoAAA.bankName,
+                                accountNumber: store.bankInfoAAA.accountNumber,
+                                accountHolder: store.bankInfoAAA.accountHolder,
+                              });
+                            }}
+                          >
+                            <div className="flex flex-row items-center gap-4">
+                              <Image
+                                src="/icon-bank.png"
+                                alt="Bank"
+                                width={40}
+                                height={40}
+                                className="w-10 h-10"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-lg font-semibold text-zinc-600">
+                                  {store.bankInfoAAA.bankName}
+                                </span>
+                                <span className="text-xl font-bold text-zinc-800">
+                                  {store.bankInfoAAA.accountNumber}
+                                </span>
+                                <span className="text-sm text-zinc-500">
+                                  {store.bankInfoAAA.accountHolder}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        )}
+
+                        {store && store.bankInfoBBB && (
+                          <button className={`
+                            ${buyerBankInfo.accountNumber === store.bankInfoBBB.accountNumber ? 'sm:col-span-4 border-blue-400 bg-blue-50' : 'sm:col-span-4'}
+                            flex flex-col gap-2
+                            border border-zinc-300/50
+                            bg-white/50
+                            p-4 rounded-lg shadow-md
+                            w-full
+                            `}
+                            onClick={() => {
+                              setBuyerBankInfo({
+                                ...buyerBankInfo,
+                                bankName: store.bankInfoBBB.bankName,
+                                accountNumber: store.bankInfoBBB.accountNumber,
+                                accountHolder: store.bankInfoBBB.accountHolder,
+                              });
+                            }}
+                          >
+                            <div className="flex flex-row items-center gap-4">
+                              <Image
+                                src="/icon-bank.png"
+                                alt="Bank"
+                                width={40}
+                                height={40}
+                                className="w-10 h-10"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-lg font-semibold text-zinc-600">
+                                  {store.bankInfoBBB.bankName}
+                                </span>
+                                <span className="text-xl font-bold text-zinc-800">
+                                  {store.bankInfoBBB.accountNumber}
+                                </span>
+                                <span className="text-sm text-zinc-500">
+                                  {store.bankInfoBBB.accountHolder}
+                                </span>
+                              </div>
+                            </div>
+                          </button>
+                        )}
+
+
+
+                      </div>
+                    )}
+                  </div>
+                  */}
 
 
 
@@ -2570,6 +2686,9 @@ export default function Index({ params }: any) {
          
 
 
+
+
+
                   <div className="mt-10 w-full flex flex-row items-center justify-between gap-4">
 
 
@@ -2784,7 +2903,7 @@ export default function Index({ params }: any) {
 
                           <th className="p-2 text-left">구매자정보</th>
 
-                          <th className="p-2 text-left">판매자 정보</th>
+                          
 
 
                           <th className="p-2 text-left">
@@ -2795,7 +2914,8 @@ export default function Index({ params }: any) {
                             </div>
                           </th>
 
-                          <th className="p-2 text-left">결제방법</th>
+                          <th className="p-2 text-left">결제통장</th>
+                          <th className="p-2 text-left">판매자 정보</th>
                           <th className="p-2 text-left">결제금액(원)</th>
                           
                           <th className="p-2 text-center">거래상태</th>
@@ -2866,8 +2986,19 @@ export default function Index({ params }: any) {
                                     </span>
                                   )}
 
-
                                 </div>
+
+
+                                  <span className="text-sm text-zinc-600">
+                                    {item.buyer?.bankName}
+                                  </span>
+                                  <span className="text-sm text-zinc-600">
+                                    {item.buyer?.accountNumber}
+                                  </span>
+                                  <span className="text-sm text-zinc-600">
+                                    {item.buyer?.accountHolder}
+                                  </span>
+
 
                                 <div className="flex flex-row items-center gap-1">
                                   <Image
@@ -2884,46 +3015,6 @@ export default function Index({ params }: any) {
 
                               </div>
                             </td>
-
-
-                            <td className="p-2">
-                              {item?.seller?.walletAddress ? (
-                                <div className="flex flex-col items-start justify-center gap-1">
-
-                                  <div className="flex flex-row items-center gap-1">
-                                    <Image
-                                      src="/icon-seller.png"
-                                      alt="Seller"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5 rounded-full"
-                                    />
-                                    <span className="text-lg text-zinc-600">
-                                      {item?.seller?.nickname || '익명'}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex flex-row items-center gap-1">
-                                    <Image
-                                      src="/icon-shield.png"
-                                      alt="Shield"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5 rounded-full"
-                                    />
-                                    <span className="text-sm">
-                                      {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
-                                    </span>
-                                  </div>
-
-                                </div>
-                              ) : (
-                                <span className="text-lg text-zinc-600">
-                                  판매자 확인중...
-                                </span>
-                              )}
-                            </td>
-
 
 
                             <td>
@@ -2966,22 +3057,11 @@ export default function Index({ params }: any) {
                               </div>
                             </td>
 
-                        
+
+                            {/*
                             <td>
                               {item?.buyer?.nickname ? (
                                 <div className="w-36 flex flex-col items-start justify-center gap-1">
-
-                                {/* 
-                                  nickname
-                                  "matoto44"
-                                  depositBankName
-                                  "카카오뱅크"
-                                  depositBankAccountNumber
-                                  "3333338246503"
-                                  depositName
-                                  "허경수"
-                                  */}
-
 
                                   <span className="text-sm text-zinc-600">
                                     {item.buyer?.depositBankName}
@@ -3007,9 +3087,66 @@ export default function Index({ params }: any) {
                                     </span>
                                 </div>
                               )}
+                            </td>
+                            */}
+
+
+                            {/*구매자 결제통장 정보*/}
+                            <td>
+
+                              <div className="w-36 flex flex-col items-start justify-center gap-1">
+                                <span className="text-sm text-zinc-600">
+                                  {item.seller?.bankInfo?.bankName}
+                                </span>
+                                <span className="text-sm text-zinc-600">
+                                  {item.seller?.bankInfo?.accountNumber}
+                                  </span>
+                                <span className="text-sm text-zinc-600">
+                                  {item.seller?.bankInfo?.accountHolder}
+                                  </span>
+                              </div>
 
                             </td>
 
+
+                            {/* 판매자 정보 */}
+                            <td className="p-2">
+                              {item?.seller?.walletAddress ? (
+                                <div className="flex flex-col items-start justify-center gap-1">
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-seller.png"
+                                      alt="Seller"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-lg text-zinc-600">
+                                      {item?.seller?.nickname || '익명'}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-row items-center gap-1">
+                                    <Image
+                                      src="/icon-shield.png"
+                                      alt="Shield"
+                                      width={20}
+                                      height={20}
+                                      className="w-5 h-5 rounded-full"
+                                    />
+                                    <span className="text-sm">
+                                      {item?.seller?.walletAddress.slice(0, 6) + '...' + item?.seller?.walletAddress.slice(-4)}
+                                    </span>
+                                  </div>
+
+                                </div>
+                              ) : (
+                                <span className="text-lg text-zinc-600">
+                                  판매자 확인중...
+                                </span>
+                              )}
+                            </td>
 
                             <td className="p-2">
                               
@@ -3059,8 +3196,7 @@ export default function Index({ params }: any) {
                                 </div>
 
                               )}
-                            </td>
-                            
+                            </td>   
 
                             <td className="p-2">
                               <div className="flex flex-row items-center justify-center gap-2">

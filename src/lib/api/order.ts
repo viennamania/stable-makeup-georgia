@@ -4834,6 +4834,8 @@ export async function getAllBuyOrdersByStorecodePrivateSale(
     //privateSale,
     storecode,
 
+    buyerBankInfoAccountNumber,
+
     searchBuyer,
     searchDepositName,
   }: {
@@ -4843,6 +4845,8 @@ export async function getAllBuyOrdersByStorecodePrivateSale(
     toDate: string;
     //privateSale: boolean;
     storecode: string;
+
+    buyerBankInfoAccountNumber?: string;
 
     searchBuyer?: string;
     searchDepositName?: string;
@@ -4854,7 +4858,11 @@ export async function getAllBuyOrdersByStorecodePrivateSale(
     {
       storecode: storecode,
       status: 'paymentConfirmed',
-      privateSale: true,
+      
+      //privateSale: true,
+
+      ...(buyerBankInfoAccountNumber ? { 'buyer.bankInfo.accountNumber': buyerBankInfoAccountNumber } : {}),
+
       paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
       ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
       ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
@@ -4866,7 +4874,11 @@ export async function getAllBuyOrdersByStorecodePrivateSale(
     {
       storecode: storecode,
       status: 'paymentConfirmed',
-      privateSale: true,
+      
+      //privateSale: true,
+
+      ...(buyerBankInfoAccountNumber ? { 'buyer.bankInfo.accountNumber': buyerBankInfoAccountNumber } : {}),
+
       paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
       ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
       ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
