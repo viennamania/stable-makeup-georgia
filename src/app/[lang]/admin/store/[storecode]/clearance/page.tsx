@@ -2935,7 +2935,7 @@ export default function Index({ params }: any) {
                             <td className="p-2">
                               <div className="flex flex-col items-center justify-center gap-1">
                                 <button
-                                  className="text-lg text-blue-500 font-semibold underline"
+                                  className="text-sm text-blue-500 font-semibold underline"
                                   onClick={() => {
                                     // copy to clipboard
                                     navigator.clipboard.writeText(item.tradeId);
@@ -2944,8 +2944,13 @@ export default function Index({ params }: any) {
                                 >
                                   #{item.tradeId}
                                 </button>
+                                {/* year-month-date */}
                                 <span className="text-sm">
-                                  {new Date(item.createdAt).toLocaleString()}
+                                  {new Date(item.createdAt).toLocaleDateString()}
+                                </span>
+                                {/* hours-minutes */}
+                                <span className="text-sm">
+                                  {new Date(item.createdAt).toLocaleTimeString()}
                                 </span>
                                 <span className="text-sm text-zinc-400">
                                   {
@@ -2989,15 +2994,29 @@ export default function Index({ params }: any) {
                                 </div>
 
 
-                                  <span className="text-sm text-zinc-600">
-                                    {item.buyer?.bankName}
+                                {/* item?.buyer?.bankInfo?.bankName, item?.buyer?.bankInfo?.accountNumber, item?.buyer?.bankInfo?.accountHolder */}
+                                <div className="flex flex-row items-center gap-1">
+                                  <Image
+                                    src="/icon-bank.png"
+                                    alt="Bank"
+                                    width={20}
+                                    height={20}
+                                    className="rounded-lg w-5 h-5"
+                                  />
+                                  <span className="text-sm text-zinc-600 font-semibold">
+                                    {item?.buyer?.bankInfo?.bankName}
                                   </span>
-                                  <span className="text-sm text-zinc-600">
-                                    {item.buyer?.accountNumber}
+                                  <span className="text-sm text-zinc-600 font-semibold">
+                                    {item?.buyer?.bankInfo?.accountNumber?.length > 5 ?
+                                      item?.buyer?.bankInfo?.accountNumber.slice(0, 3) + '****' + item?.buyer?.bankInfo?.accountNumber.slice(-2)
+                                      :
+                                      item?.buyer?.bankInfo?.accountNumber
+                                    }
                                   </span>
-                                  <span className="text-sm text-zinc-600">
-                                    {item.buyer?.accountHolder}
+                                  <span className="text-sm text-zinc-600 font-semibold">
+                                    {item?.buyer?.bankInfo?.accountHolder}
                                   </span>
+                                </div>
 
 
                                 <div className="flex flex-row items-center gap-1">
