@@ -8627,3 +8627,37 @@ export async function updateAudioNotification(data: any) {
     return null;
   }
 }
+
+
+
+
+
+// updateBuyerBankInfoUpdate
+// response updated order
+export async function updateBuyerBankInfoUpdate(
+  {
+    tradeId,
+    buyerBankInfo,
+  }: {
+    tradeId: string;
+    buyerBankInfo: any;
+  }): Promise<any | null> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  // update buyorder
+  const result = await collection.updateOne(
+    { tradeId: tradeId },
+    { $set: {
+      'buyer.bankInfo': buyerBankInfo,
+    } }
+  );
+  if (result.modifiedCount === 1) {
+    const updatedOrder = await collection.findOne<any>(
+      { tradeId: tradeId }
+    );
+    return updatedOrder;
+  } else {
+    return null;
+  }
+}
+

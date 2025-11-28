@@ -3476,6 +3476,10 @@ export default function Index({ params }: any) {
 
                         <th className="p-2">출금상태</th>
 
+                        <th className="p-2">
+                          상세
+                        </th>
+
                       </tr>
                     </thead>
 
@@ -4551,6 +4555,16 @@ export default function Index({ params }: any) {
 
 
 
+                          <td className="p-2">
+                            <button
+                              className="text-sm bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600"
+                              onClick={() => {
+                                router.push(`/${params.lang}/admin/trade-details?tradeId=${item.tradeId}`);
+                              }}
+                            >
+                              상세보기
+                            </button>
+                          </td>
 
 
 
