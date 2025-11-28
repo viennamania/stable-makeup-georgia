@@ -5565,7 +5565,14 @@ export default function Index({ params }: any) {
                 value={limit}
                 onChange={(e) =>
                   
-                  router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${page}`)
+                  //router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${page}`)
+
+                  router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
+                    + `&limit=${Number(e.target.value)}&page=1`
+                    + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
+                  )
+
+
                 }
 
                 className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
@@ -5582,7 +5589,13 @@ export default function Index({ params }: any) {
               disabled={Number(page) <= 1}
               className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=1`)
+                //router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=1`)
+
+                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
+                  + `&limit=${Number(limit)}&page=1`
+                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
+                )
+
               }}
             >
               처음으로
@@ -5594,7 +5607,12 @@ export default function Index({ params }: any) {
               className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
                 
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) - 1}`)
+                ////router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) - 1}`)
+
+                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
+                  + `&limit=${Number(limit)}&page=${Number(page) - 1}`
+                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
+                )
 
 
               }}
@@ -5613,7 +5631,12 @@ export default function Index({ params }: any) {
               className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
                 
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) + 1}`)
+                ///router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) + 1}`)
+
+                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
+                  + `&limit=${Number(limit)}&page=${Number(page) + 1}`
+                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
+                )
 
               }}
             >
@@ -5626,7 +5649,12 @@ export default function Index({ params }: any) {
               className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
                 
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`)
+                ///router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`)
+
+                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
+                  + `&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`
+                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
+                )
 
               }}
             >
