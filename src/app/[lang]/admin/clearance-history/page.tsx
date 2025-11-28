@@ -189,7 +189,6 @@ export default function Index({ params }: any) {
   const limit = searchParams.get('limit') || 20;
   const page = searchParams.get('page') || 1;
 
-
   const searchParamsStorecode = searchParams.get('storecode') || "";
 
   const paramFromDate = searchParams.get('fromDate') || "";
@@ -888,20 +887,18 @@ export default function Index({ params }: any) {
 
   // search form date to date
   const [searchFromDate, setSearchFormDate] = useState(formattedDate);
-
-  /*
+  // fromDate parameter
   useEffect(() => {
     setSearchFormDate(paramFromDate || formattedDate);
   }, [paramFromDate, formattedDate]);
-  */
+
 
   const [searchToDate, setSearchToDate] = useState(formattedDate);
-
-  /*
+  // toDate parameter
   useEffect(() => {
     setSearchToDate(paramToDate || formattedDate);
   }, [paramToDate, formattedDate]);
-  */
+  
 
 
 
@@ -3113,8 +3110,8 @@ export default function Index({ params }: any) {
                     type="date"
                     value={searchFromDate}
                     
-                    onChange={(e) => setSearchFormDate(e.target.value)}
-                    /*
+                    //onChange={(e) => setSearchFormDate(e.target.value)}
+
                     onChange={(e) => {
                       router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
                       '&fromDate=' + e.target.value +
@@ -3125,7 +3122,6 @@ export default function Index({ params }: any) {
                       '&searchTradeId=' + searchTradeId
                       );
                     }}
-                    */
 
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
@@ -3145,8 +3141,8 @@ export default function Index({ params }: any) {
                     type="date"
                     value={searchToDate}
                     
-                    onChange={(e) => setSearchToDate(e.target.value)}
-                    /*
+                    //onChange={(e) => setSearchToDate(e.target.value)}
+
                     onChange={(e) => {
                       router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
                       '&fromDate=' + searchFromDate +
@@ -3157,7 +3153,6 @@ export default function Index({ params }: any) {
                       '&searchTradeId=' + searchTradeId
                       );
                     }}
-                    */
                     
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
