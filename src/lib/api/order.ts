@@ -2180,8 +2180,9 @@ export async function getBuyOrders(
 ): Promise<any> {
 
 
-  //console.log('getBuyOrders fromDate: ' + fromDate);
-  //console.log('getBuyOrders toDate: ' + toDate);
+  console.log('getBuyOrders fromDate: ' + fromDate);
+  console.log('getBuyOrders toDate: ' + toDate);
+
 
   //console.log('getBuyOrders agentcode: ==========>' + agentcode);
 
@@ -4880,7 +4881,12 @@ export async function getAllBuyOrdersByStorecodePrivateSale(
       ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
       ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
     }
-  ).sort({ paymentConfirmedAt: -1 })
+  
+  )
+    //.sort({ paymentConfirmedAt: -1 })
+    //.sort({ createdAt: -1 })
+    .sort({ _id: -1 })
+
     .limit(limit).skip((page - 1) * limit).toArray();
   // get total count of orders
   const totalCount = await collection.countDocuments(

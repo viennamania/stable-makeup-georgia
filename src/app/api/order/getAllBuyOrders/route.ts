@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   
 
-  ///console.log("getAllBuyOrders body", body);
+  console.log("getAllBuyOrders body", body);
 
 
 

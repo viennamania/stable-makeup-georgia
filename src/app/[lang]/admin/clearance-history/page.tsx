@@ -183,8 +183,6 @@ export default function Index({ params }: any) {
 
   const searchParams = useSearchParams();
  
-  const wallet = searchParams.get('wallet');
-
 
   // limit, page number params
 
@@ -193,7 +191,15 @@ export default function Index({ params }: any) {
 
 
   const searchParamsStorecode = searchParams.get('storecode') || "";
-  
+
+  const paramFromDate = searchParams.get('fromDate') || "";
+  const paramToDate = searchParams.get('toDate') || "";
+
+  const paramSearchBuyer = searchParams.get('searchBuyer') || "";
+  const paramSearchDepositName = searchParams.get('searchDepositName') || "";
+  const paramSearchStoreBankAccountNumber = searchParams.get('searchStoreBankAccountNumber') || "";
+  const paramSearchTradeId = searchParams.get('searchTradeId') || "";
+
 
 
   const contract = getContract({
@@ -879,9 +885,25 @@ export default function Index({ params }: any) {
   const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
 
 
+
   // search form date to date
   const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+
+  /*
+  useEffect(() => {
+    setSearchFormDate(paramFromDate || formattedDate);
+  }, [paramFromDate, formattedDate]);
+  */
+
   const [searchToDate, setSearchToDate] = useState(formattedDate);
+
+  /*
+  useEffect(() => {
+    setSearchToDate(paramToDate || formattedDate);
+  }, [paramToDate, formattedDate]);
+  */
+
+
 
 
 
@@ -3090,7 +3112,21 @@ export default function Index({ params }: any) {
                   <input
                     type="date"
                     value={searchFromDate}
+                    
                     onChange={(e) => setSearchFormDate(e.target.value)}
+                    /*
+                    onChange={(e) => {
+                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
+                      '&fromDate=' + e.target.value +
+                      '&toDate=' + searchToDate +
+                      '&searchBuyer=' + searchBuyer +
+                      '&searchDepositName=' + searchDepositName +
+                      '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
+                      '&searchTradeId=' + searchTradeId
+                      );
+                    }}
+                    */
+
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
                 </div>
@@ -3108,7 +3144,21 @@ export default function Index({ params }: any) {
                   <input
                     type="date"
                     value={searchToDate}
+                    
                     onChange={(e) => setSearchToDate(e.target.value)}
+                    /*
+                    onChange={(e) => {
+                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
+                      '&fromDate=' + searchFromDate +
+                      '&toDate=' + e.target.value +
+                      '&searchBuyer=' + searchBuyer +
+                      '&searchDepositName=' + searchDepositName +
+                      '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
+                      '&searchTradeId=' + searchTradeId
+                      );
+                    }}
+                    */
+                    
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
                 </div>
