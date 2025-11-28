@@ -2140,6 +2140,7 @@ export async function getBuyOrders(
 
     privateSale,
 
+    searchTradeId,
     searchBuyer,
     searchDepositName,
 
@@ -2164,6 +2165,7 @@ export async function getBuyOrders(
 
     privateSale: boolean;
 
+    searchTradeId: string;
     searchBuyer: string;
     searchDepositName: string;
 
@@ -2237,6 +2239,10 @@ export async function getBuyOrders(
         //...(searchDepositName ? { "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } } : {}),
         // searchDepositName is buyer.depositName or seller.bankInfo.accountHolder
 
+
+        // if searchTradeId is provided, search by tradeId
+        ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+
         ...(searchDepositName ? {
           $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } },
             { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' }
@@ -2288,6 +2294,8 @@ export async function getBuyOrders(
           : { $ne: 'nothing' }))),
 
         pirvateSale: { $ne: true },
+
+        ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
 
         ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
@@ -2382,6 +2390,9 @@ export async function getBuyOrders(
         privateSale: privateSale || { $ne: true },
 
 
+        // if searchTradeId is provided, search by tradeId
+        ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+
         // search store name
         ...(searchStoreName ? { "store.storeName": { $regex: String(searchStoreName), $options: 'i' } } : {}),
 
@@ -2461,6 +2472,7 @@ export async function getBuyOrders(
 
           nickname: { $regex: searchBuyer, $options: 'i' },
 
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           
           ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
@@ -2538,6 +2550,7 @@ export async function getBuyOrders(
 
           nickname: { $regex: searchBuyer, $options: 'i' },
 
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           
           ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),

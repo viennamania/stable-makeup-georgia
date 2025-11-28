@@ -1942,7 +1942,7 @@ export default function Index({ params }: any) {
                     <span className="
                       w-32
                       text-sm font-semibold">
-                      가맹점선택
+                      가맹점 선택
                     </span>
 
 

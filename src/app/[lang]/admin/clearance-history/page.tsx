@@ -856,7 +856,7 @@ export default function Index({ params }: any) {
   }, [searchParamsStorecode]);
   
   
-
+  const [searchTradeId, setSearchTradeId] = useState("");
 
 
   const [searchBuyer, setSearchBuyer] = useState("");
@@ -983,144 +983,145 @@ export default function Index({ params }: any) {
 
 
 
-    const acceptBuyOrder = (
-      index: number,
-      orderId: string,
-      smsNumber: string,
-    ) => {
+  const acceptBuyOrder = (
+    index: number,
+    orderId: string,
+    smsNumber: string,
+  ) => {
 
-        if (!address) {
-            toast.error('Please connect your wallet');
-            return;
-        }
-
-        if (!escrowWalletAddress || escrowWalletAddress === '') {
-          toast.error('에스크로 지갑이 없습니다.');
+      if (!address) {
+          toast.error('Please connect your wallet');
           return;
-        }
+      }
 
-        setAcceptingBuyOrder (
-          acceptingBuyOrder.map((item, idx) => idx === index ? true : item)
-        );
+      if (!escrowWalletAddress || escrowWalletAddress === '') {
+        toast.error('에스크로 지갑이 없습니다.');
+        return;
+      }
 
-
-        fetch('/api/order/acceptBuyOrder', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: "admin",
-                orderId: orderId,
-                sellerWalletAddress: address,
-                sellerStorecode: "admin",
-
-                /*
-                sellerNickname: user ? user.nickname : '',
-                sellerAvatar: user ? user.avatar : '',
-
-                //buyerMobile: user.mobile,
-
-                sellerMobile: smsNumber,
-                */
+      setAcceptingBuyOrder (
+        acceptingBuyOrder.map((item, idx) => idx === index ? true : item)
+      );
 
 
+      fetch('/api/order/acceptBuyOrder', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              lang: params.lang,
+              storecode: "admin",
+              orderId: orderId,
+              sellerWalletAddress: address,
+              sellerStorecode: "admin",
 
-                seller: user?.seller,
+              /*
+              sellerNickname: user ? user.nickname : '',
+              sellerAvatar: user ? user.avatar : '',
 
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
+              //buyerMobile: user.mobile,
 
-            console.log('data', data);
-
-            //setBuyOrders(data.result.orders);
-            //openModal();
-
-            toast.success(Order_accepted_successfully);
-
-            //playSong();
+              sellerMobile: smsNumber,
+              */
 
 
 
-            fetch('/api/order/getAllBuyOrders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: searchStorecode,
-                    limit: Number(limitValue),
-                    page: Number(pageValue),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
+              seller: user?.seller,
 
-                    searchOrderStatusCompleted: true,
+          }),
+      })
+      .then(response => response.json())
+      .then(data => {
 
-                    searchBuyer: searchBuyer,
-                    searchDepositName: searchDepositName,
+          console.log('data', data);
 
-                    searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+          //setBuyOrders(data.result.orders);
+          //openModal();
 
-                    privateSale: true,
+          toast.success(Order_accepted_successfully);
 
-                    fromDate: searchFromDate,
-                    toDate: searchToDate,
-
-
-                  }
-                ),
-            })
-            .then(response => response.json())
-            .then(data => {
-                ///console.log('data', data);
-                setBuyOrders(data.result.orders);
-
-                setTotalCount(data.result.totalCount);
-
-
-                setBuyOrderStats({
-                  totalCount: data.result.totalCount,
-                  totalKrwAmount: data.result.totalKrwAmount,
-                  totalUsdtAmount: data.result.totalUsdtAmount,
-                  totalSettlementCount: data.result.totalSettlementCount,
-                  totalSettlementAmount: data.result.totalSettlementAmount,
-                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                  totalFeeAmount: data.result.totalFeeAmount,
-                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-                });
+          //playSong();
 
 
 
-            })
+          fetch('/api/order/getAllBuyOrders', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(
+                {
+                  storecode: searchStorecode,
+                  limit: Number(limitValue),
+                  page: Number(pageValue),
+                  walletAddress: address,
+                  searchMyOrders: searchMyOrders,
+
+                  searchOrderStatusCompleted: true,
+
+                  searchTradeId: searchTradeId,
+                  searchBuyer: searchBuyer,
+                  searchDepositName: searchDepositName,
+
+                  searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+
+                  privateSale: true,
+
+                  fromDate: searchFromDate,
+                  toDate: searchToDate,
+
+
+                }
+              ),
+          })
+          .then(response => response.json())
+          .then(data => {
+              ///console.log('data', data);
+              setBuyOrders(data.result.orders);
+
+              setTotalCount(data.result.totalCount);
+
+
+              setBuyOrderStats({
+                totalCount: data.result.totalCount,
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+              });
 
 
 
-        })
-        .catch((error) => {
-            console.error('Error:', JSON.stringify(error));
-        })
-        .finally(() => {
+          })
 
 
-            setAgreementForTrade (
-              agreementForTrade.map((item, idx) => idx === index ? false : item)
-            );
+
+      })
+      .catch((error) => {
+          console.error('Error:', JSON.stringify(error));
+      })
+      .finally(() => {
 
 
-            setAcceptingBuyOrder (
-                acceptingBuyOrder.map((item, idx) => idx === index ? false : item)
-            );
-
-        } );
+          setAgreementForTrade (
+            agreementForTrade.map((item, idx) => idx === index ? false : item)
+          );
 
 
-    }
+          setAcceptingBuyOrder (
+              acceptingBuyOrder.map((item, idx) => idx === index ? false : item)
+          );
+
+      } );
+
+
+  }
 
 
 
@@ -1200,6 +1201,7 @@ export default function Index({ params }: any) {
 
             searchOrderStatusCompleted: true,
 
+            searchTradeId: searchTradeId,
             searchBuyer: searchBuyer,
             searchDepositName: searchDepositName,
 
@@ -1462,6 +1464,7 @@ export default function Index({ params }: any) {
 
                 //searchOrderStatusCompleted: true,
 
+                searchTradeId: searchTradeId,
                 searchBuyer: searchBuyer,
                 searchDepositName: searchDepositName,
 
@@ -1683,6 +1686,7 @@ export default function Index({ params }: any) {
 
               //searchOrderStatusCompleted: true,
 
+              searchTradeId: searchTradeId,
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
 
@@ -1809,6 +1813,7 @@ export default function Index({ params }: any) {
 
           //searchOrderStatusCompleted: true,
 
+          searchTradeId: searchTradeId,
           searchBuyer: searchBuyer,
           searchDepositName: searchDepositName,
 
@@ -1924,6 +1929,7 @@ export default function Index({ params }: any) {
 
               //earchOrderStatusCompleted: true,
 
+              searchTradeId: searchTradeId,
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
 
@@ -2047,6 +2053,7 @@ export default function Index({ params }: any) {
     searchFromDate,
     searchToDate,
 
+    searchTradeId,
     searchBuyer,
     searchStoreBankAccountNumber,
     searchDepositName,
@@ -3011,111 +3018,103 @@ export default function Index({ params }: any) {
 
           <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
 
+            <div className="flex flex-col items-start justify-center gap-2">
 
-            {/* select storecode */}
-            <div className="flex flex-row items-center gap-2">
-              {fetchingAllStores ? (
-                <Image
-                  src="/loading.png"
-                  alt="Loading"
-                  width={20}
-                  height={20}
-                  className="animate-spin"
-                />
-              ) : (
-                <div className="flex flex-row items-center gap-2">
-
-                  
+              {/* select storecode */}
+              <div className="flex flex-row items-center gap-2">
+                {fetchingAllStores ? (
                   <Image
-                    src="/icon-store.png"
-                    alt="Store"
+                    src="/loading.png"
+                    alt="Loading"
+                    width={20}
+                    height={20}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <div className="flex flex-row items-center gap-2">
+
+                    
+                    <Image
+                      src="/icon-store.png"
+                      alt="Store"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+
+                    <span className="
+                      w-32
+                      text-sm font-semibold">
+                      가맹점 선택
+                    </span>
+
+                    <select
+                      value={searchStorecode}
+                      
+                      //onChange={(e) => setSearchStorecode(e.target.value)}
+
+                      // storecode parameter is passed to fetchBuyOrders
+                      onChange={(e) => {
+                        router.push('/' + params.lang + '/admin/clearance-history?storecode=' + e.target.value);
+                      }}
+                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    >
+                      <option value="">전체</option>
+                      {allStores && allStores.map((item, index) => (
+                        <option key={index} value={item.storecode}
+                          className="flex flex-row items-center justify-start gap-2"
+                        >
+                          
+                          {item.storeName}{' '}({item.storecode})
+
+                        </option>
+                      ))}
+                    </select>
+
+                  </div>
+
+                )}
+              </div>
+
+              {/* serach fromDate and toDate */}
+              {/* DatePicker for fromDate and toDate */}
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="flex flex-row items-center gap-2">
+                  <Image
+                    src="/icon-calendar.png"
+                    alt="Calendar"
                     width={20}
                     height={20}
                     className="rounded-lg w-5 h-5"
                   />
-
-                  <span className="
-                    w-32
-                    text-sm font-semibold">
-                    가맹점선택
-                  </span>
-
-
-                  <select
-                    value={searchStorecode}
-                    
-                    //onChange={(e) => setSearchStorecode(e.target.value)}
-
-                    // storecode parameter is passed to fetchBuyOrders
-                    onChange={(e) => {
-                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + e.target.value);
-                    }}
-
-
-
+                  <input
+                    type="date"
+                    value={searchFromDate}
+                    onChange={(e) => setSearchFormDate(e.target.value)}
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  >
-                    <option value="">전체</option>
-                    {allStores && allStores.map((item, index) => (
-                      <option key={index} value={item.storecode}
-                        className="flex flex-row items-center justify-start gap-2"
-                      >
-                        
-                        {item.storeName}{' '}({item.storecode})
-
-                      </option>
-                    ))}
-                  </select>
-
-
+                  />
                 </div>
 
-              )}
-            </div>
+                <span className="text-sm text-gray-500">~</span>
 
-
-
-
-
-            {/* serach fromDate and toDate */}
-            {/* DatePicker for fromDate and toDate */}
-            <div className="flex flex-col sm:flex-row items-center gap-2">
-              <div className="flex flex-row items-center gap-2">
-                <Image
-                  src="/icon-calendar.png"
-                  alt="Calendar"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <input
-                  type="date"
-                  value={searchFromDate}
-                  onChange={(e) => setSearchFormDate(e.target.value)}
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                />
+                <div className="flex flex-row items-center gap-2">
+                  <Image
+                    src="/icon-calendar.png"
+                    alt="Calendar"
+                    width={20}
+                    height={20}
+                    className="rounded-lg w-5 h-5"
+                  />
+                  <input
+                    type="date"
+                    value={searchToDate}
+                    onChange={(e) => setSearchToDate(e.target.value)}
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  />
+                </div>
               </div>
 
-              <span className="text-sm text-gray-500">~</span>
-
-              <div className="flex flex-row items-center gap-2">
-                <Image
-                  src="/icon-calendar.png"
-                  alt="Calendar"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <input
-                  type="date"
-                  value={searchToDate}
-                  onChange={(e) => setSearchToDate(e.target.value)}
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                />
-              </div>
             </div>
-
-
 
 
 
@@ -3127,6 +3126,17 @@ export default function Index({ params }: any) {
 
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                {/* search Trade ID */}
+                <div className="flex flex-row items-center gap-2">
+                  <input
+                    type="text"
+                    value={searchTradeId}
+                    onChange={(e) => setSearchTradeId(e.target.value)}
+                    placeholder="주문번호"
+                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  />
+                </div>
+
                 {/* search nickname */}
                 <div className="flex flex-row items-center gap-2">
                   <input
