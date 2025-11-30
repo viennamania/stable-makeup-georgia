@@ -616,7 +616,7 @@ export default function TradeDetailsPage({ params }: any) {
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className='border border-gray-300 rounded-md p-1 mt-1 w-full'
+                                                    className='w-full border border-gray-300 rounded-md p-1 mt-1 text-sm text-gray-700'
                                                     placeholder="은행명 입력"
                                                     value={buyerBankInfo.bankName}
                                                     onChange={(e) => setBuyerBankInfo({
@@ -635,7 +635,7 @@ export default function TradeDetailsPage({ params }: any) {
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className='border border-gray-300 rounded-md p-1 mt-1 w-full'
+                                                    className='w-full border border-gray-300 rounded-md p-1 mt-1 text-sm text-gray-700'
                                                     placeholder="계좌번호 입력"
                                                     value={buyerBankInfo.accountNumber}
                                                     onChange={(e) => setBuyerBankInfo({
@@ -654,7 +654,7 @@ export default function TradeDetailsPage({ params }: any) {
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className='border border-gray-300 rounded-md p-1 mt-1 w-full'
+                                                    className='w-full border border-gray-300 rounded-md p-1 mt-1 text-sm text-gray-700'
                                                     placeholder="예금주명 입력"
                                                     value={buyerBankInfo.accountHolder}
                                                     onChange={(e) => setBuyerBankInfo({
