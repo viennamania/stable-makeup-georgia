@@ -1897,7 +1897,7 @@ const fetchBuyOrders = async () => {
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">P2P 거래금액(원)</th>
 
                   
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)/미결제수(건)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)<br/>미결제수(건)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제금액(원)</th>
 
