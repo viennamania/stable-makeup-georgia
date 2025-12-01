@@ -1939,9 +1939,11 @@ export default function Index({ params }: any) {
                         {/*
                         <th className="p-2">통장수</th>
                         */}
+                        {/*
                         <th className="p-2">거래수<br/>금액(원)<br/>거래수량(USDT)</th>
 
                         <th className="p-2">결제수<br/>결제수수료(원)<br/>결제수수료수량(USDT)</th>
+                        */}
                         {/*
                         <th className="p-2">
                           청산건수<br/>청산금액(원)<br/>청산수량(USDT)
@@ -2172,6 +2174,7 @@ export default function Index({ params }: any) {
                           </td>
                           */}
 
+                          {/*
                           <td className="p-2">
                             <div className="flex flex-col items-center justify-center gap-2">
 
@@ -2209,7 +2212,7 @@ export default function Index({ params }: any) {
 
                               </div>
 
-                              {/*
+                              
                               <div className="flex flex-col sm:flex-row items-center gap-2">
                                 <button
                                   onClick={() => {
@@ -2234,16 +2237,18 @@ export default function Index({ params }: any) {
                                   P2P 거래내역
                                 </button>
                               </div>
-                              */}
+                             
 
 
                             </div>
                              
 
                           </td>
+                          */}
 
 
-                         <td className="p-2">
+                          {/*
+                          <td className="p-2">
                             <div className="flex flex-col items-center justify-center gap-2">
 
                               <div className="flex flex-col items-center  justify-center gap-2">
@@ -2283,6 +2288,7 @@ export default function Index({ params }: any) {
                             </div>
 
                           </td>
+                          */}
 
                           {/*
                           <td className="p-2">
