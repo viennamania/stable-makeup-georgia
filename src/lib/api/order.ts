@@ -4838,6 +4838,132 @@ export async function getAllBuyOrdersBySellerAccountNumber(
 }
 
 
+
+
+
+/*
+김명실 농협 22105556021573
+맞춤 0102400173229
+맞춤 0109964859919
+*/
+// 22105556021573 or 0102400173229 or 0109964859919
+
+
+// getAllBuyOrdersBySellerAccountNumber
+export async function getAllBuyOrdersBySellerAccountNumberTemp(
+  {
+    limit,
+    page,
+    fromDate,
+    toDate,
+    privateSale,
+    accountNumber,
+
+    searchBuyer,
+    searchDepositName,
+  }: {
+    limit: number;
+    page: number;
+    fromDate: string;
+    toDate: string;
+    privateSale: boolean;
+    accountNumber: string;
+
+    searchBuyer?: string;
+    searchDepositName?: string;
+  }
+): Promise<any> {
+
+
+  console.log('getAllBuyOrdersBySellerAccountNumber searchBuyer: ' + searchBuyer);
+  console.log('getAllBuyOrdersBySellerAccountNumber searchDepositName: ' + searchDepositName);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const results = await collection.find<OrderProps>(
+    {
+      
+      //'seller.bankInfo.accountNumber': accountNumber,
+      $or: [
+        { 'seller.bankInfo.accountNumber': accountNumber },
+        { 'seller.bankInfo.accountNumber': '0102400173229' },
+        { 'seller.bankInfo.accountNumber': '0109964859919' },
+      ],
+
+
+
+      // if seller.bankInfo.accountNumber has spaces, remove spaces before compare
+      //'seller.bankInfo.accountNumber': {
+      //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
+      //},
+
+      //'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
+      //'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
+
+
+      /*
+              ...(searchDepositName ? {
+          $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } },
+            { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' }
+          }] } : {}),
+      */
+
+      ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
+      ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
+
+
+
+
+
+      status: 'paymentConfirmed',
+      
+      //privateSale: privateSale,
+
+      paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
+    }
+  ).sort({ paymentConfirmedAt: -1 })
+    .limit(limit).skip((page - 1) * limit).toArray();
+  // get total count of orders
+  const totalCount = await collection.countDocuments(
+    {
+      //'seller.bankInfo.accountNumber': accountNumber,
+      $or: [
+        { 'seller.bankInfo.accountNumber': accountNumber },
+        { 'seller.bankInfo.accountNumber': '0102400173229' },
+        { 'seller.bankInfo.accountNumber': '0109964859919' },
+      ],
+
+
+      // if seller.bankInfo.accountNumber has spaces, remove spaces before compare
+      //'seller.bankInfo.accountNumber': {
+      //  $replaceAll: { input: '$seller.bankInfo.accountNumber', find: ' ', replacement: '' } , $eq: accountNumber
+      //},
+
+      //'buyer.nickname': searchBuyer ? { $regex: searchBuyer, $options: 'i' } : { $exists: true },
+      //'buyer.depositName': searchDepositName ? { $regex: searchDepositName, $options: 'i' } : { $exists: true },
+
+      ...(searchBuyer ? { 'buyer.nickname': { $regex: String(searchBuyer), $options: 'i' } } : {}),
+      ...(searchDepositName ? { 'buyer.depositName': { $regex: String(searchDepositName), $options: 'i' } } : {}),
+
+
+      status: 'paymentConfirmed',
+      
+      //privateSale: privateSale,
+
+      paymentConfirmedAt: { $gte: fromDate, $lt: toDate },
+    }
+  );
+  return {
+    totalCount: totalCount,
+    orders: results,
+  };
+
+
+}
+
+
+
+
 // getAllBuyOrdersByStorecode
 export async function getAllBuyOrdersByStorecodePrivateSale(
   {
