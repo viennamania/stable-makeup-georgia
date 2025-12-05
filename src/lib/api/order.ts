@@ -2602,8 +2602,72 @@ export async function getBuyOrders(
 
 
 
+    // totalResult for usdtAmout, krwAmount sum and count of each userType (group by userType)
 
-    
+    const totalReaultGroupByUserType = await collection.aggregate([
+      {
+        $match: {
+
+          //'seller.walletAddress': walletAddress,
+
+          //nickname: { $regex: searchNickname, $options: 'i' },
+
+
+          status: 'paymentConfirmed',
+          settlement: { $exists: true, $ne: null },
+
+          ///privateSale: { $ne: true },
+          privateSale: privateSale,
+
+
+          //agentcode: { $regex: agentcode, $options: 'i' },
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+
+
+          //storecode: storecode,
+          storecode: { $regex: storecode, $options: 'i' },
+
+          nickname: { $regex: searchBuyer, $options: 'i' },
+
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+          
+          ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+
+
+
+          ///'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
+          // seller?.bankInfo?.accountNumber
+          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+
+          // if manualConfirmPayment is true, autoConfirmPayment is not true
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+
+
+
+          //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
+
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      // group by userType empty, A, B, C, D
+      {
+        $group: {
+          _id: '$userType',
+
+          totalCount: { $sum: 1 },
+          totalKrwAmount: { $sum: '$krwAmount' },
+          totalUsdtAmount: { $sum: '$usdtAmount' },
+
+        }
+
+      }
+
+    ]).toArray();
+
+
+
 
     return {
       totalCount: totalResult.length > 0 ? totalResult[0].totalCount : 0,
@@ -2617,6 +2681,9 @@ export async function getBuyOrders(
       totalFeeAmountKRW: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalFeeAmountKRW : 0,
       totalAgentFeeAmount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalAgentFeeAmount : 0,
       totalAgentFeeAmountKRW: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalAgentFeeAmountKRW : 0,
+
+      totalByUserType: totalReaultGroupByUserType,
+      
 
       orders: results,
     };

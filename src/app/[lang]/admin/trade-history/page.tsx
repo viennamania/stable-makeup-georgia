@@ -863,7 +863,15 @@ export default function Index({ params }: any) {
 
 
   const [manualConfirmPayment, setManualConfirmPayment] = useState(false);
-  
+
+  // userTypeEmpty, userTypeA, userTypeB, userTypeC, userTypeD, userTypeE
+
+  const [userTypeEmpty, setUserTypeEmpty] = useState(true);
+  const [userTypeA, setUserTypeA] = useState(true);
+  const [userTypeB, setUserTypeB] = useState(true);
+  const [userTypeC, setUserTypeC] = useState(true);
+  const [userTypeD, setUserTypeD] = useState(true);
+ 
 
 
   const [searchMyOrders, setSearchMyOrders] = useState(false);
@@ -877,7 +885,24 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
-  const [buyOrderStats, setBuyOrderStats] = useState({
+  const [buyOrderStats, setBuyOrderStats] = useState<{
+    totalCount: number;
+    totalKrwAmount: number;
+    totalUsdtAmount: number;
+    totalSettlementCount: number;
+    totalSettlementAmount: number;
+    totalSettlementAmountKRW: number;
+    totalFeeAmount: number;
+    totalFeeAmountKRW: number;
+    totalAgentFeeAmount: number;
+    totalAgentFeeAmountKRW: number;
+    totalByUserType: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
+  }>({
     totalCount: 0,
     totalKrwAmount: 0,
     totalUsdtAmount: 0,
@@ -888,8 +913,9 @@ export default function Index({ params }: any) {
     totalFeeAmountKRW: 0,
     totalAgentFeeAmount: 0,
     totalAgentFeeAmountKRW: 0,
-  });
 
+    totalByUserType: [],
+  });
 
 
   /* agreement for trade */
@@ -1059,6 +1085,8 @@ export default function Index({ params }: any) {
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
                 });
 
 
@@ -1207,6 +1235,8 @@ export default function Index({ params }: any) {
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
             });
 
           }
@@ -1487,6 +1517,8 @@ export default function Index({ params }: any) {
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
                 });
 
             })
@@ -1714,6 +1746,8 @@ export default function Index({ params }: any) {
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
             });
 
         })
@@ -1894,6 +1928,8 @@ export default function Index({ params }: any) {
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
             });
 
         })
@@ -2119,6 +2155,8 @@ export default function Index({ params }: any) {
         totalFeeAmountKRW: data.result.totalFeeAmountKRW,
         totalAgentFeeAmount: data.result.totalAgentFeeAmount,
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+        totalByUserType: data.result.totalByUserType,
       });
 
     }
@@ -2241,6 +2279,8 @@ const fetchBuyOrders = async () => {
     totalFeeAmountKRW: data.result.totalFeeAmountKRW,
     totalAgentFeeAmount: data.result.totalAgentFeeAmount,
     totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+    totalByUserType: data.result.totalByUserType,
   });
 
 
@@ -2511,7 +2551,6 @@ const fetchBuyOrders = async () => {
       audio.play();
     }
   }, [totalNumberOfClearanceOrders, loadingTotalNumberOfClearanceOrders]);
-
 
 
 
@@ -3474,18 +3513,87 @@ const fetchBuyOrders = async () => {
           </div>
 
 
-          {/* manualConfirmPayment checkbox */}
-          <div className="flex flex-row items-center gap-2">
-            <input
-              type="checkbox"
-              checked={manualConfirmPayment}
-              onChange={(e) => setManualConfirmPayment(e.target.checked)}
-              className="w-4 h-4"
-              id="manualConfirmPaymentCheckbox"
-            />
-            <label htmlFor="manualConfirmPaymentCheckbox" className="text-sm text-zinc-500">
-              수동입금만 보기
-            </label>
+          <div className="flex flex-row items-center gap-5">
+            {/* manualConfirmPayment checkbox */}
+            <div className="flex flex-row items-center gap-2">
+              <input
+                type="checkbox"
+                checked={manualConfirmPayment}
+                onChange={(e) => setManualConfirmPayment(e.target.checked)}
+                className="w-4 h-4"
+                id="manualConfirmPaymentCheckbox"
+              />
+              <label htmlFor="manualConfirmPaymentCheckbox" className="text-sm text-zinc-500">
+                수동입금만 보기
+              </label>
+            </div>
+
+            {/* userTypeEmpty, userTypeA, userTypeB, userTypeC, userTypeD, userTypeE checkboxes */}
+            {/*
+            <div className="grid grid-cols-5 gap-2">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <label htmlFor="userTypeEmptyCheckbox" className="text-sm text-zinc-500">
+                  일반회원
+                </label>
+                <input
+                  type="checkbox"
+                  checked={userTypeEmpty}
+                  onChange={() => setUserTypeEmpty(!userTypeEmpty)}
+                  className="w-4 h-4"
+                  id="userTypeEmptyCheckbox"
+                />
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <label htmlFor="userTypeACheckbox" className="text-sm text-zinc-500">
+                  1등급
+                </label>
+                <input
+                  type="checkbox"
+                  checked={userTypeA}
+                  onChange={() => setUserTypeA(!userTypeA)}
+                  className="w-4 h-4"
+                  id="userTypeACheckbox"
+                />
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <label htmlFor="userTypeBCheckbox" className="text-sm text-zinc-500">
+                  2등급
+                </label>
+                <input
+                  type="checkbox"
+                  checked={userTypeB}
+                  onChange={() => setUserTypeB(!userTypeB)}
+                  className="w-4 h-4"
+                  id="userTypeBCheckbox"
+                />
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <label htmlFor="userTypeCCheckbox" className="text-sm text-zinc-500">
+                  3등급
+                </label>
+                <input
+                  type="checkbox"
+                  checked={userTypeC}
+                  onChange={() => setUserTypeC(!userTypeC)}
+                  className="w-4 h-4"
+                  id="userTypeCCheckbox"
+                />
+              </div>
+              <div className="flex flex-col items-center justify-center gap-2">
+                <label htmlFor="userTypeDCheckbox" className="text-sm text-zinc-500">
+                  4등급
+                </label>
+                <input
+                  type="checkbox"
+                  checked={userTypeD}
+                  onChange={() => setUserTypeD(!userTypeD)}
+                  className="w-4 h-4"
+                  id="userTypeDCheckbox"
+                />
+              </div>
+            </div>
+            */}
+
           </div>
 
 
@@ -3546,6 +3654,94 @@ const fetchBuyOrders = async () => {
               </div>
 
             </div>
+
+            {/* divider */}
+            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
+
+
+            {/* buyOrderStats totalByUserTypeEmpty, AAA, BBB, CCCC, DDDD */}
+            {/*
+            [
+              {
+                _id: 'abc',
+                totalCount: 1,
+                totalKrwAmount: 1000000,
+                totalUsdtAmount: 666.67
+              },
+              {
+                _id: '',
+                totalCount: 292,
+                totalKrwAmount: 335860000,
+                totalUsdtAmount: 224333.96
+              },
+              {
+                _id: 'test',
+                totalCount: 8,
+                totalKrwAmount: 2450000,
+                totalUsdtAmount: 1633.33
+              },
+              {
+                _id: 'AAA',
+                totalCount: 111,
+                totalKrwAmount: 288795000,
+                totalUsdtAmount: 192821.26
+              }
+            ]
+            */}
+
+            <div className="xl:w-1/3 w-full
+              flex flex-col sm:flex-row items-start justify-center gap-4">
+
+              {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
+                <div key={index} className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">
+                    {type === '' ? '일반회원'
+                      : type === 'AAA' ? '1등급'
+                      : type === 'BBB' ? '2등급'
+                      : type === 'CCC' ? '3등급'
+                      : type === 'DDD' ? '4등급'
+                      : ''
+                    }
+                  </div>
+                  <div className="text-sm font-semibold text-zinc-500">
+                    {
+                      buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                    }
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-sm font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}>
+                      {
+                        buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
+                          ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.000'
+                      }
+                    </span>
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-sm font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {
+                        buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
+                          ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
+                          : '0'
+                      }
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+            </div>
+
+
 
             {/* divider */}
             {/*
