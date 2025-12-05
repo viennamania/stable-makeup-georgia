@@ -1271,7 +1271,7 @@ export default function Index({ params }: any) {
   const [userCode, setUserCode] = useState('');
   const [userName, setUserName] = useState('');
   const [userBankName, setUserBankName] = useState('');
-  const [userType, setUserType] = useState('test');
+  const [userType, setUserType] = useState('');
 
 
 
