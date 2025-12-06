@@ -2013,10 +2013,10 @@ export default function Index({ params }: any) {
                                 <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfo.bankName}
                                 </span>
-                                <span className="text-sm font-bold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfo.accountNumber}
                                 </span>
-                                <span className="text-lg text-zinc-800 font-semibold">
+                                <span className="text-lg font-semibold text-zinc-800">
                                   {store.bankInfo.accountHolder}
                                 </span>
                               </div>
@@ -2069,10 +2069,10 @@ export default function Index({ params }: any) {
                                 <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoAAA.bankName}
                                 </span>
-                                <span className="text-sm font-bold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoAAA.accountNumber}
                                 </span>
-                                <span className="text-lg text-zinc-800 font-semibold">
+                                <span className="text-lg font-semibold text-zinc-800">
                                   {store.bankInfoAAA.accountHolder}
                                 </span>
                               </div>
@@ -2120,7 +2120,7 @@ export default function Index({ params }: any) {
                                 <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoBBB.bankName}
                                 </span>
-                                <span className="text-lg font-semibold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoBBB.accountNumber}
                                 </span>
                                 <span className="text-lg font-semibold text-zinc-800">
@@ -2167,10 +2167,10 @@ export default function Index({ params }: any) {
                                 className="w-10 h-10"
                               />
                               <div className="flex flex-col">
-                                <span className="text-lg font-semibold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoCCC.bankName}
                                 </span>
-                                <span className="text-lg font-semibold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoCCC.accountNumber}
                                 </span>
                                 <span className="text-lg font-semibold text-zinc-800">
@@ -2216,10 +2216,10 @@ export default function Index({ params }: any) {
                                 className="w-10 h-10"
                               />
                               <div className="flex flex-col">
-                                <span className="text-lg font-semibold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoDDD.bankName}
                                 </span>
-                                <span className="text-lg font-semibold text-zinc-800">
+                                <span className="text-sm font-semibold text-zinc-800">
                                   {store.bankInfoDDD.accountNumber}
                                 </span>
                                 <span className="text-lg font-semibold text-zinc-800">
