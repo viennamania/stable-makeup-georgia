@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
 
   //console.log("getAllBuyOrders result totalBySellerBankAccountNumber", result.totalBySellerBankAccountNumber);
 
+  //console.log("getAllBuyOrders result totalByBuyerBankAccountNumber", result.totalByBuyerBankAccountNumber);
 
  
   return NextResponse.json({
