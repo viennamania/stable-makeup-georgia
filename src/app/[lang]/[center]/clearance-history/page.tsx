@@ -819,7 +819,7 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
- const [buyOrderStats, setBuyOrderStats] = useState<{
+  const [buyOrderStats, setBuyOrderStats] = useState<{
     //totalCount: number;
 
     totalClearanceCount: number;
@@ -842,6 +842,12 @@ export default function Index({ params }: any) {
       totalKrwAmount: number;
       totalUsdtAmount: number;
     }>;
+    totalBySellerBankAccountNumber: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
   }>({
     //totalCount: 0,
     totalClearanceCount: 0,
@@ -858,6 +864,7 @@ export default function Index({ params }: any) {
     totalAgentFeeAmount: 0,
     totalAgentFeeAmountKRW: 0,
     totalByBuyerBankAccountNumber: [],
+    totalBySellerBankAccountNumber: [],
   });
 
 
@@ -922,165 +929,166 @@ export default function Index({ params }: any) {
 
 
 
-    const acceptBuyOrder = (
-      index: number,
-      orderId: string,
-      smsNumber: string,
-    ) => {
+  const acceptBuyOrder = (
+    index: number,
+    orderId: string,
+    smsNumber: string,
+  ) => {
 
 
 
-      console.log('acceptBuyOrder index', index);
+    console.log('acceptBuyOrder index', index);
 
 
 
-        if (!address) {
-            toast.error('Please connect your wallet');
-            return;
-        }
-
-        /*
-        if (!escrowWalletAddress || escrowWalletAddress === '') {
-          toast.error('에스크로 지갑이 없습니다.');
+      if (!address) {
+          toast.error('Please connect your wallet');
           return;
-        }
+      }
+
+      /*
+      if (!escrowWalletAddress || escrowWalletAddress === '') {
+        toast.error('에스크로 지갑이 없습니다.');
+        return;
+      }
+      */
+
+      setAcceptingBuyOrder (
+        acceptingBuyOrder.map((item, idx) => idx === index ? true : item)
+      );
+
+
+
+      /*
+          lang,
+          storecode,
+          orderId,
+          sellerWalletAddress,
+          sellerStorecode,
+          sellerMemo,
         */
 
-        setAcceptingBuyOrder (
-          acceptingBuyOrder.map((item, idx) => idx === index ? true : item)
-        );
+
+
+      fetch('/api/order/acceptBuyOrder', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              lang: params.lang,
+              storecode: params.center,
+              orderId: orderId,
+              sellerWalletAddress: address,
+              sellerStorecode: params.center,
+
+              /*
+              sellerNickname: user ? user.nickname : '',
+              sellerAvatar: user ? user.avatar : '',
+
+              //buyerMobile: user.mobile,
+
+              sellerMobile: smsNumber,
+              */
 
 
 
-        /*
-            lang,
-            storecode,
-            orderId,
-            sellerWalletAddress,
-            sellerStorecode,
-            sellerMemo,
-          */
+              seller: user?.seller,
+
+          }),
+      })
+      .then(response => response.json())
+      .then(data => {
+
+          console.log('data', data);
+
+          //setBuyOrders(data.result.orders);
+          //openModal();
+
+          toast.success(Order_accepted_successfully);
+
+          //playSong();
 
 
 
-        fetch('/api/order/acceptBuyOrder', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.center,
-                orderId: orderId,
-                sellerWalletAddress: address,
-                sellerStorecode: params.center,
+          fetch('/api/order/getAllCollectOrdersForSeller', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(
+                {
+                  storecode: params.center,
+                  limit: Number(limit),
+                  page: Number(page),
+                  walletAddress: address,
+                  searchMyOrders: searchMyOrders,
 
-                /*
-                sellerNickname: user ? user.nickname : '',
-                sellerAvatar: user ? user.avatar : '',
+                }
+              ),
+          })
+          .then(response => response.json())
+          .then(data => {
+              ///console.log('data', data);
+              setBuyOrders(data.result.orders);
 
-                //buyerMobile: user.mobile,
+              setTotalCount(data.result.totalCount);
 
-                sellerMobile: smsNumber,
-                */
-
-
-
-                seller: user?.seller,
-
-            }),
-        })
-        .then(response => response.json())
-        .then(data => {
-
-            console.log('data', data);
-
-            //setBuyOrders(data.result.orders);
-            //openModal();
-
-            toast.success(Order_accepted_successfully);
-
-            //playSong();
+              ///setTotalClearanceCount(data.result.totalClearanceCount);
+              ///setTotalClearanceAmount(data.result.totalClearanceAmount);
+              ///setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
 
 
-            fetch('/api/order/getAllCollectOrdersForSeller', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: params.center,
-                    limit: Number(limit),
-                    page: Number(page),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
+              setBuyOrderStats({
+                //totalCount: data.result.totalCount,
+                totalClearanceCount: data.result.totalClearanceCount,
+                totalClearanceAmount: data.result.totalClearanceAmount,
+                totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
 
-                  }
-                ),
-            })
-            .then(response => response.json())
-            .then(data => {
-                ///console.log('data', data);
-                setBuyOrders(data.result.orders);
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
-                setTotalCount(data.result.totalCount);
-
-                ///setTotalClearanceCount(data.result.totalClearanceCount);
-                ///setTotalClearanceAmount(data.result.totalClearanceAmount);
-                ///setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-
-
-
-                setBuyOrderStats({
-                  //totalCount: data.result.totalCount,
-                  totalClearanceCount: data.result.totalClearanceCount,
-                  totalClearanceAmount: data.result.totalClearanceAmount,
-                  totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-                  totalKrwAmount: data.result.totalKrwAmount,
-                  totalUsdtAmount: data.result.totalUsdtAmount,
-                  totalSettlementCount: data.result.totalSettlementCount,
-                  totalSettlementAmount: data.result.totalSettlementAmount,
-                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                  totalFeeAmount: data.result.totalFeeAmount,
-                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                  totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                });
+                totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
+              });
 
 
 
 
 
 
-            })
+          })
 
 
 
-        })
-        .catch((error) => {
-            console.error('Error:', JSON.stringify(error));
-        })
-        .finally(() => {
+      })
+      .catch((error) => {
+          console.error('Error:', JSON.stringify(error));
+      })
+      .finally(() => {
 
 
-            setAgreementForTrade (
-              agreementForTrade.map((item, idx) => idx === index ? false : item)
-            );
+          setAgreementForTrade (
+            agreementForTrade.map((item, idx) => idx === index ? false : item)
+          );
 
 
-            setAcceptingBuyOrder (
-                acceptingBuyOrder.map((item, idx) => idx === index ? false : item)
-            );
+          setAcceptingBuyOrder (
+              acceptingBuyOrder.map((item, idx) => idx === index ? false : item)
+          );
 
-        } );
+      } );
 
 
-    }
+  }
 
 
 
@@ -1101,118 +1109,119 @@ export default function Index({ params }: any) {
 
 
 
-    // cancel sell order state
-    const [cancellings, setCancellings] = useState([] as boolean[]);
-    useEffect(() => {
-      setCancellings([]);
-      const newArray: boolean[] = [];
-      for (let i = 0; i < buyOrders.length; i++) {
-        newArray.push(false);
-      }
-      setCancellings(newArray);
-    } , [buyOrders.length]);
+  // cancel sell order state
+  const [cancellings, setCancellings] = useState([] as boolean[]);
+  useEffect(() => {
+    setCancellings([]);
+    const newArray: boolean[] = [];
+    for (let i = 0; i < buyOrders.length; i++) {
+      newArray.push(false);
+    }
+    setCancellings(newArray);
+  } , [buyOrders.length]);
 
 
 
 
-    const cancelTrade = async (orderId: string, index: number) => {
+  const cancelTrade = async (orderId: string, index: number) => {
 
-      if (cancellings[index]) {
-        return;
-      }
+    if (cancellings[index]) {
+      return;
+    }
 
-      setCancellings(
-        cancellings.map((item, i) => i === index ? true : item)
-      );
+    setCancellings(
+      cancellings.map((item, i) => i === index ? true : item)
+    );
 
 
-      const response = await fetch('/api/order/cancelTradeBySeller', {
+    const response = await fetch('/api/order/cancelTradeBySeller', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        lang: params.lang,
+        storecode: params.center,
+        orderId: orderId,
+        walletAddress: address,
+      })
+    });
+
+    const data = await response.json();
+
+    ///console.log('data', data);
+
+    if (data.result) {
+
+      toast.success(Order_has_been_cancelled);
+
+      //playSong();
+
+
+      await fetch('/api/order/getAllCollectOrdersForSeller', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          lang: params.lang,
-          storecode: params.center,
-          orderId: orderId,
-          walletAddress: address,
-        })
+        body: JSON.stringify(
+          {
+            storecode: params.center,
+            limit: Number(limit),
+            page: Number(page),
+            walletAddress: address,
+            searchMyOrders: searchMyOrders,
+          }
+        )
+      }).then(async (response) => {
+        const data = await response.json();
+        //console.log('data', data);
+        if (data.result) {
+          setBuyOrders(data.result.orders);
+
+          setTotalCount(data.result.totalCount);
+
+          //setTotalClearanceCount(data.result.totalClearanceCount);
+          //setTotalClearanceAmount(data.result.totalClearanceAmount);
+          //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+          setBuyOrderStats({
+            //totalCount: data.result.totalCount,
+            totalClearanceCount: data.result.totalClearanceCount,
+            totalClearanceAmount: data.result.totalClearanceAmount,
+            totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+            totalKrwAmount: data.result.totalKrwAmount,
+            totalUsdtAmount: data.result.totalUsdtAmount,
+            totalSettlementCount: data.result.totalSettlementCount,
+            totalSettlementAmount: data.result.totalSettlementAmount,
+            totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+            totalFeeAmount: data.result.totalFeeAmount,
+            totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+            totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+            totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+            totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
+          });
+
+
+        }
       });
 
-      const data = await response.json();
-
-      ///console.log('data', data);
-
-      if (data.result) {
-
-        toast.success(Order_has_been_cancelled);
-
-        //playSong();
-
-
-        await fetch('/api/order/getAllCollectOrdersForSeller', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(
-            {
-              storecode: params.center,
-              limit: Number(limit),
-              page: Number(page),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-            }
-          )
-        }).then(async (response) => {
-          const data = await response.json();
-          //console.log('data', data);
-          if (data.result) {
-            setBuyOrders(data.result.orders);
-
-            setTotalCount(data.result.totalCount);
-
-            //setTotalClearanceCount(data.result.totalClearanceCount);
-            //setTotalClearanceAmount(data.result.totalClearanceAmount);
-            //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-
-            setBuyOrderStats({
-              //totalCount: data.result.totalCount,
-              totalClearanceCount: data.result.totalClearanceCount,
-              totalClearanceAmount: data.result.totalClearanceAmount,
-              totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-              totalKrwAmount: data.result.totalKrwAmount,
-              totalUsdtAmount: data.result.totalUsdtAmount,
-              totalSettlementCount: data.result.totalSettlementCount,
-              totalSettlementAmount: data.result.totalSettlementAmount,
-              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-              totalFeeAmount: data.result.totalFeeAmount,
-              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-              totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-            });
-
-
-          }
-        });
-
-      } else {
-        toast.error('Order has been failed');
-      }
-
-
-      setAgreementForCancelTrade(
-        agreementForCancelTrade.map((item, i) => i === index ? false : item)
-      );
-
-      setCancellings(
-        cancellings.map((item, i) => i === index ? false : item)
-      );
-
+    } else {
+      toast.error('Order has been failed');
     }
+
+
+    setAgreementForCancelTrade(
+      agreementForCancelTrade.map((item, i) => i === index ? false : item)
+    );
+
+    setCancellings(
+      cancellings.map((item, i) => i === index ? false : item)
+    );
+
+  }
 
 
 
@@ -1263,230 +1272,102 @@ export default function Index({ params }: any) {
   
 
 
-    // without escrow
-    const [isWithoutEscrow, setIsWithoutEscrow] = useState(true);
+  // without escrow
+  const [isWithoutEscrow, setIsWithoutEscrow] = useState(true);
 
 
-    const requestPayment = async (
-      index: number,
-      orderId: string,
-      tradeId: string,
-      amount: number,
-    ) => {
+  const requestPayment = async (
+    index: number,
+    orderId: string,
+    tradeId: string,
+    amount: number,
+  ) => {
 
 
-      // check escrowWalletAddress
+    // check escrowWalletAddress
 
-      if (!isWithoutEscrow && escrowWalletAddress === '') {
-        toast.error('Recipient wallet address is empty');
-        return;
-      }
-
-
-      // check all escrowing is false
-      if (!isWithoutEscrow && escrowing.some((item) => item === true)) {
-        toast.error('Escrowing');
-        return;
-      }
+    if (!isWithoutEscrow && escrowWalletAddress === '') {
+      toast.error('Recipient wallet address is empty');
+      return;
+    }
 
 
+    // check all escrowing is false
+    if (!isWithoutEscrow && escrowing.some((item) => item === true)) {
+      toast.error('Escrowing');
+      return;
+    }
 
 
-      // check all requestingPayment is false
-      if (requestingPayment.some((item) => item === true)) {
-        toast.error('Requesting Payment');
-        return;
-      }
 
 
-      if (!isWithoutEscrow) {
+    // check all requestingPayment is false
+    if (requestingPayment.some((item) => item === true)) {
+      toast.error('Requesting Payment');
+      return;
+    }
 
 
-        setEscrowing(
-          escrowing.map((item, idx) =>  idx === index ? true : item) 
-        );
-    
-
-   
+    if (!isWithoutEscrow) {
 
 
-        // send USDT
-        // Call the extension function to prepare the transaction
-        const transaction = transfer({
-          contract,
-          to: escrowWalletAddress,
-          amount: amount,
-        });
+      setEscrowing(
+        escrowing.map((item, idx) =>  idx === index ? true : item) 
+      );
+  
+
+  
+
+
+      // send USDT
+      // Call the extension function to prepare the transaction
+      const transaction = transfer({
+        contract,
+        to: escrowWalletAddress,
+        amount: amount,
+      });
+      
+
+
+      try {
+
+
         
 
 
-        try {
+        //console.log("transactionResult===", transactionResult);
+        
+        
+        const { transactionHash } = await sendAndConfirmTransaction({
+          
+          account: activeAccount as any,
 
+          transaction,
+        });
+        
+
+        console.log("transactionHash===", transactionHash);
+
+
+        /*
+        const transactionResult = await waitForReceipt({
+          client,
+          chain: arbitrum ,
+          maxBlocksWaitTime: 1,
+          transactionHash: transactionHash,
+        });
+
+
+        console.log("transactionResult===", transactionResult);
+        */
+  
+
+        // send payment request
+
+        //if (transactionResult) {
+        if (transactionHash) {
 
           
-
-
-          //console.log("transactionResult===", transactionResult);
-          
-          
-          const { transactionHash } = await sendAndConfirmTransaction({
-            
-            account: activeAccount as any,
-
-            transaction,
-          });
-          
-
-          console.log("transactionHash===", transactionHash);
-
-
-          /*
-          const transactionResult = await waitForReceipt({
-            client,
-            chain: arbitrum ,
-            maxBlocksWaitTime: 1,
-            transactionHash: transactionHash,
-          });
-
-
-          console.log("transactionResult===", transactionResult);
-          */
-    
-
-          // send payment request
-
-          //if (transactionResult) {
-          if (transactionHash) {
-
-            
-            setRequestingPayment(
-              requestingPayment.map((item, idx) => idx === index ? true : item)
-            );
-            
-            
-            
-
-
-          
-            const response = await fetch('/api/order/buyOrderRequestPayment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.center,
-                orderId: orderId,
-                //transactionHash: transactionResult.transactionHash,
-                transactionHash: transactionHash,
-              })
-            });
-
-            const data = await response.json();
-
-            //console.log('/api/order/buyOrderRequestPayment data====', data);
-
-
-            /*
-            setRequestingPayment(
-              requestingPayment.map((item, idx) => {
-                if (idx === index) {
-                  return false;
-                }
-                return item;
-              })
-            );
-            */
-            
-
-
-            if (data.result) {
-
-              toast.success(Payment_request_has_been_sent);
-
-              //toast.success('Payment request has been sent');
-
-              //playSong();
-              
-
-              
-              //fetchBuyOrders();
-              // fetch Buy Orders
-              await fetch('/api/order/getAllCollectOrdersForSeller', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: params.center,
-                    limit: Number(limit),
-                    page: Number(page),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
-                  }
-                ),
-              })
-              .then(response => response.json())
-              .then(data => {
-                  ///console.log('data', data);
-                  setBuyOrders(data.result.orders);
-
-                  setTotalCount(data.result.totalCount);
-
-                  //setTotalClearanceCount(data.result.totalClearanceCount);
-                  //setTotalClearanceAmount(data.result.totalClearanceAmount);
-                  //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-
-                  setBuyOrderStats({
-                    //totalCount: data.result.totalCount,
-                    totalClearanceCount: data.result.totalClearanceCount,
-                    totalClearanceAmount: data.result.totalClearanceAmount,
-                    totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-                    totalKrwAmount: data.result.totalKrwAmount,
-                    totalUsdtAmount: data.result.totalUsdtAmount,
-                    totalSettlementCount: data.result.totalSettlementCount,
-                    totalSettlementAmount: data.result.totalSettlementAmount,
-                    totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                    totalFeeAmount: data.result.totalFeeAmount,
-                    totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                    totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                    totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                    totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                  });
-
-              })
-
-            } else {
-              toast.error('Payment request has been failed');
-            }
-
-          }
-
-
-        } catch (error) {
-          console.error('Error:', JSON.stringify(error));
-
-          toast.error('Payment request has been failed');
-        }
-
-        setEscrowing(
-          escrowing.map((item, idx) =>  idx === index ? false : item)
-        );
-
-
-
-      } else {
-        // without escrow
-
-
-        try {
-
-          const transactionHash = '0x';
-
-
           setRequestingPayment(
             requestingPayment.map((item, idx) => idx === index ? true : item)
           );
@@ -1511,6 +1392,21 @@ export default function Index({ params }: any) {
           });
 
           const data = await response.json();
+
+          //console.log('/api/order/buyOrderRequestPayment data====', data);
+
+
+          /*
+          setRequestingPayment(
+            requestingPayment.map((item, idx) => {
+              if (idx === index) {
+                return false;
+              }
+              return item;
+            })
+          );
+          */
+          
 
 
           if (data.result) {
@@ -1568,45 +1464,146 @@ export default function Index({ params }: any) {
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
                 });
 
             })
 
-
           } else {
-            toast.error('결제요청이 실패했습니다.');
+            toast.error('Payment request has been failed');
           }
- 
-        } catch (error) {
-          console.error('Error:', JSON.stringify(error));
 
-          toast.error('결제요청이 실패했습니다.');
         }
 
-        
-      } // end of without escrow
 
+      } catch (error) {
+        console.error('Error:', JSON.stringify(error));
 
-      setRequestingPayment(
-        requestingPayment.map((item, idx) => idx === index ? false : item)
+        toast.error('Payment request has been failed');
+      }
+
+      setEscrowing(
+        escrowing.map((item, idx) =>  idx === index ? false : item)
       );
 
 
 
+    } else {
+      // without escrow
 
 
+      try {
+
+        const transactionHash = '0x';
 
 
-    }
+        setRequestingPayment(
+          requestingPayment.map((item, idx) => idx === index ? true : item)
+        );
+        
+        
+        
 
 
+      
+        const response = await fetch('/api/order/buyOrderRequestPayment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            lang: params.lang,
+            storecode: params.center,
+            orderId: orderId,
+            //transactionHash: transactionResult.transactionHash,
+            transactionHash: transactionHash,
+          })
+        });
+
+        const data = await response.json();
 
 
+        if (data.result) {
+
+          toast.success(Payment_request_has_been_sent);
+
+          //toast.success('Payment request has been sent');
+
+          //playSong();
+          
+
+          
+          //fetchBuyOrders();
+          // fetch Buy Orders
+          await fetch('/api/order/getAllCollectOrdersForSeller', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+              {
+                storecode: params.center,
+                limit: Number(limit),
+                page: Number(page),
+                walletAddress: address,
+                searchMyOrders: searchMyOrders,
+              }
+            ),
+          })
+          .then(response => response.json())
+          .then(data => {
+              ///console.log('data', data);
+              setBuyOrders(data.result.orders);
+
+              setTotalCount(data.result.totalCount);
+
+              //setTotalClearanceCount(data.result.totalClearanceCount);
+              //setTotalClearanceAmount(data.result.totalClearanceAmount);
+              //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+              setBuyOrderStats({
+                //totalCount: data.result.totalCount,
+                totalClearanceCount: data.result.totalClearanceCount,
+                totalClearanceAmount: data.result.totalClearanceAmount,
+                totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+                totalKrwAmount: data.result.totalKrwAmount,
+                totalUsdtAmount: data.result.totalUsdtAmount,
+                totalSettlementCount: data.result.totalSettlementCount,
+                totalSettlementAmount: data.result.totalSettlementAmount,
+                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                totalFeeAmount: data.result.totalFeeAmount,
+                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
+              });
+
+          })
 
 
+        } else {
+          toast.error('결제요청이 실패했습니다.');
+        }
+
+      } catch (error) {
+        console.error('Error:', JSON.stringify(error));
+
+        toast.error('결제요청이 실패했습니다.');
+      }
+
+      
+    } // end of without escrow
 
 
+    setRequestingPayment(
+      requestingPayment.map((item, idx) => idx === index ? false : item)
+    );
 
+
+  }
 
 
 
@@ -1989,6 +1986,7 @@ export default function Index({ params }: any) {
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
             });
 
         })
@@ -2188,6 +2186,7 @@ export default function Index({ params }: any) {
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
         totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
       });
 
       
@@ -2250,7 +2249,7 @@ export default function Index({ params }: any) {
     //isProcessingSendTransaction,
     isProcessingSendTransaction.current
 
-]);
+  ]);
 
 
 
@@ -2661,6 +2660,7 @@ export default function Index({ params }: any) {
       </main>
     );
   }
+
   if (!fetchingStore && !store) {
     return (
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
@@ -3558,6 +3558,39 @@ export default function Index({ params }: any) {
                   className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                 />
               </div>
+
+              {/* 오늘, 어제 버튼 */}
+              <div className="flex flex-row items-center gap-2">
+                <button
+                  className="bg-[#3167b4] text-white px-3 py-1 rounded-lg hover:bg-[#3167b4]/80 text-sm"
+                  onClick={() => {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    const formattedToday = `${yyyy}-${mm}-${dd}`;
+                    setSearchFormDate(formattedToday);
+                    setSearchToDate(formattedToday);
+                  }}
+                >
+                  오늘
+                </button>
+                <button
+                  className="bg-[#3167b4] text-white px-3 py-1 rounded-lg hover:bg-[#3167b4]/80 text-sm"
+                  onClick={() => {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yyyy = yesterday.getFullYear();
+                    const mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+                    const dd = String(yesterday.getDate()).padStart(2, '0');
+                    const formattedYesterday = `${yyyy}-${mm}-${dd}`;
+                    setSearchFormDate(formattedYesterday);
+                    setSearchToDate(formattedYesterday);
+                  }}
+                >
+                  어제
+                </button>
+              </div>
             </div>
 
             {fetchingBuyOrders ? (
@@ -3913,115 +3946,185 @@ export default function Index({ params }: any) {
 
 
 
-          {sellersBalance?.length > 0 && (
-            <div className="w-full flex flex-row items-center justify-end gap-4 overflow-x-auto
-              mt-4
-              border border-zinc-300 rounded-lg p-4
-              bg-white/80
-              shadow-md
-              backdrop-blur-md
-              ">
+          <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-4 overflow-x-auto
+            mt-4
+            border border-zinc-300 rounded-lg p-4
+            bg-white/80
+            shadow-md
+            backdrop-blur-md
+            ">
 
-              {/* 판매자 잔고 */}
-              <span className="text-lg font-semibold">
-                판매자
-              </span>
-
-              {/* store.withdrawalBankInfo */}
-              <div className="flex flex-col gap-2 items-start">
-                <div className="flex flex-row items-start gap-2">
-                  <Image
-                    src="/icon-bank.png"
-                    alt="Bank"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <div className="text-sm text-zinc-500">
-                    결제통장 정보
-                  </div>
-                </div>
-                <div className="flex flex-col items-start gap-1">
-
-                  <span className="text-sm font-semibold text-zinc-500">
-                    {store?.withdrawalBankInfo?.bankName}
-                  </span>
-                  <span className="text-sm font-semibold text-zinc-500">
-                    {store?.withdrawalBankInfo?.accountNumber}
-                  </span>
-                  <span className="text-sm font-semibold text-zinc-500">
-                    {store?.withdrawalBankInfo?.accountHolder}
-                  </span>
-
+            {/* store.withdrawalBankInfo */}
+            {/*
+            <div className="flex flex-col gap-2 items-start">
+              <div className="flex flex-row items-start gap-2">
+                <Image
+                  src="/icon-bank.png"
+                  alt="Bank"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5"
+                />
+                <div className="text-sm text-zinc-500">
+                  결제통장 정보
                 </div>
               </div>
+              <div className="flex flex-col items-start gap-1">
 
+                <span className="text-sm font-semibold text-zinc-500">
+                  {store?.withdrawalBankInfo?.bankName}
+                </span>
+                <span className="text-sm font-semibold text-zinc-500">
+                  {store?.withdrawalBankInfo?.accountNumber}
+                </span>
+                <span className="text-sm font-semibold text-zinc-500">
+                  {store?.withdrawalBankInfo?.accountHolder}
+                </span>
 
-              {sellersBalance?.map((seller, index) => (
-                <div key={index}
-                  className="flex flex-row items-center justify-between gap-4
-                  bg-white/80
-                  p-4 rounded-lg shadow-md
-                  backdrop-blur-md
-                  ">
-                  <div className="flex flex-row items-center gap-4">
-                    <Image
-                      src="/icon-seller.png"
-                      alt="Seller"
-                      width={40}
-                      height={40}
-                      className="w-10 h-10"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold">
-                        {seller.nickname}
-                      </span>
-                      <button
-                        className="text-sm text-zinc-600 underline"
-                        onClick={() => {
-                          navigator.clipboard.writeText(seller.walletAddress);
-                          toast.success(Copied_Wallet_Address);
-                        } }
-                      >
-                        {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
-                      </button>
-                    </div>
+              </div>
+            </div>
+            */}
+
+            {/* buyOrderStats.totalBySellerBankAccountNumber */}
+            <div className="flex flex-col sm:flex-row items-start justify-start gap-4
+              bg-white/80
+              p-4 rounded-lg shadow-md
+              backdrop-blur-md
+            ">
+
+              <div className="text-lg font-semibold mb-2 sm:mb-0">
+                판매자 통장별 청산통계
+              </div>
+
+              {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                <div key={index} className="flex flex-col gap-2 items-center">
+
+                  {/* copy account number button */}
+                  <button
+                    className="text-sm font-semibold underline text-blue-600"
+                    onClick={() => {
+                      const accountNumber = item._id || '기타은행';
+                      navigator.clipboard.writeText(accountNumber)
+                        .then(() => {
+                          toast.success(`통장번호 ${accountNumber} 복사됨`);
+                        })
+                        .catch((err) => {
+                          toast.error('복사 실패: ' + err);
+                        });
+                    }}
+                    title="통장번호 복사"
+                  >
+                    {item._id || '기타은행'}
+                  </button>
+
+                  <div className="text-sm font-semibold">
+                    {item.totalCount?.toLocaleString() || '0'}
                   </div>
-                  {/*
-                  <div className="flex flex-row items-center gap-2">
+                  <div className="flex flex-row items-center justify-center gap-1">
                     <Image
                       src="/icon-tether.png"
-                      alt="USDT"
-                      width={30}
-                      height={30}
-                      className="w-7 h-7"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
                     />
-                    <span className="text-2xl font-semibold text-[#409192]"
+                    <span className="text-sm font-semibold text-green-600"
                       style={{ fontFamily: 'monospace' }}>
-                      {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      {item.totalUsdtAmount
+                        ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
                     </span>
                   </div>
-                  */}
-
-                  {/* if seller nickname is 'seller', then show withdraw button */}
-                  {/*
-                  {seller.nickname === 'seller' && (
-                    <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
-                      }}
-                      className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                    >
-                      출금하기
-                    </button>
-                  )}
-                  */}
-
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-sm font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalKrwAmount?.toLocaleString() || '0'}
+                    </span>
+                  </div>
                 </div>
               ))}
 
             </div>
-          )}
+
+            <div className="flex flex-col gap-2
+              bg-white/80
+              p-4 rounded-lg shadow-md
+              backdrop-blur-md
+            ">
+
+              <div className="text-lg font-semibold mb-2 sm:mb-0">
+                판매자 지갑
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start justify-start gap-4">
+                {sellersBalance?.map((seller, index) => (
+                  <div key={index}
+                    className="flex flex-row items-center justify-between gap-4
+                    bg-white/80
+                    p-4 rounded-lg shadow-md
+                    backdrop-blur-md
+                    ">
+                    <div className="flex flex-row items-center gap-4">
+                      <Image
+                        src="/icon-seller.png"
+                        alt="Seller"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold">
+                          {seller.nickname}
+                        </span>
+                        <button
+                          className="text-sm text-zinc-600 underline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(seller.walletAddress);
+                            toast.success(Copied_Wallet_Address);
+                          } }
+                        >
+                          {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                        </button>
+                      </div>
+                    </div>
+                    {/*
+                    <div className="flex flex-row items-center gap-2">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="USDT"
+                        width={30}
+                        height={30}
+                        className="w-7 h-7"
+                      />
+                      <span className="text-2xl font-semibold text-[#409192]"
+                        style={{ fontFamily: 'monospace' }}>
+                        {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                    </div>
+                    */}
+
+                    {/* if seller nickname is 'seller', then show withdraw button */}
+                    {/*
+                    {seller.nickname === 'seller' && (
+                      <button
+                        onClick={() => {
+                          router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
+                        }}
+                        className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                      >
+                        출금하기
+                      </button>
+                    )}
+                    */}
+
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+          </div>
+
 
 
 

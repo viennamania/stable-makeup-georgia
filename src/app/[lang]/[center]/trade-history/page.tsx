@@ -4432,89 +4432,82 @@ const fetchBuyOrders = async () => {
 
                             </div>
                           </td>
+     
+                          <td className="p-2">
+                            <div className="
+                            w-36 
+                            flex flex-col items-center gap-2">
+          
+                                <div className="w-full flex flex-row items-center gap-1">
+                                  <Image
+                                    src="/icon-user.png"
+                                    alt="User"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  {item?.userType === 'AAA' ? (
+                                    <div className="
+                                      text-xs text-white bg-red-500 px-1 rounded-md
+                                      ">
+                                      1등급
+                                    </div>
+                                  ) : item?.userType === 'BBB' ? (
+                                    <div className="
+                                      text-xs text-white bg-orange-500 px-1 rounded-md
+                                      ">
+                                      2등급
+                                    </div>
+                                  ) : item?.userType === 'CCC' ? (
+                                    <div className="
+                                      text-xs text-white bg-yellow-500 px-1 rounded-md
+                                      ">
+                                      3등급
+                                    </div>
+                                  ) : item?.userType === 'DDD' ? (
+                                    <div className="
+                                      text-xs text-white bg-green-500 px-1 rounded-md
+                                      ">
+                                      4등급
+                                    </div>
+                                  ) : (
+                                    <div className="
+                                      text-xs text-white bg-zinc-500 px-1 rounded-md
+                                      ">
+                                      일반
+                                    </div>
+                                  )}
+                                  <span className="text-sm text-blue-600 font-semibold">
+                                    {item?.nickname.length > 8 ? item?.nickname.substring(0, 8) + '...' : item?.nickname}
+                                  </span>
 
+                                </div>
 
-                          
-                        <td className="p-2">
-                          <div className="
-                          w-36 
-                          flex flex-col items-center gap-2">
-         
-                              <div className="w-full flex flex-row items-center gap-1">
-                                <Image
-                                  src="/icon-user.png"
-                                  alt="User"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                {item?.userType === 'AAA' ? (
-                                  <div className="
-                                    text-xs text-white bg-red-500 px-1 rounded-md
-                                    ">
-                                    1등급
-                                  </div>
-                                ) : item?.userType === 'BBB' ? (
-                                  <div className="
-                                    text-xs text-white bg-orange-500 px-1 rounded-md
-                                    ">
-                                    2등급
-                                  </div>
-                                ) : item?.userType === 'CCC' ? (
-                                  <div className="
-                                    text-xs text-white bg-yellow-500 px-1 rounded-md
-                                    ">
-                                    3등급
-                                  </div>
-                                ) : item?.userType === 'DDD' ? (
-                                  <div className="
-                                    text-xs text-white bg-green-500 px-1 rounded-md
-                                    ">
-                                    4등급
-                                  </div>
-                                ) : (
-                                  <div className="
-                                    text-xs text-white bg-zinc-500 px-1 rounded-md
-                                    ">
-                                    일반
-                                  </div>
-                                )}
-                                <span className="text-sm text-blue-600 font-semibold">
-                                  {item?.nickname.length > 8 ? item?.nickname.substring(0, 8) + '...' : item?.nickname}
-                                </span>
+                                {/* wallet address */}
+                                <div className="flex flex-row items-center gap-1">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Wallet"
+                                    width={20}
+                                    height={20}
+                                    className="w-5 h-5"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(item.walletAddress);
+                                      toast.success('지갑주소가 복사되었습니다.');
+                                    }}
+                                    className="text-sm text-zinc-500 font-semibold
+                                    hover:text-blue-600 cursor-pointer
+                                    hover:underline"
+                                    title="지갑주소 복사"
+                                  >
+                                    {item.walletAddress.substring(0, 10) + '...'}
+                                  </button>
+                                </div>
 
-                              </div>
-
-                              {/* wallet address */}
-                              <div className="flex flex-row items-center gap-1">
-                                <Image
-                                  src="/icon-shield.png"
-                                  alt="Wallet"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(item.walletAddress);
-                                    toast.success('지갑주소가 복사되었습니다.');
-                                  }}
-                                  className="text-sm text-zinc-500 font-semibold
-                                  hover:text-blue-600 cursor-pointer
-                                  hover:underline"
-                                  title="지갑주소 복사"
-                                >
-                                  {item.walletAddress.substring(0, 10) + '...'}
-                                </button>
-                              </div>
-
-
-
-                          </div>
-                        </td>
-
-
-
+                            </div>
+                          </td>
                           
                           <td className="p-2">
                             <div className="
