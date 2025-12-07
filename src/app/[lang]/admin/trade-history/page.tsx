@@ -885,6 +885,30 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
+
+  /*
+  totalBySellerBankAccountNumber [
+    {
+      _id: '508158502744',
+      totalCount: 69,
+      totalKrwAmount: 159670000,
+      totalUsdtAmount: 105918.7
+    },
+    {
+      _id: '98560200001821',
+      totalCount: 16,
+      totalKrwAmount: 44160000,
+      totalUsdtAmount: 29401.58
+    },
+    {
+      _id: '3560243561679',
+      totalCount: 46,
+      totalKrwAmount: 101570000,
+      totalUsdtAmount: 67394.79
+    }
+  ]
+  */
+
   const [buyOrderStats, setBuyOrderStats] = useState<{
     totalCount: number;
     totalKrwAmount: number;
@@ -897,6 +921,12 @@ export default function Index({ params }: any) {
     totalAgentFeeAmount: number;
     totalAgentFeeAmountKRW: number;
     totalByUserType: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
+    totalBySellerBankAccountNumber: Array<{
       _id: string;
       totalCount: number;
       totalKrwAmount: number;
@@ -915,6 +945,7 @@ export default function Index({ params }: any) {
     totalAgentFeeAmountKRW: 0,
 
     totalByUserType: [],
+    totalBySellerBankAccountNumber: [],
   });
 
 
@@ -1087,6 +1118,7 @@ export default function Index({ params }: any) {
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
 
@@ -1237,6 +1269,7 @@ export default function Index({ params }: any) {
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
           }
@@ -1519,6 +1552,7 @@ export default function Index({ params }: any) {
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
             })
@@ -1748,6 +1782,7 @@ export default function Index({ params }: any) {
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
         })
@@ -1930,6 +1965,7 @@ export default function Index({ params }: any) {
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
         })
@@ -2157,6 +2193,7 @@ export default function Index({ params }: any) {
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
         totalByUserType: data.result.totalByUserType,
+        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
       });
 
     }
@@ -2281,6 +2318,7 @@ const fetchBuyOrders = async () => {
     totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
     totalByUserType: data.result.totalByUserType,
+    totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
   });
 
 
@@ -3095,7 +3133,7 @@ const fetchBuyOrders = async () => {
 
           {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
           {/* memnu buttons same width left side */}
-          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 items-center justify-start mb-4">
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/store')}
@@ -3605,58 +3643,60 @@ const fetchBuyOrders = async () => {
             p-4 rounded-lg shadow-md
             ">
 
-            <div className="xl:w-1/3 w-full
+            <div className="w-full
               flex flex-col sm:flex-row items-start justify-start gap-4">
 
               <Image
                 src="/icon-trade.png"
                 alt="Trade"
-                width={50}
-                height={50}
-                className="w-16 h-16 rounded-lg object-cover"
+                width={30}
+                height={30}
+                className="w-8 h-8 rounded-lg object-cover"
               />
 
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">P2P 거래수(건)</div>
-                <div className="text-4xl font-semibold text-zinc-500">
+                <div className="text-xl font-semibold text-zinc-500">
                   {buyOrderStats.totalCount?.toLocaleString()}
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">P2P 거래량(USDT)</div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-xl font-semibold text-[#409192]"
-                    style={{ fontFamily: 'monospace' }}>
-                    {buyOrderStats.totalUsdtAmount
-                      ? buyOrderStats.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'}
-                  </span>
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">P2P 거래량(USDT)</div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-lg font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalUsdtAmount
+                        ? buyOrderStats.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">P2P 거래금액(원)</div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-xl font-semibold text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {buyOrderStats.totalKrwAmount?.toLocaleString()}
-                  </span>
-                  
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">P2P 거래금액(원)</div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-lg font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalKrwAmount?.toLocaleString()}
+                    </span>
+                    
+                  </div>
                 </div>
               </div>
 
             </div>
 
             {/* divider */}
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="hidden sm:block w-0.5 h-16 bg-zinc-300"></div>
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
 
@@ -3690,10 +3730,11 @@ const fetchBuyOrders = async () => {
             ]
             */}
 
-            <div className="xl:w-1/3 w-full
+            <div className="w-full
               flex flex-col sm:flex-row items-start justify-center gap-4">
 
               {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
+
                 <div key={index} className="flex flex-col gap-2 items-center">
                   <div className="text-sm">
                     {type === '' ? '일반회원'
@@ -3774,18 +3815,63 @@ const fetchBuyOrders = async () => {
                     </span>
                   </div>
                 </div>
+
+              ))}
+
+            </div>
+
+
+            {/* divider */}
+            <div className="hidden sm:block w-0.5 h-16 bg-zinc-300"></div>
+            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
+
+            {/* buyOrderStats.totalBySellerBankAccountNumber */}
+            <div className="w-full
+              flex flex-col sm:flex-row items-start justify-center gap-4">
+
+              {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                <div key={index} className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">
+                    {item._id || '기타은행'}
+                  </div>
+                  <div className="text-sm font-semibold">
+                    {item.totalCount?.toLocaleString() || '0'}
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-sm font-semibold text-green-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalUsdtAmount
+                        ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
+                    </span>
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-sm font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalKrwAmount?.toLocaleString() || '0'}
+                    </span>
+                  </div>
+                </div>
               ))}
 
             </div>
 
 
 
+
             {/* divider */}
             {/*
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="hidden sm:block w-0.5 h-10 bg-zinc-300"></div>
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
-            <div className="xl:w-2/3 w-full
+            <div className="sm:w-2/3 w-full
               flex flex-col sm:flex-row items-start justify-end gap-4">
 
               <Image
@@ -3917,10 +4003,10 @@ const fetchBuyOrders = async () => {
             
             {/* divider */}
             {/*}
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="hidden sm:block w-0.5 h-10 bg-zinc-300"></div>
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
-            <div className="xl:w-1/4 flex flex-row items-center justify-center gap-2">
+            <div className="sm:w-1/4 flex flex-row items-center justify-center gap-2">
               <div className="flex flex-col gap-2 items-center">
                 <div className="text-sm">총 청산수(건)</div>
                 <div className="text-xl font-semibold text-zinc-500">
@@ -5363,7 +5449,7 @@ const fetchBuyOrders = async () => {
 
           ) : (
 
-            <div className="w-full grid gap-4 lg:grid-cols-2 xl:grid-cols-3 justify-center ">
+            <div className="w-full grid gap-4 lg:grid-cols-2 sm:grid-cols-3 justify-center ">
 
                 {buyOrders.map((item, index) => (
     
@@ -5404,7 +5490,7 @@ const fetchBuyOrders = async () => {
 
                     <article
                         //key={index}
-                        className={` w-96 xl:w-full h-full relative
+                        className={` w-96 sm:w-full h-full relative
                           ${item.walletAddress === address ? 'border-green-500' : 'border-gray-200'}
 
                           ${item.status === 'accepted' || item.status === 'paymentRequested' ? 'border-red-600' : 'border-gray-200'}

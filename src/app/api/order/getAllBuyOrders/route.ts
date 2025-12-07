@@ -110,6 +110,10 @@ export async function POST(request: NextRequest) {
   */
 
   //console.log("getAllBuyOrders result totalByUserType", result.totalByUserType);
+
+  //console.log("getAllBuyOrders result totalBySellerBankAccountNumber", result.totalBySellerBankAccountNumber);
+
+
  
   return NextResponse.json({
 

@@ -2667,6 +2667,34 @@ export async function getBuyOrders(
     ]).toArray();
 
 
+    // totalReaultGroup by seller.bankInfo.accountNumber
+    const totalReaultGroupBySellerBankAccountNumber = await collection.aggregate([
+      {
+        $match: {
+          status: 'paymentConfirmed',
+          settlement: { $exists: true, $ne: null },
+          privateSale: privateSale,
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+          storecode: { $regex: storecode, $options: 'i' },
+          nickname: { $regex: searchBuyer, $options: 'i' },
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: '$seller.bankInfo.accountNumber',
+          totalCount: { $sum: 1 },
+          totalKrwAmount: { $sum: '$krwAmount' },
+          totalUsdtAmount: { $sum: '$usdtAmount' },
+        }
+      }
+    ]).toArray();
+
+
 
 
     return {
@@ -2684,6 +2712,7 @@ export async function getBuyOrders(
 
       totalByUserType: totalReaultGroupByUserType,
       
+      totalBySellerBankAccountNumber: totalReaultGroupBySellerBankAccountNumber,
 
       orders: results,
     };
