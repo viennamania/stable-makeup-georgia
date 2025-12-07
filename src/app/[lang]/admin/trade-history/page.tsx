@@ -3704,9 +3704,18 @@ const fetchBuyOrders = async () => {
                       : ''
                     }
                   </div>
-                  <div className="text-sm font-semibold text-zinc-500">
+                  <div className="text-sm font-semibold">
                     {
-                      buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                      // if _id is '' or 'test' then sum totalCount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                      type === ''
+                        ? buyOrderStats.totalByUserType
+                            ?.filter((item) => item._id === '' || item._id === 'test')
+                            .reduce((acc, item) => acc + (item.totalCount || 0), 0)
+                            .toLocaleString()
+                        : 
+                        buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                      
+                      //buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
                     }
                   </div>
                   <div className="flex flex-row items-center justify-center gap-1">
@@ -3717,12 +3726,27 @@ const fetchBuyOrders = async () => {
                       height={20}
                       className="w-5 h-5"
                     />
-                    <span className="text-sm font-semibold text-[#409192]"
+                    <span className="text-sm font-semibold text-green-600"
                       style={{ fontFamily: 'monospace' }}>
                       {
+
+                        /*
                         buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
                           ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.000'
+                        */
+
+                        // if _id is '' or 'test' then sum totalUsdtAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                        type === ''
+                          ? buyOrderStats.totalByUserType
+                              ?.filter((item) => item._id === '' || item._id === 'test')
+                              .reduce((acc, item) => acc + (item.totalUsdtAmount || 0), 0)
+                              .toFixed(3)
+                              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          :
+                          buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
+                            ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            : '0.000'
                       }
                     </span>
                   </div>
@@ -3730,9 +3754,22 @@ const fetchBuyOrders = async () => {
                     <span className="text-sm font-semibold text-yellow-600"
                       style={{ fontFamily: 'monospace' }}>
                       {
+                        /*
                         buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
                           ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
                           : '0'
+                        */
+                       
+                        // if _id is '' or 'test' then sum totalKrwAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                        type === ''
+                          ? buyOrderStats.totalByUserType
+                              ?.filter((item) => item._id === '' || item._id === 'test')
+                              .reduce((acc, item) => acc + (item.totalKrwAmount || 0), 0)
+                              .toLocaleString()
+                          :
+                          buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
+                            ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
+                            : '0'
                       }
                     </span>
                   </div>

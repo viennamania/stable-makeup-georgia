@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
   console.log("getAllBuyOrders result totalAgentFeeAmountKRW", result.totalAgentFeeAmountKRW);
   */
 
-  console.log("getAllBuyOrders result totalByUserType", result.totalByUserType);
+  //console.log("getAllBuyOrders result totalByUserType", result.totalByUserType);
  
   return NextResponse.json({
 
