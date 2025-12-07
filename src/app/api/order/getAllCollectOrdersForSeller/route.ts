@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     toDate,
   });
 
-  ///console.log('getCollectOrdersForSeller result: ' + JSON.stringify(result));
+
+  //console.log('totalByBuyerBankAccountNumber', result.totalByBuyerBankAccountNumber);
 
   return NextResponse.json({
 

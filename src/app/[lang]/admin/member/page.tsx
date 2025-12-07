@@ -872,10 +872,7 @@ export default function Index({ params }: any) {
 
 
 
-  const [storePaymentUrl, setStorePaymentUrl]
-    = useState(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
-
-
+  const [storePaymentUrl, setStorePaymentUrl] = useState(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
 
 
 
@@ -914,7 +911,8 @@ export default function Index({ params }: any) {
 
           setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
-          data.result?.paymentUrl && setStorePaymentUrl(data.result?.paymentUrl);
+          data.result?.paymentUrl ? setStorePaymentUrl(data.result?.paymentUrl)
+                                  : setStorePaymentUrl(paymentUrl + '/' + params.lang + '/' + clientId + '/' + searchParamsStorecode + '/payment');
 
         }
 
@@ -923,7 +921,7 @@ export default function Index({ params }: any) {
 
     fetchData();
 
-  } , [searchParamsStorecode]);
+  } , [searchParamsStorecode, params.lang]);
 
 
 
@@ -2274,7 +2272,6 @@ export default function Index({ params }: any) {
                       </option>
                     ))}
                   </select>
-
 
                 </div>
 

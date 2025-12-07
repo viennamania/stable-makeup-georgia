@@ -927,6 +927,44 @@ export default function Index({ params }: any) {
 
   //console.log('buyOrders', buyOrders);
 
+
+
+ const [buyOrderStats, setBuyOrderStats] = useState<{
+    totalCount: number;
+    totalKrwAmount: number;
+    totalUsdtAmount: number;
+    totalSettlementCount: number;
+    totalSettlementAmount: number;
+    totalSettlementAmountKRW: number;
+    totalFeeAmount: number;
+    totalFeeAmountKRW: number;
+    totalAgentFeeAmount: number;
+    totalAgentFeeAmountKRW: number;
+    totalByBuyerBankAccountNumber: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
+  }>({
+    totalCount: 0,
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+    totalByBuyerBankAccountNumber: [],
+  });
+
+
+
+
+
+
   
 
 
@@ -1883,42 +1921,6 @@ export default function Index({ params }: any) {
 
 
   }
-
-
-
-
-
-  const [buyOrderStats, setBuyOrderStats] = useState<{
-    totalCount: number;
-    totalKrwAmount: number;
-    totalUsdtAmount: number;
-    totalSettlementCount: number;
-    totalSettlementAmount: number;
-    totalSettlementAmountKRW: number;
-    totalFeeAmount: number;
-    totalFeeAmountKRW: number;
-    totalAgentFeeAmount: number;
-    totalAgentFeeAmountKRW: number;
-    totalByBuyerBankAccountNumber: Array<{
-      _id: string;
-      totalCount: number;
-      totalKrwAmount: number;
-      totalUsdtAmount: number;
-    }>;
-  }>({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-    totalByBuyerBankAccountNumber: [],
-  });
-
 
 
 
@@ -3547,67 +3549,67 @@ export default function Index({ params }: any) {
           </div>
 
 
-            {/* buyOrderStats.totalByBuyerBankAccountNumber */}
-            <div className="w-full
-              flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
-              bg-white/80
-              p-4 rounded-lg shadow-md
-              backdrop-blur-md
-            ">
+          {/* buyOrderStats.totalByBuyerBankAccountNumber */}
+          <div className="w-full
+            flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
+            bg-white/80
+            p-4 rounded-lg shadow-md
+            backdrop-blur-md
+          ">
 
-              <div className="text-lg font-semibold mb-2 sm:mb-0">
-                통장별 청산통계
-              </div>
-
-              {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
-                <div key={index} className="flex flex-col gap-2 items-center">
-
-                  {/* copy account number button */}
-                  <button
-                    className="text-sm font-semibold underline text-blue-600"
-                    onClick={() => {
-                      const accountNumber = item._id || '기타은행';
-                      navigator.clipboard.writeText(accountNumber)
-                        .then(() => {
-                          toast.success(`통장번호 ${accountNumber} 복사됨`);
-                        })
-                        .catch((err) => {
-                          toast.error('복사 실패: ' + err);
-                        });
-                    }}
-                    title="통장번호 복사"
-                  >
-                    {item._id || '기타은행'}
-                  </button>
-
-                  <div className="text-sm font-semibold">
-                    {item.totalCount?.toLocaleString() || '0'}
-                  </div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <Image
-                      src="/icon-tether.png"
-                      alt="Tether"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    <span className="text-sm font-semibold text-green-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {item.totalUsdtAmount
-                        ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.000'}
-                    </span>
-                  </div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <span className="text-sm font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {item.totalKrwAmount?.toLocaleString() || '0'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
+            <div className="text-lg font-semibold mb-2 sm:mb-0">
+              통장별 청산통계
             </div>
+
+            {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
+              <div key={index} className="flex flex-col gap-2 items-center">
+
+                {/* copy account number button */}
+                <button
+                  className="text-sm font-semibold underline text-blue-600"
+                  onClick={() => {
+                    const accountNumber = item._id || '기타은행';
+                    navigator.clipboard.writeText(accountNumber)
+                      .then(() => {
+                        toast.success(`통장번호 ${accountNumber} 복사됨`);
+                      })
+                      .catch((err) => {
+                        toast.error('복사 실패: ' + err);
+                      });
+                  }}
+                  title="통장번호 복사"
+                >
+                  {item._id || '기타은행'}
+                </button>
+
+                <div className="text-sm font-semibold">
+                  {item.totalCount?.toLocaleString() || '0'}
+                </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <Image
+                    src="/icon-tether.png"
+                    alt="Tether"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  <span className="text-sm font-semibold text-green-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {item.totalUsdtAmount
+                      ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      : '0.000'}
+                  </span>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <span className="text-sm font-semibold text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {item.totalKrwAmount?.toLocaleString() || '0'}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+          </div>
 
 
 

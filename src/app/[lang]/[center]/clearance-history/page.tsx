@@ -811,17 +811,54 @@ export default function Index({ params }: any) {
 
   const [totalCount, setTotalCount] = useState(0);
 
-  const [totalClearanceCount, setTotalClearanceCount] = useState(0);
-  const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
-  const [totalClearanceAmountKRW, setTotalClearanceAmountKRW] = useState(0);
+  //const [totalClearanceCount, setTotalClearanceCount] = useState(0);
+  //const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
+  //const [totalClearanceAmountKRW, setTotalClearanceAmountKRW] = useState(0);
       
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
-  ///console.log('buyOrders', buyOrders);
+ const [buyOrderStats, setBuyOrderStats] = useState<{
+    //totalCount: number;
 
-  
+    totalClearanceCount: number;
+    totalClearanceAmount: number;
+    totalClearanceAmountKRW: number;
+
+
+    totalKrwAmount: number;
+    totalUsdtAmount: number;
+    totalSettlementCount: number;
+    totalSettlementAmount: number;
+    totalSettlementAmountKRW: number;
+    totalFeeAmount: number;
+    totalFeeAmountKRW: number;
+    totalAgentFeeAmount: number;
+    totalAgentFeeAmountKRW: number;
+    totalByBuyerBankAccountNumber: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
+  }>({
+    //totalCount: 0,
+    totalClearanceCount: 0,
+    totalClearanceAmount: 0,
+    totalClearanceAmountKRW: 0,
+
+    totalKrwAmount: 0,
+    totalUsdtAmount: 0,
+    totalSettlementCount: 0,
+    totalSettlementAmount: 0,
+    totalSettlementAmountKRW: 0,
+    totalFeeAmount: 0,
+    totalFeeAmountKRW: 0,
+    totalAgentFeeAmount: 0,
+    totalAgentFeeAmountKRW: 0,
+    totalByBuyerBankAccountNumber: [],
+  });
 
 
 
@@ -990,9 +1027,36 @@ export default function Index({ params }: any) {
 
                 setTotalCount(data.result.totalCount);
 
-                setTotalClearanceCount(data.result.totalClearanceCount);
-                setTotalClearanceAmount(data.result.totalClearanceAmount);
-                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+                ///setTotalClearanceCount(data.result.totalClearanceCount);
+                ///setTotalClearanceAmount(data.result.totalClearanceAmount);
+                ///setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+
+
+                setBuyOrderStats({
+                  //totalCount: data.result.totalCount,
+                  totalClearanceCount: data.result.totalClearanceCount,
+                  totalClearanceAmount: data.result.totalClearanceAmount,
+                  totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+                });
+
+
+
+
+
+
             })
 
 
@@ -1108,9 +1172,30 @@ export default function Index({ params }: any) {
 
             setTotalCount(data.result.totalCount);
 
-            setTotalClearanceCount(data.result.totalClearanceCount);
-            setTotalClearanceAmount(data.result.totalClearanceAmount);
-            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+            //setTotalClearanceCount(data.result.totalClearanceCount);
+            //setTotalClearanceAmount(data.result.totalClearanceAmount);
+            //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+            setBuyOrderStats({
+              //totalCount: data.result.totalCount,
+              totalClearanceCount: data.result.totalClearanceCount,
+              totalClearanceAmount: data.result.totalClearanceAmount,
+              totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+            });
+
+
           }
         });
 
@@ -1349,9 +1434,29 @@ export default function Index({ params }: any) {
 
                   setTotalCount(data.result.totalCount);
 
-                  setTotalClearanceCount(data.result.totalClearanceCount);
-                  setTotalClearanceAmount(data.result.totalClearanceAmount);
-                  setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+                  //setTotalClearanceCount(data.result.totalClearanceCount);
+                  //setTotalClearanceAmount(data.result.totalClearanceAmount);
+                  //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+                  setBuyOrderStats({
+                    //totalCount: data.result.totalCount,
+                    totalClearanceCount: data.result.totalClearanceCount,
+                    totalClearanceAmount: data.result.totalClearanceAmount,
+                    totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+                    totalKrwAmount: data.result.totalKrwAmount,
+                    totalUsdtAmount: data.result.totalUsdtAmount,
+                    totalSettlementCount: data.result.totalSettlementCount,
+                    totalSettlementAmount: data.result.totalSettlementAmount,
+                    totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                    totalFeeAmount: data.result.totalFeeAmount,
+                    totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                    totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                    totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                    totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+                  });
+
               })
 
             } else {
@@ -1442,9 +1547,29 @@ export default function Index({ params }: any) {
 
                 setTotalCount(data.result.totalCount);
 
-                setTotalClearanceCount(data.result.totalClearanceCount);
-                setTotalClearanceAmount(data.result.totalClearanceAmount);
-                setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+                //setTotalClearanceCount(data.result.totalClearanceCount);
+                //setTotalClearanceAmount(data.result.totalClearanceAmount);
+                //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+                setBuyOrderStats({
+                  //totalCount: data.result.totalCount,
+                  totalClearanceCount: data.result.totalClearanceCount,
+                  totalClearanceAmount: data.result.totalClearanceAmount,
+                  totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+                  totalKrwAmount: data.result.totalKrwAmount,
+                  totalUsdtAmount: data.result.totalUsdtAmount,
+                  totalSettlementCount: data.result.totalSettlementCount,
+                  totalSettlementAmount: data.result.totalSettlementAmount,
+                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+                  totalFeeAmount: data.result.totalFeeAmount,
+                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+                });
+
             })
 
 
@@ -1843,9 +1968,29 @@ export default function Index({ params }: any) {
 
             setTotalCount(data.result.totalCount);
 
-            setTotalClearanceCount(data.result.totalClearanceCount);
-            setTotalClearanceAmount(data.result.totalClearanceAmount);
-            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+            //setTotalClearanceCount(data.result.totalClearanceCount);
+            //setTotalClearanceAmount(data.result.totalClearanceAmount);
+            //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+            setBuyOrderStats({
+              //totalCount: data.result.totalCount,
+              totalClearanceCount: data.result.totalClearanceCount,
+              totalClearanceAmount: data.result.totalClearanceAmount,
+              totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+              totalKrwAmount: data.result.totalKrwAmount,
+              totalUsdtAmount: data.result.totalUsdtAmount,
+              totalSettlementCount: data.result.totalSettlementCount,
+              totalSettlementAmount: data.result.totalSettlementAmount,
+              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+              totalFeeAmount: data.result.totalFeeAmount,
+              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+            });
+
         })
 
       }
@@ -2022,9 +2167,29 @@ export default function Index({ params }: any) {
 
       setTotalCount(data.result.totalCount);
 
-      setTotalClearanceCount(data.result.totalClearanceCount);
-      setTotalClearanceAmount(data.result.totalClearanceAmount);
-      setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+      //setTotalClearanceCount(data.result.totalClearanceCount);
+      //setTotalClearanceAmount(data.result.totalClearanceAmount);
+      //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+
+      setBuyOrderStats({
+        //totalCount: data.result.totalCount,
+        totalClearanceCount: data.result.totalClearanceCount,
+        totalClearanceAmount: data.result.totalClearanceAmount,
+        totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
+
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+        totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+      });
+
       
     }
 
@@ -2043,7 +2208,7 @@ export default function Index({ params }: any) {
       fetchBuyOrders();
 
 
-    }, 3000);
+    }, 5000);
 
 
     return () => clearInterval(interval);
@@ -3284,34 +3449,7 @@ export default function Index({ params }: any) {
             <div className="mt-4 flex flex-row items-center justify-between gap-2 w-full">
 
 
-              {/* store.withdrawalBankInfo */}
-              <div className="flex flex-col gap-2 items-start">
-                <div className="flex flex-row items-start gap-2">
-                  <Image
-                    src="/icon-bank.png"
-                    alt="Bank"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <div className="text-sm text-zinc-500">
-                    결제통장 정보
-                  </div>
-                </div>
-                <div className="flex flex-row items-start gap-2 text-zinc-500">
 
-                  <span className="text-lg font-semibold text-zinc-500">
-                    {store?.withdrawalBankInfo?.bankName}
-                  </span>
-                  <span className="text-lg font-semibold text-zinc-500">
-                    {store?.withdrawalBankInfo?.accountNumber}
-                  </span>
-                  <span className="text-lg font-semibold text-zinc-500">
-                    {store?.withdrawalBankInfo?.accountHolder}
-                  </span>
-
-                </div>
-              </div>
 
               <div className="flex flex-row items-start gap-5">
 
@@ -3446,125 +3584,189 @@ export default function Index({ params }: any) {
 
 
 
-            {/* trade summary */}
+          {/* trade summary */}
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2
-              w-full
-              bg-zinc-100/50
-              p-4 rounded-lg shadow-md
-              ">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2
+            w-full
+            bg-zinc-100/50
+            p-4 rounded-lg shadow-md
+            ">
 
-              {/*
-              <div className="w-full xl:w-1/3 flex flex-row items-start justify-between gap-2 pl-4 pr-4">
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalCount?.toLocaleString()}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래금액(원)</div>
-                  <div className="text-sm font-semibold text-zinc-500">
-                    <span className="text-xl text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {tradeSummary.totalKrwAmount?.toLocaleString()}
-                    </span>{' '}원
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 거래량(USDT)</div>
-                  <div className="text-sm font-semibold text-zinc-500">
-                    <span className="text-xl text-[#409192]"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {tradeSummary.totalUsdtAmount?.toLocaleString()}
-                    </span>{' '}
-                      USDT
-                  </div>
+            {/*
+            <div className="w-full xl:w-1/3 flex flex-row items-start justify-between gap-2 pl-4 pr-4">
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 거래수(건)</div>
+                <div className="text-xl font-semibold text-zinc-500">
+                  {tradeSummary.totalCount?.toLocaleString()}
                 </div>
               </div>
 
-              <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-
-              <div className="w-full xl:w-1/3
-                flex flex-row items-start justify-between gap-2 pl-4 pr-4">
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 결제수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
-                    {tradeSummary.totalSettlementCount?.toLocaleString()}
-                  </div>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 거래금액(원)</div>
+                <div className="text-sm font-semibold text-zinc-500">
+                  <span className="text-xl text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {tradeSummary.totalKrwAmount?.toLocaleString()}
+                  </span>{' '}원
                 </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 결제금액(원)</div>
-                  <div className="text-sm font-semibold text-zinc-500">
-                    <span className="text-xl text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
-                    </span>{' '}
-                      원
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 결제량(USDT)</div>
-                  <div className="text-sm font-semibold text-zinc-500">
-                    <span className="text-xl text-[#409192]"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {tradeSummary.totalSettlementAmount?.toLocaleString()}
-                    </span>{' '}
-                      USDT
-                  </div>
-                </div>
-
               </div>
 
-              <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-              <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-              */}
-
-              <div className="w-full xl:w-1/3
-                flex flex-row items-start justify-between gap-2 pl-4 pr-4">
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 판매주문수(건)</div>
-                  <div className="text-xl font-semibold text-zinc-500">
-                    {totalClearanceCount?.toLocaleString()}
-                  </div>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 거래량(USDT)</div>
+                <div className="text-sm font-semibold text-zinc-500">
+                  <span className="text-xl text-[#409192]"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {tradeSummary.totalUsdtAmount?.toLocaleString()}
+                  </span>{' '}
+                    USDT
                 </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 판매량(USDT)</div>
-                  <div className="text-sm font-semibold text-zinc-500">
-                    <span className="text-xl text-[#409192]"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {
-                      totalClearanceAmount &&
-                      totalClearanceAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      }
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">총 판매금액(원)</div>
-                  <div className="text-sm font-semibold text-zinc-500">
-                    <span className="text-xl text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {totalClearanceAmountKRW?.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
               </div>
-              
             </div>
+
+            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
+
+            <div className="w-full xl:w-1/3
+              flex flex-row items-start justify-between gap-2 pl-4 pr-4">
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 결제수(건)</div>
+                <div className="text-xl font-semibold text-zinc-500">
+                  {tradeSummary.totalSettlementCount?.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 결제금액(원)</div>
+                <div className="text-sm font-semibold text-zinc-500">
+                  <span className="text-xl text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {tradeSummary.totalSettlementAmountKRW?.toLocaleString()}
+                  </span>{' '}
+                    원
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 결제량(USDT)</div>
+                <div className="text-sm font-semibold text-zinc-500">
+                  <span className="text-xl text-[#409192]"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {tradeSummary.totalSettlementAmount?.toLocaleString()}
+                  </span>{' '}
+                    USDT
+                </div>
+              </div>
+
+            </div>
+
+            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
+            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
+            */}
+
+            <div className="w-full xl:w-1/3
+              flex flex-row items-start justify-between gap-2 pl-4 pr-4">
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 판매주문수(건)</div>
+                <div className="text-xl font-semibold text-zinc-500">
+                  {buyOrderStats.totalClearanceCount?.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 판매량(USDT)</div>
+                <div className="text-sm font-semibold text-zinc-500">
+                  <span className="text-xl text-[#409192]"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {
+                    buyOrderStats.totalClearanceAmount &&
+                    buyOrderStats.totalClearanceAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 items-center">
+                <div className="text-sm">총 판매금액(원)</div>
+                <div className="text-sm font-semibold text-zinc-500">
+                  <span className="text-xl text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {buyOrderStats.totalClearanceAmountKRW?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+            
+          </div>
+
+
+
+          {/* buyOrderStats.totalByBuyerBankAccountNumber */}
+          <div className="w-full
+            flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
+            bg-white/80
+            p-4 rounded-lg shadow-md
+            backdrop-blur-md
+          ">
+
+            <div className="text-lg font-semibold mb-2 sm:mb-0">
+              구매자 통장별 청산통계
+            </div>
+
+            {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
+              <div key={index} className="flex flex-col gap-2 items-center">
+
+                {/* copy account number button */}
+                <button
+                  className="text-sm font-semibold underline text-blue-600"
+                  onClick={() => {
+                    const accountNumber = item._id || '기타은행';
+                    navigator.clipboard.writeText(accountNumber)
+                      .then(() => {
+                        toast.success(`통장번호 ${accountNumber} 복사됨`);
+                      })
+                      .catch((err) => {
+                        toast.error('복사 실패: ' + err);
+                      });
+                  }}
+                  title="통장번호 복사"
+                >
+                  {item._id || '기타은행'}
+                </button>
+
+                <div className="text-sm font-semibold">
+                  {item.totalCount?.toLocaleString() || '0'}
+                </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <Image
+                    src="/icon-tether.png"
+                    alt="Tether"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  <span className="text-sm font-semibold text-green-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {item.totalUsdtAmount
+                      ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      : '0.000'}
+                  </span>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <span className="text-sm font-semibold text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {item.totalKrwAmount?.toLocaleString() || '0'}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+          </div>
 
 
 
@@ -3712,9 +3914,48 @@ export default function Index({ params }: any) {
 
 
           {sellersBalance?.length > 0 && (
-            <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
+            <div className="w-full flex flex-row items-center justify-end gap-4 overflow-x-auto
               mt-4
+              border border-zinc-300 rounded-lg p-4
+              bg-white/80
+              shadow-md
+              backdrop-blur-md
               ">
+
+              {/* 판매자 잔고 */}
+              <span className="text-lg font-semibold">
+                판매자
+              </span>
+
+              {/* store.withdrawalBankInfo */}
+              <div className="flex flex-col gap-2 items-start">
+                <div className="flex flex-row items-start gap-2">
+                  <Image
+                    src="/icon-bank.png"
+                    alt="Bank"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  <div className="text-sm text-zinc-500">
+                    결제통장 정보
+                  </div>
+                </div>
+                <div className="flex flex-col items-start gap-1">
+
+                  <span className="text-sm font-semibold text-zinc-500">
+                    {store?.withdrawalBankInfo?.bankName}
+                  </span>
+                  <span className="text-sm font-semibold text-zinc-500">
+                    {store?.withdrawalBankInfo?.accountNumber}
+                  </span>
+                  <span className="text-sm font-semibold text-zinc-500">
+                    {store?.withdrawalBankInfo?.accountHolder}
+                  </span>
+
+                </div>
+              </div>
+
 
               {sellersBalance?.map((seller, index) => (
                 <div key={index}
@@ -3781,6 +4022,9 @@ export default function Index({ params }: any) {
 
             </div>
           )}
+
+
+
 
 
 
@@ -3973,50 +4217,72 @@ export default function Index({ params }: any) {
                       </td>
                       
                       <td className="p-2">
-
-                          <div className="flex flex-col gap-2 items-start justify-center">
-
-                            <div className="flex flex-row items-center gap-1">
-                              <Image
-                                src={item.avatar || "/icon-user.png"}
-                                alt="Avatar"
-                                width={20}
-                                height={20}
-                                className="rounded-full"
-                              />
-                              <span className="text-lg font-semibold text-zinc-500">
-                                {
-                                  //item.walletAddress === address ? 'Me' :
-                                  item?.nickname
-                                }
-                              </span>
-                            </div>
-
-                            <div className="flex flex-row items-center gap-2">
-                              <Image
-                                src="/icon-shield.png"
-                                alt="Shield"
-                                width={20}
-                                height={20}
-                                className="w-5 h-5"
-                              />
-                              <span className="text-sm font-semibold text-zinc-800">
-                                {item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)}
-                              </span>
-                            </div>
-
-                            <div className="text-sm text-zinc-500">
-                              {
-                                //item.walletAddress === address ? 'Me' : item.tradeId ? item.tradeId : ''
-
-                                //item.walletAddress === address ? 'Me' :
-
-                                item?.buyer?.depositBankName + ' ' + item?.buyer?.depositName
-
-                              }
-                            </div>
-
+                        <div className="flex flex-col gap-1">
+                          <div className="flex flex-row items-center gap-1">
+                            <Image
+                              src="/icon-user.png"
+                              alt="User"
+                              width={20}
+                              height={20}
+                              className="rounded-lg w-5 h-5"
+                            />
+                            <span className="text-sm text-zinc-600 font-semibold">
+                              {item?.buyer?.nickname ?
+                                item?.buyer?.nickname
+                                : item.nickname || '익명'}
+                            </span>
                           </div>
+
+                          {/* item?.buyer?.bankInfo?.bankName, item?.buyer?.bankInfo?.accountNumber, item?.buyer?.bankInfo?.accountHolder */}
+                          <div className="flex flex-row items-center gap-1">
+                            <Image
+                              src="/icon-bank.png"
+                              alt="Bank"
+                              width={20}
+                              height={20}
+                              className="rounded-lg w-5 h-5"
+                            />
+                            <span className="text-sm text-zinc-600 font-semibold">
+                              {item?.buyer?.bankInfo?.bankName}
+                            </span>
+                            <span className="text-sm text-zinc-600 font-semibold">
+                              {item?.buyer?.bankInfo?.accountNumber?.length > 8 ?
+                                item?.buyer?.bankInfo?.accountNumber.slice(0, 4) + '...' + item?.buyer?.bankInfo?.accountNumber.slice(-4)
+                                :
+                                item?.buyer?.bankInfo?.accountNumber
+                              }
+                            </span>
+                            <span className="text-sm text-zinc-600 font-semibold">
+                              {item?.buyer?.bankInfo?.accountHolder}
+                            </span>
+                          </div>
+
+
+                          <div className="flex flex-row items-center gap-1">
+                            <Image
+                              src="/icon-shield.png"
+                              alt="Shield"
+                              width={20}
+                              height={20}
+                              className="rounded-lg w-5 h-5"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.walletAddress);
+                                toast.success('지갑주소가 클립보드에 복사되었습니다.');
+                              }}
+                              className="text-sm text-zinc-500 font-semibold hover:text-blue-500 underline"
+                              title="지갑주소 복사"
+                            >
+                              {item?.buyer?.walletAddress ? (
+                                item?.buyer?.walletAddress.slice(0, 6) + '...' + item?.buyer?.walletAddress.slice(-4)
+                              ) : (
+                                item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)
+                              )}
+                            </button>
+                          </div>
+
+                        </div>
                       </td>
 
 

@@ -7746,11 +7746,44 @@ export async function getCollectOrdersForSeller(
 
     
 
+
+
+    // totalReaultGroup by buyer.bankInfo.accountNumber
+    const totalReaultGroupByBuyerBankAccountNumber = await collection.aggregate([
+      {
+        $match: {
+          status: 'paymentConfirmed',
+          
+          //settlement: { $exists: true, $ne: null },
+
+          privateSale: true,
+          storecode: { $regex: storecode, $options: 'i' },
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: '$buyer.bankInfo.accountNumber',
+          totalCount: { $sum: 1 },
+          totalKrwAmount: { $sum: '$krwAmount' },
+          totalUsdtAmount: { $sum: '$usdtAmount' },
+        }
+      },
+      // sort by totalUsdtAmount desc
+      { $sort: { totalUsdtAmount: -1 } }
+    ]).toArray();
+
+
+
+
     return {
       totalCount: totalCount,
       totalClearanceCount: totalClearanceCount,
       totalClearanceAmount: totalClearanceAmount,
       totalClearanceAmountKRW: totalClearanceAmountKRW,
+
+      totalByBuyerBankAccountNumber: totalReaultGroupByBuyerBankAccountNumber,
+
       orders: results,
     };
 
