@@ -3741,7 +3741,7 @@ export default function Index({ params }: any) {
 
           {/* buyOrderStats.totalByBuyerBankAccountNumber */}
           <div className="w-full
-            flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
+            flex flex-col sm:flex-row items-start justify-start gap-4
             bg-white/80
             p-4 rounded-lg shadow-md
             backdrop-blur-md
