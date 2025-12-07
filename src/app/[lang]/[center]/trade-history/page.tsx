@@ -847,18 +847,46 @@ export default function Index({ params }: any) {
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
-  const [buyOrderStats, setBuyOrderStats] = useState({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-  });
+  const [buyOrderStats, setBuyOrderStats] = useState<{
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+      totalSettlementCount: number;
+      totalSettlementAmount: number;
+      totalSettlementAmountKRW: number;
+      totalFeeAmount: number;
+      totalFeeAmountKRW: number;
+      totalAgentFeeAmount: number;
+      totalAgentFeeAmountKRW: number;
+      totalByUserType: Array<{
+        _id: string;
+        totalCount: number;
+        totalKrwAmount: number;
+        totalUsdtAmount: number;
+      }>;
+      totalBySellerBankAccountNumber: Array<{
+        _id: string;
+        totalCount: number;
+        totalKrwAmount: number;
+        totalUsdtAmount: number;
+      }>;
+    }>({
+      totalCount: 0,
+      totalKrwAmount: 0,
+      totalUsdtAmount: 0,
+      totalSettlementCount: 0,
+      totalSettlementAmount: 0,
+      totalSettlementAmountKRW: 0,
+      totalFeeAmount: 0,
+      totalFeeAmountKRW: 0,
+      totalAgentFeeAmount: 0,
+      totalAgentFeeAmountKRW: 0,
+
+      totalByUserType: [],
+      totalBySellerBankAccountNumber: [],
+    });
+
+
 
 
 
@@ -1017,6 +1045,9 @@ export default function Index({ params }: any) {
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
 
@@ -1153,6 +1184,9 @@ export default function Index({ params }: any) {
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
 
@@ -1431,6 +1465,9 @@ export default function Index({ params }: any) {
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
               })
@@ -1549,6 +1586,9 @@ export default function Index({ params }: any) {
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
             })
@@ -1767,6 +1807,9 @@ export default function Index({ params }: any) {
                 totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                 totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                totalByUserType: data.result.totalByUserType,
+                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
           })
@@ -1865,6 +1908,9 @@ export default function Index({ params }: any) {
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
             })
@@ -2044,6 +2090,9 @@ export default function Index({ params }: any) {
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
         })
@@ -2176,6 +2225,9 @@ export default function Index({ params }: any) {
         totalFeeAmountKRW: data.result.totalFeeAmountKRW,
         totalAgentFeeAmount: data.result.totalAgentFeeAmount,
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+        totalByUserType: data.result.totalByUserType,
+        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
       });
 
     }
@@ -2184,16 +2236,16 @@ export default function Index({ params }: any) {
     fetchBuyOrders();
 
     
-    
+    /*
     const interval = setInterval(() => {
 
       fetchBuyOrders();
 
 
     }, 5000);
-  
 
     return () => clearInterval(interval);
+    */
     
     
     
@@ -2294,6 +2346,9 @@ const fetchBuyOrders = async () => {
     totalFeeAmountKRW: data.result.totalFeeAmountKRW,
     totalAgentFeeAmount: data.result.totalAgentFeeAmount,
     totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+    totalByUserType: data.result.totalByUserType,
+    totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
   });
 
   setFetchingBuyOrders(false);
@@ -3897,6 +3952,69 @@ const fetchBuyOrders = async () => {
                 
               </div>
 
+
+
+              {/* buyOrderStats.totalBySellerBankAccountNumber */}
+              <div className="w-full
+                flex flex-col sm:flex-row items-start justify-end gap-4
+                border border-zinc-300 rounded-lg p-4 mt-4
+                overflow-x-auto
+                ">
+
+                {/* 판매자 통장번호별 통계 */}
+                <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
+                  판매자 통장별 P2P 거래 통계
+                </span>
+
+                {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                  <div key={index} className="flex flex-col gap-2 items-center">
+
+                    {/* copy account number button */}
+                    <button
+                      className="text-sm font-semibold underline text-blue-600"
+                      onClick={() => {
+                        const accountNumber = item._id || '기타은행';
+                        navigator.clipboard.writeText(accountNumber)
+                          .then(() => {
+                            toast.success(`통장번호 ${accountNumber} 복사됨`);
+                          })
+                          .catch((err) => {
+                            toast.error('복사 실패: ' + err);
+                          });
+                      }}
+                      title="통장번호 복사"
+                    >
+                      {item._id || '기타은행'}
+                    </button>
+
+                    <div className="text-sm font-semibold">
+                      {item.totalCount?.toLocaleString() || '0'}
+                    </div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-semibold text-green-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {item.totalUsdtAmount
+                          ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.000'}
+                      </span>
+                    </div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <span className="text-sm font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {item.totalKrwAmount?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+              </div>
 
 
 
