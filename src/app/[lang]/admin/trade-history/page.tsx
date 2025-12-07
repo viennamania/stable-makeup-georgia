@@ -3643,7 +3643,7 @@ const fetchBuyOrders = async () => {
             p-4 rounded-lg shadow-md
             ">
 
-            <div className="w-full
+            <div className="w-full sm:w-1/3
               flex flex-col sm:flex-row items-start justify-start gap-4">
 
               <Image
@@ -3696,7 +3696,7 @@ const fetchBuyOrders = async () => {
             </div>
 
             {/* divider */}
-            <div className="hidden sm:block w-0.5 h-16 bg-zinc-300"></div>
+            <div className="hidden sm:block w-0.5 h-52 bg-zinc-300"></div>  
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
 
@@ -3730,139 +3730,156 @@ const fetchBuyOrders = async () => {
             ]
             */}
 
-            <div className="w-full
-              flex flex-col sm:flex-row items-start justify-center gap-4">
+            <div className="w-full sm:w-2/3 flex flex-col items-start justify-center gap-2">
 
-              {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
+              <div className="w-full
+                flex flex-col sm:flex-row items-start justify-center gap-4">
 
-                <div key={index} className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">
-                    {type === '' ? '일반회원'
-                      : type === 'AAA' ? '1등급'
-                      : type === 'BBB' ? '2등급'
-                      : type === 'CCC' ? '3등급'
-                      : type === 'DDD' ? '4등급'
-                      : ''
-                    }
-                  </div>
-                  <div className="text-sm font-semibold">
-                    {
-                      // if _id is '' or 'test' then sum totalCount of buyOrderStats.totalByUserType where _id is '' or 'test'
-                      type === ''
-                        ? buyOrderStats.totalByUserType
-                            ?.filter((item) => item._id === '' || item._id === 'test')
-                            .reduce((acc, item) => acc + (item.totalCount || 0), 0)
-                            .toLocaleString()
-                        : 
-                        buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
-                      
-                      //buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
-                    }
-                  </div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <Image
-                      src="/icon-tether.png"
-                      alt="Tether"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    <span className="text-sm font-semibold text-green-600"
-                      style={{ fontFamily: 'monospace' }}>
+                {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
+
+                  <div key={index} className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">
+                      {type === '' ? '일반회원'
+                        : type === 'AAA' ? '1등급'
+                        : type === 'BBB' ? '2등급'
+                        : type === 'CCC' ? '3등급'
+                        : type === 'DDD' ? '4등급'
+                        : ''
+                      }
+                    </div>
+                    <div className="text-sm font-semibold">
                       {
-
-                        /*
-                        buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
-                          ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.000'
-                        */
-
-                        // if _id is '' or 'test' then sum totalUsdtAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                        // if _id is '' or 'test' then sum totalCount of buyOrderStats.totalByUserType where _id is '' or 'test'
                         type === ''
                           ? buyOrderStats.totalByUserType
                               ?.filter((item) => item._id === '' || item._id === 'test')
-                              .reduce((acc, item) => acc + (item.totalUsdtAmount || 0), 0)
-                              .toFixed(3)
-                              .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          :
+                              .reduce((acc, item) => acc + (item.totalCount || 0), 0)
+                              .toLocaleString()
+                          : 
+                          buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                        
+                        //buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                      }
+                    </div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-semibold text-green-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {
+
+                          /*
                           buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
                             ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                             : '0.000'
-                      }
-                    </span>
-                  </div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <span className="text-sm font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {
-                        /*
-                        buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
-                          ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
-                          : '0'
-                        */
-                       
-                        // if _id is '' or 'test' then sum totalKrwAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
-                        type === ''
-                          ? buyOrderStats.totalByUserType
-                              ?.filter((item) => item._id === '' || item._id === 'test')
-                              .reduce((acc, item) => acc + (item.totalKrwAmount || 0), 0)
-                              .toLocaleString()
-                          :
+                          */
+
+                          // if _id is '' or 'test' then sum totalUsdtAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                          type === ''
+                            ? buyOrderStats.totalByUserType
+                                ?.filter((item) => item._id === '' || item._id === 'test')
+                                .reduce((acc, item) => acc + (item.totalUsdtAmount || 0), 0)
+                                .toFixed(3)
+                                .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            :
+                            buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
+                              ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              : '0.000'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <span className="text-sm font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {
+                          /*
                           buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
                             ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
                             : '0'
-                      }
-                    </span>
+                          */
+                        
+                          // if _id is '' or 'test' then sum totalKrwAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                          type === ''
+                            ? buyOrderStats.totalByUserType
+                                ?.filter((item) => item._id === '' || item._id === 'test')
+                                .reduce((acc, item) => acc + (item.totalKrwAmount || 0), 0)
+                                .toLocaleString()
+                            :
+                            buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
+                              ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
+                              : '0'
+                        }
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-              ))}
+                ))}
+
+              </div>
+
+              {/* divider */}
+              <div className="w-full h-0.5 bg-zinc-300"></div>
+
+              {/* buyOrderStats.totalBySellerBankAccountNumber */}
+              <div className="w-full
+                flex flex-col sm:flex-row items-start justify-center gap-4">
+
+                {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                  <div key={index} className="flex flex-col gap-2 items-center">
+
+                    {/* copy account number button */}
+                    <button
+                      className="text-sm font-semibold underline text-blue-600"
+                      onClick={() => {
+                        const accountNumber = item._id || '기타은행';
+                        navigator.clipboard.writeText(accountNumber)
+                          .then(() => {
+                            toast.success(`통장번호 ${accountNumber} 복사됨`);
+                          })
+                          .catch((err) => {
+                            toast.error('복사 실패: ' + err);
+                          });
+                      }}
+                      title="통장번호 복사"
+                    >
+                      {item._id || '기타은행'}
+                    </button>
+
+                    <div className="text-sm font-semibold">
+                      {item.totalCount?.toLocaleString() || '0'}
+                    </div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-sm font-semibold text-green-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {item.totalUsdtAmount
+                          ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.000'}
+                      </span>
+                    </div>
+                    <div className="flex flex-row items-center justify-center gap-1">
+                      <span className="text-sm font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {item.totalKrwAmount?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+              </div>
 
             </div>
-
-
-            {/* divider */}
-            <div className="hidden sm:block w-0.5 h-16 bg-zinc-300"></div>
-            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-
-            {/* buyOrderStats.totalBySellerBankAccountNumber */}
-            <div className="w-full
-              flex flex-col sm:flex-row items-start justify-center gap-4">
-
-              {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                <div key={index} className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">
-                    {item._id || '기타은행'}
-                  </div>
-                  <div className="text-sm font-semibold">
-                    {item.totalCount?.toLocaleString() || '0'}
-                  </div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <Image
-                      src="/icon-tether.png"
-                      alt="Tether"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    <span className="text-sm font-semibold text-green-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {item.totalUsdtAmount
-                        ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.000'}
-                    </span>
-                  </div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <span className="text-sm font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {item.totalKrwAmount?.toLocaleString() || '0'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-            </div>
-
 
 
 

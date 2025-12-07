@@ -2691,7 +2691,9 @@ export async function getBuyOrders(
           totalKrwAmount: { $sum: '$krwAmount' },
           totalUsdtAmount: { $sum: '$usdtAmount' },
         }
-      }
+      },
+      // sort by totalUsdtAmount desc
+      { $sort: { totalUsdtAmount: -1 } }
     ]).toArray();
 
 
