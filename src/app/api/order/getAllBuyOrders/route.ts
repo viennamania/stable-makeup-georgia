@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
 
     manualConfirmPayment,
 
+    userType,
+
   } = body;
 
   // searchStoreBankAccountNumber
@@ -93,6 +95,8 @@ export async function POST(request: NextRequest) {
     toDate: toDate || "",
 
     manualConfirmPayment: manualConfirmPayment || false,
+
+    userType: userType === undefined ? 'all' : userType,
 
   });
 

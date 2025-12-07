@@ -223,6 +223,24 @@ export default function Index({ params }: any) {
   const limit = searchParams.get('limit') || 10;
   const page = searchParams.get('page') || 1;
 
+  const paramUserType = searchParams.get('userType');
+  const [userType, setUserType] = useState(paramUserType);
+
+  // userTypeChecked, userTypeAAAChecked, userTypeBBBChecked, userTypeCCCChecked, userTypeDDDChecked
+  const [userTypeChecked, setUserTypeChecked] = useState(paramUserType === "" ? true : false);
+  const [userTypeAAAChecked, setUserTypeAAAChecked] = useState(paramUserType === "AAA" ? true : false);
+  const [userTypeBBBChecked, setUserTypeBBBChecked] = useState(paramUserType === "BBB" ? true : false);
+  const [userTypeCCCChecked, setUserTypeCCCChecked] = useState(paramUserType === "CCC" ? true : false);
+  const [userTypeDDDChecked, setUserTypeDDDChecked] = useState(paramUserType === "DDD" ? true : false);
+
+  useEffect(() => {
+    // if all unchecked, set to all
+    if (
+      !userTypeChecked && !userTypeAAAChecked && !userTypeBBBChecked && !userTypeCCCChecked && !userTypeDDDChecked
+    ) {
+      setUserType("all");
+    }
+  }, [userTypeChecked, userTypeAAAChecked, userTypeBBBChecked, userTypeCCCChecked, userTypeDDDChecked]);
 
 
   const contract = getContract({
@@ -828,9 +846,6 @@ export default function Index({ params }: any) {
   const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState("");
 
   
-
-
-
 
 
   // limit number
@@ -2194,6 +2209,8 @@ export default function Index({ params }: any) {
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+
+              userType: userType,
             }
 
         ),
@@ -2278,6 +2295,8 @@ export default function Index({ params }: any) {
     searchBuyer,
     searchDepositName,
     searchStoreBankAccountNumber,
+
+    userType,
 ]);
 
 
@@ -2315,6 +2334,7 @@ const fetchBuyOrders = async () => {
 
         searchStoreBankAccountNumber: searchStoreBankAccountNumber,
 
+        userType: userType,
 
         fromDate: searchFromDate,
         toDate: searchToDate,
@@ -3658,6 +3678,39 @@ const fetchBuyOrders = async () => {
                       className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                     />
                   </div>
+
+                  {/* 오늘, 어제 버튼 */}
+                  <div className="flex flex-row items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const today = new Date();
+                        const yyyy = today.getFullYear();
+                        const mm = String(today.getMonth() + 1).padStart(2, '0');
+                        const dd = String(today.getDate()).padStart(2, '0');
+                        const formattedToday = `${yyyy}-${mm}-${dd}`;
+                        setSearchFormDate(formattedToday);
+                        setSearchToDate(formattedToday);
+                      }}
+                      className="bg-[#3167b4] text-white px-3 py-1 rounded-lg hover:bg-[#3167b4]/80 text-sm"
+                    >
+                      오늘
+                    </button>
+                    <button
+                      onClick={() => {
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const yyyy = yesterday.getFullYear();
+                        const mm = String(yesterday.getMonth() + 1).padStart(2, '0');
+                        const dd = String(yesterday.getDate()).padStart(2, '0');
+                        const formattedYesterday = `${yyyy}-${mm}-${dd}`;
+                        setSearchFormDate(formattedYesterday);
+                        setSearchToDate(formattedYesterday);
+                      }}
+                      className="bg-[#3167b4] text-white px-3 py-1 rounded-lg hover:bg-[#3167b4]/80 text-sm"
+                    >
+                      어제
+                    </button>
+                  </div>
                 </div>
 
 
@@ -3961,95 +4014,218 @@ const fetchBuyOrders = async () => {
                   
                 {/* buyOrderStats.totalByUserType */}
                 <div className="w-full
-                  flex flex-col sm:flex-row items-start justify-center gap-4">
+                  flex flex-col sm:flex-row items-start justify-start gap-4">
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                    구매자 등급별 P2P 거래 통계
+                    구매자 등급별<br/>P2P 거래 통계
                   </span>
 
-                  {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
+                  {/* userTypeChecked, userTypeAAAChecked, userTypeBBBChecked, userTypeCCCChecked, userTypeDDDChecked */}
 
-                    <div key={index} className="flex flex-col gap-2 items-center">
-                      <div className="text-sm">
-                        {type === '' ? '일반회원'
-                          : type === 'AAA' ? '1등급'
-                          : type === 'BBB' ? '2등급'
-                          : type === 'CCC' ? '3등급'
-                          : type === 'DDD' ? '4등급'
-                          : ''
-                        }
-                      </div>
-                      <div className="text-sm font-semibold">
-                        {
-                          // if _id is '' or 'test' then sum totalCount of buyOrderStats.totalByUserType where _id is '' or 'test'
-                          type === ''
-                            ? buyOrderStats.totalByUserType
-                                ?.filter((item) => item._id === '' || item._id === 'test')
-                                .reduce((acc, item) => acc + (item.totalCount || 0), 0)
-                                .toLocaleString()
-                            : 
-                            buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
-                          
-                          //buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
-                        }
-                      </div>
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <Image
-                          src="/icon-tether.png"
-                          alt="Tether"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-sm font-semibold text-green-600"
-                          style={{ fontFamily: 'monospace' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
+
+                      <div key={index} className="flex flex-col gap-2 items-center">
+                        <div className="text-sm">
+                          {type === '' ? (
+                            <div className="flex flex-row items-center gap-1">
+                              <span>일반회원</span>
+                              {/* check box button for userType search filter */}
+                              {/* userType is '' or 'AAA' or 'BBB' or 'CCC' or 'DDD'
+                              one of them can be selected or unselected */}
+                              <input
+                                type="checkbox"
+                                checked={userTypeChecked}
+                                onChange={(e) => {
+                                  setUserTypeChecked(e.target.checked);
+                                  if (e.target.checked) {
+                                    // set userType to ''
+                                    setUserType('');
+                                    setUserTypeAAAChecked(false);
+                                    setUserTypeBBBChecked(false);
+                                    setUserTypeCCCChecked(false);
+                                    setUserTypeDDDChecked(false);
+                                  } else {
+                                    // set userType to null
+                                    setUserType('all');
+                                  }
+                                  setPageValue(1);
+                                }}
+                              />
+                            </div>
+                          )
+                            : type === 'AAA' ? (
+                              <div className="flex flex-row items-center gap-1">
+                                <span>1등급</span>
+                                <input
+                                  type="checkbox"
+                                  checked={userTypeAAAChecked}
+                                  onChange={(e) => {
+                                    setUserTypeAAAChecked(e.target.checked);
+                                    if (e.target.checked) {
+                                      // set userType to 'AAA'
+                                      setUserType('AAA');
+                                      setUserTypeChecked(false);
+                                      setUserTypeBBBChecked(false);
+                                      setUserTypeCCCChecked(false);
+                                      setUserTypeDDDChecked(false);
+                                    } else {
+                                      // set userType to null
+                                      setUserType('all');
+                                    }
+                                    setPageValue(1);
+                                  }}
+                                />
+                              </div>
+                            )
+                            : type === 'BBB' ? (
+                              <div className="flex flex-row items-center gap-1">
+                                <span>2등급</span>
+                                <input
+                                  type="checkbox"
+                                  checked={userTypeBBBChecked}
+                                  onChange={(e) => {
+                                    setUserTypeBBBChecked(e.target.checked);
+                                    if (e.target.checked) {
+                                      // set userType to 'BBB'
+                                      setUserType('BBB');
+                                      setUserTypeChecked(false);
+                                      setUserTypeAAAChecked(false);
+                                      setUserTypeCCCChecked(false);
+                                      setUserTypeDDDChecked(false);
+                                    } else {
+                                      // set userType to null
+                                      setUserType('all');
+                                    }
+                                    setPageValue(1);
+                                  }}
+                                />
+                              </div>
+                            )
+                            : type === 'CCC' ? (
+                              <div className="flex flex-row items-center gap-1">
+                                <span>3등급</span>
+                                <input
+                                  type="checkbox"
+                                  checked={userTypeCCCChecked}
+                                  onChange={(e) => {
+                                    setUserTypeCCCChecked(e.target.checked);
+                                    if (e.target.checked) {
+                                      // set userType to 'CCC'
+                                      setUserType('CCC');
+                                      setUserTypeChecked(false);
+                                      setUserTypeAAAChecked(false);
+                                      setUserTypeBBBChecked(false);
+                                      setUserTypeDDDChecked(false);
+                                    } else {
+                                      // set userType to null
+                                      setUserType('all');
+                                    }
+                                    setPageValue(1);
+                                  }}
+                                />
+                              </div>
+                            )
+                            : type === 'DDD' ? (
+                              <div className="flex flex-row items-center gap-1">
+                                <span>4등급</span>
+                                <input
+                                  type="checkbox"
+                                  checked={userTypeDDDChecked}
+                                  onChange={(e) => {
+                                    setUserTypeDDDChecked(e.target.checked);
+                                    if (e.target.checked) {
+                                      // set userType to 'DDD'
+                                      setUserType('DDD');
+                                      setUserTypeChecked(false);
+                                      setUserTypeAAAChecked(false);
+                                      setUserTypeBBBChecked(false);
+                                      setUserTypeCCCChecked(false);
+                                    } else {
+                                      // set userType to null
+                                      setUserType('all');
+                                    }
+                                    setPageValue(1);
+                                  }}
+                                />
+                              </div>
+                            )
+                            : ''
+                          }
+                        </div>
+
+                        <div className="text-sm font-semibold">
                           {
-
-                            /*
-                            buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
-                              ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              : '0.000'
-                            */
-
-                            // if _id is '' or 'test' then sum totalUsdtAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                            // if _id is '' or 'test' then sum totalCount of buyOrderStats.totalByUserType where _id is '' or 'test'
                             type === ''
                               ? buyOrderStats.totalByUserType
                                   ?.filter((item) => item._id === '' || item._id === 'test')
-                                  .reduce((acc, item) => acc + (item.totalUsdtAmount || 0), 0)
-                                  .toFixed(3)
-                                  .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              :
+                                  .reduce((acc, item) => acc + (item.totalCount || 0), 0)
+                                  .toLocaleString()
+                              : 
+                              buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                            
+                            //buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalCount?.toLocaleString() || '0'
+                          }
+                        </div>
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          <Image
+                            src="/icon-tether.png"
+                            alt="Tether"
+                            width={20}
+                            height={20}
+                            className="w-5 h-5"
+                          />
+                          <span className="text-sm font-semibold text-green-600"
+                            style={{ fontFamily: 'monospace' }}>
+                            {
+
+                              /*
                               buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
                                 ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                 : '0.000'
-                          }
-                        </span>
-                      </div>
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <span className="text-sm font-semibold text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {
-                            /*
-                            buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
-                              ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
-                              : '0'
-                            */
-                          
-                            // if _id is '' or 'test' then sum totalKrwAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
-                            type === ''
-                              ? buyOrderStats.totalByUserType
-                                  ?.filter((item) => item._id === '' || item._id === 'test')
-                                  .reduce((acc, item) => acc + (item.totalKrwAmount || 0), 0)
-                                  .toLocaleString()
-                              :
+                              */
+
+                              // if _id is '' or 'test' then sum totalUsdtAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                              type === ''
+                                ? buyOrderStats.totalByUserType
+                                    ?.filter((item) => item._id === '' || item._id === 'test')
+                                    .reduce((acc, item) => acc + (item.totalUsdtAmount || 0), 0)
+                                    .toFixed(3)
+                                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                :
+                                buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalUsdtAmount
+                                  ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                  : '0.000'
+                            }
+                          </span>
+                        </div>
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          <span className="text-sm font-semibold text-yellow-600"
+                            style={{ fontFamily: 'monospace' }}>
+                            {
+                              /*
                               buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
                                 ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
                                 : '0'
-                          }
-                        </span>
+                              */
+                            
+                              // if _id is '' or 'test' then sum totalKrwAmount of buyOrderStats.totalByUserType where _id is '' or 'test'
+                              type === ''
+                                ? buyOrderStats.totalByUserType
+                                    ?.filter((item) => item._id === '' || item._id === 'test')
+                                    .reduce((acc, item) => acc + (item.totalKrwAmount || 0), 0)
+                                    .toLocaleString()
+                                :
+                                buyOrderStats.totalByUserType?.find((item) => item._id === type)?.totalKrwAmount
+                                  ? buyOrderStats.totalByUserType.find((item) => item._id === type)?.totalKrwAmount.toLocaleString()
+                                  : '0'
+                            }
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                  ))}
+                    ))}
+                  </div>
 
                 </div>
 
@@ -4059,7 +4235,7 @@ const fetchBuyOrders = async () => {
 
                   {/* 판매자 통장번호별 통계 */}
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                    판매자 통장별 P2P 거래 통계
+                    판매자 통장별<br/>P2P 거래 통계
                   </span>
 
                   {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (

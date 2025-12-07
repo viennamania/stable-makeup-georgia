@@ -2150,6 +2150,8 @@ export async function getBuyOrders(
     toDate,
 
     manualConfirmPayment,
+
+    userType,
   }: {
 
     limit: number;
@@ -2175,6 +2177,8 @@ export async function getBuyOrders(
     toDate: string;
 
     manualConfirmPayment: boolean;
+
+    userType: string; // 'all', '', 'AAA', 'BBB', 'CCC', 'DDD'
   }
 
 ): Promise<any> {
@@ -2421,6 +2425,8 @@ export async function getBuyOrders(
         ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
+        // userType filter
+        ...(userType !== 'all' ? { userType: userType } : {}),
 
         // filter by fromDate and toDate
         /*
@@ -2489,6 +2495,8 @@ export async function getBuyOrders(
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
 
           //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -2566,6 +2574,9 @@ export async function getBuyOrders(
           // if manualConfirmPayment is true, autoConfirmPayment is not true
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
+
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
 
 
           //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
@@ -2646,6 +2657,8 @@ export async function getBuyOrders(
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
 
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
 
           //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
 
@@ -2684,6 +2697,10 @@ export async function getBuyOrders(
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
+
           createdAt: { $gte: fromDateValue, $lt: toDateValue },
         }
       },
@@ -2717,6 +2734,10 @@ export async function getBuyOrders(
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
+
           createdAt: { $gte: fromDateValue, $lt: toDateValue },
         }
       },
