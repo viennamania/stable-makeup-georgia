@@ -108,6 +108,10 @@ interface BuyOrder {
   totalAgentFeeAmountKRW: number,
   totalFeeAmount: number,
   totalFeeAmountKRW: number,
+
+  totalClearanceCount: number,
+  totalClearanceUsdtAmount: number,
+  totalClearanceKrwAmount: number,
 }
 
 
@@ -1908,7 +1912,9 @@ const fetchBuyOrders = async () => {
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료량(USDT)</th>
                   <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">PG 수수료금액(원)</th>
 
-
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산수(건)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산량(USDT)</th>
+                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산금액(원)</th>
 
                 </tr>
               </thead>
@@ -1918,12 +1924,11 @@ const fetchBuyOrders = async () => {
                     <td className="px-4 py-2 text-sm text-zinc-700">
                       {new Date(order.date).toLocaleDateString('ko-KR')}
                     </td>
+
                     {/* align right */}
                     <td className="px-4 py-2 text-sm text-zinc-700 text-right">
                       {order.totalCount ? order.totalCount.toLocaleString() : 0}
                     </td>
-
-
                     <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
                       style={{ fontFamily: 'monospace' }}
                     >
@@ -1978,6 +1983,20 @@ const fetchBuyOrders = async () => {
                       {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     </td>
 
+
+                    <td className="px-4 py-2 text-sm text-zinc-700 text-right">
+                      {order.totalClearanceCount ? order.totalClearanceCount.toLocaleString() : 0}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalClearanceUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(order.totalClearanceKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </td>
 
 
                   </tr>

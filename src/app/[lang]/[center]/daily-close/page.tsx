@@ -113,6 +113,10 @@ interface BuyOrder {
   totalEscrowWithdrawAmount: number, // Total amount withdrawn from escrow
   totalEscrowDepositAmount: number, // Total amount deposited to escrow
 
+  totalClearanceCount: number,
+  totalClearanceUsdtAmount: number,
+  totalClearanceKrwAmount: number,  
+
   store: any,
   seller: any,
 }
@@ -1823,6 +1827,11 @@ export default function Index({ params }: any) {
                         보유량(USDT) 출금처리
                       </th>
 
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산수(건)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산량(USDT)</th>
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산금액(원)</th>
+
+
                     </tr>
                   </thead>
                   <tbody>
@@ -1897,15 +1906,27 @@ export default function Index({ params }: any) {
                                 style={{ fontFamily: 'monospace' }}
                               >
                                 {Number(order.totalEscrowWithdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USDT
-                                출금완료
                               </span>
                             ) : (
-
                               <span className="text-red-600">
                                 출금대기
                               </span>
                             
                             )}
+                          </td>
+
+                          <td className="px-4 py-2 text-sm text-zinc-700 text-right">
+                            {order.totalClearanceCount ? order.totalClearanceCount.toLocaleString() : 0}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
+                            style={{ fontFamily: 'monospace' }}
+                          >
+                            {Number(order.totalClearanceUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-yellow-600 font-semibold text-right"
+                            style={{ fontFamily: 'monospace' }}
+                          >
+                            {Number(order.totalClearanceKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                           </td>
 
                         </tr>

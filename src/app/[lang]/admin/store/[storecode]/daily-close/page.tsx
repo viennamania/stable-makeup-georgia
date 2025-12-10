@@ -111,6 +111,7 @@ interface BuyOrder {
   totalEscrowCount: number, // Count the number of escrows
   totalEscrowWithdrawAmount: number, // Total amount withdrawn from escrow
   totalEscrowDepositAmount: number, // Total amount deposited to escrow
+
 }
 
 
