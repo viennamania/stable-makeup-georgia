@@ -1005,9 +1005,9 @@ export default function Index({ params }: any) {
 
 
   // limit number
-  const [limitValue, setLimitValue] = useState(limit || 20);
+  const [limitValue, setLimitValue] = useState(limit || 50);
   useEffect(() => {
-    setLimitValue(limit || 20);
+    setLimitValue(limit || 50);
   }, [limit]);
 
   // page number
