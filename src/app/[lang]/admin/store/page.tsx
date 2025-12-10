@@ -201,7 +201,7 @@ export default function Index({ params }: any) {
 
   // limit, page number params
 
-  const limit = searchParams.get('limit') || 20;
+  const limit = searchParams.get('limit') || 50;
   const page = searchParams.get('page') || 1;
 
 
