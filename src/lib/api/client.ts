@@ -37,3 +37,14 @@ export async function updateAvatar(clientId: string, avatar: string) {
   return result;
 }
 
+// updatePayactionViewOn by clientId
+export async function updatePayactionViewOn(clientId: string, payactionViewOn: boolean) {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('clients');
+  const result = await collection.updateOne(
+    { clientId: clientId },
+    { $set: { payactionViewOn: payactionViewOn } },
+    { upsert: false }
+  );
+  return result;
+}

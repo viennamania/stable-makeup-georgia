@@ -404,6 +404,9 @@ export default function SettingsPage({ params }: any) {
     const [clientId, setClientId] = useState("");
     const [clientInfo, setClientInfo] = useState<any>(null);
 
+    // payactionViewOn
+    const [payactionViewOn, setPayactionViewOn] = useState(false);
+
     useEffect(() => {
         const fetchClientInfo = async () => {
             const response = await fetch("/api/client/getClientInfo", {
@@ -443,12 +446,17 @@ export default function SettingsPage({ params }: any) {
                     CNY: 0,
                     EUR: 0,
                 });
+
+                setPayactionViewOn(data.result.clientInfo?.payactionViewOn || false);
             }
 
         };
 
         fetchClientInfo();
     }, []);
+
+
+
 
 
 
@@ -497,6 +505,32 @@ export default function SettingsPage({ params }: any) {
 
         setUpdatingClientInfo(false);
     };
+
+
+
+    // /api/client/updatePayactionViewOn
+    const [updatingPayactionViewOn, setUpdatingPayactionViewOn] = useState(false);
+    const updatePayactionViewOn = async (value: boolean) => {
+        if (updatingPayactionViewOn) {
+            return;
+        }
+        setUpdatingPayactionViewOn(true);
+        const response = await fetch("/api/client/updatePayactionViewOn", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                payactionViewOn: value,
+            }),
+        });
+        const data = await response.json();
+        if (data.result) {
+            setPayactionViewOn(value);
+        }
+        setUpdatingPayactionViewOn(false);
+    };
+
 
 
 
@@ -1085,6 +1119,60 @@ export default function SettingsPage({ params }: any) {
                                 </button>
 
                             </div>
+
+
+                            {/* 페이액션 사용 유무 */}
+                            {/* On/Off 토글 */}
+                            {/* payactionViewOn */}
+                            <div className="w-full flex flex-col items-start justify-start gap-2
+                                background-gray-50 p-4 rounded-lg border border-gray-500">
+
+                                <div className='flex flex-row items-center justify-start gap-2 mb-4
+                                border-b border-gray-200 pb-2'>
+                                    <Image
+                                        src={`/icon-dot-green.png`}
+                                        alt={`Dot icon`}
+                                        width={10}
+                                        height={10}
+                                        className="h-2.5 w-2.5"
+                                    />
+                                    <span className="text-lg text-gray-500 font-semibold">
+                                        페이액션 사용 유무
+                                    </span>
+                                </div>
+
+                                <div className="w-full flex flex-row items-center justify-between">
+                                    <span className="text-sm text-gray-500 font-semibold">
+                                        페이액션 사용 설정
+                                    </span>
+                                    {payactionViewOn === false ? (
+                                        <button
+                                            disabled={updatingPayactionViewOn}
+                                            onClick={() => updatePayactionViewOn(true)}
+                                            className={`
+                                                ${updatingPayactionViewOn ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-500'}
+                                                px-4 py-2 bg-red-400 text-white rounded-lg
+                                            `}
+                                        >
+                                            {updatingPayactionViewOn ? '업데이트 중...' : '사용 안함'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            disabled={updatingPayactionViewOn}
+                                            onClick={() => updatePayactionViewOn(false)}
+                                            className={`
+                                                ${updatingPayactionViewOn ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500'}
+                                                px-4 py-2 bg-green-400 text-white rounded-lg
+                                            `}
+                                        >
+                                            {updatingPayactionViewOn ? '업데이트 중...' : '사용 함'}
+                                        </button>
+                                    )}
+                                </div>
+
+                            </div>
+
+
 
                             {/* 판매자 정보 */}
 

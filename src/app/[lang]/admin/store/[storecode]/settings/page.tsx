@@ -333,60 +333,31 @@ export default function SettingsPage({ params }: any) {
 
 
 
-
-
-    const [nativeBalance, setNativeBalance] = useState(0);
-    const [balance, setBalance] = useState(0);
+    const [payactionViewOn, setPayactionViewOn] = useState(false);
     useEffect(() => {
-  
-      // get the balance
-      const getBalance = async () => {
-  
-        ///console.log('getBalance address', address);
-  
-        
-        const result = await balanceOf({
-          contract,
-          address: address || "",
-        });
-  
-    
-        //console.log(result);
-    
-        setBalance( Number(result) / 10 ** 6 );
-  
-  
-        await fetch('/api/user/getBalanceByWalletAddress', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chain: storecode,
-            walletAddress: address,
-          }),
-        })
-  
-        .then(response => response.json())
-  
-        .then(data => {
-            setNativeBalance(data.result?.displayValue);
-        });
-  
-  
-  
-      };
-  
-      if (address) getBalance();
-  
-      const interval = setInterval(() => {
-        if (address) getBalance();
-      } , 5000);
-  
-      return () => clearInterval(interval);
-  
-    } , [address, contract, storecode]);
-  
+        const fetchData = async () => {
+            const response = await fetch("/api/client/getClientInfo", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.result) {
+                setPayactionViewOn(data.result.clientInfo?.payactionViewOn || false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+
+
+
 
 
 
@@ -4584,124 +4555,125 @@ export default function SettingsPage({ params }: any) {
                             };
                             */  }
                         {/* 가맹점 결제용 통장 설정 */}
-                        {/*
-                        <div className='w-full flex flex-col items-start justify-center gap-2
-                            border border-gray-400 p-4 rounded-lg'>
+                        {payactionViewOn && (
+                            <div className='w-full flex flex-col items-start justify-center gap-2
+                                border border-gray-400 p-4 rounded-lg'>
 
-                            <div className='w-full flex flex-col items-center justify-between gap-2
-                                border-b border-gray-300 pb-2'>
+                                <div className='w-full flex flex-col items-center justify-between gap-2
+                                    border-b border-gray-300 pb-2'>
 
-                                <div className="w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2">
-                                    <Image
-                                        src="/icon-payaction.png"
-                                        alt="Payaction"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="text-lg text-zinc-500">
-                                        페이액션 자동입금 설정
-                                    </span>
-                                </div>
-
-                                <div className='w-full flex flex-col items-start gap-2'>
-                                    
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        payactionApiKey:{' '}{store && store.payactionKey && store.payactionKey.payactionApiKey}
+                                    <div className="w-full flex flex-row items-center justify-start gap-2
+                                        border-b border-gray-300 pb-2">
+                                        <Image
+                                            src="/icon-payaction.png"
+                                            alt="Payaction"
+                                            width={20}
+                                            height={20}
+                                            className="w-5 h-5"
+                                        />
+                                        <span className="text-lg text-zinc-500">
+                                            페이액션 자동입금 설정
                                         </span>
                                     </div>
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        payactionWebhookKey:{' '}{store && store.payactionKey && store.payactionKey.payactionWebhookKey}
-                                        </span>
+
+                                    <div className='w-full flex flex-col items-start gap-2'>
+                                        
+                                        <div className='flex flex-row items-center justify-center gap-2'>
+                                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                            <span className="text-lg">
+                                            payactionApiKey:{' '}{store && store.payactionKey && store.payactionKey.payactionApiKey}
+                                            </span>
+                                        </div>
+                                        <div className='flex flex-row items-center justify-center gap-2'>
+                                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                            <span className="text-lg">
+                                            payactionWebhookKey:{' '}{store && store.payactionKey && store.payactionKey.payactionWebhookKey}
+                                            </span>
+                                        </div>
+                                    
+                                        <div className='flex flex-row items-center justify-center gap-2'>
+                                            <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+                                            <span className="text-lg">
+                                            payactionShopId:{' '}{store && store.payactionKey && store.payactionKey.payactionShopId}
+                                            </span>
+                                        
+                                        </div>
                                     </div>
-                                
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        payactionShopId:{' '}{store && store.payactionKey && store.payactionKey.payactionShopId}
-                                        </span>
+
+                
+                                    <div className='w-full h-[1px] bg-zinc-300'></div>
+
+                                    <div className='w-64 flex flex-col items-center justify-center gap-2'>
+                                        
+                                        <input
+                                            type="text"
+                                            className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                            placeholder="payactionApiKey"
+                                            value={payactionApiKey}
+                                            onChange={(e) => setPayactionApiKey(e.target.value)}
+                                        />
+                                        <input
+                                            type="text"
+                                            className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                            placeholder="payactionWebhookKey"
+                                            value={payactionWebhookKey}
+                                            onChange={(e) => setPayactionWebhookKey(e.target.value)}
+                                        />
+                                        
                                     
-                                    </div>
-                                </div>
-
-            
-                                <div className='w-full h-[1px] bg-zinc-300'></div>
-
-                                <div className='w-64 flex flex-col items-center justify-center gap-2'>
-                                    
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="payactionApiKey"
-                                        value={payactionApiKey}
-                                        onChange={(e) => setPayactionApiKey(e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="payactionWebhookKey"
-                                        value={payactionWebhookKey}
-                                        onChange={(e) => setPayactionWebhookKey(e.target.value)}
-                                    />
-                                    
-                                
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="payactionShopId"
-                                        value={payactionShopId}
-                                        onChange={(e) => setPayactionShopId(e.target.value)}
-                                    />
-                                    <button
-                                        disabled={!address || !payactionApiKey || !payactionWebhookKey || !payactionShopId
-                                            || updatingPayactionKeys
-                                        }
-                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!payactionApiKey || !payactionWebhookKey || !payactionShopId || updatingPayactionKeys
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!payactionApiKey || !payactionWebhookKey || !payactionShopId) {
-                                                toast.error("payactionApiKey, payactionWebhookKey, payactionShopId를 입력하세요");
-                                                return;
-                                            }
-
-                                            confirm(
-                                                `정말 ${payactionApiKey} ${payactionWebhookKey} ${payactionShopId}로 가맹점 결제용 키를 변경하시겠습니까?`
-                                            ) && updatePayactionKeys();
-                                        }}
-                                    >
-                                        {updatingPayactionKeys ? '변경 중...' : '변경하기'}
-                                    </button>
-
-                                    <div className='mt-2 w-full flex flex-col items-center justify-center gap-2'>
-        
-                                        <span className="text-sm text-red-500">
-                                            자동입금기능을 사용하지 않을 경우 <br />
-                                            아래 버튼을 눌러 초기화 해주세요.
-                                        </span>
+                                        <input
+                                            type="text"
+                                            className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                            placeholder="payactionShopId"
+                                            value={payactionShopId}
+                                            onChange={(e) => setPayactionShopId(e.target.value)}
+                                        />
                                         <button
-                                            className={`w-full bg-red-500 text-zinc-100 rounded-lg p-2
-                                                ${updatingPayactionKeys
+                                            disabled={!address || !payactionApiKey || !payactionWebhookKey || !payactionShopId
+                                                || updatingPayactionKeys
+                                            }
+                                            className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                                ${!payactionApiKey || !payactionWebhookKey || !payactionShopId || updatingPayactionKeys
                                                 ? "opacity-50" : ""}`}
                                             onClick={() => {
+                                                if (!payactionApiKey || !payactionWebhookKey || !payactionShopId) {
+                                                    toast.error("payactionApiKey, payactionWebhookKey, payactionShopId를 입력하세요");
+                                                    return;
+                                                }
+
                                                 confirm(
-                                                    `정말 초기화하시겠습니까?`
-                                                ) && resetPayactionKeys();
+                                                    `정말 ${payactionApiKey} ${payactionWebhookKey} ${payactionShopId}로 가맹점 결제용 키를 변경하시겠습니까?`
+                                                ) && updatePayactionKeys();
                                             }}
                                         >
-                                            {updatingPayactionKeys ? '초기화 중...' : '초기화'}
+                                            {updatingPayactionKeys ? '변경 중...' : '변경하기'}
                                         </button>
-                                    </div>
 
+                                        <div className='mt-2 w-full flex flex-col items-center justify-center gap-2'>
+            
+                                            <span className="text-sm text-red-500">
+                                                자동입금기능을 사용하지 않을 경우 <br />
+                                                아래 버튼을 눌러 초기화 해주세요.
+                                            </span>
+                                            <button
+                                                className={`w-full bg-red-500 text-zinc-100 rounded-lg p-2
+                                                    ${updatingPayactionKeys
+                                                    ? "opacity-50" : ""}`}
+                                                onClick={() => {
+                                                    confirm(
+                                                        `정말 초기화하시겠습니까?`
+                                                    ) && resetPayactionKeys();
+                                                }}
+                                            >
+                                                {updatingPayactionKeys ? '초기화 중...' : '초기화'}
+                                            </button>
+                                        </div>
+
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        */}
+                        )}
+                        
                         
                     
 
