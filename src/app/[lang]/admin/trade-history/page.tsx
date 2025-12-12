@@ -3845,7 +3845,9 @@ const fetchBuyOrders = async () => {
                 items-start justify-start">
 
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="flex flex-col gap-2 items-center
+                  <div
+                    key={index}
+                    className="flex flex-col gap-2 items-center
                     border border-zinc-300 rounded-lg p-2">
 
                     {/* copy account number button */}
