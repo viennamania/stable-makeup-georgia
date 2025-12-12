@@ -3771,7 +3771,7 @@ export default function Index({ params }: any) {
 
                     <th className="p-2">
                       <div className="flex flex-col items-start justify-center">
-                      구매자정보
+                      구매자 정보
                       </div>
                     </th>
 
@@ -3783,12 +3783,6 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="p-2">
-                      <div className="flex flex-col items-start justify-center">
-                        결제통장
-                      </div>
-                    </th>
-                    
                     <th className="p-2">
                       <div className="flex flex-col items-start justify-center">
                         판매자 정보
@@ -4014,6 +4008,30 @@ export default function Index({ params }: any) {
                                 : item.nickname || '익명'}
                             </span>
                           </div>
+                          <div className="flex flex-row items-center gap-1">
+                            <Image
+                              src="/icon-shield.png"
+                              alt="Shield"
+                              width={20}
+                              height={20}
+                              className="rounded-lg w-5 h-5"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.walletAddress);
+                                toast.success('지갑주소가 클립보드에 복사되었습니다.');
+                              }}
+                              className="text-sm text-zinc-500 font-semibold hover:text-blue-500 underline"
+                              title="지갑주소 복사"
+                            >
+                              {item?.buyer?.walletAddress ? (
+                                item?.buyer?.walletAddress.slice(0, 6) + '...' + item?.buyer?.walletAddress.slice(-4)
+                              ) : (
+                                item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)
+                              )}
+                            </button>
+                          </div>
+
 
                           {/* item?.buyer?.bankInfo?.bankName, item?.buyer?.bankInfo?.accountNumber, item?.buyer?.bankInfo?.accountHolder */}
                           <div className="flex flex-row items-center gap-1">
@@ -4037,31 +4055,6 @@ export default function Index({ params }: any) {
                                 {item?.buyer?.bankInfo?.accountHolder}
                               </span>
                             </div>
-                          </div>
-
-
-                          <div className="flex flex-row items-center gap-1">
-                            <Image
-                              src="/icon-shield.png"
-                              alt="Shield"
-                              width={20}
-                              height={20}
-                              className="rounded-lg w-5 h-5"
-                            />
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item.walletAddress);
-                                toast.success('지갑주소가 클립보드에 복사되었습니다.');
-                              }}
-                              className="text-sm text-zinc-500 font-semibold hover:text-blue-500 underline"
-                              title="지갑주소 복사"
-                            >
-                              {item?.buyer?.walletAddress ? (
-                                item?.buyer?.walletAddress.slice(0, 6) + '...' + item?.buyer?.walletAddress.slice(-4)
-                              ) : (
-                                item.walletAddress.slice(0, 6) + '...' + item.walletAddress.slice(-4)
-                              )}
-                            </button>
                           </div>
 
                         </div>
@@ -4117,56 +4110,6 @@ export default function Index({ params }: any) {
                       </td>
 
 
-                      <td className="p-2">
-
-                          {item?.buyer?.nickname ? (
-                            <div className="flex flex-col items-start justify-center gap-1">
-
-                              <span className="text-lg text-zinc-400 font-semibold">
-                                {item.buyer?.depositBankName}
-                              </span>
-
-                              <button
-                                className="text-sm text-zinc-600 font-semibold hover:text-blue-500"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item.buyer?.depositBankAccountNumber);
-                                  alert('계좌번호가 클립보드에 복사되었습니다.');
-                                }}
-                              >
-                                {item.buyer?.depositBankAccountNumber}
-                              </button>
-
-
-                              <span className="text-sm text-zinc-600 font-semibold">
-                                {item.buyer?.depositName}
-                              </span>
-
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-start justify-center gap-1">
-                              <span className="text-sm text-zinc-600 font-semibold">
-                                {item?.seller?.bankInfo?.bankName}
-                              </span>
-                              <button
-                                className="text-sm text-zinc-600 font-semibold hover:text-blue-500"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item?.seller?.bankInfo?.accountNumber);
-                                  alert('계좌번호가 클립보드에 복사되었습니다.');
-                                }}
-                              >
-                                {item?.seller?.bankInfo?.accountNumber}
-                              </button>
-                              <span className="text-sm text-zinc-600 font-semibold">
-                                {item?.seller?.bankInfo?.accountHolder}
-                                </span>
-                            </div>
-                          )}
-
-                      </td>
-
-
-
-
                       <td className="text-zinc-500 p-2">
                         <div className="
                         w-36
@@ -4211,12 +4154,63 @@ export default function Index({ params }: any) {
                             </button>
                           </div>
 
+                          <div className="flex flex-row items-center gap-1">
+
+                            <Image
+                              src="/icon-bank.png"
+                              alt="Bank"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            {item?.buyer?.nickname ? (
+                              <div className="flex flex-col items-start justify-center gap-1">
+
+                                <span className="text-lg text-zinc-400 font-semibold">
+                                  {item.buyer?.depositBankName}
+                                </span>
+
+                                <button
+                                  className="text-sm text-zinc-600 font-semibold hover:text-blue-500"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.buyer?.depositBankAccountNumber);
+                                    alert('계좌번호가 클립보드에 복사되었습니다.');
+                                  }}
+                                >
+                                  {item.buyer?.depositBankAccountNumber}
+                                </button>
+
+
+                                <span className="text-sm text-zinc-600 font-semibold">
+                                  {item.buyer?.depositName}
+                                </span>
+
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-start justify-center gap-1">
+                                <span className="text-sm text-zinc-600 font-semibold">
+                                  {item?.seller?.bankInfo?.bankName}
+                                </span>
+                                <button
+                                  className="text-sm text-zinc-600 font-semibold hover:text-blue-500"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item?.seller?.bankInfo?.accountNumber);
+                                    alert('계좌번호가 클립보드에 복사되었습니다.');
+                                  }}
+                                >
+                                  {item?.seller?.bankInfo?.accountNumber}
+                                </button>
+                                <span className="text-sm text-zinc-600 font-semibold">
+                                  {item?.seller?.bankInfo?.accountHolder}
+                                  </span>
+                              </div>
+                            )}
+
+                          </div>
+
+
                         </div>
                       </td>
-
-
-
-
 
                       <td className="p-2">
                         <div className="flex flex-col mr-2 items-center justify-end gap-2">
