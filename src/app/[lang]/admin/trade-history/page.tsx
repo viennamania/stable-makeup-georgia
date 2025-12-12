@@ -3825,12 +3825,28 @@ const fetchBuyOrders = async () => {
               {/* divider */}
               <div className="w-full h-0.5 bg-zinc-300"></div>
 
+              {/* 판매자 입급통장 별 통계 */}
+              <div className="flex flex-row items-center gap-2 mb-2">
+                <Image
+                  src="/icon-bank.png"
+                  alt="Bank"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5 rounded-lg"
+                />
+                <span className="text-sm font-semibold">
+                  판매자 입금통장 별 통계
+                </span>
+              </div>
+
               {/* buyOrderStats.totalBySellerBankAccountNumber */}
               <div className="w-full
-                flex flex-col sm:flex-row items-start justify-center gap-4">
+                grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
+                items-start justify-start">
 
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="flex flex-col gap-2 items-center">
+                  <div key={index} className="flex flex-col gap-2 items-center
+                    border border-zinc-300 rounded-lg p-2">
 
                     {/* copy account number button */}
                     <button
