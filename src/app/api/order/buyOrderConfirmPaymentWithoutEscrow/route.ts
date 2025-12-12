@@ -7,6 +7,7 @@ import {
 
   //buyOrderWebhook,
 
+  updateBuyOrderPayactionResult,
 } from '@lib/api/order';
 
 
@@ -48,6 +49,10 @@ import {
 } from "@/app/client";
 
 
+
+import {
+  getPayactionKeys,
+} from '@lib/api/store';
 
 
 
@@ -207,6 +212,88 @@ export async function POST(request: NextRequest) {
       sellerWalletAddressBalance: sellerWalletAddressBalance,
 
     });
+
+
+
+
+
+    // getPayactionKeys
+    const payactionKeys = await getPayactionKeys({
+      storecode: order.storecode,
+    });
+
+    if (payactionKeys && payactionKeys.payactionApiKey && payactionKeys.payactionShopId) {
+
+      const payactionApiKey = payactionKeys.payactionApiKey;
+      const payactionShopId = payactionKeys.payactionShopId;
+
+      const payactionUrl = "https://api.payaction.app/order-exclude";
+      
+      const headers = {
+        "Content-Type": "application/json",
+        "x-api-key": payactionApiKey,
+        "x-mall-id": payactionShopId,
+      };
+      const body = {
+        order_number: order.tradeId,
+      };
+      const options = {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(body),
+      };
+
+      try {
+        const response = await fetch(payactionUrl, options);
+
+        const result = await response.json();
+        
+        
+        console.log("payactionResult", result);
+        // updateBuyOrderPayactionResult
+        
+        await updateBuyOrderPayactionResult({
+          orderId: orderId,
+          api: "/api/order/cancelTradeBySeller",
+          payactionResult: result,
+        });
+        
+
+
+        if (response.status !== 200) {
+          console.error("Payaction API error", result);
+          //throw new Error("Payaction API error");
+        }
+
+        if (result.status !== "success") {
+          console.error("Payaction API error", result);
+
+
+          // update order payactionResult
+
+
+          //throw new Error("Payaction API error");
+        }
+
+        //console.log("Payaction API result", result);
+
+      
+      } catch (error) {
+        console.error("Error calling Payaction API", error);
+      }
+
+    }
+
+
+
+
+
+
+
+
+
+    
+
   
   
     //console.log("result", JSON.stringify(result));
