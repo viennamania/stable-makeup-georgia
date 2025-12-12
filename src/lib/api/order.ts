@@ -2145,6 +2145,7 @@ export async function getBuyOrders(
     searchDepositName,
 
     searchStoreBankAccountNumber,
+    searchBuyerBankAccountNumber,
 
     fromDate,
     toDate,
@@ -2172,6 +2173,7 @@ export async function getBuyOrders(
     searchDepositName: string;
 
     searchStoreBankAccountNumber: string;
+    searchBuyerBankAccountNumber: string;
 
     fromDate: string;
     toDate: string;
@@ -2259,6 +2261,7 @@ export async function getBuyOrders(
         // seller?.bankInfo?.accountNumber
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
+        ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
         
         // if manualConfirmPayment is true, autoConfirmPayment is not true
         ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
@@ -2317,6 +2320,7 @@ export async function getBuyOrders(
         // seller?.bankInfo?.accountNumber
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
+        ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
 
         // if manualConfirmPayment is true, autoConfirmPayment is not true
         ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
@@ -2420,6 +2424,7 @@ export async function getBuyOrders(
         // seller?.bankInfo?.accountNumber
         ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
+        ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
 
         // if manualConfirmPayment is true, autoConfirmPayment is not true
         ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
@@ -2489,6 +2494,9 @@ export async function getBuyOrders(
           //'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
                   // seller?.bankInfo?.accountNumber
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+          ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+
 
 
           // if manualConfirmPayment is true, autoConfirmPayment is not true
@@ -2569,6 +2577,8 @@ export async function getBuyOrders(
           ///'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
           // seller?.bankInfo?.accountNumber
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+
+          ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
 
 
           // if manualConfirmPayment is true, autoConfirmPayment is not true
@@ -2652,6 +2662,8 @@ export async function getBuyOrders(
           // seller?.bankInfo?.accountNumber
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
 
+          ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+
 
           // if manualConfirmPayment is true, autoConfirmPayment is not true
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
@@ -2695,7 +2707,11 @@ export async function getBuyOrders(
           nickname: { $regex: searchBuyer, $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          
+          
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+          
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
           // userType filter
@@ -2732,7 +2748,10 @@ export async function getBuyOrders(
           nickname: { $regex: String(searchBuyer), $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          
           ...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          ...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+
           ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
 
           // userType filter

@@ -199,6 +199,8 @@ export default function Index({ params }: any) {
   const paramSearchStoreBankAccountNumber = searchParams.get('searchStoreBankAccountNumber') || "";
   const paramSearchTradeId = searchParams.get('searchTradeId') || "";
 
+  const paramSearchSellerBankAccountNumber = searchParams.get('searchBuyerBankAccountNumber') || "";
+
 
 
   const contract = getContract({
@@ -872,6 +874,9 @@ export default function Index({ params }: any) {
   // search store bank account number
   const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState("");
 
+  // search seller bank account number
+  const [searchBuyerBankAccountNumber, setSearchBuyerBankAccountNumber] = useState("");
+
     
 
 
@@ -1129,6 +1134,7 @@ export default function Index({ params }: any) {
                   searchDepositName: searchDepositName,
 
                   searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+                  searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
                   privateSale: true,
 
@@ -1273,6 +1279,7 @@ export default function Index({ params }: any) {
             searchDepositName: searchDepositName,
 
             searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+            searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
             privateSale: true,
 
@@ -1539,6 +1546,7 @@ export default function Index({ params }: any) {
                 searchDepositName: searchDepositName,
 
                 searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+                searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
                 privateSale: true,
 
@@ -1764,6 +1772,7 @@ export default function Index({ params }: any) {
               searchDepositName: searchDepositName,
 
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+              searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
               privateSale: true, 
               
@@ -1894,6 +1903,7 @@ export default function Index({ params }: any) {
           searchDepositName: searchDepositName,
 
           searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+          searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
           privateSale: true,
 
@@ -1997,6 +2007,7 @@ export default function Index({ params }: any) {
               searchDepositName: searchDepositName,
 
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+              searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
               privateSale: true,
 
@@ -2122,6 +2133,7 @@ export default function Index({ params }: any) {
     searchTradeId,
     searchBuyer,
     searchStoreBankAccountNumber,
+    searchBuyerBankAccountNumber,
     searchDepositName,
     
 
@@ -2419,6 +2431,7 @@ export default function Index({ params }: any) {
               searchDepositName: searchDepositName,
 
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+              searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
               privateSale: true,
 
@@ -3166,6 +3179,7 @@ export default function Index({ params }: any) {
                       '&searchBuyer=' + searchBuyer +
                       '&searchDepositName=' + searchDepositName +
                       '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
+                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
                       '&searchTradeId=' + searchTradeId
                       );
                     }}
@@ -3197,6 +3211,7 @@ export default function Index({ params }: any) {
                       '&searchBuyer=' + searchBuyer +
                       '&searchDepositName=' + searchDepositName +
                       '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
+                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
                       '&searchTradeId=' + searchTradeId
                       );
                     }}
@@ -3221,6 +3236,7 @@ export default function Index({ params }: any) {
                       '&searchBuyer=' + searchBuyer +
                       '&searchDepositName=' + searchDepositName +
                       '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
+                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
                       '&searchTradeId=' + searchTradeId
                       );
                     }}
@@ -3244,6 +3260,7 @@ export default function Index({ params }: any) {
                       '&searchBuyer=' + searchBuyer +
                       '&searchDepositName=' + searchDepositName +
                       '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
+                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
                       '&searchTradeId=' + searchTradeId
                       );
                     }}
@@ -3263,8 +3280,7 @@ export default function Index({ params }: any) {
 
 
             {/* search depositName */}
-            <div className="flex flex-col sm:flex-row items-center gap-2">
-
+            <div className="flex flex-col items-center gap-2">
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                 {/* search Trade ID */}
@@ -3284,7 +3300,7 @@ export default function Index({ params }: any) {
                     type="text"
                     value={searchBuyer}
                     onChange={(e) => setSearchBuyer(e.target.value)}
-                    placeholder="회원 아이디"
+                    placeholder="구매자 아이디"
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
                 </div>
@@ -3298,14 +3314,14 @@ export default function Index({ params }: any) {
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
                 </div>
-
-                {/* searchStoreBankAccountNumber */}
+              
+                {/* 구매자 통장번호 */}
                 <div className="flex flex-row items-center gap-2">
                   <input
                     type="text"
-                    value={searchStoreBankAccountNumber}
-                    onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
-                    placeholder="입금통장번호"
+                    value={searchBuyerBankAccountNumber}
+                    onChange={(e) => setSearchBuyerBankAccountNumber(e.target.value)}
+                    placeholder="구매자 통장번호"
                     className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   /> 
                 </div>
@@ -3313,6 +3329,20 @@ export default function Index({ params }: any) {
 
 
               </div>
+
+              {/* searchStoreBankAccountNumber */}
+              <div className="flex flex-row items-center gap-2">
+                <input
+                  type="text"
+                  value={searchStoreBankAccountNumber}
+                  onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
+                  placeholder="판매자 통장번호"
+                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                /> 
+              </div>
+
+
+
 
 
               {/* 검색 버튼 */}
@@ -3348,23 +3378,21 @@ export default function Index({ params }: any) {
               </div>
               */}
 
-
-              {/* export button */}
-              <button
-                onClick={() => {
-                    exportToCSV('청산내역');
-                }}
-                disabled={isExporting}
-                className={`${isExporting ? "bg-gray-500" : "bg-green-500"} text-white p-2 rounded-lg
-                    hover:bg-green-600
-                `}
-              >
-                  {isExporting ? "Exporting..." : "엑셀"}
-              </button>
-
-
-
             </div>
+
+            {/* export button */}
+            <button
+              onClick={() => {
+                  exportToCSV('청산내역');
+              }}
+              disabled={isExporting}
+              className={`${isExporting ? "bg-gray-500" : "bg-green-500"} text-white p-2 rounded-lg
+                  hover:bg-green-600
+              `}
+            >
+                {isExporting ? "Exporting..." : "엑셀"}
+            </button>
+
 
           </div>
 
