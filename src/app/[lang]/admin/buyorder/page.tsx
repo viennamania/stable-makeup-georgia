@@ -1011,7 +1011,30 @@ getAllBuyOrders result totalAgentFeeAmount 0
 getAllBuyOrders result totalAgentFeeAmountKRW 0
 */
 
-  const [buyOrderStats, setBuyOrderStats] = useState({
+ const [buyOrderStats, setBuyOrderStats] = useState<{
+    totalCount: number;
+    totalKrwAmount: number;
+    totalUsdtAmount: number;
+    totalSettlementCount: number;
+    totalSettlementAmount: number;
+    totalSettlementAmountKRW: number;
+    totalFeeAmount: number;
+    totalFeeAmountKRW: number;
+    totalAgentFeeAmount: number;
+    totalAgentFeeAmountKRW: number;
+    totalByUserType: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
+    totalBySellerBankAccountNumber: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+    }>;
+  }>({
     totalCount: 0,
     totalKrwAmount: 0,
     totalUsdtAmount: 0,
@@ -1022,9 +1045,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     totalFeeAmountKRW: 0,
     totalAgentFeeAmount: 0,
     totalAgentFeeAmountKRW: 0,
+
+    totalByUserType: [],
+    totalBySellerBankAccountNumber: [],
   });
-
-
 
 
   //console.log('buyOrders', buyOrders);
@@ -1202,6 +1226,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
             })
@@ -1352,6 +1379,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                 totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                totalByUserType: data.result.totalByUserType,
+                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
             }
@@ -1446,6 +1476,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
 
@@ -1732,6 +1765,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                  totalByUserType: data.result.totalByUserType,
+                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
               }
@@ -1847,6 +1883,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalFeeAmountKRW: data.result.totalFeeAmountKRW,
                 totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+                totalByUserType: data.result.totalByUserType,
+                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
             }
@@ -2456,6 +2495,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalFeeAmountKRW: data.result.totalFeeAmountKRW,
               totalAgentFeeAmount: data.result.totalAgentFeeAmount,
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+              totalByUserType: data.result.totalByUserType,
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
         })
@@ -2583,6 +2625,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         totalFeeAmountKRW: data.result.totalFeeAmountKRW,
         totalAgentFeeAmount: data.result.totalAgentFeeAmount,
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+        totalByUserType: data.result.totalByUserType,
+        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
       });
 
 
@@ -4397,8 +4442,54 @@ const fetchBuyOrders = async () => {
           /ko/admin/withdraw-vault?walletAddress=0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3
           */}
 
+
+          {/* buyOrderStats.totalBySellerBankAccountNumber */}
+          <div className="w-full
+            grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4
+            items-start justify-start">
+
+            {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+              <div
+                key={index}
+                className="flex flex-col gap-2 items-center
+                border border-zinc-300 rounded-lg p-2">
+
+                {/* copy account number button */}
+                <button
+                  className="text-sm font-semibold underline text-blue-600"
+                  onClick={() => {
+                    const accountNumber = item._id || '기타은행';
+                    navigator.clipboard.writeText(accountNumber)
+                      .then(() => {
+                        toast.success(`통장번호 ${accountNumber} 복사됨`);
+                      })
+                      .catch((err) => {
+                        toast.error('복사 실패: ' + err);
+                      });
+                  }}
+                  title="통장번호 복사"
+                >
+                  {item._id || '기타은행'}
+                </button>
+
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <span className="text-sm font-semibold">
+                    {item.totalCount?.toLocaleString() || '0'}
+                  </span>
+                  <span className="text-sm font-semibold text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {item.totalKrwAmount?.toLocaleString() || '0'}
+                  </span>
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+
+
           {sellersBalance.length > 0 && (
-            <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
+            <div className="w-full flex flex-row items-center justify-end gap-4 overflow-x-auto
               mt-4
               ">
 
