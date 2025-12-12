@@ -3558,11 +3558,15 @@ export default function Index({ params }: any) {
           ">
 
             <div className="text-lg font-semibold mb-2 sm:mb-0">
-              통장별 청산통계
+              구매자 통장별<br />청산통계
             </div>
 
             {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
-              <div key={index} className="flex flex-col gap-2 items-center">
+              <div key={index} className="flex flex-col gap-2 items-center
+                border border-zinc-300 rounded-lg
+                bg-white/90
+                p-4
+              ">
 
                 {/* copy account number button */}
                 <button
@@ -3894,19 +3898,19 @@ export default function Index({ params }: any) {
                               height={20}
                               className="rounded-lg w-5 h-5"
                             />
-                            <span className="text-sm text-zinc-600 font-semibold">
-                              {item?.buyer?.bankInfo?.bankName}
-                            </span>
-                            <span className="text-sm text-zinc-600 font-semibold">
-                              {item?.buyer?.bankInfo?.accountNumber?.length > 8 ?
-                                item?.buyer?.bankInfo?.accountNumber.slice(0, 4) + '...' + item?.buyer?.bankInfo?.accountNumber.slice(-4)
-                                :
-                                item?.buyer?.bankInfo?.accountNumber
-                              }
-                            </span>
-                            <span className="text-sm text-zinc-600 font-semibold">
-                              {item?.buyer?.bankInfo?.accountHolder}
-                            </span>
+                            <div className="flex flex-col items-start justify-center">
+                              <span className="text-sm text-zinc-600 font-semibold">
+                                {item?.buyer?.bankInfo?.bankName}
+                              </span>
+                              <span className="text-sm text-zinc-600 font-semibold">
+                                {
+                                  item?.buyer?.bankInfo?.accountNumber
+                                }
+                              </span>
+                              <span className="text-sm text-zinc-600 font-semibold">
+                                {item?.buyer?.bankInfo?.accountHolder}
+                              </span>
+                            </div>
                           </div>
 
 
