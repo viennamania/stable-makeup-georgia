@@ -4445,7 +4445,7 @@ const fetchBuyOrders = async () => {
 
           {/* buyOrderStats.totalBySellerBankAccountNumber */}
           <div className="w-full
-            grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4
+            grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4
             items-start justify-start">
 
             {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
@@ -4489,9 +4489,7 @@ const fetchBuyOrders = async () => {
 
 
           {sellersBalance.length > 0 && (
-            <div className="w-full flex flex-row items-center justify-end gap-4 overflow-x-auto
-              mt-4
-              ">
+            <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-4 overflow-x-auto">
 
               {sellersBalance.map((seller, index) => (
                 <div key={index}
