@@ -3608,61 +3608,63 @@ export default function Index({ params }: any) {
                 className="w-6 h-6"
               />
               <span className="text-lg font-semibold mb-2 sm:mb-0">
-                구매자 통장별<br />청산통계
+                구매자<br />통장별<br />청산통계
               </span>
             </div>
 
-            {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
-              <div key={index} className="flex flex-col gap-2 items-center
-                border border-zinc-300 rounded-lg
-                bg-white/90
-                p-4
-              ">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+              {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
+                <div key={index} className="flex flex-col gap-2 items-center
+                  border border-zinc-300 rounded-lg
+                  bg-white/90
+                  p-4
+                ">
 
-                {/* copy account number button */}
-                <button
-                  className="text-sm font-semibold underline text-blue-600"
-                  onClick={() => {
-                    const accountNumber = item._id || '기타은행';
-                    navigator.clipboard.writeText(accountNumber)
-                      .then(() => {
-                        toast.success(`통장번호 ${accountNumber} 복사됨`);
-                      })
-                      .catch((err) => {
-                        toast.error('복사 실패: ' + err);
-                      });
-                  }}
-                  title="통장번호 복사"
-                >
-                  {item._id || '기타은행'}
-                </button>
+                  {/* copy account number button */}
+                  <button
+                    className="text-sm font-semibold underline text-blue-600"
+                    onClick={() => {
+                      const accountNumber = item._id || '기타은행';
+                      navigator.clipboard.writeText(accountNumber)
+                        .then(() => {
+                          toast.success(`통장번호 ${accountNumber} 복사됨`);
+                        })
+                        .catch((err) => {
+                          toast.error('복사 실패: ' + err);
+                        });
+                    }}
+                    title="통장번호 복사"
+                  >
+                    {item._id || '기타은행'}
+                  </button>
 
-                <div className="text-sm font-semibold">
-                  {item.totalCount?.toLocaleString() || '0'}
+                  <div className="text-sm font-semibold">
+                    {item.totalCount?.toLocaleString() || '0'}
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-sm font-semibold text-green-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalUsdtAmount
+                        ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
+                    </span>
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-sm font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalKrwAmount?.toLocaleString() || '0'}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-sm font-semibold text-green-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {item.totalUsdtAmount
-                      ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'}
-                  </span>
-                </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-sm font-semibold text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {item.totalKrwAmount?.toLocaleString() || '0'}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
           </div>
 
@@ -3683,62 +3685,63 @@ export default function Index({ params }: any) {
                 className="w-6 h-6"
               />
               <span className="text-lg font-semibold mb-2 sm:mb-0">
-                판매자 통장별<br />청산통계
+                판매자<br />통장별<br />청산통계
               </span>
             </div>
 
-            {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-              <div key={index} className="flex flex-col gap-2 items-center
-                border border-zinc-300 rounded-lg
-                bg-white/90
-                p-4
-              ">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+              {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                <div key={index} className="flex flex-col gap-2 items-center
+                  border border-zinc-300 rounded-lg
+                  bg-white/90
+                  p-4
+                ">
 
-                {/* copy account number button */}
-                <button
-                  className="text-sm font-semibold underline text-blue-600"
-                  onClick={() => {
-                    const accountNumber = item._id || '기타은행';
-                    navigator.clipboard.writeText(accountNumber)
-                      .then(() => {
-                        toast.success(`통장번호 ${accountNumber} 복사됨`);
-                      })
-                      .catch((err) => {
-                        toast.error('복사 실패: ' + err);
-                      });
-                  }}
-                  title="통장번호 복사"
-                >
-                  {item._id || '기타은행'}
-                </button>
+                  {/* copy account number button */}
+                  <button
+                    className="text-sm font-semibold underline text-blue-600"
+                    onClick={() => {
+                      const accountNumber = item._id || '기타은행';
+                      navigator.clipboard.writeText(accountNumber)
+                        .then(() => {
+                          toast.success(`통장번호 ${accountNumber} 복사됨`);
+                        })
+                        .catch((err) => {
+                          toast.error('복사 실패: ' + err);
+                        });
+                    }}
+                    title="통장번호 복사"
+                  >
+                    {item._id || '기타은행'}
+                  </button>
 
-                <div className="text-sm font-semibold">
-                  {item.totalCount?.toLocaleString() || '0'}
+                  <div className="text-sm font-semibold">
+                    {item.totalCount?.toLocaleString() || '0'}
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-sm font-semibold text-green-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalUsdtAmount
+                        ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
+                    </span>
+                  </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-sm font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {item.totalKrwAmount?.toLocaleString() || '0'}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-sm font-semibold text-green-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {item.totalUsdtAmount
-                      ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'}
-                  </span>
-                </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-sm font-semibold text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {item.totalKrwAmount?.toLocaleString() || '0'}
-                  </span>
-                </div>
-              </div>
-            ))}
-
+              ))}
+            </div>
           </div>
 
 

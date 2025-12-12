@@ -4231,7 +4231,7 @@ const fetchBuyOrders = async () => {
 
                 {/* buyOrderStats.totalBySellerBankAccountNumber */}
                 <div className="w-full
-                  flex flex-col sm:flex-row items-start justify-end gap-4">
+                  grid grid-cols-1 sm:grid-cols-5 gap-4">
 
                   {/* 판매자 통장번호별 통계 */}
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
@@ -4239,7 +4239,10 @@ const fetchBuyOrders = async () => {
                   </span>
 
                   {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                    <div key={index} className="flex flex-col gap-2 items-center">
+                    <div key={index} className="flex flex-col gap-2 items-center
+                      border border-zinc-300 rounded-lg p-4
+                      bg-zinc-50 shadow-md
+                      ">
 
                       {/* copy account number button */}
                       <button
