@@ -1862,7 +1862,7 @@ export default function Index({ params }: any) {
 
                       </div>
 
-
+                      {/*
                       <div className="flex flex-col items-center justify-end gap-2">
 
                         <div className="flex flex-row items-center justify-center gap-2">
@@ -1880,7 +1880,6 @@ export default function Index({ params }: any) {
 
                         <div className="flex flex-row items-center justify-center gap-2">
 
-                          {/* settlementWalletAddress */}
                           <div className="flex flex-row items-center justify-center gap-2">
                               <Image
                                   src="/icon-shield.png"
@@ -1924,6 +1923,7 @@ export default function Index({ params }: any) {
 
 
                       </div>
+                      */}
 
 
 
@@ -2943,17 +2943,27 @@ export default function Index({ params }: any) {
    
 
                 {sellersBalance?.length > 0 && (
-                  <div className="w-full flex flex-row items-center justify-start gap-4 overflow-x-auto
+                  <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-4 overflow-x-auto
                     mt-4
                     ">
 
+                    <span className="text-lg font-semibold text-zinc-700">
+                      판매자 지갑 잔고 현황
+                    </span>
+
                     {sellersBalance?.map((seller, index) => (
-                      <div key={index}
+                      <div
+                        key={index}
                         className="flex flex-row items-center justify-between gap-4
                         bg-white/80
                         p-4 rounded-lg shadow-md
                         backdrop-blur-md
                         ">
+                        {seller.walletAddress === store?.settlementWalletAddress ? (
+                          <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">
+                            기본지갑
+                          </div>
+                        ) : null}
                         <div className="flex flex-row items-center gap-4">
                           <Image
                             src="/icon-seller.png"
@@ -3006,8 +3016,8 @@ export default function Index({ params }: any) {
                           </button>
                         )}
                         
-
                       </div>
+                      
                     ))}
 
                   </div>
