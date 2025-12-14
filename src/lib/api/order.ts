@@ -3957,13 +3957,15 @@ export async function buyOrderConfirmPayment(data: any) {
   let result = null;
 
 
+  // update order status to paymentConfirmed where status is 'paymentRequested'
+
   try {
 
     if (autoConfirmPayment) {
 
       result = await collection.updateOne(
         
-        { _id: new ObjectId(data.orderId+'') },
+        { _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
 
 
         { $set: {
@@ -3987,7 +3989,7 @@ export async function buyOrderConfirmPayment(data: any) {
 
       result = await collection.updateOne(
         
-        { _id: new ObjectId(data.orderId+'') },
+        { _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
 
         { $set: {
           status: 'paymentConfirmed',
@@ -4011,10 +4013,11 @@ export async function buyOrderConfirmPayment(data: any) {
     return null;
   }
 
-  console.log('buyOrderConfirmPayment result: ' + JSON.stringify(result));
+  //console.log('buyOrderConfirmPayment result: ' + JSON.stringify(result));
 
+  // result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
 
-  if (result) {
+  if (result && result.modifiedCount > 0) {
 
 
 
