@@ -6193,6 +6193,7 @@ const fetchBuyOrders = async () => {
                                   </div>
                                 </div>
 
+                                {/*
                                 <div className="w-full flex flex-col gap-1 items-start justify-start">
                                   <div className="flex flex-row gap-1 items-center justify-start">
                                     <div className="w-2 h-2 rounded-full bg-[#409192]" />
@@ -6216,7 +6217,7 @@ const fetchBuyOrders = async () => {
                                     </span>
                                   </div>
                                 </div>
-
+                                */}
                               </div>
 
                               {/* chain logo */}
