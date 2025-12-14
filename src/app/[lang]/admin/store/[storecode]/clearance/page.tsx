@@ -2820,11 +2820,35 @@ export default function Index({ params }: any) {
 
          
 
+                  {/* 출금계좌 */}
+                  {/* align right */}
+                  {/* store withdrawal bank info */}
+                  <div className="w-full flex flex-row justify-end">
+                    {store && store?.withdrawalBankInfo && (
+                      <div className="flex flex-col items-end">
+                        <span className="text-sm text-zinc-500">
+                          출금계좌
+                        </span>
+                        <div className="flex flex-row items-center gap-2">
+                          <Image
+                            src="/icon-bank.png"
+                            alt="Bank"
+                            width={30}
+                            height={30}
+                            className="w-8 h-8"
+                          />
+                          <span className="text-lg font-semibold text-zinc-800">
+                            {store.withdrawalBankInfo.bankName} {store.withdrawalBankInfo.accountNumber} {store.withdrawalBankInfo.accountHolder}
+                          </span>
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
 
 
 
-
-                  <div className="mt-10 w-full flex flex-row items-center justify-between gap-4">
+                  <div className=" w-full flex flex-row items-center justify-between gap-4">
 
 
 
