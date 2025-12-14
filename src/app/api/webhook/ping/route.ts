@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 
-export async function POST(request: NextRequest) {
-
+export async function GET(request: NextRequest) {
 
   // Just respond with a success status for the ping webhook
   // find client ip address
