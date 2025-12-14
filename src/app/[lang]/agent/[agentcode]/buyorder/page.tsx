@@ -6193,6 +6193,26 @@ const fetchBuyOrders = async () => {
                                   </div>
                                 </div>
 
+                                {/* TXID: item.transactionHash */}
+                                <div className="w-full flex flex-col gap-1 items-start justify-start pt-1">
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <div className="w-2 h-2 rounded-full bg-[#409192]" />
+                                    <span className="text-sm text-zinc-500 font-normal">
+                                      거래내역 TXID
+                                    </span>
+                                  </div>
+                                  <div className="w-full flex flex-row gap-1 items-center justify-end">
+                                    <span
+                                      className="text-sm text-[#409192] font-semibold"
+                                      style={{
+                                        fontFamily: 'monospace',
+                                      }}
+                                    >
+                                      {item.transactionHash}
+                                    </span>
+                                  </div>
+                                </div>
+
                                 {/*
                                 <div className="w-full flex flex-col gap-1 items-start justify-start">
                                   <div className="flex flex-row gap-1 items-center justify-start">
