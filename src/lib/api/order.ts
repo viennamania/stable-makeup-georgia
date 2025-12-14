@@ -4061,9 +4061,15 @@ export async function buyOrderConfirmPayment(data: any) {
         "amount": "10000",
       }
       */
+
+      // returnUrl result log collection
+      const returnUrlLogCollection = client.db(dbName).collection('returnUrlLogs');
+
+
       if (order.storecode === 'qibgieiu') {
         try {
-          await fetch('https://wood-505.com/tools/arena/ChangeBalance2.php',
+          const returnUrl = 'https://wood-505.com/tools/arena/ChangeBalance2.php';
+          const response = await fetch(returnUrl,
             {
               method: 'POST',
               headers: {
@@ -4076,6 +4082,24 @@ export async function buyOrderConfirmPayment(data: any) {
               }),
             }
           );
+
+          const responseData = await response.text();
+
+
+          // log returnUrl call result
+          await returnUrlLogCollection.insertOne({
+            tradeId: order.tradeId,
+            returnUrl: returnUrl,
+            requestBody: {
+              indexkey: order.tradeId,
+              userid: order.nickname,
+              amount: order.krwAmount,
+            },
+            responseBody: responseData,
+            createdAt: new Date().toISOString(),
+          });
+
+
         } catch (error) {
           console.error('Error calling external API for storecode qibgieiu:', error);
         }
@@ -4101,11 +4125,23 @@ export async function buyOrderConfirmPayment(data: any) {
 
             console.log('Calling returnUrl API: ' + finalUrl);
 
-            await fetch(finalUrl,
+            const response = await fetch(finalUrl,
               {
                 method: 'GET',
               }
             );
+
+            const responseData = await response.text();
+
+            // log returnUrl call result
+            await returnUrlLogCollection.insertOne({
+              tradeId: order.tradeId,
+              returnUrl: finalUrl,
+              responseBody: responseData,
+              createdAt: new Date().toISOString(),
+            });
+
+
           } catch (error) {
             console.error('Error calling returnUrl API:', error);
           }
