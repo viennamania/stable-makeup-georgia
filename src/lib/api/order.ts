@@ -3965,7 +3965,8 @@ export async function buyOrderConfirmPayment(data: any) {
 
       result = await collection.updateOne(
         
-        { _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
+        //{ _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
+        { _id: new ObjectId(data.orderId+'')},
 
 
         { $set: {
@@ -3989,7 +3990,9 @@ export async function buyOrderConfirmPayment(data: any) {
 
       result = await collection.updateOne(
         
-        { _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
+        //{ _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
+        { _id: new ObjectId(data.orderId+'') },
+
 
         { $set: {
           status: 'paymentConfirmed',
