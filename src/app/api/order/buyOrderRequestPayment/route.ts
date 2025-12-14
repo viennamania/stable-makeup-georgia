@@ -75,23 +75,17 @@ export async function POST(request: NextRequest) {
   });
 
 
-  if (payactionKeys.payactionApiKey && payactionKeys.payactionShopId) {
+  if (payactionKeys?.payactionApiKey && payactionKeys?.payactionWebhookKey && payactionKeys?.payactionShopId) {
 
 
-    if (!payactionKeys) {
-      console.error("Payaction keys not found for storecode:", buyOrder.storecode);
-      return NextResponse.json({
-        error: "Payaction keys not found for storecode",
-        storecode: buyOrder.storecode,
-      }, { status: 400 });
-    }
+
     const payactionApiKey = payactionKeys.payactionApiKey;
     const payactionWebhookKey = payactionKeys.payactionWebhookKey;
     const payactionShopId = payactionKeys.payactionShopId;
 
-    //console.log("payactionApiKey", payactionApiKey);
-    //console.log("payactionWebhookKey", payactionWebhookKey);
-    //console.log("payactionShopId", payactionShopId);
+    console.log("payactionApiKey", payactionApiKey);
+    console.log("payactionWebhookKey", payactionWebhookKey);
+    console.log("payactionShopId", payactionShopId);
 
 
 
