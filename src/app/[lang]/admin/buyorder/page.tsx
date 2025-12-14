@@ -6976,7 +6976,7 @@ const fetchBuyOrders = async () => {
                                         style={{
                                           fontFamily: 'monospace',
                                         }}>
-                                        {item.transactionHash}
+                                        {item?.transactionHash && item?.transactionHash.substring(0, 6) + '...' + item?.transactionHash.substring(item?.transactionHash.length - 4)}
                                       </span>
                                     </div>
                                   </div>
