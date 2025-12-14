@@ -3954,10 +3954,9 @@ export async function buyOrderConfirmPayment(data: any) {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
 
+
   let result = null;
 
-
-  // update order status to paymentConfirmed where status is 'paymentRequested'
 
   try {
 
@@ -3965,7 +3964,6 @@ export async function buyOrderConfirmPayment(data: any) {
 
       result = await collection.updateOne(
         
-        //{ _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
         { _id: new ObjectId(data.orderId+'')},
 
 
@@ -3989,8 +3987,7 @@ export async function buyOrderConfirmPayment(data: any) {
     } else {
 
       result = await collection.updateOne(
-        
-        //{ _id: new ObjectId(data.orderId+''), status: 'paymentRequested' },
+
         { _id: new ObjectId(data.orderId+'') },
 
 
@@ -4419,6 +4416,29 @@ export async function buyOrderConfirmPayment(data: any) {
   
 }
 
+
+
+
+
+// buyOrderConfirmPaymentEnqueueTransaction
+export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
+  // orderId, queueId
+  if (!data.orderId || !data.queueId) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const result = await collection.updateOne(
+    { _id: new ObjectId(data.orderId+'')},
+    { $set: {
+      queueId: data.queueId,
+    } }
+  );
+  return {
+    success: result.modifiedCount === 1,
+  };
+}
 
 
 
