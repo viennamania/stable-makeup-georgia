@@ -5301,6 +5301,7 @@ const fetchBuyOrders = async () => {
                                   )}
                                 </span>
 
+                                {/*
                                 {
                                 
                                 (item.seller.walletAddress === address || isAdmin)
@@ -5365,6 +5366,7 @@ const fetchBuyOrders = async () => {
 
 
                                 )}
+                                */}
 
 
                               </div>
@@ -5555,6 +5557,8 @@ const fetchBuyOrders = async () => {
                         */}
                           
 
+
+                        {/*
                         {
                         (item.status === 'accepted' || item.status === 'paymentRequested')
                         //&& item.seller && item.seller.walletAddress === address
@@ -5623,9 +5627,6 @@ const fetchBuyOrders = async () => {
                               </button>
                             </div>
 
-
-                            {/* warning message */}
-                            {/* 취소사유가 없을 경우 판매자 평가에 영향을 미칠 수 있습니다. */}
                             <div className="w-full flex flex-row items-center justify-center gap-1">
                               <Image
                                 src="/icon-warning.png"
@@ -5639,11 +5640,10 @@ const fetchBuyOrders = async () => {
                               </span>
                             </div>
 
-
-
                           </div>
 
                         )}
+                        */}
                           
                           {/*
                           <div className="
