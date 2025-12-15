@@ -4016,7 +4016,7 @@ const fetchBuyOrders = async () => {
                 <div className="w-full
                   flex flex-col sm:flex-row items-start justify-start gap-4">
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                    구매자 등급별<br/>P2P 거래 통계
+                    구매자<br />등급별<br/>P2P 거래<br />통계
                   </span>
 
                   {/* userTypeChecked, userTypeAAAChecked, userTypeBBBChecked, userTypeCCCChecked, userTypeDDDChecked */}
@@ -4231,65 +4231,82 @@ const fetchBuyOrders = async () => {
 
                 {/* buyOrderStats.totalBySellerBankAccountNumber */}
                 <div className="w-full
-                  grid grid-cols-1 sm:grid-cols-5 gap-4">
+                  grid grid-cols-1 sm:grid-cols-4 gap-4">
 
                   {/* 판매자 통장번호별 통계 */}
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                    판매자 통장별<br/>P2P 거래 통계
+                    판매자<br />통장별<br/>P2P 거래<br />통계
                   </span>
 
                   {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                    <div key={index} className="flex flex-col gap-2 items-center
+                    <div key={index} className="flex flex-col gap-2 items-end justify-center
                       border border-zinc-300 rounded-lg p-4
                       bg-zinc-50 shadow-md
                       ">
 
-                      {/* copy account number button */}
-                      <button
-                        className="text-sm font-semibold underline text-blue-600"
-                        onClick={() => {
-                          const accountNumber = item._id || '기타은행';
-                          navigator.clipboard.writeText(accountNumber)
-                            .then(() => {
-                              toast.success(`통장번호 ${accountNumber} 복사됨`);
-                            })
-                            .catch((err) => {
-                              toast.error('복사 실패: ' + err);
-                            });
-                        }}
-                        title="통장번호 복사"
-                      >
-                        {item._id || '기타은행'}
-                      </button>
-
-                      <div className="text-sm font-semibold">
-                        {item.totalCount?.toLocaleString() || '0'}
-                      </div>
                       <div className="flex flex-row items-center justify-center gap-1">
                         <Image
-                          src="/icon-tether.png"
-                          alt="Tether"
+                          src="/icon-bank.png"
+                          alt="Bank"
                           width={20}
                           height={20}
                           className="w-5 h-5"
                         />
-                        <span className="text-sm font-semibold text-green-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {item.totalUsdtAmount
-                            ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                            : '0.000'}
-                        </span>
+                        {/* copy account number button */}
+                        <button
+                          className="text-sm font-semibold underline text-blue-600"
+                          onClick={() => {
+                            const accountNumber = item._id || '기타은행';
+                            navigator.clipboard.writeText(accountNumber)
+                              .then(() => {
+                                toast.success(`통장번호 ${accountNumber} 복사됨`);
+                              })
+                              .catch((err) => {
+                                toast.error('복사 실패: ' + err);
+                              });
+                          }}
+                          title="통장번호 복사"
+                        >
+                          {item._id || '기타은행'}
+                        </button>
                       </div>
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <span className="text-sm font-semibold text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {item.totalKrwAmount?.toLocaleString() || '0'}
-                        </span>
+
+                      <div className="flex flex-row items-center justify-center gap-2">
+
+                        <div className="text-sm font-semibold">
+                          {item.totalCount?.toLocaleString() || '0'}
+                        </div>
+
+                        <div className="flex flex-col gap-1 items-end justify-center">
+                          <div className="flex flex-row items-center justify-center gap-1">
+                            <Image
+                              src="/icon-tether.png"
+                              alt="Tether"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            <span className="text-sm font-semibold text-green-600"
+                              style={{ fontFamily: 'monospace' }}>
+                              {item.totalUsdtAmount
+                                ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                : '0.000'}
+                            </span>
+                          </div>
+                          <div className="flex flex-row items-center justify-center gap-1">
+                            <span className="text-sm font-semibold text-yellow-600"
+                              style={{ fontFamily: 'monospace' }}>
+                              {item.totalKrwAmount?.toLocaleString() || '0'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
+
                     </div>
                   ))}
 
                 </div>
+
               </div>
 
 
