@@ -2617,9 +2617,13 @@ export default function SettingsPage({ params }: any) {
                                     <option value="purple-100">연한 보라색</option>
                                     <option value="gray-100">연한 회색</option>
 
-                       
-
-
+                                    {/* 진한 색상 */}
+                                    <option value="[#1e3a8a]">진한 파란색</option>
+                                    <option value="[#991b1b]">진한 빨간색</option>
+                                    <option value="[#14532d]">진한 초록색</option>
+                                    <option value="[#854d0e]">진한 노란색</option>
+                                    <option value="[#6b21a8]">진한 보라색</option>
+                                    <option value="[#374151]">진한 회색</option>
 
                                 </select>
 

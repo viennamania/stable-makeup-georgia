@@ -167,10 +167,15 @@ export default function RootLayout({
             {/* storeLogo and storeName and storecode */}
             {store && (
               <button
-                className="
+                className={`
                 w-full
                 flex flex-col items-center justify-center
-                mb-2 px-4 py-2 bg-white bg-opacity-90 text-black rounded hover:bg-opacity-75"
+                mb-2 px-4 py-2 bg-white bg-opacity-90 text-black rounded hover:bg-opacity-75
+                ${store?.backgroundColor ?
+                  "bg-" + store.backgroundColor + " " :
+                  "bg-black/10"
+                }`}
+
                 onClick={() => {
                   router.push(`/${params.lang}/${store.storecode}/center`);
                 }}
