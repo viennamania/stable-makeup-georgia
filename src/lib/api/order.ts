@@ -3969,11 +3969,12 @@ export async function buyOrderConfirmPayment(data: any) {
 
         { $set: {
           status: 'paymentConfirmed',
+          paymentConfirmedAt: new Date().toISOString(),
+
           paymentAmount: paymentAmount,
           queueId: data.queueId,
           transactionHash: data.transactionHash,
-          paymentConfirmedAt: new Date().toISOString(),
-
+          
           autoConfirmPayment: autoConfirmPayment,
 
           escrowTransactionHash: data.escrowTransactionHash,
@@ -3993,10 +3994,11 @@ export async function buyOrderConfirmPayment(data: any) {
 
         { $set: {
           status: 'paymentConfirmed',
+          paymentConfirmedAt: new Date().toISOString(),
+
           paymentAmount: paymentAmount,
           queueId: data.queueId,
           transactionHash: data.transactionHash,
-          paymentConfirmedAt: new Date().toISOString(),
 
           escrowTransactionHash: data.escrowTransactionHash,
           escrowTransactionConfirmedAt: new Date().toISOString(),
@@ -4433,6 +4435,8 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
     { _id: new ObjectId(data.orderId+'')},
     { $set: {
       queueId: data.queueId,
+      status: 'paymentConfirmed',
+      paymentConfirmedAt: new Date().toISOString(),
     } }
   );
   return {
@@ -4456,6 +4460,8 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
     { queueId: data.queueId },
     { $set: {
       transactionHash: data.transactionHash,
+      status: 'paymentConfirmed',
+      paymentConfirmedAt: new Date().toISOString(),
     } }
   );
   
