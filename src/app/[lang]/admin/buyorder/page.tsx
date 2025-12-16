@@ -1059,7 +1059,62 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
   const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
   const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount);
-  
+
+  // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
+
+
+
+  function animateValue(
+    targetValue: number,
+    duration: number,
+    callback: (value: number) => void
+  ) {
+    const startValue = 0;
+    const startTime = performance.now();
+
+    function animate(currentTime: number) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const currentValue = startValue + (targetValue - startValue) * progress;
+      callback(Math.round(currentValue));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+
+  const [displayValueArray, setDisplayValueArray] = useState<number[]>([]);
+
+  // when totalKrwAmount changes, animate each value
+  useEffect(() => {
+    const newDisplayValueArray: number[] = [];
+    buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
+      // when item.totalKrwAmount changes, animate
+      if (displayValueArray[index] !== item.totalKrwAmount) {
+        animateValue(item.totalKrwAmount, 1000, (value) => {
+          setDisplayValueArray((prevValues) => {
+            const updatedValues = [...prevValues];
+            updatedValues[index] = value;
+            return updatedValues;
+          });
+        });
+      } else {
+        newDisplayValueArray.push(item.totalKrwAmount);
+      }
+    });
+    setDisplayValueArray(newDisplayValueArray);
+  }, [buyOrderStats.totalBySellerBankAccountNumber]);
+
+
+
+
+
+
 
 
 
@@ -4461,13 +4516,12 @@ const fetchBuyOrders = async () => {
             grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4
             items-start justify-start">
 
+            
             {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
               <div
                 key={index}
                 className="flex flex-col gap-2 items-center
                 border border-zinc-300 rounded-lg p-2">
-
-                {/* copy account number button */}
                 <button
                   className="text-sm font-semibold underline text-blue-600"
                   onClick={() => {
@@ -4491,12 +4545,22 @@ const fetchBuyOrders = async () => {
                   </span>
                   <span className="text-sm font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
-                    {item.totalKrwAmount?.toLocaleString() || '0'}
+                    {
+                      //item.totalKrwAmount?.toLocaleString() || '0'
+
+                      (item.totalKrwAmount || 0).toLocaleString()
+
+                      //displayValueArray[index]?.toLocaleString() || '0'
+
+                      
+                    }
                   </span>
                 </div>
 
               </div>
             ))}
+
+
 
           </div>
 
