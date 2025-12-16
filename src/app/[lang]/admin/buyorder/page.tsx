@@ -101,6 +101,9 @@ import {
 } from "@/app/config/contractAddresses";
 
 
+import { useAnimatedNumber } from "@/components/useAnimatedNumber";
+
+
 interface BuyOrder {
   _id: string;
   createdAt: string;
@@ -1053,6 +1056,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
   //console.log('buyOrders', buyOrders);
 
+  const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
+  const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
+  const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount);
   
 
 
@@ -1230,6 +1236,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalByUserType: data.result.totalByUserType,
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
+
+                
 
             })
 
@@ -3477,7 +3485,8 @@ const fetchBuyOrders = async () => {
               />
               <p className="text-lg text-green-500 font-semibold">
                 {
-                buyOrderStats.totalCount
+                  //buyOrderStats.totalCount
+                  animatedTotalCount
                 }
               </p>
             </div>
@@ -4054,53 +4063,57 @@ const fetchBuyOrders = async () => {
             ">
 
             <div className="xl:w-1/3 w-full
-              flex flex-col sm:flex-row items-start justify-start gap-4">
+              flex flex-col sm:flex-row items-between justify-between gap-4">
 
-              <Image
-                src="/icon-trade.png"
-                alt="Trade"
-                width={50}
-                height={50}
-                className="w-16 h-16 rounded-lg object-cover"
-              />                
+              <div className="flex flex-row items-center justify-center gap-2">
+                <Image
+                  src="/icon-trade.png"
+                  alt="Trade"
+                  width={50}
+                  height={50}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />                
 
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">P2P 거래수(건)</div>
-                <div className="text-4xl font-semibold text-zinc-500">
-                  {buyOrderStats.totalCount?.toLocaleString()}
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">P2P 거래수(건)</div>
+                  <div className="text-4xl font-semibold text-zinc-500">
+                    {
+                    //buyOrderStats.totalCount?.toLocaleString()
+                    animatedTotalCount.toLocaleString()
+                    }
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-row items-center justify-center gap-2">
+              <div className="flex flex-col items-end justify-center gap-2">
 
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">P2P 거래량(USDT)</div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <Image
-                      src="/icon-tether.png"
-                      alt="Tether"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    {/* RGB: 64, 145, 146 */}
-                    <span className="text-xl font-semibold text-[#409192]"
-                      style={{ fontFamily: 'monospace' }}>
-                      {buyOrderStats.totalUsdtAmount
-                        ? buyOrderStats.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.000'}
-                    </span>
-                  </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <Image
+                    src="/icon-tether.png"
+                    alt="Tether"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />
+                  {/* RGB: 64, 145, 146 */}
+                  <span className="text-4xl font-semibold text-[#409192]"
+                    style={{ fontFamily: 'monospace' }}>
+                    {
+                    animatedTotalUsdtAmount
+                      ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                      : '0.000'
+                    }
+                  </span>
                 </div>
 
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">P2P 거래금액(원)</div>
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <span className="text-xl font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {buyOrderStats.totalKrwAmount?.toLocaleString()}
-                    </span>
-                  </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <span className="text-4xl font-semibold text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {
+                    //buyOrderStats.totalKrwAmount?.toLocaleString()
+                    animatedTotalKrwAmount.toLocaleString()
+                    }
+                  </span>
                 </div>
 
               </div>
