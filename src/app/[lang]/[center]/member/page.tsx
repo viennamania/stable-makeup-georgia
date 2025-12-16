@@ -3212,7 +3212,9 @@ export default function Index({ params }: any) {
                         </td>
 
                         <td className="p-2">
-                          <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
+                          <div className="
+                            w-32
+                            flex flex-col sm:flex-row items-start justify-center gap-2">
                             <input
                               type="text"
                               value={depositAmountKrw[index]}
