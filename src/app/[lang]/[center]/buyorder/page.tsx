@@ -875,6 +875,10 @@ export default function Index({ params }: any) {
   const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
   const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount);
 
+    const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
+    const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount);
+    const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
+
 
 
   /* agreement for trade */
@@ -4762,50 +4766,49 @@ const fetchBuyOrders = async () => {
 
               <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
 
-                <Image
-                  src="/icon-payment.png"
-                  alt="Payment"
-                  width={50}
-                  height={50}
-                  className="w-16 h-16 rounded-lg object-cover"
-                />                
+                <div className="flex flex-row items-center justify-center gap-2">
+                  <Image
+                    src="/icon-payment.png"
+                    alt="Payment"
+                    width={50}
+                    height={50}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />                
 
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">가맹점 결제수(건)</div>
-                    <span className="text-4xl font-semibold text-zinc-500">
-                      {buyOrderStats.totalSettlementCount?.toLocaleString()}
-                    </span>
+                  <div className="flex flex-col gap-2 items-center">
+                    <div className="text-sm">가맹점 결제수(건)</div>
+                      <span className="text-4xl font-semibold text-zinc-500">
+                        {
+                          animatedTotalSettlementCount.toLocaleString()
+                        }
+                      </span>
+                  </div>
                 </div>
 
-                <div className="flex flex-row items-center justify-center gap-2">
+                <div className="flex flex-col items-end justify-center gap-2">
 
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">가맹점 결제량(USDT)</div>
-                    <div className="flex flex-row items-center justify-center gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}>
-                        {buyOrderStats.totalSettlementAmount
-                          ? buyOrderStats.totalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.000'}
-                      </span>
-                    </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <Image
+                      src="/icon-tether.png"
+                      alt="Tether"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                    <span className="text-4xl font-semibold text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}>
+                      {
+                        animatedTotalSettlementAmount
+                        ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
+                    </span>
                   </div>
 
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">가맹점 결제금액(원)</div>
-                    <div className="flex flex-row items-center justify-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {buyOrderStats.totalSettlementAmountKRW?.toLocaleString()}
-                      </span>
-                    </div>
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-4xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {animatedTotalSettlementAmountKRW.toLocaleString()}
+                    </span>
                   </div>
 
                 </div>
