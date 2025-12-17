@@ -871,12 +871,12 @@ export default function Index({ params }: any) {
     });
 
 
-  const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
-  const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
-  const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount);
+    const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
+    const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount, { decimalPlaces: 3 });
+    const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
 
     const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
-    const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount);
+    const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
     const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
 
 

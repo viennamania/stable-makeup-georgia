@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 interface Options {
   duration?: number; // ms
+  decimalPlaces?: number; // 소수점 자릿수
 }
 
 export function useAnimatedNumber(
   value: number,
-  { duration = 1000 }: Options = {}
+  { duration = 1000, decimalPlaces = 0 }: Options = {}
 ) {
   const [displayValue, setDisplayValue] = useState(value);
   const startValue = useRef(value);
@@ -24,7 +25,11 @@ export function useAnimatedNumber(
         startValue.current +
         (value - startValue.current) * progress;
 
-      setDisplayValue(Math.round(next));
+      setDisplayValue(
+        decimalPlaces === 0 
+          ? Math.round(next) 
+          : Math.round(next * Math.pow(10, decimalPlaces)) / Math.pow(10, decimalPlaces)
+      );
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -32,7 +37,7 @@ export function useAnimatedNumber(
     };
 
     requestAnimationFrame(animate);
-  }, [value, duration]);
+  }, [value, duration, decimalPlaces]);
 
   return displayValue;
 }

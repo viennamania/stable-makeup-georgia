@@ -1057,11 +1057,11 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   //console.log('buyOrders', buyOrders);
 
   const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
+  const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount, { decimalPlaces: 3 });
   const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
-  const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount);
 
   const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
-  const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount);
+  const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
   const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
 
   // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
