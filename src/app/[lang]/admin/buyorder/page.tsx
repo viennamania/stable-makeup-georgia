@@ -1095,20 +1095,29 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [displayValueArray, setDisplayValueArray] = useState<number[]>([]);
 
   // when totalKrwAmount changes, animate each value
+  // for each buyOrderStats.totalBySellerBankAccountNumber item
+  // check if displayValueArray[index] !== item.totalKrwAmount
+  // if true, animate
+
   useEffect(() => {
+
     const newDisplayValueArray: number[] = [];
+
     buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
-      // when item.totalKrwAmount changes, animate
-      if (displayValueArray[index] !== item.totalKrwAmount) {
-        animateValue(item.totalKrwAmount, 1000, (value) => {
+      const targetValue = item.totalKrwAmount;
+      const currentValue = displayValueArray[index] || 0;
+      if (currentValue !== targetValue) {
+        
+        animateValue(targetValue, 1000, (value) => {
           setDisplayValueArray((prevValues) => {
             const updatedValues = [...prevValues];
             updatedValues[index] = value;
             return updatedValues;
           });
         });
+
       } else {
-        newDisplayValueArray.push(item.totalKrwAmount);
+        newDisplayValueArray.push(currentValue);
       }
     });
     setDisplayValueArray(newDisplayValueArray);
@@ -4523,35 +4532,49 @@ const fetchBuyOrders = async () => {
                 key={index}
                 className="flex flex-col gap-2 items-center
                 border border-zinc-300 rounded-lg p-2">
-                <button
-                  className="text-sm font-semibold underline text-blue-600"
-                  onClick={() => {
-                    const accountNumber = item._id || '기타은행';
-                    navigator.clipboard.writeText(accountNumber)
-                      .then(() => {
-                        toast.success(`통장번호 ${accountNumber} 복사됨`);
-                      })
-                      .catch((err) => {
-                        toast.error('복사 실패: ' + err);
-                      });
-                  }}
-                  title="통장번호 복사"
-                >
-                  {item._id || '기타은행'}
-                </button>
+
+                <div className="flex flex-row items-start justify-start gap-1">
+                  <Image
+                    src="/icon-bank.png"
+                    alt="Bank"
+                    width={20}
+                    height={20}
+                    className="w-5 h-5"
+                  />              
+                  <button
+                    className="text-sm font-semibold underline text-blue-600"
+                    onClick={() => {
+                      const accountNumber = item._id || '기타은행';
+                      navigator.clipboard.writeText(accountNumber)
+                        .then(() => {
+                          toast.success(`통장번호 ${accountNumber} 복사됨`);
+                        })
+                        .catch((err) => {
+                          toast.error('복사 실패: ' + err);
+                        });
+                    }}
+                    title="통장번호 복사"
+                  >
+                    {item._id || '기타은행'}
+                  </button>
+                </div>
 
                 <div className="flex flex-row items-center justify-center gap-1">
                   <span className="text-sm font-semibold">
                     {item.totalCount?.toLocaleString() || '0'}
                   </span>
-                  <span className="text-sm font-semibold text-yellow-600"
+                  <span className="text-lg font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
                     {
                       //item.totalKrwAmount?.toLocaleString() || '0'
 
                       (item.totalKrwAmount || 0).toLocaleString()
 
-                      //displayValueArray[index]?.toLocaleString() || '0'
+                     /// displayValueArray[index]?.toLocaleString() || '0'
+
+                      //item.totalKrwAmount !== displayValueArray[index]
+                      //  ? displayValueArray[index]?.toLocaleString() || '0'
+                      //  : (item.totalKrwAmount || 0).toLocaleString()
 
                       
                     }
