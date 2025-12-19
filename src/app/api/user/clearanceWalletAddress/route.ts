@@ -43,7 +43,7 @@ const {
 } = require("thirdweb");
  */
 
-import { getContract, sendTransaction } from "thirdweb";
+import { getContract, sendAndConfirmTransaction, sendTransaction } from "thirdweb";
 
 
 
@@ -185,6 +185,7 @@ export async function POST(request: NextRequest) {
 
 
 
+    console.log("walletAddress", walletAddress);
 
 
 
@@ -262,7 +263,6 @@ export async function POST(request: NextRequest) {
     const transactionSendToStore = transfer({
         contract: getContract({
             client: thirdwebClient,
-            //chain: arbitrum,
             chain: chain === 'ethereum' ? ethereum :
                    chain === 'polygon' ? polygon :
                    chain === 'arbitrum' ? arbitrum :
@@ -278,12 +278,21 @@ export async function POST(request: NextRequest) {
         amount: clearanceUSDTBalance,
     });
 
+    /*
     const result = await sendTransaction({
         account: account,
         transaction: transactionSendToStore,
     });
+    */
+    // sendAndConfirmTransaction
+    const result = await sendAndConfirmTransaction({
+        account: account,
+        transaction: transactionSendToStore,
+    });
 
-    console.log("result", result);
+
+
+    ////console.log("result", result);
 
     if (!result) {
         console.log("transaction failed");
