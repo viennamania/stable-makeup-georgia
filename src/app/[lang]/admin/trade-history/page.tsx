@@ -873,6 +873,9 @@ export default function Index({ params }: any) {
   const [userTypeD, setUserTypeD] = useState(true);
  
 
+  const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(false);
+  const [searchOrderStatusCompleted, setSearchOrderStatusCompleted] = useState(true);
+  
 
   const [searchMyOrders, setSearchMyOrders] = useState(false);
 
@@ -1082,7 +1085,11 @@ export default function Index({ params }: any) {
                     walletAddress: address,
                     searchMyOrders: searchMyOrders,
 
-                    searchOrderStatusCompleted: true,
+                    //searchOrderStatusCompleted: true,
+                    searchOrderStatusCancelled: searchOrderStatusCancelled,
+                    searchOrderStatusCompleted: searchOrderStatusCompleted,
+
+
 
                     searchBuyer: searchBuyer,
                     searchDepositName: searchDepositName,
@@ -1235,7 +1242,9 @@ export default function Index({ params }: any) {
               walletAddress: address,
               searchMyOrders: searchMyOrders,
 
-              searchOrderStatusCompleted: true,
+              //searchOrderStatusCompleted: true,
+              searchOrderStatusCancelled: searchOrderStatusCancelled,
+              searchOrderStatusCompleted: searchOrderStatusCompleted,              
 
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
@@ -1518,7 +1527,9 @@ export default function Index({ params }: any) {
                   walletAddress: address,
                   searchMyOrders: searchMyOrders,
 
-                  searchOrderStatusCompleted: true,
+                  //searchOrderStatusCompleted: true,
+                  searchOrderStatusCancelled: searchOrderStatusCancelled,
+                  searchOrderStatusCompleted: searchOrderStatusCompleted,
 
                   searchBuyer: searchBuyer,
                   searchDepositName: searchDepositName,
@@ -1748,7 +1759,9 @@ export default function Index({ params }: any) {
               walletAddress: address,
               searchMyOrders: searchMyOrders,
 
-              searchOrderStatusCompleted: true,
+              //searchOrderStatusCompleted: true,
+              searchOrderStatusCancelled: searchOrderStatusCancelled,
+              searchOrderStatusCompleted: searchOrderStatusCompleted,
 
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
@@ -1931,7 +1944,9 @@ export default function Index({ params }: any) {
               walletAddress: address,
               searchMyOrders: searchMyOrders,
 
-              searchOrderStatusCompleted: true,
+              //searchOrderStatusCompleted: true,
+              searchOrderStatusCancelled: searchOrderStatusCancelled,
+              searchOrderStatusCompleted: searchOrderStatusCompleted,
 
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
@@ -2112,7 +2127,9 @@ export default function Index({ params }: any) {
               walletAddress: address,
               searchMyOrders: searchMyOrders,
 
-              searchOrderStatusCompleted: true,
+              //searchOrderStatusCompleted: true,
+              searchOrderStatusCancelled: searchOrderStatusCancelled,
+              searchOrderStatusCompleted: searchOrderStatusCompleted,
 
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
@@ -2250,6 +2267,9 @@ export default function Index({ params }: any) {
     searchFromDate,
     searchToDate,
 
+    searchOrderStatusCancelled,
+    searchOrderStatusCompleted,
+
     manualConfirmPayment,
 ]);
 
@@ -2278,7 +2298,9 @@ const fetchBuyOrders = async () => {
         walletAddress: address,
         searchMyOrders: searchMyOrders,
 
-        searchOrderStatusCompleted: true,
+        //searchOrderStatusCompleted: true,
+        searchOrderStatusCancelled: searchOrderStatusCancelled,
+        searchOrderStatusCompleted: searchOrderStatusCompleted,
 
         searchBuyer: searchBuyer,
         searchDepositName: searchDepositName,
@@ -2612,7 +2634,9 @@ const fetchBuyOrders = async () => {
             walletAddress: address,
             searchMyOrders: searchMyOrders,
 
-            searchOrderStatusCompleted: true,
+            //searchOrderStatusCompleted: true,
+            searchOrderStatusCancelled: searchOrderStatusCancelled,
+            searchOrderStatusCompleted: searchOrderStatusCompleted,
 
             searchBuyer: searchBuyer,
             searchDepositName: searchDepositName,
@@ -3565,6 +3589,44 @@ const fetchBuyOrders = async () => {
                 수동입금만 보기
               </label>
             </div>
+
+
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              {/* checkbox for searchOrderStatus is 'cancelled' */}
+              {/* 거래취소 */}
+              {/* 거래완료 */}
+              {/* only one checkbox can be checked */}
+              <div className="flex flex-row items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={searchOrderStatusCancelled}
+                  onChange={(e) => {
+                    setSearchOrderStatusCancelled(e.target.checked);
+                    setPageValue(1);
+                    //fetchBuyOrders();
+                  }}
+                  className="w-5 h-5"
+                />
+                <label className="text-sm text-zinc-500">거래취소</label>
+              </div>
+              <div className="flex flex-row items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={searchOrderStatusCompleted}
+                  onChange={(e) => {
+                    setSearchOrderStatusCompleted(e.target.checked);
+                    setPageValue(1);
+                    
+                    //fetchBuyOrders();
+                  }}
+                  className="w-5 h-5"
+                />
+                <label className="text-sm text-zinc-500">거래완료</label>
+              </div>
+              
+            </div>
+
+
 
             {/* userTypeEmpty, userTypeA, userTypeB, userTypeC, userTypeD, userTypeE checkboxes */}
             {/*
