@@ -1759,7 +1759,15 @@ export async function insertBuyOrder(data: any) {
 export async function insertBuyOrderForClearance(data: any) {
 
 
-  if (!data.storecode || !data.walletAddress || !data.usdtAmount || !data.krwAmount || !data.rate) {
+  if (!data.storecode
+    || !data.walletAddress
+    
+    //|| !data.sellerBankInfo
+
+    || !data.usdtAmount
+    || !data.krwAmount
+    || !data.rate
+  ) {
     
     console.log('insertBuyOrderForClearance data is null: ' + JSON.stringify(data));
     
@@ -1768,6 +1776,10 @@ export async function insertBuyOrderForClearance(data: any) {
 
 
   const nickname = data.nickname || '';
+
+
+  let sellerBankInfo = data.sellerBankInfo || null;
+
 
 
   const client = await clientPromise;
@@ -1792,6 +1804,7 @@ export async function insertBuyOrderForClearance(data: any) {
         settlementFeeWalletAddress: 1,
         settlementFeePercent: 1,
         bankInfo: 1,
+        withdrawalBankInfo: 1,
         agentFeePercent: 1,
 
         totalSettlementAmount: 1,
@@ -1803,6 +1816,18 @@ export async function insertBuyOrderForClearance(data: any) {
   if (!store) {
 
     console.log('insertBuyOrderForClearance storecode is not valid: ' + data.storecode);
+    return null;
+  }
+
+
+
+  if (!sellerBankInfo) {
+    // use store withdrawalBankInfo
+    sellerBankInfo = store.withdrawalBankInfo || null;
+  }
+
+  if (!sellerBankInfo) {
+    console.log('insertBuyOrderForClearance sellerBankInfo is null');
     return null;
   }
 
@@ -1868,7 +1893,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
   const collection = client.db(dbName).collection('buyorders');
 
- 
+  /*
   const result = await collection.insertOne(
 
     {
@@ -1901,6 +1926,76 @@ export async function insertBuyOrderForClearance(data: any) {
       queueId: null,
     }
   );
+  */
+
+  const sellerWalletAddress = store?.privateSellerWalletAddress || store?.settlementWalletAddress || store?.adminWalletAddress;
+
+  // get seller info from user collection by sellerWalletAddress
+  const sellerUser = await userCollection.findOne<OrderProps>(
+    {
+      storecode: data.storecode,
+      walletAddress: sellerWalletAddress,
+    },
+  );
+  const sellerNickname = sellerUser?.nickname || '';
+  const sellerAvatar = sellerUser?.avatar || '';
+  const sellerMobile = sellerUser?.mobile || '';
+  const sellerMemo = ""
+
+
+
+  const result = await collection.insertOne(
+
+    {
+      chain: data.chain,
+      lang: data.lang,
+
+      agentcode: agentcode,
+      agent: agent,
+      storecode: data.storecode,
+      store: store,
+      walletAddress: data.walletAddress,
+      nickname: nickname,
+      mobile: mobile,
+      avatar: avatar,
+      
+      //seller: seller,
+
+      usdtAmount: data.usdtAmount,
+      krwAmount: data.krwAmount,
+      rate: data.rate,
+      createdAt: new Date().toISOString(),
+      
+      status: 'paymentRequested',
+      acceptedAt: new Date().toISOString(),
+      paymentRequestedAt: new Date().toISOString(),
+
+      privateSale: data.privateSale,
+      
+      buyer: data.buyer,
+
+
+      seller: {
+        walletAddress: sellerWalletAddress,
+
+        nickname: sellerNickname,
+        avatar: sellerAvatar,
+        mobile: sellerMobile,
+
+        memo: sellerMemo,
+        bankInfo: sellerBankInfo,
+
+      },
+      sellerMemo: sellerMemo,
+
+
+      tradeId: tradeId,
+
+      transactionHash: '0x',
+      queueId: null,
+    }
+  );
+
 
   
   
@@ -1911,7 +2006,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
 
     // update user collection buyOrderStatus to "ordered"
-
+    /*
     await userCollection.updateOne(
       {
         walletAddress: data.walletAddress,
@@ -1919,12 +2014,25 @@ export async function insertBuyOrderForClearance(data: any) {
       },
       { $set: { buyOrderStatus: 'ordered' } }
     );
+    */
+   // update user collection buyOrderStatus to "accepted"
+    await userCollection.updateOne(
+      {
+        walletAddress: data.walletAddress,
+        storecode: data.storecode,
+      },
+      { $set: { buyOrderStatus: 'paymentRequested' } }
+    );
 
 
 
     const updated = await collection.findOne<OrderProps>(
       { _id: result.insertedId }
     );
+
+    ///console.log('insertBuyOrderForClearance updated: ' + JSON.stringify(updated));
+
+
 
     return {
 

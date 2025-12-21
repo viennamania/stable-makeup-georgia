@@ -187,6 +187,9 @@ export async function getStoreByStorecode(
         bankInfoEEE: 1,
 
         withdrawalBankInfo: 1,
+        withdrawalBankInfoAAA: 1,
+        withdrawalBankInfoBBB: 1,
+        withdrawalBankInfoCCC: 1,
         
         totalWithdrawalCount: 1,
         totalWithdrawalAmount: 1,
@@ -759,6 +762,95 @@ export async function updateStoreWithdrawalBankInfo(
     return false;
   }
 }
+
+// updateStoreWithdrawalBankInfoAAA
+export async function updateStoreWithdrawalBankInfoAAA(
+  {
+    walletAddress,
+    storecode,
+    withdrawalBankName,
+    withdrawalAccountNumber,
+    withdrawalAccountHolder,
+    withdrawalBankCode,
+  }: {
+    walletAddress: string;
+    storecode: string;
+    withdrawalBankName: string;
+    withdrawalAccountNumber: string;
+    withdrawalAccountHolder: string;
+    withdrawalBankCode: string;
+  }
+): Promise<boolean> {
+
+
+  //console.log('updateStoreWithdrawalBankInfoAAA', storecode, withdrawalBankName, withdrawalAccountNumber, withdrawalAccountHolder, withdrawalBankCode);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const withdrawalBankInfoAAA = {
+    bankName: withdrawalBankName,
+    accountNumber: withdrawalAccountNumber,
+    accountHolder: withdrawalAccountHolder,
+    accountBankCode: withdrawalBankCode,
+    createdAt: new Date().toISOString(),
+  };
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { withdrawalBankInfoAAA: withdrawalBankInfoAAA } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// updateStoreWithdrawalBankInfoBBB
+export async function updateStoreWithdrawalBankInfoBBB(
+  {
+    walletAddress,
+    storecode,
+    withdrawalBankName,
+    withdrawalAccountNumber,
+    withdrawalAccountHolder,
+    withdrawalBankCode,
+  }: {
+    walletAddress: string;
+    storecode: string;
+    withdrawalBankName: string;
+    withdrawalAccountNumber: string;
+    withdrawalAccountHolder: string;
+    withdrawalBankCode: string;
+  }
+): Promise<boolean> {
+  //console.log('updateStoreWithdrawalBankInfoBBB', storecode, withdrawalBankName, withdrawalAccountNumber, withdrawalAccountHolder, withdrawalBankCode);
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+  const withdrawalBankInfoBBB = {
+    bankName: withdrawalBankName,
+    accountNumber: withdrawalAccountNumber,
+    accountHolder: withdrawalAccountHolder,
+    accountBankCode: withdrawalBankCode,
+    createdAt: new Date().toISOString(),
+  };
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { withdrawalBankInfoBBB: withdrawalBankInfoBBB } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+
 
 
 

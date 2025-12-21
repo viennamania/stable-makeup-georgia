@@ -23,7 +23,17 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const { storecode, walletAddress, nickname, usdtAmount, krwAmount, rate, privateSale, buyer } = body;
+  const {
+    storecode,
+    walletAddress,
+    sellerBankInfo,
+    nickname,
+    usdtAmount,
+    krwAmount,
+    rate,
+    privateSale,
+    buyer
+  } = body;
 
 
   const user = await checkSellerByWalletAddress("admin", walletAddress);
@@ -46,7 +56,9 @@ export async function POST(request: NextRequest) {
     storecode: storecode,
     
     walletAddress: walletAddress,
-    //nickname: nickname,
+
+    sellerBankInfo: sellerBankInfo,
+
     nickname: sellerNickname,
 
     usdtAmount: usdtAmount,
