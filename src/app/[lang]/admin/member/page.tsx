@@ -2254,7 +2254,7 @@ export default function Index({ params }: any) {
 
                     onChange={(e) => {
                       router.push(
-                        `/${params.lang}/admin/member?storecode=${e.target.value}`
+                        `/${params.lang}/admin/member?storecode=${e.target.value}&limit=${limitValue}&page=1`
                       );
 
                     }}
@@ -2930,7 +2930,7 @@ export default function Index({ params }: any) {
                 value={limit}
                 onChange={(e) =>
                   
-                  router.push(`/${params.lang}/admin/member?limit=${Number(e.target.value)}&page=${page}`)
+                  router.push(`/${params.lang}/admin/member?limit=${Number(e.target.value)}&page=${page}&storecode=${searchParamsStorecode}`)
 
                 }
 
