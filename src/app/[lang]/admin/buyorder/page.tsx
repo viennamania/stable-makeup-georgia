@@ -1064,8 +1064,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
   const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
 
-  // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
 
+
+  // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
 
 
   function animateValue(
@@ -1092,36 +1093,28 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   }
 
 
-  const [displayValueArray, setDisplayValueArray] = useState<number[]>([]);
 
-  // when totalKrwAmount changes, animate each value
-  // for each buyOrderStats.totalBySellerBankAccountNumber item
-  // check if displayValueArray[index] !== item.totalKrwAmount
-  // if true, animate
+
+  /*
+                      sellerBankAccountDisplayValueArray[index] !== undefined
+                        ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
+                        : (item.totalKrwAmount || 0).toLocaleString()
+  */
+ /* if buyOrderStats.totalBySellerBankAccountNumber.totalKrwAmount changes, animate the value */
+ // when buyOrderStats.totalBySellerBankAccountNumber changes, animate the value
+
+  const [sellerBankAccountDisplayValueArray, setSellerBankAccountDisplayValueArray] = useState<number[]>([]);
 
   useEffect(() => {
-
     const newDisplayValueArray: number[] = [];
-
     buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
-      const targetValue = item.totalKrwAmount;
-      const currentValue = displayValueArray[index] || 0;
-      if (currentValue !== targetValue) {
-        
-        animateValue(targetValue, 1000, (value) => {
-          setDisplayValueArray((prevValues) => {
-            const updatedValues = [...prevValues];
-            updatedValues[index] = value;
-            return updatedValues;
-          });
-        });
-
-      } else {
-        newDisplayValueArray.push(currentValue);
-      }
+      animateValue(item.totalKrwAmount, 1000, (value) => {
+        newDisplayValueArray[index] = value;
+        setSellerBankAccountDisplayValueArray([...newDisplayValueArray]);
+      });
     });
-    setDisplayValueArray(newDisplayValueArray);
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
+
 
 
 
@@ -3240,6 +3233,8 @@ const fetchBuyOrders = async () => {
     const data = await response.json();
     if (data.result) {
       setSellersBalance(data.result.users);
+
+
     } else {
       console.error('Error fetching sellers balance');
     }
@@ -4523,7 +4518,7 @@ const fetchBuyOrders = async () => {
 
           {/* buyOrderStats.totalBySellerBankAccountNumber */}
           <div className="w-full
-            grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4
+            grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
             items-start justify-start">
 
             
@@ -4560,20 +4555,25 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-sm font-semibold">
+                  <span className="text-sm xl:text-lg font-semibold">
                     {item.totalCount?.toLocaleString() || '0'}
                   </span>
-                  <span className="text-lg font-semibold text-yellow-600"
+                  <span className="text-sm xl:text-xl font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
                     {
-                      //item.totalKrwAmount?.toLocaleString() || '0'
-
                       (item.totalKrwAmount || 0).toLocaleString()
 
-                     /// displayValueArray[index]?.toLocaleString() || '0'
+                      /*
+                      item.totalKrwAmount !== sellerBankAccountDisplayValueArray[index]
+                        ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
+                        : (item.totalKrwAmount || 0).toLocaleString()
+                      */
+                      // when sellerBankAccountDisplayValueArray is undefined, use item.totalKrwAmount
+                      // when sellerBankAccountDisplayValueArray is defined,
+                      // different from item.totalKrwAmount, use sellerBankAccountDisplayValueArray
 
-                      //item.totalKrwAmount !== displayValueArray[index]
-                      //  ? displayValueArray[index]?.toLocaleString() || '0'
+                      //sellerBankAccountDisplayValueArray[index] !== undefined
+                      //  ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
                       //  : (item.totalKrwAmount || 0).toLocaleString()
 
                       
@@ -4632,7 +4632,10 @@ const fetchBuyOrders = async () => {
                     />
                     <span className="text-2xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}>
-                      {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      {
+                        Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+
+                      }
                     </span>
                   </div>
 
