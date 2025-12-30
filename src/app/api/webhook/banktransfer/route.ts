@@ -98,6 +98,19 @@ export async function POST(request: NextRequest) {
     "processing_date": "2024-04-15T15:03:01+09:00"
 }
   */
+ /*
+ {
+    "transaction_type": "withdrawn",
+    "bank_account_id": "1689197615581x256615117901486500",
+    "bank_account_number": "12345678901234",
+    "bank_code": "003",
+    "amount": 100000,
+    "transaction_date": "2024-04-15T15:03:00+09:00",
+    "transaction_name": "홍길동",
+    "balance": 111222333,
+    "processing_date": "2024-04-15T15:03:01+09:00"
+}
+  */
 
 
   if (!body) {
@@ -193,9 +206,11 @@ export async function POST(request: NextRequest) {
   */}
 
 
+  
   let storecode = '';
   let center = '';
   
+  /*
   if (bank_account_number === '66200201761933') {
     storecode = 'mslxvbmm'; // 더블디 (mslxvbmm)
     center = 'place69_bot';
@@ -237,7 +252,7 @@ export async function POST(request: NextRequest) {
 
   console.log("storecode", storecode);
   console.log("center", center);
-
+  */
 
 
 
@@ -274,6 +289,7 @@ export async function POST(request: NextRequest) {
   씨티은행: 027
 
   */
+  /*
   const bankName = bank_code === '004' ? '국민은행' :
     bank_code === '020' ? '우리은행' :
     bank_code === '088' ? '신한은행' :
@@ -318,7 +334,7 @@ export async function POST(request: NextRequest) {
     bank_code === '002' ? '외환카드' :
     bank_code === '089' ? '케이뱅크' :
     '알 수 없는 은행';
-
+  */
 
 
 
@@ -341,7 +357,7 @@ export async function POST(request: NextRequest) {
   계좌 : NH농협 3120117190551
   */
 
-
+  /*
   const message = `${transaction_type === 'deposited' ? (
     '🌕 입금'
   ) : (
@@ -352,7 +368,18 @@ export async function POST(request: NextRequest) {
     `시간: ${transaction_date.replace('T', ' ').replace('+09:00', '')}\n` +
     `계좌: ${bankName} ${bank_account_number}\n` +
     `잔액: ${balance ? balance.toLocaleString() : 0}원`;
+  */
 
+  const message = `${transaction_type === 'deposited' ? (
+    '🌕 입금'
+  ) : (
+    '⭐️ 출금'
+  )} \n\n` +
+    `금액: <b>${amount ? amount.toLocaleString() : 0}</b>원\n` +
+    `이름: ${transaction_name}\n` +
+    `시간: ${transaction_date.replace('T', ' ').replace('+09:00', '')}\n` +
+    `계좌번호: ${bank_account_number}\n` +
+    `잔액: ${balance ? balance.toLocaleString() : 0}원`;
 
 
 
@@ -367,72 +394,12 @@ export async function POST(request: NextRequest) {
   try {
 
 
-    // get all users by storecode
-    const response = await getAllUsersByStorecode({
-      storecode: storecode,
-      limit: 1000,
-      page: 1,
+  }  catch (error) {
+    console.error("Error processing webhook:", error);
+    return NextResponse.json({
+      status: "error",
+      message: "Error processing webhook",
     });
-
-    const users = response?.users || [];
-
-    console.log("getAllUsersByStorecode response", response);
-    console.log("getAllUsersByStorecode users", users);
-
-
-    if (users && users.length > 0) {
-
-
-      //for (const user of users) {
-
-
-      for (let i = 0; i < users.length; i++) {
-        const user = users[i];
-
-
-        //const userid = user.nickname;
-
-        //const userid = user.id;
-        // toString()으로 변환하여 사용
-        const userid = user.id.toString();
-
-
-
-
-        
-
-
-        const response = await fetch("https://dubai-telegram.vercel.app/api/telegram/sendMessageByUseridAndStorecode", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            center: center,
-            userid: userid,
-            storecode: storecode,
-
-            message: message,
-
-          }),
-        });
-
-        if (!response.ok) {
-          console.error("Failed to send Telegram message for user:", userid, "with status:", response.status);
-          continue; // Skip to the next user if sending fails
-        }
-        const data = await response.json();
-        console.log("Telegram message sent for user:", userid, "with response:", data);
-
-      }
-
-
-    } else {
-      console.log("No users found for storecode:", storecode);
-    }
-
-  } catch (error) {
-    console.error("Error sending Telegram message:", error);
   }
 
 

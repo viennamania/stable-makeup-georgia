@@ -99,6 +99,20 @@ export async function POST(request: NextRequest) {
 }
   */
 
+/*
+{
+    "transaction_type": "withdrawn",
+    "bank_account_id": "1689197615581x256615117901486500",
+    "bank_account_number": "12345678901234",
+    "bank_code": "003",
+    "amount": 100000,
+    "transaction_date": "2024-04-15T15:03:00+09:00",
+    "transaction_name": "홍길동",
+    "balance": 111222333,
+    "processing_date": "2024-04-15T15:03:01+09:00"
+}
+    */
+
 
   if (!body) {
     return NextResponse.json({
