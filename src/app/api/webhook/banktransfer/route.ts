@@ -391,10 +391,16 @@ export async function POST(request: NextRequest) {
 
   ///const storecode = "ycvqgqgg"; // 타이틀
 
+  // 1013016171814 => 01013001085
+
+  let bankAccountNumber = bank_account_number;
+  if (bank_account_number == '1013016171814') {
+    bankAccountNumber = '01013001085';
+  }
+
 
 
   try {
-
 
     //upsertBankUser
     /*
