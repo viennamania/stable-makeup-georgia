@@ -2403,14 +2403,14 @@ export async function updateLiveOnAndOff(
 export async function upsertBankUserAndBalance(
   {
     bankAccountNumber,
-    bankName,
-    accountHolder,
-    balance,
+    //bankName,
+    latestDepositName,
+    latestBalance,
   }: {
     bankAccountNumber: string;
-    bankName: string;
-    accountHolder: string;
-    balance: number;
+    //bankName: string;
+    latestDepositName: string;
+    latestBalance: number;
   }
 ): Promise<any> {
 
@@ -2425,9 +2425,10 @@ export async function upsertBankUserAndBalance(
       $set: {
         bankAccountNumber: bankAccountNumber,
         updatedAt: new Date().toISOString(),
-        bankName: bankName,
-        accountHolder: accountHolder,
-        balance: balance,
+        //bankName: bankName,
+        //accountHolder: accountHolder,
+        lastestDepositName: latestDepositName,
+        latestBalance: latestBalance,
       }
     },
     { upsert: true }

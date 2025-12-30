@@ -404,13 +404,15 @@ export async function POST(request: NextRequest) {
     balance,
     */
 
-    const bankName = '';
+    //const bankName = '';
+    //const accountHolder = '';
 
     await upsertBankUserAndBalance({
       bankAccountNumber: bank_account_number,
-      bankName: bankName,
-      accountHolder: transaction_name,
-      balance: balance,
+      //bankName: bankName,
+      //accountHolder: accountHolder,
+      latestDepositName: transaction_name,
+      latestBalance: balance,
     });
 
 

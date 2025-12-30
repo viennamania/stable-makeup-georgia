@@ -2294,8 +2294,8 @@ export async function getBuyOrders(
 ): Promise<any> {
 
 
-  console.log('getBuyOrders fromDate: ' + fromDate);
-  console.log('getBuyOrders toDate: ' + toDate);
+  //console.log('getBuyOrders fromDate: ' + fromDate);
+  //console.log('getBuyOrders toDate: ' + toDate);
 
 
   //console.log('getBuyOrders agentcode: ==========>' + agentcode);
@@ -2317,7 +2317,7 @@ export async function getBuyOrders(
 
   // searchDepositName
   // 일렉스파크
-  console.log('getBuyOrders searchDepositName: ' + searchDepositName);
+  //console.log('getBuyOrders searchDepositName: ' + searchDepositName);
 
 
   const client = await clientPromise;
@@ -2802,6 +2802,22 @@ export async function getBuyOrders(
 
 
     // totalReaultGroup by seller.bankInfo.accountNumber
+
+    /*
+    
+      {
+        "_id": {
+          "$oid": "6953741b33bd75162b52bf41"
+        },
+        "bankAccountNumber": "3022104866591",
+        "accountHolder": "박준휘",
+        "balance": 3097081,
+        "bankName": "",
+        "updatedAt": "2025-12-30T06:58:41.471Z"
+      }
+    */
+    // join $seller.bankInfo.accountNumber with bankusers collection to get bank account info
+
     const totalReaultGroupBySellerBankAccountNumber = await collection.aggregate([
       {
         $match: {
@@ -2836,6 +2852,16 @@ export async function getBuyOrders(
           totalUsdtAmount: { $sum: '$usdtAmount' },
         }
       },
+      {
+        $lookup: {
+          from: "bankusers",
+          localField: "_id",
+          foreignField: "bankAccountNumber",
+          as: "bankUserInfo"
+        }
+      },
+
+
       // sort by totalUsdtAmount desc
       { $sort: { totalUsdtAmount: -1 } }
     ]).toArray();

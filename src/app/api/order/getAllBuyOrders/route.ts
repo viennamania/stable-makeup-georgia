@@ -122,6 +122,11 @@ export async function POST(request: NextRequest) {
 
   //console.log("getAllBuyOrders result totalByBuyerBankAccountNumber", result.totalByBuyerBankAccountNumber);
 
+  /*
+  console.log("getAllBuyOrders result.totalBySellerBankAccountNumber.bankUserInfo",
+    result.totalBySellerBankAccountNumber.map((item: { bankUserInfo: any; }) => item.bankUserInfo)
+  );
+  */
  
   return NextResponse.json({
 

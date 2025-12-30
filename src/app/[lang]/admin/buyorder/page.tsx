@@ -1036,6 +1036,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       totalCount: number;
       totalKrwAmount: number;
       totalUsdtAmount: number;
+      bankUserInfo: any;
     }>;
   }>({
     totalCount: 0,
@@ -4552,6 +4553,15 @@ const fetchBuyOrders = async () => {
                   >
                     {item._id || '기타은행'}
                   </button>
+                </div>
+
+                <div className="flex flex-row items-center justify-center gap-1">
+                  잔액(원):{' '}
+                  {item.bankUserInfo.length > 0 && (
+                    <span className="text-lg font-semibold text-yellow-600">
+                      {item.bankUserInfo[0]?.latestBalance ? item.bankUserInfo[0]?.latestBalance.toLocaleString() : '잔액정보없음'}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-row items-center justify-center gap-1">
