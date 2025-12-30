@@ -1070,6 +1070,43 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
 
 
+  const [sellerBankAccountDisplayValueArray, setSellerBankAccountDisplayValueArray] = useState<number[]>([]);
+
+
+  function updateSellerBankAccountDisplayValue(index: number, value: number) {
+    setSellerBankAccountDisplayValueArray((prevValues) => {
+      const newValues = [...prevValues];
+      newValues[index] = value;
+      return newValues;
+    });
+  }
+
+
+  useEffect(() => {
+    buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
+      const targetValue = item.totalKrwAmount;
+      const duration = 1000; // animation duration in ms
+      const startValue = sellerBankAccountDisplayValueArray[index] || 0;
+      const startTime = performance.now();
+      function animate(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = startValue + (targetValue - startValue) * progress;
+        updateSellerBankAccountDisplayValue(index, Math.round(currentValue));
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+      requestAnimationFrame(animate);
+    });
+  //}, [buyOrderStats.totalBySellerBankAccountNumber, sellerBankAccountDisplayValueArray]);
+  }, [buyOrderStats.totalBySellerBankAccountNumber]);
+
+
+
+
+
+  /*
   function animateValue(
     targetValue: number,
     duration: number,
@@ -1092,7 +1129,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
     requestAnimationFrame(animate);
   }
-
+  */
 
 
 
@@ -1103,7 +1140,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   */
  /* if buyOrderStats.totalBySellerBankAccountNumber.totalKrwAmount changes, animate the value */
  // when buyOrderStats.totalBySellerBankAccountNumber changes, animate the value
-
+  /*
   const [sellerBankAccountDisplayValueArray, setSellerBankAccountDisplayValueArray] = useState<number[]>([]);
 
   useEffect(() => {
@@ -1115,7 +1152,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       });
     });
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
-
+  */
 
 
 
@@ -4524,6 +4561,7 @@ const fetchBuyOrders = async () => {
 
             
             {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+              
               <div
                 key={index}
                 className="flex flex-col gap-2 items-center
@@ -4573,7 +4611,18 @@ const fetchBuyOrders = async () => {
                   <span className="text-sm xl:text-xl font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
                     {
-                      (item.totalKrwAmount || 0).toLocaleString()
+                      
+                      //(item.totalKrwAmount || 0).toLocaleString()
+
+                      sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                      && sellerBankAccountDisplayValueArray[index].toLocaleString()
+
+                      /*
+                      sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                        && sellerBankAccountDisplayValueArray[index] !==  item.totalKrwAmount
+                        ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
+                        : (item.totalKrwAmount || 0).toLocaleString()
+                      */
 
                       /*
                       item.totalKrwAmount !== sellerBankAccountDisplayValueArray[index]
@@ -4592,6 +4641,15 @@ const fetchBuyOrders = async () => {
                     }
                   </span>
                 </div>
+
+                {/*
+                <span className="text-sm text-zinc-500">
+                  {
+                    sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                    && sellerBankAccountDisplayValueArray[index].toLocaleString()
+                  }
+                </span>
+                */}
 
               </div>
             ))}
