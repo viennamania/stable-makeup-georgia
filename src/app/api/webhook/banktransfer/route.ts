@@ -391,10 +391,22 @@ export async function POST(request: NextRequest) {
 
   ///const storecode = "ycvqgqgg"; // 타이틀
 
+ 
+  // 132067165012 => 13207716701
+  // 1021029548189 => 02277987999
+  // 3521660264663 => 3560243561679
   // 1013016171814 => 01013001085
 
+
+
   let bankAccountNumber = bank_account_number;
-  if (bank_account_number == '1013016171814') {
+  if (bank_account_number == '132067165012') {
+    bankAccountNumber = '13207716701';
+  } else if (bank_account_number == '1021029548189') {
+    bankAccountNumber = '02277987999';
+  } else if (bank_account_number == '3521660264663') {
+    bankAccountNumber = '3560243561679';
+  } else if (bank_account_number == '1013016171814') {
     bankAccountNumber = '01013001085';
   }
 
