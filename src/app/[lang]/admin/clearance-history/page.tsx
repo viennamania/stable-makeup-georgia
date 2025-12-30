@@ -950,12 +950,14 @@ export default function Index({ params }: any) {
       totalCount: number;
       totalKrwAmount: number;
       totalUsdtAmount: number;
+      bankUserInfo: any;
     }>;
     totalBySellerBankAccountNumber?: Array<{
       _id: string;
       totalCount: number;
       totalKrwAmount: number;
       totalUsdtAmount: number;
+      bankUserInfo: any;
     }>;
   }>({
     totalCount: 0,
@@ -3612,6 +3614,94 @@ export default function Index({ params }: any) {
               </span>
             </div>
 
+
+
+            <div className="w-full
+              grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
+              items-start justify-start">
+              
+              {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col gap-2 items-center
+                  border border-zinc-300 rounded-lg p-2">
+
+                  <div className="flex flex-row items-start justify-start gap-1">
+                    <Image
+                      src="/icon-bank.png"
+                      alt="Bank"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />              
+                    <button
+                      className="text-sm font-semibold underline text-blue-600"
+                      onClick={() => {
+                        const accountNumber = item._id || '기타은행';
+                        navigator.clipboard.writeText(accountNumber)
+                          .then(() => {
+                            toast.success(`통장번호 ${accountNumber} 복사됨`);
+                          })
+                          .catch((err) => {
+                            toast.error('복사 실패: ' + err);
+                          });
+                      }}
+                      title="통장번호 복사"
+                    >
+                      {item._id || '기타은행'}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    잔액(원):{' '}
+                    {item.bankUserInfo.length > 0 && (
+                      <span className="text-lg font-semibold text-yellow-600">
+                        {item.bankUserInfo[0]?.latestBalance ? item.bankUserInfo[0]?.latestBalance.toLocaleString() : '잔액정보없음'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-row items-center justify-center gap-1">
+                    <span className="text-sm xl:text-lg font-semibold">
+                      {item.totalCount?.toLocaleString() || '0'}
+                    </span>
+                    <span className="text-sm xl:text-xl font-semibold text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}>
+                      {
+                        (item.totalKrwAmount || 0).toLocaleString()
+
+                        /*
+                        item.totalKrwAmount !== sellerBankAccountDisplayValueArray[index]
+                          ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
+                          : (item.totalKrwAmount || 0).toLocaleString()
+                        */
+                        // when sellerBankAccountDisplayValueArray is undefined, use item.totalKrwAmount
+                        // when sellerBankAccountDisplayValueArray is defined,
+                        // different from item.totalKrwAmount, use sellerBankAccountDisplayValueArray
+
+                        //sellerBankAccountDisplayValueArray[index] !== undefined
+                        //  ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
+                        //  : (item.totalKrwAmount || 0).toLocaleString()
+
+                        
+                      }
+                    </span>
+                  </div>
+
+                </div>
+              ))}
+
+
+
+            </div>
+
+
+
+
+
+
+
+            {/*
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
               {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
                 <div key={index} className="flex flex-col gap-2 items-center
@@ -3619,8 +3709,6 @@ export default function Index({ params }: any) {
                   bg-white/90
                   p-4
                 ">
-
-                  {/* copy account number button */}
                   <button
                     className="text-sm font-semibold underline text-blue-600"
                     onClick={() => {
@@ -3665,6 +3753,11 @@ export default function Index({ params }: any) {
                 </div>
               ))}
             </div>
+            */}
+
+
+
+
 
           </div>
 

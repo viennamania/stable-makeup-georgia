@@ -2902,6 +2902,15 @@ export async function getBuyOrders(
           totalUsdtAmount: { $sum: '$usdtAmount' },
         }
       },
+      {
+        $lookup: {
+          from: "bankusers",
+          localField: "_id",
+          foreignField: "bankAccountNumber",
+          as: "bankUserInfo"
+        }
+      },
+
       // sort by totalUsdtAmount desc
       { $sort: { totalUsdtAmount: -1 } }
     ]).toArray();
