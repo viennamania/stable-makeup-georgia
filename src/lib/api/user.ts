@@ -2385,3 +2385,53 @@ export async function updateLiveOnAndOff(
     return false;
   }
 }
+
+
+
+/*
+{
+  "_id": {
+    "$oid": "68648caa5dfc5e1671094d43"
+  },
+  "bankAccountNumber": "92374923",
+  "bankName": "경북은행",
+  "accountHolder": "테스트"
+}
+*/
+// bankusers collection
+// upsert bank user
+export async function upsertBankUserAndBalance(
+  {
+    bankAccountNumber,
+    bankName,
+    accountHolder,
+    balance,
+  }: {
+    bankAccountNumber: string;
+    bankName: string;
+    accountHolder: string;
+    balance: number;
+  }
+): Promise<any> {
+
+  console.log('upsertBankUser bankAccountNumber: ' + bankAccountNumber);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankusers');
+
+  const result = await collection.updateOne(
+    { bankAccountNumber: bankAccountNumber },
+    {
+      $set: {
+        bankAccountNumber: bankAccountNumber,
+        updatedAt: new Date().toISOString(),
+        bankName: bankName,
+        accountHolder: accountHolder,
+        balance: balance,
+      }
+    },
+    { upsert: true }
+  );
+
+  return result;
+}

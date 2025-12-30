@@ -4,6 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // getAllUsersByStorecode
 import {
   getAllUsersByStorecode,
+  upsertBankUserAndBalance,
 } from "@lib/api/user";
 
 
@@ -370,6 +371,7 @@ export async function POST(request: NextRequest) {
     `잔액: ${balance ? balance.toLocaleString() : 0}원`;
   */
 
+  /*
   const message = `${transaction_type === 'deposited' ? (
     '🌕 입금'
   ) : (
@@ -380,7 +382,7 @@ export async function POST(request: NextRequest) {
     `시간: ${transaction_date.replace('T', ' ').replace('+09:00', '')}\n` +
     `계좌번호: ${bank_account_number}\n` +
     `잔액: ${balance ? balance.toLocaleString() : 0}원`;
-
+  */
 
 
 
@@ -392,6 +394,26 @@ export async function POST(request: NextRequest) {
 
 
   try {
+
+
+    //upsertBankUser
+    /*
+        bankAccountNumber,
+    bankName,
+    accountHolder,
+    balance,
+    */
+
+    const bankName = '';
+
+    await upsertBankUserAndBalance({
+      bankAccountNumber: bank_account_number,
+      bankName: bankName,
+      accountHolder: transaction_name,
+      balance: balance,
+    });
+
+
 
 
   }  catch (error) {
