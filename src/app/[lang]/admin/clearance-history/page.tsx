@@ -3655,7 +3655,9 @@ export default function Index({ params }: any) {
                   <div className="flex flex-row items-center justify-center gap-1">
                     잔액(원):{' '}
                     {item.bankUserInfo.length > 0 && (
-                      <span className="text-lg font-semibold text-yellow-600">
+                      <span className="text-lg font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}
+                      >
                         {item.bankUserInfo[0]?.latestBalance ? item.bankUserInfo[0]?.latestBalance.toLocaleString() : '잔액정보없음'}
                       </span>
                     )}
