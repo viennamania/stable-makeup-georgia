@@ -1103,58 +1103,33 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
 
 
-
-
-
-  /*
-  function animateValue(
-    targetValue: number,
-    duration: number,
-    callback: (value: number) => void
-  ) {
-    const startValue = 0;
-    const startTime = performance.now();
-
-    function animate(currentTime: number) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const currentValue = startValue + (targetValue - startValue) * progress;
-      callback(Math.round(currentValue));
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    }
-
-    requestAnimationFrame(animate);
+  // lastestBalance array for animated number
+  const [lastestBalanceArray, setLastestBalanceArray] = useState<number[]>([]);
+  function updateLastestBalanceArray(index: number, value: number) {
+    setLastestBalanceArray((prevValues) => {
+      const newValues = [...prevValues];
+      newValues[index] = value;
+      return newValues;
+    });
   }
-  */
-
-
-
-  /*
-                      sellerBankAccountDisplayValueArray[index] !== undefined
-                        ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
-                        : (item.totalKrwAmount || 0).toLocaleString()
-  */
- /* if buyOrderStats.totalBySellerBankAccountNumber.totalKrwAmount changes, animate the value */
- // when buyOrderStats.totalBySellerBankAccountNumber changes, animate the value
-  /*
-  const [sellerBankAccountDisplayValueArray, setSellerBankAccountDisplayValueArray] = useState<number[]>([]);
-
   useEffect(() => {
-    const newDisplayValueArray: number[] = [];
     buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
-      animateValue(item.totalKrwAmount, 1000, (value) => {
-        newDisplayValueArray[index] = value;
-        setSellerBankAccountDisplayValueArray([...newDisplayValueArray]);
-      });
+      const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].latestBalance ? item.bankUserInfo[0].latestBalance : 0;
+      const duration = 1000; // animation duration in ms
+      const startValue = lastestBalanceArray[index] || 0;
+      const startTime = performance.now();
+      function animate(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = startValue + (targetValue - startValue) * progress;
+        updateLastestBalanceArray(index, Math.round(currentValue));
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+      requestAnimationFrame(animate);
     });
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
-  */
-
-
 
 
 
@@ -3293,6 +3268,35 @@ const fetchBuyOrders = async () => {
 
   //console.log('sellersBalance', sellersBalance);
 
+  // currentUsdtBalance array for animated display
+  const [currentUsdtBalanceArray, setCurrentUsdtBalanceArray] = useState<number[]>([]);
+  function animateUsdtBalance(targetBalances: number[]) {
+    const animationDuration = 1000; // 1 second
+    const frameRate = 30; // 30 frames per second
+    const totalFrames = Math.round((animationDuration / 1000) * frameRate);
+    const initialBalances = currentUsdtBalanceArray.length === targetBalances.length
+      ? [...currentUsdtBalanceArray]
+      : targetBalances.map(() => 0);
+
+    let frame = 0;
+    const interval = setInterval(() => {
+      frame++;
+      const newBalances = targetBalances.map((target, index) => {
+        const initial = initialBalances[index];
+        const progress = Math.min(frame / totalFrames, 1);
+        return initial + (target - initial) * progress;
+      });
+      setCurrentUsdtBalanceArray(newBalances);
+      if (frame >= totalFrames) {
+        clearInterval(interval);
+      }
+    }, 1000 / frameRate);
+  }
+  useEffect(() => {
+    const targetBalances = sellersBalance.map((seller) => seller.currentUsdtBalance || 0);
+    animateUsdtBalance(targetBalances);
+  }, [sellersBalance]);
+
 
 
 
@@ -4599,7 +4603,12 @@ const fetchBuyOrders = async () => {
                     <span className="text-lg font-semibold text-yellow-600"
                       style={{ fontFamily: 'monospace' }}
                     >
-                      {item.bankUserInfo[0]?.latestBalance ? item.bankUserInfo[0]?.latestBalance.toLocaleString() : '잔액정보없음'}
+                      {
+                        //item.bankUserInfo[0]?.latestBalance ? item.bankUserInfo[0]?.latestBalance.toLocaleString() : '잔액정보없음'
+                        lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                        ? lastestBalanceArray[index].toLocaleString()
+                        : '잔액정보없음'
+                      }
                     </span>
                   )}
                 </div>
@@ -4616,40 +4625,10 @@ const fetchBuyOrders = async () => {
 
                       sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
                       && sellerBankAccountDisplayValueArray[index].toLocaleString()
-
-                      /*
-                      sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
-                        && sellerBankAccountDisplayValueArray[index] !==  item.totalKrwAmount
-                        ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
-                        : (item.totalKrwAmount || 0).toLocaleString()
-                      */
-
-                      /*
-                      item.totalKrwAmount !== sellerBankAccountDisplayValueArray[index]
-                        ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
-                        : (item.totalKrwAmount || 0).toLocaleString()
-                      */
-                      // when sellerBankAccountDisplayValueArray is undefined, use item.totalKrwAmount
-                      // when sellerBankAccountDisplayValueArray is defined,
-                      // different from item.totalKrwAmount, use sellerBankAccountDisplayValueArray
-
-                      //sellerBankAccountDisplayValueArray[index] !== undefined
-                      //  ? sellerBankAccountDisplayValueArray[index]?.toLocaleString() || '0'
-                      //  : (item.totalKrwAmount || 0).toLocaleString()
-
                       
                     }
                   </span>
                 </div>
-
-                {/*
-                <span className="text-sm text-zinc-500">
-                  {
-                    sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
-                    && sellerBankAccountDisplayValueArray[index].toLocaleString()
-                  }
-                </span>
-                */}
 
               </div>
             ))}
@@ -4703,8 +4682,11 @@ const fetchBuyOrders = async () => {
                     <span className="text-2xl font-semibold text-[#409192]"
                       style={{ fontFamily: 'monospace' }}>
                       {
-                        Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        //Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
+                        currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                        ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'
                       }
                     </span>
                   </div>
