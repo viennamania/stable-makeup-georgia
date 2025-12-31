@@ -4568,8 +4568,21 @@ const fetchBuyOrders = async () => {
               
               <div
                 key={index}
-                className="flex flex-col gap-2 items-center
-                border border-zinc-300 rounded-lg p-2">
+                //className="flex flex-col gap-2 items-center
+                //border border-zinc-300 rounded-lg p-2"
+                // if lastestBalanceArray[index] is changed, then animate the background color
+                // if sellerBankAccountDisplayValueArray[index] is changed, then animate the background color
+                // two color is differentiate between the two conditions
+                className={`flex flex-col gap-2 items-center
+                p-4 rounded-lg shadow-md
+                backdrop-blur-md
+                ${lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.latestBalance
+                  ? 'bg-green-100/80 animate-pulse'
+                  : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
+                    ? 'bg-yellow-100/80 animate-pulse'
+                    : 'bg-white/80'}
+                `}
+                >
 
                 <div className="flex flex-row items-start justify-start gap-1">
                   <Image
@@ -4643,11 +4656,20 @@ const fetchBuyOrders = async () => {
 
               {sellersBalance.map((seller, index) => (
                 <div key={index}
-                  className="flex flex-row items-center justify-between gap-4
-                  bg-white/80
+                  //className="flex flex-row items-center justify-between gap-4
+                 // bg-white/80
+                  //p-4 rounded-lg shadow-md
+                  //backdrop-blur-md
+                  //"
+                  // if currentUsdtBalanceArray[index] is changed, then animate the background color
+                  className={`flex flex-col sm:flex-row items-center justify-between gap-4
                   p-4 rounded-lg shadow-md
                   backdrop-blur-md
-                  ">
+                  ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
+                    ? 'bg-green-100/80 animate-pulse'
+                    : 'bg-white/80'}
+                  `}
+                  >
                   <div className="flex flex-row items-center gap-4">
                     <Image
                       src="/icon-seller.png"
