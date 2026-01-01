@@ -4365,7 +4365,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-[#409192]"
+                      <span className="text-lg font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}>
                         {buyOrderStats.totalFeeAmount
                           ? buyOrderStats.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -4377,7 +4377,7 @@ const fetchBuyOrders = async () => {
                   <div className="flex flex-col gap-2 items-center">
                     <div className="text-sm">PG 수수료금액(원)</div>
                     <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
+                      <span className="text-lg font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
                         {buyOrderStats.totalFeeAmountKRW
                           ? buyOrderStats.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -4391,7 +4391,7 @@ const fetchBuyOrders = async () => {
 
                 <div className="flex flex-row gap-2 items-center">
 
-                  <div className="flex flex-col gap-2 items-center">
+                  <div className="flex flex-col gap-1 items-center">
                     <div className="text-sm">AG 수수료량(USDT)</div>
                     <div className="w-full flex flex-row items-center justify-end gap-1">
                       <Image
@@ -4401,7 +4401,7 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-xl font-semibold text-[#409192]"
+                      <span className="text-lg font-semibold text-[#409192]"
                         style={{ fontFamily: 'monospace' }}>
                         {buyOrderStats.totalAgentFeeAmount
                           ? buyOrderStats.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -4410,10 +4410,10 @@ const fetchBuyOrders = async () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 items-center">
+                  <div className="flex flex-col gap-1 items-center">
                     <div className="text-sm">AG 수수료금액(원)</div>
                     <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
+                      <span className="text-lg font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
                         {buyOrderStats.totalAgentFeeAmountKRW
                           ? buyOrderStats.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -4681,38 +4681,15 @@ const fetchBuyOrders = async () => {
 
             {/* show different count buyOrderStats.totalReaultGroupByBuyerDepositNameCount and buyOrderStats.totalByBuyerDepositName.length */}
    
+            {/* large text +n more bolded emphasized color */}
             {buyOrderStats.totalReaultGroupByBuyerDepositNameCount! - buyOrderStats.totalByBuyerDepositName!.length > 0 && (
-              <div
-                className="flex flex-col gap-1 items-center
-                p-2 rounded-lg shadow-md
-                bg-white/80
-                backdrop-blur-md
-                "
+
+              <div className="text-xl font-bold text-red-500
+                flex items-center justify-center"
               >
-                <div className="flex flex-row items-start justify-start gap-1">
-                  <Image
-                    src="/icon-user.png"
-                    alt="User"
-                    width={20}
-                    height={20}
-                    className="w-4 h-4"
-                  />          
-                  <span
-                    className="text-xs font-semibold text-blue-600"
-                  >
-                    외 {buyOrderStats.totalReaultGroupByBuyerDepositNameCount! - buyOrderStats.totalByBuyerDepositName!.length}명
-                  </span>
-                </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-xs">
-                    -
-                  </span>
-                  <span className="text-xs text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    -
-                  </span>
-                </div>
+                +{buyOrderStats.totalReaultGroupByBuyerDepositNameCount! - buyOrderStats.totalByBuyerDepositName!.length} 명
               </div>
+
             )}
 
           </div>
