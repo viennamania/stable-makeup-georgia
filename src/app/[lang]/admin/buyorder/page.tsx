@@ -4161,32 +4161,37 @@ const fetchBuyOrders = async () => {
 
           {/* trade summary */}
 
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-2
-            w-full
-            bg-zinc-100/50
-            p-4 rounded-lg shadow-md
-            ">
 
+          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2">
+
+            {/* if animatedTotalUsdtAmount is changed, border pulse animation */}
+            {/*
             <div className="xl:w-1/3 w-full
-              flex flex-col sm:flex-row items-between justify-between gap-4">
+              flex flex-col sm:flex-row items-between justify-between gap-4
+              border border-zinc-300 p-4 rounded-lg
+            ">
+            */}
+            <div className={`xl:w-1/3 w-full
+              flex flex-col sm:flex-row items-between justify-between gap-4
+              ${buyOrderStats.totalUsdtAmount !== animatedTotalUsdtAmount ? 'border-2 border-green-400 animate-pulse p-4 rounded-lg' : 'border border-zinc-300 p-4 rounded-lg'}
+            `}>
 
-              <div className="flex flex-row items-center justify-center gap-2">
+              <div className="flex flex-col gap-2 items-center">
                 <Image
                   src="/icon-trade.png"
-                  alt="Trade"
+                  alt="P2P"
                   width={50}
                   height={50}
-                  className="w-16 h-16 rounded-lg object-cover"
-                />                
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">P2P 거래수(건)</div>
-                  <div className="text-4xl font-semibold text-zinc-500">
-                    {
-                    //buyOrderStats.totalCount?.toLocaleString()
-                    animatedTotalCount.toLocaleString()
-                    }
-                  </div>
+                  className={`w-16 h-16 rounded-lg object-cover
+                    ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''
+                  }`}
+                />
+                <div className="text-sm">P2P 거래수(건)</div>
+                <div className="text-4xl font-semibold text-zinc-500">
+                  {
+                  //buyOrderStats.totalCount?.toLocaleString()
+                  animatedTotalCount.toLocaleString()
+                  }
                 </div>
               </div>
 
@@ -4229,26 +4234,30 @@ const fetchBuyOrders = async () => {
             <div className="hidden xl:block w-0.5 h-20 bg-zinc-300"></div>
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
+            {/*
             <div className="xl:w-2/3 w-full
               flex flex-col sm:flex-row items-start justify-end gap-4">
+            */}
+            <div className={`xl:w-2/3 w-full
+              flex flex-col sm:flex-row items-start justify-end gap-4
+              ${buyOrderStats.totalSettlementAmount !== animatedTotalSettlementAmount ? 'border-2 border-green-400 animate-pulse p-4 rounded-lg' : 'border border-zinc-300 p-4 rounded-lg'}
+            `}>
 
               <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
 
-                <div className="flex flex-row items-center justify-center gap-2">
+                <div className="flex flex-col gap-2 items-center">
                   <Image
                     src="/icon-payment.png"
                     alt="Payment"
                     width={50}
                     height={50}
                     className="w-16 h-16 rounded-lg object-cover"
-                  />                
+                  />   
 
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">가맹점 결제수(건)</div>
-                      <span className="text-4xl font-semibold text-zinc-500">
-                        {animatedTotalSettlementCount.toLocaleString()}
-                      </span>
-                  </div>
+                  <div className="text-sm">가맹점 결제수(건)</div>
+                    <span className="text-4xl font-semibold text-zinc-500">
+                      {animatedTotalSettlementCount.toLocaleString()}
+                    </span>
                 </div>
 
                 <div className="flex flex-col items-end justify-center gap-2">
