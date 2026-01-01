@@ -4182,7 +4182,7 @@ const fetchBuyOrders = async () => {
                   alt="P2P"
                   width={50}
                   height={50}
-                  className={`w-16 h-16 rounded-lg object-cover
+                  className={`w-12 h-12 rounded-lg object-cover
                     ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''
                   }`}
                 />
@@ -4251,7 +4251,7 @@ const fetchBuyOrders = async () => {
                     alt="Payment"
                     width={50}
                     height={50}
-                    className="w-16 h-16 rounded-lg object-cover"
+                    className="w-12 h-12 rounded-lg object-cover"
                   />   
 
                   <div className="text-sm">가맹점 결제수(건)</div>
