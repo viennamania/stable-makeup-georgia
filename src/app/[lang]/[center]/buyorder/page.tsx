@@ -853,6 +853,7 @@ export default function Index({ params }: any) {
         totalCount: number;
         totalKrwAmount: number;
         totalUsdtAmount: number;
+        bankUserInfo: any;
       }>;
     }>({
       totalCount: 0,
@@ -871,13 +872,81 @@ export default function Index({ params }: any) {
     });
 
 
-    const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
-    const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount, { decimalPlaces: 3 });
-    const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
 
-    const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
-    const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
-    const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
+
+  const animatedTotalCount = useAnimatedNumber(buyOrderStats.totalCount);
+  const animatedTotalUsdtAmount = useAnimatedNumber(buyOrderStats.totalUsdtAmount, { decimalPlaces: 3 });
+  const animatedTotalKrwAmount = useAnimatedNumber(buyOrderStats.totalKrwAmount);
+
+  const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
+  const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
+  const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
+
+
+
+  const [sellerBankAccountDisplayValueArray, setSellerBankAccountDisplayValueArray] = useState<number[]>([]);
+
+
+  function updateSellerBankAccountDisplayValue(index: number, value: number) {
+    setSellerBankAccountDisplayValueArray((prevValues) => {
+      const newValues = [...prevValues];
+      newValues[index] = value;
+      return newValues;
+    });
+  }
+
+
+  useEffect(() => {
+    buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
+      const targetValue = item.totalKrwAmount;
+      const duration = 1000; // animation duration in ms
+      const startValue = sellerBankAccountDisplayValueArray[index] || 0;
+      const startTime = performance.now();
+      function animate(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = startValue + (targetValue - startValue) * progress;
+        updateSellerBankAccountDisplayValue(index, Math.round(currentValue));
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+      requestAnimationFrame(animate);
+    });
+  //}, [buyOrderStats.totalBySellerBankAccountNumber, sellerBankAccountDisplayValueArray]);
+  }, [buyOrderStats.totalBySellerBankAccountNumber]);
+
+
+  // lastestBalance array for animated number
+  const [lastestBalanceArray, setLastestBalanceArray] = useState<number[]>([]);
+  function updateLastestBalanceArray(index: number, value: number) {
+    setLastestBalanceArray((prevValues) => {
+      const newValues = [...prevValues];
+      newValues[index] = value;
+      return newValues;
+    });
+  }
+  useEffect(() => {
+    buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
+      const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].latestBalance ? item.bankUserInfo[0].latestBalance : 0;
+      const duration = 1000; // animation duration in ms
+      const startValue = lastestBalanceArray[index] || 0;
+      const startTime = performance.now();
+      function animate(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = startValue + (targetValue - startValue) * progress;
+        updateLastestBalanceArray(index, Math.round(currentValue));
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+      requestAnimationFrame(animate);
+    });
+  }, [buyOrderStats.totalBySellerBankAccountNumber]);
+
+
+
 
 
 
@@ -5038,14 +5107,22 @@ const fetchBuyOrders = async () => {
 
 
                 {/* buyOrderStats.totalBySellerBankAccountNumber */}
+                {/*
                 <div className="w-full
                   grid grid-cols-1 sm:grid-cols-8 gap-4">
+                */}
+
+                <div className="w-full
+                  grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
+                  items-start justify-start">
+
 
                   {/* 판매자 통장번호별 통계 */}
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
                     판매자<br />통장별<br/>P2P 거래<br />통계
                   </span>
 
+                  {/*
                   {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
                     <div key={index} className="flex flex-col gap-2 items-end justify-center
                       border border-zinc-300 rounded-lg p-4
@@ -5060,7 +5137,6 @@ const fetchBuyOrders = async () => {
                           height={20}
                           className="w-5 h-5"
                         />
-                        {/* copy account number button */}
                         <button
                           className="text-sm font-semibold underline text-blue-600"
                           onClick={() => {
@@ -5112,6 +5188,92 @@ const fetchBuyOrders = async () => {
 
                     </div>
                   ))}
+                  */}
+
+
+
+                  {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                    
+                    <div
+                      key={index}
+                      //className="flex flex-col gap-2 items-center
+                      //border border-zinc-300 rounded-lg p-2"
+                      // if lastestBalanceArray[index] is changed, then animate the background color
+                      // if sellerBankAccountDisplayValueArray[index] is changed, then animate the background color
+                      // two color is differentiate between the two conditions
+                      className={`flex flex-col gap-2 items-center
+                      p-4 rounded-lg shadow-md
+                      backdrop-blur-md
+                      ${lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.latestBalance
+                        ? 'bg-green-100/80 animate-pulse'
+                        : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
+                          ? 'bg-yellow-100/80 animate-pulse'
+                          : 'bg-white/80'}
+                      `}
+                      >
+
+                      <div className="flex flex-row items-start justify-start gap-1">
+                        <Image
+                          src="/icon-bank.png"
+                          alt="Bank"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />              
+                        <button
+                          className="text-sm font-semibold underline text-blue-600"
+                          onClick={() => {
+                            const accountNumber = item._id || '기타은행';
+                            navigator.clipboard.writeText(accountNumber)
+                              .then(() => {
+                                toast.success(`통장번호 ${accountNumber} 복사됨`);
+                              })
+                              .catch((err) => {
+                                toast.error('복사 실패: ' + err);
+                              });
+                          }}
+                          title="통장번호 복사"
+                        >
+                          {item._id || '기타은행'}
+                        </button>
+                      </div>
+
+                      <div className="flex flex-row items-center justify-center gap-1">
+                        잔액(원):{' '}
+                        {item.bankUserInfo.length > 0 && (
+                          <span className="text-lg font-semibold text-yellow-600"
+                            style={{ fontFamily: 'monospace' }}
+                          >
+                            {
+                              //item.bankUserInfo[0]?.latestBalance ? item.bankUserInfo[0]?.latestBalance.toLocaleString() : '잔액정보없음'
+                              lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                              ? lastestBalanceArray[index].toLocaleString()
+                              : '잔액정보없음'
+                            }
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-row items-center justify-center gap-1">
+                        <span className="text-sm xl:text-lg font-semibold">
+                          {item.totalCount?.toLocaleString() || '0'}
+                        </span>
+                        <span className="text-sm xl:text-xl font-semibold text-yellow-600"
+                          style={{ fontFamily: 'monospace' }}>
+                          {
+                            
+                            //(item.totalKrwAmount || 0).toLocaleString()
+
+                            sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                            && sellerBankAccountDisplayValueArray[index].toLocaleString()
+                            
+                          }
+                        </span>
+                      </div>
+
+                    </div>
+                  ))}
+
 
                 </div>
 
