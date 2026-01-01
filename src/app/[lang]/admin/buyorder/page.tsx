@@ -4697,7 +4697,7 @@ const fetchBuyOrders = async () => {
 
           {/* buyOrderStats.totalBySellerBankAccountNumber */}
           <div className="w-full
-            grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
+            grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1
             items-start justify-start">
 
             
@@ -4710,8 +4710,8 @@ const fetchBuyOrders = async () => {
                 // if lastestBalanceArray[index] is changed, then animate the background color
                 // if sellerBankAccountDisplayValueArray[index] is changed, then animate the background color
                 // two color is differentiate between the two conditions
-                className={`flex flex-col gap-2 items-center
-                p-4 rounded-lg shadow-md
+                className={`flex flex-col gap-1 items-center
+                p-2 rounded-lg shadow-md
                 backdrop-blur-md
                 ${lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.latestBalance
                   ? 'bg-green-100/80 animate-pulse'
@@ -4730,7 +4730,7 @@ const fetchBuyOrders = async () => {
                     className="w-5 h-5"
                   />              
                   <button
-                    className="text-sm font-semibold underline text-blue-600"
+                    className="text-sm text-zinc-500 underline font-semibold"
                     onClick={() => {
                       const accountNumber = item._id || '기타은행';
                       navigator.clipboard.writeText(accountNumber)
@@ -4745,6 +4745,16 @@ const fetchBuyOrders = async () => {
                   >
                     {item._id || '기타은행'}
                   </button>
+
+                  {/* accountHolder if exists */}
+                  {item.bankUserInfo.length > 0 && (
+                    <div className="flex flex-col">
+                      <span className="text-sm text-zinc-500 font-semibold">
+                        {item.bankUserInfo[0].accountHolder || '알수없음'}
+                      </span>
+                    </div>
+                  )}
+
                 </div>
 
                 <div className="flex flex-row items-center justify-center gap-1">
