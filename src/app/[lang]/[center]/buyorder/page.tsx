@@ -3567,8 +3567,8 @@ const fetchBuyOrders = async () => {
             backdrop-blur-md
             ">
               <Image
-                src="/icon-payment.png"
-                alt="Merchant"
+                src="/icon-payment2.png"
+                alt="payment"
                 width={35}
                 height={35}
                 className="w-6 h-6"
@@ -4777,7 +4777,9 @@ const fetchBuyOrders = async () => {
                   alt="Trade"
                   width={50}
                   height={50}
-                  className="w-16 h-16 rounded-lg object-cover"
+                  className={`w-12 h-12 rounded-lg object-cover
+                    ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''}
+                  `}
                 />                
 
                 <div className="flex flex-col gap-2 items-center">
@@ -4837,11 +4839,13 @@ const fetchBuyOrders = async () => {
 
                 <div className="flex flex-row items-center justify-center gap-2">
                   <Image
-                    src="/icon-payment.png"
+                    src="/icon-payment2.png"
                     alt="Payment"
                     width={50}
                     height={50}
-                    className="w-16 h-16 rounded-lg object-cover"
+                    className={`w-12 h-12 rounded-lg object-cover
+                      ${buyOrderStats.totalSettlementCount !== animatedTotalSettlementCount ? 'animate-spin' : ''}
+                    `}
                   />                
 
                   <div className="flex flex-col gap-2 items-center">

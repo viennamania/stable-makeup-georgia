@@ -2801,6 +2801,70 @@ export async function getBuyOrders(
     ]).toArray();
 
 
+
+    const totalReaultGroupByBuyerDepositName = await collection.aggregate([
+      {
+        $match: {
+          status: 'paymentConfirmed',
+          //settlement: { $exists: true, $ne: null },
+          privateSale: privateSale,
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+          storecode: { $regex: storecode, $options: 'i' },
+          nickname: { $regex: searchBuyer, $options: 'i' },
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          //...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          //...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: '$buyer.depositName',
+          totalCount: { $sum: 1 },
+          totalKrwAmount: { $sum: '$krwAmount' },
+          totalUsdtAmount: { $sum: '$usdtAmount' },
+        }
+      },
+      // sort by totalUsdtAmount desc
+      { $sort: { totalUsdtAmount: -1, _id: 1 } },
+      // limit 20
+      { $limit: 20 }
+    ]).toArray();
+
+    const totalReaultGroupByBuyerDepositNameCount = await collection.aggregate([
+      {
+        $match: {
+          status: 'paymentConfirmed',
+          //settlement: { $exists: true, $ne: null },
+          privateSale: privateSale,
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+          storecode: { $regex: storecode, $options: 'i' },
+          nickname: { $regex: searchBuyer, $options: 'i' },
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          //...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          //...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          _id: '$buyer.depositName',
+        }
+      },
+      {
+        $count: "totalCount"
+      }
+    ]).toArray();
+
+
     // totalReaultGroup by seller.bankInfo.accountNumber
 
     /*
@@ -2932,6 +2996,9 @@ export async function getBuyOrders(
 
       totalByUserType: totalReaultGroupByUserType,
       
+      totalByBuyerDepositName: totalReaultGroupByBuyerDepositName,
+      totalReaultGroupByBuyerDepositNameCount: totalReaultGroupByBuyerDepositNameCount.length > 0 ? totalReaultGroupByBuyerDepositNameCount[0].totalCount : 0,
+
       totalBySellerBankAccountNumber: totalReaultGroupBySellerBankAccountNumber,
 
       totalByBuyerBankAccountNumber: totalReaultGroupByBuyerBankAccountNumber,

@@ -1025,12 +1025,22 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     totalFeeAmountKRW: number;
     totalAgentFeeAmount: number;
     totalAgentFeeAmountKRW: number;
+
     totalByUserType: Array<{
       _id: string;
       totalCount: number;
       totalKrwAmount: number;
       totalUsdtAmount: number;
     }>;
+
+    totalByBuyerDepositName: Array<{
+        _id: string;
+        totalCount: number;
+        totalKrwAmount: number;
+        totalUsdtAmount: number;
+      }>;
+    totalReaultGroupByBuyerDepositNameCount: number;
+
     totalBySellerBankAccountNumber: Array<{
       _id: string;
       totalCount: number;
@@ -1051,6 +1061,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     totalAgentFeeAmountKRW: 0,
 
     totalByUserType: [],
+    totalByBuyerDepositName: [],
+    totalReaultGroupByBuyerDepositNameCount: 0,
     totalBySellerBankAccountNumber: [],
   });
 
@@ -1068,6 +1080,38 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
 
   // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
+
+
+  const [buyerDisplayValueArray, setBuyerDisplayValueArray] = useState<number[]>([]);
+  function updateBuyerDisplayValue(index: number, value: number) {
+    setBuyerDisplayValueArray((prevValues) => {
+      const newValues = [...prevValues];
+      newValues[index] = value;
+      return newValues;
+    });
+  }
+
+  useEffect(() => {
+    buyOrderStats.totalByBuyerDepositName.forEach((item, index) => {
+      const targetValue = item.totalKrwAmount;
+      const duration = 1000; // animation duration in ms
+      const startValue = buyerDisplayValueArray[index] || 0;
+      const startTime = performance.now();
+      function animate(currentTime: number) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentValue = startValue + (targetValue - startValue) * progress;
+        updateBuyerDisplayValue(index, Math.round(currentValue));
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+      requestAnimationFrame(animate);
+    });
+  }, [buyOrderStats.totalByBuyerDepositName]);
+
+
+
 
 
   const [sellerBankAccountDisplayValueArray, setSellerBankAccountDisplayValueArray] = useState<number[]>([]);
@@ -1308,6 +1352,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByUserType: data.result.totalByUserType,
+                  totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                  totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
@@ -1463,6 +1509,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                 totalByUserType: data.result.totalByUserType,
+                totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
                 totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
@@ -1560,6 +1608,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
+              totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+              totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
@@ -1849,6 +1899,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByUserType: data.result.totalByUserType,
+                  totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                  totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
@@ -1967,6 +2019,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                 totalByUserType: data.result.totalByUserType,
+                totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
                 totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
@@ -2579,6 +2633,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
+              totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+              totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
@@ -2709,6 +2765,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
         totalByUserType: data.result.totalByUserType,
+        totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+        totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
         totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
       });
 
@@ -3603,7 +3661,7 @@ const fetchBuyOrders = async () => {
             backdrop-blur-md
             ">
               <Image
-                src="/icon-payment.png"
+                src="/icon-payment2.png"
                 alt="Merchant"
                 width={35}
                 height={35}
@@ -4183,8 +4241,8 @@ const fetchBuyOrders = async () => {
                   width={50}
                   height={50}
                   className={`w-12 h-12 rounded-lg object-cover
-                    ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''
-                  }`}
+                    ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''}
+                  `}
                 />
                 <div className="text-sm">P2P 거래수(건)</div>
                 <div className="text-4xl font-semibold text-zinc-500">
@@ -4247,11 +4305,13 @@ const fetchBuyOrders = async () => {
 
                 <div className="flex flex-col gap-2 items-center">
                   <Image
-                    src="/icon-payment.png"
+                    src="/icon-payment2.png"
                     alt="Payment"
                     width={50}
                     height={50}
-                    className="w-12 h-12 rounded-lg object-cover"
+                    className={`w-12 h-12 rounded-lg object-cover
+                      ${buyOrderStats.totalSettlementCount !== animatedTotalSettlementCount ? 'animate-spin' : ''}
+                    `}
                   />   
 
                   <div className="text-sm">가맹점 결제수(건)</div>
@@ -4565,6 +4625,97 @@ const fetchBuyOrders = async () => {
           {/*
           /ko/admin/withdraw-vault?walletAddress=0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3
           */}
+
+
+          {/* buyOrderStats.totalByBuyerDepositName */}
+          <div className="w-full
+            grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1
+            items-start justify-start">
+            {buyOrderStats.totalByBuyerDepositName?.map((item, index) => (
+              <div
+                key={index}
+                className={`flex flex-col gap-1 items-center
+                p-2 rounded-lg shadow-md
+                backdrop-blur-md
+                ${buyerDisplayValueArray && buyerDisplayValueArray[index] !== undefined && buyerDisplayValueArray[index] !== item.totalKrwAmount
+                  ? 'bg-yellow-100/80 animate-pulse'
+                  : 'bg-white/80'}
+                `}
+              >
+                <div className="flex flex-row items-start justify-start gap-1">
+                  <Image
+                    src="/icon-user.png"
+                    alt="User"
+                    width={20}
+                    height={20}
+                    className="w-4 h-4"
+                  />          
+                  <button
+                    className="text-xs font-semibold underline text-blue-600"
+                    onClick={() => {
+                      const depositName = item._id || '알수없음';
+                      navigator.clipboard.writeText(depositName)
+                        .then(() => {
+                          toast.success(`입금자명 ${depositName} 복사됨`);
+                        })
+                        .catch((err) => {
+                          toast.error('복사 실패: ' + err);
+                        });
+                    }}
+                    title="입금자명 복사"
+                  >
+                    {item._id || '알수없음'}
+                  </button>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <span className="text-xs">
+                    {item.totalCount?.toLocaleString() || '0'}
+                  </span>
+                  <span className="text-xs text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    {(item.totalKrwAmount || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {/* show different count buyOrderStats.totalReaultGroupByBuyerDepositNameCount and buyOrderStats.totalByBuyerDepositName.length */}
+   
+            {buyOrderStats.totalReaultGroupByBuyerDepositNameCount! - buyOrderStats.totalByBuyerDepositName!.length > 0 && (
+              <div
+                className="flex flex-col gap-1 items-center
+                p-2 rounded-lg shadow-md
+                bg-white/80
+                backdrop-blur-md
+                "
+              >
+                <div className="flex flex-row items-start justify-start gap-1">
+                  <Image
+                    src="/icon-user.png"
+                    alt="User"
+                    width={20}
+                    height={20}
+                    className="w-4 h-4"
+                  />          
+                  <span
+                    className="text-xs font-semibold text-blue-600"
+                  >
+                    외 {buyOrderStats.totalReaultGroupByBuyerDepositNameCount! - buyOrderStats.totalByBuyerDepositName!.length}명
+                  </span>
+                </div>
+                <div className="flex flex-row items-center justify-center gap-1">
+                  <span className="text-xs">
+                    -
+                  </span>
+                  <span className="text-xs text-yellow-600"
+                    style={{ fontFamily: 'monospace' }}>
+                    -
+                  </span>
+                </div>
+              </div>
+            )}
+
+          </div>
 
 
           {/* buyOrderStats.totalBySellerBankAccountNumber */}
