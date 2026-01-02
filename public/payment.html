@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Member Pay Dashboard</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --line:#22305c;
+      --text:#e7ecff;
+      --muted:#aab5e6;
+      --ok:#3ddc97;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --chip:#1b2750;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", Helvetica, Arial, "Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 20% 0%, #18265a 0%, rgba(24,38,90,0) 60%),
+                  radial-gradient(900px 600px at 90% 10%, #22377a 0%, rgba(34,55,122,0) 55%),
+                  var(--bg);
+      color: var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    button{font:inherit}
+    .app{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      min-height:100vh;
+    }
+    /* Sidebar */
+    .sidebar{
+      padding:18px 14px;
+      background: linear-gradient(180deg, rgba(17,26,51,.9), rgba(10,14,32,.85));
+      border-right: 1px solid var(--line);
+      position: sticky;
+      top:0;
+      height:100vh;
+      overflow:auto;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px 16px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      margin-bottom:14px;
+    }
+    .logo{
+      width:38px; height:38px;
+      border-radius:12px;
+      background: linear-gradient(135deg, #4c6fff, #24d1ff);
+      box-shadow: 0 10px 22px rgba(76,111,255,.25);
+    }
+    .brand h1{
+      font-size:14px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .brand small{display:block; color:var(--muted); margin-top:2px; font-weight:500}
+    .nav{
+      display:flex; flex-direction:column; gap:6px;
+      padding:4px;
+    }
+    .nav a{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      color:var(--muted);
+      border:1px solid transparent;
+    }
+    .nav a:hover{background: rgba(255,255,255,.05); color:var(--text)}
+    .nav a.active{
+      background: rgba(76,111,255,.14);
+      border-color: rgba(76,111,255,.35);
+      color: var(--text);
+    }
+    .nav .icon{
+      width:22px; height:22px;
+      display:grid; place-items:center;
+      border-radius:8px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.06);
+      font-size:12px;
+    }
+    .sidecard{
+      margin-top:14px;
+      padding:12px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .sidecard h3{margin:0 0 8px; font-size:12px; color:var(--muted); font-weight:700}
+    .kv{display:grid; gap:8px}
+    .kv .row{display:flex; justify-content:space-between; gap:10px; font-size:12px}
+    .pill{
+      padding:4px 8px;
+      border-radius:999px;
+      background: rgba(61,220,151,.12);
+      border:1px solid rgba(61,220,151,.35);
+      color: var(--ok);
+      font-weight:700;
+      font-size:11px;
+      white-space:nowrap;
+    }
+    .pill.warn{
+      background: rgba(255,204,102,.12);
+      border-color: rgba(255,204,102,.35);
+      color: var(--warn);
+    }
+
+    /* Main */
+    .main{
+      padding:18px;
+      max-width: 1250px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:16px;
+    }
+    .topbar .left{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .title{margin:0; font-size:18px}
+    .subtitle{margin:0; color:var(--muted); font-size:12px}
+    .topbar .right{
+      display:flex; align-items:center; gap:10px;
+    }
+    .search{
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      min-width: 320px;
+    }
+    .search input{
+      border:0; outline:0; background:transparent;
+      color:var(--text);
+      width:100%;
+      font-size:13px;
+    }
+    .chip{
+      padding:6px 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size:12px;
+      cursor:pointer;
+    }
+    .btn{
+      padding:10px 12px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4c6fff, #24d1ff);
+      border: 0;
+      color: #06102a;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow: 0 12px 22px rgba(76,111,255,.22);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      box-shadow:none;
+      font-weight:700;
+    }
+
+    /* Layout blocks */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(17,26,51,.72), rgba(10,14,32,.55));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .ph{
+      padding:14px 14px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.03);
+    }
+    .panel .ph h2{
+      margin:0; font-size:13px; letter-spacing:.2px;
+    }
+    .panel .ph .meta{color:var(--muted); font-size:12px}
+    .panel .pc{padding:14px}
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+    .card{
+      padding:12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+      min-height: 86px;
+    }
+    .card .k{color:var(--muted); font-size:11px; font-weight:700}
+    .card .v{margin-top:8px; font-size:18px; font-weight:900; letter-spacing:.2px}
+    .card .hint{margin-top:6px; color:var(--muted); font-size:11px}
+    .status{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{width:7px; height:7px; border-radius:99px; background: var(--ok)}
+    .dot.warn{background: var(--warn)}
+    .dot.bad{background: var(--bad)}
+
+    /* Table */
+    table{width:100%; border-collapse:separate; border-spacing:0 10px;}
+    th{
+      text-align:left;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:800;
+      padding:0 10px 6px;
+    }
+    td{
+      padding:12px 10px;
+      background: rgba(255,255,255,.04);
+      border-top:1px solid rgba(255,255,255,.07);
+      border-bottom:1px solid rgba(255,255,255,.07);
+      font-size:12px;
+      vertical-align:middle;
+    }
+    tr td:first-child{
+      border-left:1px solid rgba(255,255,255,.07);
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+    }
+    tr td:last-child{
+      border-right:1px solid rgba(255,255,255,.07);
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:11px;
+      font-weight:800;
+      background: rgba(61,220,151,.12);
+      border: 1px solid rgba(61,220,151,.35);
+      color: var(--ok);
+      white-space:nowrap;
+    }
+    .badge.warn{
+      background: rgba(255,204,102,.12);
+      border-color: rgba(255,204,102,.35);
+      color: var(--warn);
+    }
+    .badge.bad{
+      background: rgba(255,107,107,.12);
+      border-color: rgba(255,107,107,.35);
+      color: var(--bad);
+    }
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .muted{color:var(--muted)}
+    .row-actions{display:flex; gap:8px; flex-wrap:wrap}
+    .linkbtn{
+      padding:7px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      font-size:11px;
+      cursor:pointer;
+    }
+    .linkbtn.primary{
+      background: rgba(76,111,255,.16);
+      border-color: rgba(76,111,255,.35);
+    }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .modal{
+      width:min(720px, 100%);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(17,26,51,.95), rgba(10,14,32,.92));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .mh{
+      padding:14px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modal .mh h3{margin:0; font-size:13px}
+    .modal .mc{padding:14px}
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field{display:flex; flex-direction:column; gap:6px}
+    .field label{font-size:11px; color:var(--muted); font-weight:800}
+    .field input, .field select, .field textarea{
+      padding:10px 11px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      outline:none;
+      font-size:13px;
+    }
+    .field textarea{min-height: 88px; resize:vertical}
+    .modal .mf{
+      padding:14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display:flex; justify-content:flex-end; gap:10px;
+    }
+    .closex{
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      cursor:pointer;
+      font-size:18px;
+      padding:6px 10px;
+      border-radius: 10px;
+    }
+    .closex:hover{background: rgba(255,255,255,.06); color: var(--text)}
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .app{grid-template-columns: 1fr}
+      .sidebar{position:relative; height:auto}
+      .grid{grid-template-columns:1fr}
+      .cards{grid-template-columns:1fr}
+      .search{min-width: 0; width: 100%}
+      .topbar{flex-direction:column; align-items:stretch}
+      .topbar .right{justify-content:space-between}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Pay Member Portal</h1>
+          <small>USDT Escrow • Member</small>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Main Navigation">
+        <a class="active" href="#dashboard" data-route="dashboard"><span class="icon">🏠</span>대시보드</a>
+        <a href="#transactions" data-route="transactions"><span class="icon">🧾</span>거래</a>
+        <a href="#listings" data-route="listings"><span class="icon">📌</span>매물/오퍼</a>
+        <a href="#wallet" data-route="wallet"><span class="icon">🔒</span>에스크로</a>
+        <a href="#reports" data-route="reports"><span class="icon">📈</span>리포트</a>
+        <a href="#account" data-route="account"><span class="icon">👤</span>계정/인증</a>
+      </nav>
+
+      <div class="sidecard">
+        <h3>내 상태</h3>
+        <div class="kv">
+          <div class="row"><span class="muted">KYC</span><span class="pill" id="kycPill">Verified</span></div>
+          <div class="row"><span class="muted">레벨</span><span class="mono">L2</span></div>
+          <div class="row"><span class="muted">일일 한도</span><span class="mono">50,000 USDT</span></div>
+          <div class="row"><span class="muted">2FA</span><span class="pill warn" id="twofaPill">Off</span></div>
+        </div>
+      </div>
+
+      <div class="sidecard">
+        <h3>중요 고지</h3>
+        <div class="muted" style="font-size:12px; line-height:1.5">
+          본 서비스는 <b>USDT 에스크로</b> 기능을 제공합니다. 원화 결제/송금은 당사자 간 외부에서 처리하며,
+          증빙 제출 및 검토에 따라 Release가 진행됩니다.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div class="left">
+          <h2 class="title" id="pageTitle">대시보드</h2>
+          <p class="subtitle" id="pageSubtitle">진행 중 거래와 해야 할 일을 한눈에 확인하세요.</p>
+        </div>
+        <div class="right">
+          <div class="search" role="search">
+            <span class="muted">🔎</span>
+            <input id="searchInput" placeholder="거래번호, 상대, 상태로 검색…" />
+          </div>
+          <button class="chip" id="toggleDemo">Demo Data</button>
+          <button class="btn" id="newTxBtn">새 거래 시작</button>
+        </div>
+      </header>
+
+      <!-- Route: Dashboard -->
+      <section class="route" id="dashboard" data-route-section="dashboard">
+        <div class="panel">
+          <div class="ph">
+            <h2>요약</h2>
+            <div class="status"><span class="dot"></span> 서비스 정상</div>
+          </div>
+          <div class="pc">
+            <div class="cards">
+              <div class="card">
+                <div class="k">진행 중 거래</div>
+                <div class="v" id="statActive">3</div>
+                <div class="hint">Proof/Review 상태 포함</div>
+              </div>
+              <div class="card">
+                <div class="k">대기 작업</div>
+                <div class="v" id="statTodo">2</div>
+                <div class="hint">증빙 제출/승인 필요</div>
+              </div>
+              <div class="card">
+                <div class="k">에스크로 Lock</div>
+                <div class="v" id="statLocked">12,500</div>
+                <div class="hint">USDT</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="grid">
+          <div class="panel">
+            <div class="ph">
+              <h2>최근 거래</h2>
+              <div class="meta">상태 타임라인 기반</div>
+            </div>
+            <div class="pc">
+              <table aria-label="Recent Transactions">
+                <thead>
+                  <tr>
+                    <th>거래번호</th>
+                    <th>상대</th>
+                    <th>금액</th>
+                    <th>상태</th>
+                    <th>액션</th>
+                  </tr>
+                </thead>
+                <tbody id="txTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <h2>해야 할 일</h2>
+              <div class="meta">Due soon</div>
+            </div>
+            <div class="pc" id="todoList" style="display:grid; gap:10px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Route: Transactions -->
+      <section class="route" id="transactions" data-route-section="transactions" hidden>
+        <div class="panel">
+          <div class="ph">
+            <h2>거래 목록</h2>
+            <div class="meta">필터/검색</div>
+          </div>
+          <div class="pc">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+              <button class="chip" data-filter="ALL">전체</button>
+              <button class="chip" data-filter="LOCKED">LOCKED</button>
+              <button class="chip" data-filter="PROOF_SUBMITTED">PROOF_SUBMITTED</button>
+              <button class="chip" data-filter="REVIEWING">REVIEWING</button>
+              <button class="chip" data-filter="RELEASED">RELEASED</button>
+              <button class="chip" data-filter="DISPUTED">DISPUTED</button>
+            </div>
+            <table aria-label="All Transactions">
+              <thead>
+                <tr>
+                  <th>거래번호</th>
+                  <th>상대</th>
+                  <th>금액</th>
+                  <th>상태</th>
+                  <th>업데이트</th>
+                  <th>액션</th>
+                </tr>
+              </thead>
+              <tbody id="txAllTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Route: Listings -->
+      <section class="route" id="listings" data-route-section="listings" hidden>
+        <div class="panel">
+          <div class="ph">
+            <h2>매물/오퍼</h2>
+            <div class="meta">등록 · 협의 · 매칭</div>
+          </div>
+          <div class="pc">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+              <button class="btn secondary" id="newListingBtn">매물 등록</button>
+              <button class="btn secondary" id="newOfferBtn">오퍼 생성</button>
+            </div>
+            <div class="muted" style="font-size:12px; line-height:1.5">
+              이 영역은 API 연동 시 <span class="mono">/listings</span>, <span class="mono">/offers</span> 데이터를 표시하도록 확장하세요.
+              현재는 샘플 UI만 포함되어 있습니다.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Route: Wallet / Escrow -->
+      <section class="route" id="wallet" data-route-section="wallet" hidden>
+        <div class="panel">
+          <div class="ph">
+            <h2>에스크로</h2>
+            <div class="meta">Lock · Release · 주소관리</div>
+          </div>
+          <div class="pc">
+            <div class="cards" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="card">
+                <div class="k">내 Lock 잔액</div>
+                <div class="v"><span id="escrowLocked">12,500</span> <span class="muted" style="font-size:12px">USDT</span></div>
+                <div class="hint">진행 중 거래 합산</div>
+              </div>
+              <div class="card">
+                <div class="k">Release 승인 대기</div>
+                <div class="v" id="escrowPending">1</div>
+                <div class="hint">Reviewing 포함</div>
+              </div>
+            </div>
+
+            <div style="height:14px"></div>
+
+            <div class="panel" style="box-shadow:none">
+              <div class="ph">
+                <h2>주소 화이트리스트</h2>
+                <div class="meta">출금/수령 주소</div>
+              </div>
+              <div class="pc">
+                <table aria-label="Whitelist">
+                  <thead>
+                    <tr>
+                      <th>라벨</th>
+                      <th>네트워크</th>
+                      <th>주소</th>
+                      <th>액션</th>
+                    </tr>
+                  </thead>
+                  <tbody id="wlBody"></tbody>
+                </table>
+                <button class="btn secondary" id="addWlBtn">주소 추가</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Route: Reports -->
+      <section class="route" id="reports" data-route-section="reports" hidden>
+        <div class="panel">
+          <div class="ph">
+            <h2>리포트</h2>
+            <div class="meta">CSV/PDF 내보내기</div>
+          </div>
+          <div class="pc">
+            <div class="muted" style="font-size:12px; line-height:1.6; margin-bottom:12px">
+              API 연동 시 거래 내역을 기간별로 조회하여 다운로드 기능을 제공하세요.
+              (예: <span class="mono">GET /reports/transactions?from=...&to=...</span>)
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap">
+              <button class="btn secondary" id="exportCsvBtn">CSV 다운로드(샘플)</button>
+              <button class="btn secondary" id="exportPdfBtn">PDF 다운로드(샘플)</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Route: Account -->
+      <section class="route" id="account" data-route-section="account" hidden>
+        <div class="panel">
+          <div class="ph">
+            <h2>계정/인증</h2>
+            <div class="meta">KYC · 2FA · 권한</div>
+          </div>
+          <div class="pc">
+            <div class="form" style="grid-template-columns: 1fr 1fr;">
+              <div class="field">
+                <label>이메일</label>
+                <input value="member@example.com" />
+              </div>
+              <div class="field">
+                <label>회원 유형</label>
+                <select>
+                  <option>개인</option>
+                  <option selected>법인</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>KYC 상태</label>
+                <input value="Verified (L2)" disabled />
+              </div>
+              <div class="field">
+                <label>2FA</label>
+                <select id="twofaSelect">
+                  <option value="off" selected>Off</option>
+                  <option value="on">On</option>
+                </select>
+              </div>
+              <div class="field" style="grid-column: 1 / -1;">
+                <label>리스크 고지 확인</label>
+                <textarea disabled>본 서비스는 USDT 에스크로만 제공하며, 원화 결제는 당사자 간 외부에서 처리합니다. 증빙 제출 및 검토 결과에 따라 Release가 진행될 수 있습니다.</textarea>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap">
+              <button class="btn secondary" id="saveAccountBtn">저장</button>
+              <button class="btn secondary" id="logoutBtn">로그아웃</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="muted" style="padding:16px 6px; font-size:12px;">
+        © <span id="year"></span> Pay Member Portal • Sample HTML (API 연동 전 UI 템플릿)
+      </footer>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal">
+      <div class="mh">
+        <h3 id="modalTitle">새 거래 시작</h3>
+        <button class="closex" id="modalClose" aria-label="Close">×</button>
+      </div>
+      <div class="mc" id="modalContent">
+        <form id="txForm">
+          <div class="form">
+            <div class="field">
+              <label>상대(닉네임/법인명)</label>
+              <input name="counterparty" placeholder="예: Alpha OTC" required />
+            </div>
+            <div class="field">
+              <label>역할</label>
+              <select name="role">
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>금액(USDT)</label>
+              <input name="amount" type="number" min="1" step="1" placeholder="예: 5000" required />
+            </div>
+            <div class="field">
+              <label>네트워크</label>
+              <select name="network">
+                <option>TRON (TRC20)</option>
+                <option>Ethereum (ERC20)</option>
+                <option>TON</option>
+                <option>Solana</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>메모(증빙/협의사항)</label>
+              <textarea name="memo" placeholder="예: 1/2 15:00 송금 예정, 증빙 업로드 후 Release 요청"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="mf">
+        <button class="btn secondary" id="modalCancel">취소</button>
+        <button class="btn" id="modalSubmit">생성</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------- Demo Data (replace with API calls) --------
+    const demo = {
+      enabled: true,
+      user: { kyc: "Verified", level:"L2", dailyLimit: 50000, twofa:false },
+      whitelist: [
+        { label:"Main Treasury", network:"TRC20", address:"TQp1...x9dK" },
+        { label:"Cold Wallet", network:"ERC20", address:"0xA1b2...9F0e" }
+      ],
+      transactions: [
+        { id:"TX-250102-001", counterparty:"Alpha OTC", amount:6500, status:"PROOF_SUBMITTED", updated:"2026-01-02 15:40", todo:"증빙 검토 대기" },
+        { id:"TX-250102-002", counterparty:"Beta Maker", amount:3000, status:"LOCKED", updated:"2026-01-02 14:10", todo:"구매자 증빙 제출 요청" },
+        { id:"TX-250101-009", counterparty:"Gamma Desk", amount:8000, status:"REVIEWING", updated:"2026-01-01 20:22", todo:"운영자 승인 대기" },
+        { id:"TX-241231-120", counterparty:"Delta Trade", amount:2000, status:"RELEASED", updated:"2025-12-31 18:05", todo:"완료" },
+        { id:"TX-241231-088", counterparty:"Echo OTC", amount:1500, status:"DISPUTED", updated:"2025-12-31 09:44", todo:"분쟁 진행" }
+      ]
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    function statusBadge(status){
+      const map = {
+        "LOCKED": { cls:"warn", dot:"warn", label:"LOCKED (에스크로 잠금)" },
+        "PROOF_SUBMITTED": { cls:"warn", dot:"warn", label:"PROOF_SUBMITTED (증빙 제출)" },
+        "REVIEWING": { cls:"warn", dot:"warn", label:"REVIEWING (검토 중)" },
+        "RELEASED": { cls:"", dot:"", label:"RELEASED (완료)" },
+        "DISPUTED": { cls:"bad", dot:"bad", label:"DISPUTED (분쟁)" }
+      };
+      const v = map[status] || { cls:"", dot:"", label: status };
+      const cls = v.cls ? `badge ${v.cls}` : "badge";
+      return `<span class="${cls}"><span class="dot ${v.dot}"></span>${v.label}</span>`;
+    }
+
+    function renderSidebarStatus(){
+      $("#kycPill").textContent = demo.user.kyc;
+      if(demo.user.twofa){
+        $("#twofaPill").textContent = "On";
+        $("#twofaPill").classList.remove("warn");
+      }else{
+        $("#twofaPill").textContent = "Off";
+        $("#twofaPill").classList.add("warn");
+      }
+      $("#twofaSelect").value = demo.user.twofa ? "on" : "off";
+    }
+
+    function computeStats(){
+      const active = demo.transactions.filter(t => !["RELEASED"].includes(t.status)).length;
+      const todo = demo.transactions.filter(t => ["LOCKED","PROOF_SUBMITTED","REVIEWING"].includes(t.status)).length;
+      const locked = demo.transactions
+        .filter(t => ["LOCKED","PROOF_SUBMITTED","REVIEWING"].includes(t.status))
+        .reduce((s,t)=>s+t.amount,0);
+      $("#statActive").textContent = active;
+      $("#statTodo").textContent = todo;
+      $("#statLocked").textContent = locked.toLocaleString();
+      $("#escrowLocked").textContent = locked.toLocaleString();
+      $("#escrowPending").textContent = demo.transactions.filter(t => ["REVIEWING"].includes(t.status)).length;
+    }
+
+    function renderDashboardTables(){
+      const tbody = $("#txTableBody");
+      const items = demo.transactions.slice(0,4);
+      tbody.innerHTML = items.map(t => `
+        <tr>
+          <td class="mono">${t.id}</td>
+          <td>${t.counterparty}</td>
+          <td class="mono">${t.amount.toLocaleString()} USDT</td>
+          <td>${statusBadge(t.status)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="linkbtn primary" data-open-tx="${t.id}">상세</button>
+              ${t.status === "LOCKED" ? `<button class="linkbtn" data-action="request-proof" data-tx="${t.id}">증빙 요청</button>` : ""}
+              ${t.status === "PROOF_SUBMITTED" ? `<button class="linkbtn" data-action="review" data-tx="${t.id}">검토</button>` : ""}
+              ${t.status === "REVIEWING" ? `<button class="linkbtn" data-action="release" data-tx="${t.id}">Release 요청</button>` : ""}
+              ${t.status === "DISPUTED" ? `<button class="linkbtn" data-action="dispute" data-tx="${t.id}">분쟁 보기</button>` : ""}
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderTodo(){
+      const list = $("#todoList");
+      const todos = demo.transactions
+        .filter(t => ["LOCKED","PROOF_SUBMITTED","REVIEWING","DISPUTED"].includes(t.status))
+        .slice(0,5);
+
+      list.innerHTML = todos.map(t => {
+        const dot = t.status === "DISPUTED" ? "bad" : "warn";
+        const title = t.status === "LOCKED" ? "증빙 요청/수신 대기"
+                    : t.status === "PROOF_SUBMITTED" ? "증빙 검토 필요"
+                    : t.status === "REVIEWING" ? "승인/Release 대기"
+                    : "분쟁 케이스 진행";
+        return `
+          <div class="card" style="min-height:auto">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start">
+              <div>
+                <div class="k">${title}</div>
+                <div class="v" style="font-size:14px; margin-top:8px">${t.counterparty}</div>
+                <div class="hint mono">${t.id} • ${t.amount.toLocaleString()} USDT</div>
+              </div>
+              <div class="status"><span class="dot ${dot}"></span>${t.status}</div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap">
+              <button class="linkbtn primary" data-open-tx="${t.id}">상세</button>
+              ${t.status !== "DISPUTED" ? `<button class="linkbtn" data-action="upload-proof" data-tx="${t.id}">증빙 업로드</button>` : ""}
+              <button class="linkbtn" data-action="message" data-tx="${t.id}">메시지</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderTransactionsAll(filter="ALL", q=""){
+      const body = $("#txAllTableBody");
+      let items = [...demo.transactions];
+
+      if(filter !== "ALL") items = items.filter(t => t.status === filter);
+
+      const query = (q || "").trim().toLowerCase();
+      if(query){
+        items = items.filter(t =>
+          t.id.toLowerCase().includes(query) ||
+          t.counterparty.toLowerCase().includes(query) ||
+          t.status.toLowerCase().includes(query)
+        );
+      }
+
+      body.innerHTML = items.map(t => `
+        <tr>
+          <td class="mono">${t.id}</td>
+          <td>${t.counterparty}</td>
+          <td class="mono">${t.amount.toLocaleString()} USDT</td>
+          <td>${statusBadge(t.status)}</td>
+          <td class="mono muted">${t.updated}</td>
+          <td>
+            <div class="row-actions">
+              <button class="linkbtn primary" data-open-tx="${t.id}">상세</button>
+              <button class="linkbtn" data-action="timeline" data-tx="${t.id}">타임라인</button>
+              ${t.status !== "RELEASED" ? `<button class="linkbtn" data-action="dispute" data-tx="${t.id}">분쟁</button>` : ""}
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderWhitelist(){
+      const body = $("#wlBody");
+      body.innerHTML = demo.whitelist.map((w, idx) => `
+        <tr>
+          <td>${w.label}</td>
+          <td class="mono">${w.network}</td>
+          <td class="mono">${w.address}</td>
+          <td>
+            <div class="row-actions">
+              <button class="linkbtn" data-action="copy" data-copy="${w.address}">복사</button>
+              <button class="linkbtn" data-action="remove-wl" data-idx="${idx}">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    // -------- Routing --------
+    const routeMeta = {
+      dashboard: { title:"대시보드", sub:"진행 중 거래와 해야 할 일을 한눈에 확인하세요." },
+      transactions: { title:"거래", sub:"상태별로 거래를 조회하고 액션을 수행합니다." },
+      listings: { title:"매물/오퍼", sub:"매물 등록과 오퍼(매칭 요청)를 관리합니다." },
+      wallet: { title:"에스크로", sub:"Lock/Release 및 주소 화이트리스트를 관리합니다." },
+      reports: { title:"리포트", sub:"거래 내역 및 수수료 리포트를 다운로드합니다." },
+      account: { title:"계정/인증", sub:"KYC/2FA 및 기본 정보를 관리합니다." }
+    };
+
+    function setRoute(route){
+      // sections
+      $$("[data-route-section]").forEach(sec => {
+        sec.hidden = sec.getAttribute("data-route-section") !== route;
+      });
+      // nav
+      $$("[data-route]").forEach(a => {
+        a.classList.toggle("active", a.getAttribute("data-route") === route);
+      });
+      // header
+      $("#pageTitle").textContent = routeMeta[route]?.title || "페이지";
+      $("#pageSubtitle").textContent = routeMeta[route]?.sub || "";
+      // hash
+      history.replaceState(null, "", `#${route}`);
+    }
+
+    // -------- Modal --------
+    const backdrop = $("#modalBackdrop");
+    function openModal(title){
+      $("#modalTitle").textContent = title;
+      backdrop.style.display = "flex";
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+    function closeModal(){
+      backdrop.style.display = "none";
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    // -------- Exports (sample) --------
+    function download(filename, content, mime){
+      const blob = new Blob([content], {type: mime || "text/plain"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // -------- Wire up events --------
+    let currentFilter = "ALL";
+
+    function bindTableActions(){
+      document.body.addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if(!btn) return;
+
+        const openId = btn.getAttribute("data-open-tx");
+        if(openId){
+          alert(`(샘플) 거래 상세 열기: ${openId}\n\nAPI 연동 시 /transactions/${openId} 조회 후 상세 화면으로 이동하세요.`);
+          return;
+        }
+
+        const action = btn.getAttribute("data-action");
+        if(!action) return;
+
+        if(action === "copy"){
+          const text = btn.getAttribute("data-copy") || "";
+          navigator.clipboard?.writeText(text);
+          alert("주소가 복사되었습니다.");
+          return;
+        }
+        if(action === "remove-wl"){
+          const idx = Number(btn.getAttribute("data-idx"));
+          if(Number.isFinite(idx)){
+            demo.whitelist.splice(idx, 1);
+            renderWhitelist();
+          }
+          return;
+        }
+
+        const txId = btn.getAttribute("data-tx");
+        if(action === "upload-proof"){
+          alert(`(샘플) 증빙 업로드: ${txId}\n\nAPI 연동 시 presigned URL 발급 → 업로드 → /proof 등록을 수행하세요.`);
+        } else if(action === "review"){
+          alert(`(샘플) 증빙 검토: ${txId}\n\n운영자/승인 권한일 때만 노출되도록 권한 체크를 적용하세요.`);
+        } else if(action === "release"){
+          alert(`(샘플) Release 요청: ${txId}\n\nAPI 연동 시 /escrow/release 호출(다중 승인/서명 등)로 연결하세요.`);
+        } else if(action === "request-proof"){
+          alert(`(샘플) 증빙 요청 메시지 발송: ${txId}\n\n내부 메시지/템플릿 기능을 연결하세요.`);
+        } else if(action === "dispute"){
+          alert(`(샘플) 분쟁 케이스: ${txId}\n\nAPI 연동 시 /dispute 생성 및 케이스 화면을 구현하세요.`);
+        } else if(action === "message"){
+          alert(`(샘플) 메시지/채팅: ${txId}\n\nAPI 연동 시 채팅/메시지 서비스(웹소켓 등)로 연결하세요.`);
+        } else if(action === "timeline"){
+          alert(`(샘플) 타임라인: ${txId}\n\n거래 상태 변경 로그(LOCKED→PROOF→REVIEWING→RELEASED)를 표시하세요.`);
+        }
+      });
+    }
+
+    function bindNav(){
+      $$("[data-route]").forEach(a => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          setRoute(a.getAttribute("data-route"));
+        });
+      });
+      window.addEventListener("hashchange", () => {
+        const r = (location.hash || "#dashboard").replace("#","");
+        if(routeMeta[r]) setRoute(r);
+      });
+    }
+
+    function bindTopbar(){
+      $("#newTxBtn").addEventListener("click", () => openModal("새 거래 시작"));
+      $("#modalClose").addEventListener("click", closeModal);
+      $("#modalCancel").addEventListener("click", closeModal);
+      $("#modalSubmit").addEventListener("click", () => {
+        const form = $("#txForm");
+        const data = Object.fromEntries(new FormData(form));
+        if(!data.counterparty || !data.amount){
+          alert("상대와 금액을 입력하세요.");
+          return;
+        }
+        // Create a demo transaction (replace with POST /transactions + POST /escrow/lock)
+        const id = `TX-${Date.now().toString().slice(-6)}-NEW`;
+        demo.transactions.unshift({
+          id,
+          counterparty: data.counterparty,
+          amount: Number(data.amount),
+          status: "LOCKED",
+          updated: new Date().toISOString().slice(0,16).replace("T"," "),
+          todo: "구매자 증빙 제출 요청"
+        });
+        form.reset();
+        closeModal();
+        refreshAll();
+        setRoute("transactions");
+      });
+
+      $("#toggleDemo").addEventListener("click", () => {
+        demo.enabled = !demo.enabled;
+        alert(`Demo Data: ${demo.enabled ? "ON" : "OFF"}\n\nOFF로 해도 화면은 유지됩니다(샘플). API 연동 시 이 부분을 실제 fetch로 교체하세요.`);
+      });
+
+      $("#searchInput").addEventListener("input", (e) => {
+        const q = e.target.value;
+        renderTransactionsAll(currentFilter, q);
+      });
+
+      $$('button[data-filter]').forEach(b => {
+        b.addEventListener("click", () => {
+          currentFilter = b.getAttribute("data-filter");
+          renderTransactionsAll(currentFilter, $("#searchInput").value);
+        });
+      });
+
+      $("#addWlBtn").addEventListener("click", () => {
+        const label = prompt("라벨(예: Main Treasury)");
+        if(!label) return;
+        const network = prompt("네트워크(예: TRC20/ERC20)");
+        if(!network) return;
+        const address = prompt("주소");
+        if(!address) return;
+        demo.whitelist.push({label, network, address});
+        renderWhitelist();
+      });
+
+      $("#exportCsvBtn").addEventListener("click", () => {
+        const rows = [["id","counterparty","amount","status","updated"]];
+        demo.transactions.forEach(t => rows.push([t.id,t.counterparty,t.amount,t.status,t.updated]));
+        const csv = rows.map(r => r.map(x => `"${String(x).replaceAll('"','""')}"`).join(",")).join("\n");
+        download("transactions_sample.csv", csv, "text/csv;charset=utf-8");
+      });
+
+      $("#exportPdfBtn").addEventListener("click", () => {
+        const text =
+`[Sample PDF Content]
+- Replace with real PDF generator on server or client (e.g., jsPDF).
+- Exported at: ${new Date().toISOString()}
+
+Transactions:
+${demo.transactions.map(t => `- ${t.id} | ${t.counterparty} | ${t.amount} USDT | ${t.status} | ${t.updated}`).join("\n")}
+`;
+        download("transactions_sample.txt", text, "text/plain;charset=utf-8");
+      });
+
+      $("#twofaSelect").addEventListener("change", (e) => {
+        demo.user.twofa = e.target.value === "on";
+        renderSidebarStatus();
+      });
+
+      $("#saveAccountBtn").addEventListener("click", () => {
+        alert("(샘플) 저장 완료\n\nAPI 연동 시 PATCH /me, POST /2fa/enable 등을 호출하세요.");
+      });
+      $("#logoutBtn").addEventListener("click", () => {
+        alert("(샘플) 로그아웃\n\nAPI 연동 시 토큰 삭제 후 로그인 화면으로 이동하세요.");
+      });
+
+      // Close modal when clicking backdrop
+      backdrop.addEventListener("click", (e) => {
+        if(e.target === backdrop) closeModal();
+      });
+      // ESC to close
+      document.addEventListener("keydown", (e) => {
+        if(e.key === "Escape" && backdrop.style.display === "flex") closeModal();
+      });
+    }
+
+    function refreshAll(){
+      renderSidebarStatus();
+      computeStats();
+      renderDashboardTables();
+      renderTodo();
+      renderTransactionsAll(currentFilter, $("#searchInput").value);
+      renderWhitelist();
+    }
+
+    // -------- Init --------
+    (function init(){
+      $("#year").textContent = new Date().getFullYear();
+      bindNav();
+      bindTopbar();
+      bindTableActions();
+      refreshAll();
+
+      const initialRoute = (location.hash || "#dashboard").replace("#","");
+      setRoute(routeMeta[initialRoute] ? initialRoute : "dashboard");
+    })();
+  </script>
+</body>
+</html>

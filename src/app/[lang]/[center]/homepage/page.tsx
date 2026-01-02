@@ -2648,6 +2648,7 @@ const fetchBuyOrders = async () => {
 
               className="p-2 text-sm bg-transparent text-zinc-800 rounded"
 
+              value={params.lang}
               onChange={(e) => {
                 const lang = e.target.value;
                 router.push(
@@ -2657,25 +2658,21 @@ const fetchBuyOrders = async () => {
             >
               <option
                 value="en"
-                selected={params.lang === "en"}
               >
                 English(US)
               </option>
               <option
                 value="ko"
-                selected={params.lang === "ko"}
               >
                 한국어(KR)
               </option>
               <option
                 value="zh"
-                selected={params.lang === "zh"}
               >
                 中文(ZH)
               </option>
               <option
                 value="ja"
-                selected={params.lang === "ja"}
               >
                 日本語(JP)
               </option>
