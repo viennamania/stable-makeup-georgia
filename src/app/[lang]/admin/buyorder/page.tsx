@@ -4667,8 +4667,8 @@ const fetchBuyOrders = async () => {
                     {item._id || '알수없음'}
                   </button>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-xs">
+                <div className="w-full flex flex-row items-center justify-between gap-1">
+                  <span className="text-xs text-zinc-500">
                     {item.totalCount?.toLocaleString() || '0'}
                   </span>
                   <span className="text-xs text-yellow-600"
@@ -4773,11 +4773,11 @@ const fetchBuyOrders = async () => {
                   )}
                 </div>
 
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-sm xl:text-lg font-semibold">
+                <div className="w-full flex flex-row items-center justify-between gap-1">
+                  <span className="text-sm xl:text-lg font-semibold text-zinc-500">
                     {item.totalCount?.toLocaleString() || '0'}
                   </span>
-                  <span className="text-sm xl:text-xl font-semibold text-yellow-600"
+                  <span className="text-sm xl:text-lg font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
                     {
                       
