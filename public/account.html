@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>계정/인증 • Pay Member Portal</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --line:#22305c;
+      --text:#e7ecff;
+      --muted:#aab5e6;
+      --ok:#3ddc97;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --chip:#1b2750;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", Helvetica, Arial;
+      background:
+        radial-gradient(1200px 700px at 20% 0%, #18265a 0%, rgba(24,38,90,0) 60%),
+        radial-gradient(900px 600px at 90% 10%, #22377a 0%, rgba(34,55,122,0) 55%),
+        var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    button{font:inherit}
+
+    /* App Layout */
+    .app{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      min-height:100vh;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      padding:18px 14px;
+      background: linear-gradient(180deg, rgba(17,26,51,.9), rgba(10,14,32,.85));
+      border-right: 1px solid rgba(255,255,255,.08);
+      position:sticky; top:0;
+      height:100vh; overflow:auto;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 10px 16px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      margin-bottom:14px;
+    }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(135deg, #4c6fff, #24d1ff);
+      box-shadow: 0 10px 22px rgba(76,111,255,.25);
+    }
+    .brand h1{margin:0; font-size:14px; letter-spacing:.2px}
+    .brand small{display:block; color:var(--muted); margin-top:2px; font-weight:500}
+
+    .nav{display:flex; flex-direction:column; gap:6px; padding:4px;}
+    .nav a{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      color:var(--muted);
+      border:1px solid transparent;
+    }
+    .nav a:hover{background: rgba(255,255,255,.05); color:var(--text)}
+    .nav a.active{
+      background: rgba(76,111,255,.14);
+      border-color: rgba(76,111,255,.35);
+      color: var(--text);
+    }
+    .icon{
+      width:22px; height:22px;
+      display:grid; place-items:center;
+      border-radius:8px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.06);
+      font-size:12px;
+    }
+
+    .sidecard{
+      margin-top:14px;
+      padding:12px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .sidecard h3{margin:0 0 8px; font-size:12px; color:var(--muted); font-weight:800}
+    .kv{display:grid; gap:8px}
+    .kv .row{display:flex; justify-content:space-between; gap:10px; font-size:12px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .pill{
+      padding:4px 8px; border-radius:999px;
+      background: rgba(61,220,151,.12);
+      border:1px solid rgba(61,220,151,.35);
+      color: var(--ok);
+      font-weight:800; font-size:11px; white-space:nowrap;
+    }
+    .pill.warn{
+      background: rgba(255,204,102,.12);
+      border-color: rgba(255,204,102,.35);
+      color: var(--warn);
+    }
+
+    /* Main */
+    .main{
+      padding:18px;
+      max-width: 1250px;
+      margin: 0 auto;
+      width:100%;
+    }
+    .topbar{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      margin-bottom:16px;
+    }
+    .title{margin:0; font-size:18px}
+    .subtitle{margin:4px 0 0; color:var(--muted); font-size:12px}
+    .topbar .left{display:flex; flex-direction:column}
+    .topbar .right{display:flex; align-items:center; gap:10px}
+    .chip{
+      padding:6px 10px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size:12px;
+      cursor:pointer;
+    }
+    .btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:0;
+      cursor:pointer;
+      font-weight:900;
+      color:#06102a;
+      background: linear-gradient(135deg, #4c6fff, #24d1ff);
+      box-shadow: 0 12px 22px rgba(76,111,255,.22);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      box-shadow:none;
+      font-weight:800;
+    }
+    .status{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:5px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{width:7px; height:7px; border-radius:99px; background: var(--ok)}
+    .dot.warn{background: var(--warn)}
+    .dot.bad{background: var(--bad)}
+
+    /* Panels */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(17,26,51,.72), rgba(10,14,32,.55));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .ph{
+      padding:14px 14px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.03);
+    }
+    .ph h2{margin:0; font-size:13px; letter-spacing:.2px}
+    .ph .meta{color:var(--muted); font-size:12px}
+    .pc{padding:14px}
+
+    /* Forms */
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field{display:flex; flex-direction:column; gap:6px}
+    .field label{font-size:11px; color:var(--muted); font-weight:900}
+    .field input,.field select,.field textarea{
+      padding:10px 11px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      outline:none;
+      font-size:13px;
+    }
+    .field textarea{min-height: 98px; resize:vertical}
+    .help{color:var(--muted); font-size:11px; line-height:1.5; margin-top:2px}
+
+    /* Cards */
+    .card{
+      padding:12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .card .k{color:var(--muted); font-size:11px; font-weight:900}
+    .card .v{margin-top:8px; font-size:16px; font-weight:950; letter-spacing:.2px}
+    .row-actions{display:flex; gap:10px; flex-wrap:wrap}
+
+    /* Table */
+    table{width:100%; border-collapse:separate; border-spacing:0 10px;}
+    th{
+      text-align:left;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:950;
+      padding:0 10px 6px;
+    }
+    td{
+      padding:12px 10px;
+      background: rgba(255,255,255,.04);
+      border-top:1px solid rgba(255,255,255,.07);
+      border-bottom:1px solid rgba(255,255,255,.07);
+      font-size:12px;
+      vertical-align:middle;
+    }
+    tr td:first-child{
+      border-left:1px solid rgba(255,255,255,.07);
+      border-top-left-radius:12px;
+      border-bottom-left-radius:12px;
+    }
+    tr td:last-child{
+      border-right:1px solid rgba(255,255,255,.07);
+      border-top-right-radius:12px;
+      border-bottom-right-radius:12px;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:950;
+      background: rgba(61,220,151,.12);
+      border:1px solid rgba(61,220,151,.35);
+      color: var(--ok);
+      white-space:nowrap;
+    }
+    .badge.warn{
+      background: rgba(255,204,102,.12);
+      border-color: rgba(255,204,102,.35);
+      color: var(--warn);
+    }
+
+    /* Toggle */
+    .toggle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .switch{
+      position:relative; width:46px; height:28px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      cursor:pointer;
+      flex: 0 0 auto;
+    }
+    .knob{
+      position:absolute; top:3px; left:3px;
+      width:22px; height:22px; border-radius:999px;
+      background: rgba(255,255,255,.75);
+      transition: transform .18s ease, background .18s ease;
+    }
+    .switch.on{
+      background: rgba(61,220,151,.18);
+      border-color: rgba(61,220,151,.35);
+    }
+    .switch.on .knob{
+      transform: translateX(18px);
+      background: rgba(61,220,151,.95);
+    }
+
+    footer{padding:16px 6px; font-size:12px; color:var(--muted)}
+
+    @media (max-width: 980px){
+      .app{grid-template-columns:1fr}
+      .sidebar{position:relative; height:auto}
+      .grid{grid-template-columns:1fr}
+      .topbar{flex-direction:column; align-items:stretch}
+      .topbar .right{justify-content:space-between; flex-wrap:wrap}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Pay Member Portal</h1>
+          <small>USDT Escrow • Member</small>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Main Navigation">
+        <a href="/dashboard.html"><span class="icon">🏠</span>대시보드</a>
+        <a href="/transactions.html"><span class="icon">🧾</span>거래</a>
+        <a href="/listings.html"><span class="icon">📌</span>매물/오퍼</a>
+        <a href="/wallet.html"><span class="icon">🔒</span>에스크로</a>
+        <a href="/reports.html"><span class="icon">📈</span>리포트</a>
+        <a class="active" href="/account.html"><span class="icon">👤</span>계정/인증</a>
+      </nav>
+
+      <div class="sidecard">
+        <h3>내 상태</h3>
+        <div class="kv">
+          <div class="row"><span class="muted">KYC</span><span class="pill" id="kycPill">Verified</span></div>
+          <div class="row"><span class="muted">레벨</span><span class="mono">L2</span></div>
+          <div class="row"><span class="muted">일일 한도</span><span class="mono">50,000 USDT</span></div>
+          <div class="row"><span class="muted">2FA</span><span class="pill warn" id="twofaPill">Off</span></div>
+        </div>
+      </div>
+
+      <div class="sidecard">
+        <h3>중요 고지</h3>
+        <div class="muted" style="font-size:12px; line-height:1.5">
+          본 서비스는 <b>USDT 에스크로</b> 기능을 제공합니다. 원화 결제/송금은 당사자 간 외부에서 처리하며,
+          증빙 제출 및 검토 결과에 따라 Release가 진행됩니다.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div class="left">
+          <h2 class="title">계정/인증</h2>
+          <p class="subtitle">KYC 상태, 2FA, 접근 권한 및 보안 설정을 관리하세요.</p>
+        </div>
+        <div class="right">
+          <span class="status"><span class="dot"></span> 계정 정상</span>
+          <button class="chip" id="btnSecurityLog">보안 로그</button>
+          <button class="btn" id="btnSaveAll">저장</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <!-- Left: Account -->
+        <div class="panel">
+          <div class="ph">
+            <h2>프로필</h2>
+            <div class="meta">기본 정보</div>
+          </div>
+          <div class="pc">
+            <div class="form">
+              <div class="field">
+                <label>회원 유형</label>
+                <select id="memberType">
+                  <option>개인</option>
+                  <option selected>법인</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>조직명/법인명</label>
+                <input id="orgName" value="Seunghyun Holdings" />
+              </div>
+
+              <div class="field">
+                <label>담당자 이름</label>
+                <input id="name" value="Seunghyun" />
+              </div>
+
+              <div class="field">
+                <label>이메일</label>
+                <input id="email" value="member@example.com" />
+                <div class="help">로그인/알림 수신에 사용됩니다.</div>
+              </div>
+
+              <div class="field">
+                <label>휴대폰(선택)</label>
+                <input id="phone" placeholder="예: 010-1234-5678" />
+                <div class="help">2FA/중요 알림에 사용할 수 있습니다.</div>
+              </div>
+
+              <div class="field">
+                <label>타임존</label>
+                <select id="timezone">
+                  <option selected>Asia/Seoul (KST)</option>
+                  <option>UTC</option>
+                  <option>America/New_York</option>
+                </select>
+              </div>
+
+              <div class="field" style="grid-column:1/-1;">
+                <label>고지/리스크 확인</label>
+                <textarea id="riskText" disabled>본 서비스는 USDT 에스크로만 제공하며, 원화 결제는 당사자 간 외부에서 처리합니다. 증빙 제출 및 검토 결과에 따라 Release가 진행될 수 있습니다.</textarea>
+              </div>
+            </div>
+
+            <div style="height:14px"></div>
+
+            <div class="panel" style="box-shadow:none">
+              <div class="ph">
+                <h2>보안</h2>
+                <div class="meta">2FA · 비밀번호</div>
+              </div>
+              <div class="pc" style="display:grid; gap:12px;">
+                <div class="toggle">
+                  <div>
+                    <div style="font-weight:950; font-size:13px;">2단계 인증(2FA)</div>
+                    <div class="help">로그인 시 추가 인증을 요구합니다. (권장)</div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="badge warn" id="twofaBadge"><span class="dot warn"></span>OFF</span>
+                    <div class="switch" id="twofaSwitch" role="switch" aria-checked="false" tabindex="0">
+                      <div class="knob"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="k">비밀번호 변경</div>
+                  <div class="help">API 연동 시: <span class="mono">POST /account/password</span></div>
+                  <div style="height:10px"></div>
+                  <div class="form" style="grid-template-columns:1fr 1fr;">
+                    <div class="field">
+                      <label>현재 비밀번호</label>
+                      <input type="password" placeholder="••••••••" />
+                    </div>
+                    <div class="field">
+                      <label>새 비밀번호</label>
+                      <input type="password" placeholder="8자 이상" />
+                    </div>
+                    <div class="field" style="grid-column:1/-1;">
+                      <label>새 비밀번호 확인</label>
+                      <input type="password" placeholder="동일하게 입력" />
+                    </div>
+                  </div>
+                  <div style="height:12px"></div>
+                  <div class="row-actions">
+                    <button class="btn secondary" id="btnChangePw">비밀번호 변경</button>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="k">세션 관리</div>
+                  <div class="help">의심스러운 로그인 기록이 있으면 모든 기기에서 로그아웃하세요.</div>
+                  <div style="height:10px"></div>
+                  <div class="row-actions">
+                    <button class="btn secondary" id="btnLogout">로그아웃</button>
+                    <button class="btn secondary" id="btnLogoutAll">모든 기기 로그아웃</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: KYC & Limits / Team -->
+        <div style="display:grid; gap:14px;">
+          <div class="panel">
+            <div class="ph">
+              <h2>KYC/한도</h2>
+              <div class="meta">검증 상태</div>
+            </div>
+            <div class="pc" style="display:grid; gap:12px;">
+              <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                  <div>
+                    <div class="k">KYC 상태</div>
+                    <div class="v" style="margin-top:6px;">Verified <span class="muted" style="font-size:12px; font-weight:800;">(L2)</span></div>
+                    <div class="help">추가 서류가 필요한 경우 EDD로 전환될 수 있습니다.</div>
+                  </div>
+                  <span class="badge"><span class="dot"></span>통과</span>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="k">거래 한도</div>
+                <div style="height:8px"></div>
+                <div style="display:grid; gap:8px; font-size:12px;">
+                  <div style="display:flex; justify-content:space-between;">
+                    <span class="muted">일일 한도</span><span class="mono">50,000 USDT</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span class="muted">월간 한도</span><span class="mono">1,000,000 USDT</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span class="muted">화이트리스트 거래</span><span class="mono">Enabled</span>
+                  </div>
+                </div>
+                <div style="height:12px"></div>
+                <div class="row-actions">
+                  <button class="btn secondary" id="btnUpgrade">한도 상향 신청</button>
+                  <button class="btn secondary" id="btnKycDocs">KYC 서류 보기</button>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="k">고위험 플래그</div>
+                <div class="help">룰 기반 모니터링 결과에 따라 거래가 일시 보류될 수 있습니다.</div>
+                <div style="height:10px"></div>
+                <span class="status"><span class="dot"></span>현재 플래그 없음</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="ph">
+              <h2>조직/권한</h2>
+              <div class="meta">멤버 관리</div>
+            </div>
+            <div class="pc">
+              <div class="card" style="margin-bottom:12px;">
+                <div class="k">권한 요약</div>
+                <div class="help">API 연동 시 RBAC 권한으로 화면 노출을 제어하세요.</div>
+                <div style="height:10px"></div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <span class="status"><span class="dot"></span>Member</span>
+                  <span class="status"><span class="dot warn"></span>Release 요청</span>
+                  <span class="status"><span class="dot warn"></span>주소 추가</span>
+                </div>
+              </div>
+
+              <table aria-label="Organization Members">
+                <thead>
+                  <tr>
+                    <th>이름</th>
+                    <th>이메일</th>
+                    <th>권한</th>
+                    <th>상태</th>
+                  </tr>
+                </thead>
+                <tbody id="memberRows">
+                  <tr>
+                    <td>Seunghyun</td>
+                    <td class="mono">member@example.com</td>
+                    <td>Owner</td>
+                    <td><span class="badge"><span class="dot"></span>활성</span></td>
+                  </tr>
+                  <tr>
+                    <td>Ops Admin</td>
+                    <td class="mono">ops@example.com</td>
+                    <td>Operator</td>
+                    <td><span class="badge warn"><span class="dot warn"></span>초대됨</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div style="height:12px"></div>
+              <div class="row-actions">
+                <button class="btn secondary" id="btnInvite">멤버 초대</button>
+                <button class="btn secondary" id="btnRoles">권한 설정</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <footer>© <span id="year"></span> Pay Member Portal • Account/Auth Page (Sample HTML)</footer>
+    </main>
+  </div>
+
+  <script>
+    const $ = (s)=>document.querySelector(s);
+
+    // init year
+    $("#year").textContent = new Date().getFullYear();
+
+    // 2FA Toggle (demo)
+    let twofaOn = false;
+
+    function renderTwofa(){
+      const pill = $("#twofaPill");
+      const badge = $("#twofaBadge");
+      const sw = $("#twofaSwitch");
+      if(twofaOn){
+        pill.textContent = "On";
+        pill.classList.remove("warn");
+        badge.className = "badge";
+        badge.innerHTML = '<span class="dot"></span>ON';
+        sw.classList.add("on");
+        sw.setAttribute("aria-checked","true");
+      }else{
+        pill.textContent = "Off";
+        pill.classList.add("warn");
+        badge.className = "badge warn";
+        badge.innerHTML = '<span class="dot warn"></span>OFF';
+        sw.classList.remove("on");
+        sw.setAttribute("aria-checked","false");
+      }
+    }
+
+    function toggleTwofa(){
+      twofaOn = !twofaOn;
+      renderTwofa();
+      alert(`(샘플) 2FA ${twofaOn ? "ON" : "OFF"}\n\nAPI 연동 시:\n- ON: POST /2fa/enable (OTP 등록/QR)\n- OFF: POST /2fa/disable\n을 호출하세요.`);
+    }
+
+    $("#twofaSwitch").addEventListener("click", toggleTwofa);
+    $("#twofaSwitch").addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleTwofa(); }
+    });
+
+    // Buttons (demo hooks)
+    $("#btnSaveAll").addEventListener("click", ()=>{
+      alert("(샘플) 저장 완료\n\nAPI 연동 시 PATCH /me, PATCH /org 등을 호출하세요.");
+    });
+    $("#btnSecurityLog").addEventListener("click", ()=>{
+      alert("(샘플) 보안 로그\n\nAPI 연동 시 GET /security/logs 로 최근 로그인/IP/디바이스를 표시하세요.");
+    });
+    $("#btnChangePw").addEventListener("click", ()=>{
+      alert("(샘플) 비밀번호 변경\n\nAPI 연동 시 POST /account/password 로 연결하세요.");
+    });
+    $("#btnLogout").addEventListener("click", ()=>{
+      alert("(샘플) 로그아웃\n\n토큰/세션 삭제 후 로그인 페이지로 이동하세요.");
+    });
+    $("#btnLogoutAll").addEventListener("click", ()=>{
+      alert("(샘플) 모든 기기 로그아웃\n\nAPI 연동 시 POST /sessions/revoke_all 등을 호출하세요.");
+    });
+    $("#btnUpgrade").addEventListener("click", ()=>{
+      alert("(샘플) 한도 상향 신청\n\nAPI 연동 시 POST /kyc/upgrade_request (EDD 서류 업로드)로 연결하세요.");
+    });
+    $("#btnKycDocs").addEventListener("click", ()=>{
+      alert("(샘플) KYC 서류 보기\n\nAPI 연동 시 GET /kyc/documents 목록/다운로드를 구현하세요.");
+    });
+    $("#btnInvite").addEventListener("click", ()=>{
+      const email = prompt("초대할 이메일을 입력하세요");
+      if(!email) return;
+      alert(`(샘플) 초대 발송: ${email}\n\nAPI 연동 시 POST /org/invite 를 호출하세요.`);
+    });
+    $("#btnRoles").addEventListener("click", ()=>{
+      alert("(샘플) 권한 설정\n\nAPI 연동 시 RBAC(Role/Permission) 화면을 추가하세요.");
+    });
+
+    renderTwofa();
+  </script>
+</body>
+</html>
