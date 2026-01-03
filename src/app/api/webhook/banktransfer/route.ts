@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
   // 1002532555836 => 01039126579
 
 
-
+  // 57491038528407 => 01048859573
 
 
 
@@ -419,6 +419,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '01040772911';
   } else if (bank_account_number == '1002532555836') {
     bankAccountNumber = '01039126579';
+  } else if (bank_account_number == '57491038528407') {
+    bankAccountNumber = '01048859573';
   }
 
   
