@@ -1033,6 +1033,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       totalUsdtAmount: number;
     }>;
 
+    /*
     totalByBuyerDepositName: Array<{
         _id: string;
         totalCount: number;
@@ -1040,6 +1041,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         totalUsdtAmount: number;
       }>;
     totalReaultGroupByBuyerDepositNameCount: number;
+    */
 
     totalBySellerBankAccountNumber: Array<{
       _id: string;
@@ -1061,8 +1063,12 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     totalAgentFeeAmountKRW: 0,
 
     totalByUserType: [],
+
+    /*
     totalByBuyerDepositName: [],
     totalReaultGroupByBuyerDepositNameCount: 0,
+    */
+
     totalBySellerBankAccountNumber: [],
   });
 
@@ -1082,6 +1088,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   // animation for totalBySellerBankAccountNumber.totalKrwAmount static array
 
 
+  /*
   const [buyerDisplayValueArray, setBuyerDisplayValueArray] = useState<number[]>([]);
   function updateBuyerDisplayValue(index: number, value: number) {
     setBuyerDisplayValueArray((prevValues) => {
@@ -1109,6 +1116,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       requestAnimationFrame(animate);
     });
   }, [buyOrderStats.totalByBuyerDepositName]);
+  */
 
 
 
@@ -1352,8 +1360,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByUserType: data.result.totalByUserType,
-                  totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                  totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+                  
+                  //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                  //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+                  
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
@@ -1509,8 +1519,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                 totalByUserType: data.result.totalByUserType,
-                totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
+                //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
                 totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
@@ -1608,8 +1620,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
-              totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-              totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+              
+              //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+              //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
@@ -1899,8 +1913,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                   totalByUserType: data.result.totalByUserType,
-                  totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                  totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
+                  //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                  //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
                 });
 
@@ -2019,8 +2035,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                 totalByUserType: data.result.totalByUserType,
-                totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
+                //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+                //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
                 totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
               });
 
@@ -2633,8 +2651,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
-              totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-              totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
+              //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+              //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
             });
 
@@ -2765,8 +2785,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
         totalByUserType: data.result.totalByUserType,
-        totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-        totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
+        //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+        //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+
         totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
       });
 
@@ -4628,6 +4650,7 @@ const fetchBuyOrders = async () => {
 
 
           {/* buyOrderStats.totalByBuyerDepositName */}
+          {/*
           <div className="w-full
             grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1
             items-start justify-start">
@@ -4679,9 +4702,7 @@ const fetchBuyOrders = async () => {
               </div>
             ))}
 
-            {/* show different count buyOrderStats.totalReaultGroupByBuyerDepositNameCount and buyOrderStats.totalByBuyerDepositName.length */}
-   
-            {/* large text +n more bolded emphasized color */}
+
             {buyOrderStats.totalReaultGroupByBuyerDepositNameCount! - buyOrderStats.totalByBuyerDepositName!.length > 0 && (
 
               <div className="text-xl font-bold text-red-500
@@ -4693,6 +4714,7 @@ const fetchBuyOrders = async () => {
             )}
 
           </div>
+          */}
 
 
           {/* buyOrderStats.totalBySellerBankAccountNumber */}

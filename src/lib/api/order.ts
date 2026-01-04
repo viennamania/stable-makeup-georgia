@@ -2801,7 +2801,7 @@ export async function getBuyOrders(
     ]).toArray();
 
 
-
+    /*
     const totalReaultGroupByBuyerDepositName = await collection.aggregate([
       {
         $match: {
@@ -2863,6 +2863,7 @@ export async function getBuyOrders(
         $count: "totalCount"
       }
     ]).toArray();
+    */
 
 
     // totalReaultGroup by seller.bankInfo.accountNumber
@@ -2998,8 +2999,8 @@ export async function getBuyOrders(
 
       totalByUserType: totalReaultGroupByUserType,
       
-      totalByBuyerDepositName: totalReaultGroupByBuyerDepositName,
-      totalReaultGroupByBuyerDepositNameCount: totalReaultGroupByBuyerDepositNameCount.length > 0 ? totalReaultGroupByBuyerDepositNameCount[0].totalCount : 0,
+      //totalByBuyerDepositName: totalReaultGroupByBuyerDepositName,
+      //totalReaultGroupByBuyerDepositNameCount: totalReaultGroupByBuyerDepositNameCount.length > 0 ? totalReaultGroupByBuyerDepositNameCount[0].totalCount : 0,
 
       totalBySellerBankAccountNumber: totalReaultGroupBySellerBankAccountNumber,
 
