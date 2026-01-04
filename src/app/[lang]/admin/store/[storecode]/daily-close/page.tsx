@@ -690,7 +690,9 @@ export default function Index({ params }: any) {
 
     //const today = new Date();
     //first day of the year
-    const today = new Date( new Date().getFullYear(), 0, 1);
+    //const today = new Date( new Date().getFullYear(), 0, 1);
+    // first day of last year
+    const today = new Date( new Date().getFullYear() - 1, 0, 1);
 
     today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
 
@@ -804,7 +806,7 @@ export default function Index({ params }: any) {
     fetchBuyOrders();
 
     
-    
+    /*
     const interval = setInterval(() => {
 
       fetchBuyOrders();
@@ -814,7 +816,7 @@ export default function Index({ params }: any) {
   
 
     return () => clearInterval(interval);
-    
+    */
     
     
     
@@ -1360,25 +1362,6 @@ const fetchBuyOrders = async () => {
 
    return data.result;
   };
-
-
-
-
-
-
-
-  useEffect(() => {
-    // Dynamically load the Binance widget script
-    const script = document.createElement("script");
-    script.src = "https://public.bnbstatic.com/unpkg/growth-widget/cryptoCurrencyWidget@0.0.20.min.js";
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup the script when the component unmounts
-      document.body.removeChild(script);
-    };
-  }, [address, store]);
 
 
 
