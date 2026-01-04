@@ -4854,8 +4854,8 @@ const fetchBuyOrders = async () => {
                         //Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
                         currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                        ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.000'
+                        ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.00'
                       }
                     </span>
                   </div>
