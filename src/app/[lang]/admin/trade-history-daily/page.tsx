@@ -591,7 +591,7 @@ export default function Index({ params }: any) {
 
     }
 
-  } , [address]);
+  } , [address, searchStorecode]);
 
 
 
@@ -699,7 +699,9 @@ export default function Index({ params }: any) {
 
     //const today = new Date();
     //first day of the year
-    const today = new Date( new Date().getFullYear(), 0, 1);
+    //const today = new Date( new Date().getFullYear(), 0, 1);
+    // first day of last year
+    const today = new Date( new Date().getFullYear() - 1, 0, 1);
 
     today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
 
