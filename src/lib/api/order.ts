@@ -4171,13 +4171,21 @@ export async function buyOrderConfirmPayment(data: any) {
   let result = null;
 
 
+  // when order status is 'paymentRequested', then update to 'paymentConfirmed'
+
+
   try {
 
     if (autoConfirmPayment) {
 
+
+
       result = await collection.updateOne(
         
-        { _id: new ObjectId(data.orderId+'')},
+        {
+          _id: new ObjectId(data.orderId+''),
+          status: 'paymentRequested',
+        },
 
 
         { $set: {
@@ -4202,7 +4210,10 @@ export async function buyOrderConfirmPayment(data: any) {
 
       result = await collection.updateOne(
 
-        { _id: new ObjectId(data.orderId+'') },
+        {
+          _id: new ObjectId(data.orderId+''),
+          status: 'paymentRequested',
+        },
 
 
         { $set: {
@@ -4283,8 +4294,10 @@ export async function buyOrderConfirmPayment(data: any) {
       // returnUrl result log collection
       const returnUrlLogCollection = client.db(dbName).collection('returnUrlLogs');
 
-
-      if (order.storecode === 'qibgieiu') {
+      // 조지아 WOOD site
+      if (
+        order.storecode === 'qibgieiu'
+      ) {
         try {
           const returnUrl = 'https://wood-505.com/tools/arena/ChangeBalance2.php';
           const response = await fetch(returnUrl,
@@ -4626,6 +4639,9 @@ export async function buyOrderConfirmPayment(data: any) {
 
     
   } else {
+
+    console.log('buyOrderConfirmPayment no document updated for orderId: ' + data.orderId);
+    
     return null;
   }
   
