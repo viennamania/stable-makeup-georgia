@@ -404,7 +404,7 @@ export async function POST(request: NextRequest) {
 
   // 57491038528407 => 01048859573
 
-
+  // 3560820389133 => 10897495680-99
 
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
@@ -421,6 +421,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '01039126579';
   } else if (bank_account_number == '57491038528407') {
     bankAccountNumber = '01048859573';
+  } else if (bank_account_number == '3560820389133') {
+    bankAccountNumber = '10897495680-99';
   }
 
   
