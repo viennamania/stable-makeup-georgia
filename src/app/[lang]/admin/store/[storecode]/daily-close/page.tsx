@@ -1074,7 +1074,9 @@ const fetchBuyOrders = async () => {
       return;
     }
 
-    toast.success('Escrow withdrawal successful');
+    //toast.success('Escrow withdrawal successful');
+    // 한글로
+    toast.success('에스크로 출금이 성공적으로 처리되었습니다');
 
     const data = await response.json();
 
