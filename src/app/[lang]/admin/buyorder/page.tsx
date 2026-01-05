@@ -5978,7 +5978,7 @@ const fetchBuyOrders = async () => {
                                   openModal();
                                 }}
                               >
-                                {Completed}
+                                거래<br/>완료
                               </button>
                               <a
                                 href={`${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
