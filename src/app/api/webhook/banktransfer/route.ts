@@ -406,6 +406,11 @@ export async function POST(request: NextRequest) {
 
   // 3560820389133 => 10897495680-99
 
+  //////// 1089749568099 => 356-0820-3891-33
+
+
+  // 1021026804140 => 맞춤계좌: 02103378912
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -423,6 +428,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '01048859573';
   } else if (bank_account_number == '3560820389133') {
     bankAccountNumber = '10897495680-99';
+  } else if (bank_account_number == '1021026804140') {
+    bankAccountNumber = '02103378912';
   }
 
   
