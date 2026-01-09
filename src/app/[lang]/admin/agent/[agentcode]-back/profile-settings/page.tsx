@@ -1558,6 +1558,15 @@ export default function SettingsPage({ params }: any) {
                                         <option value="동양종합금융" selected={bankName === "동양종합금융"}>
                                             동양종합금융
                                         </option>
+                                        <option value="JT친애저축은행" selected={bankName === "JT친애저축은행"}>
+                                            JT친애저축은행
+                                        </option>
+                                        <option value="한국씨티은행" selected={bankName === "한국씨티은행"}>
+                                            한국씨티은행
+                                        </option>
+                                        <option value="산림조합중앙회" selected={bankName === "산림조합중앙회"}>
+                                            산림조합중앙회
+                                        </option>
                                         <option value="산업은행" selected={bankName === "산업은행"}>
                                             산업은행
                                         </option>
