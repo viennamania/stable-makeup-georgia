@@ -3181,7 +3181,7 @@ export default function Index({ params }: any) {
                         <td className="p-2">
                           <div className="
                             mr-5
-                            w-48
+                            w-32
                             flex flex-col items-end justify-center gap-1">
 
                             <div className="w-full flex flex-row items-center justify-end gap-1">
@@ -3192,7 +3192,7 @@ export default function Index({ params }: any) {
                                 height={20}
                                 className="w-5 h-5"
                               />
-                              <span className="text-lg text-[#409192] font-semibold"
+                              <span className="text-lg text-[#409192]"
                                 style={{ fontFamily: 'monospace' }}
                               >
                               {
@@ -3204,7 +3204,7 @@ export default function Index({ params }: any) {
                               </span>
                             </div>
                             <div className="w-full flex flex-row items-center justify-end gap-1">
-                              <span className="text-lg text-yellow-600 font-semibold"
+                              <span className="text-lg text-yellow-600"
                                 style={{ fontFamily: 'monospace' }}
                               >
                               {item?.totalPaymentConfirmedKrwAmount && item?.totalPaymentConfirmedKrwAmount.toLocaleString('ko-KR') || 0}
