@@ -2636,8 +2636,8 @@ export default function Index({ params }: any) {
 
             </div>
 
-
-            <div className="w-full flex flex-col xl:flwx-row items-start justify-center gap-2 mt-4">
+            {/*
+            <div className="w-full flex flex-col xl:flex-row items-start justify-center gap-2 mt-4">
 
               <div className="flex flex-row items-center justify-start gap-2">  
                 <Image
@@ -2665,7 +2665,7 @@ export default function Index({ params }: any) {
                   storePaymentUrl
                   }
                 </button>
-                {/* 복사 button */}
+
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(`${storePaymentUrl}`);
@@ -2684,6 +2684,7 @@ export default function Index({ params }: any) {
               </div>
 
             </div>
+            */}
 
 
             <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
@@ -3174,7 +3175,7 @@ export default function Index({ params }: any) {
                         </td>
 
                         <td className="p-2">
-                          <div className="w-20 flex flex-col items-end justify-center gap-1">
+                          <div className="w-16 flex flex-col items-end justify-center gap-1">
                             {item?.totalPaymentConfirmedCount || 0}
                           </div>
                         </td>
@@ -3362,28 +3363,28 @@ export default function Index({ params }: any) {
 
                         <td className="p-2">
                           <div className="
-                            w-32
+                            w-28 
                             flex flex-col sm:flex-row items-start justify-center gap-2">
                             <span className="text-sm text-zinc-500">
                               {
                               item?.buyOrderStatus === 'ordered' ? (
-                                <span className="text-lg text-yellow-500 font-semibold">
+                                <span className="text-sm text-yellow-500 font-semibold">
                                   구매주문
                                 </span>
                               ) : item?.buyOrderStatus === 'accepted' ? (
-                                <span className="text-lg text-green-500 font-semibold">
+                                <span className="text-sm text-green-500 font-semibold">
                                   판매자확정
                                 </span>
                               ) : item?.buyOrderStatus === 'paymentRequested' ? (
-                                <span className="text-lg text-red-500 font-semibold">
+                                <span className="text-sm text-red-500 font-semibold">
                                   결제요청
                                 </span>
                               ) : item?.buyOrderStatus === 'paymentConfirmed' ? (
-                                <span className="text-lg text-green-500 font-semibold">
+                                <span className="text-sm text-green-500 font-semibold">
                                   결제완료
                                 </span>
                               ) : item?.buyOrderStatus === 'cancelled' ? (
-                                <span className="text-lg text-red-500 font-semibold">
+                                <span className="text-sm text-red-500 font-semibold">
                                   거래취소
                                 </span>
                               ) : ''
