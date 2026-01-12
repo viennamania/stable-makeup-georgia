@@ -86,6 +86,23 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   console.log("payaction body", body);
+
+  /*
+  {
+    transaction_type: 'deposited',
+    bank_account_number: '1013016171814',
+    amount: 50000,
+    transaction_date: '2026-01-10T15:50:40.598+09:00',
+    transaction_name: '윤석산',
+    balance: 1820004
+  }
+  */
+
+  
+
+
+
+
   /*
 {
     "transaction_type": "deposited",
@@ -413,6 +430,8 @@ export async function POST(request: NextRequest) {
 
   // 110496321987 => 07891237777
 
+  // 41402149330 => 2427343744778
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -434,6 +453,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '02103378912';
   } else if (bank_account_number == '110496321987') {
     bankAccountNumber = '07891237777';
+  } else if (bank_account_number == '41402149330') {
+    bankAccountNumber = '2427343744778';
   }
 
   

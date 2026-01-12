@@ -8175,11 +8175,14 @@ const fetchBuyOrders = async () => {
                                             is last 1 hour, show button to settlement
                                         */}
 
+
+                                        {/* 일단 수동으로 정산하기는 막는다. */}
+                                        
                                         {item.transactionHash &&
                                           new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() > 1000 * 5 * 60 && (
 
                                           <div className="flex flex-row gap-2 items-center justify-center">
-                                            {/* checkbox to confirm settlement */}
+
                                             <input
                                               disabled={loadingSettlement[index]}
                                               type="checkbox"
@@ -8241,6 +8244,7 @@ const fetchBuyOrders = async () => {
                                             </button>
                                           </div>
                                         )}
+                                        
 
 
 
