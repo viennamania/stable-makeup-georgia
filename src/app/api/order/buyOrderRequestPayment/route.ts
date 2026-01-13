@@ -90,20 +90,6 @@ export async function POST(request: NextRequest) {
 
 
 
-
-    /*
-
-    if (!payactionApiKey || !payactionShopId) {
-      console.error("Payaction API key or Shop ID is not defined for storecode:", buyOrder.storecode);
-      return NextResponse.json({
-        error: "Payaction API key or Shop ID is not defined",
-        storecode: buyOrder.storecode,
-      }, { status: 400 });
-    }
-    */
-
-
-
   
     // if buyOrder?.mobile is +82, remove +82
     let mobile = buyOrder?.mobile || "";
@@ -118,7 +104,7 @@ export async function POST(request: NextRequest) {
 
 
 
-
+    
     if (payactionApiKey && payactionShopId) {
 
       const tradeId = buyOrder.tradeId;
@@ -153,9 +139,7 @@ export async function POST(request: NextRequest) {
 
         const payactionResult = await payactionResponse.json();
         console.log("buyOrderRequestPayment payactionResult", payactionResult);
-        /*
-        { status: 'success', response: {} }
-        */
+
 
         // updateBuyOrderPayactionResult
         await updateBuyOrderPayactionResult({
@@ -191,6 +175,7 @@ export async function POST(request: NextRequest) {
       }
     
     }
+    
 
 
 
