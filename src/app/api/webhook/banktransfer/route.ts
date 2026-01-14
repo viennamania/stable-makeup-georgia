@@ -434,6 +434,11 @@ export async function POST(request: NextRequest) {
 
   // 3560820389133 => 1089749568099
 
+  /*
+  계좌번호 : 3520946632383
+맞춤계좌 : 3528879532639
+  */
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -459,6 +464,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '2427343744778';
   } else if (bank_account_number == '3560820389133') {
     bankAccountNumber = '1089749568099';
+  } else if (bank_account_number == '3520946632383') {
+    bankAccountNumber = '3528879532639';
   }
 
   
