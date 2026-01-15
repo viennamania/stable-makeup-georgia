@@ -1136,6 +1136,7 @@ export async function getAllBuyers(
           totalPaymentConfirmedUsdtAmount: 1,
 
           userType: 1,
+          liveOnAndOff: 1,
         }
       }
     )

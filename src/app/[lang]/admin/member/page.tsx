@@ -2494,6 +2494,12 @@ export default function Index({ params }: any) {
                               <span>가입일시</span>
                             </div>
                         </th>
+                        {/* 회원상태 */}
+                        <th className="p-2">
+                          <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
+                            <span>회원 상태</span>
+                          </div>
+                        </th>
 
                         <th className="p-2">
                           <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
@@ -2542,17 +2548,38 @@ export default function Index({ params }: any) {
 
                           <td className="
                             p-2">
-                            {new Date(item.createdAt).toLocaleDateString('ko-KR', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                            })}
-                            {' '}
-                            {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit',
-                            })}
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <span className="text-sm text-zinc-500">
+                                {new Date(item.createdAt).toLocaleDateString('ko-KR', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                })}
+                              </span>
+                              <span className="text-sm text-zinc-500">
+                                {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                })}
+                              </span>
+                            </div>
+
+                          </td>
+
+                          {/* 회원상태  liveOnAndOff  true => 정상상태 , false => 차단상태 */}
+                          <td className="p-2">
+                            <div className="flex flex-col items-start justify-center gap-2">
+                              {item?.liveOnAndOff === false ? (
+                                <span className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs">
+                                  차단상태
+                                </span>
+                              ) : (
+                                <span className="bg-green-500 text-white px-2 py-1 rounded-lg text-xs">
+                                  정상상태
+                                </span>
+                              )}
+                            </div>
                           </td>
                         
                           <td className="p-2">
