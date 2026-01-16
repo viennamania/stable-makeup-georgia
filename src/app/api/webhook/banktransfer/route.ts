@@ -441,7 +441,12 @@ export async function POST(request: NextRequest) {
 
     /*
     계좌번호 : 9002158502801
-맞춤계좌 : 8010715698760
+    맞춤계좌 : 8010715698760
+    */
+
+    /*
+    계좌번호 : 3510166188053
+    맞춤계좌 : 3510166639
     */
 
   let bankAccountNumber = bank_account_number;
@@ -473,6 +478,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '3528879532639';
   } else if (bank_account_number == '9002158502801') {
     bankAccountNumber = '8010715698760';
+  } else if (bank_account_number == '3510166188053') {
+    bankAccountNumber = '3510166639';
   }
 
   
