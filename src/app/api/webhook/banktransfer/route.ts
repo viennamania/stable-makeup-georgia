@@ -459,6 +459,10 @@ export async function POST(request: NextRequest) {
     ▫️계좌번호 : 1021029721413
       맞춤계좌 : 02102573599
     */
+    /*
+    3020621418681 농협 임도운
+    3520106623778
+    */
 
 
   let bankAccountNumber = bank_account_number;
@@ -496,6 +500,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '202053696796';
   } else if (bank_account_number == '1021029721413') {
     bankAccountNumber = '02102573599';
+  } else if (bank_account_number == '3020621418681') {
+    bankAccountNumber = '3520106623778';
   }
 
   
