@@ -453,6 +453,14 @@ export async function POST(request: NextRequest) {
     맞춤계좌 : 202053696796
     */
 
+    /*
+    ◾️이름 : 박진우
+    ◾️은행 : 전북
+    ▫️계좌번호 : 1021029721413
+      맞춤계좌 : 02102573599
+    */
+
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -486,6 +494,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '3510166639';
   } else if (bank_account_number == '010844647440') {
     bankAccountNumber = '202053696796';
+  } else if (bank_account_number == '1021029721413') {
+    bankAccountNumber = '02102573599';
   }
 
   
