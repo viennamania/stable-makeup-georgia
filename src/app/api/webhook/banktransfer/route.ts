@@ -10,19 +10,8 @@ import {
 
 
 import {
-  OrderProps,
-	acceptBuyOrder,
-  updateBuyOrderByQueueId,
-
-
-  //getOneBuyOrder,
-  getOneBuyOrderByTradeId,
-
-  buyOrderConfirmPayment,
-
-} from '@lib/api/order';
-
-
+  insertOne,
+} from '@lib/api/bankTransfer';
 
 
 
@@ -150,6 +139,7 @@ export async function POST(request: NextRequest) {
     transaction_name,
     balance,
     processing_date,
+    match,
   } = body;
 
  
@@ -164,6 +154,7 @@ export async function POST(request: NextRequest) {
   console.log("transaction_name", transaction_name);
   console.log("balance", balance);
   console.log("processing_date", processing_date);
+  console.log("match", match);
 
   {/*
   {
@@ -529,7 +520,20 @@ export async function POST(request: NextRequest) {
       latestBalance: balance,
     });
 
-
+    // insert bank transfer record
+    await insertOne({
+      transactionType: transaction_type,
+      bankAccountId: bank_account_id,
+      originalBankAccountNumber: bank_account_number,
+      bankAccountNumber: bankAccountNumber,
+      bankCode: bank_code,
+      amount: amount,
+      transactionDate: transaction_date,
+      transactionName: transaction_name,
+      balance: balance,
+      processingDate: processing_date,
+      match: match,
+    });
 
 
   }  catch (error) {

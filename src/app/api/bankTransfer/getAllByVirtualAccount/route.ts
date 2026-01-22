@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
 	findByAccount,
-} from '@lib/api/bankTransfer'
+} from '@lib/api/bankTransferVirtualAccount';
 
 export async function POST(request: NextRequest) {
 
