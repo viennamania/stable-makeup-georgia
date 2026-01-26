@@ -460,6 +460,11 @@ export async function POST(request: NextRequest) {
     맞춤계좌: 22200925777
     */
 
+    /*
+    본 : 1002753153102
+    맞춤 : 01086364077
+    */
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -470,7 +475,7 @@ export async function POST(request: NextRequest) {
   } else if (bank_account_number == '1013016171814') {
     bankAccountNumber = '01013001085';
   } else if (bank_account_number == '1002753153102') {
-    bankAccountNumber = '01040772911';
+    bankAccountNumber = '01086364077';
   } else if (bank_account_number == '1002532555836') {
     bankAccountNumber = '01039126579';
   } else if (bank_account_number == '57491038528407') {
@@ -499,6 +504,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '3520106623778';
   } else if (bank_account_number == '2210092524704') {
     bankAccountNumber = '22200925777';
+  } else if (bank_account_number == '1002753153102') {
+    bankAccountNumber = '01086364077';
   }
 
   
