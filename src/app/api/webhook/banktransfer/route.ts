@@ -455,6 +455,10 @@ export async function POST(request: NextRequest) {
     3520106623778
     */
 
+    /*
+    계좌번호 : 221-0092-5247-04
+    맞춤계좌: 22200925777
+    */
 
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
@@ -493,6 +497,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '02102573599';
   } else if (bank_account_number == '3020621418681') {
     bankAccountNumber = '3520106623778';
+  } else if (bank_account_number == '2210092524704') {
+    bankAccountNumber = '22200925777';
   }
 
   
