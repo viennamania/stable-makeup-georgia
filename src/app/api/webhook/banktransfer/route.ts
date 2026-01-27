@@ -466,6 +466,7 @@ export async function POST(request: NextRequest) {
     */
 
     /*
+    // 1021023221787
     이름 : 조강민
     은행 : 전북
     계좌번호 : 전북 1021-02-3221787
@@ -516,7 +517,7 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '22200925777';
   } else if (bank_account_number == '1002753153102') {
     bankAccountNumber = '01086364077';
-  } else if (bank_account_number == '102132221787') {
+  } else if (bank_account_number == '1021023221787') {
     bankAccountNumber = '04558997011';
   }
 
