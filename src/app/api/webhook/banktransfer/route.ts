@@ -465,6 +465,13 @@ export async function POST(request: NextRequest) {
     맞춤 : 01086364077
     */
 
+    /*
+    이름 : 조강민
+    은행 : 전북
+    계좌번호 : 전북 1021-02-3221787
+    맞춤계좌 : 04558997011
+    */
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -509,6 +516,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '22200925777';
   } else if (bank_account_number == '1002753153102') {
     bankAccountNumber = '01086364077';
+  } else if (bank_account_number == '102132221787') {
+    bankAccountNumber = '04558997011';
   }
 
   
