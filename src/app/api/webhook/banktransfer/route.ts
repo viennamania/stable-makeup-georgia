@@ -472,8 +472,11 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '02277987999';
   } else if (bank_account_number == '3521660264663') {
     bankAccountNumber = '3560243561679';
-  } else if (bank_account_number == '1013016171814') {
-    bankAccountNumber = '01013001085';
+
+  // 2026-01-27 수정
+  //} else if (bank_account_number == '1013016171814') {
+  //  bankAccountNumber = '01013001085';
+
   } else if (bank_account_number == '1002753153102') {
     bankAccountNumber = '01086364077';
   } else if (bank_account_number == '1002532555836') {
