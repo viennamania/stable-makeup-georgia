@@ -263,6 +263,13 @@ export async function POST(request: NextRequest) {
     transactionName: buyerDepositName,
     amount: paymentAmount,
     tradeId: order_number,
+    buyerInfo: {
+      nickname: buyerNickname,
+      depositBankName: buyOrder?.buyer?.depositBankName || "",
+      depositBankAccountNumber: buyOrder?.buyer?.depositBankAccountNumber || "",
+      depositName: buyOrder?.buyer?.depositName || "",
+      walletAddress: buyOrder?.buyer?.walletAddress || "",
+    },
   });
   
   console.log("updateBankTransferMatchAndTradeId result", result);
