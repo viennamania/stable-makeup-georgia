@@ -188,7 +188,6 @@ export async function updateBankTransferMatchAndTradeId({
 
 
   // transactionName
-  // 김윤중(점중스튜
 
 
   const client = await clientPromise;
@@ -207,7 +206,8 @@ export async function updateBankTransferMatchAndTradeId({
     {
       transactionType: 'deposited',
       //transactionName: transactionName,
-      transactionName: { $regex: `^${transactionName}` },
+      transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
+      
       amount: amount,
       transactionDate: { $gte: oneMinuteAgoKST },
       match: null,

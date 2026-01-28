@@ -90,18 +90,6 @@ const getTodayString = () => {
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
 };
 
-const normalizeTransactionType = (value: string) => {
-  if (!value) return '';
-  const normalized = value.toLowerCase();
-  if (value === '입금' || normalized === 'deposited' || normalized === 'deposit') {
-    return 'deposited';
-  }
-  if (value === '출금' || normalized === 'withdrawn' || normalized === 'withdrawal') {
-    return 'withdrawn';
-  }
-  return value;
-};
-
 const formatTransactionTypeInfo = (value: any) => {
   if (!value) {
     return { label: '-', variant: 'default' as const };
@@ -131,7 +119,6 @@ export default function BankTransferPage({ params }: any) {
   const limitParam = searchParams.get('limit') || '20';
   const pageParam = searchParams.get('page') || '1';
   const queryParam = searchParams.get('q') || '';
-  const typeParam = searchParams.get('type') || '';
   const matchParam = searchParams.get('match') || '';
   const fromDateParam = searchParams.get('fromDate') || todayString;
   const toDateParam = searchParams.get('toDate') || todayString;
@@ -141,7 +128,6 @@ export default function BankTransferPage({ params }: any) {
   const [pageInput, setPageInput] = useState(String(Number(pageParam) || 1));
 
   const [searchKeyword, setSearchKeyword] = useState(queryParam);
-  const [transactionType, setTransactionType] = useState(normalizeTransactionType(typeParam));
   const [matchStatus, setMatchStatus] = useState(matchParam);
   const [searchFromDate, setSearchFromDate] = useState(fromDateParam);
   const [searchToDate, setSearchToDate] = useState(toDateParam);
@@ -160,12 +146,6 @@ export default function BankTransferPage({ params }: any) {
   useEffect(() => {
     setSearchKeyword(queryParam);
   }, [queryParam]);
-
-  const normalizedTypeParam = useMemo(() => normalizeTransactionType(typeParam), [typeParam]);
-
-  useEffect(() => {
-    setTransactionType(normalizedTypeParam);
-  }, [normalizedTypeParam]);
 
   useEffect(() => {
     setMatchStatus(matchParam);
@@ -235,11 +215,11 @@ export default function BankTransferPage({ params }: any) {
           limit: Number(limitParam) || 20,
           page: Number(pageParam) || 1,
           search: queryParam,
-        transactionType: normalizedTypeParam,
-          matchStatus: matchParam,
-          fromDate: fromDateParam,
-          toDate: toDateParam,
-        }),
+        transactionType: 'deposited',
+        matchStatus: matchParam,
+        fromDate: fromDateParam,
+        toDate: toDateParam,
+      }),
       });
 
       if (!response.ok) {
@@ -264,7 +244,7 @@ export default function BankTransferPage({ params }: any) {
       return;
     }
     fetchBankTransfers();
-  }, [address, isAdmin, limitParam, pageParam, queryParam, normalizedTypeParam, matchParam, fromDateParam, toDateParam]);
+  }, [address, isAdmin, limitParam, pageParam, queryParam, matchParam, fromDateParam, toDateParam]);
 
 
   const totalPages = useMemo(() => {
@@ -277,7 +257,6 @@ export default function BankTransferPage({ params }: any) {
     limit?: string | number;
     page?: string | number;
     q?: string;
-    type?: string;
     match?: string;
     fromDate?: string;
     toDate?: string;
@@ -287,7 +266,6 @@ export default function BankTransferPage({ params }: any) {
     const nextLimit = overrides.limit ?? limitParam ?? 20;
     const nextPage = overrides.page ?? pageParam ?? 1;
     const nextQ = overrides.q ?? queryParam;
-    const nextType = overrides.type ?? normalizedTypeParam;
     const nextMatch = overrides.match ?? matchParam;
     const nextFromDate = overrides.fromDate ?? fromDateParam;
     const nextToDate = overrides.toDate ?? toDateParam;
@@ -296,7 +274,6 @@ export default function BankTransferPage({ params }: any) {
     params.set('page', String(nextPage));
 
     if (nextQ) params.set('q', String(nextQ));
-    if (nextType) params.set('type', String(nextType));
     if (nextMatch) params.set('match', String(nextMatch));
     if (nextFromDate) params.set('fromDate', String(nextFromDate));
     if (nextToDate) params.set('toDate', String(nextToDate));
@@ -424,19 +401,6 @@ export default function BankTransferPage({ params }: any) {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-sm text-gray-500">거래구분</span>
-            <select
-              value={transactionType}
-              onChange={(e) => setTransactionType(e.target.value)}
-              className="w-40 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-            >
-              <option value="">전체</option>
-              <option value="deposited">입금</option>
-              <option value="withdrawn">출금</option>
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-500">매칭상태</span>
             <select
               value={matchStatus}
@@ -475,7 +439,6 @@ export default function BankTransferPage({ params }: any) {
                 const query = buildQueryString({
                   page: 1,
                   q: searchKeyword,
-                  type: transactionType,
                   match: matchStatus,
                   fromDate: searchFromDate,
                   toDate: searchToDate,
@@ -498,7 +461,6 @@ export default function BankTransferPage({ params }: any) {
                 const query = buildQueryString({
                   page: 1,
                   q: '',
-                  type: '',
                   match: '',
                   fromDate: '',
                   toDate: '',
@@ -529,7 +491,7 @@ export default function BankTransferPage({ params }: any) {
                 <th className="px-3 py-3 text-left">거래구분</th>
                 <th className="px-3 py-3 text-left">처리일시</th>
                 <th className="px-3 py-3 text-center">매칭</th>
-                <th className="px-3 py-3 text-left">계좌ID</th>
+                <th className="px-3 py-3 text-left">거래ID</th>
               </tr>
             </thead>
             <tbody className="text-sm">
@@ -552,6 +514,7 @@ export default function BankTransferPage({ params }: any) {
                 const transactionTypeInfo = formatTransactionTypeInfo(transfer.transactionType || transfer.trxType || '-');
                 const processingDate = transfer.processingDate || transfer.regDate || '-';
                 const matchLabel = transfer.match ? '매칭됨' : '미매칭';
+                const tradeId = transfer.tradeId || '-';
                 const accountId = transfer.bankAccountId || transfer.vactId || '-';
                 const rowKey = transfer?._id?.toString?.() || transfer?._id?.$oid || `${pageValue}-${index}`;
 
@@ -590,7 +553,7 @@ export default function BankTransferPage({ params }: any) {
                         {matchLabel}
                       </span>
                     </td>
-                    <td className="px-3 py-3">{accountId}</td>
+                    <td className="px-3 py-3">{tradeId}</td>
                   </tr>
                 );
               })}

@@ -552,7 +552,7 @@ export async function POST(request: NextRequest) {
     let match = null;
     let tradeId = null;
 
-    /*
+    
     if (transaction_type === 'deposited') {
       
       // check match from buyorders collection
@@ -568,11 +568,10 @@ export async function POST(request: NextRequest) {
       if (matchResult) {
         match = 'success';
         tradeId = matchResult;
-      } else {
-        match = 'pending';
       }
+
     }
-    */
+    
 
 
     // insert bank transfer record

@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
 
  
   // updateBankTransferMatchAndTradeId
-  
+  /*
   const result = await updateBankTransferMatchAndTradeId({
     transactionName: buyerDepositName,
     amount: paymentAmount,
@@ -266,7 +266,7 @@ export async function POST(request: NextRequest) {
   });
   
   console.log("updateBankTransferMatchAndTradeId result", result);
-  
+  */
 
 
   

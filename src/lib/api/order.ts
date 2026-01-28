@@ -9499,6 +9499,9 @@ export async function updateBuyerBankInfoUpdate(
 // when buyerDepositName and krwAmount match
 // and 1 minute within createdAt
 // return tradeId
+
+// buyerDepositName: "김윤중(점중스튜"
+
 export async function checkBuyOrderMatchDeposit(
   {
     buyerDepositName,
@@ -9513,7 +9516,11 @@ export async function checkBuyOrderMatchDeposit(
   const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000).toISOString();
   const result = await collection.findOne<any>(
     {
-      'buyer.depositName': buyerDepositName,
+      //'buyer.depositName': buyerDepositName,
+
+      'buyer.depositName': { $regex: `^${buyerDepositName}$`, $options: 'i' }, // case insensitive match
+
+
       krwAmount: krwAmount,
       createdAt: { $gte: oneMinuteAgo },
     },
