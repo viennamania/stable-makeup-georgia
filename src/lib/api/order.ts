@@ -9497,7 +9497,7 @@ export async function updateBuyerBankInfoUpdate(
 
 // check match from buyorders collection
 // when buyerDepositName and krwAmount match
-// and 1 minute within createdAt
+// and 10 minute within createdAt
 // return tradeId
 
 // buyerDepositName: "김윤중(점중스튜"
@@ -9513,7 +9513,7 @@ export async function checkBuyOrderMatchDeposit(
 ): Promise<string | null> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000).toISOString();
+  const oneMinuteAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const result = await collection.findOne<any>(
     {
       //'buyer.depositName': buyerDepositName,

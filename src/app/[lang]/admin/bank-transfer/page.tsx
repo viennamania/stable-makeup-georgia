@@ -90,20 +90,6 @@ const getTodayString = () => {
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
 };
 
-const formatTransactionTypeInfo = (value: any) => {
-  if (!value) {
-    return { label: '-', variant: 'default' as const };
-  }
-  const normalized = String(value).toLowerCase();
-  if (value === '입금' || normalized === 'deposited' || normalized === 'deposit') {
-    return { label: '입금', variant: 'deposit' as const };
-  }
-  if (value === '출금' || normalized === 'withdrawn' || normalized === 'withdrawal') {
-    return { label: '출금', variant: 'withdrawal' as const };
-  }
-  return { label: String(value), variant: 'default' as const };
-};
-
 
 export default function BankTransferPage({ params }: any) {
 
@@ -395,7 +381,7 @@ export default function BankTransferPage({ params }: any) {
               type="text"
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="입금자명, 계좌번호, 은행코드"
+              placeholder="입금자명, 계좌번호, 원계좌번호, 은행코드"
               className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
             />
           </div>
@@ -454,7 +440,6 @@ export default function BankTransferPage({ params }: any) {
             <button
               onClick={() => {
                 setSearchKeyword('');
-                setTransactionType('');
                 setMatchStatus('');
                 setSearchFromDate('');
                 setSearchToDate('');
@@ -487,9 +472,6 @@ export default function BankTransferPage({ params }: any) {
                 <th className="px-3 py-3 text-right">잔액</th>
                 <th className="px-3 py-3 text-left">계좌번호</th>
                 <th className="px-3 py-3 text-left">원계좌번호</th>
-                <th className="px-3 py-3 text-left">은행</th>
-                <th className="px-3 py-3 text-left">거래구분</th>
-                <th className="px-3 py-3 text-left">처리일시</th>
                 <th className="px-3 py-3 text-center">매칭</th>
                 <th className="px-3 py-3 text-left">거래ID</th>
               </tr>
@@ -497,7 +479,7 @@ export default function BankTransferPage({ params }: any) {
             <tbody className="text-sm">
               {bankTransfers.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                     조회된 입금내역이 없습니다.
                   </td>
                 </tr>
@@ -510,12 +492,8 @@ export default function BankTransferPage({ params }: any) {
                 const balance = transfer.balance;
                 const bankAccountNumber = transfer.bankAccountNumber || transfer.account || transfer.custAccnt || '-';
                 const originalBankAccountNumber = transfer.originalBankAccountNumber || transfer.custAccnt || '-';
-                const bankName = transfer.bankCode || transfer.bankName || transfer.custBankName || '-';
-                const transactionTypeInfo = formatTransactionTypeInfo(transfer.transactionType || transfer.trxType || '-');
-                const processingDate = transfer.processingDate || transfer.regDate || '-';
                 const matchLabel = transfer.match ? '매칭됨' : '미매칭';
                 const tradeId = transfer.tradeId || '-';
-                const accountId = transfer.bankAccountId || transfer.vactId || '-';
                 const rowKey = transfer?._id?.toString?.() || transfer?._id?.$oid || `${pageValue}-${index}`;
 
                 return (
@@ -533,21 +511,6 @@ export default function BankTransferPage({ params }: any) {
                     </td>
                     <td className="px-3 py-3">{bankAccountNumber}</td>
                     <td className="px-3 py-3">{originalBankAccountNumber}</td>
-                    <td className="px-3 py-3">{bankName}</td>
-                    <td className="px-3 py-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          transactionTypeInfo.variant === 'deposit'
-                            ? 'bg-blue-100 text-blue-700'
-                            : transactionTypeInfo.variant === 'withdrawal'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        {transactionTypeInfo.label}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">{formatDateTime(processingDate)}</td>
                     <td className="px-3 py-3 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs ${transfer.match ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                         {matchLabel}

@@ -198,8 +198,8 @@ export async function updateBankTransferMatchAndTradeId({
   // is KST timezone
   // so we need to consider timezone difference
   // but for simplicity, we will just use Date.now() - 1 minute
-  const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
-  const oneMinuteAgoKST = new Date(oneMinuteAgo.getTime() + 9 * 60 * 60 * 1000);
+  //const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+  //const oneMinuteAgoKST = new Date(oneMinuteAgo.getTime() + 9 * 60 * 60 * 1000);
 
 
   const result = await collection.updateOne(
@@ -207,10 +207,11 @@ export async function updateBankTransferMatchAndTradeId({
       transactionType: 'deposited',
       //transactionName: transactionName,
       transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
-      
+
       amount: amount,
-      transactionDate: { $gte: oneMinuteAgoKST },
+      //transactionDate: { $gte: oneMinuteAgoKST },
       match: null,
+      tradeId: null,
     },
     {
       $set: {
