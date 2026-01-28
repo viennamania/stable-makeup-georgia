@@ -265,8 +265,8 @@ export async function POST(request: NextRequest) {
     tradeId: order_number,
     storeInfo: {
       storecode: buyOrder?.storecode || "",
-      storeName: buyOrder?.storeName || "",
-      storeLogo: buyOrder?.storeLogo || "",
+      storeName: buyOrder?.store.storeName || "",
+      storeLogo: buyOrder?.store.storeLogo || "",
     },
     buyerInfo: {
       nickname: buyerNickname,
