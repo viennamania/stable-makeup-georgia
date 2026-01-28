@@ -179,10 +179,20 @@ export async function updateBankTransferMatchAndTradeId({
   amount: number;
   tradeId: string;
 }) {
+
+  console.log('updateBankTransferMatchAndTradeId called with:', {
+    transactionName,
+    amount,
+    tradeId,
+  });
+
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection('bankTransfers');
 
   const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+
+  // "transactionDate": "2026-01-28T01:04:11.152+09:00"
 
   const result = await collection.updateOne(
     {
@@ -190,6 +200,7 @@ export async function updateBankTransferMatchAndTradeId({
       transactionName: transactionName,
       amount: amount,
       transactionDate: { $gte: oneMinuteAgo },
+      match: null,
     },
     {
       $set: {
