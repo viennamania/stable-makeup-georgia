@@ -25,6 +25,9 @@ import {
 
 
 
+import {
+  updateBankTransferMatchAndTradeId,
+} from '@lib/api/bankTransfer';
 
 
 // webhook
@@ -250,9 +253,20 @@ export async function POST(request: NextRequest) {
 
   });
 
-  console.log("buyOrderConfirmPayment response", response);
+  //console.log("buyOrderConfirmPayment response", response);
 
+
+ 
+  // updateBankTransferMatchAndTradeId
+  const result = await updateBankTransferMatchAndTradeId({
+    transactionName: buyerDepositName,
+    amount: paymentAmount,
+    tradeId: order_number,
+  });
   
+  console.log("updateBankTransferMatchAndTradeId result", result);
+
+
   
   
   

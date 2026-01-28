@@ -144,3 +144,61 @@ export async function getBankTransfers(
   };
 }
 
+
+/*
+{
+  "_id": {
+    "$oid": "6978e1feeff8ed7d1afb38c6"
+  },
+  "transactionType": "deposited",
+  "bankAccountId": null,
+  "originalBankAccountNumber": "3020621418681",
+  "bankAccountNumber": "3520106623778",
+  "bankCode": null,
+  "amount": 200000,
+  "transactionDate": "2026-01-28T01:04:11.152+09:00",
+  "transactionName": "이순임",
+  "balance": 1381172,
+  "processingDate": null,
+  "match": null
+}
+*/
+
+
+// update bankTransfers collection match field = 'success', tradeId field = tradeId
+// when transactionType: deposited
+// and transactionName and amount equals to the given values
+// and within 1 minute ago
+
+export async function updateBankTransferMatchAndTradeId({
+  transactionName,
+  amount,
+  tradeId,
+}: {
+  transactionName: string;
+  amount: number;
+  tradeId: string;
+}) {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+
+  const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+
+  const result = await collection.updateOne(
+    {
+      transactionType: 'deposited',
+      transactionName: transactionName,
+      amount: amount,
+      transactionDate: { $gte: oneMinuteAgo },
+    },
+    {
+      $set: {
+        match: 'success',
+        tradeId: tradeId,
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
+
+}
