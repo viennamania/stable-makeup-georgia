@@ -187,19 +187,29 @@ export async function updateBankTransferMatchAndTradeId({
   });
 
 
+  // transactionName
+  // 김윤중(점중스튜
+
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection('bankTransfers');
 
-  const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
 
   // "transactionDate": "2026-01-28T01:04:11.152+09:00"
+  // is KST timezone
+  // so we need to consider timezone difference
+  // but for simplicity, we will just use Date.now() - 1 minute
+  const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
+  const oneMinuteAgoKST = new Date(oneMinuteAgo.getTime() + 9 * 60 * 60 * 1000);
+
 
   const result = await collection.updateOne(
     {
       transactionType: 'deposited',
-      transactionName: transactionName,
+      //transactionName: transactionName,
+      transactionName: { $regex: `^${transactionName}` },
       amount: amount,
-      transactionDate: { $gte: oneMinuteAgo },
+      transactionDate: { $gte: oneMinuteAgoKST },
       match: null,
     },
     {
