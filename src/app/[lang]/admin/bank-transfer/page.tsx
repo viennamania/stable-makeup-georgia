@@ -412,35 +412,95 @@ export default function BankTransferPage({ params }: any) {
         <div className="w-full flex flex-col lg:flex-row lg:items-end gap-3 bg-white/80 p-4 rounded-lg shadow-md mb-4">
           <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-500">검색어</span>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="입금자명"
-              className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-            />
+            <div className="relative w-64">
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="입금자명"
+                className="w-full p-2 pr-8 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+              />
+              {searchKeyword && (
+                <button
+                  type="button"
+                  onClick={() => setSearchKeyword('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full border border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 flex items-center justify-center text-sm leading-none"
+                  aria-label="검색어 지우기"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true">
+                    <path
+                      d="M6 6l12 12M18 6L6 18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-500">계좌번호</span>
-            <input
-              type="text"
-              value={searchAccountNumber}
-              onChange={(e) => setSearchAccountNumber(e.target.value)}
-              placeholder="계좌번호"
-              className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-            />
+            <div className="relative w-48">
+              <input
+                type="text"
+                value={searchAccountNumber}
+                onChange={(e) => setSearchAccountNumber(e.target.value)}
+                placeholder="계좌번호"
+                className="w-full p-2 pr-8 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+              />
+              {searchAccountNumber && (
+                <button
+                  type="button"
+                  onClick={() => setSearchAccountNumber('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full border border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 flex items-center justify-center text-sm leading-none"
+                  aria-label="계좌번호 지우기"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true">
+                    <path
+                      d="M6 6l12 12M18 6L6 18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
             <span className="text-sm text-gray-500">원계좌번호</span>
-            <input
-              type="text"
-              value={searchOriginalAccountNumber}
-              onChange={(e) => setSearchOriginalAccountNumber(e.target.value)}
-              placeholder="원계좌번호"
-              className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-            />
+            <div className="relative w-48">
+              <input
+                type="text"
+                value={searchOriginalAccountNumber}
+                onChange={(e) => setSearchOriginalAccountNumber(e.target.value)}
+                placeholder="원계좌번호"
+                className="w-full p-2 pr-8 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+              />
+              {searchOriginalAccountNumber && (
+                <button
+                  type="button"
+                  onClick={() => setSearchOriginalAccountNumber('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full border border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 flex items-center justify-center text-sm leading-none"
+                  aria-label="원계좌번호 지우기"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true">
+                    <path
+                      d="M6 6l12 12M18 6L6 18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-1">
