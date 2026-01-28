@@ -14,7 +14,10 @@ import {
 } from '@lib/api/bankTransfer';
 
 
-
+// checkBuyOrderMatchDeposit
+import {
+  checkBuyOrderMatchDeposit,
+} from '@lib/api/order';
 
 // webhook
 // header
@@ -139,7 +142,6 @@ export async function POST(request: NextRequest) {
     transaction_name,
     balance,
     processing_date,
-    match,
   } = body;
 
  
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
   console.log("transaction_name", transaction_name);
   console.log("balance", balance);
   console.log("processing_date", processing_date);
-  console.log("match", match);
+
 
   {/*
   {
@@ -546,6 +548,32 @@ export async function POST(request: NextRequest) {
       latestBalance: balance,
     });
 
+
+    let match = null;
+    let tradeId = null;
+    if (transaction_type === 'deposited') {
+      
+      // check match from buyorders collection
+      // when buyerDepositName and krwAmount match
+
+      const matchResult = await checkBuyOrderMatchDeposit({
+        buyerDepositName: transaction_name,
+        krwAmount: amount,
+      });
+
+      console.log("checkBuyOrderMatchDeposit result", matchResult);
+
+      if (matchResult) {
+        match = 'success';
+        tradeId = matchResult;
+      } else {
+        match = 'pending';
+      }
+
+
+    }
+
+
     // insert bank transfer record
     await insertOne({
       transactionType: transaction_type,
@@ -559,6 +587,7 @@ export async function POST(request: NextRequest) {
       balance: balance,
       processingDate: processing_date,
       match: match,
+      tradeId: tradeId,
     });
 
 
