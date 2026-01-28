@@ -34,5 +34,113 @@ export async function insertOne(data: any) {
 
 
 
+// Get bank transfers with pagination and filters
+export async function getBankTransfers(
+  {
+    limit,
+    page,
+    search = '',
+    transactionType = '',
+    matchStatus = '',
+    fromDate = '',
+    toDate = '',
+  }: {
+    limit: number;
+    page: number;
+    search?: string;
+    transactionType?: string;
+    matchStatus?: string;
+    fromDate?: string;
+    toDate?: string;
+  }
+): Promise<any> {
 
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+
+  const filters: any[] = [];
+
+  if (search) {
+    const regex = { $regex: String(search), $options: 'i' };
+    filters.push({
+      $or: [
+        { transactionName: regex },
+        { sender: regex },
+        { bankAccountNumber: regex },
+        { originalBankAccountNumber: regex },
+        { account: regex },
+        { custAccnt: regex },
+        { bankAccountId: regex },
+        { bankCode: regex },
+        { bankName: regex },
+        { custBankName: regex },
+      ],
+    });
+  }
+
+  if (transactionType) {
+    const rawType = String(transactionType);
+    const normalizedType = rawType.toLowerCase();
+    let typeRegex = rawType;
+
+    if (rawType === '입금' || normalizedType === 'deposited' || normalizedType === 'deposit') {
+      typeRegex = '^(deposited|deposit|입금)$';
+    } else if (rawType === '출금' || normalizedType === 'withdrawn' || normalizedType === 'withdrawal') {
+      typeRegex = '^(withdrawn|withdrawal|출금)$';
+    }
+
+    filters.push({
+      $or: [
+        { transactionType: { $regex: typeRegex, $options: 'i' } },
+        { trxType: { $regex: typeRegex, $options: 'i' } },
+      ],
+    });
+  }
+
+  if (matchStatus === 'matched') {
+    filters.push({ match: { $ne: null } });
+  } else if (matchStatus === 'unmatched') {
+    filters.push({ match: null });
+  }
+
+  if (fromDate || toDate) {
+    const dateRangeDate: any = {};
+    const dateRangeString: any = {};
+
+    if (fromDate) {
+      const start = new Date(`${fromDate}T00:00:00.000Z`);
+      dateRangeDate.$gte = start;
+      dateRangeString.$gte = start.toISOString();
+    }
+
+    if (toDate) {
+      const end = new Date(`${toDate}T23:59:59.999Z`);
+      dateRangeDate.$lte = end;
+      dateRangeString.$lte = end.toISOString();
+    }
+
+    filters.push({
+      $or: [
+        { transactionDate: dateRangeDate },
+        { transactionDate: dateRangeString },
+      ],
+    });
+  }
+
+  const query = filters.length ? { $and: filters } : {};
+
+  const totalCount = await collection.countDocuments(query);
+
+  const transfers = await collection
+    .find(query)
+    .sort({ transactionDate: -1, regDate: -1, _id: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .toArray();
+
+  return {
+    totalCount,
+    transfers,
+  };
+}
 
