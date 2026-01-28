@@ -215,11 +215,13 @@ export async function updateBankTransferMatchAndTradeId({
   transactionName,
   amount,
   tradeId,
+  storeInfo,
   buyerInfo,
 }: {
   transactionName: string;
   amount: number;
   tradeId: string;
+  storeInfo: any;
   buyerInfo: any;
 }) {
 
@@ -227,6 +229,7 @@ export async function updateBankTransferMatchAndTradeId({
     transactionName,
     amount,
     tradeId,
+    storeInfo,
     buyerInfo,
   });
 
@@ -262,6 +265,7 @@ export async function updateBankTransferMatchAndTradeId({
       $set: {
         match: 'success',
         tradeId: tradeId,
+        storeInfo: storeInfo,
         buyerInfo: buyerInfo,
       },
     }

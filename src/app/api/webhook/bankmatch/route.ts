@@ -263,6 +263,11 @@ export async function POST(request: NextRequest) {
     transactionName: buyerDepositName,
     amount: paymentAmount,
     tradeId: order_number,
+    storeInfo: {
+      storecode: buyOrder?.storecode || "",
+      storeName: buyOrder?.storeName || "",
+      storeLogo: buyOrder?.storeLogo || "",
+    },
     buyerInfo: {
       nickname: buyerNickname,
       depositBankName: buyOrder?.buyer?.depositBankName || "",
