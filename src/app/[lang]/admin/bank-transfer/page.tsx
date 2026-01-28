@@ -616,14 +616,10 @@ export default function BankTransferPage({ params }: any) {
                 const originalBankAccountNumber = transfer.originalBankAccountNumber || transfer.custAccnt || '-';
                 const matchLabel = transfer.match ? '매칭됨' : '미매칭';
                 const tradeId = transfer.tradeId || '-';
-                const buyerInfo = transfer?.buyerInfo ? (
-                  <div className="text-xs text-green-700">
-                    {transfer.buyerInfo?.nickname || '아이디없음'}<br/>
-                    {transfer.buyerInfo?.email || '이메일없음'}<br/>
-                    {transfer.buyerInfo?.phone || '전화번호없음'}
+                const buyerInfo = transfer?.buyerInfo && (
+                  <div className="text-sm text-green-700">
+                    {transfer.buyerInfo?.nickname || '-'}
                   </div>
-                ) : (
-                  <div className="text-xs text-red-600">미등록</div>
                 );
                 const rowKey = transfer?._id?.toString?.() || transfer?._id?.$oid || `${pageValue}-${index}`;
 
@@ -645,6 +641,7 @@ export default function BankTransferPage({ params }: any) {
                       </span>
                     </td>
                     <td className="px-3 py-3">{tradeId}</td>
+                    <td className="px-3 py-3">{buyerInfo}</td>
                   </tr>
                 );
               })}
