@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
     matchStatus,
     fromDate,
     toDate,
+    accountNumber,
+    originalAccountNumber,
   } = body;
 
   const result = await getBankTransfers({
@@ -23,6 +25,8 @@ export async function POST(request: NextRequest) {
     matchStatus: matchStatus || '',
     fromDate: fromDate || '',
     toDate: toDate || '',
+    accountNumber: accountNumber || '',
+    originalAccountNumber: originalAccountNumber || '',
   });
 
   return NextResponse.json({

@@ -44,6 +44,8 @@ export async function getBankTransfers(
     matchStatus = '',
     fromDate = '',
     toDate = '',
+    accountNumber = '',
+    originalAccountNumber = '',
   }: {
     limit: number;
     page: number;
@@ -52,6 +54,8 @@ export async function getBankTransfers(
     matchStatus?: string;
     fromDate?: string;
     toDate?: string;
+    accountNumber?: string;
+    originalAccountNumber?: string;
   }
 ): Promise<any> {
 
@@ -66,14 +70,27 @@ export async function getBankTransfers(
       $or: [
         { transactionName: regex },
         { sender: regex },
-        { bankAccountNumber: regex },
-        { originalBankAccountNumber: regex },
-        { account: regex },
-        { custAccnt: regex },
-        { bankAccountId: regex },
-        { bankCode: regex },
-        { bankName: regex },
-        { custBankName: regex },
+      ],
+    });
+  }
+
+  if (accountNumber) {
+    const value = String(accountNumber).trim();
+    filters.push({
+      $or: [
+        { bankAccountNumber: value },
+        { account: value },
+        { custAccnt: value },
+      ],
+    });
+  }
+
+  if (originalAccountNumber) {
+    const value = String(originalAccountNumber).trim();
+    filters.push({
+      $or: [
+        { originalBankAccountNumber: value },
+        { custAccnt: value },
       ],
     });
   }
@@ -131,6 +148,29 @@ export async function getBankTransfers(
 
   const totalCount = await collection.countDocuments(query);
 
+  const totalAmountResult = await collection
+    .aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: null,
+          totalAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "double",
+                onError: 0,
+                onNull: 0,
+              },
+            },
+          },
+        },
+      },
+    ])
+    .toArray();
+
+  const totalAmount = totalAmountResult?.[0]?.totalAmount || 0;
+
   const transfers = await collection
     .find(query)
     .sort({ transactionDate: -1, regDate: -1, _id: -1 })
@@ -140,6 +180,7 @@ export async function getBankTransfers(
 
   return {
     totalCount,
+    totalAmount,
     transfers,
   };
 }

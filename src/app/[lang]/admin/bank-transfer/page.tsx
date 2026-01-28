@@ -106,6 +106,8 @@ export default function BankTransferPage({ params }: any) {
   const pageParam = searchParams.get('page') || '1';
   const queryParam = searchParams.get('q') || '';
   const matchParam = searchParams.get('match') || '';
+  const accountNumberParam = searchParams.get('accountNumber') || '';
+  const originalAccountNumberParam = searchParams.get('originalAccountNumber') || '';
   const fromDateParam = searchParams.get('fromDate') || todayString;
   const toDateParam = searchParams.get('toDate') || todayString;
 
@@ -114,6 +116,8 @@ export default function BankTransferPage({ params }: any) {
   const [pageInput, setPageInput] = useState(String(Number(pageParam) || 1));
 
   const [searchKeyword, setSearchKeyword] = useState(queryParam);
+  const [searchAccountNumber, setSearchAccountNumber] = useState(accountNumberParam);
+  const [searchOriginalAccountNumber, setSearchOriginalAccountNumber] = useState(originalAccountNumberParam);
   const [matchStatus, setMatchStatus] = useState(matchParam);
   const [searchFromDate, setSearchFromDate] = useState(fromDateParam);
   const [searchToDate, setSearchToDate] = useState(toDateParam);
@@ -132,6 +136,12 @@ export default function BankTransferPage({ params }: any) {
   useEffect(() => {
     setSearchKeyword(queryParam);
   }, [queryParam]);
+  useEffect(() => {
+    setSearchAccountNumber(accountNumberParam);
+  }, [accountNumberParam]);
+  useEffect(() => {
+    setSearchOriginalAccountNumber(originalAccountNumberParam);
+  }, [originalAccountNumberParam]);
 
   useEffect(() => {
     setMatchStatus(matchParam);
@@ -184,6 +194,7 @@ export default function BankTransferPage({ params }: any) {
   const [fetchingTransfers, setFetchingTransfers] = useState(false);
   const [bankTransfers, setBankTransfers] = useState([] as any[]);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
 
   const fetchBankTransfers = async () => {
     if (fetchingTransfers) {
@@ -200,13 +211,15 @@ export default function BankTransferPage({ params }: any) {
         body: JSON.stringify({
           limit: Number(limitParam) || 20,
           page: Number(pageParam) || 1,
-          search: queryParam,
+        search: queryParam,
         transactionType: 'deposited',
         matchStatus: matchParam,
         fromDate: fromDateParam,
         toDate: toDateParam,
+        accountNumber: accountNumberParam,
+        originalAccountNumber: originalAccountNumberParam,
       }),
-      });
+    });
 
       if (!response.ok) {
         toast.error('입금내역 조회를 실패했습니다.');
@@ -217,6 +230,7 @@ export default function BankTransferPage({ params }: any) {
 
       setBankTransfers(data.result?.transfers || []);
       setTotalCount(data.result?.totalCount || 0);
+      setTotalAmount(data.result?.totalAmount || 0);
     } catch (error) {
       toast.error('입금내역 조회를 실패했습니다.');
     } finally {
@@ -230,7 +244,7 @@ export default function BankTransferPage({ params }: any) {
       return;
     }
     fetchBankTransfers();
-  }, [address, isAdmin, limitParam, pageParam, queryParam, matchParam, fromDateParam, toDateParam]);
+  }, [address, isAdmin, limitParam, pageParam, queryParam, matchParam, fromDateParam, toDateParam, accountNumberParam, originalAccountNumberParam]);
 
 
   const totalPages = useMemo(() => {
@@ -246,6 +260,8 @@ export default function BankTransferPage({ params }: any) {
     match?: string;
     fromDate?: string;
     toDate?: string;
+    accountNumber?: string;
+    originalAccountNumber?: string;
   } = {}) => {
     const params = new URLSearchParams();
 
@@ -255,6 +271,8 @@ export default function BankTransferPage({ params }: any) {
     const nextMatch = overrides.match ?? matchParam;
     const nextFromDate = overrides.fromDate ?? fromDateParam;
     const nextToDate = overrides.toDate ?? toDateParam;
+    const nextAccountNumber = overrides.accountNumber ?? accountNumberParam;
+    const nextOriginalAccountNumber = overrides.originalAccountNumber ?? originalAccountNumberParam;
 
     params.set('limit', String(nextLimit));
     params.set('page', String(nextPage));
@@ -263,6 +281,8 @@ export default function BankTransferPage({ params }: any) {
     if (nextMatch) params.set('match', String(nextMatch));
     if (nextFromDate) params.set('fromDate', String(nextFromDate));
     if (nextToDate) params.set('toDate', String(nextToDate));
+    if (nextAccountNumber) params.set('accountNumber', String(nextAccountNumber));
+    if (nextOriginalAccountNumber) params.set('originalAccountNumber', String(nextOriginalAccountNumber));
 
     return params.toString();
   };
@@ -348,7 +368,6 @@ export default function BankTransferPage({ params }: any) {
             />
             <div className="text-xl font-semibold">은행 입금내역</div>
             <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">최신순</span>
-            <span className="text-sm text-gray-600">총 {totalCount.toLocaleString('ko-KR')}건</span>
           </div>
 
           <div className="flex flex-row items-center gap-2">
@@ -372,6 +391,22 @@ export default function BankTransferPage({ params }: any) {
           </div>
         </div>
 
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 bg-white rounded-xl shadow-md border border-zinc-200 px-4 py-3 mb-4">
+          <div className="flex flex-row items-center gap-3">
+            <div className="text-sm text-zinc-500">검색결과</div>
+            <div className="text-2xl font-semibold text-[#1f2937]">
+              {totalCount.toLocaleString('ko-KR')}건
+            </div>
+            <div className="text-sm text-zinc-400">/</div>
+            <div className="text-2xl font-semibold text-[#1f2937]">
+              {formatNumber(totalAmount)}원
+            </div>
+          </div>
+          <div className="text-sm text-zinc-500">
+            기준: 검색 조건 적용 결과
+          </div>
+        </div>
+
 
         {/* search filters */}
         <div className="w-full flex flex-col lg:flex-row lg:items-end gap-3 bg-white/80 p-4 rounded-lg shadow-md mb-4">
@@ -381,8 +416,30 @@ export default function BankTransferPage({ params }: any) {
               type="text"
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
-              placeholder="입금자명, 계좌번호, 원계좌번호, 은행코드"
+              placeholder="입금자명"
               className="w-64 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-gray-500">계좌번호</span>
+            <input
+              type="text"
+              value={searchAccountNumber}
+              onChange={(e) => setSearchAccountNumber(e.target.value)}
+              placeholder="계좌번호"
+              className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-sm text-gray-500">원계좌번호</span>
+            <input
+              type="text"
+              value={searchOriginalAccountNumber}
+              onChange={(e) => setSearchOriginalAccountNumber(e.target.value)}
+              placeholder="원계좌번호"
+              className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
             />
           </div>
 
@@ -428,6 +485,8 @@ export default function BankTransferPage({ params }: any) {
                   match: matchStatus,
                   fromDate: searchFromDate,
                   toDate: searchToDate,
+                  accountNumber: searchAccountNumber,
+                  originalAccountNumber: searchOriginalAccountNumber,
                 });
                 router.push(`/${params.lang}/admin/bank-transfer?${query}`);
               }}
@@ -440,6 +499,8 @@ export default function BankTransferPage({ params }: any) {
             <button
               onClick={() => {
                 setSearchKeyword('');
+                setSearchAccountNumber('');
+                setSearchOriginalAccountNumber('');
                 setMatchStatus('');
                 setSearchFromDate('');
                 setSearchToDate('');
@@ -449,6 +510,8 @@ export default function BankTransferPage({ params }: any) {
                   match: '',
                   fromDate: '',
                   toDate: '',
+                  accountNumber: '',
+                  originalAccountNumber: '',
                 });
                 router.push(`/${params.lang}/admin/bank-transfer?${query}`);
               }}
@@ -467,9 +530,8 @@ export default function BankTransferPage({ params }: any) {
               <tr>
                 <th className="px-3 py-3 text-left">No</th>
                 <th className="px-3 py-3 text-left">거래일시</th>
-                <th className="px-3 py-3 text-left">입금자</th>
+                <th className="px-3 py-3 text-left">입금자명</th>
                 <th className="px-3 py-3 text-right">금액</th>
-                <th className="px-3 py-3 text-right">잔액</th>
                 <th className="px-3 py-3 text-left">계좌번호</th>
                 <th className="px-3 py-3 text-left">원계좌번호</th>
                 <th className="px-3 py-3 text-center">매칭</th>
@@ -479,7 +541,7 @@ export default function BankTransferPage({ params }: any) {
             <tbody className="text-sm">
               {bankTransfers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                     조회된 입금내역이 없습니다.
                   </td>
                 </tr>
@@ -489,7 +551,6 @@ export default function BankTransferPage({ params }: any) {
                 const transactionDate = transfer.transactionDate || transfer.regDate || transfer.createdAt;
                 const transactionName = transfer.transactionName || transfer.sender || '-';
                 const amount = transfer.amount;
-                const balance = transfer.balance;
                 const bankAccountNumber = transfer.bankAccountNumber || transfer.account || transfer.custAccnt || '-';
                 const originalBankAccountNumber = transfer.originalBankAccountNumber || transfer.custAccnt || '-';
                 const matchLabel = transfer.match ? '매칭됨' : '미매칭';
@@ -505,9 +566,6 @@ export default function BankTransferPage({ params }: any) {
                     <td className="px-3 py-3">{transactionName}</td>
                     <td className="px-3 py-3 text-right font-semibold text-blue-600">
                       {formatNumber(amount)}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      {formatNumber(balance)}
                     </td>
                     <td className="px-3 py-3">{bankAccountNumber}</td>
                     <td className="px-3 py-3">{originalBankAccountNumber}</td>
