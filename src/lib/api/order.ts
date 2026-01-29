@@ -9526,7 +9526,7 @@ export async function checkBuyOrderMatchDeposit(
 
   const result = await collection.findOne<any>(
     {
-      //'buyer.depositName': buyerDepositName,
+      'buyer.bankTransferMatched': { $ne: true }, // bankTransferMatched is not true
 
       'buyer.depositName': { $regex: `^${buyerDepositName}$`, $options: 'i' }, // case insensitive match
       krwAmount: krwAmount,
@@ -9543,6 +9543,18 @@ export async function checkBuyOrderMatchDeposit(
   );
   
   if (result) {
+
+    // update check bankTransferMatched to true
+    const updateResult = await collection.updateOne(
+      { tradeId: result.tradeId },
+      { $set: { 'buyer.bankTransferMatched': true } }
+    );
+
+    if (updateResult.modifiedCount !== 1) {
+      console.log('checkBuyOrderMatchDeposit: failed to update bankTransferMatched for tradeId: ' + result.tradeId);
+    }
+
+
     return {
       tradeId: result.tradeId,
       store: result.store,
@@ -9552,6 +9564,7 @@ export async function checkBuyOrderMatchDeposit(
       },
       seller: result.seller,
     }
+
   } else {
     return null;
   }
