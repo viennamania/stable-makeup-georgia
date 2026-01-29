@@ -551,9 +551,12 @@ export async function POST(request: NextRequest) {
 
     let match = null;
     let tradeId = null;
+    let storeInfo = null;
+    let buyerInfo = null;
+    let sellerInfo = null;
 
     
-    /*
+    
     if (transaction_type === 'deposited') {
       
       // check match from buyorders collection
@@ -568,11 +571,16 @@ export async function POST(request: NextRequest) {
 
       if (matchResult) {
         match = 'success';
-        tradeId = matchResult;
+        tradeId = matchResult.tradeId;
+        storeInfo = matchResult.store;
+        buyerInfo = matchResult.buyer;
+        sellerInfo = matchResult.seller;
+
+        console.log("Matched tradeId:", tradeId);
       }
 
     }
-    */
+    
     
 
 
@@ -590,7 +598,11 @@ export async function POST(request: NextRequest) {
       processingDate: processing_date,
       match: match,
       tradeId: tradeId,
+      storeInfo: storeInfo,
+      buyerInfo: buyerInfo,
+      sellerInfo: sellerInfo,
     });
+
 
 
   }  catch (error) {

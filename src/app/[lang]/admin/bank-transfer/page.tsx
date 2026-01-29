@@ -596,13 +596,14 @@ export default function BankTransferPage({ params }: any) {
                 <th className="px-3 py-3 text-left">원계좌번호</th>
                 <th className="px-3 py-3 text-center">매칭</th>
                 <th className="px-3 py-3 text-left">거래ID</th>
+                <th className="px-3 py-3 text-left">가맹점</th>
                 <th className="px-3 py-3 text-left">회원정보</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {bankTransfers.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                     조회된 입금내역이 없습니다.
                   </td>
                 </tr>
@@ -616,6 +617,9 @@ export default function BankTransferPage({ params }: any) {
                 const originalBankAccountNumber = transfer.originalBankAccountNumber || transfer.custAccnt || '-';
                 const matchLabel = transfer.match ? '매칭됨' : '미매칭';
                 const tradeId = transfer.tradeId || '-';
+                const storeInfo = transfer?.storeInfo || null;
+                const storeName = storeInfo?.storeName || '-';
+                const storeLogo = storeInfo?.storeLogo || '';
                 const buyerInfo = transfer?.buyerInfo && (
                   <div className="text-sm text-green-700">
                     {transfer.buyerInfo?.nickname || '-'}
@@ -641,6 +645,24 @@ export default function BankTransferPage({ params }: any) {
                       </span>
                     </td>
                     <td className="px-3 py-3">{tradeId}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-row items-center gap-2">
+                        {storeLogo ? (
+                          <Image
+                            src={storeLogo}
+                            alt={storeName}
+                            width={28}
+                            height={28}
+                            className="w-7 h-7 rounded-full object-cover border border-zinc-200"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-[10px] text-zinc-400">
+                            -
+                          </div>
+                        )}
+                        <span className="text-sm text-zinc-700">{storeName}</span>
+                      </div>
+                    </td>
                     <td className="px-3 py-3">{buyerInfo}</td>
                   </tr>
                 );

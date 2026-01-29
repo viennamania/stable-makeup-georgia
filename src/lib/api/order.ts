@@ -9510,25 +9510,44 @@ export async function checkBuyOrderMatchDeposit(
     buyerDepositName: string;
     krwAmount: number;
   }
-): Promise<string | null> {
+): Promise<{
+  tradeId: string;
+  store: any;
+  buyer: any;
+  seller: any;
+} | null> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  const oneMinuteAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  
+  //const oneMinuteAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  // 1 day ago
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+
   const result = await collection.findOne<any>(
     {
       //'buyer.depositName': buyerDepositName,
 
       'buyer.depositName': { $regex: `^${buyerDepositName}$`, $options: 'i' }, // case insensitive match
-
-
       krwAmount: krwAmount,
-      createdAt: { $gte: oneMinuteAgo },
+
+      createdAt: { $gte: oneDayAgo },
     },
-    { projection: { tradeId: 1 } }
+    { projection: {
+      tradeId: 1,
+      store: 1,
+      buyer: 1,
+      seller: 1,
+    } }
   );
   
   if (result) {
-    return result.tradeId;
+    return {
+      tradeId: result.tradeId,
+      store: result.store,
+      buyer: result.buyer,
+      seller: result.seller,
+    }
   } else {
     return null;
   }
