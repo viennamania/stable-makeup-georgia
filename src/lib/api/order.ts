@@ -9535,6 +9535,7 @@ export async function checkBuyOrderMatchDeposit(
     },
     { projection: {
       tradeId: 1,
+      nickname: 1,
       store: 1,
       buyer: 1,
       seller: 1,
@@ -9545,7 +9546,10 @@ export async function checkBuyOrderMatchDeposit(
     return {
       tradeId: result.tradeId,
       store: result.store,
-      buyer: result.buyer,
+      buyer: {
+        nickname: result.nickname,
+        bankInfo: result.buyer.bankInfo,
+      },
       seller: result.seller,
     }
   } else {
