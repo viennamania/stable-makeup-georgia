@@ -19,6 +19,14 @@ import {
   checkBuyOrderMatchDeposit,
 } from '@lib/api/order';
 
+
+
+// isBankAccountNumberExistsInStores
+import {
+  isBankAccountNumberExistsInStores,
+} from '@lib/api/store';
+
+
 // webhook
 // header
 /*
@@ -558,6 +566,27 @@ export async function POST(request: NextRequest) {
     
     
     if (transaction_type === 'deposited') {
+
+
+      // bankAccountNumber 가 stores collection 에 있는지 확인
+      // isBankAccountNumberExistsInStores
+      const existsInStores =  await isBankAccountNumberExistsInStores({
+        accountNumber: bankAccountNumber,
+      });
+
+      console.log("isBankAccountNumberExistsInStores", existsInStores);
+
+      if (!existsInStores) {
+        console.log("bankAccountNumber not exists in stores, skip matching buyorder");
+        // return NextResponse.json({
+        //   status: "success",
+        // });
+        return NextResponse.json({
+          status: "success",
+        });
+      }
+
+
       
       // check match from buyorders collection
       // when buyerDepositName and krwAmount match
