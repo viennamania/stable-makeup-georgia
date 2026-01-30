@@ -483,6 +483,14 @@ export async function POST(request: NextRequest) {
     맞춤계좌 : 04558997011
     */
 
+    /*
+    이름 : 김희왕
+    은행 : 케이뱅크
+    계좌번호 :  100224438470
+    맞춤계좌 : 001030458524
+    */
+
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -529,6 +537,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '01086364077';
   } else if (bank_account_number == '1021023221787') {
     bankAccountNumber = '04558997011';
+  } else if (bank_account_number == '100224438470') {
+    bankAccountNumber = '001030458524';
   }
 
   
