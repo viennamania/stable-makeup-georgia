@@ -498,6 +498,15 @@ export async function POST(request: NextRequest) {
     */
 
 
+    /*
+    이름 : 박인수
+◾️   은행 : 농협
+    ▫️계좌번호 : 3560411570193
+    맞춤계좌 : 3560517653939
+    */
+
+
+
   let bankAccountNumber = bank_account_number;
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
@@ -546,6 +555,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '04558997011';
   } else if (bank_account_number == '100224438470') {
     bankAccountNumber = '001030458524';
+  } else if (bank_account_number == '3560411570193') {
+    bankAccountNumber = '3560517653939';
   }
 
   
