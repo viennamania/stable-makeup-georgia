@@ -509,7 +509,7 @@ export async function POST(request: NextRequest) {
 
   let bankAccountNumber = bank_account_number;
 
-  
+
   if (bank_account_number == '132067165012') {
     bankAccountNumber = '13207716701';
   } else if (bank_account_number == '1021029548189') {
@@ -530,16 +530,21 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '01039126579';
   } else if (bank_account_number == '57491038528407') {
     bankAccountNumber = '01048859573';
+  
+
+  /*
   } else if (bank_account_number == '3560820389133') {
-    bankAccountNumber = '10897495680-99';
+    bankAccountNumber = '1089749568099';
+  */
+    
+
   } else if (bank_account_number == '1021026804140') {
     bankAccountNumber = '02103378912';
   } else if (bank_account_number == '110496321987') {
     bankAccountNumber = '07891237777';
   } else if (bank_account_number == '41402149330') {
     bankAccountNumber = '2427343744778';
-  } else if (bank_account_number == '3560820389133') {
-    bankAccountNumber = '1089749568099';
+
   } else if (bank_account_number == '3520946632383') {
     bankAccountNumber = '3528879532639';
   } else if (bank_account_number == '9002158502801') {
@@ -552,6 +557,8 @@ export async function POST(request: NextRequest) {
     bankAccountNumber = '02102573599';
   } else if (bank_account_number == '3020621418681') {
     bankAccountNumber = '3520106623778';
+
+
   } else if (bank_account_number == '2210092524704') {
     bankAccountNumber = '22200925777';
 
