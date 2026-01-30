@@ -1676,26 +1676,26 @@ export async function getPrivateSellerWalletAddressFromStorecode(
 
 
 
-// bankAccountNumber 가 stores collection 에 있는지 확인
-export async function isBankAccountNumberExistsInStores({
-  accountNumber,
+// bankAccountNumber 가 stores collection 에 있으면 storeInfo 반환
+export async function getStoreByBankAccountNumber({
+  bankAccountNumber,
 }: {
-  accountNumber: string;
-}): Promise<boolean> {
+  bankAccountNumber: string;
+}): Promise<any> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('stores');
 
   const result = await collection.findOne<any>(
     {
       $or: [
-        { 'bankInfo.accountNumber': accountNumber },
-        { 'bankInfoAAA.accountNumber': accountNumber },
-        { 'bankInfoBBB.accountNumber': accountNumber },
-        { 'bankInfoCCC.accountNumber': accountNumber },
-        { 'bankInfoDDD.accountNumber': accountNumber },
+        { 'bankInfo.accountNumber': bankAccountNumber },
+        { 'bankInfoAAA.accountNumber': bankAccountNumber },
+        { 'bankInfoBBB.accountNumber': bankAccountNumber },
+        { 'bankInfoCCC.accountNumber': bankAccountNumber },
+        { 'bankInfoDDD.accountNumber': bankAccountNumber },
       ],
-    }
+    },
   );
 
-  return result ? true : false;
+  return result;
 }

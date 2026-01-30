@@ -308,3 +308,84 @@ export async function isBankTransferMultipleTimes({
 
   return count > 1;
 }
+
+
+
+// bankTransfer 에서 오늘것 중에 매칭 안되어있는것 찾기 (입금자명, 금액 기준)
+// 그리고 합산이 paymentAmount 이상이면
+// 차례로 합산해서 paymentAmount 와 똑같아지면 그 시점까지
+// 각각을 매칭 처리한다.
+export async function matchBankTransfersToPaymentAmount({
+  transactionName,
+  paymentAmount,
+  tradeId,
+}: {
+  transactionName: string;
+  paymentAmount: number;
+  tradeId: string;
+}): Promise<any[]> {
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+
+  // 오늘 날짜 구하기 (KST 기준)
+  const now = new Date();
+  const kstOffset = 9 * 60; // KST is UTC+9
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const kstNow = new Date(utc + (kstOffset * 60000));
+
+  const startOfDay = new Date(kstNow.getFullYear(), kstNow.getMonth(), kstNow.getDate(), 0, 0, 0);
+  const endOfDay = new Date(kstNow.getFullYear(), kstNow.getMonth(), kstNow.getDate(), 23, 59, 59, 999);
+
+  // find unmatched bank transfers for today
+  const unmatchedTransfers = await collection.find({
+    transactionType: 'deposited',
+    transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
+    amount: { $gt: 0 },
+    transactionDate: { $gte: startOfDay, $lte: endOfDay },
+    match: null,
+  }).sort({ transactionDate: 1 }).toArray();
+
+  const matchedTransfers: any[] = [];
+  let accumulatedAmount = 0;
+
+  for (const transfer of unmatchedTransfers) {
+    accumulatedAmount += transfer.amount;
+
+    matchedTransfers.push(transfer);
+
+    if (accumulatedAmount >= paymentAmount) {
+      break;
+    }
+  }
+
+
+  // check if accumulatedAmount equals paymentAmount
+  // update only if equals
+  // update each matched transfer
+
+  if (accumulatedAmount === paymentAmount) {
+
+   
+    // get buyorder collection to get storeInfo and buyerInfo
+    const buyOrderCollection = client.db(dbName).collection('buyorders');
+
+    const buyOrder = await buyOrderCollection.findOne({ tradeId: tradeId });
+
+    const storeInfo = buyOrder?.store || null;
+    const buyerInfo = buyOrder?.buyer || null;
+
+
+    for (const transfer of matchedTransfers) {
+      await collection.updateOne(
+        { _id: transfer._id },
+        { $set: { match: 'success', tradeId: tradeId, storeInfo: storeInfo, buyerInfo: buyerInfo } }
+      );
+    }
+
+
+    return matchedTransfers;
+  } else {
+    return [];
+  }
+}

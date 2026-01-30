@@ -589,6 +589,7 @@ export default function BankTransferPage({ params }: any) {
             <thead className="bg-zinc-800 text-white text-sm font-semibold">
               <tr>
                 <th className="px-3 py-3 text-left">No</th>
+                <th className="px-3 py-3 text-left">가맹점</th>
                 <th className="px-3 py-3 text-left">거래일시</th>
                 <th className="px-3 py-3 text-left">입금자명</th>
                 <th className="px-3 py-3 text-right">금액</th>
@@ -596,7 +597,6 @@ export default function BankTransferPage({ params }: any) {
                 <th className="px-3 py-3 text-left">원계좌번호</th>
                 <th className="px-3 py-3 text-center">매칭</th>
                 <th className="px-3 py-3 text-left">거래ID</th>
-                <th className="px-3 py-3 text-left">가맹점</th>
                 <th className="px-3 py-3 text-left">회원정보</th>
               </tr>
             </thead>
@@ -633,6 +633,24 @@ export default function BankTransferPage({ params }: any) {
                     <td className="px-3 py-3 text-left text-gray-500">
                       {(pageValue - 1) * limitValue + index + 1}
                     </td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-row items-center gap-2">
+                        {storeLogo ? (
+                          <Image
+                            src={storeLogo}
+                            alt={storeName}
+                            width={28}
+                            height={28}
+                            className="w-7 h-7 rounded-full object-cover border border-zinc-200"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-[10px] text-zinc-400">
+                            -
+                          </div>
+                        )}
+                        <span className="text-sm text-zinc-700">{storeName}</span>
+                      </div>
+                    </td>
                     <td className="px-3 py-3">{formatDateTime(transactionDate)}</td>
                     <td className="px-3 py-3">{transactionName}</td>
                     <td className="px-3 py-3 text-right font-semibold text-blue-600">
@@ -659,24 +677,6 @@ export default function BankTransferPage({ params }: any) {
                       ) : (
                         <span className="text-sm text-zinc-400">-</span>
                       )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-row items-center gap-2">
-                        {storeLogo ? (
-                          <Image
-                            src={storeLogo}
-                            alt={storeName}
-                            width={28}
-                            height={28}
-                            className="w-7 h-7 rounded-full object-cover border border-zinc-200"
-                          />
-                        ) : (
-                          <div className="w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-[10px] text-zinc-400">
-                            -
-                          </div>
-                        )}
-                        <span className="text-sm text-zinc-700">{storeName}</span>
-                      </div>
                     </td>
                     <td className="px-3 py-3">{buyerInfo}</td>
                   </tr>

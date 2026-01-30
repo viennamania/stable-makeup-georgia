@@ -16,6 +16,13 @@ import {
 } from '@lib/api/user';
 
 
+
+// matchBankTransfersToPaymentAmount
+import {
+  matchBankTransfersToPaymentAmount,
+} from '@lib/api/bankTransfer';
+
+
 // thirdweb
 
 import {
@@ -213,6 +220,25 @@ export async function POST(request: NextRequest) {
 
     });
 
+
+
+
+
+    // bankTransfer 에서 오늘것 중에 매칭 안되어있는것 찾기
+    // 그리고 합산이 paymentAmount 이상이면
+    // 차례로 합산해서 paymentAmount 와 똑같아지면 그 시점까지
+    // 각각을 매칭 처리한다.
+    // matchBankTransfersToPaymentAmount
+    /*
+    const bankTransfersToMatch = await matchBankTransfersToPaymentAmount({
+      transactionName: orderNickname,
+      paymentAmount: paymentAmount,
+      tradeId:  order?.tradeId,
+    });
+
+    console.log("bankTransfersToMatch.length=", bankTransfersToMatch.length);
+
+    */
 
 
 

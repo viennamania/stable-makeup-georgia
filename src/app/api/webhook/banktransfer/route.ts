@@ -21,9 +21,9 @@ import {
 
 
 
-// isBankAccountNumberExistsInStores
+// getStoreByBankAccountNumber
 import {
-  isBankAccountNumberExistsInStores,
+  getStoreByBankAccountNumber,
 } from '@lib/api/store';
 
 
@@ -574,36 +574,31 @@ export async function POST(request: NextRequest) {
     });
 
 
+
+
+
+    // get store by bankAccountNumber
+    const storeInfo = await getStoreByBankAccountNumber({
+      bankAccountNumber: bankAccountNumber,
+    });
+
+    if (!storeInfo) {
+      console.log("No store found for bankAccountNumber:", bankAccountNumber);
+      return NextResponse.json({
+        status: "success",
+      });
+    }
+
+    
+
     let match = null;
     let tradeId = null;
-    let storeInfo = null;
     let buyerInfo = null;
     let sellerInfo = null;
 
-    
-    
     if (transaction_type === 'deposited') {
 
-
-      // bankAccountNumber 가 stores collection 에 있는지 확인
-      // isBankAccountNumberExistsInStores
-      const existsInStores =  await isBankAccountNumberExistsInStores({
-        accountNumber: bankAccountNumber,
-      });
-
-      console.log("isBankAccountNumberExistsInStores", existsInStores);
-
-      if (!existsInStores) {
-        console.log("bankAccountNumber not exists in stores, skip matching buyorder");
-        // return NextResponse.json({
-        //   status: "success",
-        // });
-        return NextResponse.json({
-          status: "success",
-        });
-      }
-
-
+   
 
       // check bankTransfer multiple times
       // isBankTransferMultipleTimes
@@ -639,7 +634,6 @@ export async function POST(request: NextRequest) {
       if (matchResult) {
         match = 'success';
         tradeId = matchResult.tradeId;
-        storeInfo = matchResult.store;
         buyerInfo = matchResult.buyer;
         sellerInfo = matchResult.seller;
 
