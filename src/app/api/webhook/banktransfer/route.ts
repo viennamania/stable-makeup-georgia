@@ -27,6 +27,13 @@ import {
 } from '@lib/api/store';
 
 
+// isBankTransferMultipleTimes
+import {
+  isBankTransferMultipleTimes,
+} from '@lib/api/bankTransfer';
+
+
+
 // webhook
 // header
 /*
@@ -595,6 +602,27 @@ export async function POST(request: NextRequest) {
           status: "success",
         });
       }
+
+
+
+      // check bankTransfer multiple times
+      // isBankTransferMultipleTimes
+      /*
+      const isMultiple = await isBankTransferMultipleTimes({
+        transactionName: transaction_name,
+        amount: amount,
+        transactionDate: new Date(transaction_date),
+      });
+
+      console.log("isBankTransferMultipleTimes", isMultiple);
+
+      if (isMultiple) {
+        console.log("Bank transfer is multiple times, skip matching buyorder");
+        return NextResponse.json({
+          status: "success",
+        });
+      }
+      */
 
 
       

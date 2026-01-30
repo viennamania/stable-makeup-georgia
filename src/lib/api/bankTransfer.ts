@@ -276,3 +276,35 @@ export async function updateBankTransferMatchAndTradeId({
   return result.modifiedCount > 0;
 
 }
+
+
+
+
+// check bankTransfer 짧은 시간에 여러번 발생하는지 체크
+export async function isBankTransferMultipleTimes({
+  transactionName,
+  amount,
+  transactionDate,
+}: {
+  transactionName: string;
+  amount: number;
+  transactionDate: Date;
+}): Promise<boolean> {
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+
+  // check within 10 seconds
+  
+  const oneMinuteBefore = new Date(transactionDate.getTime() - 10 * 1000);
+  const oneMinuteAfter = new Date(transactionDate.getTime() + 10 * 1000);
+
+  const count = await collection.countDocuments({
+    transactionType: 'deposited',
+    transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
+    amount: amount,
+    transactionDate: { $gte: oneMinuteBefore, $lte: oneMinuteAfter },
+  });
+
+  return count > 1;
+}
