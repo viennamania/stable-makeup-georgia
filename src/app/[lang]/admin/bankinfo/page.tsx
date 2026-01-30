@@ -67,6 +67,35 @@ const formatDateTime = (value: any) => {
   return date.toLocaleString('ko-KR');
 };
 
+const CopyIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className || "h-4 w-4"}
+    aria-hidden="true"
+  >
+    <rect
+      x="9"
+      y="9"
+      width="11"
+      height="11"
+      rx="2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <rect
+      x="4"
+      y="4"
+      width="11"
+      height="11"
+      rx="2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+  </svg>
+);
+
 const emptyForm = {
   bankName: '',
   realAccountNumber: '',
@@ -373,6 +402,20 @@ export default function BankInfoPage() {
     try {
       await navigator.clipboard.writeText(target);
       toast.success('사용중인 계좌번호를 복사했습니다.');
+    } catch (error) {
+      toast.error('복사에 실패했습니다.');
+    }
+  };
+
+  const handleCopyValue = async (value: string, label: string) => {
+    const target = String(value || '').trim();
+    if (!target) {
+      toast.error(`복사할 ${label}가 없습니다.`);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(target);
+      toast.success(`${label}를 복사했습니다.`);
     } catch (error) {
       toast.error('복사에 실패했습니다.');
     }
@@ -837,7 +880,7 @@ export default function BankInfoPage() {
                 const rowKey = id || `${index}`;
 
                 return (
-                  <tr key={rowKey} className="border-b border-gray-200 hover:bg-gray-50">
+                  <tr key={rowKey} className="group border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-3 py-3 text-left text-gray-500">
                       {index + 1}
                     </td>
@@ -882,9 +925,10 @@ export default function BankInfoPage() {
                             <button
                               type="button"
                               onClick={() => handleCopyDefaultAccount(info.defaultAccountNumber)}
-                              className="text-xs px-2 py-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                              className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50 opacity-0 group-hover:opacity-100 transition"
+                              aria-label="사용중인 계좌번호 복사"
                             >
-                              복사
+                              <CopyIcon className="h-3.5 w-3.5" />
                             </button>
                           )}
                         </div>
@@ -899,24 +943,49 @@ export default function BankInfoPage() {
                           className="w-56 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
                         />
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => openDetail(info)}
-                          className="text-left text-zinc-900 hover:underline underline-offset-4"
-                        >
-                          {info?.realAccountNumber || info?.accountNumber || '-'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openDetail(info)}
+                            className="text-left text-zinc-900 hover:underline underline-offset-4"
+                          >
+                            {info?.realAccountNumber || info?.accountNumber || '-'}
+                          </button>
+                          {(info?.realAccountNumber || info?.accountNumber) && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCopyValue(
+                                  info?.realAccountNumber || info?.accountNumber,
+                                  '실계좌번호'
+                                )
+                              }
+                              className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50 opacity-0 group-hover:opacity-100 transition"
+                              aria-label="실계좌번호 복사"
+                            >
+                              <CopyIcon className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td className="px-3 py-3">
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-col gap-1">
                         {Array.isArray(info?.aliasAccountNumber) && info.aliasAccountNumber.length > 0 ? (
                           info.aliasAccountNumber.map((alias: string) => (
                             <span
                               key={alias}
-                              className="text-xs px-2 py-1 rounded border border-zinc-200 text-zinc-600 bg-white"
+                              className="group/alias text-xs px-2 py-1 rounded border border-zinc-200 text-zinc-600 bg-white inline-flex items-center gap-1"
                             >
-                              {alias}
+                              <span>{alias}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyValue(alias, '별칭 계좌번호')}
+                                className="p-0.5 rounded border border-zinc-200 text-zinc-500 hover:bg-zinc-50 opacity-0 group-hover:opacity-100 group-hover/alias:opacity-100 transition"
+                                aria-label="별칭 계좌번호 복사"
+                              >
+                                <CopyIcon className="h-3 w-3" />
+                              </button>
                             </span>
                           ))
                         ) : (
@@ -1129,9 +1198,10 @@ export default function BankInfoPage() {
                       <button
                         type="button"
                         onClick={handleCopyAccountNumber}
-                        className="text-xs px-2 py-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                        className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                        aria-label="실계좌번호 복사"
                       >
-                        복사
+                        <CopyIcon className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1201,9 +1271,10 @@ export default function BankInfoPage() {
                           <button
                             type="button"
                             onClick={() => handleCopyAlias(alias)}
-                            className="text-xs px-2 py-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                            className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                            aria-label="별칭 계좌번호 복사"
                           >
-                            복사
+                            <CopyIcon className="h-3.5 w-3.5" />
                           </button>
                           <button
                             type="button"
