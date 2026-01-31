@@ -178,10 +178,11 @@ export async function POST(request: NextRequest) {
 
 
   // touchBankInfoByRealAccountNumber
-  await touchBankInfoByRealAccountNumber(
+  const bankInfo = await touchBankInfoByRealAccountNumber(
     bank_account_number,
     balance
   );
+
 
 
 
@@ -518,7 +519,7 @@ export async function POST(request: NextRequest) {
     */
 
 
-
+    /*
   let bankAccountNumber = bank_account_number;
 
 
@@ -533,22 +534,13 @@ export async function POST(request: NextRequest) {
   //} else if (bank_account_number == '1013016171814') {
   //  bankAccountNumber = '01013001085';
 
-  /*
-  } else if (bank_account_number == '1002753153102') {
-    bankAccountNumber = '01086364077';
-  */
+
 
   } else if (bank_account_number == '1002532555836') {
     bankAccountNumber = '01039126579';
   } else if (bank_account_number == '57491038528407') {
     bankAccountNumber = '01048859573';
-  
 
-  /*
-  } else if (bank_account_number == '3560820389133') {
-    bankAccountNumber = '1089749568099';
-  */
-    
 
   } else if (bank_account_number == '1021026804140') {
     bankAccountNumber = '02103378912';
@@ -574,12 +566,6 @@ export async function POST(request: NextRequest) {
   } else if (bank_account_number == '2210092524704') {
     bankAccountNumber = '22200925777';
 
-  /*
-  } else if (bank_account_number == '1002753153102') {
-    bankAccountNumber = '01086364077';
-  */
-
-
   } else if (bank_account_number == '1021023221787') {
     bankAccountNumber = '04558997011';
   } else if (bank_account_number == '100224438470') {
@@ -587,7 +573,9 @@ export async function POST(request: NextRequest) {
   } else if (bank_account_number == '3560411570193') {
     bankAccountNumber = '3560517653939';
   }
+  */
 
+  const bankAccountNumber = bankInfo?.defaultAccountNumber || bank_account_number;
   
 
 

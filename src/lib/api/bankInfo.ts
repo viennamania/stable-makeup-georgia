@@ -203,5 +203,15 @@ export async function touchBankInfoByRealAccountNumber(
     { upsert: true }
   );
 
-  return result;
+  if (!result) {
+    return null;
+  }
+
+  // return the document
+  const bankInfo = await collection.findOne({
+    realAccountNumber: value,
+  });
+
+
+  return bankInfo;
 }
