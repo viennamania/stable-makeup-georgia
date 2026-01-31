@@ -7,12 +7,16 @@ export async function POST(request: NextRequest) {
 
   const {
     search,
+    bankName,
+    accountNumber,
     limit,
     page,
   } = body || {};
 
   const result = await getBankInfos({
     search: search || '',
+    bankName: bankName || '',
+    accountNumber: accountNumber || '',
     limit: Number(limit) || 50,
     page: Number(page) || 1,
   });

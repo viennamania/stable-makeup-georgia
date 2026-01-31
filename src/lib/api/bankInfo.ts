@@ -5,10 +5,14 @@ import { dbName } from '../mongodb';
 
 export async function getBankInfos({
   search = '',
+  bankName = '',
+  accountNumber = '',
   limit = 50,
   page = 1,
 }: {
   search?: string;
+  bankName?: string;
+  accountNumber?: string;
   limit?: number;
   page?: number;
 } = {}) {
@@ -26,6 +30,24 @@ export async function getBankInfos({
         { accountNumber: regex },
         { accountHolder: regex },
         { aliasAccountNumber: regex },
+      ],
+    });
+  }
+
+  const bankNameValue = String(bankName || '').trim();
+  if (bankNameValue) {
+    const regex = { $regex: bankNameValue, $options: 'i' };
+    filters.push({ bankName: regex });
+  }
+
+  const accountNumberValue = String(accountNumber || '').trim();
+  if (accountNumberValue) {
+    const regex = { $regex: accountNumberValue, $options: 'i' };
+    filters.push({
+      $or: [
+        { defaultAccountNumber: regex },
+        { realAccountNumber: regex },
+        { accountNumber: regex },
       ],
     });
   }

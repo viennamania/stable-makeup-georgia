@@ -2925,15 +2925,26 @@ export default function Index({ params }: any) {
 
                               </div>
 
-                              <div className="mb-2
-                                w-full
-                                flex flex-row items-between justify-between gap-2">
+                              <div className="mb-2 w-full flex flex-col gap-2">
+                                <button
+                                  disabled={!isAdmin || insertingStore}
+                                  onClick={() => {
+                                    router.push(
+                                      '/' + params.lang + '/admin/store/' + item.storecode + '/payment-settings'
+                                    );
+                                  }}
+                                  className={`
+                                    ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
+                                    w-full bg-zinc-800 text-sm text-white px-2 py-1 rounded-lg hover:bg-zinc-700
+                                  `}
+                                >
+                                  결제계좌설정
+                                </button>
+
                                 {/* settings button */}
                                 <button
                                   disabled={!isAdmin || insertingStore}
-                                  
                                   onClick={() => {
-
                                     if (version === 'bangbang') {
                                       router.push(
                                         '/' + params.lang + '/admin/store/' + item.storecode + '/settings-bangbang'
@@ -2943,33 +2954,14 @@ export default function Index({ params }: any) {
                                         '/' + params.lang + '/admin/store/' + item.storecode + '/settings'
                                       );
                                     }
-
                                   }}
-
                                   className={`
                                     ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
-                                    w-full
-                                    bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80
+                                    w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg hover:bg-[#3167b4]/80
                                   `}
                                 >
                                   설정하기
                                 </button>
-                                {/*
-                                <button
-                                  onClick={() => {
-                                    router.push(
-                                      '/' + params.lang + '/admin/store/' + item.storecode + '/memo'
-                                    );
-                                  }}
-                                  className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                                >
-                                  메모하기
-                                </button>
-                                */}
-                                
-
                               </div>
 
 
@@ -4085,6 +4077,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

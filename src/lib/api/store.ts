@@ -523,6 +523,14 @@ export async function updateStoreSettlementFeePercent(
 
 
 // updateStoreBankInfo
+const logStoreBankInfoHistory = async (historyCollection: any, payload: any) => {
+  try {
+    await historyCollection.insertOne(payload);
+  } catch (error) {
+    console.error('Failed to log store bank info history', error);
+  }
+};
+
 export async function updateStoreBankInfo(
   {
     walletAddress,
@@ -539,7 +547,9 @@ export async function updateStoreBankInfo(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection('storeBankInfoHistory');
 
   const bankInfo = {
     bankName,
@@ -547,16 +557,35 @@ export async function updateStoreBankInfo(
     accountHolder,
   };
 
+  const projection: any = { bankInfo: 1 };
+  const existing = await collection.findOne({ storecode }, { projection });
+  const beforeInfo = existing?.bankInfo || null;
+
   // update storecode
   const result = await collection.updateOne(
     { storecode: storecode },
     { $set: { bankInfo: bankInfo } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
+
+  if (result && result.matchedCount > 0) {
+    const isSame =
+      (beforeInfo?.bankName || '') === bankInfo.bankName &&
+      (beforeInfo?.accountNumber || '') === bankInfo.accountNumber &&
+      (beforeInfo?.accountHolder || '') === bankInfo.accountHolder;
+
+    if (!isSame) {
+      await logStoreBankInfoHistory(historyCollection, {
+        storecode,
+        field: 'bankInfo',
+        before: beforeInfo,
+        after: bankInfo,
+        updatedBy: walletAddress || '',
+        updatedAt: new Date(),
+      });
+    }
   }
+
+  return !!result;
 }
 
 
@@ -577,7 +606,9 @@ export async function updateStoreBankInfoAAA(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection('storeBankInfoHistory');
 
   const bankInfoAAA = {
     bankName: bankName,
@@ -585,16 +616,35 @@ export async function updateStoreBankInfoAAA(
     accountHolder: accountHolder,
   };
 
+  const projection: any = { bankInfoAAA: 1 };
+  const existing = await collection.findOne({ storecode }, { projection });
+  const beforeInfo = existing?.bankInfoAAA || null;
+
   // update storecode
   const result = await collection.updateOne(
     { storecode: storecode },
     { $set: { bankInfoAAA: bankInfoAAA } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
+
+  if (result && result.matchedCount > 0) {
+    const isSame =
+      (beforeInfo?.bankName || '') === bankInfoAAA.bankName &&
+      (beforeInfo?.accountNumber || '') === bankInfoAAA.accountNumber &&
+      (beforeInfo?.accountHolder || '') === bankInfoAAA.accountHolder;
+
+    if (!isSame) {
+      await logStoreBankInfoHistory(historyCollection, {
+        storecode,
+        field: 'bankInfoAAA',
+        before: beforeInfo,
+        after: bankInfoAAA,
+        updatedBy: walletAddress || '',
+        updatedAt: new Date(),
+      });
+    }
   }
+
+  return !!result;
 }
 
 
@@ -616,7 +666,9 @@ export async function updateStoreBankInfoBBB(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection('storeBankInfoHistory');
 
   const bankInfoBBB = {
     bankName: bankName,
@@ -624,16 +676,35 @@ export async function updateStoreBankInfoBBB(
     accountHolder: accountHolder,
   };
 
+  const projection: any = { bankInfoBBB: 1 };
+  const existing = await collection.findOne({ storecode }, { projection });
+  const beforeInfo = existing?.bankInfoBBB || null;
+
   // update storecode
   const result = await collection.updateOne(
     { storecode: storecode },
     { $set: { bankInfoBBB: bankInfoBBB } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
+
+  if (result && result.matchedCount > 0) {
+    const isSame =
+      (beforeInfo?.bankName || '') === bankInfoBBB.bankName &&
+      (beforeInfo?.accountNumber || '') === bankInfoBBB.accountNumber &&
+      (beforeInfo?.accountHolder || '') === bankInfoBBB.accountHolder;
+
+    if (!isSame) {
+      await logStoreBankInfoHistory(historyCollection, {
+        storecode,
+        field: 'bankInfoBBB',
+        before: beforeInfo,
+        after: bankInfoBBB,
+        updatedBy: walletAddress || '',
+        updatedAt: new Date(),
+      });
+    }
   }
+
+  return !!result;
 }
 
 
@@ -654,7 +725,9 @@ export async function updateStoreBankInfoCCC(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection('storeBankInfoHistory');
 
   const bankInfoCCC = {
     bankName: bankName,
@@ -662,16 +735,35 @@ export async function updateStoreBankInfoCCC(
     accountHolder: accountHolder,
   };
 
+  const projection: any = { bankInfoCCC: 1 };
+  const existing = await collection.findOne({ storecode }, { projection });
+  const beforeInfo = existing?.bankInfoCCC || null;
+
   // update storecode
   const result = await collection.updateOne(
     { storecode: storecode },
     { $set: { bankInfoCCC: bankInfoCCC } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
+
+  if (result && result.matchedCount > 0) {
+    const isSame =
+      (beforeInfo?.bankName || '') === bankInfoCCC.bankName &&
+      (beforeInfo?.accountNumber || '') === bankInfoCCC.accountNumber &&
+      (beforeInfo?.accountHolder || '') === bankInfoCCC.accountHolder;
+
+    if (!isSame) {
+      await logStoreBankInfoHistory(historyCollection, {
+        storecode,
+        field: 'bankInfoCCC',
+        before: beforeInfo,
+        after: bankInfoCCC,
+        updatedBy: walletAddress || '',
+        updatedAt: new Date(),
+      });
+    }
   }
+
+  return !!result;
 }
 
 
@@ -692,7 +784,9 @@ export async function updateStoreBankInfoDDD(
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection('storeBankInfoHistory');
 
   const bankInfoDDD = {
     bankName: bankName,
@@ -700,16 +794,87 @@ export async function updateStoreBankInfoDDD(
     accountHolder: accountHolder,
   };
 
+  const projection: any = { bankInfoDDD: 1 };
+  const existing = await collection.findOne({ storecode }, { projection });
+  const beforeInfo = existing?.bankInfoDDD || null;
+
   // update storecode
   const result = await collection.updateOne(
     { storecode: storecode },
     { $set: { bankInfoDDD: bankInfoDDD } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
+
+  if (result && result.matchedCount > 0) {
+    const isSame =
+      (beforeInfo?.bankName || '') === bankInfoDDD.bankName &&
+      (beforeInfo?.accountNumber || '') === bankInfoDDD.accountNumber &&
+      (beforeInfo?.accountHolder || '') === bankInfoDDD.accountHolder;
+
+    if (!isSame) {
+      await logStoreBankInfoHistory(historyCollection, {
+        storecode,
+        field: 'bankInfoDDD',
+        before: beforeInfo,
+        after: bankInfoDDD,
+        updatedBy: walletAddress || '',
+        updatedAt: new Date(),
+      });
+    }
   }
+
+  return !!result;
+}
+
+export async function getStoreBankInfoHistory({
+  storecode,
+  limit = 50,
+  field,
+  dateFrom,
+  dateTo,
+}: {
+  storecode: string;
+  limit?: number;
+  field?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  if (!storecode) {
+    return [];
+  }
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('storeBankInfoHistory');
+
+  const query: Record<string, any> = { storecode };
+  if (field) {
+    query.field = field;
+  }
+
+  if (dateFrom || dateTo) {
+    const range: Record<string, Date> = {};
+    if (dateFrom) {
+      const start = new Date(`${dateFrom}T00:00:00`);
+      if (!Number.isNaN(start.getTime())) {
+        range.$gte = start;
+      }
+    }
+    if (dateTo) {
+      const end = new Date(`${dateTo}T23:59:59.999`);
+      if (!Number.isNaN(end.getTime())) {
+        range.$lte = end;
+      }
+    }
+    if (Object.keys(range).length > 0) {
+      query.updatedAt = range;
+    }
+  }
+
+  const history = await collection
+    .find(query)
+    .sort({ updatedAt: -1, _id: -1 })
+    .limit(Math.max(1, limit))
+    .toArray();
+
+  return history;
 }
 
 
