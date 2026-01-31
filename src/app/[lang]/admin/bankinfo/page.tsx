@@ -851,18 +851,18 @@ export default function BankInfoPage() {
         </div>
 
         <div className="w-full overflow-x-auto bg-white border border-zinc-200 rounded-md">
-          <table className="min-w-[960px] w-full table-auto border-collapse">
+          <table className="min-w-[1200px] w-full table-fixed border-collapse">
             <thead className="bg-zinc-100 text-zinc-700 text-sm font-medium border-b border-zinc-200">
               <tr>
-                <th className="px-3 py-3 text-left">No</th>
-                <th className="px-3 py-3 text-left">예금주</th>
-                <th className="px-3 py-3 text-left">은행명</th>
-                <th className="px-3 py-3 text-left">사용중인 계좌번호</th>
-                <th className="px-3 py-3 text-left">실계좌번호</th>
-                <th className="px-3 py-3 text-left">별칭</th>
-                <th className="px-3 py-3 text-left">생성일</th>
-                <th className="px-3 py-3 text-left">수정일</th>
-                <th className="px-3 py-3 text-center">관리</th>
+                <th className="px-3 py-3 text-left w-12">No</th>
+                <th className="px-3 py-3 text-left w-32">실계좌번호</th>
+                <th className="px-3 py-3 text-left w-28">예금주</th>
+                <th className="px-3 py-3 text-left w-28">은행명</th>
+                <th className="px-3 py-3 text-left w-48">사용중인 계좌번호</th>
+                <th className="px-3 py-3 text-left w-52">별칭</th>
+                <th className="px-3 py-3 text-left w-36">생성일</th>
+                <th className="px-3 py-3 text-left w-36">수정일</th>
+                <th className="px-3 py-3 text-center w-28">관리</th>
               </tr>
             </thead>
             <tbody className="text-sm">
@@ -880,73 +880,11 @@ export default function BankInfoPage() {
                 const rowKey = id || `${index}`;
 
                 return (
-                  <tr key={rowKey} className="group border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-3 py-3 text-left text-gray-500">
+                  <tr key={rowKey} className="group border-b border-gray-200 hover:bg-gray-50 align-top">
+                    <td className="px-3 py-3 text-left text-gray-500 align-top">
                       {index + 1}
                     </td>
-                    <td className="px-3 py-3">
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={editForm.accountHolder}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
-                          className="w-40 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
-                        />
-                      ) : (
-                        info?.accountHolder || '-'
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      {isEditing ? (
-                        <select
-                          value={editForm.bankName}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, bankName: e.target.value }))}
-                          className="w-44 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
-                        >
-                          <option value="">은행 선택</option>
-                          {!bankNameOptions.includes(editForm.bankName) && editForm.bankName ? (
-                            <option value={editForm.bankName}>{editForm.bankName}</option>
-                          ) : null}
-                          {bankNameOptions.map((bankName) => (
-                            <option key={bankName} value={bankName}>
-                              {bankName}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        info?.bankName || '-'
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      {isEditing ? (
-                        <span>{info?.defaultAccountNumber || ''}</span>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openDefaultPanel(info)}
-                            className="text-left text-zinc-900 hover:underline underline-offset-4"
-                          >
-                            {info?.defaultAccountNumber ? (
-                              info.defaultAccountNumber
-                            ) : (
-                              <span className="text-xs text-zinc-400">설정</span>
-                            )}
-                          </button>
-                          {info?.defaultAccountNumber && (
-                            <button
-                              type="button"
-                              onClick={() => handleCopyDefaultAccount(info.defaultAccountNumber)}
-                              className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50 opacity-0 group-hover:opacity-100 transition"
-                              aria-label="사용중인 계좌번호 복사"
-                            >
-                              <CopyIcon className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-3 align-top">
                       {isEditing ? (
                         <input
                           type="text"
@@ -981,7 +919,69 @@ export default function BankInfoPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-3 align-top">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.accountHolder}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
+                          className="w-40 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                        />
+                      ) : (
+                        info?.accountHolder || '-'
+                      )}
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      {isEditing ? (
+                        <select
+                          value={editForm.bankName}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, bankName: e.target.value }))}
+                          className="w-44 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                        >
+                          <option value="">은행 선택</option>
+                          {!bankNameOptions.includes(editForm.bankName) && editForm.bankName ? (
+                            <option value={editForm.bankName}>{editForm.bankName}</option>
+                          ) : null}
+                          {bankNameOptions.map((bankName) => (
+                            <option key={bankName} value={bankName}>
+                              {bankName}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        info?.bankName || '-'
+                      )}
+                    </td>
+                    <td className="px-3 py-3 align-top">
+                      {isEditing ? (
+                        <span>{info?.defaultAccountNumber || ''}</span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openDefaultPanel(info)}
+                            className="text-left text-zinc-900 hover:underline underline-offset-4"
+                          >
+                            {info?.defaultAccountNumber ? (
+                              info.defaultAccountNumber
+                            ) : (
+                              <span className="text-xs text-zinc-400">설정</span>
+                            )}
+                          </button>
+                          {info?.defaultAccountNumber && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyDefaultAccount(info.defaultAccountNumber)}
+                              className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50 opacity-0 group-hover:opacity-100 transition"
+                              aria-label="사용중인 계좌번호 복사"
+                            >
+                              <CopyIcon className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 align-top">
                       <div className="flex flex-col gap-1">
                         {Array.isArray(info?.aliasAccountNumber) && info.aliasAccountNumber.length > 0 ? (
                           info.aliasAccountNumber.map((alias: string) => (
@@ -1005,9 +1005,9 @@ export default function BankInfoPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3">{formatDateTime(info?.createdAt)}</td>
-                    <td className="px-3 py-3">{formatDateTime(info?.updatedAt)}</td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="px-3 py-3 align-top">{formatDateTime(info?.createdAt)}</td>
+                    <td className="px-3 py-3 align-top">{formatDateTime(info?.updatedAt)}</td>
+                    <td className="px-3 py-3 text-center align-top">
                       {isEditing ? (
                         <div className="flex flex-row items-center justify-center gap-2">
                           <button
