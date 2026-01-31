@@ -1206,7 +1206,6 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelAccountNumber, setAliasPanelAccountNumber] = useState('');
   const [aliasPanelTotalCount, setAliasPanelTotalCount] = useState(0);
   const [aliasPanelTotalAmount, setAliasPanelTotalAmount] = useState(0);
-  const [aliasPanelTxnType, setAliasPanelTxnType] = useState<'all' | 'deposit' | 'withdraw'>('all');
   const [showSellerBankStats, setShowSellerBankStats] = useState(true);
   const [showSellerAliasStats, setShowSellerAliasStats] = useState(true);
 
@@ -1234,17 +1233,14 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     return { label: '기타', className: 'bg-zinc-100 text-zinc-600 border border-zinc-200' };
   };
 
-  const fetchAliasTransfers = async (accountNumber: string | number, nextTxnType?: 'all' | 'deposit' | 'withdraw') => {
+  const fetchAliasTransfers = async (accountNumber: string | number) => {
     const targetAccount = String(accountNumber || '').trim();
     if (!targetAccount) {
       toast.error('계좌번호가 없습니다.');
       return;
     }
 
-    const txnType = nextTxnType || aliasPanelTxnType;
-
     setAliasPanelAccountNumber(targetAccount);
-    setAliasPanelTxnType(txnType);
     setAliasPanelOpen(true);
     setAliasPanelLoading(true);
     setAliasPanelError('');
@@ -1259,7 +1255,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
           accountNumber: targetAccount,
           fromDate: searchFromDate,
           toDate: searchToDate,
-          transactionType: txnType === 'all' ? '' : txnType === 'deposit' ? 'deposited' : 'withdrawn',
+          transactionType: 'deposited',
         }),
       });
 
@@ -4938,7 +4934,7 @@ const fetchBuyOrders = async () => {
                       />
                       <button
                         className="text-sm font-semibold underline text-blue-600 truncate"
-                        onClick={() => fetchAliasTransfers(item._id || '기타은행', 'all')}
+                        onClick={() => fetchAliasTransfers(item._id || '기타은행')}
                         title="계좌 이력 보기"
                       >
                         {item._id || '기타은행'}
@@ -9568,32 +9564,11 @@ const fetchBuyOrders = async () => {
             </div>
 
             <div className="p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
-                  {[
-                    { key: 'all', label: '전체' },
-                    { key: 'deposit', label: '입금' },
-                    { key: 'withdraw', label: '출금' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.key}
-                      className={`px-3 py-1 text-xs rounded-md transition ${
-                        aliasPanelTxnType === opt.key
-                          ? 'bg-white shadow-sm border border-zinc-200 font-semibold'
-                          : 'text-zinc-600'
-                      }`}
-                      onClick={() => {
-                        setAliasPanelTxnType(opt.key as any);
-                        fetchAliasTransfers(aliasPanelAccountNumber, opt.key as any);
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center justify-end gap-3">
+                <span className="text-xs text-zinc-500">입금 내역만 표시</span>
                 <button
                   className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
-                  onClick={() => fetchAliasTransfers(aliasPanelAccountNumber, aliasPanelTxnType)}
+                  onClick={() => fetchAliasTransfers(aliasPanelAccountNumber)}
                 >
                   새로고침
                 </button>

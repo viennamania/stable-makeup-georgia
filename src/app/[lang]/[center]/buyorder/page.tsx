@@ -963,7 +963,9 @@ export default function Index({ params }: any) {
   const [aliasPanelAccountNumber, setAliasPanelAccountNumber] = useState('');
   const [aliasPanelTotalCount, setAliasPanelTotalCount] = useState(0);
   const [aliasPanelTotalAmount, setAliasPanelTotalAmount] = useState(0);
-  const [aliasPanelTxnType, setAliasPanelTxnType] = useState<'all' | 'deposit' | 'withdraw'>('all');
+  const [aliasPanelTxnType, setAliasPanelTxnType] = useState<'all' | 'deposit' | 'withdraw'>('deposit');
+  const [showSellerBankStats, setShowSellerBankStats] = useState(true);
+  const [showSellerAliasStats, setShowSellerAliasStats] = useState(true);
 
   const formatKstDateTime = (value?: string | Date) => {
     if (!value) return '';
@@ -5216,15 +5218,27 @@ const fetchBuyOrders = async () => {
                   grid grid-cols-1 sm:grid-cols-8 gap-4">
                 */}
 
+                <div className="w-full flex items-center justify-between mb-2 gap-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                      onClick={() => setShowSellerBankStats((v) => !v)}
+                    >
+                      {showSellerBankStats ? '접기' : '펼치기'}
+                    </button>
+                    <span className="text-lg font-semibold">
+                      판매자 통장별 P2P 거래 통계(실계좌번호 기준)
+                    </span>
+                  </div>
+                  <span className="text-xs text-zinc-500">
+                    총 {buyOrderStats.totalBySellerBankAccountNumber?.length || 0} 계좌
+                  </span>
+                </div>
+
+                {showSellerBankStats && (
                 <div className="w-full
                   grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
                   items-start justify-start">
-
-
-                  {/* 판매자 통장번호별 통계 */}
-                  <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                    판매자<br />통장별<br/>P2P 거래<br />통계(실계좌번호 기준)
-                  </span>
 
                   {/*
                   {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
@@ -5288,33 +5302,20 @@ const fetchBuyOrders = async () => {
 
 
                   {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                    
                     <div
                       key={index}
-                      //className="flex flex-col gap-2 items-center
-                      //border border-zinc-300 rounded-lg p-2"
-                      // if lastestBalanceArray[index] is changed, then animate the background color
-                      // if sellerBankAccountDisplayValueArray[index] is changed, then animate the background color
-                      // two color is differentiate between the two conditions
-                      className={`flex flex-col gap-2 items-center
-                      p-4 rounded-lg shadow-md
-                      backdrop-blur-md
-                      ${lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
-                        ? 'bg-green-100/80 animate-pulse'
-                        : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
-                          ? 'bg-yellow-100/80 animate-pulse'
-                          : 'bg-white/80'}
-                      `}
-                      >
-
-                      <div className="flex flex-row items-start justify-start gap-1">
+                      className="flex flex-col gap-2 items-end justify-center
+                      border border-zinc-300 rounded-lg p-4
+                      bg-zinc-50 shadow-md"
+                    >
+                      <div className="flex flex-row items-center justify-center gap-1">
                         <Image
                           src="/icon-bank.png"
                           alt="Bank"
                           width={20}
                           height={20}
                           className="w-5 h-5"
-                        />              
+                        />
                         <button
                           className="text-sm font-semibold underline text-blue-600"
                           onClick={() => {
@@ -5339,50 +5340,55 @@ const fetchBuyOrders = async () => {
                           <span className="text-lg font-semibold text-yellow-600"
                             style={{ fontFamily: 'monospace' }}
                           >
-                            {
-                              //item.bankUserInfo[0]?.balance ? item.bankUserInfo[0]?.balance.toLocaleString() : '잔액정보없음'
-                              lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                            {lastestBalanceArray && lastestBalanceArray[index] !== undefined
                               ? lastestBalanceArray[index].toLocaleString()
-                              : '잔액정보없음'
-                            }
+                              : '잔액정보없음'}
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <span className="text-sm xl:text-lg font-semibold">
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <div className="text-sm font-semibold">
                           {item.totalCount?.toLocaleString() || '0'}
-                        </span>
-                        <span className="text-sm xl:text-xl font-semibold text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {
-                            
-                            //(item.totalKrwAmount || 0).toLocaleString()
-
-                            sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
-                            && sellerBankAccountDisplayValueArray[index].toLocaleString()
-                            
-                          }
-                        </span>
+                        </div>
+                        <div className="flex flex-col gap-1 items-end justify-center">
+                          <div className="flex flex-row items-center justify-center gap-1">
+                            <span className="text-sm font-semibold text-yellow-600"
+                              style={{ fontFamily: 'monospace' }}>
+                              {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                                ? sellerBankAccountDisplayValueArray[index].toLocaleString()
+                                : '0'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-
                     </div>
                   ))}
 
 
                 </div>
+                )}
 
 
                 <div className="w-full mt-6 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold">
-                      판매자 통장별 P2P 거래 통계(사용계좌번호 기준)
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                        onClick={() => setShowSellerAliasStats((v) => !v)}
+                      >
+                        {showSellerAliasStats ? '접기' : '펼치기'}
+                      </button>
+                      <span className="text-lg font-semibold">
+                        판매자 통장별 P2P 거래 통계(사용계좌번호 기준)
+                      </span>
+                    </div>
                     <span className="text-xs text-zinc-500">
                       총 {buyOrderStats.totalBySellerAliesBankAccountNumber?.length || 0} 계좌
                     </span>
                   </div>
 
+                  {showSellerAliasStats && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 items-start">
                     {buyOrderStats.totalBySellerAliesBankAccountNumber?.map((item, index) => (
                       <div key={index} className="flex flex-col gap-2 items-end justify-center
@@ -5435,6 +5441,7 @@ const fetchBuyOrders = async () => {
                       </div>
                     ))}
                   </div>
+                  )}
                 </div>
 
 
