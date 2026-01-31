@@ -855,6 +855,13 @@ export default function Index({ params }: any) {
         totalUsdtAmount: number;
         bankUserInfo: any;
       }>;
+      totalBySellerAliesBankAccountNumber: Array<{
+        _id: string;
+        totalCount: number;
+        totalKrwAmount: number;
+        totalUsdtAmount: number;
+        bankUserInfo: any;
+      }>;
     }>({
       totalCount: 0,
       totalKrwAmount: 0,
@@ -869,6 +876,7 @@ export default function Index({ params }: any) {
 
       totalByUserType: [],
       totalBySellerBankAccountNumber: [],
+      totalBySellerAliesBankAccountNumber: [],
     });
 
 
@@ -945,6 +953,89 @@ export default function Index({ params }: any) {
     });
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
 
+
+
+  // 별칭 계좌별 이력 패널 상태
+  const [aliasPanelOpen, setAliasPanelOpen] = useState(false);
+  const [aliasPanelLoading, setAliasPanelLoading] = useState(false);
+  const [aliasPanelError, setAliasPanelError] = useState('');
+  const [aliasPanelTransfers, setAliasPanelTransfers] = useState<any[]>([]);
+  const [aliasPanelAccountNumber, setAliasPanelAccountNumber] = useState('');
+  const [aliasPanelTotalCount, setAliasPanelTotalCount] = useState(0);
+  const [aliasPanelTotalAmount, setAliasPanelTotalAmount] = useState(0);
+  const [aliasPanelTxnType, setAliasPanelTxnType] = useState<'all' | 'deposit' | 'withdraw'>('all');
+
+  const formatKstDateTime = (value?: string | Date) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getTxnTypeInfo = (typeValue: any) => {
+    const raw = String(typeValue || '').toLowerCase();
+    if (raw === 'deposited' || raw === 'deposit' || raw === '입금') {
+      return { label: '입금', className: 'bg-emerald-100 text-emerald-700 border border-emerald-200' };
+    }
+    if (raw === 'withdrawn' || raw === 'withdrawal' || raw === '출금') {
+      return { label: '출금', className: 'bg-rose-100 text-rose-700 border border-rose-200' };
+    }
+    return { label: '기타', className: 'bg-zinc-100 text-zinc-600 border border-zinc-200' };
+  };
+
+  const fetchAliasTransfers = async (accountNumber: string | number, nextTxnType?: 'all' | 'deposit' | 'withdraw') => {
+    const targetAccount = String(accountNumber || '').trim();
+    if (!targetAccount) {
+      toast.error('계좌번호가 없습니다.');
+      return;
+    }
+
+    setAliasPanelAccountNumber(targetAccount);
+    setAliasPanelOpen(true);
+    setAliasPanelLoading(true);
+    setAliasPanelError('');
+    const txnType = nextTxnType || aliasPanelTxnType;
+
+    try {
+      const response = await fetch('/api/bankTransfer/getAll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          limit: 100,
+          page: 1,
+          accountNumber: targetAccount,
+          fromDate: searchFromDate,
+          toDate: searchToDate,
+          transactionType: txnType === 'all' ? '' : txnType === 'deposit' ? 'deposited' : 'withdrawn',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('데이터를 불러오지 못했습니다.');
+      }
+
+      const data = await response.json();
+      setAliasPanelTransfers(data?.result?.transfers || []);
+      setAliasPanelTotalCount(data?.result?.totalCount || 0);
+      setAliasPanelTotalAmount(data?.result?.totalAmount || 0);
+    } catch (error: any) {
+      console.error('별칭 계좌 이력 조회 실패', error);
+      setAliasPanelError(error?.message || '불러오기 실패');
+      toast.error(error?.message || '데이터를 불러오지 못했습니다.');
+    } finally {
+      setAliasPanelLoading(false);
+    }
+  };
+
+  const closeAliasPanel = () => {
+    setAliasPanelOpen(false);
+  };
 
 
 
@@ -1121,6 +1212,7 @@ export default function Index({ params }: any) {
 
                   totalByUserType: data.result.totalByUserType,
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                  totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
                 });
 
 
@@ -1281,6 +1373,7 @@ export default function Index({ params }: any) {
 
               totalByUserType: data.result.totalByUserType,
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
             });
 
 
@@ -1576,6 +1669,7 @@ export default function Index({ params }: any) {
 
                   totalByUserType: data.result.totalByUserType,
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                  totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
                 });
 
               }
@@ -1717,6 +1811,7 @@ export default function Index({ params }: any) {
 
                 totalByUserType: data.result.totalByUserType,
                 totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
               });
 
             }
@@ -2007,6 +2102,7 @@ export default function Index({ params }: any) {
 
                     totalByUserType: data.result.totalByUserType,
                     totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                    totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
                   });
 
               })
@@ -2190,6 +2286,7 @@ export default function Index({ params }: any) {
 
                   totalByUserType: data.result.totalByUserType,
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                  totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
                 });
 
             })
@@ -2383,6 +2480,7 @@ export default function Index({ params }: any) {
 
               totalByUserType: data.result.totalByUserType,
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
             });
 
         })
@@ -2560,6 +2658,7 @@ export default function Index({ params }: any) {
 
         totalByUserType: data.result.totalByUserType,
         totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+        totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
       });
 
 
@@ -2693,6 +2792,7 @@ const fetchBuyOrders = async () => {
 
     totalByUserType: data.result.totalByUserType,
     totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+    totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber,
   });
 
 
@@ -5123,7 +5223,7 @@ const fetchBuyOrders = async () => {
 
                   {/* 판매자 통장번호별 통계 */}
                   <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                    판매자<br />통장별<br/>P2P 거래<br />통계
+                    판매자<br />통장별<br/>P2P 거래<br />통계(실계좌번호 기준)
                   </span>
 
                   {/*
@@ -5143,17 +5243,8 @@ const fetchBuyOrders = async () => {
                         />
                         <button
                           className="text-sm font-semibold underline text-blue-600"
-                          onClick={() => {
-                            const accountNumber = item._id || '기타은행';
-                            navigator.clipboard.writeText(accountNumber)
-                              .then(() => {
-                                toast.success(`통장번호 ${accountNumber} 복사됨`);
-                              })
-                              .catch((err) => {
-                                toast.error('복사 실패: ' + err);
-                              });
-                          }}
-                          title="통장번호 복사"
+                          onClick={() => fetchAliasTransfers(item._id || '기타은행')}
+                          title="별칭 계좌 이력 보기"
                         >
                           {item._id || '기타은행'}
                         </button>
@@ -5280,6 +5371,74 @@ const fetchBuyOrders = async () => {
 
 
                 </div>
+
+
+                <div className="w-full flex flex-row items-start justify-start gap-4 mt-6">
+
+                  {/* 판매자 통장번호별 통계 */}
+                  <div className="mr-4 flex flex-col gap-2 items-center justify-center">
+                    <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
+                      판매자<br />통장별<br/>P2P 거래<br />통계(사용계좌번호 기준)
+                    </span>
+                  </div>
+
+
+                  {buyOrderStats.totalBySellerAliesBankAccountNumber?.map((item, index) => (
+                    <div key={index} className="flex flex-col gap-2 items-end justify-center
+                      border border-zinc-300 rounded-lg p-4
+                      bg-zinc-50 shadow-md
+                      ml-2
+                      ">
+                      <div className="flex flex-row items-center justify-center gap-1">
+                        <Image
+                          src="/icon-bank.png"
+                          alt="Bank"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <button
+                          className="text-sm font-semibold underline text-blue-600"
+                          onClick={() => fetchAliasTransfers(item._id || '기타은행')}
+                          title="계좌 이력 보기"
+                        >
+                          {item._id || '기타은행'}
+                        </button>
+                      </div>
+
+                      <div className="flex flex-row items-center justify-center gap-1">
+                        잔액(원):{' '}
+                        {item.bankUserInfo.length > 0 && (
+                          <span className="text-lg font-semibold text-yellow-600"
+                            style={{ fontFamily: 'monospace' }}
+                          >
+                            {item.bankUserInfo[0]?.latestBalance
+                              ? item.bankUserInfo[0]?.latestBalance.toLocaleString()
+                              : '잔액정보없음'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <div className="text-sm font-semibold">
+                          {item.totalCount?.toLocaleString() || '0'}
+                        </div>
+                        <div className="flex flex-col gap-1 items-end justify-center">
+                          <div className="flex flex-row items-center justify-center gap-1">
+                            <span className="text-sm font-semibold text-yellow-600"
+                              style={{ fontFamily: 'monospace' }}>
+                              {item.totalKrwAmount?.toLocaleString() || '0'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+
+                </div>
+
+
 
 
           {/* table view is horizontal scroll */}
@@ -9081,6 +9240,130 @@ const fetchBuyOrders = async () => {
             />
         </ModalUser>
 
+        {/* 별칭 계좌 이력 패널 (좌측 슬라이드) */}
+        <div
+          className={`fixed inset-0 z-50 transition-all duration-300 ${
+            aliasPanelOpen ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+        >
+          {/* dimmed background */}
+          <div
+            className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${
+              aliasPanelOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={closeAliasPanel}
+          />
+
+          {/* panel */}
+          <div
+            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[420px] max-w-[480px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
+              aliasPanelOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <div className="p-4 border-b border-zinc-200 flex items-start justify-between gap-2">
+              <div className="flex flex-col">
+                <span className="text-xs uppercase tracking-wide text-zinc-500">
+                  사용계좌번호
+                </span>
+                <span className="text-lg font-semibold text-zinc-900" style={{ fontFamily: 'monospace' }}>
+                  {aliasPanelAccountNumber || '-'}
+                </span>
+                <span className="text-xs text-zinc-500 mt-1">
+                  조회기간 {searchFromDate} ~ {searchToDate}
+                </span>
+                <div className="flex gap-3 text-xs text-zinc-500 mt-1">
+                  <span>건수 {aliasPanelTotalCount.toLocaleString()}</span>
+                  <span>합계 {aliasPanelTotalAmount?.toLocaleString()} 원</span>
+                </div>
+              </div>
+              <button
+                className="text-sm px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-100 active:scale-95 transition"
+                onClick={closeAliasPanel}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
+                  {[
+                    { key: 'all', label: '전체' },
+                    { key: 'deposit', label: '입금' },
+                    { key: 'withdraw', label: '출금' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      className={`px-3 py-1 text-xs rounded-md transition ${
+                        aliasPanelTxnType === opt.key
+                          ? 'bg-white shadow-sm border border-zinc-200 font-semibold'
+                          : 'text-zinc-600'
+                      }`}
+                      onClick={() => {
+                        setAliasPanelTxnType(opt.key as any);
+                        fetchAliasTransfers(aliasPanelAccountNumber, opt.key as any);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
+                  onClick={() => fetchAliasTransfers(aliasPanelAccountNumber, aliasPanelTxnType)}
+                >
+                  새로고침
+                </button>
+              </div>
+
+              {aliasPanelLoading && (
+                <div className="text-sm text-zinc-500">불러오는 중...</div>
+              )}
+
+              {aliasPanelError && (
+                <div className="text-sm text-red-600 mb-3">오류: {aliasPanelError}</div>
+              )}
+
+              {!aliasPanelLoading && !aliasPanelError && aliasPanelTransfers.length === 0 && (
+                <div className="text-sm text-zinc-500">표시할 이력이 없습니다.</div>
+              )}
+
+              <div className="space-y-3">
+                {aliasPanelTransfers.map((trx: any, idx: number) => (
+                  <div
+                    key={trx._id || idx}
+                    className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs"
+                  >
+                    {(() => {
+                      const { label, className } = getTxnTypeInfo(trx.transactionType || trx.trxType);
+                      return (
+                        <>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`px-2 py-0.5 rounded-full leading-none ${className}`}>
+                              {label}
+                            </span>
+                            <span className="font-semibold text-zinc-900 truncate">
+                              {trx.transactionName || '-'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                              {trx.amount !== undefined ? Number(trx.amount).toLocaleString() : '-'}
+                            </span>
+                            <span className="text-[11px] text-zinc-500 whitespace-nowrap">
+                              {formatKstDateTime(trx.transactionDate || trx.regDate)}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
 
 
     </main>
@@ -9258,6 +9541,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
-

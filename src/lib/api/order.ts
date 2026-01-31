@@ -2951,6 +2951,65 @@ export async function getBuyOrders(
 
 
 
+
+
+
+    const totalReaultGroupBySellerAliesBankAccountNumber = await collection.aggregate([
+      {
+        $match: {
+          status: 'paymentConfirmed',
+          
+          //settlement: { $exists: true, $ne: null },
+
+          privateSale: privateSale,
+          ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
+          storecode: { $regex: storecode, $options: 'i' },
+          nickname: { $regex: searchBuyer, $options: 'i' },
+          ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
+          ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
+          
+          
+          //...(searchStoreBankAccountNumber ? { 'seller.bankInfo.accountNumber': { $regex: String(searchStoreBankAccountNumber), $options: 'i' } } : {}),
+          //...(searchBuyerBankAccountNumber ? { 'buyer.bankInfo.accountNumber': { $regex: String(searchBuyerBankAccountNumber), $options: 'i' } } : {}),
+          
+          ...(manualConfirmPayment ? { autoConfirmPayment: { $ne: true } } : {}),
+
+          // userType filter
+          ...(userType !== 'all' ? { userType: userType } : {}),
+
+          createdAt: { $gte: fromDateValue, $lt: toDateValue },
+        }
+      },
+      {
+        $group: {
+          
+          _id: '$seller.bankInfo.accountNumber',
+          totalCount: { $sum: 1 },
+          totalKrwAmount: { $sum: '$krwAmount' },
+          totalUsdtAmount: { $sum: '$usdtAmount' },
+        }
+      },
+      
+      {
+        $lookup: {
+          from: "bankusers",
+          localField: "_id",
+          foreignField: "bankAccountNumber",
+          as: "bankUserInfo"
+        }
+      },
+
+
+      // sort by totalUsdtAmount desc
+      { $sort: { totalUsdtAmount: -1 } }
+    ]).toArray();
+
+
+
+
+
+
+
     // totalReaultGroup by buyer.bankInfo.accountNumber
     
     const totalReaultGroupByBuyerBankAccountNumber = await collection.aggregate([
@@ -3021,6 +3080,8 @@ export async function getBuyOrders(
       //totalReaultGroupByBuyerDepositNameCount: totalReaultGroupByBuyerDepositNameCount.length > 0 ? totalReaultGroupByBuyerDepositNameCount[0].totalCount : 0,
 
       totalBySellerBankAccountNumber: totalReaultGroupBySellerBankAccountNumber,
+
+      totalBySellerAliesBankAccountNumber: totalReaultGroupBySellerAliesBankAccountNumber,
 
       totalByBuyerBankAccountNumber: totalReaultGroupByBuyerBankAccountNumber,
 
