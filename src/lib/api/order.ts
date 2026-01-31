@@ -2912,9 +2912,9 @@ export async function getBuyOrders(
       {
         $group: {
           
-          _id: '$seller.bankInfo.accountNumber',
+          //_id: '$seller.bankInfo.accountNumber',
 
-          //_id: '$seller.bankInfo.realAccountNumber',
+          _id: '$seller.bankInfo.realAccountNumber',
           
           totalCount: { $sum: 1 },
           totalKrwAmount: { $sum: '$krwAmount' },
@@ -2922,6 +2922,7 @@ export async function getBuyOrders(
         }
       },
       
+      /*
       {
         $lookup: {
           from: "bankusers",
@@ -2930,8 +2931,9 @@ export async function getBuyOrders(
           as: "bankUserInfo"
         }
       },
+      */
       
-     /*
+     
       {
         $lookup: {
           from: "bankInfos",
@@ -2940,7 +2942,7 @@ export async function getBuyOrders(
           as: "bankUserInfo"
         }
       },
-      */
+      
 
 
       // sort by totalUsdtAmount desc

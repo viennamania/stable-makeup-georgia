@@ -1167,9 +1167,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   useEffect(() => {
     buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
       
-      const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].latestBalance ? item.bankUserInfo[0].latestBalance : 0;
+      ///const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].latestBalance ? item.bankUserInfo[0].latestBalance : 0;
 
-      //const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].balance ? item.bankUserInfo[0].balance : 0;
+      const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].balance ? item.bankUserInfo[0].balance : 0;
 
 
       const duration = 1000; // animation duration in ms
@@ -4742,8 +4742,8 @@ const fetchBuyOrders = async () => {
                 backdrop-blur-md
                 ${
                 
-                lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.lastestBalance
-                //lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
+                //lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.lastestBalance
+                lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
 
                   ? 'bg-green-100/80 animate-pulse'
                   : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
