@@ -23,6 +23,10 @@ export async function POST(request: NextRequest) {
     accountHolder,
     memo,
     aliasAccountNumber,
+    realName,
+    residentNumber,
+    phoneNumber,
+    idCardImageUrl,
   } = body || {};
 
   const normalizedAccountNumber = String(realAccountNumber ?? accountNumber ?? '').trim();
@@ -52,6 +56,10 @@ export async function POST(request: NextRequest) {
     ...(normalizedAliasAccountNumber !== undefined
       ? { aliasAccountNumber: normalizedAliasAccountNumber }
       : {}),
+    ...(realName != null ? { realName: String(realName) } : {}),
+    ...(residentNumber != null ? { residentNumber: String(residentNumber) } : {}),
+    ...(phoneNumber != null ? { phoneNumber: String(phoneNumber) } : {}),
+    ...(idCardImageUrl != null ? { idCardImageUrl: String(idCardImageUrl) } : {}),
   });
 
   return NextResponse.json({

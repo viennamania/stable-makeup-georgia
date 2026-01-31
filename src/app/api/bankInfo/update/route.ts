@@ -14,6 +14,16 @@ const normalizeAliasAccountNumber = (input: any) => {
   return Array.from(new Set(cleaned));
 };
 
+const normalizeOptionalString = (value: any) => {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null) {
+    return '';
+  }
+  return String(value);
+};
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
@@ -26,6 +36,10 @@ export async function POST(request: NextRequest) {
     memo,
     aliasAccountNumber,
     defaultAccountNumber,
+    realName,
+    residentNumber,
+    phoneNumber,
+    idCardImageUrl,
   } = body || {};
 
   if (!id || !ObjectId.isValid(String(id))) {
@@ -53,6 +67,10 @@ export async function POST(request: NextRequest) {
   }
 
   const normalizedAliasAccountNumber = normalizeAliasAccountNumber(aliasAccountNumber);
+  const normalizedRealName = normalizeOptionalString(realName);
+  const normalizedResidentNumber = normalizeOptionalString(residentNumber);
+  const normalizedPhoneNumber = normalizeOptionalString(phoneNumber);
+  const normalizedIdCardImageUrl = normalizeOptionalString(idCardImageUrl);
 
   const result = await updateBankInfo({
     id: String(id),
@@ -65,6 +83,10 @@ export async function POST(request: NextRequest) {
         ? { aliasAccountNumber: normalizedAliasAccountNumber }
         : {}),
       ...(defaultAccountNumber !== undefined ? { defaultAccountNumber: String(defaultAccountNumber) } : {}),
+      ...(normalizedRealName !== undefined ? { realName: normalizedRealName } : {}),
+      ...(normalizedResidentNumber !== undefined ? { residentNumber: normalizedResidentNumber } : {}),
+      ...(normalizedPhoneNumber !== undefined ? { phoneNumber: normalizedPhoneNumber } : {}),
+      ...(normalizedIdCardImageUrl !== undefined ? { idCardImageUrl: normalizedIdCardImageUrl } : {}),
     },
   });
 

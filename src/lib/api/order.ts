@@ -2911,12 +2911,17 @@ export async function getBuyOrders(
       },
       {
         $group: {
+          
           _id: '$seller.bankInfo.accountNumber',
+
+          //_id: '$seller.bankInfo.realAccountNumber',
+          
           totalCount: { $sum: 1 },
           totalKrwAmount: { $sum: '$krwAmount' },
           totalUsdtAmount: { $sum: '$usdtAmount' },
         }
       },
+      
       {
         $lookup: {
           from: "bankusers",
@@ -2925,6 +2930,17 @@ export async function getBuyOrders(
           as: "bankUserInfo"
         }
       },
+      
+     /*
+      {
+        $lookup: {
+          from: "bankInfos",
+          localField: "_id",
+          foreignField: "realAccountNumber",
+          as: "bankUserInfo"
+        }
+      },
+      */
 
 
       // sort by totalUsdtAmount desc

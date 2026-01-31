@@ -78,6 +78,10 @@ export async function createBankInfo(data: {
   accountHolder: string;
   memo?: string;
   aliasAccountNumber?: string[];
+  realName?: string;
+  residentNumber?: string;
+  phoneNumber?: string;
+  idCardImageUrl?: string;
 }) {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('bankInfos');
@@ -89,6 +93,10 @@ export async function createBankInfo(data: {
     accountHolder: data.accountHolder,
     ...(data.memo !== undefined ? { memo: data.memo } : {}),
     ...(data.aliasAccountNumber !== undefined ? { aliasAccountNumber: data.aliasAccountNumber } : {}),
+    ...(data.realName !== undefined ? { realName: data.realName } : {}),
+    ...(data.residentNumber !== undefined ? { residentNumber: data.residentNumber } : {}),
+    ...(data.phoneNumber !== undefined ? { phoneNumber: data.phoneNumber } : {}),
+    ...(data.idCardImageUrl !== undefined ? { idCardImageUrl: data.idCardImageUrl } : {}),
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -117,6 +125,10 @@ export async function updateBankInfo({
     memo?: string;
     aliasAccountNumber?: string[];
     defaultAccountNumber?: string;
+    realName?: string;
+    residentNumber?: string;
+    phoneNumber?: string;
+    idCardImageUrl?: string;
   };
 }) {
   if (!ObjectId.isValid(id)) {
@@ -140,6 +152,18 @@ export async function updateBankInfo({
   }
   if (data.defaultAccountNumber !== undefined) {
     updateFields.defaultAccountNumber = data.defaultAccountNumber;
+  }
+  if (data.realName !== undefined) {
+    updateFields.realName = data.realName;
+  }
+  if (data.residentNumber !== undefined) {
+    updateFields.residentNumber = data.residentNumber;
+  }
+  if (data.phoneNumber !== undefined) {
+    updateFields.phoneNumber = data.phoneNumber;
+  }
+  if (data.idCardImageUrl !== undefined) {
+    updateFields.idCardImageUrl = data.idCardImageUrl;
   }
 
   const result = await collection.updateOne(

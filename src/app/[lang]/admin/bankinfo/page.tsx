@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import { toast } from 'react-hot-toast';
+import type { PutBlobResult } from '@vercel/blob';
 
 import { client } from "../../../client";
 
@@ -102,6 +103,13 @@ const emptyForm = {
   accountHolder: '',
 };
 
+const emptyRealNameForm = {
+  realName: '',
+  residentNumber: '',
+  phoneNumber: '',
+  idCardImageUrl: '',
+};
+
 const bankNameOptions = [
   '국민은행',
   '신한은행',
@@ -145,6 +153,11 @@ export default function BankInfoPage() {
   const [selectedDefaultInfo, setSelectedDefaultInfo] = useState<any>(null);
   const [selectedDefaultValue, setSelectedDefaultValue] = useState('');
   const [savingDefault, setSavingDefault] = useState(false);
+  const [isRealNameOpen, setIsRealNameOpen] = useState(false);
+  const [selectedRealNameInfo, setSelectedRealNameInfo] = useState<any>(null);
+  const [realNameForm, setRealNameForm] = useState({ ...emptyRealNameForm });
+  const [savingRealName, setSavingRealName] = useState(false);
+  const [uploadingIdCard, setUploadingIdCard] = useState(false);
 
   const getIdValue = (item: any) =>
     String(item?._id?.toString?.() || item?._id?.$oid || item?._id || '');
@@ -179,6 +192,17 @@ export default function BankInfoPage() {
   const defaultAliasValues = normalizeAliasList(
     Array.isArray(selectedDefaultInfo?.aliasAccountNumber) ? selectedDefaultInfo.aliasAccountNumber : []
   ).filter((value) => value !== defaultRealValue);
+  const realNameOriginal = {
+    realName: selectedRealNameInfo?.realName || '',
+    residentNumber: selectedRealNameInfo?.residentNumber || '',
+    phoneNumber: selectedRealNameInfo?.phoneNumber || '',
+    idCardImageUrl: selectedRealNameInfo?.idCardImageUrl || '',
+  };
+  const isRealNameDirty =
+    realNameForm.realName !== realNameOriginal.realName ||
+    realNameForm.residentNumber !== realNameOriginal.residentNumber ||
+    realNameForm.phoneNumber !== realNameOriginal.phoneNumber ||
+    realNameForm.idCardImageUrl !== realNameOriginal.idCardImageUrl;
 
   const resolveErrorMessage = async (
     response: Response,
@@ -313,6 +337,9 @@ export default function BankInfoPage() {
     if (isDefaultOpen && !closeDefaultPanel()) {
       return;
     }
+    if (isRealNameOpen && !closeRealNamePanel()) {
+      return;
+    }
     setSelectedInfo(item);
     setDetailMemo(item?.memo || '');
     setDetailAliases(Array.isArray(item?.aliasAccountNumber) ? [...item.aliasAccountNumber] : []);
@@ -339,9 +366,29 @@ export default function BankInfoPage() {
     if (isDetailOpen && !closeDetail()) {
       return;
     }
+    if (isRealNameOpen && !closeRealNamePanel()) {
+      return;
+    }
     setSelectedDefaultInfo(item);
     setSelectedDefaultValue(item?.defaultAccountNumber || '');
     setIsDefaultOpen(true);
+  };
+
+  const openRealNamePanel = (item: any) => {
+    if (isDetailOpen && !closeDetail()) {
+      return;
+    }
+    if (isDefaultOpen && !closeDefaultPanel()) {
+      return;
+    }
+    setSelectedRealNameInfo(item);
+    setRealNameForm({
+      realName: item?.realName || '',
+      residentNumber: item?.residentNumber || '',
+      phoneNumber: item?.phoneNumber || '',
+      idCardImageUrl: item?.idCardImageUrl || '',
+    });
+    setIsRealNameOpen(true);
   };
 
   const closeDefaultPanel = () => {
@@ -354,6 +401,19 @@ export default function BankInfoPage() {
     setIsDefaultOpen(false);
     setSelectedDefaultInfo(null);
     setSelectedDefaultValue('');
+    return true;
+  };
+
+  const closeRealNamePanel = () => {
+    if (isRealNameDirty) {
+      const shouldClose = window.confirm('변경사항이 저장되지 않았습니다. 닫으시겠습니까?');
+      if (!shouldClose) {
+        return false;
+      }
+    }
+    setIsRealNameOpen(false);
+    setSelectedRealNameInfo(null);
+    setRealNameForm({ ...emptyRealNameForm });
     return true;
   };
 
@@ -378,6 +438,17 @@ export default function BankInfoPage() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isDefaultOpen, isDefaultDirty]);
+
+  useEffect(() => {
+    if (!isRealNameOpen) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeRealNamePanel();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isRealNameOpen, isRealNameDirty]);
 
   const handleCopyAccountNumber = async () => {
     if (!selectedInfo) return;
@@ -419,6 +490,42 @@ export default function BankInfoPage() {
       toast.success(`${label}를 복사했습니다.`);
     } catch (error) {
       toast.error('복사에 실패했습니다.');
+    }
+  };
+
+  const handleUploadIdCard = async (file: File) => {
+    if (!file || uploadingIdCard) return;
+    if (file.size / 1024 / 1024 > 50) {
+      toast.error('파일 크기가 너무 큽니다. (최대 50MB)');
+      return;
+    }
+    setUploadingIdCard(true);
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'content-type': file.type || 'application/octet-stream',
+        },
+        body: file,
+      });
+
+      if (!response.ok) {
+        toast.error('신분증 사진 업로드에 실패했습니다.');
+        return;
+      }
+
+      const { url } = (await response.json()) as PutBlobResult;
+      if (!url) {
+        toast.error('업로드 결과가 올바르지 않습니다.');
+        return;
+      }
+
+      setRealNameForm((prev) => ({ ...prev, idCardImageUrl: url }));
+      toast.success('신분증 사진을 업로드했습니다.');
+    } catch (error) {
+      toast.error('신분증 사진 업로드에 실패했습니다.');
+    } finally {
+      setUploadingIdCard(false);
     }
   };
 
@@ -571,6 +678,57 @@ export default function BankInfoPage() {
       toast.error('사용중인 계좌번호 저장에 실패했습니다.');
     } finally {
       setSavingDefault(false);
+    }
+  };
+
+  const handleSaveRealName = async () => {
+    if (!selectedRealNameInfo || savingRealName) return;
+    const id = getIdValue(selectedRealNameInfo);
+    if (!id) {
+      toast.error('유효하지 않은 항목입니다.');
+      return;
+    }
+
+    const payload = {
+      realName: realNameForm.realName.trim(),
+      residentNumber: realNameForm.residentNumber.trim(),
+      phoneNumber: realNameForm.phoneNumber.trim(),
+      idCardImageUrl: realNameForm.idCardImageUrl.trim(),
+    };
+
+    setSavingRealName(true);
+    try {
+      const response = await fetch('/api/bankInfo/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id,
+          bankName: selectedRealNameInfo?.bankName || '',
+          realAccountNumber: selectedRealNameInfo?.realAccountNumber || selectedRealNameInfo?.accountNumber || '',
+          accountHolder: selectedRealNameInfo?.accountHolder || '',
+          ...payload,
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await resolveErrorMessage(response, '실명 정보 저장에 실패했습니다.');
+        toast.error(message);
+        return;
+      }
+
+      toast.success('실명 정보를 저장했습니다.');
+      setSelectedRealNameInfo((prev: any) => ({
+        ...prev,
+        ...payload,
+        updatedAt: new Date(),
+      }));
+      await fetchBankInfos();
+    } catch (error) {
+      toast.error('실명 정보 저장에 실패했습니다.');
+    } finally {
+      setSavingRealName(false);
     }
   };
 
@@ -856,20 +1014,21 @@ export default function BankInfoPage() {
             <thead className="bg-zinc-100 text-zinc-700 text-sm font-medium border-b border-zinc-200">
               <tr>
                 <th className="px-3 py-3 text-left w-12">No</th>
+                <th className="px-3 py-3 text-left w-24">잔고</th>
                 <th className="px-3 py-3 text-left w-32">실계좌번호</th>
+                <th className="px-3 py-3 text-left w-24">은행명</th>
                 <th className="px-3 py-3 text-left w-28">예금주</th>
-                <th className="px-3 py-3 text-left w-28">은행명</th>
-                <th className="px-3 py-3 text-left w-48">사용중인 계좌번호</th>
-                <th className="px-3 py-3 text-left w-52">별칭</th>
-                <th className="px-3 py-3 text-left w-36">생성일</th>
-                <th className="px-3 py-3 text-left w-36">수정일</th>
+                <th className="px-3 py-3 text-left w-24">실명정보</th>
+                <th className="px-3 py-3 text-left w-36">사용중인 계좌번호</th>
+                <th className="px-3 py-3 text-left w-32">별칭</th>
+                <th className="px-3 py-3 text-left w-40">생성/수정일</th>
                 <th className="px-3 py-3 text-center w-28">관리</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {bankInfos.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-500">
                     등록된 은행 정보가 없습니다.
                   </td>
                 </tr>
@@ -884,6 +1043,11 @@ export default function BankInfoPage() {
                   <tr key={rowKey} className="group border-b border-gray-200 hover:bg-gray-50 align-top">
                     <td className="px-3 py-3 text-left text-gray-500 align-top overflow-hidden">
                       {index + 1}
+                    </td>
+                    <td className="px-3 py-3 align-top overflow-hidden text-right">
+                      {info?.balance !== undefined && info?.balance !== null
+                        ? Number(info.balance).toLocaleString('ko-KR')
+                        : '-'}
                     </td>
                     <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (
@@ -922,18 +1086,6 @@ export default function BankInfoPage() {
                     </td>
                     <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (
-                        <input
-                          type="text"
-                          value={editForm.accountHolder}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
-                          className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
-                        />
-                      ) : (
-                        info?.accountHolder || '-'
-                      )}
-                    </td>
-                    <td className="px-3 py-3 align-top overflow-hidden">
-                      {isEditing ? (
                         <select
                           value={editForm.bankName}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, bankName: e.target.value }))}
@@ -951,6 +1103,33 @@ export default function BankInfoPage() {
                         </select>
                       ) : (
                         info?.bankName || '-'
+                      )}
+                    </td>
+                    <td className="px-3 py-3 align-top overflow-hidden">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.accountHolder}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
+                          className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openRealNamePanel(info)}
+                          className="text-left text-zinc-900 hover:underline underline-offset-4"
+                        >
+                          {info?.accountHolder || '-'}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 align-top overflow-hidden">
+                      {info?.realName && info?.residentNumber && info?.phoneNumber && info?.idCardImageUrl ? (
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          verified
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-400">-</span>
                       )}
                     </td>
                     <td className="px-3 py-3 align-top overflow-hidden">
@@ -1006,8 +1185,12 @@ export default function BankInfoPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-top overflow-hidden">{formatDateTime(info?.createdAt)}</td>
-                    <td className="px-3 py-3 align-top overflow-hidden">{formatDateTime(info?.updatedAt)}</td>
+                    <td className="px-3 py-3 align-top overflow-hidden">
+                      <div className="flex flex-col gap-1 text-xs text-zinc-600">
+                        <span>생성 {formatDateTime(info?.createdAt)}</span>
+                        <span>수정 {formatDateTime(info?.updatedAt)}</span>
+                      </div>
+                    </td>
                     <td className="px-3 py-3 text-center align-top overflow-hidden">
                       {isEditing ? (
                         <div className="flex flex-row items-center justify-center gap-2">
@@ -1145,6 +1328,158 @@ export default function BankInfoPage() {
               >
                 저장하기
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={`fixed inset-0 z-50 ${isRealNameOpen ? '' : 'pointer-events-none'}`}>
+        <div
+          className={`absolute inset-0 bg-black/20 transition-opacity duration-200 ${isRealNameOpen ? 'opacity-100' : 'opacity-0'}`}
+          onClick={closeRealNamePanel}
+        />
+        <div
+          className={`absolute right-0 top-0 h-full w-full sm:w-[360px] bg-white border-l border-zinc-200 transform transition-transform duration-200 ${isRealNameOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+              <div>
+                <div className="text-xs text-zinc-500">실명 정보</div>
+                <div className="text-lg font-semibold text-zinc-900">예금주 정보</div>
+              </div>
+              <div className="flex items-center gap-2">
+                {isRealNameDirty && (
+                  <span className="text-xs text-amber-600">변경됨</span>
+                )}
+                <button
+                  type="button"
+                  onClick={closeRealNamePanel}
+                  className="h-8 w-8 rounded-full border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 flex items-center justify-center"
+                  aria-label="닫기"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+                    <path
+                      d="M6 6l12 12M18 6L6 18"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm text-zinc-700">
+              <div className="border border-zinc-200 rounded-md p-3">
+                <div className="text-xs text-zinc-500 mb-2">계좌 정보</div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">은행명</span>
+                    <span className="font-medium text-zinc-900">{selectedRealNameInfo?.bankName || '-'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">실계좌번호</span>
+                    <span className="font-medium text-zinc-900">
+                      {selectedRealNameInfo?.realAccountNumber || selectedRealNameInfo?.accountNumber || '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500">예금주</span>
+                    <span className="font-medium text-zinc-900">{selectedRealNameInfo?.accountHolder || '-'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-zinc-200 rounded-md p-3 space-y-3">
+                <div className="text-xs text-zinc-500">실명 정보</div>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-zinc-500">이름</span>
+                  <input
+                    type="text"
+                    value={realNameForm.realName}
+                    onChange={(e) => setRealNameForm((prev) => ({ ...prev, realName: e.target.value }))}
+                    placeholder="이름"
+                    className="w-full p-2 border border-zinc-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-zinc-500">주민번호</span>
+                  <input
+                    type="text"
+                    value={realNameForm.residentNumber}
+                    onChange={(e) => setRealNameForm((prev) => ({ ...prev, residentNumber: e.target.value }))}
+                    placeholder="예: 900101-1234567"
+                    className="w-full p-2 border border-zinc-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-zinc-500">핸드폰번호</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={realNameForm.phoneNumber}
+                    onChange={(e) =>
+                      setRealNameForm((prev) => ({ ...prev, phoneNumber: sanitizeDigits(e.target.value) }))
+                    }
+                    placeholder="예: 01012345678"
+                    className="w-full p-2 border border-zinc-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-xs text-zinc-500">신분증사진</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.currentTarget.files?.[0];
+                      if (file) {
+                        handleUploadIdCard(file);
+                      }
+                      e.currentTarget.value = '';
+                    }}
+                    className="w-full text-sm"
+                    disabled={uploadingIdCard}
+                  />
+                  {uploadingIdCard && (
+                    <span className="text-xs text-zinc-400">업로드 중...</span>
+                  )}
+                  {realNameForm.idCardImageUrl ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-zinc-500 break-all">{realNameForm.idCardImageUrl}</span>
+                      <button
+                        type="button"
+                        onClick={() => setRealNameForm((prev) => ({ ...prev, idCardImageUrl: '' }))}
+                        className="text-xs text-red-600 hover:underline underline-offset-4"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-zinc-400">업로드된 사진이 없습니다.</span>
+                  )}
+                </label>
+                {realNameForm.idCardImageUrl ? (
+                  <div className="rounded-md border border-zinc-200 overflow-hidden bg-zinc-50">
+                    <img
+                      src={realNameForm.idCardImageUrl}
+                      alt="신분증 사진 미리보기"
+                      className="w-full h-auto object-contain"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-200 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={handleSaveRealName}
+                  className={`w-full px-3 py-2 rounded text-white bg-zinc-900 hover:bg-zinc-800 ${savingRealName || uploadingIdCard || !isRealNameDirty ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={savingRealName || uploadingIdCard || !isRealNameDirty}
+                >
+                  저장하기
+                </button>
             </div>
           </div>
         </div>
