@@ -190,8 +190,6 @@ export async function touchBankInfoByRealAccountNumber(
         balance: balance,
       },
       $setOnInsert: {
-        touchedAt: now,
-        balance: balance,
         bankName: 'Unknown',
         realAccountNumber: value,
         defaultAccountNumber: value,
