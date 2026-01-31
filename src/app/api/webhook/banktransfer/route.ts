@@ -178,7 +178,10 @@ export async function POST(request: NextRequest) {
 
 
   // touchBankInfoByRealAccountNumber
-  await touchBankInfoByRealAccountNumber(bank_account_number);
+  await touchBankInfoByRealAccountNumber(
+    bank_account_number,
+    balance
+  );
 
 
 
@@ -590,6 +593,11 @@ export async function POST(request: NextRequest) {
 
 
   try {
+
+
+
+
+
 
     //upsertBankUser
     /*

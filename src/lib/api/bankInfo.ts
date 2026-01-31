@@ -166,7 +166,10 @@ export async function deleteBankInfo(id: string) {
 
 // touch by realAccountNumber
 // used in webhook when bank transfer occurs
-export async function touchBankInfoByRealAccountNumber(realAccountNumber: string) {
+export async function touchBankInfoByRealAccountNumber(
+  realAccountNumber: string,
+  balance: number,
+) {
   const value = String(realAccountNumber || '').trim();
   if (!value) {
     return null;
@@ -184,8 +187,11 @@ export async function touchBankInfoByRealAccountNumber(realAccountNumber: string
     {
       $set: {
         touchedAt: now,
+        balance: balance,
       },
       $setOnInsert: {
+        touchedAt: now,
+        balance: balance,
         bankName: 'Unknown',
         realAccountNumber: value,
         defaultAccountNumber: value,
