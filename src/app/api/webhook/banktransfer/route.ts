@@ -27,12 +27,15 @@ import {
 } from '@lib/api/store';
 
 
-// isBankTransferMultipleTimes
+
 import {
   isBankTransferMultipleTimes,
 } from '@lib/api/bankTransfer';
 
-
+// touchBankInfoByRealAccountNumber
+import {
+  touchBankInfoByRealAccountNumber,
+} from '@lib/api/bankInfo';
 
 // webhook
 // header
@@ -171,6 +174,12 @@ export async function POST(request: NextRequest) {
   console.log("transaction_name", transaction_name);
   console.log("balance", balance);
   console.log("processing_date", processing_date);
+
+
+
+  // touchBankInfoByRealAccountNumber
+  await touchBankInfoByRealAccountNumber(bank_account_number);
+
 
 
   {/*

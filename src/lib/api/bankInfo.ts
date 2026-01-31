@@ -160,3 +160,41 @@ export async function deleteBankInfo(id: string) {
   const collection = client.db(dbName).collection('bankInfos');
   return collection.deleteOne({ _id: new ObjectId(id) });
 }
+
+
+
+
+// touch by realAccountNumber
+// used in webhook when bank transfer occurs
+export async function touchBankInfoByRealAccountNumber(realAccountNumber: string) {
+  const value = String(realAccountNumber || '').trim();
+  if (!value) {
+    return null;
+  }
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankInfos');
+
+  const now = new Date();
+
+  // if not exists, insert a new document
+  const result = await collection.updateOne(
+    {
+      realAccountNumber: value,
+    },
+    {
+      $set: {
+        touchedAt: now,
+      },
+      $setOnInsert: {
+        bankName: 'Unknown',
+        realAccountNumber: value,
+        defaultAccountNumber: value,
+        accountHolder: 'Unknown',
+        createdAt: now,
+      },
+    },
+    { upsert: true }
+  );
+
+  return result;
+}
