@@ -1050,6 +1050,14 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       totalUsdtAmount: number;
       bankUserInfo: any;
     }>;
+
+    totalBySellerAliesBankAccountNumber: Array<{
+      _id: string;
+      totalCount: number;
+      totalKrwAmount: number;
+      totalUsdtAmount: number;
+      bankUserInfo: any;
+    }>;
   }>({
     totalCount: 0,
     totalKrwAmount: 0,
@@ -1070,6 +1078,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     */
 
     totalBySellerBankAccountNumber: [],
+    totalBySellerAliesBankAccountNumber: [],
   });
 
 
@@ -1188,6 +1197,92 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     });
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
 
+
+  // 사용계좌(별칭) 이력 패널 상태
+  const [aliasPanelOpen, setAliasPanelOpen] = useState(false);
+  const [aliasPanelLoading, setAliasPanelLoading] = useState(false);
+  const [aliasPanelError, setAliasPanelError] = useState('');
+  const [aliasPanelTransfers, setAliasPanelTransfers] = useState<any[]>([]);
+  const [aliasPanelAccountNumber, setAliasPanelAccountNumber] = useState('');
+  const [aliasPanelTotalCount, setAliasPanelTotalCount] = useState(0);
+  const [aliasPanelTotalAmount, setAliasPanelTotalAmount] = useState(0);
+  const [aliasPanelTxnType, setAliasPanelTxnType] = useState<'all' | 'deposit' | 'withdraw'>('all');
+  const [showSellerBankStats, setShowSellerBankStats] = useState(true);
+  const [showSellerAliasStats, setShowSellerAliasStats] = useState(true);
+
+  const formatKstDateTime = (value?: string | Date) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getTxnTypeInfo = (typeValue: any) => {
+    const raw = String(typeValue || '').toLowerCase();
+    if (raw === 'deposited' || raw === 'deposit' || raw === '입금') {
+      return { label: '입금', className: 'bg-emerald-100 text-emerald-700 border border-emerald-200' };
+    }
+    if (raw === 'withdrawn' || raw === 'withdrawal' || raw === '출금') {
+      return { label: '출금', className: 'bg-rose-100 text-rose-700 border border-rose-200' };
+    }
+    return { label: '기타', className: 'bg-zinc-100 text-zinc-600 border border-zinc-200' };
+  };
+
+  const fetchAliasTransfers = async (accountNumber: string | number, nextTxnType?: 'all' | 'deposit' | 'withdraw') => {
+    const targetAccount = String(accountNumber || '').trim();
+    if (!targetAccount) {
+      toast.error('계좌번호가 없습니다.');
+      return;
+    }
+
+    const txnType = nextTxnType || aliasPanelTxnType;
+
+    setAliasPanelAccountNumber(targetAccount);
+    setAliasPanelTxnType(txnType);
+    setAliasPanelOpen(true);
+    setAliasPanelLoading(true);
+    setAliasPanelError('');
+
+    try {
+      const response = await fetch('/api/bankTransfer/getAll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          limit: 100,
+          page: 1,
+          accountNumber: targetAccount,
+          fromDate: searchFromDate,
+          toDate: searchToDate,
+          transactionType: txnType === 'all' ? '' : txnType === 'deposit' ? 'deposited' : 'withdrawn',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('데이터를 불러오지 못했습니다.');
+      }
+
+      const data = await response.json();
+      setAliasPanelTransfers(data?.result?.transfers || []);
+      setAliasPanelTotalCount(data?.result?.totalCount || 0);
+      setAliasPanelTotalAmount(data?.result?.totalAmount || 0);
+    } catch (error: any) {
+      console.error('별칭 계좌 이력 조회 실패', error);
+      setAliasPanelError(error?.message || '불러오기 실패');
+      toast.error(error?.message || '데이터를 불러오지 못했습니다.');
+    } finally {
+      setAliasPanelLoading(false);
+    }
+  };
+
+  const closeAliasPanel = () => {
+    setAliasPanelOpen(false);
+  };
 
 
 
@@ -1370,6 +1465,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
                   
                   totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                  totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
                 });
 
                 
@@ -1523,13 +1619,14 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
-                totalByUserType: data.result.totalByUserType,
-
-                //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-
-                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-              });
+            totalByUserType: data.result.totalByUserType,
+            
+            //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+            //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+            
+            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+            totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
+          });
 
             }
           });
@@ -1628,8 +1725,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               
               //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
               //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-
+              
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
             });
 
 
@@ -1917,13 +2015,14 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                   totalAgentFeeAmount: data.result.totalAgentFeeAmount,
                   totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
-                  totalByUserType: data.result.totalByUserType,
-
-                  //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                  //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-
-                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-                });
+              totalByUserType: data.result.totalByUserType,
+              
+              //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+              //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+              
+              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
+            });
 
               }
             });
@@ -2040,11 +2139,12 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
                 totalByUserType: data.result.totalByUserType,
-
+                
                 //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
                 //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-
+                
                 totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+                totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
               });
 
             }
@@ -2656,11 +2756,12 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
               totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
               totalByUserType: data.result.totalByUserType,
-
+              
               //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
               //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-
+              
               totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
             });
 
         })
@@ -2789,13 +2890,14 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
         totalAgentFeeAmount: data.result.totalAgentFeeAmount,
         totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
 
-        totalByUserType: data.result.totalByUserType,
-
-        //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-        //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-
-        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-      });
+            totalByUserType: data.result.totalByUserType,
+            
+            //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
+            //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
+            
+            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
+            totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
+          });
 
 
     }
@@ -4722,113 +4824,152 @@ const fetchBuyOrders = async () => {
           */}
 
 
-          {/* buyOrderStats.totalBySellerBankAccountNumber */}
-          <div className="w-full
-            grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1
-            items-start justify-start">
+          <div className="w-full flex items-center justify-between mb-2 gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                onClick={() => setShowSellerBankStats((v) => !v)}
+              >
+                {showSellerBankStats ? '접기' : '펼치기'}
+              </button>
+              <span className="text-lg font-semibold">
+                판매자 통장별 P2P 거래 통계(실계좌번호 기준)
+              </span>
+            </div>
+            <span className="text-xs text-zinc-500">
+              총 {buyOrderStats.totalBySellerBankAccountNumber?.length || 0} 계좌
+            </span>
+          </div>
 
-            
-            {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-              
-              <div
-                key={index}
-                //className="flex flex-col gap-2 items-center
-                //border border-zinc-300 rounded-lg p-2"
-                // if lastestBalanceArray[index] is changed, then animate the background color
-                // if sellerBankAccountDisplayValueArray[index] is changed, then animate the background color
-                // two color is differentiate between the two conditions
-                className={`flex flex-col gap-1 items-center
-                p-2 rounded-lg shadow-md
-                backdrop-blur-md
-                ${
-                
-                //lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.lastestBalance
-                lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
-
-                  ? 'bg-green-100/80 animate-pulse'
-                  : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
-                    ? 'bg-yellow-100/80 animate-pulse'
-                    : 'bg-white/80'}
-                `}
+          {showSellerBankStats && (
+            <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
+              {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                <div
+                  key={index}
+                  className={`flex flex-col gap-1 items-start
+                  p-3 rounded-xl border border-zinc-200 bg-white
+                  ${
+                    lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
+                      ? 'ring-1 ring-emerald-200'
+                      : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
+                        ? 'ring-1 ring-amber-200'
+                        : ''
+                  }
+                  `}
                 >
+                  <div className="flex items-center gap-2 w-full">
+                    <Image src="/icon-bank.png" alt="Bank" width={14} height={14} className="w-3.5 h-3.5" />
+                    <button
+                      className="text-sm font-semibold text-blue-600 underline truncate text-left"
+                      onClick={() => {
+                        const accountNumber = item._id || '기타은행';
+                        const holder = item.bankUserInfo?.[0]?.accountHolder || '';
+                        const bank = item.bankUserInfo?.[0]?.bankName || '';
+                        navigator.clipboard.writeText(accountNumber)
+                          .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
+                          .catch((err) => toast.error('복사 실패: ' + err));
+                      }}
+                      title="통장번호 복사"
+                    >
+                      {[
+                        item._id || '기타은행',
+                        item.bankUserInfo?.[0]?.accountHolder,
+                        item.bankUserInfo?.[0]?.bankName,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </button>
+                  </div>
 
-                <div className="flex flex-row items-start justify-start gap-1">
-                  <Image
-                    src="/icon-bank.png"
-                    alt="Bank"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />              
-                  <button
-                    className="text-sm text-zinc-500 underline font-semibold"
-                    onClick={() => {
-                      const accountNumber = item._id || '기타은행';
-                      navigator.clipboard.writeText(accountNumber)
-                        .then(() => {
-                          toast.success(`통장번호 ${accountNumber} 복사됨`);
-                        })
-                        .catch((err) => {
-                          toast.error('복사 실패: ' + err);
-                        });
-                    }}
-                    title="통장번호 복사"
-                  >
-                    {item._id || '기타은행'}
-                  </button>
+                  <div className="flex items-baseline gap-1 text-xs text-zinc-500">
+                    <span>잔액(원)</span>
+                    <span className="text-lg font-bold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                      {lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                        ? lastestBalanceArray[index].toLocaleString()
+                        : '잔액정보없음'}
+                    </span>
+                  </div>
+
+                  <div className="w-full flex items-center justify-between text-xs">
+                    <span className="font-semibold text-zinc-600">{item.totalCount?.toLocaleString() || '0'}</span>
+                    <span className="font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                      {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                        ? sellerBankAccountDisplayValueArray[index].toLocaleString()
+                        : '0'}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-row items-center justify-center gap-1">
-                  {/* accountHolder if exists */}
-                  {item.bankUserInfo.length > 0 && (
-                    <div className="flex flex-row items-center gap-1">
-                      <span className="text-sm text-zinc-500 font-semibold">
-                        {item.bankUserInfo[0].accountHolder || '알수없음'}
-                      </span>
-                      <span className="text-sm text-zinc-500 font-semibold">
-                        {item.bankUserInfo[0].bankName || ''}
+              ))}
+            </div>
+          )}
+
+
+          {/* 판매자 통장별 P2P 거래 통계(사용계좌번호 기준) */}
+          <div className="w-full mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                  onClick={() => setShowSellerAliasStats((v) => !v)}
+                >
+                  {showSellerAliasStats ? '접기' : '펼치기'}
+                </button>
+                <span className="text-lg font-semibold">
+                  판매자 통장별 P2P 거래 통계(사용계좌번호 기준)
+                </span>
+              </div>
+              <span className="text-xs text-zinc-500">
+                총 {buyOrderStats.totalBySellerAliesBankAccountNumber?.length || 0} 계좌
+              </span>
+            </div>
+
+            {showSellerAliasStats && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
+                {buyOrderStats.totalBySellerAliesBankAccountNumber?.map((item, index) => (
+                  <div key={index} className="flex flex-col gap-1 items-start
+                    border border-zinc-200 rounded-xl p-3 bg-white">
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/icon-bank.png"
+                        alt="Bank"
+                        width={20}
+                        height={20}
+                        className="w-4 h-4"
+                      />
+                      <button
+                        className="text-sm font-semibold underline text-blue-600 truncate"
+                        onClick={() => fetchAliasTransfers(item._id || '기타은행', 'all')}
+                        title="계좌 이력 보기"
+                      >
+                        {item._id || '기타은행'}
+                      </button>
+                    </div>
+
+                    {item.bankUserInfo.length > 0 && (
+                      <div className="text-[11px] text-zinc-500 truncate">
+                        {item.bankUserInfo[0].accountHolder || '알수없음'} · {item.bankUserInfo[0].bankName || ''}
+                      </div>
+                    )}
+
+                    <div className="flex items-baseline gap-1 text-xs text-zinc-500">
+                      <span>잔액(원)</span>
+                      <span className="text-lg font-bold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                        {item.bankUserInfo[0]?.latestBalance
+                          ? item.bankUserInfo[0]?.latestBalance.toLocaleString()
+                          : '잔액정보없음'}
                       </span>
                     </div>
-                  )}
 
-                </div>
-
-                <div className="flex flex-row items-center justify-center gap-1">
-                  잔액(원):{' '}
-                  {item.bankUserInfo.length > 0 && (
-                    <span className="text-lg font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}
-                    >
-                      {
-                        lastestBalanceArray && lastestBalanceArray[index] !== undefined
-                        ? lastestBalanceArray[index].toLocaleString()
-                        : '잔액정보없음'
-                      }
-                    </span>
-                  )}
-                </div>
-
-                <div className="w-full flex flex-row items-center justify-between gap-1">
-                  <span className="text-sm xl:text-lg font-semibold text-zinc-500">
-                    {item.totalCount?.toLocaleString() || '0'}
-                  </span>
-                  <span className="text-sm xl:text-lg font-semibold text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {
-                      
-                      //(item.totalKrwAmount || 0).toLocaleString()
-
-                      sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
-                      && sellerBankAccountDisplayValueArray[index].toLocaleString()
-                      
-                    }
-                  </span>
-                </div>
-
+                    <div className="w-full flex items-center justify-between text-xs">
+                      <span className="font-semibold text-zinc-600">{item.totalCount?.toLocaleString() || '0'}</span>
+                      <span className="font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                        {item.totalKrwAmount?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-
-
-
+            )}
           </div>
 
 
@@ -9382,6 +9523,130 @@ const fetchBuyOrders = async () => {
             />
         </ModalUser>
 
+        {/* 사용계좌 이력 패널 (좌측 슬라이드) */}
+        <div
+          className={`fixed inset-0 z-50 transition-all duration-300 ${
+            aliasPanelOpen ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+        >
+          {/* dimmed background */}
+          <div
+            className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${
+              aliasPanelOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={closeAliasPanel}
+          />
+
+          {/* panel */}
+          <div
+            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[420px] max-w-[480px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
+              aliasPanelOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <div className="p-4 border-b border-zinc-200 flex items-start justify-between gap-2">
+              <div className="flex flex-col">
+                <span className="text-xs uppercase tracking-wide text-zinc-500">
+                  사용계좌번호
+                </span>
+                <span className="text-lg font-semibold text-zinc-900" style={{ fontFamily: 'monospace' }}>
+                  {aliasPanelAccountNumber || '-'}
+                </span>
+                <span className="text-xs text-zinc-500 mt-1">
+                  조회기간 {searchFromDate} ~ {searchToDate}
+                </span>
+                <div className="flex gap-3 text-xs text-zinc-500 mt-1">
+                  <span>건수 {aliasPanelTotalCount.toLocaleString()}</span>
+                  <span>합계 {aliasPanelTotalAmount?.toLocaleString()} 원</span>
+                </div>
+              </div>
+              <button
+                className="text-sm px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-100 active:scale-95 transition"
+                onClick={closeAliasPanel}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
+                  {[
+                    { key: 'all', label: '전체' },
+                    { key: 'deposit', label: '입금' },
+                    { key: 'withdraw', label: '출금' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      className={`px-3 py-1 text-xs rounded-md transition ${
+                        aliasPanelTxnType === opt.key
+                          ? 'bg-white shadow-sm border border-zinc-200 font-semibold'
+                          : 'text-zinc-600'
+                      }`}
+                      onClick={() => {
+                        setAliasPanelTxnType(opt.key as any);
+                        fetchAliasTransfers(aliasPanelAccountNumber, opt.key as any);
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
+                  onClick={() => fetchAliasTransfers(aliasPanelAccountNumber, aliasPanelTxnType)}
+                >
+                  새로고침
+                </button>
+              </div>
+
+              {aliasPanelLoading && (
+                <div className="text-sm text-zinc-500">불러오는 중...</div>
+              )}
+
+              {aliasPanelError && (
+                <div className="text-sm text-red-600 mb-3">오류: {aliasPanelError}</div>
+              )}
+
+              {!aliasPanelLoading && !aliasPanelError && aliasPanelTransfers.length === 0 && (
+                <div className="text-sm text-zinc-500">표시할 이력이 없습니다.</div>
+              )}
+
+              <div className="space-y-2">
+                {aliasPanelTransfers.map((trx: any, idx: number) => (
+                  <div
+                    key={trx._id || idx}
+                    className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs"
+                  >
+                    {(() => {
+                      const { label, className } = getTxnTypeInfo(trx.transactionType || trx.trxType);
+                      return (
+                        <>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`px-2 py-0.5 rounded-full leading-none ${className}`}>
+                              {label}
+                            </span>
+                            <span className="font-semibold text-zinc-900 truncate">
+                              {trx.transactionName || '-'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                              {trx.amount !== undefined ? Number(trx.amount).toLocaleString() : '-'}
+                            </span>
+                            <span className="text-[11px] text-zinc-500 whitespace-nowrap">
+                              {formatKstDateTime(trx.transactionDate || trx.regDate)}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
 
     </main>
 
@@ -9554,6 +9819,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
-

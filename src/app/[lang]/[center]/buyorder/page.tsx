@@ -5373,69 +5373,68 @@ const fetchBuyOrders = async () => {
                 </div>
 
 
-                <div className="w-full flex flex-row items-start justify-start gap-4 mt-6">
-
-                  {/* 판매자 통장번호별 통계 */}
-                  <div className="mr-4 flex flex-col gap-2 items-center justify-center">
-                    <span className="text-lg font-semibold mb-2 w-full sm:w-auto">
-                      판매자<br />통장별<br/>P2P 거래<br />통계(사용계좌번호 기준)
+                <div className="w-full mt-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold">
+                      판매자 통장별 P2P 거래 통계(사용계좌번호 기준)
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      총 {buyOrderStats.totalBySellerAliesBankAccountNumber?.length || 0} 계좌
                     </span>
                   </div>
 
-
-                  {buyOrderStats.totalBySellerAliesBankAccountNumber?.map((item, index) => (
-                    <div key={index} className="flex flex-col gap-2 items-end justify-center
-                      border border-zinc-300 rounded-lg p-4
-                      bg-zinc-50 shadow-md
-                      ml-2
-                      ">
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <Image
-                          src="/icon-bank.png"
-                          alt="Bank"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <button
-                          className="text-sm font-semibold underline text-blue-600"
-                          onClick={() => fetchAliasTransfers(item._id || '기타은행')}
-                          title="계좌 이력 보기"
-                        >
-                          {item._id || '기타은행'}
-                        </button>
-                      </div>
-
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        잔액(원):{' '}
-                        {item.bankUserInfo.length > 0 && (
-                          <span className="text-lg font-semibold text-yellow-600"
-                            style={{ fontFamily: 'monospace' }}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 items-start">
+                    {buyOrderStats.totalBySellerAliesBankAccountNumber?.map((item, index) => (
+                      <div key={index} className="flex flex-col gap-2 items-end justify-center
+                        border border-zinc-300 rounded-lg p-4
+                        bg-zinc-50 shadow-md
+                        ">
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          <Image
+                            src="/icon-bank.png"
+                            alt="Bank"
+                            width={20}
+                            height={20}
+                            className="w-5 h-5"
+                          />
+                          <button
+                            className="text-sm font-semibold underline text-blue-600"
+                            onClick={() => fetchAliasTransfers(item._id || '기타은행')}
+                            title="계좌 이력 보기"
                           >
-                            {item.bankUserInfo[0]?.latestBalance
-                              ? item.bankUserInfo[0]?.latestBalance.toLocaleString()
-                              : '잔액정보없음'}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <div className="text-sm font-semibold">
-                          {item.totalCount?.toLocaleString() || '0'}
+                            {item._id || '기타은행'}
+                          </button>
                         </div>
-                        <div className="flex flex-col gap-1 items-end justify-center">
-                          <div className="flex flex-row items-center justify-center gap-1">
-                            <span className="text-sm font-semibold text-yellow-600"
-                              style={{ fontFamily: 'monospace' }}>
-                              {item.totalKrwAmount?.toLocaleString() || '0'}
+
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          잔액(원):{' '}
+                          {item.bankUserInfo.length > 0 && (
+                            <span className="text-lg font-semibold text-yellow-600"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {item.bankUserInfo[0]?.latestBalance
+                                ? item.bankUserInfo[0]?.latestBalance.toLocaleString()
+                                : '잔액정보없음'}
                             </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-row items-center justify-center gap-2">
+                          <div className="text-sm font-semibold">
+                            {item.totalCount?.toLocaleString() || '0'}
+                          </div>
+                          <div className="flex flex-col gap-1 items-end justify-center">
+                            <div className="flex flex-row items-center justify-center gap-1">
+                              <span className="text-sm font-semibold text-yellow-600"
+                                style={{ fontFamily: 'monospace' }}>
+                                {item.totalKrwAmount?.toLocaleString() || '0'}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-
-
+                    ))}
+                  </div>
                 </div>
 
 
