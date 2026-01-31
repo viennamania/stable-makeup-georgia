@@ -857,6 +857,25 @@ export default function BankInfoPage() {
   return (
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
       <div className="py-0 w-full space-y-3">
+        <div className="w-full flex items-center justify-between">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 text-sm px-3 py-2 rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-50"
+          >
+            <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
+                <path
+                  d="M15 6l-6 6 6 6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              돌아가기
+            </button>
+          </div>
+
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-zinc-200 pb-2">
           <div className="flex flex-row items-center gap-2">
             <Image

@@ -2647,7 +2647,13 @@ export default function Index({ params }: any) {
 
                 {true && (
             
-                  <div className="w-full flex flex-row gap-2 justify-between items-center mt-5">
+                  <div className="w-full flex flex-col gap-3 justify-start items-start mt-5">
+                    <button
+                      onClick={() => router.push('/' + params.lang + '/admin/bankinfo')}
+                      className="w-full bg-zinc-900 text-sm text-white px-4 py-2 rounded-lg hover:bg-zinc-800"
+                    >
+                      은행 계좌 관리
+                    </button>
 
                     {/*
                     <button
