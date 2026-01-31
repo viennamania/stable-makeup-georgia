@@ -3952,7 +3952,7 @@ export async function acceptBuyOrder(data: any) {
   let updatedBankInfo = bankInfo;
 
   // find trustBankInfo by bankInfo.accountNumber from bankInfos collection
-  const bankInfosCollection = client.db(dbName).collection('bankinfos');
+  const bankInfosCollection = client.db(dbName).collection('bankInfos');
   const trustBankInfo = await bankInfosCollection.findOne<any>(
     {
       defaultAccountNumber: bankInfo?.accountNumber,
