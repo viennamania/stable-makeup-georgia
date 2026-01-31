@@ -3949,7 +3949,27 @@ export async function acceptBuyOrder(data: any) {
   const sellerMobile = user?.mobile || '';
 
 
+  let updatedBankInfo = bankInfo;
 
+  // find trustBankInfo by bankInfo.accountNumber from bankInfos collection
+  const bankInfosCollection = client.db(dbName).collection('bankinfos');
+  const trustBankInfo = await bankInfosCollection.findOne<any>(
+    {
+      defaultAccountNumber: bankInfo?.accountNumber,
+    }
+  );
+  if (trustBankInfo
+    && trustBankInfo.bankName !== 'Unknown'
+    && trustBankInfo.accountHolder !== 'Unknown'
+    && trustBankInfo.realAccountNumber
+  ) {
+    updatedBankInfo = {
+      bankName: trustBankInfo.bankName,
+      accountNumber: trustBankInfo.defaultAccountNumber,
+      accountHolder: trustBankInfo.accountHolder,
+      realAccountNumber: trustBankInfo.realAccountNumber,
+    };
+  }
 
 
 
@@ -4002,7 +4022,9 @@ export async function acceptBuyOrder(data: any) {
         mobile: sellerMobile,
 
         memo: sellerMemo,
-        bankInfo: bankInfo,
+
+        //bankInfo: bankInfo,
+        bankInfo: updatedBankInfo,
 
       },
 
