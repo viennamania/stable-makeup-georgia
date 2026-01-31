@@ -1005,7 +1005,7 @@ export default function BankInfoPage() {
                 value={form.realAccountNumber}
                 onChange={(e) => setForm((prev) => ({ ...prev, realAccountNumber: e.target.value }))}
                 placeholder="예: 9003226783592"
-                className="w-64 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                className="w-72 p-3 border border-amber-500 rounded-md bg-amber-50 text-amber-900 font-semibold tracking-wide shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -1034,7 +1034,7 @@ export default function BankInfoPage() {
               <tr>
                 <th className="px-3 py-3 text-left w-12">No</th>
                 <th className="px-3 py-3 text-left w-24">잔고</th>
-                <th className="px-3 py-3 text-left w-32">실계좌번호</th>
+                <th className="px-3 py-3 text-left w-36 text-amber-700">실계좌번호</th>
                 <th className="px-3 py-3 text-left w-24">은행명</th>
                 <th className="px-3 py-3 text-left w-28">예금주</th>
                 <th className="px-3 py-3 text-left w-24">실명정보</th>
@@ -1074,14 +1074,14 @@ export default function BankInfoPage() {
                           type="text"
                           value={editForm.realAccountNumber}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, realAccountNumber: e.target.value }))}
-                          className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                          className="w-full min-w-0 p-2 border border-amber-500 rounded-md bg-amber-50 text-amber-900 font-semibold tracking-wide shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                         />
                       ) : (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-amber-800 font-semibold">
                           <button
                             type="button"
                             onClick={() => openDetail(info)}
-                            className="text-left text-zinc-900 hover:underline underline-offset-4"
+                            className="text-left hover:underline underline-offset-4"
                           >
                             {info?.realAccountNumber || info?.accountNumber || '-'}
                           </button>
@@ -1260,22 +1260,22 @@ export default function BankInfoPage() {
           onClick={closeDefaultPanel}
         />
         <div
-          className={`absolute right-0 top-0 h-full w-full sm:w-[360px] bg-white border-l border-zinc-200 transform transition-transform duration-200 ${isDefaultOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`absolute right-0 top-0 h-full w-full sm:w-[360px] bg-amber-50 border-l border-amber-200 transform transition-transform duration-200 ${isDefaultOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200 bg-white/80 backdrop-blur">
               <div>
-                <div className="text-xs text-zinc-500">사용중인 계좌번호</div>
-                <div className="text-lg font-semibold text-zinc-900">계좌 선택</div>
+                <div className="text-xs text-amber-700">사용중인 계좌번호</div>
+                <div className="text-lg font-semibold text-amber-800">계좌 선택</div>
               </div>
               <div className="flex items-center gap-2">
                 {isDefaultDirty && (
-                  <span className="text-xs text-amber-600">변경됨</span>
+                  <span className="text-xs text-amber-700">변경됨</span>
                 )}
                 <button
                   type="button"
                   onClick={closeDefaultPanel}
-                  className="h-8 w-8 rounded-full border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 flex items-center justify-center"
+                  className="h-8 w-8 rounded-full border border-amber-200 bg-white text-amber-700 hover:bg-amber-100 hover:text-amber-800 flex items-center justify-center"
                   aria-label="닫기"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
@@ -1291,14 +1291,14 @@ export default function BankInfoPage() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm text-zinc-700">
-              <div className="border border-zinc-200 rounded-md p-3">
-                <div className="text-xs text-zinc-500 mb-2">선택 가능한 계좌</div>
+            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm text-amber-900">
+              <div className="border border-amber-200 rounded-md p-3 bg-white">
+                <div className="text-xs text-amber-700 mb-2 font-semibold">선택 가능한 계좌</div>
                 <div className="space-y-4">
                   <div>
-                    <div className="text-xs text-zinc-400 mb-2">실계좌번호</div>
+                    <div className="text-xs text-amber-600 mb-2">실계좌번호</div>
                     {defaultRealValue ? (
-                      <label className="flex items-center gap-2 text-sm text-zinc-800">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                         <input
                           type="radio"
                           name="defaultAccountNumber"
@@ -1314,13 +1314,13 @@ export default function BankInfoPage() {
                   </div>
 
                   <div>
-                    <div className="text-xs text-zinc-400 mb-2">별칭 계좌번호</div>
+                    <div className="text-xs text-amber-600 mb-2">별칭 계좌번호</div>
                     {defaultAliasValues.length === 0 ? (
-                      <div className="text-xs text-zinc-400">등록된 별칭이 없습니다.</div>
+                      <div className="text-xs text-amber-500">등록된 별칭이 없습니다.</div>
                     ) : (
                       <div className="space-y-2">
                         {defaultAliasValues.map((alias) => (
-                          <label key={alias} className="flex items-center gap-2 text-sm text-zinc-800">
+                          <label key={alias} className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                             <input
                               type="radio"
                               name="defaultAccountNumber"
@@ -1342,7 +1342,7 @@ export default function BankInfoPage() {
               <button
                 type="button"
                 onClick={handleSaveDefaultAccount}
-                className={`w-full px-3 py-2 rounded text-white bg-zinc-900 hover:bg-zinc-800 ${savingDefault || !isDefaultDirty || !selectedDefaultValue ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full px-3 py-2 rounded text-white bg-amber-700 hover:bg-amber-800 ${savingDefault || !isDefaultDirty || !selectedDefaultValue ? 'opacity-50 cursor-not-allowed' : ''}`}
                 disabled={savingDefault || !isDefaultDirty || !selectedDefaultValue}
               >
                 저장하기
@@ -1361,10 +1361,10 @@ export default function BankInfoPage() {
           className={`absolute right-0 top-0 h-full w-full sm:w-[360px] bg-white border-l border-zinc-200 transform transition-transform duration-200 ${isRealNameOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200 bg-amber-50">
               <div>
-                <div className="text-xs text-zinc-500">실명 정보</div>
-                <div className="text-lg font-semibold text-zinc-900">예금주 정보</div>
+                <div className="text-xs text-amber-700">실명 정보</div>
+                <div className="text-lg font-semibold text-amber-800">예금주 정보</div>
               </div>
               <div className="flex items-center gap-2">
                 {isRealNameDirty && (
@@ -1390,22 +1390,22 @@ export default function BankInfoPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm text-zinc-700">
-              <div className="border border-zinc-200 rounded-md p-3">
-                <div className="text-xs text-zinc-500 mb-2">계좌 정보</div>
+              <div className="border border-amber-200 rounded-md p-3 bg-amber-50">
+                <div className="text-xs text-amber-700 mb-2 font-semibold">계좌 정보</div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">은행명</span>
-                    <span className="font-medium text-zinc-900">{selectedRealNameInfo?.bankName || '-'}</span>
+                    <span className="text-amber-700 font-medium">은행명</span>
+                    <span className="font-semibold text-amber-900">{selectedRealNameInfo?.bankName || '-'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">실계좌번호</span>
-                    <span className="font-medium text-zinc-900">
+                    <span className="text-amber-700 font-medium">실계좌번호</span>
+                    <span className="font-semibold text-amber-900 tracking-wide">
                       {selectedRealNameInfo?.realAccountNumber || selectedRealNameInfo?.accountNumber || '-'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">예금주</span>
-                    <span className="font-medium text-zinc-900">{selectedRealNameInfo?.accountHolder || '-'}</span>
+                    <span className="text-amber-700 font-medium">예금주</span>
+                    <span className="font-semibold text-amber-900">{selectedRealNameInfo?.accountHolder || '-'}</span>
                   </div>
                 </div>
               </div>
@@ -1513,10 +1513,10 @@ export default function BankInfoPage() {
           className={`absolute right-0 top-0 h-full w-full sm:w-[360px] bg-white border-l border-zinc-200 transform transition-transform duration-200 ${isDetailOpen ? 'translate-x-0' : 'translate-x-full'}`}
         >
           <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-amber-50">
               <div>
                 <div className="text-xs text-zinc-500">상세 정보</div>
-                <div className="text-lg font-semibold text-zinc-900">실계좌번호</div>
+                <div className="text-lg font-semibold text-amber-800">실계좌번호</div>
               </div>
               <button
                 type="button"
@@ -1537,23 +1537,23 @@ export default function BankInfoPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 text-sm text-zinc-700">
-              <div className="border border-zinc-200 rounded-md p-3">
-                <div className="text-xs text-zinc-500 mb-2">계좌 정보</div>
+              <div className="border border-amber-200 rounded-md p-3 bg-amber-50">
+                <div className="text-xs text-amber-700 mb-2 font-semibold">계좌 정보</div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">은행명</span>
-                    <span className="font-medium text-zinc-900">{selectedInfo?.bankName || '-'}</span>
+                    <span className="text-amber-700 font-medium">은행명</span>
+                    <span className="font-semibold text-amber-900">{selectedInfo?.bankName || '-'}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">실계좌번호</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-zinc-900">
+                    <span className="text-amber-700 font-medium">실계좌번호</span>
+                    <div className="flex items-center gap-2 text-amber-900 font-semibold">
+                      <span className="tracking-wide">
                         {selectedInfo?.realAccountNumber || selectedInfo?.accountNumber || '-'}
                       </span>
                       <button
                         type="button"
                         onClick={handleCopyAccountNumber}
-                        className="p-1 rounded border border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+                        className="p-1 rounded border border-amber-200 text-amber-700 hover:bg-amber-100"
                         aria-label="실계좌번호 복사"
                       >
                         <CopyIcon className="h-3.5 w-3.5" />
@@ -1561,8 +1561,8 @@ export default function BankInfoPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500">예금주</span>
-                    <span className="font-medium text-zinc-900">{selectedInfo?.accountHolder || '-'}</span>
+                    <span className="text-amber-700 font-medium">예금주</span>
+                    <span className="font-semibold text-amber-900">{selectedInfo?.accountHolder || '-'}</span>
                   </div>
                 </div>
               </div>
