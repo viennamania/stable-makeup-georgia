@@ -855,11 +855,11 @@ export default function BankInfoPage() {
             <thead className="bg-zinc-100 text-zinc-700 text-sm font-medium border-b border-zinc-200">
               <tr>
                 <th className="px-3 py-3 text-left">No</th>
+                <th className="px-3 py-3 text-left">예금주</th>
                 <th className="px-3 py-3 text-left">은행명</th>
                 <th className="px-3 py-3 text-left">사용중인 계좌번호</th>
                 <th className="px-3 py-3 text-left">실계좌번호</th>
                 <th className="px-3 py-3 text-left">별칭</th>
-                <th className="px-3 py-3 text-left">예금주</th>
                 <th className="px-3 py-3 text-left">생성일</th>
                 <th className="px-3 py-3 text-left">수정일</th>
                 <th className="px-3 py-3 text-center">관리</th>
@@ -883,6 +883,18 @@ export default function BankInfoPage() {
                   <tr key={rowKey} className="group border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-3 py-3 text-left text-gray-500">
                       {index + 1}
+                    </td>
+                    <td className="px-3 py-3">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editForm.accountHolder}
+                          onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
+                          className="w-40 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                        />
+                      ) : (
+                        info?.accountHolder || '-'
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       {isEditing ? (
@@ -992,18 +1004,6 @@ export default function BankInfoPage() {
                           <span className="text-xs text-zinc-400">-</span>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={editForm.accountHolder}
-                          onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
-                          className="w-40 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
-                        />
-                      ) : (
-                        info?.accountHolder || '-'
-                      )}
                     </td>
                     <td className="px-3 py-3">{formatDateTime(info?.createdAt)}</td>
                     <td className="px-3 py-3">{formatDateTime(info?.updatedAt)}</td>

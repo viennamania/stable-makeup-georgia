@@ -191,6 +191,7 @@ export async function touchBankInfoByRealAccountNumber(realAccountNumber: string
         defaultAccountNumber: value,
         accountHolder: 'Unknown',
         createdAt: now,
+        createdBy: 'system',
       },
     },
     { upsert: true }
