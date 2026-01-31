@@ -115,6 +115,7 @@ const bankNameOptions = [
   '케이뱅크',
   '토스뱅크',
   '새마을금고',
+  '전북은행',
   '수협',
   '우체국',
   '신협',
@@ -881,16 +882,16 @@ export default function BankInfoPage() {
 
                 return (
                   <tr key={rowKey} className="group border-b border-gray-200 hover:bg-gray-50 align-top">
-                    <td className="px-3 py-3 text-left text-gray-500 align-top">
+                    <td className="px-3 py-3 text-left text-gray-500 align-top overflow-hidden">
                       {index + 1}
                     </td>
-                    <td className="px-3 py-3 align-top">
+                    <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (
                         <input
                           type="text"
                           value={editForm.realAccountNumber}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, realAccountNumber: e.target.value }))}
-                          className="w-56 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                          className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
                         />
                       ) : (
                         <div className="flex items-center gap-2">
@@ -919,24 +920,24 @@ export default function BankInfoPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-3 align-top">
+                    <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (
                         <input
                           type="text"
                           value={editForm.accountHolder}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, accountHolder: e.target.value }))}
-                          className="w-40 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                          className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
                         />
                       ) : (
                         info?.accountHolder || '-'
                       )}
                     </td>
-                    <td className="px-3 py-3 align-top">
+                    <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (
                         <select
                           value={editForm.bankName}
                           onChange={(e) => setEditForm((prev) => ({ ...prev, bankName: e.target.value }))}
-                          className="w-44 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
+                          className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
                         >
                           <option value="">은행 선택</option>
                           {!bankNameOptions.includes(editForm.bankName) && editForm.bankName ? (
@@ -952,7 +953,7 @@ export default function BankInfoPage() {
                         info?.bankName || '-'
                       )}
                     </td>
-                    <td className="px-3 py-3 align-top">
+                    <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (
                         <span>{info?.defaultAccountNumber || ''}</span>
                       ) : (
@@ -981,7 +982,7 @@ export default function BankInfoPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-3 align-top">
+                    <td className="px-3 py-3 align-top overflow-hidden">
                       <div className="flex flex-col gap-1">
                         {Array.isArray(info?.aliasAccountNumber) && info.aliasAccountNumber.length > 0 ? (
                           info.aliasAccountNumber.map((alias: string) => (
@@ -1005,9 +1006,9 @@ export default function BankInfoPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-top">{formatDateTime(info?.createdAt)}</td>
-                    <td className="px-3 py-3 align-top">{formatDateTime(info?.updatedAt)}</td>
-                    <td className="px-3 py-3 text-center align-top">
+                    <td className="px-3 py-3 align-top overflow-hidden">{formatDateTime(info?.createdAt)}</td>
+                    <td className="px-3 py-3 align-top overflow-hidden">{formatDateTime(info?.updatedAt)}</td>
+                    <td className="px-3 py-3 text-center align-top overflow-hidden">
                       {isEditing ? (
                         <div className="flex flex-row items-center justify-center gap-2">
                           <button
