@@ -103,6 +103,44 @@ import {
 
 import { useAnimatedNumber } from "@/components/useAnimatedNumber";
 
+// status → pulse utility
+const statusPulseClass = (status: string | undefined) => {
+  switch (status) {
+    case 'ordered':
+      return 'status-pulse-gray';
+    case 'paymentRequested':
+      return 'status-pulse-amber';
+    case 'paymentConfirmed':
+    case 'paymentSettled':
+      return 'status-pulse-emerald';
+    case 'cancelled':
+    case 'canceled':
+      return 'status-pulse-rose';
+    default:
+      return '';
+  }
+};
+
+const RevealText: React.FC<{ value: any; className?: string; children: React.ReactNode }> = ({
+  value,
+  className = '',
+  children,
+}) => {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    setTick((t) => t + 1); // force re-mount to replay animation on value change/appear
+  }, [value]);
+  return (
+    <span
+      key={tick}
+      className={`content-reveal inline-block ${className}`}
+      style={{ animation: 'contentReveal 0.4s ease-out, flashReveal 0.6s ease-out' }}
+    >
+      {children}
+    </span>
+  );
+};
+
 
 interface BuyOrder {
   _id: string;
@@ -999,6 +1037,125 @@ export default function Index({ params }: any) {
   //const [totalCount, setTotalCount] = useState(0);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+  const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set());
+  const [recentlyAddedDirection, setRecentlyAddedDirection] = useState<Record<string, 'top' | 'bottom'>>({});
+  const prevBuyOrderIdsRef = useRef<Set<string>>(new Set());
+  const prevStatusMapRef = useRef<Record<string, string>>({});
+  const [recentStatusChange, setRecentStatusChange] = useState<Record<string, string>>({});
+  const [showJackpot, setShowJackpot] = useState(false);
+  const [jackpotMessage, setJackpotMessage] = useState<string>('입금이 완료되었습니다.');
+  const [jackpotStoreName, setJackpotStoreName] = useState<string>('');
+  const [jackpotStoreLogo, setJackpotStoreLogo] = useState<string>('/icon-store.png');
+  const [jackpotDepositor, setJackpotDepositor] = useState<string>('');
+  const lastJackpotRef = useRef<{ id: string | null; time: number }>({ id: null, time: 0 });
+
+  const jackpotDoneRef = useRef<Set<string>>(new Set());
+
+  const triggerJackpot = (order?: BuyOrder) => {
+    if (!order) return;
+    if (order._id && jackpotDoneRef.current.has(order._id)) return;
+    const now = Date.now();
+    if (lastJackpotRef.current.id === order._id && now - lastJackpotRef.current.time < 1500) {
+      return; // prevent double flashing on rapid successive updates of same order
+    }
+    if (order._id) {
+      jackpotDoneRef.current.add(order._id); // mark as already celebrated
+    }
+    const amount = order.krwAmount ? order.krwAmount.toLocaleString() : '';
+    const depositor = order.buyer?.depositName || order.buyer?.name || '';
+    setJackpotDepositor(depositor || '');
+    setJackpotMessage(`${amount ? amount + '원이 ' : ''}입금되었습니다.`);
+    setJackpotStoreName(order.store?.storeName || '');
+    setJackpotStoreLogo(order.store?.storeLogo || '/icon-store.png');
+    setShowJackpot(true);
+    setTimeout(() => setShowJackpot(false), 3000);
+    lastJackpotRef.current = { id: order._id, time: now };
+  };
+
+  // track newly added rows to animate them
+  useEffect(() => {
+    let jackpotTriggered = false;
+    const currentIds = new Set(buyOrders.map((o) => o._id));
+    const added = buyOrders
+      .filter((o) => !prevBuyOrderIdsRef.current.has(o._id))
+      .map((o) => o._id);
+    const statusChanged: string[] = [];
+    const currentStatusMap: Record<string, string> = {};
+    buyOrders.forEach((o) => {
+      currentStatusMap[o._id] = o.status;
+      if (prevStatusMapRef.current[o._id] && prevStatusMapRef.current[o._id] !== o.status) {
+        statusChanged.push(o._id);
+      }
+    });
+
+    if (added.length) {
+      // decide slide direction per added row (top if near start, bottom otherwise)
+      setRecentlyAddedDirection((prev) => {
+        const next = { ...prev };
+        added.forEach((id) => {
+          const idx = buyOrders.findIndex((o) => o._id === id);
+          next[id] = idx <= 1 ? 'top' : 'bottom';
+        });
+        return next;
+      });
+
+      setRecentlyAddedIds((prev) => {
+        const next = new Set(prev);
+        added.forEach((id) => next.add(id));
+        const jackpotStates = ['paymentCompleted', 'paymentConfirmed', 'paymentSettled'];
+        const jackpotOrder = added
+          .map((id) => buyOrders.find((o) => o._id === id))
+          .find((order) => order && jackpotStates.includes(order.status));
+        if (jackpotOrder) {
+          triggerJackpot(jackpotOrder);
+          jackpotTriggered = true;
+        }
+        // remove highlight after animation finishes
+        setTimeout(() => {
+          setRecentlyAddedIds((curr) => {
+            const cleaned = new Set(curr);
+            added.forEach((id) => cleaned.delete(id));
+            return cleaned;
+          });
+          setRecentlyAddedDirection((curr) => {
+            const copy = { ...curr };
+            added.forEach((id) => delete copy[id]);
+            return copy;
+          });
+        }, 700);
+        return next;
+      });
+    }
+
+    if (statusChanged.length) {
+      setRecentStatusChange((prev) => {
+        const next = { ...prev };
+        statusChanged.forEach((id) => {
+          next[id] = currentStatusMap[id];
+        });
+        // trigger jackpot overlay when a status reaches completion
+        const jackpotStates = ['paymentCompleted', 'paymentConfirmed', 'paymentSettled'];
+        if (!jackpotTriggered) {
+          const jackpotId = statusChanged.find((id) => jackpotStates.includes(currentStatusMap[id]));
+          if (jackpotId) {
+            const order = buyOrders.find((o) => o._id === jackpotId);
+            triggerJackpot(order);
+          }
+        }
+        setTimeout(() => {
+          setRecentStatusChange((curr) => {
+            const copy = { ...curr };
+            statusChanged.forEach((id) => delete copy[id]);
+            return copy;
+          });
+        }, 900);
+        return next;
+      });
+    }
+
+    prevBuyOrderIdsRef.current = currentIds;
+    prevStatusMapRef.current = currentStatusMap;
+  }, [buyOrders]);
 
 
   /*
@@ -3689,6 +3846,128 @@ const fetchBuyOrders = async () => {
   return (
 
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto bg-neutral-50 text-gray-900">
+      {showJackpot && (
+        <div className="jackpot-overlay">
+          {[...Array(20)].map((_, i) => (
+            <span
+              key={i}
+              className="confetti-piece"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 60}%`,
+                animationDelay: `${Math.random() * 0.3}s`,
+              ['--confetti-color' as any]: ['#10b981','#6366f1','#f59e0b','#ef4444'][i % 4],
+            }}
+          />
+          ))}
+          <div className="jackpot-card flex items-center gap-4 px-6 py-4 bg-white/95 rounded-2xl shadow-2xl backdrop-blur">
+            <Image
+              src={jackpotStoreLogo || '/icon-store.png'}
+              alt={jackpotStoreName || 'store'}
+              width={72}
+              height={72}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-amber-300 bg-white"
+            />
+            <div className="flex flex-col gap-1">
+              <span className="text-lg sm:text-xl font-semibold text-neutral-700">
+                {jackpotStoreName || '가맹점'}
+              </span>
+              {jackpotDepositor && (
+                <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900 leading-tight">
+                  예금주: {jackpotDepositor}
+                </span>
+              )}
+              <div className="text-5xl sm:text-6xl font-extrabold text-amber-500 drop-shadow-lg tracking-tight leading-none">
+                {jackpotMessage}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <style jsx global>{`
+        @keyframes slideInTop {
+          from { transform: translateY(-10px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes slideInBottom {
+          from { transform: translateY(10px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-in-top { animation: slideInTop 0.45s ease-out; }
+        .slide-in-bottom { animation: slideInBottom 0.45s ease-out; }
+        @keyframes expandRow {
+          0% { transform: scaleY(0.8); opacity: 0; }
+          70% { transform: scaleY(1.02); opacity: 1; }
+          100% { transform: scaleY(1); opacity: 1; }
+        }
+        .expand-row {
+          transform-origin: top;
+          animation: expandRow 0.35s ease-out;
+        }
+        @keyframes statusPulseGray {
+          0% { box-shadow: 0 0 0 0 rgba(107,114,128,0.45); }
+          100% { box-shadow: 0 0 0 10px rgba(107,114,128,0); }
+        }
+        @keyframes statusPulseAmber {
+          0% { box-shadow: 0 0 0 0 rgba(245,158,11,0.45); }
+          100% { box-shadow: 0 0 0 10px rgba(245,158,11,0); }
+        }
+        @keyframes statusPulseEmerald {
+          0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.45); }
+          100% { box-shadow: 0 0 0 10px rgba(16,185,129,0); }
+        }
+        @keyframes statusPulseRose {
+          0% { box-shadow: 0 0 0 0 rgba(244,63,94,0.45); }
+          100% { box-shadow: 0 0 0 10px rgba(244,63,94,0); }
+        }
+        .status-pulse-gray { animation: statusPulseGray 0.8s ease-out; }
+        .status-pulse-amber { animation: statusPulseAmber 0.8s ease-out; }
+        .status-pulse-emerald { animation: statusPulseEmerald 0.8s ease-out; }
+        .status-pulse-rose { animation: statusPulseRose 0.8s ease-out; }
+        @keyframes contentReveal {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes flashReveal {
+          0% { box-shadow: 0 0 0 0 rgba(255,193,7,0.65); background-color: rgba(255,236,179,0.95); }
+          60% { box-shadow: 0 0 0 10px rgba(255,193,7,0.05); background-color: rgba(255,236,179,0.2); }
+          100% { box-shadow: 0 0 0 14px rgba(255,193,7,0); background-color: transparent; }
+        }
+        .content-reveal {
+          animation: contentReveal 0.4s ease-out, flashReveal 0.6s ease-out;
+          border-radius: 6px;
+        }
+        @keyframes jackpotFlash {
+          0% { opacity: 0; transform: scale(0.96); }
+          20% { opacity: 1; transform: scale(1.02); }
+          60% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1); }
+        }
+        @keyframes confetti {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
+        }
+        .jackpot-overlay {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          background: radial-gradient(circle at 50% 40%, rgba(255,255,240,0.9), rgba(255,255,240,0.25) 45%, rgba(0,0,0,0.12));
+          animation: jackpotFlash 1.2s ease-out;
+          z-index: 50;
+        }
+        .confetti-piece {
+          position: absolute;
+          width: 6px;
+          height: 14px;
+          border-radius: 2px;
+          background: var(--confetti-color, #10b981);
+          opacity: 0;
+          animation: confetti 1s ease-out forwards;
+        }
+      `}</style>
 
       {/* fixed position right and vertically center */}
       <div className="
@@ -5206,16 +5485,18 @@ const fetchBuyOrders = async () => {
                 {buyOrders.map((item, index) => (
 
                   
-                  <tr key={index} className={`
-                    ${
-                      index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-
-
-                      //item.walletAddress === address ?
-                      
-
-                    }  
-                  `}>
+                  <tr
+                    key={item._id || index}
+                    className={`
+                      ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
+                      border-b border-neutral-200
+                      transition-all duration-500 ease-out
+                      ${recentlyAddedIds.has(item._id || '') ? 'scale-[1.01] shadow-md shadow-neutral-200/80 expand-row' : ''}
+                      ${recentlyAddedDirection[item._id || ''] === 'top' ? 'slide-in-top' : ''}
+                      ${recentlyAddedDirection[item._id || ''] === 'bottom' ? 'slide-in-bottom' : ''}
+                      ${recentStatusChange[item._id || ''] ? statusPulseClass(recentStatusChange[item._id || '']) : ''}
+                    `}
+                  >
                   
 
                     <td className="
@@ -5260,13 +5541,15 @@ const fetchBuyOrders = async () => {
                           />
                           
                           <div className="flex flex-col items-start justify-start">
-                            <span className="text-sm text-zinc-500 font-bold">
-                              {
-                                item?.store?.storeName?.length > 5 ?
-                                item?.store?.storeName?.substring(0, 5) + '...' :
-                                item?.store?.storeName
-                              }
-                            </span>
+                            <RevealText value={item?.store?.storeName}>
+                              <span className="text-sm text-zinc-500 font-bold">
+                                {
+                                  item?.store?.storeName?.length > 5 ?
+                                  item?.store?.storeName?.substring(0, 5) + '...' :
+                                  item?.store?.storeName
+                                }
+                              </span>
+                            </RevealText>
                             <span className="text-sm text-zinc-500">
                               {
                                 item?.agent.agentName?.length > 5 ?
@@ -5288,9 +5571,9 @@ const fetchBuyOrders = async () => {
                               ${item?.status === 'cancelled' || (item?.status === 'paymentConfirmed' && item?.transactionHash !== '0x') ? '' : 'animate-spin'}`}
                           />
                           <span className="text-sm text-zinc-500 font-semibold">
-                          {
-                            "#" + item.tradeId
-                          }
+                            <RevealText value={item.tradeId}>
+                              {"#" + item.tradeId}
+                            </RevealText>
                           </span>
                         </div>
 
@@ -5298,13 +5581,15 @@ const fetchBuyOrders = async () => {
 
                           <div className="w-full flex flex-col items-start justify-start">
 
-                            <span className="text-sm text-zinc-800 font-semibold">
-                              {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                              })}
-                            </span>
+                            <RevealText value={item.createdAt}>
+                              <span className="text-sm text-zinc-800 font-semibold">
+                                {new Date(item.createdAt).toLocaleTimeString('ko-KR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                })}
+                              </span>
+                            </RevealText>
                             {/*
                             <span className="text-sm text-zinc-500">
                               {new Date(item.createdAt).toLocaleDateString('ko-KR', {
@@ -8404,7 +8689,7 @@ const fetchBuyOrders = async () => {
         {/* ?limit=10&page=1 */}
         {/* submit button */}
         {/* totalPage = Math.ceil(totalCount / limit) */}
-        <div className="mt-4 flex flex-row items-center justify-center gap-4">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
 
 
           <div className="flex flex-row items-center gap-2">
@@ -8414,7 +8699,7 @@ const fetchBuyOrders = async () => {
                 router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${pageValue}`)
               }
 
-              className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
+              className="text-sm bg-neutral-900 text-white px-3 py-2 rounded-md border border-neutral-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-neutral-500"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -8426,7 +8711,11 @@ const fetchBuyOrders = async () => {
           {/* 처음으로 */}
           <button
             disabled={Number(pageValue) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            className={`text-sm px-4 py-2 rounded-md border transition ${
+              Number(pageValue) <= 1
+                ? 'bg-neutral-200 text-neutral-400 border-neutral-200'
+                : 'bg-neutral-900 text-white border-neutral-900 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => {
               router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=1`)
             }}
@@ -8437,7 +8726,11 @@ const fetchBuyOrders = async () => {
 
           <button
             disabled={Number(pageValue) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            className={`text-sm px-4 py-2 rounded-md border transition ${
+              Number(pageValue) <= 1
+                ? 'bg-neutral-200 text-neutral-400 border-neutral-200'
+                : 'bg-neutral-800 text-white border-neutral-900 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => {
 
               router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=${Number(pageValue) - 1}`)
@@ -8449,14 +8742,18 @@ const fetchBuyOrders = async () => {
           </button>
 
 
-          <span className="text-sm text-zinc-500">
+          <span className="text-sm text-neutral-500 px-2">
             {pageValue} / {Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}
           </span>
 
 
           <button
             disabled={Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            className={`text-sm px-4 py-2 rounded-md border transition ${
+              Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))
+                ? 'bg-neutral-200 text-neutral-400 border-neutral-200'
+                : 'bg-neutral-900 text-white border-neutral-900 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => {
 
               router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=${Number(pageValue) + 1}`)
@@ -8469,7 +8766,11 @@ const fetchBuyOrders = async () => {
           {/* 마지막으로 */}
           <button
             disabled={Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+            className={`text-sm px-4 py-2 rounded-md border transition ${
+              Number(pageValue) >= Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))
+                ? 'bg-neutral-200 text-neutral-400 border-neutral-200'
+                : 'bg-neutral-800 text-white border-neutral-900 hover:-translate-y-0.5 hover:shadow-md'
+            }`}
             onClick={() => {
 
               router.push(`/${params.lang}/admin/buyorder?storecode=${searchStorecode}&limit=${Number(limitValue)}&page=${Math.ceil(Number(buyOrderStats.totalCount) / Number(limitValue))}`)
