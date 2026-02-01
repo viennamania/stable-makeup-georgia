@@ -153,9 +153,9 @@ export default function Index({ params }: any) {
 
   //console.log('params', params);
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
-  const wallet = searchParams.get('wallet');
+  const wallet = searchParams?.get('wallet');
 
   const storecode = params?.center;
 
@@ -3343,4 +3343,3 @@ const TradeDetail = (
       </div>
     );
   };
-

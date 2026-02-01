@@ -271,7 +271,7 @@ export default function Index({ params }: any) {
 
     // get params
 
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams()!;
 
     const storeUser = searchParams.get('storeUser');
 

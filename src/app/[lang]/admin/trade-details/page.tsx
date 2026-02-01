@@ -104,7 +104,7 @@ export default function TradeDetailsPage({ params }: any) {
 
     //console.log("params", params);
     
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams()!;
  
     const tradeId = searchParams.get('tradeId') || '';
 

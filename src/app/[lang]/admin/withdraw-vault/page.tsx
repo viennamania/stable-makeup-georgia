@@ -124,7 +124,7 @@ export default function SendUsdt({ params }: any) {
 
   //console.log("params", params);
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   // vault wallet address
   const walletAddress = searchParams.get('walletAddress');

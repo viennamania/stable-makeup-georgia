@@ -132,7 +132,7 @@ export default function Index({ params }: any) {
 
   // get params from the URL
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
   const wallet = searchParams.get('wallet');
 

@@ -148,7 +148,7 @@ const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; //
 
 export default function Index({ params }: any) {
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
   const wallet = searchParams.get('wallet');
 

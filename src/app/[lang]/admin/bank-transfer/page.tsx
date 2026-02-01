@@ -93,7 +93,7 @@ const getTodayString = () => {
 export default function BankTransferPage({ params }: any) {
 
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const activeAccount = useActiveAccount();
   const address = activeAccount?.address;

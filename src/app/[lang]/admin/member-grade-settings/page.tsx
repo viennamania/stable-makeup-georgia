@@ -104,7 +104,7 @@ export default function SettingsPage({ params }: any) {
 
     //console.log("params", params);
     
-    const searchParams = useSearchParams();
+    const searchParams = useSearchParams()!;
  
     const userStorecode = searchParams.get('storecode');
     const userWalletAddress = searchParams.get('walletAddress');

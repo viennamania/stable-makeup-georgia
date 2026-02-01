@@ -179,7 +179,7 @@ const wallets = [
 
 export default function Index({ params }: any) {
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
   const wallet = searchParams.get('wallet');
 

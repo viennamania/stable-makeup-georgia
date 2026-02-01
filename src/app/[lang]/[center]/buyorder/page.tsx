@@ -200,7 +200,7 @@ const wallets = [
 
 export default function Index({ params }: any) {
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
   //const wallet = searchParams.get('wallet');
 
@@ -789,7 +789,7 @@ export default function Index({ params }: any) {
 
   const [limitValue, setLimitValue] = useState(20);
   useEffect(() => {
-    const limit = searchParams.get('limit') || 20;
+    const limit = searchParams?.get('limit') || 20;
     setLimitValue(Number(limit));
   }, [searchParams]);
 
@@ -797,7 +797,7 @@ export default function Index({ params }: any) {
 
   const [pageValue, setPageValue] = useState(1);
   useEffect(() => {
-    const page = searchParams.get('page') || 1;
+    const page = searchParams?.get('page') || 1;
     setPageValue(Number(page));
   }, [searchParams]);
 
@@ -815,13 +815,13 @@ export default function Index({ params }: any) {
 
 
 
-  const [searchBuyer, setSearchBuyer] = useState(searchParams.get('searchBuyer') || "");
+  const [searchBuyer, setSearchBuyer] = useState(searchParams?.get('searchBuyer') || "");
 
-  const [searchDepositName, setSearchDepositName] = useState(searchParams.get('searchDepositName') || "");
+  const [searchDepositName, setSearchDepositName] = useState(searchParams?.get('searchDepositName') || "");
 
 
   // search store bank account number
-  const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState(searchParams.get('searchStoreBankAccountNumber') || "");
+  const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState(searchParams?.get('searchStoreBankAccountNumber') || "");
 
 
 

@@ -103,13 +103,13 @@ export default function ChatPage() {
 
 function ChatPageContent() {
   
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams()!
 
   
   //const storecode = searchParams.get('storecode')
 
  
-  const channel = searchParams.get('channel')
+  const channel = searchParams?.get('channel')
  
 
   console.log("ChatPageContent channel", channel);

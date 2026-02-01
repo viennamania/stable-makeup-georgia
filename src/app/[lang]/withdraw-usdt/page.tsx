@@ -133,7 +133,7 @@ export default function SendUsdt({ params }: any) {
 
   //console.log("params", params);
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
   
   const contract = getContract({

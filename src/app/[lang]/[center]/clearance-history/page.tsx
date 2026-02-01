@@ -211,15 +211,15 @@ const wallets = [
 
 export default function Index({ params }: any) {
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
-  const wallet = searchParams.get('wallet');
+  const wallet = searchParams?.get('wallet');
 
 
   // limit, page number params
 
-  const limit = searchParams.get('limit') || 10;
-  const page = searchParams.get('page') || 1;
+  const limit = searchParams?.get('limit') || 10;
+  const page = searchParams?.get('page') || 1;
 
 
 
@@ -6508,6 +6508,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

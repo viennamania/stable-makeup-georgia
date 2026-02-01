@@ -161,13 +161,13 @@ export default function Index({ params }: any) {
 
 
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
  
 
   // limit, page number params
 
-  const limit = searchParams.get('limit') || 20;
-  const page = searchParams.get('page') || 1;
+  const limit = (searchParams?.get('limit') || 20) as number | string;
+  const page = (searchParams?.get('page') || 1) as number | string;
 
 
 
@@ -2030,6 +2030,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

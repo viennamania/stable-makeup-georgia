@@ -58,7 +58,7 @@ const AppBarComponent = () => {
 
 
 
-    const path = pathname.split("/").slice(2).join("/");
+    const path = (pathname ?? "").split("/").slice(2).join("/");
 
     console.log("language", language);
     console.log("pathname", pathname);

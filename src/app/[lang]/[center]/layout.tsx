@@ -88,7 +88,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
 
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
 
   const router = useRouter();
