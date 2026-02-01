@@ -3618,7 +3618,7 @@ const fetchBuyOrders = async () => {
 
   if (address && loadingUser) {
     return (
-      <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto bg-neutral-50 text-gray-900">
         <div className="py-0 w-full flex flex-col items-center justify-center gap-4">
 
           <Image
@@ -3688,7 +3688,7 @@ const fetchBuyOrders = async () => {
 
   return (
 
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto bg-neutral-50 text-gray-900">
 
       {/* fixed position right and vertically center */}
       <div className="
@@ -4541,35 +4541,35 @@ const fetchBuyOrders = async () => {
             */}
             <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-4">
               {/* P2P Summary */}
-              <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 p-4 shadow-sm items-start">
-                <div className="w-9 h-9 rounded-lg bg-emerald-400 text-white text-xs font-bold flex items-center justify-center">
+              <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm items-start">
+                <div className="w-10 h-10 rounded-lg bg-black text-white text-sm font-bold flex items-center justify-center">
                   P2
                 </div>
                 <div className="flex flex-col gap-1 min-w-0">
-                  <div className="text-[11px] uppercase tracking-wide text-emerald-700">P2P 거래수</div>
-                  <div className="text-base font-bold text-zinc-900 leading-tight">{buyOrderStats.totalCount?.toLocaleString() || '0'}</div>
-                  <div className="flex flex-wrap gap-2 text-xs font-semibold" style={{ fontFamily: 'monospace' }}>
-                    <span className="text-emerald-700">ꜩ {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
-                    <span className="text-amber-700">{animatedTotalKrwAmount.toLocaleString()}</span>
+                  <div className="text-sm uppercase tracking-wide text-gray-600">P2P 거래수</div>
+                  <div className="text-xl font-bold text-gray-900 leading-tight">{buyOrderStats.totalCount?.toLocaleString() || '0'}</div>
+                  <div className="flex flex-wrap gap-2 text-sm font-semibold text-gray-900" style={{ fontFamily: 'monospace' }}>
+                    <span className="text-gray-900">ꜩ {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
+                    <span className="text-gray-700">{animatedTotalKrwAmount.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
               {/* Settlement Summary */}
-              <div className="flex gap-4 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-5 shadow-sm items-start">
-                <div className="w-10 h-10 rounded-lg bg-sky-300/80 flex items-center justify-center">
-                  <Image src="/icon-payment2.png" alt="Settlement" width={20} height={20} className="w-5 h-5 object-cover" />
+              <div className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm items-start">
+                <div className="w-11 h-11 rounded-lg bg-gray-900 text-white flex items-center justify-center">
+                  <Image src="/icon-payment2.png" alt="Settlement" width={24} height={24} className="w-6 h-6 object-cover invert" />
                 </div>
                 <div className="flex flex-col gap-1.5 min-w-0 w-full">
-                  <div className="text-xs uppercase tracking-wide text-sky-700">가맹점 결제수</div>
-                  <div className="text-lg font-bold text-zinc-900 leading-tight">
+                  <div className="text-sm uppercase tracking-wide text-gray-600">가맹점 결제수</div>
+                  <div className="text-xl font-bold text-gray-900 leading-tight">
                     {animatedTotalSettlementCount.toLocaleString()}
                   </div>
-                  <div className="flex flex-wrap gap-2 text-sm font-semibold" style={{ fontFamily: 'monospace' }}>
-                    <span className="text-emerald-700">ꜩ {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
-                    <span className="text-amber-700">{animatedTotalSettlementAmountKRW.toLocaleString()}</span>
+                  <div className="flex flex-wrap gap-2 text-base font-semibold text-gray-900" style={{ fontFamily: 'monospace' }}>
+                    <span className="text-gray-900">ꜩ {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
+                    <span className="text-gray-700">{animatedTotalSettlementAmountKRW.toLocaleString()}</span>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-[11px] text-zinc-500 font-semibold">
+                  <div className="flex flex-wrap gap-2 text-xs text-gray-500 font-semibold">
                     <span>PG {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalFeeAmountKRW?.toLocaleString() || '0'}</span>
                     <span>AG {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalAgentFeeAmountKRW?.toLocaleString() || '0'}</span>
                   </div>
@@ -4984,56 +4984,51 @@ const fetchBuyOrders = async () => {
             </div>
           )}
 
-
+          {/* buyOrders table */}
           <div className="w-full overflow-x-auto">
 
-            <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+            <table className="w-full table-auto border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
 
-              <thead
-                className="bg-zinc-800 text-white text-sm font-semibold"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                }}
-              >
+              <thead className="bg-neutral-900 text-white text-sm font-semibold">
                 <tr>
 
-                  <th className="p-2 text-start">
-                    <div className="flex flex-col items-start justify-center gap-2">
-                      <span className="text-sm text-zinc-50 font-semibold">
+                  <th className="p-3 text-start">
+                    <div className="flex flex-col items-start justify-center gap-1">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         가맹점
                       </span>
-                      <span className="text-sm text-zinc-50 font-semibold">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         P2P거래번호
                       </span>
-                      <span className="text-sm text-zinc-50 font-semibold">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         거래시작시간
                       </span>
                     </div>
                   </th>
 
-                  <th className="p-2 text-start">
-                    <div className="flex flex-col items-start justify-center gap-2">
-                      <span className="text-sm text-zinc-50 font-semibold">
+                  <th className="p-3 text-start">
+                    <div className="flex flex-col items-start justify-center gap-1">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         P2P 구매자 아이디
                       </span>
-                      <span className="text-sm text-zinc-50 font-semibold">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         USDT지갑
                       </span>
-                      <span className="text-sm text-zinc-50 font-semibold">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         입금자
                       </span>
                     </div>
                   </th>
                   
-                  <th className="p-2 text-end">
-                    <div className="flex flex-col items-end justify-center gap-2">
-                      <span className="text-sm text-zinc-50 font-semibold">
+                  <th className="p-3 text-end">
+                    <div className="flex flex-col items-end justify-center gap-1">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         {Buy_Amount}(USDT)
                       </span>
-                      <span className="text-sm text-zinc-50 font-semibold">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         구매금액(원)
                       </span>
-                      <span className="text-sm text-zinc-50 font-semibold">
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         개당금액(원)
                       </span>
                     </div>
@@ -5042,46 +5037,39 @@ const fetchBuyOrders = async () => {
                   <th className="p-2">{Payment_Amount}</th>
                   */}
 
-                  <th className="p-2 text-start">
-                    <div className="flex flex-col items-start justify-center gap-2">
+                  <th className="p-3 text-start">
+                    <div className="flex flex-col items-start justify-center gap-1">
 
-                      <div className="flex flex-col items-start justify-center gap-2">
-                          <span className="text-sm text-zinc-50 font-semibold">
+                      <div className="flex flex-col items-start justify-center gap-1">
+                          <span className="text-xs uppercase tracking-wide text-neutral-300">
                             P2P 판매자 아이디
                           </span>
-                          <span className="text-sm text-zinc-50 font-semibold">
+                          <span className="text-xs uppercase tracking-wide text-neutral-300">
                             USDT지갑
                           </span>
                       </div>
 
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <span>자동매칭</span>
+                      <div className="flex flex-row items-center justify-start gap-2 text-neutral-200">
+                        <span className="text-xs uppercase tracking-wide">자동매칭</span>
                         <Image
                           src="/icon-matching.png"
                           alt="Auto Matching"
-                          width={20}
-                          height={20}
-
-                          /*
-                          className="
-                          bg-zinc-100 rounded-full
-                          w-5 h-5 animate-spin"
-                          */
-                          // if buyOrders.filter((item) => item.status === 'ordered').length > 0, then animate spin
+                          width={16}
+                          height={16}
                           className={`
-                            w-5 h-5
+                            w-4 h-4
                             ${buyOrders.filter((item) => item.status === 'ordered').length > 0 ? 'animate-spin' : ''}
                           `}
                         />
 
                         {/* the count of status is ordered */}
-                        <span className="text-sm text-zinc-50 font-semibold">
+                        <span className="text-xs font-semibold">
                           {
                             buyOrders.filter((item) => item.status === 'ordered').length
                           }
                         </span>
 
-                        <span className="text-sm text-zinc-50 font-semibold">
+                        <span className="text-xs uppercase tracking-wide">
                           거래상태
                         </span>
 
