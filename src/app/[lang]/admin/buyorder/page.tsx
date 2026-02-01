@@ -4469,6 +4469,8 @@ const fetchBuyOrders = async () => {
               border border-zinc-300 p-4 rounded-lg
             ">
             */}
+
+            {/* P2P Summary */}
             <div className={`xl:w-1/3 w-full
               flex flex-col sm:flex-row items-between justify-between gap-4
               ${buyOrderStats.totalUsdtAmount !== animatedTotalUsdtAmount ? 'border-2 border-green-400 animate-pulse p-4 rounded-lg' : 'border border-zinc-300 p-4 rounded-lg'}
@@ -4478,14 +4480,14 @@ const fetchBuyOrders = async () => {
                 <Image
                   src="/icon-trade.png"
                   alt="P2P"
-                  width={50}
-                  height={50}
-                  className={`w-12 h-12 rounded-lg object-cover
+                  width={44}
+                  height={44}
+                  className={`w-10 h-10 rounded-lg object-cover
                     ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''}
                   `}
                 />
                 <div className="text-sm">P2P 거래수(건)</div>
-                <div className="text-4xl font-semibold text-zinc-500">
+                <div className="text-3xl font-semibold text-zinc-500">
                   {
                   //buyOrderStats.totalCount?.toLocaleString()
                   animatedTotalCount.toLocaleString()
@@ -4504,7 +4506,7 @@ const fetchBuyOrders = async () => {
                     className="w-5 h-5"
                   />
                   {/* RGB: 64, 145, 146 */}
-                  <span className="text-4xl font-semibold text-[#409192]"
+                  <span className="text-3xl font-semibold text-[#409192]"
                     style={{ fontFamily: 'monospace' }}>
                     {
                     animatedTotalUsdtAmount
@@ -4515,7 +4517,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-4xl font-semibold text-yellow-600"
+                  <span className="text-3xl font-semibold text-yellow-600"
                     style={{ fontFamily: 'monospace' }}>
                     {
                     //buyOrderStats.totalKrwAmount?.toLocaleString()
@@ -4527,6 +4529,7 @@ const fetchBuyOrders = async () => {
               </div>
 
             </div>
+            {/* end of P2P Summary */}
 
             {/* divider */}
             <div className="hidden xl:block w-0.5 h-20 bg-zinc-300"></div>
@@ -4536,43 +4539,43 @@ const fetchBuyOrders = async () => {
             <div className="xl:w-2/3 w-full
               flex flex-col sm:flex-row items-start justify-end gap-4">
             */}
-          <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {/* P2P Summary */}
-            <div className="flex gap-4 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 p-5 shadow-sm items-start">
-              <div className="w-10 h-10 rounded-lg bg-emerald-400 text-white text-sm font-bold flex items-center justify-center">
-                P2
-              </div>
-              <div className="flex flex-col gap-1.5 min-w-0">
-                <div className="text-xs uppercase tracking-wide text-emerald-700">P2P 거래수</div>
-                <div className="text-lg font-bold text-zinc-900 leading-tight">{buyOrderStats.totalCount?.toLocaleString() || '0'}</div>
-                <div className="flex flex-wrap gap-2 text-sm font-semibold" style={{ fontFamily: 'monospace' }}>
-                  <span className="text-emerald-700">ꜩ {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
-                  <span className="text-amber-700">{animatedTotalKrwAmount.toLocaleString()}</span>
+            <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {/* P2P Summary */}
+              <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 p-4 shadow-sm items-start">
+                <div className="w-9 h-9 rounded-lg bg-emerald-400 text-white text-xs font-bold flex items-center justify-center">
+                  P2
+                </div>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <div className="text-[11px] uppercase tracking-wide text-emerald-700">P2P 거래수</div>
+                  <div className="text-base font-bold text-zinc-900 leading-tight">{buyOrderStats.totalCount?.toLocaleString() || '0'}</div>
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold" style={{ fontFamily: 'monospace' }}>
+                    <span className="text-emerald-700">ꜩ {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
+                    <span className="text-amber-700">{animatedTotalKrwAmount.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Settlement Summary */}
-            <div className="flex gap-4 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-5 shadow-sm items-start">
-              <div className="w-10 h-10 rounded-lg bg-sky-300/80 flex items-center justify-center">
-                <Image src="/icon-payment2.png" alt="Settlement" width={20} height={20} className="w-5 h-5 object-cover" />
-              </div>
-              <div className="flex flex-col gap-1.5 min-w-0 w-full">
-                <div className="text-xs uppercase tracking-wide text-sky-700">가맹점 결제수</div>
-                <div className="text-lg font-bold text-zinc-900 leading-tight">
-                  {animatedTotalSettlementCount.toLocaleString()}
+              {/* Settlement Summary */}
+              <div className="flex gap-4 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-slate-50 p-5 shadow-sm items-start">
+                <div className="w-10 h-10 rounded-lg bg-sky-300/80 flex items-center justify-center">
+                  <Image src="/icon-payment2.png" alt="Settlement" width={20} height={20} className="w-5 h-5 object-cover" />
                 </div>
-                <div className="flex flex-wrap gap-2 text-sm font-semibold" style={{ fontFamily: 'monospace' }}>
-                  <span className="text-emerald-700">ꜩ {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
-                  <span className="text-amber-700">{animatedTotalSettlementAmountKRW.toLocaleString()}</span>
-                </div>
-                <div className="flex flex-wrap gap-2 text-[11px] text-zinc-500 font-semibold">
-                  <span>PG {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalFeeAmountKRW?.toLocaleString() || '0'}</span>
-                  <span>AG {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalAgentFeeAmountKRW?.toLocaleString() || '0'}</span>
+                <div className="flex flex-col gap-1.5 min-w-0 w-full">
+                  <div className="text-xs uppercase tracking-wide text-sky-700">가맹점 결제수</div>
+                  <div className="text-lg font-bold text-zinc-900 leading-tight">
+                    {animatedTotalSettlementCount.toLocaleString()}
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-sm font-semibold" style={{ fontFamily: 'monospace' }}>
+                    <span className="text-emerald-700">ꜩ {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
+                    <span className="text-amber-700">{animatedTotalSettlementAmountKRW.toLocaleString()}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[11px] text-zinc-500 font-semibold">
+                    <span>PG {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalFeeAmountKRW?.toLocaleString() || '0'}</span>
+                    <span>AG {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalAgentFeeAmountKRW?.toLocaleString() || '0'}</span>
+                  </div>
                 </div>
               </div>
             </div>
-         </div>
             
           </div>
 
