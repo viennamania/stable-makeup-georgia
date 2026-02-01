@@ -829,6 +829,17 @@ export default function Index({ params }: any) {
   const [totalCount, setTotalCount] = useState(0);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+  const [showJackpot, setShowJackpot] = useState(false);
+  const [jackpotMessage, setJackpotMessage] = useState<string>('결제가 완료되었습니다.');
+  const [jackpotStoreName, setJackpotStoreName] = useState<string>('');
+  const [jackpotStoreLogo, setJackpotStoreLogo] = useState<string>('/icon-store.png');
+  const [jackpotDepositor, setJackpotDepositor] = useState<string>('');
+  const [jackpotKrw, setJackpotKrw] = useState<number>(0);
+  const [jackpotUsdt, setJackpotUsdt] = useState<number>(0);
+  const prevBuyOrderIdsRef = useRef<Set<string>>(new Set());
+  const prevStatusMapRef = useRef<Record<string, string>>({});
+  const lastJackpotRef = useRef<{ id: string | null; time: number }>({ id: null, time: 0 });
+  const jackpotDoneRef = useRef<Set<string>>(new Set());
 
 
   const [buyOrderStats, setBuyOrderStats] = useState<{
@@ -889,6 +900,63 @@ export default function Index({ params }: any) {
   const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
   const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
   const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
+
+
+  const triggerJackpot = (order?: BuyOrder) => {
+    if (!order) return;
+    if (order._id && jackpotDoneRef.current.has(order._id)) return;
+    const now = Date.now();
+    if (lastJackpotRef.current.id === order._id && now - lastJackpotRef.current.time < 1500) {
+      return; // prevent double flashing for the same order
+    }
+    if (order._id) {
+      jackpotDoneRef.current.add(order._id);
+    }
+    const amount = order.krwAmount ?? 0;
+    const usdt = order.usdtAmount ?? 0;
+    const depositor = order.buyer?.depositName || order.buyer?.name || '';
+    setJackpotDepositor(depositor || '');
+    setJackpotKrw(amount);
+    setJackpotUsdt(usdt);
+    setJackpotMessage('결제가 완료되었습니다.');
+    setJackpotStoreName(order.store?.storeName || store?.storeName || '');
+    setJackpotStoreLogo(order.store?.storeLogo || store?.storeLogo || '/icon-store.png');
+    setShowJackpot(true);
+    setTimeout(() => setShowJackpot(false), 3200);
+    lastJackpotRef.current = { id: order._id, time: now };
+  };
+
+  useEffect(() => {
+    if (!buyOrders || buyOrders.length === 0) {
+      prevBuyOrderIdsRef.current = new Set();
+      prevStatusMapRef.current = {};
+      return;
+    }
+
+    const jackpotStates = ['paymentCompleted', 'paymentConfirmed', 'paymentSettled'];
+    const currentStatusMap: Record<string, string> = {};
+    buyOrders.forEach((o) => {
+      currentStatusMap[o._id] = o.status;
+    });
+
+    const newlyFinished = buyOrders.find((o) => {
+      const prev = prevStatusMapRef.current[o._id];
+      return prev && prev !== o.status && jackpotStates.includes(o.status);
+    });
+
+    const addedFinished = buyOrders.find(
+      (o) => !prevBuyOrderIdsRef.current.has(o._id) && jackpotStates.includes(o.status)
+    );
+
+    if (newlyFinished) {
+      triggerJackpot(newlyFinished);
+    } else if (addedFinished) {
+      triggerJackpot(addedFinished);
+    }
+
+    prevBuyOrderIdsRef.current = new Set(buyOrders.map((o) => o._id));
+    prevStatusMapRef.current = currentStatusMap;
+  }, [buyOrders, user]);
 
 
 
@@ -3562,7 +3630,90 @@ const fetchBuyOrders = async () => {
 
   return (
 
+    <>
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+
+      {showJackpot && (
+        <div className="jackpot-overlay">
+          {[...Array(20)].map((_, i) => (
+            <span
+              key={i}
+              className="confetti-piece"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 60}%`,
+                animationDelay: `${Math.random() * 0.3}s`,
+              ['--confetti-color' as any]: ['#10b981','#6366f1','#f59e0b','#ef4444'][i % 4],
+            }}
+          />
+          ))}
+          <div className="jackpot-card flex items-center gap-4 px-6 py-4 bg-white/95 rounded-2xl shadow-2xl backdrop-blur">
+            <Image
+              src={jackpotStoreLogo || '/icon-store.png'}
+              alt={jackpotStoreName || 'store'}
+              width={72}
+              height={72}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-amber-300 bg-white"
+            />
+            <div className="flex flex-col gap-1">
+              <span className="text-lg sm:text-xl font-semibold text-neutral-700">
+                {jackpotStoreName || '가맹점'}
+              </span>
+              {jackpotDepositor && (
+                <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900 leading-tight">
+                  입금자명: {jackpotDepositor}
+                </span>
+              )}
+              <div className="text-4xl sm:text-5xl font-extrabold text-amber-500 drop-shadow-lg tracking-tight leading-none">
+                <span className="text-emerald-600">
+                  {jackpotKrw.toLocaleString()}원
+                </span>
+                <span className="text-neutral-700 font-bold mx-2 text-2xl sm:text-3xl">
+                  를 결제하고
+                </span>
+                <span className="text-emerald-600">
+                  {jackpotUsdt.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} USDT
+                </span>
+                <span className="text-neutral-700 font-bold ml-2 text-2xl sm:text-3xl">
+                  를 구매하였습니다.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <style jsx global>{`
+        @keyframes jackpotFlash {
+          0% { opacity: 0; transform: scale(0.96); }
+          20% { opacity: 1; transform: scale(1.02); }
+          60% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1); }
+        }
+        @keyframes confetti {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
+        }
+        .jackpot-overlay {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          background: radial-gradient(circle at 50% 40%, rgba(255,255,240,0.9), rgba(255,255,240,0.25) 45%, rgba(0,0,0,0.12));
+          animation: jackpotFlash 1.2s ease-out;
+          z-index: 50;
+        }
+        .confetti-piece {
+          position: absolute;
+          width: 6px;
+          height: 14px;
+          border-radius: 2px;
+          background: var(--confetti-color, #10b981);
+          opacity: 0;
+          animation: confetti 1s ease-out forwards;
+        }
+      `}</style>
 
 
       {/* fixed position right and vertically center */}
@@ -3582,9 +3733,9 @@ const fetchBuyOrders = async () => {
               backdrop-blur-md
             ">
 
-              <div className="flex flex-col items-center justify-center gap-1
-              border-r-2 border-gray-300 pr-2
-              ">
+            <div className="flex flex-col items-center justify-center gap-1
+            border-r-2 border-gray-300 pr-2
+            ">
                 <span className="text-xl text-zinc-500 font-semibold">
                   {user?.buyOrderAudioOn ? (
                     '🔊'
@@ -9511,6 +9662,7 @@ const fetchBuyOrders = async () => {
 
 
     </main>
+    </>
 
   );
 
