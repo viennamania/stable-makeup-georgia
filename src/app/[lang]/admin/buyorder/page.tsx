@@ -1055,6 +1055,7 @@ export default function Index({ params }: any) {
 
   const triggerJackpot = (order?: BuyOrder) => {
     if (!order) return;
+    if (!user?.isJackpotAnimationOn) return;
     if (order._id && jackpotDoneRef.current.has(order._id)) return;
     const now = Date.now();
     if (lastJackpotRef.current.id === order._id && now - lastJackpotRef.current.time < 1500) {
