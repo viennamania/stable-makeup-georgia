@@ -2953,7 +2953,7 @@ export async function getBuyOrders(
 
 
 
-
+    /*
     const totalReaultGroupBySellerAliesBankAccountNumber = await collection.aggregate([
       {
         $match: {
@@ -3003,7 +3003,7 @@ export async function getBuyOrders(
       // sort by totalUsdtAmount desc
       { $sort: { totalUsdtAmount: -1 } }
     ]).toArray();
-
+    */
 
 
 
@@ -3081,7 +3081,7 @@ export async function getBuyOrders(
 
       totalBySellerBankAccountNumber: totalReaultGroupBySellerBankAccountNumber,
 
-      totalBySellerAliesBankAccountNumber: totalReaultGroupBySellerAliesBankAccountNumber,
+      ////totalBySellerAliesBankAccountNumber: totalReaultGroupBySellerAliesBankAccountNumber,
 
       totalByBuyerBankAccountNumber: totalReaultGroupByBuyerBankAccountNumber,
 

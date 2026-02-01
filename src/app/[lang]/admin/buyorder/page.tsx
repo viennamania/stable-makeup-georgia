@@ -1565,6 +1565,17 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     setAliasPanelOpen(false);
   };
 
+  // ESC to close alias panel
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && aliasPanelOpen) {
+        closeAliasPanel();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [aliasPanelOpen]);
+
   // 무한 스크롤로 추가 로드
   useEffect(() => {
     const sentinel = aliasPanelLoadMoreRef.current;
@@ -4813,125 +4824,82 @@ const fetchBuyOrders = async () => {
           {/* trade summary */}
 
 
-          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2">
-
-            {/* if animatedTotalUsdtAmount is changed, border pulse animation */}
-            {/*
-            <div className="xl:w-1/3 w-full
-              flex flex-col sm:flex-row items-between justify-between gap-4
-              border border-zinc-300 p-4 rounded-lg
-            ">
-            */}
-
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* P2P Summary */}
-            <div className={`xl:w-1/3 w-full
-              flex flex-col sm:flex-row items-between justify-between gap-4
-              ${buyOrderStats.totalUsdtAmount !== animatedTotalUsdtAmount ? 'border-2 border-green-400 animate-pulse p-4 rounded-lg' : 'border border-zinc-300 p-4 rounded-lg'}
-            `}>
-
-              <div className="flex flex-col gap-2 items-center">
-                <Image
-                  src="/icon-trade.png"
-                  alt="P2P"
-                  width={44}
-                  height={44}
-                  className={`w-10 h-10 rounded-lg object-cover
-                    ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''}
-                  `}
-                />
-                <div className="text-sm">P2P 거래수(건)</div>
-                <div className="text-3xl font-semibold text-zinc-500">
-                  {
-                  //buyOrderStats.totalCount?.toLocaleString()
-                  animatedTotalCount.toLocaleString()
-                  }
+            <div className="flex items-stretch gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-inner">
+                  <Image src="/icon-trade.png" alt="P2P" width={32} height={32} className="w-8 h-8 object-contain invert" />
                 </div>
-              </div>
-
-              <div className="flex flex-col items-end justify-center gap-2">
-
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  {/* RGB: 64, 145, 146 */}
-                  <span className="text-3xl font-semibold text-[#409192]"
-                    style={{ fontFamily: 'monospace' }}>
-                    {
-                    animatedTotalUsdtAmount
-                      ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'
-                    }
+                <div className="flex flex-col justify-center">
+                  <span className="text-sm text-zinc-600">P2P 거래수(건)</span>
+                  <span className="text-3xl font-semibold text-zinc-700">
+                    {animatedTotalCount.toLocaleString()}
                   </span>
                 </div>
-
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-3xl font-semibold text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {
-                    //buyOrderStats.totalKrwAmount?.toLocaleString()
-                    animatedTotalKrwAmount.toLocaleString()
-                    }
-                  </span>
-                </div>
-
               </div>
-
+              <div className="mx-3 hidden md:block w-px bg-gradient-to-b from-transparent via-zinc-200 to-transparent" />
+              <div className="flex flex-col justify-center items-end flex-1">
+                <span className="text-3xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
+                  <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
+                  {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
+                </span>
+                <span className="text-3xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
+                  {animatedTotalKrwAmount.toLocaleString()}
+                </span>
+              </div>
             </div>
-            {/* end of P2P Summary */}
 
-            {/* divider */}
-            <div className="hidden xl:block w-0.5 h-20 bg-zinc-300"></div>
-            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-
-            {/*
-            <div className="xl:w-2/3 w-full
-              flex flex-col sm:flex-row items-start justify-end gap-4">
-            */}
-            <div className="w-full grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {/* P2P Summary */}
-              <div className="flex gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm items-start">
-                <div className="w-10 h-10 rounded-lg bg-black text-white text-sm font-bold flex items-center justify-center">
-                  P2
+            {/* Settlement Summary */}
+            <div className="flex items-stretch gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center shadow-inner">
+                  <Image src="/icon-payment2.png" alt="Settlement" width={28} height={28} className="w-7 h-7 object-contain" />
                 </div>
-                <div className="flex flex-col gap-1 min-w-0">
-                  <div className="text-sm uppercase tracking-wide text-gray-600">P2P 거래수</div>
-                  <div className="text-xl font-bold text-gray-900 leading-tight">{buyOrderStats.totalCount?.toLocaleString() || '0'}</div>
-                  <div className="flex flex-wrap gap-2 text-sm font-semibold text-gray-900" style={{ fontFamily: 'monospace' }}>
-                    <span className="text-gray-900">ꜩ {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
-                    <span className="text-gray-700">{animatedTotalKrwAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settlement Summary */}
-              <div className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm items-start">
-                <div className="w-11 h-11 rounded-lg bg-gray-900 text-white flex items-center justify-center">
-                  <Image src="/icon-payment2.png" alt="Settlement" width={24} height={24} className="w-6 h-6 object-cover invert" />
-                </div>
-                <div className="flex flex-col gap-1.5 min-w-0 w-full">
-                  <div className="text-sm uppercase tracking-wide text-gray-600">가맹점 결제수</div>
-                  <div className="text-xl font-bold text-gray-900 leading-tight">
+                <div className="flex flex-col justify-center">
+                  <span className="text-sm text-zinc-600">가맹점 결제수(건)</span>
+                  <span className="text-3xl font-semibold text-zinc-700">
                     {animatedTotalSettlementCount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <div className="mx-3 hidden md:block w-px bg-gradient-to-b from-transparent via-zinc-200 to-transparent" />
+              <div className="flex flex-col justify-center items-end flex-1 gap-1">
+                <span className="text-3xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
+                  <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
+                  {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
+                </span>
+                <span className="text-3xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
+                  {animatedTotalSettlementAmountKRW.toLocaleString()}
+                </span>
+                <div className="flex flex-col gap-1 text-sm font-semibold text-zinc-700 mt-1 items-end">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-zinc-500">PG 수수료</span>
+                    <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} USDT
+                    </span>
+                    <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalFeeAmountKRW !== undefined
+                        ? Math.round(buyOrderStats.totalFeeAmountKRW).toLocaleString()
+                        : '0'} 원
+                    </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 text-base font-semibold text-gray-900" style={{ fontFamily: 'monospace' }}>
-                    <span className="text-gray-900">ꜩ {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}</span>
-                    <span className="text-gray-700">{animatedTotalSettlementAmountKRW.toLocaleString()}</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-xs text-gray-500 font-semibold">
-                    <span>PG {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalFeeAmountKRW?.toLocaleString() || '0'}</span>
-                    <span>AG {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} / {buyOrderStats.totalAgentFeeAmountKRW?.toLocaleString() || '0'}</span>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-zinc-500">AG 수수료</span>
+                    <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} USDT
+                    </span>
+                    <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
+                      {buyOrderStats.totalAgentFeeAmountKRW !== undefined
+                        ? Math.round(buyOrderStats.totalAgentFeeAmountKRW).toLocaleString()
+                        : '0'} 원
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-            
           </div>
-
+          
 
           {/* for mobile */}
           {/*
@@ -5202,27 +5170,22 @@ const fetchBuyOrders = async () => {
                   ${balanceFlashSet.has(index) ? 'balance-flash' : ''}
                   `}
                 >
-                  <div className="flex items-center gap-2 w-full">
+                  <div className="flex items-center gap-2 w-full justify-between">
                     <Image src="/icon-bank.png" alt="Bank" width={16} height={16} className="w-4 h-4" />
                     <div className="flex flex-col min-w-0">
                       <button
                         className="text-sm font-semibold text-blue-600 underline truncate text-left"
-                        onClick={() =>
-                          fetchAliasTransfers(
-                            item.bankUserInfo?.[0]?.realAccountNumber
-                            || item.bankUserInfo?.[0]?.accountNumber
-                            || item._id
-                            || '기타은행',
-                            {
-                              bankName: item.bankUserInfo?.[0]?.bankName,
-                              accountHolder: item.bankUserInfo?.[0]?.accountHolder,
-                              aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                              defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                              realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || '',
-                            }
-                          )
-                        }
-                        title="입금내역 보기"
+                        onClick={() => {
+                          const accountNumber =
+                            item.bankUserInfo?.[0]?.defaultAccountNumber ||
+                            item._id ||
+                            '기타은행';
+                          navigator.clipboard
+                            .writeText(accountNumber)
+                            .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
+                            .catch((err) => toast.error('복사 실패: ' + err));
+                        }}
+                        title="계좌번호 복사"
                       >
                         {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
                       </button>
@@ -5233,6 +5196,26 @@ const fetchBuyOrders = async () => {
                         실계좌번호: {item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || '-'}
                       </span>
                     </div>
+                    <button
+                      className="text-xs px-2 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 shrink-0"
+                      onClick={() =>
+                        fetchAliasTransfers(
+                          item.bankUserInfo?.[0]?.realAccountNumber
+                          || item.bankUserInfo?.[0]?.accountNumber
+                          || item._id
+                          || '기타은행',
+                          {
+                            bankName: item.bankUserInfo?.[0]?.bankName,
+                            accountHolder: item.bankUserInfo?.[0]?.accountHolder,
+                            aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                            defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                            realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || '',
+                          }
+                        )
+                      }
+                    >
+                      입금내역
+                    </button>
                   </div>
 
                   <div className="w-full flex items-center justify-between text-xs">
@@ -8924,6 +8907,56 @@ const fetchBuyOrders = async () => {
                   <span className="text-xs text-zinc-500">
                     조회기간 {searchFromDate} ~ {searchToDate}
                   </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
+                      {[
+                        { key: 'all', label: '전체' },
+                        { key: 'matched', label: '정상입금' },
+                        { key: 'unmatched', label: '미신청입금' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.key}
+                          className={`px-2.5 py-1 text-[11px] rounded-md transition ${
+                            aliasPanelMatchFilter === opt.key
+                              ? 'bg-white shadow-sm border border-zinc-200 font-semibold'
+                              : 'text-zinc-600'
+                          }`}
+                          onClick={() => {
+                            setAliasPanelMatchFilter(opt.key as any);
+                            fetchAliasTransfers(
+                              aliasPanelAccountNumber,
+                              {
+                                bankName: aliasPanelBankName,
+                                accountHolder: aliasPanelAccountHolder,
+                                aliasAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
+                                defaultAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
+                                realAccountNumber: aliasPanelAccountNumber,
+                              },
+                              opt.key as any,
+                              1,
+                              false
+                            );
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
+                      onClick={() =>
+                        fetchAliasTransfers(aliasPanelAccountNumber, {
+                          bankName: aliasPanelBankName,
+                          accountHolder: aliasPanelAccountHolder,
+                          aliasAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
+                          defaultAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
+                          realAccountNumber: aliasPanelAccountNumber,
+                        }, aliasPanelMatchFilter, 1, false)
+                      }
+                    >
+                      새로고침
+                    </button>
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="px-3 py-1.5 rounded-md bg-zinc-100 text-zinc-700">
                       건수 {aliasPanelTotalCount.toLocaleString()}
@@ -8938,57 +8971,7 @@ const fetchBuyOrders = async () => {
 
             <div className="p-4 space-y-3 pt-4">
               <div className="flex items-center justify-between text-xs text-zinc-500">
-                <div className="flex items-center gap-2">
-                  <span>검색결과입니다.</span>
-                  <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
-                    {[
-                      { key: 'all', label: '전체' },
-                      { key: 'matched', label: '정상입금' },
-                      { key: 'unmatched', label: '미신청입금' },
-                    ].map((opt) => (
-                      <button
-                        key={opt.key}
-                        className={`px-2.5 py-1 text-[11px] rounded-md transition ${
-                          aliasPanelMatchFilter === opt.key
-                            ? 'bg-white shadow-sm border border-zinc-200 font-semibold'
-                            : 'text-zinc-600'
-                        }`}
-                        onClick={() => {
-                          setAliasPanelMatchFilter(opt.key as any);
-                          fetchAliasTransfers(
-                            aliasPanelAccountNumber,
-                            {
-                              bankName: aliasPanelBankName,
-                              accountHolder: aliasPanelAccountHolder,
-                              aliasAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
-                              defaultAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
-                              realAccountNumber: aliasPanelAccountNumber,
-                            },
-                            opt.key as any,
-                            1,
-                            false
-                          );
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
-                  onClick={() =>
-                    fetchAliasTransfers(aliasPanelAccountNumber, {
-                      bankName: aliasPanelBankName,
-                      accountHolder: aliasPanelAccountHolder,
-                      aliasAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
-                      defaultAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
-                      realAccountNumber: aliasPanelAccountNumber,
-                    }, aliasPanelMatchFilter, 1, false)
-                  }
-                >
-                  새로고침
-                </button>
+                <span>검색결과입니다.</span>
               </div>
 
               {aliasPanelError && (
