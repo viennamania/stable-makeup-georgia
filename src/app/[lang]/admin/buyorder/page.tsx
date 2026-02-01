@@ -1328,6 +1328,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
   // lastestBalance array for animated number
   const [lastestBalanceArray, setLastestBalanceArray] = useState<number[]>([]);
+  const prevTargetBalanceRef = useRef<number[]>([]);
+  const [balanceFlashSet, setBalanceFlashSet] = useState<Set<number>>(new Set());
   function updateLastestBalanceArray(index: number, value: number) {
     setLastestBalanceArray((prevValues) => {
       const newValues = [...prevValues];
@@ -1336,6 +1338,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     });
   }
   useEffect(() => {
+    const changedIndices: number[] = [];
     buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
       
       ///const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].latestBalance ? item.bankUserInfo[0].latestBalance : 0;
@@ -1345,6 +1348,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
       const duration = 1000; // animation duration in ms
       const startValue = lastestBalanceArray[index] || 0;
+      if (startValue !== targetValue) {
+        changedIndices.push(index);
+      }
       const startTime = performance.now();
       function animate(currentTime: number) {
         const elapsed = currentTime - startTime;
@@ -1357,6 +1363,49 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
       }
       requestAnimationFrame(animate);
     });
+    if (changedIndices.length) {
+      setBalanceFlashSet((prev) => {
+        const next = new Set(prev);
+        changedIndices.forEach((i) => next.add(i));
+        setTimeout(() => {
+          setBalanceFlashSet((curr) => {
+            const copy = new Set(curr);
+            changedIndices.forEach((i) => copy.delete(i));
+            return copy;
+          });
+        }, 900);
+        return next;
+      });
+    }
+  }, [buyOrderStats.totalBySellerBankAccountNumber]);
+
+  // detect balance change for flash animation using raw target values
+  useEffect(() => {
+    const prev = prevTargetBalanceRef.current;
+    const changed: number[] = [];
+    buyOrderStats.totalBySellerBankAccountNumber.forEach((item, idx) => {
+      const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].balance
+        ? item.bankUserInfo[0].balance
+        : 0;
+      if (prev[idx] !== undefined && prev[idx] !== targetValue) {
+        changed.push(idx);
+      }
+      prev[idx] = targetValue;
+    });
+    if (changed.length) {
+      setBalanceFlashSet((prevSet) => {
+        const next = new Set(prevSet);
+        changed.forEach((i) => next.add(i));
+        setTimeout(() => {
+          setBalanceFlashSet((curr) => {
+            const copy = new Set(curr);
+            changed.forEach((i) => copy.delete(i));
+            return copy;
+          });
+        }, 900);
+        return next;
+      });
+    }
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
 
 
@@ -3953,6 +4002,14 @@ const fetchBuyOrders = async () => {
           animation: contentReveal 0.4s ease-out, flashReveal 0.6s ease-out;
           border-radius: 6px;
         }
+        @keyframes balanceFlash {
+          0% { box-shadow: 0 0 0 0 rgba(21,128,61,0.85); background-color: rgba(16,185,129,0.25); }
+          35% { box-shadow: 0 0 0 14px rgba(21,128,61,0.40); background-color: rgba(16,185,129,0.15); }
+          70% { box-shadow: 0 0 0 26px rgba(21,128,61,0.12); background-color: rgba(16,185,129,0.06); }
+          100% { box-shadow: 0 0 0 34px rgba(21,128,61,0); background-color: transparent; }
+        }
+        .balance-flash { animation: balanceFlash 1s ease-out; }
+        .balance-flash-target { animation: balanceFlash 1s ease-out; }
         @keyframes jackpotFlash {
           0% { opacity: 0; transform: scale(0.96); }
           20% { opacity: 1; transform: scale(1.02); }
@@ -5141,6 +5198,7 @@ const fetchBuyOrders = async () => {
                         ? 'ring-1 ring-amber-200'
                         : ''
                   }
+                  ${balanceFlashSet.has(index) ? 'balance-flash' : ''}
                   `}
                 >
                   <div className="flex items-center gap-2 w-full">
@@ -5177,8 +5235,8 @@ const fetchBuyOrders = async () => {
                   </div>
 
                   <div className="w-full flex items-center justify-between text-xs">
-                    <span className="text-zinc-500">잔액(원)</span>
-                    <span className="text-lg font-bold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                    <span className="text-sm text-zinc-500">잔액(원)</span>
+                    <span className="text-xl font-extrabold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
                       {lastestBalanceArray && lastestBalanceArray[index] !== undefined
                         ? lastestBalanceArray[index].toLocaleString()
                         : '잔액정보없음'}
