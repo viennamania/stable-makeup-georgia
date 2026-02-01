@@ -3874,7 +3874,7 @@ const fetchBuyOrders = async () => {
               </span>
               {jackpotDepositor && (
                 <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900 leading-tight">
-                  예금주: {jackpotDepositor}
+                  입금자명: {jackpotDepositor}
                 </span>
               )}
               <div className="text-5xl sm:text-6xl font-extrabold text-amber-500 drop-shadow-lg tracking-tight leading-none">
