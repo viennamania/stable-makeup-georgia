@@ -995,6 +995,8 @@ export default function Index({ params }: any) {
 
   // lastestBalance array for animated number
   const [lastestBalanceArray, setLastestBalanceArray] = useState<number[]>([]);
+  const [balanceFlashSet, setBalanceFlashSet] = useState<Set<number>>(new Set());
+  const prevBalanceRef = useRef<number[]>([]);
   function updateLastestBalanceArray(index: number, value: number) {
     setLastestBalanceArray((prevValues) => {
       const newValues = [...prevValues];
@@ -1003,10 +1005,16 @@ export default function Index({ params }: any) {
     });
   }
   useEffect(() => {
+    const flashes: number[] = [];
     buyOrderStats.totalBySellerBankAccountNumber.forEach((item, index) => {
       const targetValue = item.bankUserInfo && item.bankUserInfo.length > 0 && item.bankUserInfo[0].balance ? item.bankUserInfo[0].balance : 0;
       const duration = 1000; // animation duration in ms
       const startValue = lastestBalanceArray[index] || 0;
+       const prevValue = prevBalanceRef.current[index] ?? startValue;
+       if (prevValue !== targetValue) {
+         flashes.push(index);
+       }
+       prevBalanceRef.current[index] = targetValue;
       const startTime = performance.now();
       function animate(currentTime: number) {
         const elapsed = currentTime - startTime;
@@ -1019,6 +1027,10 @@ export default function Index({ params }: any) {
       }
       requestAnimationFrame(animate);
     });
+    if (flashes.length) {
+      setBalanceFlashSet(new Set(flashes));
+      setTimeout(() => setBalanceFlashSet(new Set()), 1000);
+    }
   }, [buyOrderStats.totalBySellerBankAccountNumber]);
 
 
@@ -3693,6 +3705,14 @@ const fetchBuyOrders = async () => {
           0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
           100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
         }
+        @keyframes balanceFlash {
+          0% { box-shadow: 0 0 0 0 rgba(21,128,61,0.85); background-color: rgba(16,185,129,0.18); }
+          35% { box-shadow: 0 0 0 14px rgba(21,128,61,0.30); background-color: rgba(16,185,129,0.10); }
+          70% { box-shadow: 0 0 0 26px rgba(21,128,61,0.10); background-color: rgba(16,185,129,0.04); }
+          100% { box-shadow: 0 0 0 34px rgba(21,128,61,0); background-color: transparent; }
+        }
+        .balance-flash { animation: balanceFlash 0.9s ease-out; }
+        .balance-flash-target { animation: balanceFlash 0.9s ease-out; }
         .jackpot-overlay {
           position: fixed;
           inset: 0;
@@ -5596,7 +5616,7 @@ const fetchBuyOrders = async () => {
             {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
               <div
                 key={index}
-                className="flex flex-col gap-3 items-start border border-zinc-300 rounded-lg p-4 bg-zinc-50 shadow-md"
+                className={`flex flex-col gap-3 items-start border border-zinc-300 rounded-lg p-4 bg-zinc-50 shadow-md transition ${balanceFlashSet.has(index) ? 'balance-flash' : ''}`}
               >
                 <div className="w-full flex items-center gap-2">
                   <Image src="/icon-bank.png" alt="Bank" width={18} height={18} className="w-4.5 h-4.5" />
@@ -5628,7 +5648,7 @@ const fetchBuyOrders = async () => {
 
                 <div className="w-full flex items-center justify-between">
                   <span className="text-sm text-zinc-500">잔액(원):</span>
-                  <span className="text-lg font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                  <span className={`text-lg font-semibold text-yellow-600 ${balanceFlashSet.has(index) ? 'balance-flash-target' : ''}`} style={{ fontFamily: 'monospace' }}>
                     {lastestBalanceArray && lastestBalanceArray[index] !== undefined
                       ? lastestBalanceArray[index].toLocaleString()
                       : '잔액정보없음'}
