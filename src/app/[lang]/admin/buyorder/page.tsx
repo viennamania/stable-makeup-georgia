@@ -1047,6 +1047,8 @@ export default function Index({ params }: any) {
   const [jackpotStoreName, setJackpotStoreName] = useState<string>('');
   const [jackpotStoreLogo, setJackpotStoreLogo] = useState<string>('/icon-store.png');
   const [jackpotDepositor, setJackpotDepositor] = useState<string>('');
+  const [jackpotKrw, setJackpotKrw] = useState<number>(0);
+  const [jackpotUsdt, setJackpotUsdt] = useState<number>(0);
   const lastJackpotRef = useRef<{ id: string | null; time: number }>({ id: null, time: 0 });
 
   const jackpotDoneRef = useRef<Set<string>>(new Set());
@@ -1061,10 +1063,13 @@ export default function Index({ params }: any) {
     if (order._id) {
       jackpotDoneRef.current.add(order._id); // mark as already celebrated
     }
-    const amount = order.krwAmount ? order.krwAmount.toLocaleString() : '';
+    const amount = order.krwAmount ?? 0;
+    const usdt = order.usdtAmount ?? 0;
     const depositor = order.buyer?.depositName || order.buyer?.name || '';
     setJackpotDepositor(depositor || '');
-    setJackpotMessage(`${amount ? amount + '원이 ' : ''}입금되었습니다.`);
+    setJackpotKrw(amount);
+    setJackpotUsdt(usdt);
+    setJackpotMessage('결제가 완료되었습니다.');
     setJackpotStoreName(order.store?.storeName || '');
     setJackpotStoreLogo(order.store?.storeLogo || '/icon-store.png');
     setShowJackpot(true);
@@ -3877,8 +3882,19 @@ const fetchBuyOrders = async () => {
                   입금자명: {jackpotDepositor}
                 </span>
               )}
-              <div className="text-5xl sm:text-6xl font-extrabold text-amber-500 drop-shadow-lg tracking-tight leading-none">
-                {jackpotMessage}
+              <div className="text-4xl sm:text-5xl font-extrabold text-amber-500 drop-shadow-lg tracking-tight leading-none">
+                <span className="text-emerald-600">
+                  {jackpotKrw.toLocaleString()}원
+                </span>
+                <span className="text-neutral-700 font-bold mx-2 text-2xl sm:text-3xl">
+                  를 결제하고
+                </span>
+                <span className="text-emerald-600">
+                  {jackpotUsdt.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} USDT
+                </span>
+                <span className="text-neutral-700 font-bold ml-2 text-2xl sm:text-3xl">
+                  를 구매하였습니다.
+                </span>
               </div>
             </div>
           </div>
