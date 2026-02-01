@@ -587,330 +587,6 @@ export default function SettingsPage({ params }: any) {
 
 
 
-    // set storeBankInfo
-    const [bankName, setBankName] = useState("");
-    const [accountNumber, setAccountNumber] = useState("");
-    const [accountHolder, setAccountHolder] = useState("");
-
-    const [writingStoreBankInfo, setWritingStoreBankInfo] = useState(false);
-
-    const writeStoreBankInfo = async () => {
-        if (!address) {
-            toast.error(Please_connect_your_wallet_first);
-            return;
-        }
-        if (bankName.length < 2 || bankName.length > 20) {
-            toast.error("은행 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountNumber.length < 2 || accountNumber.length > 20) {
-            toast.error("계좌 번호를 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountHolder.length < 2 || accountHolder.length > 20) {
-            toast.error("예금주 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        setWritingStoreBankInfo(true);
-        const response = await fetch('/api/store/setStoreBankInfo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.storecode,
-                walletAddress: address,
-                bankName: bankName,
-                accountNumber: accountNumber,
-                accountHolder: accountHolder,
-            }),
-        });
-        const data = await response.json();
-        //console.log("data", data);
-        if (data.result) {
-            toast.success('가맹점 은행 정보가 설정되었습니다');
-            setBankName('');
-            setAccountNumber('');
-            setAccountHolder('');
-
-            setStore({
-                ...store,
-                bankInfo: {
-                    bankName: bankName,
-                    accountNumber: accountNumber,
-                    accountHolder: accountHolder,
-                },
-            });
-
-            
-            //fetchStore();
-
-
-        } else {
-            toast.error('가맹점 은행 정보 설정에 실패하였습니다');
-        }
-        setWritingStoreBankInfo(false);
-    }
-
-
-
-
-
-
-    // set storeBankInfoAAA
-    const [bankNameAAA, setBankNameAAA] = useState("");
-    const [accountNumberAAA, setAccountNumberAAA] = useState("");
-    const [accountHolderAAA, setAccountHolderAAA] = useState("");
-    const [writingStoreBankInfoAAA, setWritingStoreBankInfoAAA] = useState(false);
-    const writeStoreBankInfoAAA = async () => {
-        if (!address) {
-            toast.error(Please_connect_your_wallet_first);
-            return;
-        }
-        if (bankNameAAA.length < 2 || bankNameAAA.length > 20) {
-            toast.error("은행 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountNumberAAA.length < 2 || accountNumberAAA.length > 20) {
-            toast.error("계좌 번호를 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountHolderAAA.length < 2 || accountHolderAAA.length > 20) {
-            toast.error("예금주 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        setWritingStoreBankInfoAAA(true);
-        const response = await fetch('/api/store/setStoreBankInfoAAA', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.storecode,
-                walletAddress: address,
-                bankName: bankNameAAA,
-                accountNumber: accountNumberAAA,
-                accountHolder: accountHolderAAA,
-            }),
-        });
-        const data = await response.json();
-        //console.log("data", data);
-        if (data.result) {
-            toast.success('가맹점 은행 정보가 설정되었습니다');
-            setBankNameAAA('');
-            setAccountNumberAAA('');
-            setAccountHolderAAA('');
-            setStore({
-                ...store,
-                bankInfoAAA: {
-                    bankName: bankNameAAA,
-                    accountNumber: accountNumberAAA,
-                    accountHolder: accountHolderAAA,
-                },
-            });
-            //fetchStore();
-        } else {
-            toast.error('가맹점 은행 정보 설정에 실패하였습니다');
-        }
-        setWritingStoreBankInfoAAA(false);
-    }
-
-
-
-
-    // set storeBankInfoBBB
-    const [bankNameBBB, setBankNameBBB] = useState("");
-    const [accountNumberBBB, setAccountNumberBBB] = useState("");
-    const [accountHolderBBB, setAccountHolderBBB] = useState("");
-    const [writingStoreBankInfoBBB, setWritingStoreBankInfoBBB] = useState(false);
-    const writeStoreBankInfoBBB = async () => {
-        if (!address) {
-            toast.error(Please_connect_your_wallet_first);
-            return;
-        }
-        if (bankNameBBB.length < 2 || bankNameBBB.length > 20) {
-            toast.error("은행 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountNumberBBB.length < 2 || accountNumberBBB.length > 20) {
-            toast.error("계좌 번호를 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountHolderBBB.length < 2 || accountHolderBBB.length > 20) {
-            toast.error("예금주 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        setWritingStoreBankInfoBBB(true);
-        const response = await fetch('/api/store/setStoreBankInfoBBB', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.storecode,
-                walletAddress: address,
-                bankName: bankNameBBB,
-                accountNumber: accountNumberBBB,
-                accountHolder: accountHolderBBB,
-            }),
-        });
-        const data = await response.json();
-        //console.log("data", data);
-        if (data.result) {
-            toast.success('가맹점 은행 정보가 설정되었습니다');
-            setBankNameBBB('');
-            setAccountNumberBBB('');
-            setAccountHolderBBB('');
-            setStore({
-                ...store,
-                bankInfoBBB: {
-                    bankName: bankNameBBB,
-                    accountNumber: accountNumberBBB,
-                    accountHolder: accountHolderBBB,
-                },
-            });
-            //fetchStore();
-        } else {
-            toast.error('가맹점 은행 정보 설정에 실패하였습니다');
-        }
-        setWritingStoreBankInfoBBB(false);
-    }
-
-
-
-
-
-    // // set storeBankInfoCCC
-    const [bankNameCCC, setBankNameCCC] = useState("");
-    const [accountNumberCCC, setAccountNumberCCC] = useState("");
-    const [accountHolderCCC, setAccountHolderCCC] = useState("");
-    const [writingStoreBankInfoCCC, setWritingStoreBankInfoCCC] = useState(false);
-    const writeStoreBankInfoCCC = async () => {
-        if (!address) {
-            toast.error(Please_connect_your_wallet_first);
-            return;
-        }
-        if (bankNameCCC.length < 2 || bankNameCCC.length > 20) {
-            toast.error("은행 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountNumberCCC.length < 2 || accountNumberCCC.length > 20) {
-            toast.error("계좌 번호를 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountHolderCCC.length < 2 || accountHolderCCC.length > 20) {
-            toast.error("예금주 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        setWritingStoreBankInfoCCC(true);
-        const response = await fetch('/api/store/setStoreBankInfoCCC', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.storecode,
-                walletAddress: address,
-                bankName: bankNameCCC,
-                accountNumber: accountNumberCCC,
-                accountHolder: accountHolderCCC,
-            }),
-        });
-        const data = await response.json();
-        //console.log("data", data);
-        if (data.result) {
-            toast.success('가맹점 은행 정보가 설정되었습니다');
-            setBankNameCCC('');
-            setAccountNumberCCC('');
-            setAccountHolderCCC('');
-            setStore({
-                ...store,
-                bankInfoCCC: {
-                    bankName: bankNameCCC,
-                    accountNumber: accountNumberCCC,
-                    accountHolder: accountHolderCCC,
-                },
-            });
-            //fetchStore();
-        } else {
-            toast.error('가맹점 은행 정보 설정에 실패하였습니다');
-        }
-        setWritingStoreBankInfoCCC(false);
-    }
-
-
-
-    // // set storeBankInfoDDD
-    const [bankNameDDD, setBankNameDDD] = useState("");
-    const [accountNumberDDD, setAccountNumberDDD] = useState("");
-    const [accountHolderDDD, setAccountHolderDDD] = useState("");
-    const [writingStoreBankInfoDDD, setWritingStoreBankInfoDDD] = useState(false);
-    const writeStoreBankInfoDDD = async () => {
-        if (!address) {
-            toast.error(Please_connect_your_wallet_first);
-            return;
-        }
-        if (bankNameDDD.length < 2 || bankNameDDD.length > 20) {
-            toast.error("은행 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountNumberDDD.length < 2 || accountNumberDDD.length > 20) {
-            toast.error("계좌 번호를 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        if (accountHolderDDD.length < 2 || accountHolderDDD.length > 20) {
-            toast.error("예금주 이름을 2자 이상 20자 이하로 설정하세요");
-            return;
-        }
-        setWritingStoreBankInfoDDD(true);
-        const response = await fetch('/api/store/setStoreBankInfoDDD', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                lang: params.lang,
-                storecode: params.storecode,
-                walletAddress: address,
-                bankName: bankNameDDD,
-                accountNumber: accountNumberDDD,
-                accountHolder: accountHolderDDD,
-            }),
-        });
-        const data = await response.json();
-        //console.log("data", data);
-        if (data.result) {
-            toast.success('가맹점 은행 정보가 설정되었습니다');
-            setBankNameDDD('');
-            setAccountNumberDDD('');
-            setAccountHolderDDD('');
-            setStore({
-                ...store,
-                bankInfoDDD: {
-                    bankName: bankNameDDD,
-                    accountNumber: accountNumberDDD,
-                    accountHolder: accountHolderDDD,
-                },
-            });
-            //fetchStore();
-        } else {
-            toast.error('가맹점 은행 정보 설정에 실패하였습니다');
-        }
-        setWritingStoreBankInfoDDD(false);
-    }
-
-
-
-
-
-
-
-
-
     // setWithdrawalBankName
     // setWithdrawalAccountNumber
     // setWithdrawalAccountHolder
@@ -2544,166 +2220,110 @@ export default function SettingsPage({ params }: any) {
                         </div>
 
 
-                        <div className='w-full flex flex-col items-start justify-center gap-2
-                            border border-gray-400 rounded-lg p-4'>
-            
-                            
-                            <div className='w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2'>
+                        <div className="w-full rounded-2xl border border-zinc-200 bg-white shadow-sm p-6 space-y-5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
                                     <Image
                                         src="/icon-store.png"
-                                        alt="Manager"
-                                        width={20}
-                                        height={20}
-                                        className="w-6 h-6"
+                                        alt="Store"
+                                        width={24}
+                                        height={24}
+                                        className="w-7 h-7"
                                     />
-                                    <span className="text-lg text-zinc-500">
-                                        가맹점 기본정보 설정
-                                    </span>
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-semibold text-zinc-900">가맹점 기본정보 설정</span>
+                                        <span className="text-sm text-zinc-500">이름, 설명, 로고를 수정하세요.</span>
+                                    </div>
                                 </div>
-
-
-
-                            
-                            <div className="flex flex-row items-center gap-2">
-                                {/* dot */}
-                                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                <span className="text-lg">
-                                    가맹점 코드
-                                </span>
-                                <span className="text-xl text-blue-500 font-semibold">
-                                    {store?.storecode}
-                                </span>
                             </div>
-                            
-                            
-                            <div className='w-full flex flex-col sm:flex-row items-center justify-between gap-2'>
 
-
-
-                                <div className="flex flex-row items-center gap-2">
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        가맹점 이름
-                                    </span>
-                                    <span className="text-xl text-blue-500 font-semibold">
-                                        {store?.storeName}
-                                    </span>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xs text-zinc-500">가맹점 코드</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl font-semibold text-blue-600">{store?.storecode}</span>
+                                        <button
+                                            className="text-xs px-2 py-1 rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(store?.storecode || '');
+                                                toast.success('가맹점 코드가 복사되었습니다.');
+                                            }}
+                                        >
+                                            복사
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className='flex flex-row gap-2 items-center justify-between'>
-                                    <div className='flex flex-col gap-2'>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xs text-zinc-500">가맹점 이름</span>
+                                    <div className="flex gap-2">
                                         <input
                                             disabled={!address || settingStoreName}
-                                            className="bg-white text-zinc-500 rounded-lg p-2 text-sm"
-                                                
-                                            placeholder="가맹점 이름을 입력하세요"                                              
+                                            className="flex-1 bg-white text-zinc-800 rounded-lg px-3 py-2 text-sm border border-zinc-300 focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
+                                            placeholder="가맹점 이름을 입력하세요"
                                             value={storeName}
-
                                             type='text'
-                                            onChange={(e) => {
-                                                setStoreName(e.target.value);                                       
-                                            } }
-
+                                            onChange={(e) => setStoreName(e.target.value)}
                                         />
-
+                                        <button
+                                            disabled={!address || !storeName || settingStoreName}
+                                            className={`px-3 py-2 rounded-lg bg-[#3167b4] text-white text-sm font-semibold shadow-sm hover:bg-[#2b599d] transition ${(!storeName || settingStoreName) ? 'opacity-60' : ''}`}
+                                            onClick={() => {
+                                                confirm(`정말 ${storeName}으로 가맹점 이름을 변경하시겠습니까?`) && writeStoreName();
+                                            }}
+                                        >
+                                            {settingStoreName ? "변경 중..." : "변경"}
+                                        </button>
                                     </div>
-
-                                    <button
-                                        disabled={!address || !nickname
-                                            || settingStoreName
-                                        }
-                                        className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!storeName || settingStoreName
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            confirm(
-                                                `정말 ${storeName}으로 가맹점 이름을 변경하시겠습니까?`
-                                            ) && writeStoreName();
-                                        }}
-                                    >
-                                        {settingStoreName ? "변경 중..." : "변경하기"}
-                                    </button>
-                                
+                                    <span className="text-xs text-blue-500 font-semibold">{store?.storeName}</span>
                                 </div>
 
-                                
+                                <div className="flex flex-col gap-1 md:col-span-2">
+                                    <span className="text-xs text-zinc-500">가맹점 설명</span>
+                                    <div className="flex gap-2">
+                                        <input
+                                            disabled={!address || writingStoreDescription}
+                                            className="flex-1 bg-white text-zinc-800 rounded-lg px-3 py-2 text-sm border border-zinc-300 focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
+                                            placeholder="가맹점 설명을 입력하세요"
+                                            value={storeDescription}
+                                            type='text'
+                                            onChange={(e) => setStoreDescription(e.target.value)}
+                                        />
+                                        <button
+                                            disabled={!address || !storeDescription || writingStoreDescription}
+                                            className={`px-3 py-2 rounded-lg bg-[#3167b4] text-white text-sm font-semibold shadow-sm hover:bg-[#2b599d] transition ${(!storeDescription || writingStoreDescription) ? 'opacity-60' : ''}`}
+                                            onClick={() => {
+                                                confirm(`정말 ${storeDescription}으로 가맹점 설명을 변경하시겠습니까?`) && writeStoreDescription();
+                                            }}
+                                        >
+                                            {writingStoreDescription ? "변경 중..." : "변경"}
+                                        </button>
+                                    </div>
+                                    <span className="text-xs text-blue-500 font-semibold">{store?.storeDescription}</span>
+                                </div>
                             </div>
 
-
-
-
-                            <div className='w-full flex flex-col sm:flex-row items-center justify-between gap-2'>
-                                <div className="flex flex-row items-center justify-start gap-2">
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        가맹점 설명
-                                    </span>
-                                    <span className="text-xl text-blue-500 font-semibold">
-                                        {store?.storeDescription}
-                                    </span>
-                                </div>
-                                <div className='flex flex-row gap-2 items-center justify-between'>
-                                    <input
-                                        disabled={!address || writingStoreDescription}
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm"
-                                        placeholder="가맹점 설명을 입력하세요"
-                                        value={storeDescription}
-                                        type='text'
-                                        onChange={(e) => {
-                                            setStoreDescription(e.target.value);
-                                        } }
+                            <div className="flex flex-col gap-2">
+                                <span className="text-xs text-zinc-500">가맹점 로고</span>
+                                <div className="w-full flex flex-row items-center justify-start gap-3">
+                                    <Uploader
+                                        lang={params.lang}
+                                        storecode={params.storecode as string}
                                     />
-                                    <button
-                                        disabled={!address || !storeDescription || writingStoreDescription}
-                                        className={`bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!storeDescription || writingStoreDescription
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            confirm(
-                                                `정말 ${storeDescription}으로 가맹점 설명을 변경하시겠습니까?`
-                                            ) &&
-                                            writeStoreDescription();
-                                        }}
-                                    >
-                                        {writingStoreDescription ? "변경 중..." : "변경하기"}
-                                    </button>
+                                    {store?.storeLogo && (
+                                        <Image
+                                            src={store.storeLogo}
+                                            alt="Store logo"
+                                            width={64}
+                                            height={64}
+                                            className="rounded-lg w-16 h-16 object-cover border border-zinc-200"
+                                        />
+                                    )}
                                 </div>
                             </div>
-                            
-                
-
-            
-                            <div className="w-full flex flex-row items-center justify-start gap-2">
-                                {/* dot */}
-                                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                <span className="text-lg">
-                                    가맹점 로고
-                                </span>
-                            </div>
-
-                            <div className="w-full flex flex-row items-center justify-center gap-2">
-                                <Uploader
-                                    lang={params.lang}
-                                    storecode={params.storecode as string}
-                                />
-                            </div>
-
-
-
-
-
-
-
 
                             {/* store backgroundColor */}
-
-
-                            <div className='w-full flex flex-col items-start gap-2  
-                            
-                            '>
+                            <div className='w-full flex flex-col items-start gap-2'>
                                 <div className='flex flex-row items-center justify-center gap-2'>
                                     {/* dot */}
                                     <div className='w-2 h-2 bg-green-500 rounded-full'></div>
@@ -4273,656 +3893,57 @@ export default function SettingsPage({ params }: any) {
 
 
 
-                        {/* store bankInfo settings */}
-                        {/* 가맹점 결제용 통장 설정 */}
-                        <div className='w-full flex flex-col items-start justify-center gap-2
-                            border border-gray-400 p-4 rounded-lg'>
-
-                            <div className='w-full flex flex-col items-center justify-between gap-2'>
-                                
-                                <div className="w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2">
-                                    {/* dot */}
-                                    <Image
-                                        src="/icon-bank.png"
-                                        alt="Bank"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(일반 회원용)</b>
-                                    </span>
-                                </div>
-
-                                <div className='w-full flex flex-col items-start gap-2'>
-                                    
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            은행이름:{' '}{store && store.bankInfo && store.bankInfo.bankName}
-                                        </span>
+                        {/* P2P 구매자 계좌이체용 원화통장 설정 */}
+                        <div className="w-full rounded-2xl border border-zinc-200 bg-white shadow-sm p-5 space-y-4">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                        <Image src="/icon-bank.png" alt="Bank" width={22} height={22} className="w-6 h-6" />
                                     </div>
-
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        계좌번호:{' '}{store && store.bankInfo && store.bankInfo.accountNumber}
-                                        </span>
-                                    </div>
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        예금주:{' '}{store && store.bankInfo && store.bankInfo.accountHolder}
-                                        </span>
+                                    <div className="flex flex-col">
+                                        <span className="text-base font-semibold text-zinc-900">P2P 구매자 계좌이체용 원화통장 설정</span>
+                                        <span className="text-sm text-zinc-500">회원 등급별로 출금 계좌를 확인하세요.</span>
                                     </div>
                                 </div>
-
-                                {/* divider */}
-                                <div className='w-full h-[1px] bg-zinc-300'></div>
-
-                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
-                                    
-                                    <select
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        value={bankName}
-                                        onChange={(e) => setBankName(e.target.value)}
-                                    >
-                                        <option value="">은행이름 선택</option>
-                                        <option value="카카오뱅크">카카오뱅크</option>
-                                        <option value="케이뱅크">케이뱅크</option>
-                                        <option value="토스뱅크">토스뱅크</option>
-                                        <option value="국민은행">국민은행</option>
-                                        <option value="우리은행">우리은행</option>
-                                        <option value="신한은행">신한은행</option>
-                                        <option value="농협">농협</option>
-                                        <option value="기업은행">기업은행</option>
-                                        <option value="하나은행">하나은행</option>
-                                        <option value="외환은행">외환은행</option>
-                                        <option value="SC제일은행">SC제일은행</option>
-                                        <option value="부산은행">부산은행</option>
-                                        <option value="대구은행">대구은행</option>
-                                        <option value="전북은행">전북은행</option>
-                                        <option value="경북은행">경북은행</option>
-                                        <option value="경남은행">경남은행</option>
-                                        <option value="광주은행">광주은행</option>
-                                        <option value="제주은행">제주은행</option>
-                                        <option value="새마을금고">새마을금고</option>
-                                        <option value="수협">수협</option>
-                                        <option value="신협">신협</option>
-                                        <option value="씨티은행">씨티은행</option>
-                                        <option value="대신은행">대신은행</option>
-                                        <option value="동양종합금융">동양종합금융</option>
-                                        <option value="JT친애저축은행">JT친애저축은행</option>
-                                        <option value="산업은행">산업은행</option>
-                                        <option value="우체국">우체국</option>
-                                    </select>
-
-
-
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="계좌번호"
-                                        value={accountNumber}
-                                        onChange={(e) => setAccountNumber(e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="예금주"
-                                        value={accountHolder}
-                                        onChange={(e) => setAccountHolder(e.target.value)}
-                                    />
-
-                                    <button
-                                        disabled={!address || !bankName || !accountNumber || !accountHolder
-                                            || writingStoreBankInfo
-                                        }
-                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!bankName || !accountNumber || !accountHolder || writingStoreBankInfo
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!bankName || !accountNumber || !accountHolder) {
-                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
-                                                return;
-                                            }
-
-                                            confirm(
-                                                `정말 ${bankName} ${accountNumber} ${accountHolder}로 가맹점 결제용 통장을 변경하시겠습니까?`
-                                            ) && writeStoreBankInfo();
-                                        }}
-                                    >
-                                        {writingStoreBankInfo ? '변경 중...' : '변경하기'}
-                                    </button>
-
-                                </div>
-
                             </div>
 
-
-                            {/* 1등급 */}
-                            {/* AAA */}
-                            <div className='mt-5
-                                w-full flex flex-col items-center justify-between gap-2
-                                border-t border-gray-300 pt-2
-                                '>
-                                
-                                <div className="w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2">
-                                    {/* dot */}
-                                    <Image
-                                        src="/icon-bank.png"
-                                        alt="Bank"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(1등급 회원용)</b>
-                                    </span>
-                                </div>
-
-                                <div className='w-full flex flex-col items-start gap-2'>
-                                    
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            은행이름:{' '}{store && store.bankInfoAAA && store.bankInfoAAA.bankName}
-                                        </span>
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
+                                {[
+                                    { label: '일반', tone: 'bg-zinc-100 text-zinc-700', data: store?.bankInfo },
+                                    { label: '1등급', tone: 'bg-rose-100 text-rose-700', data: store?.bankInfoAAA },
+                                    { label: '2등급', tone: 'bg-amber-100 text-amber-700', data: store?.bankInfoBBB },
+                                    { label: '3등급', tone: 'bg-blue-100 text-blue-700', data: store?.bankInfoCCC },
+                                    { label: '4등급', tone: 'bg-emerald-100 text-emerald-700', data: store?.bankInfoDDD },
+                                ].map((tier, idx) => (
+                                    <div key={idx} className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 shadow-xs">
+                                        <div className="flex items-center justify-between">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${tier.tone}`}>
+                                                {tier.label}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-1.5 text-sm">
+                                            <div className="flex items-center gap-2 text-zinc-600">
+                                                <span className="w-16 text-xs text-zinc-500">은행</span>
+                                                <span className="font-semibold text-zinc-800 truncate">
+                                                    {tier.data?.bankName || '미설정'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-zinc-600">
+                                                <span className="w-16 text-xs text-zinc-500">계좌번호</span>
+                                                <span className="font-mono font-semibold text-zinc-900 truncate">
+                                                    {tier.data?.accountNumber || '미설정'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-zinc-600">
+                                                <span className="w-16 text-xs text-zinc-500">예금주</span>
+                                                <span className="font-semibold text-zinc-800 truncate">
+                                                    {tier.data?.accountHolder || '미설정'}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        계좌번호:{' '}{store && store.bankInfoAAA && store.bankInfoAAA.accountNumber}
-                                        </span>
-                                    </div>
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        예금주:{' '}{store && store.bankInfoAAA && store.bankInfoAAA.accountHolder}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* divider */}
-                                <div className='w-full h-[1px] bg-zinc-300'></div>
-
-                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
-                                    
-                                    <select
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        value={bankNameAAA}
-                                        onChange={(e) => setBankNameAAA(e.target.value)}
-                                    >
-                                        <option value="">은행이름 선택</option>
-                                        <option value="카카오뱅크">카카오뱅크</option>
-                                        <option value="케이뱅크">케이뱅크</option>
-                                        <option value="토스뱅크">토스뱅크</option>
-                                        <option value="국민은행">국민은행</option>
-                                        <option value="우리은행">우리은행</option>
-                                        <option value="신한은행">신한은행</option>
-                                        <option value="농협">농협</option>
-                                        <option value="기업은행">기업은행</option>
-                                        <option value="하나은행">하나은행</option>
-                                        <option value="외환은행">외환은행</option>
-                                        <option value="SC제일은행">SC제일은행</option>
-                                        <option value="부산은행">부산은행</option>
-                                        <option value="대구은행">대구은행</option>
-                                        <option value="전북은행">전북은행</option>
-                                        <option value="경북은행">경북은행</option>
-                                        <option value="경남은행">경남은행</option>
-                                        <option value="광주은행">광주은행</option>
-                                        <option value="제주은행">제주은행</option>
-                                        <option value="새마을금고">새마을금고</option>
-                                        <option value="수협">수협</option>
-                                        <option value="신협">신협</option>
-                                        <option value="씨티은행">씨티은행</option>
-                                        <option value="대신은행">대신은행</option>
-                                        <option value="동양종합금융">동양종합금융</option>
-                                        <option value="JT친애저축은행">JT친애저축은행</option>
-                                        <option value="산업은행">산업은행</option>
-                                        <option value="우체국">우체국</option>
-                                    </select>
-
-
-
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="계좌번호"
-                                        value={accountNumberAAA}
-                                        onChange={(e) => setAccountNumberAAA(e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="예금주"
-                                        value={accountHolderAAA}
-                                        onChange={(e) => setAccountHolderAAA(e.target.value)}
-                                    />
-
-                                    <button
-                                        disabled={!address || !bankNameAAA || !accountNumberAAA || !accountHolderAAA
-                                            || writingStoreBankInfoAAA
-                                        }
-                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!bankNameAAA || !accountNumberAAA || !accountHolderAAA || writingStoreBankInfoAAA
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!bankNameAAA || !accountNumberAAA || !accountHolderAAA) {
-                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
-                                                return;
-                                            }
-
-                                            confirm(
-                                                `정말 ${bankNameAAA} ${accountNumberAAA} ${accountHolderAAA}로 가맹점 결제용 통장을 변경하시겠습니까?`
-                                        ) && writeStoreBankInfoAAA();
-                                        }}
-                                    >
-                                        {writingStoreBankInfoAAA ? '변경 중...' : '변경하기'}
-                                    </button>
-
-                                </div>
-
+                                ))}
                             </div>
-
-                            
-                            {/* 2등급 */}
-                            {/* BBB */}
-                            <div className='mt-5
-                                w-full flex flex-col items-center justify-between gap-2
-                                border-t border-gray-300 pt-2
-                                '>
-                                
-                                <div className="w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2">
-                                    {/* dot */}
-                                    <Image
-                                        src="/icon-bank.png"
-                                        alt="Bank"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(2등급 회원용)</b>
-                                    </span>
-                                </div>
-
-                                <div className='w-full flex flex-col items-start gap-2'>
-                                    
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            은행이름:{' '}{store && store.bankInfoBBB && store.bankInfoBBB.bankName}
-                                        </span>
-                                    </div>
-
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        계좌번호:{' '}{store && store.bankInfoBBB && store.bankInfoBBB.accountNumber}
-                                        </span>
-                                    </div>
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        예금주:{' '}{store && store.bankInfoBBB && store.bankInfoBBB.accountHolder}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* divider */}
-                                <div className='w-full h-[1px] bg-zinc-300'></div>
-
-                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
-                                    
-                                    <select
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        value={bankNameBBB}
-                                        onChange={(e) => setBankNameBBB(e.target.value)}
-                                    >
-                                        <option value="">은행이름 선택</option>
-                                        <option value="카카오뱅크">카카오뱅크</option>
-                                        <option value="케이뱅크">케이뱅크</option>
-                                        <option value="토스뱅크">토스뱅크</option>
-                                        <option value="국민은행">국민은행</option>
-                                        <option value="우리은행">우리은행</option>
-                                        <option value="신한은행">신한은행</option>
-                                        <option value="농협">농협</option>
-                                        <option value="기업은행">기업은행</option>
-                                        <option value="하나은행">하나은행</option>
-                                        <option value="외환은행">외환은행</option>
-                                        <option value="SC제일은행">SC제일은행</option>
-                                        <option value="부산은행">부산은행</option>
-                                        <option value="대구은행">대구은행</option>
-                                        <option value="전북은행">전북은행</option>
-                                        <option value="경북은행">경북은행</option>
-                                        <option value="경남은행">경남은행</option>
-                                        <option value="광주은행">광주은행</option>
-                                        <option value="제주은행">제주은행</option>
-                                        <option value="새마을금고">새마을금고</option>
-                                        <option value="수협">수협</option>
-                                        <option value="신협">신협</option>
-                                        <option value="씨티은행">씨티은행</option>
-                                        <option value="대신은행">대신은행</option>
-                                        <option value="동양종합금융">동양종합금융</option>
-                                        <option value="JT친애저축은행">JT친애저축은행</option>
-                                        <option value="산업은행">산업은행</option>
-                                        <option value="우체국">우체국</option>
-                                    </select>
-
-
-
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="계좌번호"
-                                        value={accountNumberBBB}
-                                        onChange={(e) => setAccountNumberBBB(e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="예금주"
-                                        value={accountHolderBBB}
-                                        onChange={(e) => setAccountHolderBBB(e.target.value)}
-                                    />
-
-                                    <button
-                                        disabled={!address || !bankNameBBB || !accountNumberBBB || !accountHolderBBB
-                                            || writingStoreBankInfoBBB
-                                        }
-                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!bankNameBBB || !accountNumberBBB || !accountHolderBBB || writingStoreBankInfoBBB
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!bankNameBBB || !accountNumberBBB || !accountHolderBBB) {
-                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
-                                                return;
-                                            }
-
-                                            confirm(
-                                                `정말 ${bankNameBBB} ${accountNumberBBB} ${accountHolderBBB}로 가맹점 결제용 통장을 변경하시겠습니까?`
-                                        ) && writeStoreBankInfoBBB();
-                                        }}
-                                    >
-                                        {writingStoreBankInfoBBB ? '변경 중...' : '변경하기'}
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-
-
-                            {/* 3등급 */}
-                            {/* CCC */}
-                            <div className='mt-5
-                                w-full flex flex-col items-center justify-between gap-2
-                                border-t border-gray-300 pt-2
-                                '>
-                                
-                                <div className="w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2">
-                                    {/* dot */}
-                                    <Image
-                                        src="/icon-bank.png"
-                                        alt="Bank"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(3등급 회원용)</b>
-                                    </span>
-                                </div>
-
-                                <div className='w-full flex flex-col items-start gap-2'>
-                                    
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            은행이름:{' '}{store && store.bankInfoCCC && store.bankInfoCCC.bankName}
-                                        </span>
-                                    </div>
-
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        계좌번호:{' '}{store && store.bankInfoCCC && store.bankInfoCCC.accountNumber}
-                                        </span>
-                                    </div>
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        예금주:{' '}{store && store.bankInfoCCC && store.bankInfoCCC.accountHolder}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* divider */}
-                                <div className='w-full h-[1px] bg-zinc-300'></div>
-
-                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
-                                    
-                                    <select
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        value={bankNameCCC}
-                                        onChange={(e) => setBankNameCCC(e.target.value)}
-                                    >
-                                        <option value="">은행이름 선택</option>
-                                        <option value="카카오뱅크">카카오뱅크</option>
-                                        <option value="케이뱅크">케이뱅크</option>
-                                        <option value="토스뱅크">토스뱅크</option>
-                                        <option value="국민은행">국민은행</option>
-                                        <option value="우리은행">우리은행</option>
-                                        <option value="신한은행">신한은행</option>
-                                        <option value="농협">농협</option>
-                                        <option value="기업은행">기업은행</option>
-                                        <option value="하나은행">하나은행</option>
-                                        <option value="외환은행">외환은행</option>
-                                        <option value="SC제일은행">SC제일은행</option>
-                                        <option value="부산은행">부산은행</option>
-                                        <option value="대구은행">대구은행</option>
-                                        <option value="전북은행">전북은행</option>
-                                        <option value="경북은행">경북은행</option>
-                                        <option value="경남은행">경남은행</option>
-                                        <option value="광주은행">광주은행</option>
-                                        <option value="제주은행">제주은행</option>
-                                        <option value="새마을금고">새마을금고</option>
-                                        <option value="수협">수협</option>
-                                        <option value="신협">신협</option>
-                                        <option value="씨티은행">씨티은행</option>
-                                        <option value="대신은행">대신은행</option>
-                                        <option value="동양종합금융">동양종합금융</option>
-                                        <option value="JT친애저축은행">JT친애저축은행</option>
-                                        <option value="산업은행">산업은행</option>
-                                        <option value="우체국">우체국</option>
-                                    </select>
-
-
-
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="계좌번호"
-                                        value={accountNumberCCC}
-                                        onChange={(e) => setAccountNumberCCC(e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="예금주"
-                                        value={accountHolderCCC}
-                                        onChange={(e) => setAccountHolderCCC(e.target.value)}
-                                    />
-
-                                    <button
-                                        disabled={!address || !bankNameCCC || !accountNumberCCC || !accountHolderCCC
-                                            || writingStoreBankInfoCCC
-                                        }
-                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!bankNameCCC || !accountNumberCCC || !accountHolderCCC || writingStoreBankInfoCCC
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!bankNameCCC || !accountNumberCCC || !accountHolderCCC) {
-                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
-                                                return;
-                                            }
-
-                                            confirm(
-                                                `정말 ${bankNameCCC} ${accountNumberCCC} ${accountHolderCCC}로 가맹점 결제용 통장을 변경하시겠습니까?`
-                                        ) && writeStoreBankInfoCCC();
-                                        }}
-                                    >
-                                        {writingStoreBankInfoCCC ? '변경 중...' : '변경하기'}
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-
-                            {/* 4등급 */}
-                            {/* DDD */}
-                            <div className='mt-5
-                                w-full flex flex-col items-center justify-between gap-2
-                                border-t border-gray-300 pt-2'>
-                                
-                                <div className="w-full flex flex-row items-center justify-start gap-2
-                                    border-b border-gray-300 pb-2">
-                                    {/* dot */}
-                                    <Image
-                                        src="/icon-bank.png"
-                                        alt="Bank"
-                                        width={20}
-                                        height={20}
-                                        className="w-5 h-5"
-                                    />
-                                    <span className="text-lg text-zinc-500">
-                                        P2P 구매자 계좌이체용 원화통장 설정 <b>(4등급 회원용)</b>
-                                    </span>
-                                </div>
-
-                                <div className='w-full flex flex-col items-start gap-2'>
-                                    
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        {/* dot */}
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                            은행이름:{' '}{store && store.bankInfoDDD && store.bankInfoDDD.bankName}
-                                        </span>
-                                    </div>
-
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        계좌번호:{' '}{store && store.bankInfoDDD && store.bankInfoDDD.accountNumber}
-                                        </span>
-                                    </div>
-                                    <div className='flex flex-row items-center justify-center gap-2'>
-                                        <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                        <span className="text-lg">
-                                        예금주:{' '}{store && store.bankInfoDDD && store.bankInfoDDD.accountHolder}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* divider */}
-                                <div className='w-full h-[1px] bg-zinc-300'></div>
-
-                                <div className='w-64 flex flex-col gap-2 items-center justify-between'>
-                                    
-                                    <select
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        value={bankNameDDD}
-                                        onChange={(e) => setBankNameDDD(e.target.value)}
-                                    >
-                                        <option value="">은행이름 선택</option>
-                                        <option value="카카오뱅크">카카오뱅크</option>
-                                        <option value="케이뱅크">케이뱅크</option>
-                                        <option value="토스뱅크">토스뱅크</option>
-                                        <option value="국민은행">국민은행</option>
-                                        <option value="우리은행">우리은행</option>
-                                        <option value="신한은행">신한은행</option>
-                                        <option value="농협">농협</option>
-                                        <option value="기업은행">기업은행</option>
-                                        <option value="하나은행">하나은행</option>
-                                        <option value="외환은행">외환은행</option>
-                                        <option value="SC제일은행">SC제일은행</option>
-                                        <option value="부산은행">부산은행</option>
-                                        <option value="대구은행">대구은행</option>
-                                        <option value="전북은행">전북은행</option>
-                                        <option value="경북은행">경북은행</option>
-                                        <option value="경남은행">경남은행</option>
-                                        <option value="광주은행">광주은행</option>
-                                        <option value="제주은행">제주은행</option>
-                                        <option value="새마을금고">새마을금고</option>
-                                        <option value="수협">수협</option>
-                                        <option value="신협">신협</option>
-                                        <option value="씨티은행">씨티은행</option>
-                                        <option value="대신은행">대신은행</option>
-                                        <option value="동양종합금융">동양종합금융</option>
-                                        <option value="JT친애저축은행">JT친애저축은행</option>
-                                        <option value="산업은행">산업은행</option>
-                                        <option value="우체국">우체국</option>
-                                    </select>
-
-
-
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="계좌번호"
-                                        value={accountNumberDDD}
-                                        onChange={(e) => setAccountNumberDDD(e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
-                                        placeholder="예금주"
-                                        value={accountHolderDDD}
-                                        onChange={(e) => setAccountHolderDDD(e.target.value)}
-                                    />
-
-                                    <button
-                                        disabled={!address || !bankNameDDD || !accountNumberDDD || !accountHolderDDD
-                                            || writingStoreBankInfoDDD
-                                        }
-                                        className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
-                                            ${!bankNameDDD || !accountNumberDDD || !accountHolderDDD || writingStoreBankInfoDDD
-                                            ? "opacity-50" : ""}`}
-                                        onClick={() => {
-                                            if (!bankNameDDD || !accountNumberDDD || !accountHolderDDD) {
-                                                toast.error("은행명, 계좌번호, 예금주를 입력하세요");
-                                                return;
-                                            }
-
-                                            confirm(
-                                                `정말 ${bankNameDDD} ${accountNumberDDD} ${accountHolderDDD}로 가맹점 결제용 통장을 변경하시겠습니까?`
-                                        ) && writeStoreBankInfoDDD();
-                                        }}
-                                    >
-                                        {writingStoreBankInfoDDD ? '변경 중...' : '변경하기'}
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-
-
-
-
                         </div>
 
 
