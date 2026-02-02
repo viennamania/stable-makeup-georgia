@@ -5627,17 +5627,32 @@ const fetchBuyOrders = async () => {
                     >
                       <div className="flex items-center justify-between text-[11px] text-zinc-500">
                         <span className="font-semibold text-zinc-600">No.{unmatchedTransfers.length - index}</span>
-                        <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">
-                          {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            className={`px-2 py-[2px] text-[10px] rounded-full border ${
+                              transfer.alarmOn === false
+                                ? 'border-zinc-300 text-zinc-500 bg-white'
+                                : 'border-rose-300 text-rose-600 bg-rose-50'
+                            } ${togglingAlarmId === (transfer._id || '') ? 'opacity-60 cursor-wait' : 'hover:opacity-90'}`}
+                            onClick={() => toggleAlarm(transfer._id, transfer.alarmOn !== false)}
+                            disabled={togglingAlarmId === (transfer._id || '')}
+                          >
+                            {transfer.alarmOn === false ? '알람 끔' : '알람 켬'}
+                          </button>
+                          <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">
+                            {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col text-sm">
-                        <span className="font-semibold text-zinc-800 truncate">
-                          {transfer.storeInfo?.storeName || '미지정 가맹점'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-zinc-700 truncate">{transfer.transactionName || '-'}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm font-semibold text-zinc-800 truncate">
+                            {transfer.storeInfo?.storeName || '미지정 가맹점'}
+                          </span>
+                          <span className="text-sm font-semibold text-zinc-700 truncate">
+                            {transfer.transactionName || '-'}
+                          </span>
+                        </div>
                         <span className="text-base font-extrabold text-emerald-700" style={{ fontFamily: 'monospace' }}>
                           {(Number(transfer.amount) || 0).toLocaleString()}
                         </span>
@@ -5663,17 +5678,6 @@ const fetchBuyOrders = async () => {
                               || '예금주없음')}
                           </span>
                         </div>
-                        <button
-                          className={`mt-1 w-fit px-2 py-[2px] text-[10px] rounded-full border ${
-                            transfer.alarmOn === false
-                              ? 'border-zinc-300 text-zinc-500 bg-white'
-                              : 'border-rose-300 text-rose-600 bg-rose-50'
-                          } ${togglingAlarmId === (transfer._id || '') ? 'opacity-60 cursor-wait' : 'hover:opacity-90'}`}
-                          onClick={() => toggleAlarm(transfer._id, transfer.alarmOn !== false)}
-                          disabled={togglingAlarmId === (transfer._id || '')}
-                        >
-                          {transfer.alarmOn === false ? '알람 끔' : '알람 켬'}
-                        </button>
                       </div>
                     </div>
                       );
