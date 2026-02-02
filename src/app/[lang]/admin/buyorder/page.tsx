@@ -1615,6 +1615,7 @@ const depositAmountMatches = useMemo(() => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accountNumber: sellerAccountNumber,
+          transactionType: 'deposited',
           matchStatus: 'unmatched',
           page: 1,
           limit: 50,
