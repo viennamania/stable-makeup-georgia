@@ -1445,6 +1445,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [unmatchedLoading, setUnmatchedLoading] = useState(false);
   const [unmatchedTotalAmount, setUnmatchedTotalAmount] = useState(0);
   const [showUnmatched, setShowUnmatched] = useState(true);
+  const unmatchedScrollRef = useRef<HTMLDivElement | null>(null);
+  const [togglingAlarmId, setTogglingAlarmId] = useState<string | null>(null);
+  const lastAlarmSoundRef = useRef<number>(0);
 
   // 입금내역 선택 모달 상태
 const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -1480,8 +1483,31 @@ const depositAmountMatches = useMemo(() => {
     });
   };
 
+  const formatTimeAgo = (value?: string | Date) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) return '방금 전';
+    const sec = Math.floor(diffMs / 1000);
+    if (sec < 60) return '방금 전';
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}시간 전`;
+    const day = Math.floor(hr / 24);
+    if (day < 7) return `${day}일 전`;
+    const week = Math.floor(day / 7);
+    if (week < 5) return `${week}주 전`;
+    const month = Math.floor(day / 30);
+    if (month < 12) return `${month}개월 전`;
+    const year = Math.floor(day / 365);
+    return `${year}년 전`;
+  };
+
   // 오래된 미신청 입금일수록 붉게 표시
-  const getUnmatchedCardStyle = (
+  const getUnmatchedCardProps = (
     value: string | Date | undefined,
     oldestMs: number | null,
     newestMs: number | null
@@ -1490,17 +1516,29 @@ const depositAmountMatches = useMemo(() => {
     const ts = date && !Number.isNaN(date.getTime()) ? date.getTime() : null;
     if (ts === null || oldestMs === null || newestMs === null) {
       return {
-        backgroundColor: 'rgba(248, 113, 113, 0.18)',
-        borderColor: 'rgba(248, 113, 113, 0.3)',
+        style: {
+          backgroundColor: 'rgba(248, 113, 113, 0.18)',
+          borderColor: 'rgba(248, 113, 113, 0.3)',
+          boxShadow: '0 6px 14px rgba(248,113,113,0.12)',
+        },
+        alertClass: '',
       };
     }
     const range = Math.max(1, newestMs - oldestMs);
     const ratio = 1 - Math.max(0, Math.min(1, (ts - oldestMs) / range)); // oldest=1(red), newest=0(light)
     const bgAlpha = 0.16 + 0.44 * ratio;   // 0.16 ~ 0.60
     const borderAlpha = 0.25 + 0.55 * ratio; // 0.25 ~ 0.80
+    const shadowAlpha = 0.08 + 0.3 * ratio;  // 0.08 ~ 0.38
+    const alertClass =
+      ratio >= 0.8 ? 'animate-pulse ring-2 ring-rose-300' :
+      ratio >= 0.5 ? 'ring ring-rose-200' : '';
     return {
-      backgroundColor: `rgba(248, 113, 113, ${bgAlpha})`,
-      borderColor: `rgba(248, 113, 113, ${borderAlpha})`,
+      style: {
+        backgroundColor: `rgba(248, 113, 113, ${bgAlpha})`,
+        borderColor: `rgba(248, 113, 113, ${borderAlpha})`,
+        boxShadow: `0 8px 18px rgba(248,113,113, ${shadowAlpha})`,
+      },
+      alertClass,
     };
   };
 
@@ -1784,6 +1822,9 @@ const depositAmountMatches = useMemo(() => {
           page: 1,
           transactionType: 'deposited',
           matchStatus: 'notSuccess',
+          fromDate: searchFromDate || '',
+          toDate: searchToDate || '',
+          storecode: searchStorecode || '',
         }),
       });
 
@@ -1823,7 +1864,49 @@ const depositAmountMatches = useMemo(() => {
     fetchUnmatchedTransfers();
     const interval = setInterval(fetchUnmatchedTransfers, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [searchFromDate, searchToDate, searchStorecode]);
+
+  // alarm sound when any unmatched item has alarmOn !== false
+  useEffect(() => {
+    const now = Date.now();
+    const hasAlarm = unmatchedTransfers.some((t) => t?.alarmOn !== false);
+    if (hasAlarm && now - lastAlarmSoundRef.current > 12000) {
+      playSong();
+      lastAlarmSoundRef.current = now;
+    }
+  }, [unmatchedTransfers]);
+
+  const toggleAlarm = async (transferId: string, currentOn: boolean) => {
+    if (!transferId) return;
+    try {
+      setTogglingAlarmId(transferId);
+      const nextOn = !currentOn;
+      // optimistic update
+      setUnmatchedTransfers((prev) =>
+        prev.map((t: any) =>
+          (t._id || '') === transferId ? { ...t, alarmOn: nextOn } : t
+        )
+      );
+      const res = await fetch('/api/bankTransfer/updateAlarm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: transferId, alarmOn: nextOn }),
+      });
+      if (!res.ok) {
+        throw new Error('알람 상태 업데이트 실패');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || '알람 상태를 변경하지 못했습니다.');
+      // revert on failure
+      setUnmatchedTransfers((prev) =>
+        prev.map((t: any) =>
+          (t._id || '') === transferId ? { ...t, alarmOn: currentOn } : t
+        )
+      );
+    } finally {
+      setTogglingAlarmId(null);
+    }
+  };
 
 
 
@@ -4853,10 +4936,9 @@ const fetchBuyOrders = async () => {
                     <select
                       value={searchStorecode}
                       
-                      //onChange={(e) => setSearchStorecode(e.target.value)}
-
                       // storecode parameter is passed to fetchBuyOrders
                       onChange={(e) => {
+                        setSearchStorecode(e.target.value);
                         router.push('/' + params.lang + '/admin/buyorder?storecode=' + e.target.value);
                       }}
 
@@ -5468,30 +5550,47 @@ const fetchBuyOrders = async () => {
 
 
           {/* 미신청내역 */}
-          {/*
+          
           <div className="w-full mt-6">
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
-                  onClick={() => setShowUnmatched((v) => !v)}
-                >
-                  {showUnmatched ? '접기' : '펼치기'}
-                </button>
-                <span className="text-lg font-semibold">미신청내역</span>
-                <span className="text-xs text-zinc-500">match != 'success' 입금건</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <span>건수 {unmatchedTransfers.length.toLocaleString()}</span>
-                <span>합계 {unmatchedTotalAmount.toLocaleString()}원</span>
-                <button
-                  className="px-2 py-1 border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-50"
-                  onClick={fetchUnmatchedTransfers}
-                  disabled={unmatchedLoading}
-                >
-                  {unmatchedLoading ? '갱신중...' : '새로고침'}
-                </button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                onClick={() => setShowUnmatched((v) => !v)}
+              >
+                {showUnmatched ? '접기' : '펼치기'}
+              </button>
+              <span className="text-lg font-semibold">미신청내역</span>
+              <span className="text-xs text-zinc-500">
+                건수 {unmatchedTransfers.length.toLocaleString()}
+              </span>
+              <span className="text-xs text-zinc-500">
+                합계 {unmatchedTotalAmount.toLocaleString()}원
+              </span>
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-50"
+                onClick={fetchUnmatchedTransfers}
+                disabled={unmatchedLoading}
+              >
+                {unmatchedLoading ? '갱신중...' : '새로고침'}
+              </button>
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100"
+                onClick={() => unmatchedScrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' })}
+                title="처음으로"
+              >
+                « 처음
+              </button>
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100"
+                onClick={() => {
+                  const el = unmatchedScrollRef.current;
+                  if (!el) return;
+                  el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+                }}
+                title="마지막으로"
+              >
+                마지막 »
+              </button>
             </div>
 
             {showUnmatched && (
@@ -5501,7 +5600,10 @@ const fetchBuyOrders = async () => {
                   {unmatchedLoading ? '불러오는 중...' : '미신청 입금이 없습니다.'}
                 </div>
               ) : (
-                <div className="flex gap-3 pb-2 overflow-x-auto">
+                <div
+                  className="flex gap-2 pb-2 overflow-x-auto"
+                  ref={unmatchedScrollRef}
+                >
                   {(() => {
                     const timestamps = unmatchedTransfers
                       .map((t) => {
@@ -5511,72 +5613,78 @@ const fetchBuyOrders = async () => {
                       .filter((v) => v !== null) as number[];
                     const oldest = timestamps.length ? Math.min(...timestamps) : null;
                     const newest = timestamps.length ? Math.max(...timestamps) : null;
-                    return unmatchedTransfers.map((transfer, index) => (
-                    <div
-                      key={transfer._id || index}
-                      className="min-w-[260px] max-w-[280px] p-3 border rounded-xl shadow-sm flex flex-col gap-2"
-                      style={getUnmatchedCardStyle(
+                    return unmatchedTransfers.map((transfer, index) => {
+                      const cardProps = getUnmatchedCardProps(
                         transfer.transactionDate || transfer.processingDate || transfer.regDate,
                         oldest,
                         newest
-                      )}
+                      );
+                      return (
+                    <div
+                      key={transfer._id || index}
+                      className={`min-w-[220px] max-w-[240px] p-3 border rounded-lg shadow-sm flex flex-col gap-1.5 ${cardProps.alertClass}`}
+                      style={cardProps.style}
                     >
-                      <div className="flex items-center justify-between text-xs text-zinc-500">
-                        <span className="font-semibold text-zinc-700">No. {unmatchedTransfers.length - index}</span>
-                        <span className="text-[11px]">{formatKstDateTime(transfer.transactionDate || transfer.processingDate || transfer.regDate)}</span>
+                      <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                        <span className="font-semibold text-zinc-600">No.{unmatchedTransfers.length - index}</span>
+                        <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">
+                          {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
+                        </span>
                       </div>
                       <div className="flex flex-col text-sm">
-                        <span className="font-semibold text-zinc-800">
+                        <span className="font-semibold text-zinc-800 truncate">
                           {transfer.storeInfo?.storeName || '미지정 가맹점'}
-                        </span>
-                        <span className="text-[11px] text-zinc-500" style={{ fontFamily: 'monospace' }}>
-                          {transfer.storeInfo?.storecode || '-'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-zinc-700">{transfer.transactionName || '-'}</span>
+                        <span className="text-sm font-semibold text-zinc-700 truncate">{transfer.transactionName || '-'}</span>
                         <span className="text-base font-extrabold text-emerald-700" style={{ fontFamily: 'monospace' }}>
                           {(Number(transfer.amount) || 0).toLocaleString()}
                         </span>
                       </div>
-                      <div className="flex flex-col text-xs text-zinc-700">
-                        <span className="font-mono text-sm text-zinc-800 truncate">
-                          맞춤계좌: {transfer.bankAccountNumber || '-'}
-                        </span>
-                        <span className="text-[11px] text-zinc-500 truncate">
-                          {(transfer.storeInfo?.bankInfo?.bankName
-                            || transfer.storeInfo?.bankInfoAAA?.bankName
-                            || transfer.storeInfo?.bankInfoBBB?.bankName
-                            || transfer.storeInfo?.bankInfoCCC?.bankName
-                            || transfer.storeInfo?.bankInfoDDD?.bankName
-                            || '은행정보없음')}
-                          {' · '}
-                          {(transfer.storeInfo?.bankInfo?.accountHolder
-                            || transfer.storeInfo?.bankInfoAAA?.accountHolder
-                            || transfer.storeInfo?.bankInfoBBB?.accountHolder
-                            || transfer.storeInfo?.bankInfoCCC?.accountHolder
-                            || transfer.storeInfo?.bankInfoDDD?.accountHolder
-                            || '예금주없음')}
-                        </span>
-                        <span className="text-[11px] text-zinc-500 truncate">
-                          실계좌: {transfer.originalBankAccountNumber || '-'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-zinc-600">
-                        <span>잔액</span>
-                        <span className="font-mono text-sm text-zinc-700">
-                          {(Number(transfer.balance) || 0).toLocaleString()}
-                        </span>
+                      <div className="flex flex-col text-[11px] text-zinc-700 gap-[2px]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono text-sm text-zinc-800 truncate">
+                            {transfer.bankAccountNumber || '-'}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 truncate">
+                            {(transfer.storeInfo?.bankInfo?.bankName
+                              || transfer.storeInfo?.bankInfoAAA?.bankName
+                              || transfer.storeInfo?.bankInfoBBB?.bankName
+                              || transfer.storeInfo?.bankInfoCCC?.bankName
+                              || transfer.storeInfo?.bankInfoDDD?.bankName
+                              || '은행정보없음')}
+                            {' · '}
+                            {(transfer.storeInfo?.bankInfo?.accountHolder
+                              || transfer.storeInfo?.bankInfoAAA?.accountHolder
+                              || transfer.storeInfo?.bankInfoBBB?.accountHolder
+                              || transfer.storeInfo?.bankInfoCCC?.accountHolder
+                              || transfer.storeInfo?.bankInfoDDD?.accountHolder
+                              || '예금주없음')}
+                          </span>
+                        </div>
+                        <button
+                          className={`mt-1 w-fit px-2 py-[2px] text-[10px] rounded-full border ${
+                            transfer.alarmOn === false
+                              ? 'border-zinc-300 text-zinc-500 bg-white'
+                              : 'border-rose-300 text-rose-600 bg-rose-50'
+                          } ${togglingAlarmId === (transfer._id || '') ? 'opacity-60 cursor-wait' : 'hover:opacity-90'}`}
+                          onClick={() => toggleAlarm(transfer._id, transfer.alarmOn !== false)}
+                          disabled={togglingAlarmId === (transfer._id || '')}
+                        >
+                          {transfer.alarmOn === false ? '알람 끔' : '알람 켬'}
+                        </button>
                       </div>
                     </div>
-                    ));
+                      );
+                    });
                   })()}
                 </div>
               )}
             </div>
             )}
           </div>
-          */}
+          
 
 
           {sellersBalance.length > 0 && (

@@ -49,6 +49,7 @@ export async function getBankTransfers(
     toDate = '',
     accountNumber = '',
     originalAccountNumber = '',
+    storecode = '',
   }: {
     limit: number;
     page: number;
@@ -59,8 +60,25 @@ export async function getBankTransfers(
     toDate?: string;
     accountNumber?: string;
     originalAccountNumber?: string;
+    storecode?: string;
   }
 ): Promise<any> {
+
+  /*
+  console.log('getBankTransfers called with:', {
+    limit,
+    page,
+    search,
+    transactionType,
+    matchStatus,
+    fromDate,
+    toDate,
+    accountNumber,
+    originalAccountNumber,
+    storecode,
+  });
+  */
+  
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('bankTransfers');
@@ -96,6 +114,11 @@ export async function getBankTransfers(
         { custAccnt: value },
       ],
     });
+  }
+
+  if (storecode) {
+    const value = String(storecode).trim();
+    filters.push({ 'storeInfo.storecode': value });
   }
 
   if (transactionType) {
@@ -193,6 +216,26 @@ export async function getBankTransfers(
     totalAmount,
     transfers,
   };
+}
+
+
+export async function updateBankTransferAlarm({
+  id,
+  alarmOn,
+}: {
+  id: string;
+  alarmOn: boolean;
+}) {
+  if (!ObjectId.isValid(id)) {
+    return { acknowledged: false, modifiedCount: 0 };
+  }
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+  const result = await collection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { alarmOn } },
+  );
+  return result;
 }
 
 

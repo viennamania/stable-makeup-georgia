@@ -15,7 +15,10 @@ export async function POST(request: NextRequest) {
     toDate,
     accountNumber,
     originalAccountNumber,
+    storecode,
   } = body;
+
+  ///console.log('API getAll bankTransfer called with:', body);
 
   const result = await getBankTransfers({
     limit: limit || 20,
@@ -27,6 +30,7 @@ export async function POST(request: NextRequest) {
     toDate: toDate || '',
     accountNumber: accountNumber || '',
     originalAccountNumber: originalAccountNumber || '',
+    storecode: storecode || '',
   });
 
   return NextResponse.json({
