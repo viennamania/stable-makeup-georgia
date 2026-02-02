@@ -10,6 +10,7 @@ import Image from "next/image";
 
 //import Modal from '@/components/modal';
 import ModalUser from '@/components/modal-user';
+import Modal from '@/components/modal';
 
 import { useRouter }from "next//navigation";
 
@@ -771,6 +772,40 @@ export default function Index({ params }: any) {
 
   const closeModal = () => setModalOpen(false);
   const openModal = () => setModalOpen(true);
+
+  const [tradeDetailOpen, setTradeDetailOpen] = useState(false);
+  const [tradeDetailLoading, setTradeDetailLoading] = useState(false);
+  const [tradeDetailData, setTradeDetailData] = useState<any>(null);
+
+  const closeTradeDetailModal = () => {
+    setTradeDetailOpen(false);
+    setTradeDetailData(null);
+  };
+
+  const openTradeDetailModal = async (tradeId: string) => {
+    if (!tradeId) return;
+    setTradeDetailOpen(true);
+    setTradeDetailLoading(true);
+    try {
+      const res = await fetch('/api/order/getOneBuyOrderByTradeId', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tradeId }),
+      });
+      const data = await res.json();
+      if (!res.ok || data?.error) {
+        throw new Error(data?.error || '거래상세를 불러오지 못했습니다.');
+      }
+      setTradeDetailData(data?.result || null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || '거래상세 조회 실패');
+    } finally {
+      setTradeDetailLoading(false);
+    }
+  };
 
   
 
@@ -9531,6 +9566,81 @@ const fetchBuyOrders = async () => {
             />
         </ModalUser>
 
+        {/* 거래상세 모달 */}
+        <Modal isOpen={tradeDetailOpen} onClose={closeTradeDetailModal}>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-zinc-900">거래상세</h3>
+              <button
+                onClick={closeTradeDetailModal}
+                className="text-xs px-3 py-1 rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-100 transition"
+              >
+                닫기
+              </button>
+            </div>
+
+            {tradeDetailLoading && (
+              <div className="flex items-center gap-2 text-sm text-zinc-500">
+                <Image src="/loading.png" alt="loading" width={20} height={20} className="w-5 h-5 animate-spin" />
+                불러오는 중...
+              </div>
+            )}
+
+            {!tradeDetailLoading && !tradeDetailData && (
+              <div className="text-sm text-zinc-500">표시할 거래 정보가 없습니다.</div>
+            )}
+
+            {!tradeDetailLoading && tradeDetailData && (
+              <div className="space-y-3 text-sm text-zinc-700">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">거래번호</span>
+                  <span className="px-2 py-1 rounded-md border border-zinc-200 bg-zinc-50 font-mono text-xs">
+                    {tradeDetailData.tradeId || '-'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">상태</span>
+                  <span className="font-semibold">{tradeDetailData.status || '-'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">구매자 닉네임</span>
+                  <span className="font-semibold">
+                    {tradeDetailData?.buyer?.nickname || '-'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">입금자명</span>
+                  <span className="font-semibold">{tradeDetailData?.buyer?.depositName || '-'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">USDT</span>
+                  <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                    {(tradeDetailData?.usdtAmount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">KRW</span>
+                  <span className="font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                    {(tradeDetailData?.krwAmount ?? tradeDetailData?.paymentAmount ?? 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">거래일시</span>
+                  <span className="font-semibold">
+                    {formatKstDateTime(tradeDetailData?.createdAt)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">가맹점</span>
+                  <span className="font-semibold">
+                    {tradeDetailData?.store?.storeName || tradeDetailData?.storecode || '-'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+
         {/* 별칭 계좌 이력 패널 (좌측 슬라이드) */}
         <div
           className={`fixed inset-0 z-50 transition-all duration-300 ${
@@ -9687,10 +9797,14 @@ const fetchBuyOrders = async () => {
                             <span className={`px-2 py-0.5 rounded-full leading-none ${matchInfo.className}`}>
                               {matchInfo.label}
                             </span>
-                            <span className="font-semibold text-zinc-900 truncate">
-                              {trx.transactionName || '-'}
-                              {trx.buyerInfo?.nickname ? ` · ${trx.buyerInfo.nickname}` : ''}
-                            </span>
+                            <div className="flex flex-col leading-tight">
+                              <span className="font-semibold text-zinc-900 truncate">
+                                {trx.transactionName || '-'}
+                              </span>
+                              <span className="text-[11px] text-zinc-500 truncate">
+                                {trx.buyerInfo?.nickname || '-'}
+                              </span>
+                            </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
@@ -9699,6 +9813,14 @@ const fetchBuyOrders = async () => {
                             <span className="text-[11px] text-zinc-500 whitespace-nowrap">
                               {formatKstDateTime(trx.transactionDate || trx.regDate)}
                             </span>
+                            {trx.tradeId && (
+                              <button
+                                className="px-2 py-0.5 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 font-mono text-[11px] hover:bg-emerald-100"
+                                onClick={() => openTradeDetailModal(trx.tradeId)}
+                              >
+                                {trx.tradeId}
+                              </button>
+                            )}
                           </div>
                         </>
                       );
