@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, use, act, useRef, useMemo } from "react";
+import React, { useState, useEffect, use, act, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
 
 import ModalUser from '@/components/modal-user';
@@ -933,9 +933,9 @@ export default function Index({ params }: any) {
 
 
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  //const [play, { stop }] = useSound(galaxySfx);
-  const [play, { stop }] = useSound('/ding.mp3');
+const [isPlaying, setIsPlaying] = useState(false);
+//const [play, { stop }] = useSound(galaxySfx);
+const [play, { stop }] = useSound('/ding.mp3');
 
   function playSong() {
     setIsPlaying(true);
@@ -961,10 +961,12 @@ export default function Index({ params }: any) {
   
   
   
-  const [searchStorecode, setSearchStorecode] = useState("");
-  useEffect(() => {
-    setSearchStorecode(searchParamsStorecode || "");
-  }, [searchParamsStorecode]);
+const [searchStorecode, setSearchStorecode] = useState("");
+useEffect(() => {
+  setSearchStorecode(searchParamsStorecode || "");
+}, [searchParamsStorecode]);
+
+const [prioritizePending, setPrioritizePending] = useState(true);
 
 
 
@@ -1049,7 +1051,29 @@ export default function Index({ params }: any) {
 
   //const [totalCount, setTotalCount] = useState(0);
     
-  const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+  const priorityStatusSet = useMemo(() => new Set(['ordered', 'paymentRequested']), []);
+  const prioritizeOrderList = useCallback((orders: BuyOrder[]) => {
+    if (!prioritizePending) return orders;
+    return orders
+      .map((o, idx) => ({
+        o,
+        idx,
+        p: priorityStatusSet.has(o.status) ? 0 : 1,
+      }))
+      .sort((a, b) => a.p - b.p || a.idx - b.idx)
+      .map((x) => x.o);
+  }, [prioritizePending, priorityStatusSet]);
+
+  const applyBuyOrders = useCallback((orders: BuyOrder[]) => {
+    setBuyOrders(prioritizeOrderList(orders));
+  }, [prioritizeOrderList]);
+
+  // re-apply ordering when preference changes
+  useEffect(() => {
+    setBuyOrders((prev) => prioritizeOrderList(prev));
+  }, [prioritizeOrderList]);
+
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set());
   const [recentlyAddedDirection, setRecentlyAddedDirection] = useState<Record<string, 'top' | 'bottom'>>({});
   const prevBuyOrderIdsRef = useRef<Set<string>>(new Set());
@@ -2067,7 +2091,7 @@ const depositAmountMatches = useMemo(() => {
             .then(response => response.json())
             .then(data => {
                 ///console.log('data', data);
-                setBuyOrders(data.result.orders);
+                applyBuyOrders(data.result.orders);
 
                 //setTotalCount(data.result.totalCount);
 
@@ -2227,7 +2251,7 @@ const depositAmountMatches = useMemo(() => {
             const data = await response.json();
             //console.log('data', data);
             if (data.result) {
-              setBuyOrders(data.result.orders);
+              applyBuyOrders(data.result.orders);
 
               ////setTotalCount(data.result.totalCount);
 
@@ -2329,7 +2353,7 @@ const depositAmountMatches = useMemo(() => {
           const data = await response.json();
           //console.log('data', data);
           if (data.result) {
-            setBuyOrders(data.result.orders);
+            applyBuyOrders(data.result.orders);
 
             //setTotalCount(data.result.totalCount);
 
@@ -2623,7 +2647,7 @@ const depositAmountMatches = useMemo(() => {
               const data = await response.json();
               //console.log('data', data);
               if (data.result) {
-                setBuyOrders(data.result.orders);
+                applyBuyOrders(data.result.orders);
     
                 //setTotalCount(data.result.totalCount);
 
@@ -2746,7 +2770,7 @@ const depositAmountMatches = useMemo(() => {
             const data = await response.json();
             //console.log('data', data);
             if (data.result) {
-              setBuyOrders(data.result.orders);
+              applyBuyOrders(data.result.orders);
   
               //setTotalCount(data.result.totalCount);
 
@@ -3020,7 +3044,7 @@ const depositAmountMatches = useMemo(() => {
             const data = await response.json();
             //console.log('data', data);
             if (data.result) {
-              setBuyOrders(data.result.orders);
+              applyBuyOrders(data.result.orders);
   
               //setTotalCount(data.result.totalCount);
 
@@ -3042,7 +3066,7 @@ const depositAmountMatches = useMemo(() => {
           });
           */
 
-          setBuyOrders(
+          applyBuyOrders(
             buyOrders.map((item, idx) => {
               if (idx === index) {
                 return {
@@ -3238,7 +3262,7 @@ const depositAmountMatches = useMemo(() => {
 
           const data = await response.json();
 
-          setBuyOrders(
+          applyBuyOrders(
             buyOrders.map((item, idx) => {
               if (idx === index) {
                 return {
@@ -3371,7 +3395,7 @@ const depositAmountMatches = useMemo(() => {
         .then(response => response.json())
         .then(data => {
             ///console.log('data', data);
-            setBuyOrders(data.result.orders);
+            applyBuyOrders(data.result.orders);
 
             //setTotalCount(data.result.totalCount);
 
@@ -3506,7 +3530,7 @@ const depositAmountMatches = useMemo(() => {
       const data = await response.json();
 
 
-      setBuyOrders(data.result.orders);
+      applyBuyOrders(data.result.orders);
 
       //setTotalCount(data.result.totalCount);
 
@@ -3631,7 +3655,7 @@ const fetchBuyOrders = async () => {
   const data = await response.json();
   //console.log('data', data);
 
-  setBuyOrders(data.result.orders);
+  applyBuyOrders(data.result.orders);
   //setTotalCount(data.result.totalCount);
   setFetchingBuyOrders(false);
 
@@ -4852,8 +4876,6 @@ const fetchBuyOrders = async () => {
 
           </div>
 
-
-
           {/*
           {address && (
               <div className="w-full flex flex-col items-end justify-center gap-4">
@@ -4997,7 +5019,6 @@ const fetchBuyOrders = async () => {
                   />
                   <label className="text-sm text-zinc-500">거래완료</label>
                 </div>
-                
               </div>
 
 
@@ -5770,6 +5791,19 @@ const fetchBuyOrders = async () => {
 
             </div>
           )}
+
+          {/* 처리안한주문 먼저보기 (주문 테이블 상단) */}
+          <div className="w-full flex items-start justify-start mb-2">
+            <label className="flex items-center gap-2 text-sm text-zinc-600">
+              <input
+                type="checkbox"
+                checked={prioritizePending}
+                onChange={(e) => setPrioritizePending(e.target.checked)}
+                className="w-5 h-5"
+              />
+              <span className="whitespace-nowrap">처리안한주문 먼저보기</span>
+            </label>
+          </div>
 
           {/* buyOrders table */}
           <div className="w-full overflow-x-auto">
