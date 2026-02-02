@@ -9488,6 +9488,15 @@ const fetchBuyOrders = async () => {
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-zinc-200">
               <button
+                className="px-3 py-2 text-sm rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition"
+                onClick={() => {
+                  setDepositModalOpen(false);
+                  setSelectedDepositIds([]);
+                }}
+              >
+                취소하기
+              </button>
+              <button
                 disabled={depositModalLoading}
                 className={`px-4 py-2 text-sm rounded-md text-white font-semibold shadow-sm transition ${
                   depositModalLoading
