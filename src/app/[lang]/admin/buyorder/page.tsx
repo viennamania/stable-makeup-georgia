@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act, useRef } from "react";
+import { useState, useEffect, use, act, useRef, useMemo } from "react";
 
 import Image from "next/image";
 
@@ -1427,6 +1427,27 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelHasMore, setAliasPanelHasMore] = useState(true);
   const aliasPanelLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
+  // 입금내역 선택 모달 상태
+const [depositModalOpen, setDepositModalOpen] = useState(false);
+const [depositModalLoading, setDepositModalLoading] = useState(false);
+const [depositOptions, setDepositOptions] = useState<any[]>([]);
+const [selectedDepositIds, setSelectedDepositIds] = useState<string[]>([]);
+const [targetConfirmIndex, setTargetConfirmIndex] = useState<number | null>(null);
+const [targetConfirmOrder, setTargetConfirmOrder] = useState<BuyOrder | null>(null);
+const selectedDepositTotal = useMemo(() => {
+  return depositOptions.reduce((sum, trx, idx) => {
+    const key = trx?._id || String(idx);
+    if (!selectedDepositIds.includes(key)) return sum;
+    return sum + (Number(trx?.amount) || 0);
+  }, 0);
+}, [depositOptions, selectedDepositIds]);
+const depositAmountMatches = useMemo(() => {
+  if (!targetConfirmOrder) return true;
+  if (!selectedDepositIds.length) return true;
+  const orderAmount = Number(targetConfirmOrder.krwAmount) || 0;
+  return selectedDepositTotal === orderAmount;
+}, [targetConfirmOrder, selectedDepositIds, selectedDepositTotal]);
+
   const formatKstDateTime = (value?: string | Date) => {
     if (!value) return '';
     const date = new Date(value);
@@ -1575,6 +1596,74 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [aliasPanelOpen]);
+
+  // 입금내역 선택 모달 열기
+  const openDepositModalForOrder = async (index: number, order: BuyOrder) => {
+    const sellerAccountNumber = order?.seller?.bankInfo?.accountNumber;
+    if (!sellerAccountNumber) {
+      toast.error('판매자 계좌번호가 없습니다.');
+      return;
+    }
+    setTargetConfirmIndex(index);
+    setTargetConfirmOrder(order);
+    setSelectedDepositIds([]);
+    setDepositModalOpen(true);
+    setDepositModalLoading(true);
+    try {
+      const res = await fetch('/api/bankTransfer/getAll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountNumber: sellerAccountNumber,
+          matchStatus: 'unmatched',
+          page: 1,
+          limit: 50,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`입금내역 조회 실패 (${res.status})`);
+      }
+      const data = await res.json();
+      const list = data?.result?.transfers || [];
+      list.sort((a: any, b: any) =>
+        new Date(b.transactionDate || b.regDate || 0).getTime() -
+        new Date(a.transactionDate || a.regDate || 0).getTime()
+      );
+      setDepositOptions(list);
+    } catch (err) {
+      console.error(err);
+      toast.error('입금내역을 불러오지 못했습니다.');
+      setDepositOptions([]);
+    } finally {
+      setDepositModalLoading(false);
+    }
+  };
+
+  const handleConfirmPaymentWithSelected = async () => {
+    if (targetConfirmIndex === null || !targetConfirmOrder) {
+      toast.error('대상 주문이 없습니다.');
+      return;
+    }
+    if (!selectedDepositIds.length) {
+      toast.error('입금내역을 선택하세요.');
+      return;
+    }
+    if (!depositAmountMatches) {
+      toast.error('선택한 입금 합계와 주문 금액이 일치하지 않습니다.');
+      return;
+    }
+    await confirmPayment(
+      targetConfirmIndex,
+      targetConfirmOrder._id,
+      targetConfirmOrder.krwAmount,
+      targetConfirmOrder.usdtAmount,
+      targetConfirmOrder.walletAddress,
+      targetConfirmOrder.paymentMethod,
+      selectedDepositIds,
+      selectedDepositTotal
+    );
+    setDepositModalOpen(false);
+  };
 
   // 무한 스크롤로 추가 로드
   useEffect(() => {
@@ -2583,6 +2672,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
 
     paymentMethod: string, // 'bank' or 'mkrw' or 'usdt'
 
+    bankTransferIds?: string[],
+    selectedDepositAmount?: number,
   ) => {
     // confirm payment
     // send usdt to buyer wallet address
@@ -2662,6 +2753,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 orderId: orderId,
                 paymentAmount: krwAmount,
                 transactionHash: transactionHash,
+                bankTransferId: bankTransferIds?.[0],
+                bankTransferIds,
+                bankTransferAmount: selectedDepositAmount,
                 ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
                 isSmartAccount: false,
               })
@@ -2684,6 +2778,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
                 orderId: orderId,
                 paymentAmount: krwAmount,
                 transactionHash: transactionHash,
+                bankTransferId: bankTransferIds?.[0],
+                bankTransferIds,
+                bankTransferAmount: selectedDepositAmount,
                 ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
                 isSmartAccount: false,
               })
@@ -6842,7 +6939,7 @@ const fetchBuyOrders = async () => {
 
                                   <div className="flex flex-col gap-2 items-center justify-center">
 
-                                    <button
+                                      <button
 
                                       disabled={confirmingPayment[index]}
                                       
@@ -6854,6 +6951,7 @@ const fetchBuyOrders = async () => {
                                         w-24 text-center
                                       `}
 
+                                      /*
                                       onClick={() => {
                                         confirm("정말 입금확인 하시겠습니까?") &&
                                         confirmPayment(
@@ -6870,6 +6968,11 @@ const fetchBuyOrders = async () => {
                                           item.paymentMethod,
                                         );
                                       }}
+                                      */
+                                      onClick={() => {
+                                        openDepositModalForOrder(index, item);
+                                      }}
+
 
                                     >
                                       <div className="w-full flex flex-row gap-1 items-center justify-center">
@@ -6889,6 +6992,8 @@ const fetchBuyOrders = async () => {
                                       </div>
 
                                     </button>
+
+
 
                                   </div>
 
@@ -7382,6 +7487,8 @@ const fetchBuyOrders = async () => {
                                         item.walletAddress,
 
                                         item.paymentMethod,
+                                        [],
+                                        0,
                                       );
                                     }}
 
@@ -7567,26 +7674,8 @@ const fetchBuyOrders = async () => {
                                       // onclick avoid avoid repeated execution of onclick event
                                       // use a ref to track if the event is already in progress
                                       
-                                      onClick={(e) => {
-
-                                        //e.preventDefault();
-                                        //e.stopPropagation();
-
-                                        //confirmPayment(
-                                        sendPayment(
-
-                                          index,
-                                          item._id,
-                                          
-                                          //paymentAmounts[index],
-                                          item.krwAmount,
-
-                                          //paymentAmountsUsdt[index],
-                                          item.usdtAmount,
-
-
-                                          item.walletAddress,
-                                        );
+                                      onClick={() => {
+                                        openDepositModalForOrder(index, item);
                                       }}
                                     >
 
@@ -8876,7 +8965,7 @@ const fetchBuyOrders = async () => {
 
           {/* panel */}
           <div
-            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[420px] max-w-[480px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
+            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[440px] max-w-[520px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
               aliasPanelOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
@@ -8986,7 +9075,7 @@ const fetchBuyOrders = async () => {
                 {aliasPanelTransfers.map((trx: any, idx: number) => (
                   <div
                     key={trx._id || idx}
-                    className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs"
                   >
                   {(() => {
                     const descendingIndex = aliasPanelTotalCount
@@ -9006,24 +9095,64 @@ const fetchBuyOrders = async () => {
                     })();
                     return (
                       <>
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 w-full sm:w-auto">
                           <span className="w-6 text-center text-[11px] text-zinc-400">
                             {descendingIndex}.
                           </span>
-                          <span className={`px-2 py-0.5 rounded-full leading-none ${matchInfo.className}`}>
+                          <span className={`sm:w-[72px] w-auto min-w-[64px] text-center px-2 py-0.5 rounded-full leading-none ${matchInfo.className}`}>
                             {matchInfo.label}
                           </span>
                           <span className="font-semibold text-zinc-900 truncate">
                             {trx.transactionName || '-'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end gap-1 w-full sm:w-auto text-right">
                           <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
                             {trx.amount !== undefined ? Number(trx.amount).toLocaleString() : '-'}
                           </span>
-                          <span className="text-[11px] text-zinc-500 whitespace-nowrap">
-                            {formatKstDateTime(trx.transactionDate || trx.regDate)}
-                          </span>
+                          {(() => {
+                            const rawDate = trx.transactionDate || trx.regDate;
+                            const dt = rawDate ? new Date(rawDate) : null;
+                            const isValid = dt && !Number.isNaN(dt.getTime());
+                            const dateLabel = isValid
+                              ? dt.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
+                              : '-';
+                            const timeLabel = isValid
+                              ? dt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                              : '';
+                            return (
+                              <span className="text-[11px] text-zinc-500 leading-tight">
+                                <span className="block">{dateLabel}</span>
+                                {timeLabel && <span className="block">{timeLabel}</span>}
+                              </span>
+                            );
+                          })()}
+                          {(() => {
+                            const m = trx?.match;
+                            const normalized = m === undefined || m === null
+                              ? ''
+                              : typeof m === 'string'
+                                ? m.toLowerCase()
+                                : 'object';
+                            const isSuccess = normalized === 'success' || normalized === 'object';
+                            const sellerName = trx.sellerInfo?.bankInfo?.accountHolder || trx.buyerInfo?.nickname || trx.userInfo?.nickname || trx.userId || '';
+                            const tradeLabel = trx.tradeId || '';
+                            const combined = [tradeLabel, sellerName].filter(Boolean).join(' · ');
+                            const fallback = '매칭되는 거래없음';
+                            const text = combined || fallback;
+                            const isFallback = !isSuccess && !combined;
+                            return (
+                              <span
+                                className={`px-3 py-0.5 rounded-md text-[11px] min-w-full sm:min-w-[200px] text-center ${
+                                  isFallback
+                                    ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                                    : 'border border-zinc-200 bg-zinc-50 text-zinc-600'
+                                }`}
+                              >
+                                {text}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </>
                     );
@@ -9042,6 +9171,338 @@ const fetchBuyOrders = async () => {
             </div>
           </div>
         </div>
+
+      {/* 입금내역 선택 모달 */}
+      {depositModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-zinc-200">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
+                <div className="flex flex-col">
+                  <span className="text-base font-semibold text-zinc-900">입금내역 선택</span>
+                  <span className="text-xs text-zinc-500">거래를 완료하기 위해서 해당 미신청한 입금을 찾아야 합니다.</span>
+                </div>
+              </div>
+            <div className="px-5 pt-4 pb-2 space-y-3">
+              {targetConfirmOrder && (
+                <div className="rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[13px] text-zinc-800 shadow-sm space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] text-zinc-500">거래 ID</span>
+                      <span className="font-mono text-[12px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">
+                        {targetConfirmOrder.tradeId || '-'}
+                      </span>
+                    </span>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-[16px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                        {(targetConfirmOrder.krwAmount ?? 0).toLocaleString()}원
+                      </span>
+                      <span className="font-mono text-[16px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+                        {(targetConfirmOrder.usdtAmount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} USDT
+                      </span>
+                      {targetConfirmOrder.rate && (
+                        <span className="font-mono text-[12px] text-zinc-500">
+                          환율 {Number(targetConfirmOrder.rate).toLocaleString()}
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600">
+                        {targetConfirmOrder.status === 'paymentRequested' ? '결제요청' : targetConfirmOrder.status}
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-1.75 text-[12.5px]">
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-[11px] font-semibold text-zinc-500 w-12">가맹점</span>
+                      <span className="font-semibold text-zinc-900 text-[13.5px]">
+                        {targetConfirmOrder.store?.storeName || '-'}
+                      </span>
+                      <span className="text-[11px] text-zinc-500">
+                        {targetConfirmOrder.store?.storecode || '-'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-[11px] font-semibold text-zinc-500 w-12">구매자</span>
+                      <span className="font-semibold text-zinc-900 text-[13.5px]">
+                        {targetConfirmOrder.buyer?.depositName || '-'}
+                      </span>
+                      {targetConfirmOrder.buyer?.depositBankName && (
+                        <span className="text-[11px] text-zinc-500">
+                          {targetConfirmOrder.buyer.depositBankName}
+                        </span>
+                      )}
+                      {targetConfirmOrder.buyer?.depositBankAccountNumber && (
+                        <span className="text-[11px] font-mono text-emerald-700">
+                          {targetConfirmOrder.buyer.depositBankAccountNumber}
+                        </span>
+                      )}
+                      {targetConfirmOrder.nickname && (
+                        <span className="text-[11px] text-zinc-500">
+                          ({targetConfirmOrder.nickname})
+                        </span>
+                      )}
+                      {targetConfirmOrder.buyer?.nickname && (
+                        <span className="text-[11px] text-zinc-500">
+                          @{targetConfirmOrder.buyer.nickname}
+                        </span>
+                      )}
+                      {(() => {
+                        const buyerId =
+                          targetConfirmOrder.buyer?.id ||
+                          targetConfirmOrder.buyer?._id ||
+                          targetConfirmOrder.buyer?.userId ||
+                          targetConfirmOrder.buyer?.uid ||
+                          targetConfirmOrder.buyer?.username;
+                        return buyerId ? (
+                          <span className="text-[11px] text-zinc-500">
+                            ID {buyerId}
+                          </span>
+                        ) : null;
+                      })()}
+                      <span className="text-[11px] text-zinc-500 font-mono">
+                        {targetConfirmOrder.walletAddress ? `${targetConfirmOrder.walletAddress.slice(0, 6)}...${targetConfirmOrder.walletAddress.slice(-4)}` : '-'}
+                      </span>
+                      {targetConfirmOrder.buyer?.bankInfo?.bankName && (
+                        <span className="text-[11px] text-zinc-500">
+                          {targetConfirmOrder.buyer.bankInfo.bankName}
+                        </span>
+                      )}
+                      {targetConfirmOrder.buyer?.bankInfo?.accountNumber && (
+                        <span className="text-[11px] font-mono text-emerald-700">
+                          {targetConfirmOrder.buyer.bankInfo.accountNumber}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-[11px] font-semibold text-zinc-500 w-12">판매자</span>
+                      <span className="font-semibold text-zinc-900 text-[13.5px]">
+                        {targetConfirmOrder.seller?.nickname || targetConfirmOrder.seller?.name || '-'}
+                      </span>
+                      <span className="text-[11px] text-zinc-500">
+                        {targetConfirmOrder.seller?.bankInfo?.bankName || '은행명 없음'}
+                      </span>
+                      {targetConfirmOrder.seller?.bankInfo?.accountHolder && (
+                        <span className="text-[11px] text-zinc-500">
+                          {targetConfirmOrder.seller.bankInfo.accountHolder}
+                        </span>
+                      )}
+                      <span className="text-[11px] font-mono text-emerald-700">
+                        {targetConfirmOrder.seller?.bankInfo?.accountNumber || '-'}
+                      </span>
+                      <span className="text-[11px] font-mono text-zinc-600">
+                        {targetConfirmOrder.seller?.bankInfo?.realAccountNumber || targetConfirmOrder.seller?.bankInfo?.accountNumber || '-'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-[11.5px] text-zinc-600">
+                    <span className="text-[11px] font-semibold text-zinc-500 mr-1">타임라인</span>
+                    <span className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1">
+                      <span className="text-[11px] text-zinc-500">주문</span>
+                      <span className="font-mono text-[11px] text-zinc-700">{formatKstDateTime(targetConfirmOrder.createdAt)}</span>
+                    </span>
+                    {targetConfirmOrder.acceptedAt && (
+                      <span className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1">
+                        <span className="text-[11px] text-zinc-500">수락</span>
+                        <span className="font-mono text-[11px] text-zinc-700">{formatKstDateTime(targetConfirmOrder.acceptedAt)}</span>
+                      </span>
+                    )}
+                    {targetConfirmOrder.paymentRequestedAt && (
+                      <span className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1">
+                        <span className="text-[11px] text-zinc-500">입금요청</span>
+                        <span className="font-mono text-[11px] text-zinc-700">{formatKstDateTime(targetConfirmOrder.paymentRequestedAt)}</span>
+                      </span>
+                    )}
+                    {targetConfirmOrder.paymentConfirmedAt && (
+                      <span className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1">
+                        <span className="text-[11px] text-zinc-500">입금확인</span>
+                        <span className="font-mono text-[11px] text-zinc-700">{formatKstDateTime(targetConfirmOrder.paymentConfirmedAt)}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="px-5 pb-1">
+              <h3 className="text-sm font-semibold text-zinc-900">미신청입금 내역</h3>
+              <p className="text-[11px] text-zinc-500 mt-1">
+                내역중에서 해당 주문에 해당하는 입금을 선택하세요. 중복해서 선택가능합니다.
+              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
+                <span className="px-3 py-1.5 rounded-full border border-zinc-300 bg-zinc-50 text-zinc-700 font-semibold shadow-sm">
+                  선택 <span className="font-bold text-zinc-900">{selectedDepositIds.length}</span>건
+                </span>
+                <span className="px-3.5 py-1.5 rounded-full border border-emerald-400 bg-emerald-50 text-emerald-700 font-semibold shadow-sm flex items-baseline gap-1">
+                  <span>합계</span>
+                  <span className="font-mono text-[13px] font-bold">
+                    {selectedDepositTotal.toLocaleString()}
+                  </span>
+                  <span>원</span>
+                </span>
+                {selectedDepositIds.length > 0 && (
+                  <span
+                    className={`px-3 py-1.5 rounded-full border shadow-sm text-[12px] font-semibold ${
+                      depositAmountMatches
+                        ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                        : 'border-amber-400 bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {depositAmountMatches
+                      ? '주문 금액과 일치'
+                      : `주문 금액 ${Number(targetConfirmOrder?.krwAmount || 0).toLocaleString()}원과 불일치`}
+                  </span>
+                )}
+              </div>
+              {selectedDepositIds.length > 0 && !depositAmountMatches && (
+                <div className="mt-2 rounded-md border border-rose-300 bg-rose-50 text-rose-700 text-[12px] px-3 py-2 flex items-start gap-2">
+                  <span className="text-rose-600 font-bold">!</span>
+                  <span>
+                    선택한 입금 합계가 주문 금액과 다릅니다. 금액을 정확히 맞추지 않으면 결제 확정이 불가하거나 오류가 발생할 수 있습니다.
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="max-h-[50vh] overflow-y-auto px-5 pb-3 space-y-2">
+              {depositModalLoading ? (
+                <div className="flex items-center justify-center py-6 text-sm text-zinc-500">
+                  불러오는 중...
+                </div>
+              ) : depositOptions.length === 0 ? (
+                <div className="flex items-center justify-center py-6 text-sm text-zinc-500">
+                  표시할 입금내역이 없습니다.
+                </div>
+              ) : (
+                depositOptions.map((trx: any, idx: number) => {
+                  const key = trx._id || String(idx);
+                  const isSelected = selectedDepositIds.includes(key);
+                  const buyerDepositName = (targetConfirmOrder?.buyer?.depositName || '').trim();
+                  const transferName = (trx.transactionName || '').trim();
+                  const normalizeAcc = (v: any) => String(v || '').replace(/[^0-9a-z]/gi, '').toLowerCase();
+                  const sellerAccount = normalizeAcc(targetConfirmOrder?.seller?.bankInfo?.accountNumber);
+                  const transferAccount = normalizeAcc(trx.bankAccountNumber);
+                  const nameMatches =
+                    !!buyerDepositName &&
+                    buyerDepositName.length > 0 &&
+                    buyerDepositName.toLowerCase() === transferName.toLowerCase();
+                  const accountMatches = !!sellerAccount && sellerAccount === transferAccount && !!transferAccount;
+                  const toggle = () => {
+                    setSelectedDepositIds((prev) =>
+                      prev.includes(key) ? prev.filter((id) => id !== key) : [...prev, key]
+                    );
+                  };
+                  return (
+                    <label
+                      key={key}
+                      className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 cursor-pointer transition ${
+                        isSelected
+                          ? 'border-emerald-400 bg-emerald-50'
+                          : 'border-zinc-200 hover:border-emerald-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          name="depositSelect"
+                          className="w-4 h-4 text-emerald-600 border-zinc-300 focus:ring-emerald-400"
+                          checked={isSelected}
+                          onChange={toggle}
+                        />
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${
+                              ((trx.match ?? '').toString().toLowerCase() === 'success' || (trx.match ?? '').toString().toLowerCase() === 'object')
+                                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                : 'bg-amber-50 border-amber-200 text-amber-700'
+                            }`}>
+                              {(() => {
+                                const label = (trx.match ?? '').toString().toLowerCase();
+                                return label === 'success' || label === 'object'
+                                  ? '정상입금'
+                                  : '미신청입금';
+                              })()}
+                            </span>
+                            <span className="text-sm font-semibold text-zinc-900 truncate max-w-[140px]">
+                              {transferName || '-'}
+                            </span>
+                            {buyerDepositName && (
+                              <span
+                                className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                                  nameMatches
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                    : 'bg-amber-50 border-amber-200 text-amber-700'
+                                }`}
+                              >
+                                {nameMatches ? '입금자명 일치' : '입금자명 불일치'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                            <span className="flex items-center gap-1">
+                              · {trx.bankName || ''} · {trx.accountHolder || ''} · {trx.bankAccountNumber || ''}
+                            </span>
+                            {sellerAccount && (
+                              <span
+                                className={`px-2 py-0.5 rounded-full border ${
+                                  accountMatches
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                    : 'bg-amber-50 border-amber-200 text-amber-700'
+                                }`}
+                              >
+                                {accountMatches ? '계좌번호 일치' : '계좌번호 불일치'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 text-right">
+                        <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                          {trx.tradeId && (
+                            <span className="px-2 py-0.5 rounded-md border border-zinc-200 bg-zinc-50 font-mono">
+                              {trx.tradeId}
+                            </span>
+                          )}
+                          {trx.userId && (
+                            <span className="px-2 py-0.5 rounded-md border border-zinc-200 bg-zinc-50">
+                              {trx.userId}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-base font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                          {(trx.amount !== undefined ? Number(trx.amount) : 0).toLocaleString()}
+                        </span>
+                        <span className="text-[12px] text-zinc-600 font-medium flex items-center gap-1">
+                          <span className="text-emerald-500 text-xs">●</span>
+                          {formatKstDateTime(trx.transactionDate || trx.regDate)}
+                        </span>
+                      </div>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-zinc-200">
+              <button
+                className="px-3 py-2 text-sm rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition"
+                onClick={() => setDepositModalOpen(false)}
+              >
+                취소
+              </button>
+              <button
+                disabled={!selectedDepositIds.length || depositModalLoading}
+                className={`px-4 py-2 text-sm rounded-md text-white font-semibold shadow-sm transition ${
+                  !selectedDepositIds.length || depositModalLoading
+                    ? 'bg-emerald-300 cursor-not-allowed'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
+                onClick={handleConfirmPaymentWithSelected}
+              >
+                {depositModalLoading ? '진행중...' : '완료하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
     </main>

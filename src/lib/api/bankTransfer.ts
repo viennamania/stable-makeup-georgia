@@ -2,6 +2,8 @@ import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
 
+// ObjectId
+import { ObjectId } from 'mongodb';
 
 
 // getOne by vactId
@@ -388,4 +390,51 @@ export async function matchBankTransfersToPaymentAmount({
   } else {
     return [];
   }
+}
+
+
+
+
+// matchBankTransfersBybankTransferId
+export async function matchBankTransfersBybankTransferId({
+  bankTransferId,
+  tradeId,
+}: {
+  bankTransferId: string;
+  tradeId: string;
+}): Promise<boolean> {
+
+  // get storeInfo, buyerInfo, sellerInfo from buyorders collection
+  const clientForBuyOrder = await clientPromise;
+  const buyOrderCollection = clientForBuyOrder.db(dbName).collection('buyorders');
+
+  const buyOrder = await buyOrderCollection.findOne({ tradeId: tradeId });
+
+  const storeInfo = buyOrder?.store || null;
+  const buyerInfo = buyOrder?.buyer || null;
+  const sellerInfo = buyOrder?.seller || null;
+
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+
+  const result = await collection.updateOne(
+    {
+      _id: new ObjectId(bankTransferId),
+      transactionType: 'deposited',
+      match: null,
+      tradeId: null,
+    },
+    {
+      $set: {
+        match: 'success',
+        tradeId: tradeId,
+        storeInfo: storeInfo,
+        buyerInfo: buyerInfo,
+        sellerInfo: sellerInfo,
+      },
+    }
+  );
+
+  return result.modifiedCount > 0;
 }

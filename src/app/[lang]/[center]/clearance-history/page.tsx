@@ -4096,67 +4096,66 @@ export default function Index({ params }: any) {
                 판매자 지갑
               </div>
 
-              <div className="flex flex-col sm:flex-row items-start justify-start gap-4">
+              <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {sellersBalance?.map((seller, index) => (
-                  <div key={index}
-                    className="flex flex-row items-center justify-between gap-4
-                    bg-white/80
-                    p-4 rounded-lg shadow-md
-                    backdrop-blur-md
-                    ">
-                    <div className="flex flex-row items-center gap-4">
+                  <div
+                    key={index}
+                    className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 flex items-center gap-4"
+                  >
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 border border-zinc-200">
                       <Image
                         src="/icon-seller.png"
                         alt="Seller"
-                        width={40}
-                        height={40}
-                        className="w-10 h-10"
+                        width={32}
+                        height={32}
+                        className="w-8 h-8"
                       />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold">
-                          {seller.nickname}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-zinc-900 truncate">{seller.nickname}</span>
+                        <span className="px-2 py-0.5 text-[11px] rounded-full border border-zinc-200 text-zinc-600 bg-white">
+                          SELLER
                         </span>
-                        <button
-                          className="text-sm text-zinc-600 underline"
-                          onClick={() => {
-                            navigator.clipboard.writeText(seller.walletAddress);
-                            toast.success(Copied_Wallet_Address);
-                          } }
-                        >
-                          {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
-                        </button>
+                      </div>
+                      <button
+                        className="mt-1 text-sm text-blue-600 hover:text-blue-700 underline underline-offset-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(seller.walletAddress);
+                          toast.success(Copied_Wallet_Address);
+                        }}
+                      >
+                        {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                      </button>
+                      <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                        <Image
+                          src="/icon-tether.png"
+                          alt="USDT"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'monospace' }}>
+                          {Number(seller.currentUsdtBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        </span>
+                        <span className="text-xs text-zinc-500 font-medium">USDT</span>
                       </div>
                     </div>
-                    {/*
-                    <div className="flex flex-row items-center gap-2">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="USDT"
-                        width={30}
-                        height={30}
-                        className="w-7 h-7"
-                      />
-                      <span className="text-2xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}>
-                        {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      </span>
-                    </div>
-                    */}
 
-                    {/* if seller nickname is 'seller', then show withdraw button */}
-                    {/*
-                    {seller.nickname === 'seller' && (
+                    <div className="flex flex-col items-end gap-2">
                       <button
                         onClick={() => {
                           router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
                         }}
-                        className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                        className="px-3 py-2 rounded-lg border border-zinc-300 bg-white text-[#3167b4] text-sm font-semibold hover:bg-zinc-50 transition"
                       >
                         출금하기
                       </button>
-                    )}
-                    */}
-
+                      <span className="text-[11px] text-zinc-500">
+                        잔액 확인: {seller.settlementUpdatedAt ? new Date(seller.settlementUpdatedAt).toLocaleString('ko-KR') : '–'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -6508,5 +6507,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-

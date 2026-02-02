@@ -19,6 +19,7 @@ import {
 
 // matchBankTransfersToPaymentAmount
 import {
+  matchBankTransfersBybankTransferId,
   matchBankTransfersToPaymentAmount,
 } from '@lib/api/bankTransfer';
 
@@ -108,7 +109,10 @@ export async function POST(request: NextRequest) {
     paymentAmount,
     queueId,
     transactionHash,
-    isSmartAccount
+
+    bankTransferIds,
+
+    //isSmartAccount
   } = body;
 
 
@@ -118,6 +122,8 @@ export async function POST(request: NextRequest) {
   console.log("orderId", orderId);
 
   console.log("paymentAmount", paymentAmount);
+
+
 
 
 
@@ -219,6 +225,23 @@ export async function POST(request: NextRequest) {
       sellerWalletAddressBalance: sellerWalletAddressBalance,
 
     });
+
+
+
+    // if bankTransferIds 가 있으면
+    // 각각을 매칭 처리한다.
+    if (bankTransferIds && Array.isArray(bankTransferIds)) {
+      for (const bankTransferId of bankTransferIds) {
+        try {
+          await matchBankTransfersBybankTransferId({
+            bankTransferId: bankTransferId,
+            tradeId:  order?.tradeId,
+          });
+        } catch (error) {
+          console.log("Error matching bank transfer ID:", bankTransferId, error);
+        }
+      }
+    }
 
 
 
