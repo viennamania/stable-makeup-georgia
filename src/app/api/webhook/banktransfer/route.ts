@@ -37,6 +37,13 @@ import {
   touchBankInfoByRealAccountNumber,
 } from '@lib/api/bankInfo';
 
+
+// insertWebhookLog
+import {
+  insertWebhookLog,
+} from '@lib/api/webhookLog';
+import { error } from "console";
+
 // webhook
 // header
 /*
@@ -174,6 +181,36 @@ export async function POST(request: NextRequest) {
   console.log("transaction_name", transaction_name);
   console.log("balance", balance);
   console.log("processing_date", processing_date);
+
+
+
+
+
+  /*
+    event: string;
+  headers?: Headers | Record<string, any>;
+  body: any;
+  error?: any;
+  createdAt?: string | Date;
+  */
+
+  const data = {
+    event: "banktransfer_webhook",
+    headers: {
+      "x-webhook-key": webhookKey,
+      "x-mall-id": mallId,
+      "x-trace-id": traceId,
+    },
+    body: body,
+    error: null,
+    createdAt: new Date(),
+  };
+
+  await insertWebhookLog(data);
+
+
+
+
 
 
 
@@ -608,7 +645,7 @@ export async function POST(request: NextRequest) {
 
 
 
-
+    let errorMessage = null;
 
     // get store by bankAccountNumber
     const storeInfo = await getStoreByBankAccountNumber({
@@ -617,12 +654,13 @@ export async function POST(request: NextRequest) {
 
     if (!storeInfo) {
       console.log("No store found for bankAccountNumber:", bankAccountNumber);
-      return NextResponse.json({
-        status: "success",
-      });
+      
+      errorMessage = "No store found for bankAccountNumber";
     }
 
-    
+
+
+
 
     let match = null;
     let tradeId = null;
@@ -697,6 +735,7 @@ export async function POST(request: NextRequest) {
       storeInfo: storeInfo,
       buyerInfo: buyerInfo,
       sellerInfo: sellerInfo,
+      errorMessage: errorMessage,
     });
 
 
