@@ -236,6 +236,7 @@ export async function POST(request: NextRequest) {
           await matchBankTransfersBybankTransferId({
             bankTransferId: bankTransferId,
             tradeId:  order?.tradeId,
+            matchedByAdmin: true,
           });
         } catch (error) {
           console.log("Error matching bank transfer ID:", bankTransferId, error);

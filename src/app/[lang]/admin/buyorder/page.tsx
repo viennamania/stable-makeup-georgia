@@ -1,14 +1,7 @@
 'use client';
 
-import { useState, useEffect, use, act, useRef, useMemo } from "react";
-
+import React, { useState, useEffect, use, act, useRef, useMemo } from "react";
 import Image from "next/image";
-
-
-
-// open modal
-
-///import Modal from '@/components/modal';
 
 import ModalUser from '@/components/modal-user';
 
@@ -1617,17 +1610,13 @@ const depositAmountMatches = useMemo(() => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [aliasPanelOpen]);
 
-  // 입금내역 선택 모달 열기
-  const openDepositModalForOrder = async (index: number, order: BuyOrder) => {
+  const fetchDepositsForOrder = async (order: BuyOrder | null) => {
+    if (!order) return;
     const sellerAccountNumber = order?.seller?.bankInfo?.accountNumber;
     if (!sellerAccountNumber) {
       toast.error('판매자 계좌번호가 없습니다.');
       return;
     }
-    setTargetConfirmIndex(index);
-    setTargetConfirmOrder(order);
-    setSelectedDepositIds([]);
-    setDepositModalOpen(true);
     setDepositModalLoading(true);
     try {
       const res = await fetch('/api/bankTransfer/getAll', {
@@ -1662,6 +1651,24 @@ const depositAmountMatches = useMemo(() => {
     } finally {
       setDepositModalLoading(false);
     }
+  };
+
+  // 입금내역 선택 모달 열기
+  const openDepositModalForOrder = async (index: number, order: BuyOrder) => {
+    const sellerAccountNumber = order?.seller?.bankInfo?.accountNumber;
+    if (!sellerAccountNumber) {
+      toast.error('판매자 계좌번호가 없습니다.');
+      return;
+    }
+    setTargetConfirmIndex(index);
+    setTargetConfirmOrder(order);
+    setSelectedDepositIds([]);
+    setDepositModalOpen(true);
+    fetchDepositsForOrder(order);
+  };
+
+  const refreshDepositOptions = async () => {
+    await fetchDepositsForOrder(targetConfirmOrder);
   };
 
   const handleConfirmPaymentWithSelected = async () => {
@@ -4032,7 +4039,7 @@ const fetchBuyOrders = async () => {
 
 
   return (
-
+    <>
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto bg-neutral-50 text-gray-900">
       {showJackpot && (
         <div className="jackpot-overlay">
@@ -4084,6 +4091,13 @@ const fetchBuyOrders = async () => {
         </div>
       )}
       <style jsx global>{`
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-slide {
+          animation: fadeSlideIn 300ms ease-out;
+        }
         @keyframes slideInTop {
           from { transform: translateY(-10px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
@@ -4094,6 +4108,12 @@ const fetchBuyOrders = async () => {
         }
         .slide-in-top { animation: slideInTop 0.45s ease-out; }
         .slide-in-bottom { animation: slideInBottom 0.45s ease-out; }
+        @keyframes fadeStatus {
+          0% { opacity: 0; transform: translateY(4px); }
+          40% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-status { animation: fadeStatus 480ms ease-out; }
         @keyframes expandRow {
           0% { transform: scaleY(0.8); opacity: 0; }
           70% { transform: scaleY(1.02); opacity: 1; }
@@ -6745,7 +6765,7 @@ const fetchBuyOrders = async () => {
 
                             <div className="w-full flex flex-col gap-2 items-start justify-center">
 
-                              <div className="flex flex-row gap-1 items-center justify-end">
+                              <div className="flex flex-row gap-1 items-center justify-end animate-fade-slide">
                                 <Image
                                   src="/icon-search-bank.gif"
                                   alt="Bank Auto"
@@ -6754,11 +6774,11 @@ const fetchBuyOrders = async () => {
                                   className="rounded-full"
                                 />
                                 {item?.autoConfirmPayment === true ? (
-                                  <span className="text-sm font-semibold text-zinc-500">
+                                  <span className="text-sm font-semibold text-zinc-500 drop-shadow-sm">
                                     입금 확인중입니다.
                                   </span>
                                 ) : (
-                                  <span className="text-sm font-semibold text-zinc-500">
+                                  <span className="text-sm font-semibold text-zinc-500 drop-shadow-sm">
                                     입금 확인중입니다.
                                   </span>
                                 )}
@@ -7177,7 +7197,10 @@ const fetchBuyOrders = async () => {
                         {item.status === 'paymentConfirmed' &&
                         !item?.settlement &&
                         (!item?.transactionHash || item?.transactionHash === '0x') && (
-                          <div className="w-full flex flex-row gap-2 items-center justify-center">
+                          <div
+                            key={`${item._id}-${item.status}-${item.transactionHash || 'pending'}`}
+                            className="w-full flex flex-row gap-2 items-center justify-center fade-status"
+                          >
                             <Image
                               src="/icon-sending.png"
                               alt="Sending"
@@ -9341,7 +9364,25 @@ const fetchBuyOrders = async () => {
               )}
             </div>
             <div className="px-5 pb-1">
-              <h3 className="text-sm font-semibold text-zinc-900">미신청입금 내역</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-zinc-900">미신청입금 내역</h3>
+                <button
+                  onClick={refreshDepositOptions}
+                  disabled={depositModalLoading || !targetConfirmOrder}
+                  className={`flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] font-semibold transition ${
+                    depositModalLoading
+                      ? 'bg-zinc-100 text-zinc-400 border-zinc-200 cursor-not-allowed'
+                      : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50'
+                  }`}
+                >
+                  {depositModalLoading ? (
+                    <span className="w-3 h-3 border-2 border-emerald-300 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-emerald-700">⟳</span>
+                  )}
+                  <span>새로고침</span>
+                </button>
+              </div>
               <p className="text-[11px] text-zinc-500 mt-1">
                 내역중에서 해당 주문에 해당하는 입금을 선택하세요. 중복해서 선택가능합니다.
               </p>
@@ -9525,7 +9566,7 @@ const fetchBuyOrders = async () => {
 
 
     </main>
-
+    </>
   );
 
 

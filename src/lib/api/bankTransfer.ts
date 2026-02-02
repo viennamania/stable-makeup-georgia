@@ -1,3 +1,4 @@
+import { match } from 'assert';
 import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
@@ -396,12 +397,15 @@ export async function matchBankTransfersToPaymentAmount({
 
 
 // matchBankTransfersBybankTransferId
+// 수동으로 처리했는지 체크
 export async function matchBankTransfersBybankTransferId({
   bankTransferId,
   tradeId,
+  matchedByAdmin = false,
 }: {
   bankTransferId: string;
   tradeId: string;
+  matchedByAdmin?: boolean;
 }): Promise<boolean> {
 
   // get storeInfo, buyerInfo, sellerInfo from buyorders collection
@@ -428,6 +432,7 @@ export async function matchBankTransfersBybankTransferId({
     {
       $set: {
         match: 'success',
+        matchedByAdmin: matchedByAdmin,
         tradeId: tradeId,
         storeInfo: storeInfo,
         buyerInfo: buyerInfo,

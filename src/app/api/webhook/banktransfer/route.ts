@@ -692,6 +692,7 @@ export async function POST(request: NextRequest) {
       balance: balance,
       processingDate: processing_date,
       match: match,
+      matchedByAdmin: false,
       tradeId: tradeId,
       storeInfo: storeInfo,
       buyerInfo: buyerInfo,
