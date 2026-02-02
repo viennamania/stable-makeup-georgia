@@ -56,7 +56,8 @@ import { getUserPhoneNumber } from "thirdweb/wallets/in-app";
 
 import { balanceOf, transfer } from "thirdweb/extensions/erc20";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
- 
+
+import * as XLSX from "xlsx";
 
 
 import AppBarComponent from "@/components/Appbar/AppBar";
@@ -1932,6 +1933,43 @@ const depositAmountMatches = useMemo(() => {
     } finally {
       setTogglingAlarmId(null);
     }
+  };
+
+  const downloadUnmatchedExcel = () => {
+    if (!unmatchedTransfers.length) {
+      toast.error('다운로드할 미신청 입금이 없습니다.');
+      return;
+    }
+
+    const rows = unmatchedTransfers.map((t, idx) => {
+      const bankInfo =
+        t.storeInfo?.bankInfo ||
+        t.storeInfo?.bankInfoAAA ||
+        t.storeInfo?.bankInfoBBB ||
+        t.storeInfo?.bankInfoCCC ||
+        t.storeInfo?.bankInfoDDD ||
+        {};
+
+      return {
+        No: unmatchedTransfers.length - idx,
+        Store: t.storeInfo?.storeName || '',
+        Depositor: t.transactionName || '',
+        Amount: Number(t.amount) || 0,
+        BankAccountNumber: t.bankAccountNumber || '',
+        BankName: bankInfo.bankName || '',
+        AccountHolder: bankInfo.accountHolder || '',
+        TransactionDate: t.transactionDate || t.processingDate || t.regDate || '',
+        Balance: Number(t.balance) || 0,
+        AlarmOn: t.alarmOn === false ? 'OFF' : 'ON',
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Unmatched');
+
+    const filename = `unmatched_${searchFromDate || 'from'}_${searchToDate || 'to'}.xlsx`;
+    XLSX.writeFile(wb, filename);
   };
 
 
@@ -5599,6 +5637,12 @@ const fetchBuyOrders = async () => {
               <span className="text-xs text-zinc-500">
                 합계 {unmatchedTotalAmount.toLocaleString()}원
               </span>
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100"
+                onClick={downloadUnmatchedExcel}
+              >
+                엑셀다운로드
+              </button>
               <button
                 className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-50"
                 onClick={fetchUnmatchedTransfers}
