@@ -121,6 +121,26 @@ const statusPulseClass = (status: string | undefined) => {
   }
 };
 
+const statusCardTone = (status: string | undefined, settlement?: any) => {
+  // Treat settlement completion even when status remains paymentConfirmed
+  const isSettled = status === 'paymentConfirmed' && !!settlement?.txid;
+  switch (status) {
+    case 'paymentRequested':
+      return 'bg-amber-50 border-amber-200 hover:bg-amber-100';
+    case 'accepted':
+      return 'bg-sky-50 border-sky-200 hover:bg-sky-100';
+    case 'paymentConfirmed':
+      return isSettled
+        ? 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100'
+        : 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100';
+    case 'cancelled':
+    case 'canceled':
+      return 'bg-rose-50 border-rose-200 hover:bg-rose-100';
+    default:
+      return 'bg-zinc-50 border-zinc-200 hover:bg-zinc-100';
+  }
+};
+
 const RevealText: React.FC<{ value: any; className?: string; children: React.ReactNode }> = ({
   value,
   className = '',
@@ -5664,23 +5684,11 @@ const fetchBuyOrders = async () => {
                     "
                     >
 
-                      <div className="
-                        h-40
-                        w-32
-                        flex flex-col items-start justify-start gap-2
-                        bg-zinc-100
-                        rounded-lg
-                        border border-zinc-800
-                        hover:bg-zinc-200
-                        cursor-pointer
-                        transition-all duration-200 ease-in-out
-                        hover:scale-105
-                        hover:shadow-lg
-                        hover:shadow-zinc-500/50
-                        hover:cursor-pointer
-                        p-2
-
-                        "
+                      <div
+                        className={`h-40 w-32 flex flex-col items-start justify-start gap-2 rounded-lg border
+                        ${statusCardTone(item.status, item.settlement)}
+                        cursor-pointer transition-all duration-200 ease-in-out
+                        hover:scale-105 hover:shadow-lg hover:shadow-emerald-100/80 hover:cursor-pointer p-2`}
                         onClick={() => {
                           // copy traideId to clipboard
                           navigator.clipboard.writeText(item.tradeId);
