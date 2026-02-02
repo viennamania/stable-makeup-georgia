@@ -6949,11 +6949,13 @@ const fetchBuyOrders = async () => {
                                       disabled={confirmingPayment[index]}
                                       
                                       className={`
-                                        ${confirmingPayment[index]
-                                        ? 'text-gray-400 border-gray-400 bg-gray-100 cursor-not-allowed'
-                                        : 'text-blue-600 border-blue-600 bg-blue-100 hover:bg-blue-200 cursor-pointer hover:scale-105 hover:shadow-lg hover:shadow-blue-500/50'
-                                        } bg-blue-100 border border-blue-600 rounded-lg p-2
-                                        w-24 text-center
+                                        w-28 text-center px-3 py-2 rounded-xl font-semibold text-white
+                                        transition-all duration-200
+                                        ${
+                                          confirmingPayment[index]
+                                            ? 'bg-gradient-to-r from-zinc-300 to-zinc-400 border border-zinc-400 cursor-not-allowed shadow-none'
+                                            : 'bg-gradient-to-r from-emerald-500 to-teal-600 border border-emerald-600 shadow-[0_10px_20px_rgba(16,185,129,0.35)] hover:shadow-[0_14px_26px_rgba(16,185,129,0.45)] hover:-translate-y-0.5 active:translate-y-0'
+                                        }
                                       `}
 
                                       /*
@@ -7227,19 +7229,20 @@ const fetchBuyOrders = async () => {
                               />
                               <button
                                 disabled={cancellings[index] || !agreementForCancelTrade[index]}
-            
+
                                 className="
                                   w-full flex flex-row gap-1
-                                  text-sm text-red-600 font-semibold
-                                  border border-red-600 rounded-lg p-2
-                                  bg-red-100
+                                  text-sm font-semibold text-white
+                                  rounded-xl p-2
+                                  bg-gradient-to-r from-rose-500 to-red-600
+                                  border border-red-500
                                   text-center
-                                  hover:bg-red-200
                                   cursor-pointer
                                   transition-all duration-200 ease-in-out
-                                  hover:scale-105
-                                  hover:shadow-lg
-                                  hover:shadow-red-500/50
+                                  shadow-[0_10px_20px_rgba(248,113,113,0.35)]
+                                  hover:shadow-[0_14px_26px_rgba(248,113,113,0.45)]
+                                  hover:-translate-y-0.5 active:translate-y-0
+                                  disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
                                 "  
                                 onClick={() => {
                                   cancelTrade(item._id, index);
