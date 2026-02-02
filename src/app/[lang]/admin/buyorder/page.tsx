@@ -1626,11 +1626,15 @@ const depositAmountMatches = useMemo(() => {
       }
       const data = await res.json();
       const list = data?.result?.transfers || [];
-      list.sort((a: any, b: any) =>
+      const filtered = list.filter((t: any) => {
+        const typeRaw = (t?.transactionType || t?.trxType || '').toString().toLowerCase();
+        return typeRaw === 'deposited' || typeRaw === 'deposit' || typeRaw === '입금';
+      });
+      filtered.sort((a: any, b: any) =>
         new Date(b.transactionDate || b.regDate || 0).getTime() -
         new Date(a.transactionDate || a.regDate || 0).getTime()
       );
-      setDepositOptions(list);
+      setDepositOptions(filtered);
     } catch (err) {
       console.error(err);
       toast.error('입금내역을 불러오지 못했습니다.');
@@ -1645,14 +1649,14 @@ const depositAmountMatches = useMemo(() => {
       toast.error('대상 주문이 없습니다.');
       return;
     }
-    if (!selectedDepositIds.length) {
-      toast.error('입금내역을 선택하세요.');
-      return;
-    }
-    if (!depositAmountMatches) {
+    if (selectedDepositIds.length && !depositAmountMatches) {
       toast.error('선택한 입금 합계와 주문 금액이 일치하지 않습니다.');
       return;
     }
+
+    const transferIds = selectedDepositIds.length ? selectedDepositIds : ['000000000'];
+    const transferAmount = selectedDepositIds.length ? selectedDepositTotal : 0;
+
     await confirmPayment(
       targetConfirmIndex,
       targetConfirmOrder._id,
@@ -1660,8 +1664,8 @@ const depositAmountMatches = useMemo(() => {
       targetConfirmOrder.usdtAmount,
       targetConfirmOrder.walletAddress,
       targetConfirmOrder.paymentMethod,
-      selectedDepositIds,
-      selectedDepositTotal
+      transferIds,
+      transferAmount
     );
     setDepositModalOpen(false);
   };
@@ -9484,15 +9488,9 @@ const fetchBuyOrders = async () => {
             </div>
             <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-zinc-200">
               <button
-                className="px-3 py-2 text-sm rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition"
-                onClick={() => setDepositModalOpen(false)}
-              >
-                취소
-              </button>
-              <button
-                disabled={!selectedDepositIds.length || depositModalLoading}
+                disabled={depositModalLoading}
                 className={`px-4 py-2 text-sm rounded-md text-white font-semibold shadow-sm transition ${
-                  !selectedDepositIds.length || depositModalLoading
+                  depositModalLoading
                     ? 'bg-emerald-300 cursor-not-allowed'
                     : 'bg-emerald-600 hover:bg-emerald-700'
                 }`}
