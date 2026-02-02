@@ -1720,6 +1720,8 @@ const depositAmountMatches = useMemo(() => {
           matchStatus: 'unmatched',
           page: 1,
           limit: 50,
+          fromDate: searchFromDate,
+          toDate: searchToDate,
         }),
       });
       if (!res.ok) {
