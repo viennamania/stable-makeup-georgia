@@ -656,6 +656,11 @@ export async function POST(request: NextRequest) {
       console.log("No store found for bankAccountNumber:", bankAccountNumber);
       
       errorMessage = "No store found for bankAccountNumber";
+
+      return NextResponse.json({
+        status: "error",
+        message: "No store found for bankAccountNumber",
+      });
     }
 
 

@@ -121,6 +121,13 @@ export async function getBankTransfers(
     filters.push({ match: { $ne: null } });
   } else if (matchStatus === 'unmatched') {
     filters.push({ match: null });
+  } else if (matchStatus === 'notSuccess') {
+    filters.push({
+      $or: [
+        { match: { $exists: false } },
+        { match: { $ne: 'success' } },
+      ],
+    });
   }
 
   if (fromDate || toDate) {

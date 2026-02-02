@@ -1440,6 +1440,12 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelHasMore, setAliasPanelHasMore] = useState(true);
   const aliasPanelLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
+  // 미신청 입금내역
+  const [unmatchedTransfers, setUnmatchedTransfers] = useState<any[]>([]);
+  const [unmatchedLoading, setUnmatchedLoading] = useState(false);
+  const [unmatchedTotalAmount, setUnmatchedTotalAmount] = useState(0);
+  const [showUnmatched, setShowUnmatched] = useState(true);
+
   // 입금내역 선택 모달 상태
 const [depositModalOpen, setDepositModalOpen] = useState(false);
 const [depositModalLoading, setDepositModalLoading] = useState(false);
@@ -1472,6 +1478,30 @@ const depositAmountMatches = useMemo(() => {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  // 오래된 미신청 입금일수록 붉게 표시
+  const getUnmatchedCardStyle = (
+    value: string | Date | undefined,
+    oldestMs: number | null,
+    newestMs: number | null
+  ) => {
+    const date = value ? new Date(value) : null;
+    const ts = date && !Number.isNaN(date.getTime()) ? date.getTime() : null;
+    if (ts === null || oldestMs === null || newestMs === null) {
+      return {
+        backgroundColor: 'rgba(248, 113, 113, 0.18)',
+        borderColor: 'rgba(248, 113, 113, 0.3)',
+      };
+    }
+    const range = Math.max(1, newestMs - oldestMs);
+    const ratio = 1 - Math.max(0, Math.min(1, (ts - oldestMs) / range)); // oldest=1(red), newest=0(light)
+    const bgAlpha = 0.16 + 0.44 * ratio;   // 0.16 ~ 0.60
+    const borderAlpha = 0.25 + 0.55 * ratio; // 0.25 ~ 0.80
+    return {
+      backgroundColor: `rgba(248, 113, 113, ${bgAlpha})`,
+      borderColor: `rgba(248, 113, 113, ${borderAlpha})`,
+    };
   };
 
   const getTxnTypeInfo = (typeValue: any) => {
@@ -1740,6 +1770,60 @@ const depositAmountMatches = useMemo(() => {
     aliasPanelAccountHolder,
     aliasPanelAliasNumber,
   ]);
+
+  // 미신청 입금내역 조회
+  const fetchUnmatchedTransfers = async () => {
+    if (unmatchedLoading) return;
+    setUnmatchedLoading(true);
+    try {
+      const response = await fetch('/api/bankTransfer/getAll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          limit: 200,
+          page: 1,
+          transactionType: 'deposited',
+          matchStatus: 'notSuccess',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('미신청 입금내역을 불러오지 못했습니다.');
+      }
+
+      const data = await response.json();
+      const rawList: any[] = data?.result?.transfers || [];
+
+      const filtered = rawList.filter((t) => {
+        const m = t?.match;
+        if (!m) return true;
+        if (typeof m === 'string') return m.toLowerCase() !== 'success';
+        // 객체인 경우는 매칭된 것으로 간주
+        return false;
+      });
+
+      filtered.sort((a, b) =>
+        new Date(b.transactionDate || b.regDate || 0).getTime() -
+        new Date(a.transactionDate || a.regDate || 0).getTime()
+      );
+
+      const totalAmt = filtered.reduce((sum, cur) => sum + (Number(cur.amount) || 0), 0);
+
+      setUnmatchedTransfers(filtered);
+      setUnmatchedTotalAmount(totalAmt);
+    } catch (error: any) {
+      console.error('미신청 입금 조회 실패', error);
+      toast.error(error?.message || '미신청 입금내역 조회 실패');
+    } finally {
+      setUnmatchedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnmatchedTransfers();
+    const interval = setInterval(fetchUnmatchedTransfers, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
 
 
@@ -5381,6 +5465,118 @@ const fetchBuyOrders = async () => {
               ))}
             </div>
           )}
+
+
+          {/* 미신청내역 */}
+          {/*
+          <div className="w-full mt-6">
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                  onClick={() => setShowUnmatched((v) => !v)}
+                >
+                  {showUnmatched ? '접기' : '펼치기'}
+                </button>
+                <span className="text-lg font-semibold">미신청내역</span>
+                <span className="text-xs text-zinc-500">match != 'success' 입금건</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-zinc-500">
+                <span>건수 {unmatchedTransfers.length.toLocaleString()}</span>
+                <span>합계 {unmatchedTotalAmount.toLocaleString()}원</span>
+                <button
+                  className="px-2 py-1 border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-50"
+                  onClick={fetchUnmatchedTransfers}
+                  disabled={unmatchedLoading}
+                >
+                  {unmatchedLoading ? '갱신중...' : '새로고침'}
+                </button>
+              </div>
+            </div>
+
+            {showUnmatched && (
+            <div className="w-full overflow-x-auto">
+              {unmatchedTransfers.length === 0 ? (
+                <div className="min-h-[80px] flex items-center justify-center text-sm text-zinc-500 border border-neutral-200 rounded-xl bg-white px-4">
+                  {unmatchedLoading ? '불러오는 중...' : '미신청 입금이 없습니다.'}
+                </div>
+              ) : (
+                <div className="flex gap-3 pb-2 overflow-x-auto">
+                  {(() => {
+                    const timestamps = unmatchedTransfers
+                      .map((t) => {
+                        const d = new Date(t.transactionDate || t.processingDate || t.regDate);
+                        return Number.isNaN(d.getTime()) ? null : d.getTime();
+                      })
+                      .filter((v) => v !== null) as number[];
+                    const oldest = timestamps.length ? Math.min(...timestamps) : null;
+                    const newest = timestamps.length ? Math.max(...timestamps) : null;
+                    return unmatchedTransfers.map((transfer, index) => (
+                    <div
+                      key={transfer._id || index}
+                      className="min-w-[260px] max-w-[280px] p-3 border rounded-xl shadow-sm flex flex-col gap-2"
+                      style={getUnmatchedCardStyle(
+                        transfer.transactionDate || transfer.processingDate || transfer.regDate,
+                        oldest,
+                        newest
+                      )}
+                    >
+                      <div className="flex items-center justify-between text-xs text-zinc-500">
+                        <span className="font-semibold text-zinc-700">No. {unmatchedTransfers.length - index}</span>
+                        <span className="text-[11px]">{formatKstDateTime(transfer.transactionDate || transfer.processingDate || transfer.regDate)}</span>
+                      </div>
+                      <div className="flex flex-col text-sm">
+                        <span className="font-semibold text-zinc-800">
+                          {transfer.storeInfo?.storeName || '미지정 가맹점'}
+                        </span>
+                        <span className="text-[11px] text-zinc-500" style={{ fontFamily: 'monospace' }}>
+                          {transfer.storeInfo?.storecode || '-'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-zinc-700">{transfer.transactionName || '-'}</span>
+                        <span className="text-base font-extrabold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                          {(Number(transfer.amount) || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col text-xs text-zinc-700">
+                        <span className="font-mono text-sm text-zinc-800 truncate">
+                          맞춤계좌: {transfer.bankAccountNumber || '-'}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 truncate">
+                          {(transfer.storeInfo?.bankInfo?.bankName
+                            || transfer.storeInfo?.bankInfoAAA?.bankName
+                            || transfer.storeInfo?.bankInfoBBB?.bankName
+                            || transfer.storeInfo?.bankInfoCCC?.bankName
+                            || transfer.storeInfo?.bankInfoDDD?.bankName
+                            || '은행정보없음')}
+                          {' · '}
+                          {(transfer.storeInfo?.bankInfo?.accountHolder
+                            || transfer.storeInfo?.bankInfoAAA?.accountHolder
+                            || transfer.storeInfo?.bankInfoBBB?.accountHolder
+                            || transfer.storeInfo?.bankInfoCCC?.accountHolder
+                            || transfer.storeInfo?.bankInfoDDD?.accountHolder
+                            || '예금주없음')}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 truncate">
+                          실계좌: {transfer.originalBankAccountNumber || '-'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-zinc-600">
+                        <span>잔액</span>
+                        <span className="font-mono text-sm text-zinc-700">
+                          {(Number(transfer.balance) || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    ));
+                  })()}
+                </div>
+              )}
+            </div>
+            )}
+          </div>
+          */}
 
 
           {sellersBalance.length > 0 && (
