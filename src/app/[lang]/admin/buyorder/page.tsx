@@ -5153,7 +5153,7 @@ const fetchBuyOrders = async () => {
           {/* trade summary */}
 
 
-          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-4">
             {/* P2P Summary */}
             <div className="flex items-stretch gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-3">
@@ -5161,19 +5161,19 @@ const fetchBuyOrders = async () => {
                   <Image src="/icon-trade.png" alt="P2P" width={32} height={32} className="w-8 h-8 object-contain invert" />
                 </div>
                 <div className="flex flex-col justify-center">
-                  <span className="text-sm text-zinc-600">P2P 거래수(건)</span>
-                  <span className="text-3xl font-semibold text-zinc-700">
+                  <span className="text-[11px] text-zinc-600">P2P 거래수(건)</span>
+                  <span className="text-xl font-semibold text-zinc-700">
                     {animatedTotalCount.toLocaleString()}
                   </span>
                 </div>
               </div>
               <div className="mx-3 hidden md:block w-px bg-gradient-to-b from-transparent via-zinc-200 to-transparent" />
               <div className="flex flex-col justify-center items-end flex-1">
-                <span className="text-3xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
+                <span className="text-xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
                   <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
                   {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
                 </span>
-                <span className="text-3xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
+                <span className="text-xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
                   {animatedTotalKrwAmount.toLocaleString()}
                 </span>
               </div>
@@ -5186,43 +5186,52 @@ const fetchBuyOrders = async () => {
                   <Image src="/icon-payment2.png" alt="Settlement" width={28} height={28} className="w-7 h-7 object-contain" />
                 </div>
                 <div className="flex flex-col justify-center">
-                  <span className="text-sm text-zinc-600">가맹점 결제수(건)</span>
-                  <span className="text-3xl font-semibold text-zinc-700">
+                  <span className="text-[11px] text-zinc-600">가맹점 결제수(건)</span>
+                  <span className="text-xl font-semibold text-zinc-700">
                     {animatedTotalSettlementCount.toLocaleString()}
                   </span>
                 </div>
               </div>
-              <div className="mx-3 hidden md:block w-px bg-gradient-to-b from-transparent via-zinc-200 to-transparent" />
-              <div className="flex flex-col justify-center items-end flex-1 gap-1">
-                <span className="text-3xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
-                  <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
-                  {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
-                </span>
-                <span className="text-3xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
-                  {animatedTotalSettlementAmountKRW.toLocaleString()}
-                </span>
-                <div className="flex flex-col gap-1 text-sm font-semibold text-zinc-700 mt-1 items-end">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-zinc-500">PG 수수료</span>
-                    <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
-                      {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} USDT
-                    </span>
-                    <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
-                      {buyOrderStats.totalFeeAmountKRW !== undefined
-                        ? Math.round(buyOrderStats.totalFeeAmountKRW).toLocaleString()
-                        : '0'} 원
-                    </span>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-end flex-1 gap-2 md:gap-4">
+                <div className="flex flex-col items-end">
+                  <span className="text-xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
+                    <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
+                    {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
+                  </span>
+                  <span className="text-xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
+                    {animatedTotalSettlementAmountKRW.toLocaleString()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full md:w-auto text-sm font-semibold text-zinc-700 md:mt-0 mt-1">
+                  <div className="flex flex-col gap-1 items-end md:items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-500">PG 수수료</span>
+                      <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} USDT
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalFeeAmountKRW !== undefined
+                          ? Math.round(buyOrderStats.totalFeeAmountKRW).toLocaleString()
+                          : '0'} 원
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="text-zinc-500">AG 수수료</span>
-                    <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
-                      {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} USDT
-                    </span>
-                    <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
-                      {buyOrderStats.totalAgentFeeAmountKRW !== undefined
-                        ? Math.round(buyOrderStats.totalAgentFeeAmountKRW).toLocaleString()
-                        : '0'} 원
-                    </span>
+                  <div className="flex flex-col gap-1 items-end md:items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-500">AG 수수료</span>
+                      <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} USDT
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalAgentFeeAmountKRW !== undefined
+                          ? Math.round(buyOrderStats.totalAgentFeeAmountKRW).toLocaleString()
+                          : '0'} 원
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -5476,10 +5485,11 @@ const fetchBuyOrders = async () => {
               <span className="text-lg font-semibold">
                 판매자 통장별 P2P 거래 통계
               </span>
+              <span className="text-xs text-zinc-500">
+                총 {buyOrderStats.totalBySellerBankAccountNumber?.length || 0} 계좌
+              </span>
             </div>
-            <span className="text-xs text-zinc-500">
-              총 {buyOrderStats.totalBySellerBankAccountNumber?.length || 0} 계좌
-            </span>
+            <div />
           </div>
 
           {showSellerBankStats && (
