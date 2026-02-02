@@ -1050,6 +1050,13 @@ export default function Index({ params }: any) {
   const [aliasPanelPage, setAliasPanelPage] = useState(1);
   const [aliasPanelHasMore, setAliasPanelHasMore] = useState(true);
   const aliasPanelLoadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  // 미신청 입금내역
+  const [unmatchedTransfers, setUnmatchedTransfers] = useState<any[]>([]);
+  const [unmatchedTotalAmount, setUnmatchedTotalAmount] = useState(0);
+  const [unmatchedLoading, setUnmatchedLoading] = useState(false);
+  const [showUnmatched, setShowUnmatched] = useState(true);
+  const unmatchedScrollRef = useRef<HTMLDivElement | null>(null);
   const [showSellerBankStats, setShowSellerBankStats] = useState(true);
   const [showSellerAliasStats, setShowSellerAliasStats] = useState(true);
 
@@ -1064,6 +1071,29 @@ export default function Index({ params }: any) {
       hour: '2-digit',
       minute: '2-digit',
     });
+  };
+
+  const formatTimeAgo = (value?: string | Date) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) return '방금 전';
+    const sec = Math.floor(diffMs / 1000);
+    if (sec < 60) return '방금 전';
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}분 전`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}시간 전`;
+    const day = Math.floor(hr / 24);
+    if (day < 7) return `${day}일 전`;
+    const week = Math.floor(day / 7);
+    if (week < 5) return `${week}주 전`;
+    const month = Math.floor(day / 30);
+    if (month < 12) return `${month}개월 전`;
+    const year = Math.floor(day / 365);
+    return `${year}년 전`;
   };
 
   const getTxnTypeInfo = (typeValue: any) => {
@@ -1201,6 +1231,53 @@ export default function Index({ params }: any) {
     }
   };
 
+  // 미신청 입금내역 불러오기
+  const fetchUnmatchedTransfers = async () => {
+    if (unmatchedLoading) return;
+    setUnmatchedLoading(true);
+    try {
+      const res = await fetch('/api/bankTransfer/getAll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          limit: 200,
+          page: 1,
+          transactionType: 'deposited',
+          matchStatus: 'notSuccess',
+          fromDate: searchFromDate || '',
+          toDate: searchToDate || '',
+          storecode: searchStorecode || '',
+        }),
+      });
+      if (!res.ok) {
+        throw new Error('미신청 입금내역을 불러오지 못했습니다.');
+      }
+      const data = await res.json();
+      const rawList: any[] = data?.result?.transfers || [];
+
+      // match !== 'success' 만 남기고 최근순 정렬
+      const filtered = rawList.filter((t) => {
+        const m = t?.match;
+        if (!m) return true;
+        if (typeof m === 'string') return m.toLowerCase() !== 'success';
+        if (typeof m === 'object') return false;
+        return true;
+      }).sort((a, b) =>
+        new Date(b.transactionDate || b.regDate || 0).getTime() -
+        new Date(a.transactionDate || a.regDate || 0).getTime()
+      );
+
+      setUnmatchedTransfers(filtered);
+      setUnmatchedTotalAmount(
+        filtered.reduce((sum, cur) => sum + (Number(cur.amount) || 0), 0)
+      );
+    } catch (error: any) {
+      toast.error(error?.message || '미신청 입금내역 조회 실패');
+    } finally {
+      setUnmatchedLoading(false);
+    }
+  };
+
   const closeAliasPanel = () => {
     setAliasPanelOpen(false);
   };
@@ -1248,6 +1325,13 @@ export default function Index({ params }: any) {
     aliasPanelAccountHolder,
     aliasPanelAliasNumber,
   ]);
+
+  // 미신청 내역 자동 갱신
+  useEffect(() => {
+    fetchUnmatchedTransfers();
+    const timer = setInterval(fetchUnmatchedTransfers, 10000);
+    return () => clearInterval(timer);
+  }, [searchFromDate, searchToDate, searchStorecode]);
 
 
 
@@ -5165,239 +5249,89 @@ const fetchBuyOrders = async () => {
 
           {/* trade summary */}
 
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-2
-            w-full
-            bg-zinc-100/50
-            p-4 rounded-lg shadow-md
-            ">
-
-            <div className="xl:w-1/3 w-full
-              flex flex-col sm:flex-row items-between justify-between gap-4">
-
-              <div className="flex flex-row items-center justify-center gap-2">
-                <Image
-                  src="/icon-trade.png"
-                  alt="Trade"
-                  width={50}
-                  height={50}
-                  className={`w-12 h-12 rounded-lg object-cover
-                    ${buyOrderStats.totalCount !== animatedTotalCount ? 'animate-spin' : ''}
-                  `}
-                />                
-
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">P2P 거래수(건)</div>
-                  <div className="text-4xl font-semibold text-zinc-500">
-                    {
-                    //buyOrderStats.totalCount?.toLocaleString()
-                    animatedTotalCount.toLocaleString()
-                    }
-                  </div>
+          <div className="w-full grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-4">
+            {/* P2P Summary */}
+            <div className="flex items-stretch gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-inner">
+                  <Image src="/icon-trade.png" alt="P2P" width={32} height={32} className="w-8 h-8 object-contain invert" />
                 </div>
-              </div>
-
-              <div className="flex flex-col items-end justify-center gap-2">
-
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  {/* RGB: 64, 145, 146 */}
-                  <span className="text-4xl font-semibold text-[#409192]"
-                    style={{ fontFamily: 'monospace' }}>
-                    {
-                    animatedTotalUsdtAmount
-                      ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                      : '0.000'
-                    }
+                <div className="flex flex-col justify-center">
+                  <span className="text-[11px] text-zinc-600">P2P 거래수(건)</span>
+                  <span className="text-xl font-semibold text-zinc-700">
+                    {animatedTotalCount.toLocaleString()}
                   </span>
                 </div>
+              </div>
+              <div className="mx-3 hidden md:block w-px bg-gradient-to-b from-transparent via-zinc-200 to-transparent" />
+              <div className="flex flex-col justify-center items-end flex-1">
+                <span className="text-xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
+                  <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
+                  {animatedTotalUsdtAmount ? animatedTotalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
+                </span>
+                <span className="text-xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
+                  {animatedTotalKrwAmount.toLocaleString()}
+                </span>
+              </div>
+            </div>
 
-                <div className="flex flex-row items-center justify-center gap-1">
-                  <span className="text-4xl font-semibold text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}>
-                    {
-                    //buyOrderStats.totalKrwAmount?.toLocaleString()
-                    animatedTotalKrwAmount.toLocaleString()
-                    }
+            {/* Settlement Summary */}
+            <div className="flex items-stretch gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center shadow-inner">
+                  <Image src="/icon-payment2.png" alt="Settlement" width={28} height={28} className="w-7 h-7 object-contain" />
+                </div>
+                <div className="flex flex-col justify-center">
+                  <span className="text-[11px] text-zinc-600">가맹점 결제수(건)</span>
+                  <span className="text-xl font-semibold text-zinc-700">
+                    {animatedTotalSettlementCount.toLocaleString()}
                   </span>
                 </div>
-
               </div>
-
-            </div>
-
-            {/* divider */}
-            <div className="hidden xl:block w-0.5 h-20 bg-zinc-300"></div>
-            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-
-            <div className="xl:w-2/3 w-full
-              flex flex-col sm:flex-row items-start justify-end gap-4">
-
-              <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
-
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <Image
-                    src="/icon-payment2.png"
-                    alt="Payment"
-                    width={50}
-                    height={50}
-                    className={`w-12 h-12 rounded-lg object-cover
-                      ${buyOrderStats.totalSettlementCount !== animatedTotalSettlementCount ? 'animate-spin' : ''}
-                    `}
-                  />                
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">가맹점 결제수(건)</div>
-                      <span className="text-4xl font-semibold text-zinc-500">
-                        {
-                          animatedTotalSettlementCount.toLocaleString()
-                        }
+              <div className="flex flex-col md:flex-row md:items-center md:justify-end flex-1 gap-2 md:gap-4">
+                <div className="flex flex-col items-end">
+                  <span className="text-xl font-bold text-emerald-600 flex items-center gap-2 leading-tight" style={{ fontFamily: 'monospace' }}>
+                    <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
+                    {animatedTotalSettlementAmount ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}
+                  </span>
+                  <span className="text-xl font-bold text-amber-600 leading-tight" style={{ fontFamily: 'monospace' }}>
+                    {animatedTotalSettlementAmountKRW.toLocaleString()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full md:w-auto text-sm font-semibold text-zinc-700 md:mt-0 mt-1">
+                  <div className="flex flex-col gap-1 items-end md:items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-500">PG 수수료</span>
+                      <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalFeeAmount?.toFixed(3) || '0.000'} USDT
                       </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end justify-center gap-2">
-
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <Image
-                      src="/icon-tether.png"
-                      alt="Tether"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    <span className="text-4xl font-semibold text-[#409192]"
-                      style={{ fontFamily: 'monospace' }}>
-                      {
-                        animatedTotalSettlementAmount
-                        ? animatedTotalSettlementAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.000'}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <span className="text-4xl font-semibold text-yellow-600"
-                      style={{ fontFamily: 'monospace' }}>
-                      {animatedTotalSettlementAmountKRW.toLocaleString()}
-                    </span>
-                  </div>
-
-                </div>
-
-              </div>
-
-              <div className="flex flex-col gap-2 items-center">
-
-                <div className="flex flex-row gap-2 items-center
-                  border-b border-zinc-300 pb-2">
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">PG 수수료량(USDT)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}>
-                        {buyOrderStats.totalFeeAmount
-                          ? buyOrderStats.totalFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.000'}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalFeeAmountKRW !== undefined
+                          ? Math.round(buyOrderStats.totalFeeAmountKRW).toLocaleString()
+                          : '0'} 원
                       </span>
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">PG 수수료금액(원)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {buyOrderStats.totalFeeAmountKRW
-                          ? buyOrderStats.totalFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0'}
+                  <div className="flex flex-col gap-1 items-end md:items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-zinc-500">AG 수수료</span>
+                      <span className="text-emerald-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalAgentFeeAmount?.toFixed(3) || '0.000'} USDT
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600 text-base" style={{ fontFamily: 'monospace' }}>
+                        {buyOrderStats.totalAgentFeeAmountKRW !== undefined
+                          ? Math.round(buyOrderStats.totalAgentFeeAmountKRW).toLocaleString()
+                          : '0'} 원
                       </span>
                     </div>
                   </div>
-
-                </div>
-
-
-                <div className="flex flex-row gap-2 items-center">
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">AG 수수료량(USDT)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}>
-                        {buyOrderStats.totalAgentFeeAmount
-                          ? buyOrderStats.totalAgentFeeAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.000'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">AG 수수료금액(원)</div>
-                    <div className="w-full flex flex-row items-center justify-end gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {buyOrderStats.totalAgentFeeAmountKRW
-                          ? buyOrderStats.totalAgentFeeAmountKRW.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0'}
-                      </span>
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            
-            {/* divider */}
-            {/*}
-            <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
-            <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
-
-            <div className="xl:w-1/4 flex flex-row items-center justify-center gap-2">
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 청산수(건)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceCount?.toLocaleString()}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 청산금액(원)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceAmount?.toLocaleString()} 원
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 청산수량(USDT)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {tradeSummary.totalClearanceAmountUSDT?.toLocaleString()} USDT
                 </div>
               </div>
             </div>
-            */}
-            
           </div>
 
           {/* for mobile */}
@@ -5519,8 +5453,118 @@ const fetchBuyOrders = async () => {
             grid grid-cols-1 sm:grid-cols-8 gap-4">
           */}
 
-          <div className="w-full flex flex-col items-center">
-            <div className="w-full max-w-6xl flex items-center justify-between mb-2 gap-2">
+          {/* 미신청입금 내역 */}
+          <div className="w-full mt-6">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                onClick={() => setShowUnmatched((v) => !v)}
+              >
+                {showUnmatched ? '접기' : '펼치기'}
+              </button>
+              <span className="text-lg font-semibold">미신청입금 내역</span>
+              <span className="text-xs text-zinc-500">
+                건수 {unmatchedTransfers.length.toLocaleString()}
+              </span>
+              <span className="text-xs text-zinc-500">
+                합계 {unmatchedTotalAmount.toLocaleString()}원
+              </span>
+              <button
+                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-50"
+                onClick={fetchUnmatchedTransfers}
+                disabled={unmatchedLoading}
+              >
+                {unmatchedLoading ? '갱신중...' : '새로고침'}
+              </button>
+            </div>
+
+            {showUnmatched && (
+            <div className="w-full overflow-x-auto">
+              {unmatchedTransfers.length === 0 ? (
+                <div className="min-h-[80px] flex items-center justify-center text-sm text-zinc-500 border border-neutral-200 rounded-xl bg-white px-4">
+                  {unmatchedLoading ? '불러오는 중...' : '미신청 입금이 없습니다.'}
+                </div>
+              ) : (
+                <div
+                  className="flex gap-2 pb-2 overflow-x-auto"
+                  ref={unmatchedScrollRef}
+                >
+                  {(() => {
+                    const timestamps = unmatchedTransfers
+                      .map((t) => {
+                        const d = new Date(t.transactionDate || t.processingDate || t.regDate);
+                        return Number.isNaN(d.getTime()) ? null : d.getTime();
+                      })
+                      .filter((v) => v !== null) as number[];
+                    const oldest = timestamps.length ? Math.min(...timestamps) : null;
+                    const newest = timestamps.length ? Math.max(...timestamps) : null;
+                    return unmatchedTransfers.map((transfer, index) => {
+                      const ts = new Date(transfer.transactionDate || transfer.processingDate || transfer.regDate).getTime();
+                      const ratio = (oldest !== null && newest !== null && newest !== oldest)
+                        ? 1 - Math.max(0, Math.min(1, (ts - oldest) / (newest - oldest)))
+                        : 0.5;
+                      const bg = `rgba(248,113,113, ${0.15 + 0.35 * ratio})`;
+                      const border = `rgba(248,113,113, ${0.25 + 0.4 * ratio})`;
+                      return (
+                    <div
+                      key={transfer._id || index}
+                      className="min-w-[220px] max-w-[240px] p-3 border rounded-lg shadow-sm flex flex-col gap-1.5"
+                      style={{ backgroundColor: bg, borderColor: border, boxShadow: `0 6px 12px rgba(248,113,113,0.12)` }}
+                    >
+                      <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                        <span className="font-semibold text-zinc-600">No.{unmatchedTransfers.length - index}</span>
+                        <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-white/70 text-rose-600 border border-rose-100">
+                          {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm font-semibold text-zinc-800 truncate">
+                            {transfer.storeInfo?.storeName || '미지정 가맹점'}
+                          </span>
+                          <span className="text-sm font-semibold text-zinc-700 truncate">
+                            {transfer.transactionName || '-'}
+                          </span>
+                        </div>
+                        <span className="text-base font-extrabold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                          {(Number(transfer.amount) || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col text-[11px] text-zinc-700 gap-[2px]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono text-sm text-zinc-800 truncate">
+                            {transfer.bankAccountNumber || '-'}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 truncate">
+                            {(transfer.storeInfo?.bankInfo?.bankName
+                              || transfer.storeInfo?.bankInfoAAA?.bankName
+                              || transfer.storeInfo?.bankInfoBBB?.bankName
+                              || transfer.storeInfo?.bankInfoCCC?.bankName
+                              || transfer.storeInfo?.bankInfoDDD?.bankName
+                              || '은행정보없음')}
+                            {' · '}
+                            {(transfer.storeInfo?.bankInfo?.accountHolder
+                              || transfer.storeInfo?.bankInfoAAA?.accountHolder
+                              || transfer.storeInfo?.bankInfoBBB?.accountHolder
+                              || transfer.storeInfo?.bankInfoCCC?.accountHolder
+                              || transfer.storeInfo?.bankInfoDDD?.accountHolder
+                              || '예금주없음')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </div>
+            )}
+          </div>
+
+
+          <div className="w-full flex flex-col items-center justify-center">
+            <div className="w-full max-w-6xl flex items-center justify-center mb-2 gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <button
                   className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
@@ -5538,7 +5582,7 @@ const fetchBuyOrders = async () => {
             </div>
 
             {showSellerBankStats && (
-            <div className="w-full max-w-6xl
+            <div className="w-full max-w-6xl mx-auto
               grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4
               items-start justify-center">
 
@@ -5616,12 +5660,12 @@ const fetchBuyOrders = async () => {
             {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
               <div
                 key={index}
-                className={`flex flex-col gap-3 items-start border border-zinc-300 rounded-lg p-4 bg-zinc-50 shadow-md transition ${balanceFlashSet.has(index) ? 'balance-flash' : ''}`}
+                className={`flex flex-col gap-2 items-start border border-zinc-200 rounded-lg p-3 bg-white shadow-sm transition ${balanceFlashSet.has(index) ? 'balance-flash' : ''}`}
               >
-                <div className="w-full flex items-center gap-2">
+                <div className="w-full flex items-center gap-2 text-sm text-zinc-800">
                   <Image src="/icon-bank.png" alt="Bank" width={18} height={18} className="w-4.5 h-4.5" />
                   <button
-                    className="text-sm font-semibold underline text-blue-600 truncate"
+                    className="font-semibold underline text-blue-600 truncate"
                     onClick={() => {
                       const accountNumber = item._id || '기타은행';
                       navigator.clipboard.writeText(accountNumber)
@@ -5632,6 +5676,9 @@ const fetchBuyOrders = async () => {
                   >
                     {item._id || '기타은행'}
                   </button>
+                  <span className="text-xs text-zinc-500 truncate">
+                    {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
+                  </span>
                   {item.bankUserInfo?.[0]?.accountHolder && (
                     <span className="text-xs font-semibold text-zinc-500">
                       {item.bankUserInfo[0].accountHolder}
@@ -5640,15 +5687,17 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="w-full flex items-center justify-between gap-2">
-                  <span className="text-sm text-zinc-500 whitespace-nowrap">사용계좌번호:</span>
-                  <span className="text-lg font-semibold text-zinc-700 truncate text-right" style={{ fontFamily: 'monospace' }}>
-                    {item.bankUserInfo[0]?.defaultAccountNumber || '기본통장정보없음'}
-                  </span>
+                  <span className="text-xs text-zinc-500 whitespace-nowrap">사용계좌</span>
+                  <div className="flex flex-col items-end min-w-0">
+                    <span className="text-base font-semibold text-zinc-800 truncate text-right" style={{ fontFamily: 'monospace' }}>
+                      {item.bankUserInfo[0]?.defaultAccountNumber || '기본통장정보없음'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="w-full flex items-center justify-between">
-                  <span className="text-sm text-zinc-500">잔액(원):</span>
-                  <span className={`text-lg font-semibold text-yellow-600 ${balanceFlashSet.has(index) ? 'balance-flash-target' : ''}`} style={{ fontFamily: 'monospace' }}>
+                  <span className="text-xs text-zinc-500">잔액(원)</span>
+                  <span className={`text-lg font-semibold text-amber-600 ${balanceFlashSet.has(index) ? 'balance-flash-target' : ''}`} style={{ fontFamily: 'monospace' }}>
                     {lastestBalanceArray && lastestBalanceArray[index] !== undefined
                       ? lastestBalanceArray[index].toLocaleString()
                       : '잔액정보없음'}
@@ -5656,10 +5705,10 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <div className="w-full flex items-center justify-between">
-                  <span className="text-sm font-semibold text-zinc-600">
-                    {item.totalCount?.toLocaleString() || '0'}
+                  <span className="text-xs font-semibold text-zinc-500">
+                    거래 {item.totalCount?.toLocaleString() || '0'}건
                   </span>
-                  <span className="text-sm font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                  <span className="text-sm font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
                     {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
                       ? sellerBankAccountDisplayValueArray[index].toLocaleString()
                       : '0'}
@@ -5667,7 +5716,7 @@ const fetchBuyOrders = async () => {
                 </div>
 
                 <button
-                  className="w-full text-xs px-3 py-2 border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition text-center"
+                  className="w-full text-xs px-3 py-2 border border-zinc-200 rounded-md text-zinc-600 hover:bg-zinc-50 transition text-center"
                   onClick={() => fetchDepositsByAccount(
                     item.bankUserInfo?.[0]?.realAccountNumber
                     || item.bankUserInfo?.[0]?.accountNumber
@@ -5700,14 +5749,9 @@ const fetchBuyOrders = async () => {
 
             <div className="w-full overflow-x-auto">
 
-              <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+              <table className="w-full table-auto border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
 
-                <thead
-                  className="bg-zinc-800 text-white text-sm font-semibold"
-                  style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  }}
-                >
+                <thead className="bg-neutral-900 text-white text-sm font-semibold">
                   <tr>
 
                     <th className="p-2">
@@ -5869,14 +5913,8 @@ const fetchBuyOrders = async () => {
 
                     
                     <tr key={index} className={`
-                      ${
-                        index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-
-
-                        //item.walletAddress === address ?
-                        
-
-                      }
+                      ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'}
+                      border-b border-neutral-200
                     `}>
                     
 
@@ -9509,7 +9547,7 @@ const fetchBuyOrders = async () => {
 
           {/* panel */}
           <div
-            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[420px] max-w-[480px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
+            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[500px] max-w-[560px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
               aliasPanelOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
@@ -9651,6 +9689,7 @@ const fetchBuyOrders = async () => {
                             </span>
                             <span className="font-semibold text-zinc-900 truncate">
                               {trx.transactionName || '-'}
+                              {trx.buyerInfo?.nickname ? ` · ${trx.buyerInfo.nickname}` : ''}
                             </span>
                           </div>
                           <div className="flex items-center gap-3">

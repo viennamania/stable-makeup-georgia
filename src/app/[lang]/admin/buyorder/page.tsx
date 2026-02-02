@@ -5620,7 +5620,7 @@ const fetchBuyOrders = async () => {
           )}
 
 
-          {/* 미신청내역 */}
+          {/* 미신청입금 내역 */}
           
           <div className="w-full mt-6">
             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -5630,7 +5630,7 @@ const fetchBuyOrders = async () => {
               >
                 {showUnmatched ? '접기' : '펼치기'}
               </button>
-              <span className="text-lg font-semibold">미신청내역</span>
+              <span className="text-lg font-semibold">미신청입금 내역</span>
               <span className="text-xs text-zinc-500">
                 건수 {unmatchedTransfers.length.toLocaleString()}
               </span>
