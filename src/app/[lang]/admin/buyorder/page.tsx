@@ -1458,6 +1458,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelAliasNumber, setAliasPanelAliasNumber] = useState('');
   const [aliasPanelBankName, setAliasPanelBankName] = useState('');
   const [aliasPanelAccountHolder, setAliasPanelAccountHolder] = useState('');
+  const [aliasPanelStoreLogo, setAliasPanelStoreLogo] = useState('');
+  const [aliasPanelStoreName, setAliasPanelStoreName] = useState('');
   const [aliasPanelTotalCount, setAliasPanelTotalCount] = useState(0);
   const [aliasPanelTotalAmount, setAliasPanelTotalAmount] = useState(0);
   const [showSellerBankStats, setShowSellerBankStats] = useState(true);
@@ -1643,6 +1645,8 @@ const depositAmountMatches = useMemo(() => {
       setAliasPanelTotalAmount(0);
       setAliasPanelPage(1);
       setAliasPanelHasMore(true);
+      setAliasPanelStoreLogo('');
+      setAliasPanelStoreName('');
     }
 
     setAliasPanelAccountNumber(targetReal);
@@ -1704,6 +1708,21 @@ const depositAmountMatches = useMemo(() => {
       setAliasPanelTransfers((prev) =>
         append ? [...prev, ...filteredTransfers] : filteredTransfers
       );
+      if ((!append || !aliasPanelStoreName) && filteredTransfers.length > 0) {
+        const first = filteredTransfers[0];
+        const storeLogo =
+          first?.storeInfo?.storeLogo ||
+          first?.storeInfo?.logo ||
+          first?.store?.storeLogo ||
+          '';
+        const storeName =
+          first?.storeInfo?.storeName ||
+          first?.store?.storeName ||
+          first?.storeName ||
+          '';
+        if (storeLogo) setAliasPanelStoreLogo(storeLogo);
+        if (storeName) setAliasPanelStoreName(storeName);
+      }
 
       const apiTotalCount = data?.result?.totalCount ?? filteredTransfers.length;
       const apiTotalAmount = data?.result?.totalAmount ?? filteredTransfers.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
@@ -5581,25 +5600,33 @@ const fetchBuyOrders = async () => {
                   ${balanceFlashSet.has(index) ? 'balance-flash' : ''}
                   `}
                 >
-                  <div className="flex items-center gap-2 w-full justify-between">
-                    <Image src="/icon-bank.png" alt="Bank" width={16} height={16} className="w-4 h-4" />
-                    <div className="flex flex-col min-w-0">
-                      <button
-                        className="text-sm font-semibold text-blue-600 underline truncate text-left"
-                        onClick={() => {
-                          const accountNumber =
-                            item.bankUserInfo?.[0]?.defaultAccountNumber ||
-                            item._id ||
-                            '기타은행';
-                          navigator.clipboard
-                            .writeText(accountNumber)
-                            .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
-                            .catch((err) => toast.error('복사 실패: ' + err));
-                        }}
-                        title="계좌번호 복사"
-                      >
-                        {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
-                      </button>
+                  <div className="flex items-start gap-3 w-full justify-between">
+                    <div className="flex flex-col min-w-0 gap-1">
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src="/icon-bank.png"
+                          alt="Bank"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 rounded-md border border-zinc-200 bg-white object-cover"
+                        />
+                        <button
+                          className="text-sm font-semibold text-blue-600 underline truncate text-left"
+                          onClick={() => {
+                            const accountNumber =
+                              item.bankUserInfo?.[0]?.defaultAccountNumber ||
+                              item._id ||
+                              '기타은행';
+                            navigator.clipboard
+                              .writeText(accountNumber)
+                              .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
+                              .catch((err) => toast.error('복사 실패: ' + err));
+                          }}
+                          title="계좌번호 복사"
+                        >
+                          {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
+                        </button>
+                      </div>
                       <span className="text-xs text-zinc-500 truncate">
                         {item.bankUserInfo?.[0]?.accountHolder || '예금주 없음'} · {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
                       </span>
@@ -9534,20 +9561,38 @@ const fetchBuyOrders = async () => {
                 >
                   닫기
                 </button>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs uppercase tracking-wide text-zinc-500">사용계좌번호</span>
-                  <span className="text-2xl font-extrabold text-zinc-900" style={{ fontFamily: 'monospace' }}>
-                    {aliasPanelAliasNumber || aliasPanelAccountNumber || '-'}
-                  </span>
-                  <span className="text-[11px] uppercase tracking-wide text-zinc-400 mt-2">실계좌번호</span>
-                  <span className="text-base font-semibold text-zinc-600" style={{ fontFamily: 'monospace' }}>
-                    {aliasPanelAccountNumber || '-'}
-                  </span>
-                  {(aliasPanelBankName || aliasPanelAccountHolder) && (
-                    <span className="text-sm font-semibold text-zinc-700">
-                      {aliasPanelBankName || '은행명 없음'} · {aliasPanelAccountHolder || '예금주 없음'}
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs uppercase tracking-wide text-zinc-500">사용계좌번호</span>
+                      <span className="text-2xl font-extrabold text-zinc-900" style={{ fontFamily: 'monospace' }}>
+                        {aliasPanelAliasNumber || aliasPanelAccountNumber || '-'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Image
+                        src={aliasPanelStoreLogo || '/icon-store.png'}
+                        alt="Store"
+                        width={28}
+                        height={28}
+                        className="w-7 h-7 rounded-md border border-zinc-200 bg-white object-cover"
+                      />
+                      <span className="text-sm font-semibold text-zinc-800 truncate max-w-[150px]">
+                        {aliasPanelStoreName || '가맹점 정보 없음'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[11px] uppercase tracking-wide text-zinc-400 mt-1">실계좌번호</span>
+                    <span className="text-base font-semibold text-zinc-600" style={{ fontFamily: 'monospace' }}>
+                      {aliasPanelAccountNumber || '-'}
                     </span>
-                  )}
+                    {(aliasPanelBankName || aliasPanelAccountHolder) && (
+                      <span className="text-sm font-semibold text-zinc-700">
+                        {aliasPanelBankName || '은행명 없음'} · {aliasPanelAccountHolder || '예금주 없음'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2 text-sm font-semibold">
                   <span className="text-xs text-zinc-500">
@@ -9677,9 +9722,6 @@ const fetchBuyOrders = async () => {
                           </span>
                         </div>
                         <div className="flex flex-col items-end gap-1 w-full sm:w-auto text-right">
-                          <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
-                            {trx.amount !== undefined ? Number(trx.amount).toLocaleString() : '-'}
-                          </span>
                           {(() => {
                             const rawDate = trx.transactionDate || trx.regDate;
                             const dt = rawDate ? new Date(rawDate) : null;
@@ -9691,10 +9733,14 @@ const fetchBuyOrders = async () => {
                               ? dt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
                               : '';
                             return (
-                              <span className="text-[11px] text-zinc-500 leading-tight">
-                                <span className="block">{dateLabel}</span>
-                                {timeLabel && <span className="block">{timeLabel}</span>}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                                  {trx.amount !== undefined ? Number(trx.amount).toLocaleString() : '-'}
+                                </span>
+                                <span className="text-[11px] text-zinc-500 whitespace-nowrap">
+                                  {isValid ? `${dateLabel} ${timeLabel}` : '-'}
+                                </span>
+                              </div>
                             );
                           })()}
                           {(() => {
