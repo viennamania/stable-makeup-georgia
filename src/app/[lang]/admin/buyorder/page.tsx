@@ -1467,6 +1467,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelPage, setAliasPanelPage] = useState(1);
   const [aliasPanelHasMore, setAliasPanelHasMore] = useState(true);
   const aliasPanelLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [aliasPanelDownloading, setAliasPanelDownloading] = useState(false);
 
   // 미신청 입금내역
   const [unmatchedTransfers, setUnmatchedTransfers] = useState<any[]>([]);
@@ -1741,6 +1742,130 @@ const depositAmountMatches = useMemo(() => {
 
   const closeAliasPanel = () => {
     setAliasPanelOpen(false);
+  };
+
+  const downloadAliasPanelExcel = async () => {
+    if (aliasPanelDownloading) return;
+    if (!aliasPanelAccountNumber) {
+      toast.error('먼저 계좌를 선택해 주세요.');
+      return;
+    }
+
+    setAliasPanelDownloading(true);
+    try {
+      const limit = 200;
+      let page = 1;
+      let hasMore = true;
+      const allTransfers: any[] = [];
+      let totalCountFromApi: number | null = null;
+
+      while (hasMore) {
+        const response = await fetch('/api/bankTransfer/getAll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            limit,
+            page,
+            accountNumber: '',
+            originalAccountNumber: aliasPanelAccountNumber,
+            fromDate: searchFromDate,
+            toDate: searchToDate,
+            transactionType: 'deposited',
+            matchStatus:
+              aliasPanelMatchFilter === 'matched'
+                ? 'matched'
+                : aliasPanelMatchFilter === 'unmatched'
+                  ? 'unmatched'
+                  : '',
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('전체 내역을 불러오지 못했습니다.');
+        }
+
+        const data = await response.json();
+        const rawTransfers: any[] = data?.result?.transfers || [];
+
+        const filteredTransfers =
+          aliasPanelMatchFilter === 'matched'
+            ? rawTransfers.filter((t) => {
+                const m = t?.match;
+                if (!m) return false;
+                if (typeof m === 'string') return m.toLowerCase() === 'success';
+                if (typeof m === 'object') return true;
+                return false;
+              })
+            : aliasPanelMatchFilter === 'unmatched'
+              ? rawTransfers.filter((t) => {
+                  const m = t?.match;
+                  if (!m) return true;
+                  if (typeof m === 'string') return m.toLowerCase() !== 'success';
+                  if (typeof m === 'object') return false;
+                  return true;
+                })
+              : rawTransfers;
+
+        allTransfers.push(...filteredTransfers);
+        if (totalCountFromApi === null) {
+          totalCountFromApi = data?.result?.totalCount ?? filteredTransfers.length;
+        }
+        hasMore = rawTransfers.length >= limit;
+        page += 1;
+      }
+
+      if (!allTransfers.length) {
+        toast.error('다운로드할 입금 내역이 없습니다.');
+        return;
+      }
+
+      const rows = allTransfers.map((t, idx) => {
+        const matchLabel = (() => {
+          const m = t?.match;
+          const normalized = m === undefined || m === null
+            ? ''
+            : typeof m === 'string'
+              ? m.toLowerCase()
+              : 'object';
+          const isSuccess = normalized === 'success' || normalized === 'object';
+          return isSuccess ? '정상입금' : '미신청입금';
+        })();
+
+        const descendingIndex = totalCountFromApi !== null
+          ? totalCountFromApi - idx
+          : allTransfers.length - idx;
+
+        return {
+          No: descendingIndex,
+          Match: matchLabel,
+          Depositor: t.transactionName || '',
+          Amount: Number(t.amount) || 0,
+          BankAccountNumber: t.bankAccountNumber || aliasPanelAccountNumber || '',
+          BankName: t.bankName || aliasPanelBankName || '',
+          AccountHolder: t.accountHolder || aliasPanelAccountHolder || '',
+          TransactionDate: t.transactionDate || t.processingDate || t.regDate || '',
+          Balance: Number(t.balance) || 0,
+          TradeId: t.tradeId || '',
+          UserId: t.userId || '',
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Deposits');
+
+      const safeAlias = (aliasPanelAliasNumber || aliasPanelAccountNumber || 'account')
+        .toString()
+        .replace(/[^0-9a-zA-Z_-]/g, '');
+      const filename = `deposits_${safeAlias}_${searchFromDate || 'from'}_${searchToDate || 'to'}.xlsx`;
+      XLSX.writeFile(wb, filename);
+      toast.success('전체 입금 내역을 다운로드했습니다.');
+    } catch (error: any) {
+      console.error('입금 내역 다운로드 실패', error);
+      toast.error(error?.message || '엑셀 다운로드에 실패했습니다.');
+    } finally {
+      setAliasPanelDownloading(false);
+    }
   };
 
   // ESC to close alias panel
@@ -5564,124 +5689,126 @@ const fetchBuyOrders = async () => {
           </div>
           */}
 
-
-          <div className="w-full flex items-center justify-between mb-2 gap-2">
-            <div className="flex items-center gap-2">
-              <button
-                className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
-                onClick={() => setShowSellerBankStats((v) => !v)}
-              >
-                {showSellerBankStats ? '접기' : '펼치기'}
-              </button>
-              <span className="text-lg font-semibold">
-                판매자 통장별 P2P 거래 통계
-              </span>
-              <span className="text-xs text-zinc-500">
-                총 {buyOrderStats.totalBySellerBankAccountNumber?.length || 0} 계좌
-              </span>
-            </div>
-            <div />
-          </div>
-
-          {showSellerBankStats && (
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
-              {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                <div
-                  key={index}
-                  className={`flex flex-col gap-1.5 items-start
-                  p-3 rounded-xl border border-zinc-200 bg-white
-                  ${
-                    lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
-                      ? 'ring-1 ring-emerald-200'
-                      : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
-                        ? 'ring-1 ring-amber-200'
-                        : ''
-                  }
-                  ${balanceFlashSet.has(index) ? 'balance-flash' : ''}
-                  `}
+          {/* 판매자 통장별 P2P 거래 통계 */}
+          <div className="w-full mt-2">
+            <div className="w-full flex items-center justify-between mb-2 gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
+                  onClick={() => setShowSellerBankStats((v) => !v)}
                 >
-                  <div className="flex items-start gap-3 w-full justify-between">
-                    <div className="flex flex-col min-w-0 gap-0.5 leading-tight">
-                      <div className="flex items-center gap-2">
-                        <Image
-                          src="/icon-bank.png"
-                          alt="Bank"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 rounded-md border border-zinc-200 bg-white object-cover"
-                        />
-                        <button
-                          className="text-sm font-semibold text-blue-600 underline truncate text-left"
-                          onClick={() => {
-                            const accountNumber =
-                              item.bankUserInfo?.[0]?.defaultAccountNumber ||
-                              item._id ||
-                              '기타은행';
-                            navigator.clipboard
-                              .writeText(accountNumber)
-                              .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
-                              .catch((err) => toast.error('복사 실패: ' + err));
-                          }}
-                          title="계좌번호 복사"
-                        >
-                          {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
-                        </button>
+                  {showSellerBankStats ? '접기' : '펼치기'}
+                </button>
+                <span className="text-lg font-semibold">
+                  판매자 통장별 P2P 거래 통계
+                </span>
+                <span className="text-xs text-zinc-500">
+                  총 {buyOrderStats.totalBySellerBankAccountNumber?.length || 0} 계좌
+                </span>
+              </div>
+              <div />
+            </div>
+
+            {showSellerBankStats && (
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
+                {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
+                  <div
+                    key={index}
+                    className={`flex flex-col gap-1.5 items-start
+                    p-3 rounded-xl border border-zinc-200 bg-white
+                    ${
+                      lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
+                        ? 'ring-1 ring-emerald-200'
+                        : sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined && sellerBankAccountDisplayValueArray[index] !== item.totalKrwAmount
+                          ? 'ring-1 ring-amber-200'
+                          : ''
+                    }
+                    ${balanceFlashSet.has(index) ? 'balance-flash' : ''}
+                    `}
+                  >
+                    <div className="flex items-start gap-3 w-full justify-between">
+                      <div className="flex flex-col min-w-0 gap-0.5 leading-tight">
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src="/icon-bank.png"
+                            alt="Bank"
+                            width={20}
+                            height={20}
+                            className="w-5 h-5 rounded-md border border-zinc-200 bg-white object-cover"
+                          />
+                          <button
+                            className="text-sm font-semibold text-blue-600 underline truncate text-left"
+                            onClick={() => {
+                              const accountNumber =
+                                item.bankUserInfo?.[0]?.defaultAccountNumber ||
+                                item._id ||
+                                '기타은행';
+                              navigator.clipboard
+                                .writeText(accountNumber)
+                                .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
+                                .catch((err) => toast.error('복사 실패: ' + err));
+                            }}
+                            title="계좌번호 복사"
+                          >
+                            {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
+                          </button>
+                        </div>
+                        <span className="text-xs text-zinc-500 truncate leading-tight">
+                          {item.bankUserInfo?.[0]?.accountHolder || '예금주 없음'} · {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
+                        </span>
+                        <span className="text-[11px] text-zinc-400 truncate leading-tight" style={{ fontFamily: 'monospace' }}>
+                          실계좌번호: {item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || '-'}
+                        </span>
                       </div>
-                      <span className="text-xs text-zinc-500 truncate leading-tight">
-                        {item.bankUserInfo?.[0]?.accountHolder || '예금주 없음'} · {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
-                      </span>
-                      <span className="text-[11px] text-zinc-400 truncate leading-tight" style={{ fontFamily: 'monospace' }}>
-                        실계좌번호: {item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || '-'}
+                      <button
+                        className="text-xs px-2 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 shrink-0"
+                        onClick={() =>
+                          fetchAliasTransfers(
+                            item.bankUserInfo?.[0]?.realAccountNumber
+                            || item.bankUserInfo?.[0]?.accountNumber
+                            || item._id
+                            || '기타은행',
+                            {
+                              bankName: item.bankUserInfo?.[0]?.bankName,
+                              accountHolder: item.bankUserInfo?.[0]?.accountHolder,
+                              aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                              defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                              realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || '',
+                            }
+                          )
+                        }
+                      >
+                        입금내역
+                      </button>
+                    </div>
+
+                    <div className="w-full flex items-center justify-between text-xs">
+                      <span className="text-sm text-zinc-500">잔액(원)</span>
+                      <span className="text-xl font-extrabold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
+                        {lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                          ? lastestBalanceArray[index].toLocaleString()
+                          : '잔액정보없음'}
                       </span>
                     </div>
-                    <button
-                      className="text-xs px-2 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 shrink-0"
-                      onClick={() =>
-                        fetchAliasTransfers(
-                          item.bankUserInfo?.[0]?.realAccountNumber
-                          || item.bankUserInfo?.[0]?.accountNumber
-                          || item._id
-                          || '기타은행',
-                          {
-                            bankName: item.bankUserInfo?.[0]?.bankName,
-                            accountHolder: item.bankUserInfo?.[0]?.accountHolder,
-                            aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                            defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                            realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || '',
-                          }
-                        )
-                      }
-                    >
-                      입금내역
-                    </button>
-                  </div>
 
-                  <div className="w-full flex items-center justify-between text-xs">
-                    <span className="text-sm text-zinc-500">잔액(원)</span>
-                    <span className="text-xl font-extrabold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
-                      {lastestBalanceArray && lastestBalanceArray[index] !== undefined
-                        ? lastestBalanceArray[index].toLocaleString()
-                        : '잔액정보없음'}
-                    </span>
+                    <div className="w-full flex items-center justify-between text-xs">
+                      <span className="font-semibold text-zinc-600">{item.totalCount?.toLocaleString() || '0'}</span>
+                      <span className="font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                        {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                          ? sellerBankAccountDisplayValueArray[index].toLocaleString()
+                          : '0'}
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="w-full flex items-center justify-between text-xs">
-                    <span className="font-semibold text-zinc-600">{item.totalCount?.toLocaleString() || '0'}</span>
-                    <span className="font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
-                      {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
-                        ? sellerBankAccountDisplayValueArray[index].toLocaleString()
-                        : '0'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
 
 
           {/* 미신청입금 내역 */}
           
-          <div className="w-full mt-6">
+          <div className="w-full mt-4">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <button
                 className="px-2 py-1 text-xs border border-zinc-300 rounded-md text-zinc-600 hover:bg-zinc-100 transition"
@@ -5923,7 +6050,7 @@ const fetchBuyOrders = async () => {
           {/* buyOrders table */}
           <div className="w-full overflow-x-auto">
 
-            <table className="w-full table-auto border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
+            <table className="w-full table-auto border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white text-[13px] leading-tight [&>thead>tr>th]:py-2 [&>thead>tr>th]:px-3 [&>tbody>tr>td]:py-2 [&>tbody>tr>td]:px-3">
 
               <thead className="bg-neutral-900 text-white text-sm font-semibold">
                 <tr>
@@ -6162,7 +6289,7 @@ const fetchBuyOrders = async () => {
                     >
 
                       <div
-                        className={`h-40 w-32 flex flex-col items-start justify-start gap-2 rounded-lg border
+                        className={`h-32 w-32 flex flex-col items-start justify-start gap-2 rounded-lg border
                         ${statusCardTone(item.status, item.settlement)}
                         cursor-pointer transition-all duration-200 ease-in-out
                         hover:scale-105 hover:shadow-lg hover:shadow-emerald-100/80 hover:cursor-pointer p-2`}
@@ -6526,7 +6653,7 @@ const fetchBuyOrders = async () => {
                     <td className="p-2">
                       <div className="
                         w-32
-                        flex flex-col gap-2 items-end justify-start">
+                        flex flex-col gap-1 items-end justify-start leading-tight">
 
                         <div className="flex flex-row items-center justify-end gap-1">
                           <Image
@@ -6572,9 +6699,9 @@ const fetchBuyOrders = async () => {
                         </span>
 
                         {/* paymentMethod */}
-                        <div className="flex flex-col items-end justify-end gap-2">
+                        <div className="flex flex-col items-end justify-end gap-1 leading-tight">
                           
-                          <div className="flex flex-row items-center justify-center gap-2">
+                          <div className="flex flex-row items-center justify-center gap-1">
                             <span className="text-sm text-zinc-500">
                               결제방법
                             </span>
@@ -6873,8 +7000,8 @@ const fetchBuyOrders = async () => {
                           <div className="w-full flex flex-row gap-2 items-center justify-start">
 
                             <button
-                              className="text-sm text-yellow-600 font-semibold
-                                border border-yellow-600 rounded-lg p-2
+                              className="text-xs leading-tight text-yellow-600 font-semibold
+                                border border-yellow-600 rounded-lg px-2.5 py-1.5
                                 text-center
                                 hover:bg-yellow-200
                                 cursor-pointer
@@ -6962,9 +7089,9 @@ const fetchBuyOrders = async () => {
 
                             <button
                               className="
-                                text-sm text-[#409192] font-semibold
+                                text-xs leading-tight text-[#409192] font-semibold
                                 border border-green-600 rounded-lg p-2
-                                text-center
+                                text-center whitespace-nowrap
                                 hover:bg-green-200
                                 cursor-pointer
                                 transition-all duration-200 ease-in-out
@@ -6977,7 +7104,7 @@ const fetchBuyOrders = async () => {
                                 openModal();
                               }}
                             >
-                              거래<br/>완료
+                              거래완료
                             </button>
                             <a
                               href={`${paymentUrl}/${params.lang}/${clientId}/${item?.storecode}/pay-usdt-reverse/${item?._id}`}
@@ -7025,8 +7152,8 @@ const fetchBuyOrders = async () => {
                       //!item?.escrowTransactionHash &&
                       item?.status === 'paymentConfirmed' && (
                         <div className="
-                          w-36
-                          flex flex-col gap-2 items-end justify-start">
+                          w-32
+                          flex flex-col gap-1.5 items-end justify-start leading-tight text-[13px]">
                           
                           {item?.autoConfirmPayment === true ? (
                           
@@ -7034,9 +7161,9 @@ const fetchBuyOrders = async () => {
                               <Image
                                 src="/icon-payaction.png"
                                 alt="Bank Check"
-                                width={20}
-                                height={20}
-                                className="w-5 h-5 rounded-full"
+                                width={16}
+                                height={16}
+                                className="w-4 h-4 rounded-full"
                               />
                               <span className="text-sm font-semibold text-zinc-500">
                                 자동입금확인
@@ -7049,9 +7176,9 @@ const fetchBuyOrders = async () => {
                               <Image
                                 src="/icon-bank-check.png"
                                 alt="Bank Check"
-                                width={20}
-                                height={20}
-                                className="w-5 h-5 rounded-full"
+                                width={16}
+                                height={16}
+                                className="w-4 h-4 rounded-full"
                               />
                               <span className="text-sm font-semibold text-zinc-500">
                                 수동입금확인
@@ -7220,9 +7347,9 @@ const fetchBuyOrders = async () => {
                             </div>
                           ) : (
 
-                            <div className="w-full flex flex-col gap-2 items-start justify-center">
+                            <div className="w-full flex flex-col gap-1.5 items-start justify-center leading-tight">
 
-                              <div className="flex flex-row gap-1 items-center justify-end animate-fade-slide">
+                              <div className="flex flex-row gap-1 items-center justify-end animate-fade-slide leading-tight">
                                 <Image
                                   src="/icon-search-bank.gif"
                                   alt="Bank Auto"
@@ -7231,11 +7358,11 @@ const fetchBuyOrders = async () => {
                                   className="rounded-full"
                                 />
                                 {item?.autoConfirmPayment === true ? (
-                                  <span className="text-sm font-semibold text-zinc-500 drop-shadow-sm">
+                                  <span className="text-[13px] font-semibold text-zinc-500 drop-shadow-sm leading-tight">
                                     입금 확인중입니다.
                                   </span>
                                 ) : (
-                                  <span className="text-sm font-semibold text-zinc-500 drop-shadow-sm">
+                                  <span className="text-[13px] font-semibold text-zinc-500 drop-shadow-sm leading-tight">
                                     입금 확인중입니다.
                                   </span>
                                 )}
@@ -7243,7 +7370,7 @@ const fetchBuyOrders = async () => {
                               </div>
 
                               {item?.userType === '' ? (
-                                <div className="flex flex-row gap-1 items-center justify-end">
+                                <div className="flex flex-row gap-1 items-center justify-end leading-tight">
                                   <Image
                                     src="/icon-bank.png"
                                     alt="Bank"
@@ -8249,7 +8376,7 @@ const fetchBuyOrders = async () => {
                         && (
                           <button
                             className="
-                              h-40
+                              h-32
                               w-full
                               flex flex-row gap-2 items-center justify-between
                               text-sm text-[#409192] font-semibold
@@ -8553,7 +8680,7 @@ const fetchBuyOrders = async () => {
 
                     <td className="p-2">
                       <div className="
-                        h-40
+                        h-32
                         w-full
                         flex flex-col gap-2 items-start justify-center
                         border border-dashed border-zinc-600
@@ -8623,7 +8750,7 @@ const fetchBuyOrders = async () => {
                                 alt="Payment Icon"
                                 width={30}
                                 height={30}
-                                className="w-8 h-8 rounded-lg object-cover"
+                                className="w-6 h-6 rounded-lg object-cover"
                               />
                               <Image
                                 src={item?.store?.storeLogo || '/icon-store.png'}
@@ -8659,7 +8786,7 @@ const fetchBuyOrders = async () => {
                               <span className="text-sm font-semibold text-zinc-500">
                                 지갑잔액:
                               </span>
-                              <span className="text-lg font-semibold text-green-600"
+                              <span className="text-sm font-semibold text-green-600"
                                 style={{
                                   fontFamily: 'monospace',
                                 }}>
@@ -8979,12 +9106,11 @@ const fetchBuyOrders = async () => {
 
                                 className={`
                                   ${item.settlement.txid === "0x" || !item.settlement.txid ? "bg-gray-500 cursor-not-allowed" : "bg-[#AFE4AB] hover:bg-[#9BCDA5] cursor-pointer"}
-                                  w-full  
-                                  flex flex-col gap-2 items-center justify-center
-
+                                  flex flex-col gap-1 items-center justify-center
+                                  w-48 
                                   bg-[#AFE4AB] hover:bg-[#9BCDA5]
                                   text-sm text-green-800 font-semibold
-                                  border border-green-600 rounded-lg p-2
+                                  border border-green-600 rounded-lg px-3 py-2
                                   hover:border-green-700
                                   hover:shadow-lg
                                   hover:shadow-green-500/50
@@ -9014,8 +9140,8 @@ const fetchBuyOrders = async () => {
 
 
                                 <div className="
-                                  w-40   
-                                  flex flex-col gap-1 items-end justify-center"
+                                  w-full  
+                                  flex flex-col gap-0.5 items-end justify-center leading-tight"
                                   style={{
                                     fontFamily: 'monospace',
                                   }}
@@ -9058,7 +9184,7 @@ const fetchBuyOrders = async () => {
                               </button>
                         
                               <div className="  
-                                w-32
+                                w-20 
                                 flex flex-col gap-2 items-end justify-center"
                               >
                                 <button
@@ -9598,7 +9724,7 @@ const fetchBuyOrders = async () => {
                   <span className="text-xs text-zinc-500">
                     조회기간 {searchFromDate} ~ {searchToDate}
                   </span>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
                       {[
                         { key: 'all', label: '전체' },
@@ -9633,20 +9759,29 @@ const fetchBuyOrders = async () => {
                         </button>
                       ))}
                     </div>
-                    <button
-                      className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
-                      onClick={() =>
-                        fetchAliasTransfers(aliasPanelAccountNumber, {
-                          bankName: aliasPanelBankName,
-                          accountHolder: aliasPanelAccountHolder,
-                          aliasAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
-                          defaultAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
-                          realAccountNumber: aliasPanelAccountNumber,
-                        }, aliasPanelMatchFilter, 1, false)
-                      }
-                    >
-                      새로고침
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="text-xs px-3 py-1.5 rounded-md border border-zinc-200 hover:bg-zinc-50 active:scale-95 transition"
+                        onClick={() =>
+                          fetchAliasTransfers(aliasPanelAccountNumber, {
+                            bankName: aliasPanelBankName,
+                            accountHolder: aliasPanelAccountHolder,
+                            aliasAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
+                            defaultAccountNumber: aliasPanelAliasNumber || aliasPanelAccountNumber,
+                            realAccountNumber: aliasPanelAccountNumber,
+                          }, aliasPanelMatchFilter, 1, false)
+                        }
+                        >
+                          새로고침
+                        </button>
+                      <button
+                        className={`text-xs px-3 py-1.5 rounded-md border border-emerald-200 text-emerald-700 hover:bg-emerald-50 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                        onClick={downloadAliasPanelExcel}
+                        disabled={aliasPanelDownloading}
+                      >
+                        {aliasPanelDownloading ? '다운로드중...' : '엑셀다운로드'}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-3 py-1.5 rounded-md bg-zinc-100 text-zinc-700">
