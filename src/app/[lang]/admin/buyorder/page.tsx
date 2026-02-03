@@ -1468,6 +1468,10 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelHasMore, setAliasPanelHasMore] = useState(true);
   const aliasPanelLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const [aliasPanelDownloading, setAliasPanelDownloading] = useState(false);
+  const [aliasPanelConfirmOpen, setAliasPanelConfirmOpen] = useState(false);
+  const [aliasPanelConfirmMemo, setAliasPanelConfirmMemo] = useState('');
+  const [aliasPanelConfirmTarget, setAliasPanelConfirmTarget] = useState<any>(null);
+  const [aliasPanelConfirmLoading, setAliasPanelConfirmLoading] = useState(false);
 
   // 미신청 입금내역
   const [unmatchedTransfers, setUnmatchedTransfers] = useState<any[]>([]);
@@ -1865,6 +1869,58 @@ const depositAmountMatches = useMemo(() => {
       toast.error(error?.message || '엑셀 다운로드에 실패했습니다.');
     } finally {
       setAliasPanelDownloading(false);
+    }
+  };
+
+  const openAliasConfirmModal = (trx: any) => {
+    setAliasPanelConfirmTarget(trx);
+    setAliasPanelConfirmMemo(trx?.memo || '');
+    setAliasPanelConfirmOpen(true);
+  };
+
+  const closeAliasConfirmModal = () => {
+    if (aliasPanelConfirmLoading) return;
+    setAliasPanelConfirmOpen(false);
+    setAliasPanelConfirmMemo('');
+    setAliasPanelConfirmTarget(null);
+  };
+
+  const confirmAliasMatchUpdate = async () => {
+    if (!aliasPanelConfirmTarget?._id) {
+      toast.error('대상 입금 내역이 없습니다.');
+      return;
+    }
+    if (!aliasPanelConfirmMemo.trim()) {
+      toast.error('설명을 입력해주세요.');
+      return;
+    }
+    setAliasPanelConfirmLoading(true);
+    try {
+      const res = await fetch('/api/bankTransfer/mark-success', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: aliasPanelConfirmTarget._id,
+          memo: aliasPanelConfirmMemo.trim(),
+        }),
+      });
+      if (!res.ok) {
+        throw new Error('업데이트에 실패했습니다.');
+      }
+      // update local list
+      setAliasPanelTransfers((prev) =>
+        prev.map((t) =>
+          (t._id || '') === aliasPanelConfirmTarget._id
+            ? { ...t, match: 'success', memo: aliasPanelConfirmMemo.trim() }
+            : t
+        )
+      );
+      toast.success('입금내역을 정상입금으로 업데이트했습니다.');
+      closeAliasConfirmModal();
+    } catch (error: any) {
+      toast.error(error?.message || '업데이트에 실패했습니다.');
+    } finally {
+      setAliasPanelConfirmLoading(false);
     }
   };
 
@@ -9675,7 +9731,7 @@ const fetchBuyOrders = async () => {
 
           {/* panel */}
           <div
-            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[440px] max-w-[520px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
+            className={`absolute inset-y-0 left-0 bg-white shadow-2xl w-full sm:w-[560px] max-w-[720px] h-full overflow-y-auto transition-transform duration-300 ease-out ${
               aliasPanelOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
           >
@@ -9808,7 +9864,7 @@ const fetchBuyOrders = async () => {
                 <div className="text-sm text-zinc-500">표시할 이력이 없습니다.</div>
               )}
 
-              <div className="space-y-2">
+                  <div className="space-y-2">
                 {aliasPanelTransfers.map((trx: any, idx: number) => (
                   <div
                     key={trx._id || idx}
@@ -9818,18 +9874,16 @@ const fetchBuyOrders = async () => {
                     const descendingIndex = aliasPanelTotalCount
                       ? aliasPanelTotalCount - idx
                       : aliasPanelTransfers.length - idx;
-                    const matchInfo = (() => {
-                      const m = trx?.match;
-                      const normalized = m === undefined || m === null
-                        ? ''
-                        : typeof m === 'string'
-                          ? m.toLowerCase()
-                          : 'object';
-                      const isSuccess = normalized === 'success' || normalized === 'object';
-                      return isSuccess
-                        ? { label: '정상입금', className: 'bg-blue-100 text-blue-700 border border-blue-200' }
-                        : { label: '미신청입금', className: 'bg-amber-100 text-amber-700 border border-amber-200' };
-                    })();
+                    const m = trx?.match;
+                    const normalized = m === undefined || m === null
+                      ? ''
+                      : typeof m === 'string'
+                        ? m.toLowerCase()
+                        : 'object';
+                    const isSuccess = normalized === 'success' || normalized === 'object';
+                    const matchInfo = isSuccess
+                      ? { label: '정상입금', className: 'bg-blue-100 text-blue-700 border border-blue-200' }
+                      : { label: '미신청입금', className: 'bg-amber-100 text-amber-700 border border-amber-200' };
                     const manualProcessed = !!trx?.matchedByAdmin;
                     return (
                       <>
@@ -9837,6 +9891,14 @@ const fetchBuyOrders = async () => {
                           <span className="w-6 text-center text-[11px] text-zinc-400">
                             {descendingIndex}.
                           </span>
+                          {!isSuccess && (
+                            <button
+                              className="text-[11px] px-2 py-0.5 rounded-md border border-rose-200 text-rose-600 hover:bg-rose-50 active:scale-95 transition"
+                              onClick={() => openAliasConfirmModal(trx)}
+                            >
+                              입금처리
+                            </button>
+                          )}
                           <div className="flex flex-col gap-1">
                             <span className={`sm:w-[72px] w-auto min-w-[64px] text-center px-2 py-0.5 rounded-full leading-none ${matchInfo.className}`}>
                               {matchInfo.label}
@@ -9876,8 +9938,8 @@ const fetchBuyOrders = async () => {
                                   {isValid ? `${dateLabel} ${timeLabel}` : '-'}
                                 </span>
                               </div>
-                            );
-                          })()}
+                              );
+                            })()}
                           {(() => {
                             const m = trx?.match;
                             const normalized = m === undefined || m === null
@@ -9892,15 +9954,22 @@ const fetchBuyOrders = async () => {
                             const text = combined || fallback;
                             const isFallback = !isSuccess && !combined;
                             return (
-                              <span
-                                className={`px-3 py-0.5 rounded-md text-[11px] min-w-full sm:min-w-[200px] text-center ${
-                                  isFallback
-                                    ? 'border border-amber-200 bg-amber-50 text-amber-700'
-                                  : 'border border-zinc-200 bg-zinc-50 text-zinc-600'
-                                }`}
-                              >
-                                {text}
-                              </span>
+                              <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
+                                <span
+                                  className={`px-3 py-0.5 rounded-md text-[11px] min-w-[120px] sm:min-w-[160px] text-center ${
+                                    isFallback
+                                      ? 'border border-amber-200 bg-amber-50 text-amber-700'
+                                      : 'border border-zinc-200 bg-zinc-50 text-zinc-600'
+                                  }`}
+                                >
+                                  {text}
+                                </span>
+                                {trx.memo && (
+                                  <span className="px-3 py-0.5 rounded-md text-[11px] min-w-[120px] sm:min-w-[160px] text-center border border-zinc-200 bg-zinc-50 text-zinc-500">
+                                    {trx.memo}
+                                  </span>
+                                )}
+                              </div>
                             );
                           })()}
                           {trx.tradeId && (
@@ -10289,6 +10358,65 @@ const fetchBuyOrders = async () => {
                 onClick={handleConfirmPaymentWithSelected}
               >
                 {depositModalLoading ? '진행중...' : '완료하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {aliasPanelConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-zinc-200 p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-zinc-900">입금내역 처리</h3>
+              <button
+                className="text-sm text-zinc-500 hover:text-zinc-700"
+                onClick={closeAliasConfirmModal}
+                disabled={aliasPanelConfirmLoading}
+              >
+                닫기
+              </button>
+            </div>
+            <div className="text-sm text-zinc-600 space-y-1">
+              <div>해당 입금내역을 정상입금으로 처리하고 메모를 저장합니다.</div>
+              <div className="font-mono text-[12px] text-zinc-500">
+                ID: {aliasPanelConfirmTarget?._id || '-'}
+              </div>
+              {aliasPanelConfirmTarget?.amount !== undefined && (
+                <div className="font-semibold text-emerald-700">
+                  금액: {Number(aliasPanelConfirmTarget.amount).toLocaleString()} 원
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-zinc-700">메모</label>
+              <textarea
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                rows={3}
+                value={aliasPanelConfirmMemo}
+                onChange={(e) => setAliasPanelConfirmMemo(e.target.value)}
+                placeholder="설명을 입력하세요"
+                disabled={aliasPanelConfirmLoading}
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                className="px-3 py-2 text-sm rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition"
+                onClick={closeAliasConfirmModal}
+                disabled={aliasPanelConfirmLoading}
+              >
+                취소
+              </button>
+              <button
+                className={`px-4 py-2 text-sm rounded-md text-white font-semibold shadow-sm transition ${
+                  aliasPanelConfirmLoading
+                    ? 'bg-emerald-200 cursor-not-allowed'
+                    : 'bg-emerald-600 hover:bg-emerald-500'
+                }`}
+                onClick={confirmAliasMatchUpdate}
+                disabled={aliasPanelConfirmLoading}
+              >
+                {aliasPanelConfirmLoading ? '처리중...' : '확인'}
               </button>
             </div>
           </div>
