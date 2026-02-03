@@ -43,6 +43,7 @@ import {
   insertWebhookLog,
 } from '@lib/api/webhookLog';
 import { error } from "console";
+import { memo } from "react";
 
 // webhook
 // header
@@ -711,6 +712,7 @@ export async function POST(request: NextRequest) {
         match = 'success';
         tradeId = matchResult.tradeId;
         buyerInfo = matchResult.buyer;
+
         sellerInfo = matchResult.seller;
 
         console.log("Matched tradeId:", tradeId);
@@ -741,6 +743,7 @@ export async function POST(request: NextRequest) {
       buyerInfo: buyerInfo,
       sellerInfo: sellerInfo,
       errorMessage: errorMessage,
+      memo: '자동 매칭',
     });
 
 

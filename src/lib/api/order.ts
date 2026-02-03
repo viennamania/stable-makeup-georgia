@@ -9658,7 +9658,7 @@ export async function checkBuyOrderMatchDeposit(
       tradeId: result.tradeId,
       buyer: {
         nickname: result.nickname,
-        bankInfo: result.buyer.bankInfo,
+        bankInfo: result.buyer,
       },
       seller: result.seller,
     }
