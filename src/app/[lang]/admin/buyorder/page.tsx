@@ -5584,11 +5584,11 @@ const fetchBuyOrders = async () => {
           </div>
 
           {showSellerBankStats && (
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
               {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
                 <div
                   key={index}
-                  className={`flex flex-col gap-2 items-start
+                  className={`flex flex-col gap-1.5 items-start
                   p-3 rounded-xl border border-zinc-200 bg-white
                   ${
                     lastestBalanceArray && lastestBalanceArray[index] !== undefined && lastestBalanceArray[index] !== item.bankUserInfo[0]?.balance
@@ -5601,7 +5601,7 @@ const fetchBuyOrders = async () => {
                   `}
                 >
                   <div className="flex items-start gap-3 w-full justify-between">
-                    <div className="flex flex-col min-w-0 gap-1">
+                    <div className="flex flex-col min-w-0 gap-0.5 leading-tight">
                       <div className="flex items-center gap-2">
                         <Image
                           src="/icon-bank.png"
@@ -5627,10 +5627,10 @@ const fetchBuyOrders = async () => {
                           {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
                         </button>
                       </div>
-                      <span className="text-xs text-zinc-500 truncate">
+                      <span className="text-xs text-zinc-500 truncate leading-tight">
                         {item.bankUserInfo?.[0]?.accountHolder || '예금주 없음'} · {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
                       </span>
-                      <span className="text-[11px] text-zinc-400 truncate" style={{ fontFamily: 'monospace' }}>
+                      <span className="text-[11px] text-zinc-400 truncate leading-tight" style={{ fontFamily: 'monospace' }}>
                         실계좌번호: {item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || '-'}
                       </span>
                     </div>
