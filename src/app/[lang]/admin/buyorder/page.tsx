@@ -1481,6 +1481,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const unmatchedScrollRef = useRef<HTMLDivElement | null>(null);
   const [togglingAlarmId, setTogglingAlarmId] = useState<string | null>(null);
   const lastAlarmSoundRef = useRef<number>(0);
+  const [unmatchedCountdown, setUnmatchedCountdown] = useState('00:00:00');
 
   // 입금내역 선택 모달 상태
 const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -2166,6 +2167,28 @@ const depositAmountMatches = useMemo(() => {
       setTogglingAlarmId(null);
     }
   };
+
+  // countdown to midnight (local time)
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+      const diff = end.getTime() - now.getTime();
+      if (diff <= 0) {
+        setUnmatchedCountdown('00:00:00');
+        return;
+      }
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setUnmatchedCountdown(`${pad(h)}:${pad(m)}:${pad(s)}`);
+    };
+    updateCountdown();
+    const id = setInterval(updateCountdown, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const downloadUnmatchedExcel = () => {
     if (!unmatchedTransfers.length) {
@@ -5915,8 +5938,15 @@ const fetchBuyOrders = async () => {
             {showUnmatched && (
             <div className="w-full overflow-x-auto">
               {unmatchedTransfers.length === 0 ? (
-                <div className="min-h-[80px] flex items-center justify-center text-sm text-zinc-500 border border-neutral-200 rounded-xl bg-white px-4">
-                  {unmatchedLoading ? '불러오는 중...' : '미신청 입금이 없습니다.'}
+                <div className="min-h-[120px] flex flex-col items-center justify-center gap-2 text-sm text-zinc-600 border border-neutral-200 rounded-xl bg-white px-4">
+                  <div className="flex items-center gap-2 text-[13px] text-zinc-500">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                    <span>{unmatchedLoading ? '불러오는 중...' : '미신청 입금이 없습니다.'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[13px] text-emerald-700 font-semibold">
+                    <span>자정까지 남은 시간</span>
+                    <span className="font-mono text-lg animate-pulse">{unmatchedCountdown}</span>
+                  </div>
                 </div>
               ) : (
                 <div
