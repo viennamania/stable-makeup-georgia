@@ -465,7 +465,13 @@ export async function matchBankTransfersBybankTransferId({
   const buyOrder = await buyOrderCollection.findOne({ tradeId: tradeId });
 
   const storeInfo = buyOrder?.store || null;
-  const buyerInfo = buyOrder?.buyer || null;
+  //const bankInfo = buyOrder?.buyer || null;
+  const buyerInfo = {
+    nickname: buyOrder?.nickname || '',
+    bankInfo: buyOrder?.buyer || null,
+  };
+    
+    
   const sellerInfo = buyOrder?.seller || null;
 
 
