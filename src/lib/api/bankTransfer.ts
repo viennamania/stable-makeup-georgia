@@ -5,6 +5,7 @@ import { dbName } from '../mongodb';
 
 // ObjectId
 import { ObjectId } from 'mongodb';
+import { memo } from 'react';
 
 
 // getOne by vactId
@@ -426,13 +427,23 @@ export async function matchBankTransfersToPaymentAmount({
     const buyOrder = await buyOrderCollection.findOne({ tradeId: tradeId });
 
     const storeInfo = buyOrder?.store || null;
-    const buyerInfo = buyOrder?.buyer || null;
-
+    const buyerInfo = {
+      nickname: buyOrder?.nickname || '',
+      bankInfo: buyOrder?.buyer || null,
+    };
+    const sellerInfo = buyOrder?.seller || null;
 
     for (const transfer of matchedTransfers) {
       await collection.updateOne(
         { _id: transfer._id },
-        { $set: { match: 'success', tradeId: tradeId, storeInfo: storeInfo, buyerInfo: buyerInfo } }
+        { $set: {
+          match: 'success',
+          tradeId: tradeId,
+          storeInfo: storeInfo,
+          buyerInfo: buyerInfo,
+          sellerInfo: sellerInfo,
+          memo: '자동 매칭',
+        } }
       );
     }
 
@@ -493,6 +504,7 @@ export async function matchBankTransfersBybankTransferId({
         storeInfo: storeInfo,
         buyerInfo: buyerInfo,
         sellerInfo: sellerInfo,
+        memo: '관리자 수동 매칭',
       },
     }
   );
