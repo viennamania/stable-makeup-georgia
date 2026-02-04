@@ -1468,6 +1468,8 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [aliasPanelHasMore, setAliasPanelHasMore] = useState(true);
   const aliasPanelLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const [aliasPanelDownloading, setAliasPanelDownloading] = useState(false);
+  const [aliasPanelAutoCount, setAliasPanelAutoCount] = useState(0);
+  const [aliasPanelManualCount, setAliasPanelManualCount] = useState(0);
   const [aliasPanelConfirmOpen, setAliasPanelConfirmOpen] = useState(false);
   const [aliasPanelConfirmMemo, setAliasPanelConfirmMemo] = useState('');
   const [aliasPanelConfirmTarget, setAliasPanelConfirmTarget] = useState<any>(null);
@@ -1649,6 +1651,8 @@ const depositAmountMatches = useMemo(() => {
       setAliasPanelTransfers([]);
       setAliasPanelTotalCount(0);
       setAliasPanelTotalAmount(0);
+      setAliasPanelAutoCount(0);
+      setAliasPanelManualCount(0);
       setAliasPanelPage(1);
       setAliasPanelHasMore(true);
       setAliasPanelStoreLogo('');
@@ -1732,8 +1736,12 @@ const depositAmountMatches = useMemo(() => {
 
       const apiTotalCount = data?.result?.totalCount ?? filteredTransfers.length;
       const apiTotalAmount = data?.result?.totalAmount ?? filteredTransfers.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+      const apiAutoCount = data?.result?.totalAutoCount ?? filteredTransfers.filter((t) => t?.matchedByAdmin !== true).length;
+      const apiManualCount = data?.result?.totalManualCount ?? filteredTransfers.filter((t) => t?.matchedByAdmin === true).length;
       setAliasPanelTotalCount(apiTotalCount);
       setAliasPanelTotalAmount(apiTotalAmount);
+      setAliasPanelAutoCount(apiAutoCount);
+      setAliasPanelManualCount(apiManualCount);
       setAliasPanelPage(page);
       setAliasPanelHasMore(rawTransfers.length >= 50);
     } catch (error: any) {
@@ -9872,6 +9880,12 @@ const fetchBuyOrders = async () => {
                   <div className="flex items-center gap-2">
                     <span className="px-3 py-1.5 rounded-md bg-zinc-100 text-zinc-700">
                       건수 {aliasPanelTotalCount.toLocaleString()}
+                    </span>
+                    <span className="px-3 py-1.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                      자동 {aliasPanelAutoCount.toLocaleString()}
+                    </span>
+                    <span className="px-3 py-1.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100">
+                      수동 {aliasPanelManualCount.toLocaleString()}
                     </span>
                     <span className="px-3.5 py-2 rounded-md bg-amber-50 text-amber-600" style={{ fontFamily: 'monospace' }}>
                       합계 {aliasPanelTotalAmount?.toLocaleString()} 원

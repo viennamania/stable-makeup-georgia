@@ -205,6 +205,17 @@ export async function getBankTransfers(
 
   const totalAmount = totalAmountResult?.[0]?.totalAmount || 0;
 
+  const manualFilters = [...filters, { matchedByAdmin: true }];
+  const autoFilters = [...filters, { $or: [{ matchedByAdmin: { $exists: false } }, { matchedByAdmin: { $ne: true } }] }];
+
+  const manualQuery = manualFilters.length ? { $and: manualFilters } : {};
+  const autoQuery = autoFilters.length ? { $and: autoFilters } : {};
+
+  const [totalManualCount, totalAutoCount] = await Promise.all([
+    collection.countDocuments(manualQuery),
+    collection.countDocuments(autoQuery),
+  ]);
+
   const transfers = await collection
     .find(query)
     .sort({ transactionDate: -1, regDate: -1, _id: -1 })
@@ -215,6 +226,8 @@ export async function getBankTransfers(
   return {
     totalCount,
     totalAmount,
+    totalManualCount,
+    totalAutoCount,
     transfers,
   };
 }
