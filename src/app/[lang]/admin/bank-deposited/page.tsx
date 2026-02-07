@@ -185,7 +185,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
           <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>          
           <div className="text-sm font-semibold text-zinc-900 break-all">{group.defaultAccountNumber}</div>
  
-          <div className="flex text-[12px] text-zinc-600">
+          <div className="flex text-sm font-semibold text-zinc-900 gap-1 items-center">
             {group.accountHolder} · {group.bankName}
           </div>
 
