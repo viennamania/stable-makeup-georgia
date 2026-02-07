@@ -93,6 +93,20 @@ const formatTimeAgo = (value: any) => {
   return `${day}일 ${suffix}`;
 };
 
+const timeAgoToneClass = (value: any) => {
+  if (!value) return "bg-zinc-100 text-zinc-500";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "bg-zinc-100 text-zinc-500";
+
+  const diffSec = Math.abs((Date.now() - date.getTime()) / 1000);
+
+  if (diffSec < 60) return "bg-emerald-50 text-emerald-700";
+  if (diffSec < 3600) return "bg-lime-100 text-lime-800";
+  if (diffSec < 86_400) return "bg-amber-100 text-amber-800";
+  if (diffSec < 604_800) return "bg-orange-200 text-orange-900";
+  return "bg-red-200 text-red-900";
+};
+
 interface WebhookLog {
   _id?: string;
   event?: string;
@@ -194,8 +208,10 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
             >
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
-                <div className="text-[11px] text-amber-700 font-semibold">
-                  {formatTimeAgo(transactionDate)}
+                <div className="mt-0.5">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${timeAgoToneClass(transactionDate)}`}>
+                    {formatTimeAgo(transactionDate)}
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1 text-[10px] text-zinc-500">
                   {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">trace {traceId}</span>}
