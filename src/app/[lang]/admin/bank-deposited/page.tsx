@@ -224,23 +224,29 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
           return (
             <div
               key={rowKey}
-              className={`px-3 py-2 flex items-start justify-between gap-3 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
+              className={`px-3 py-2 flex items-start justify-between gap-2 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[12px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[11px]">
                     {displayOrder}
                   </span>
+
+                  <div className="flex flex-nowrap items-center gap-1 mt-1 text-[10px] text-zinc-500">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${timeAgoToneClass(transactionDate)}`}>
+                      {formatTimeAgo(transactionDate)}
+                    </span>
+                    {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 whitespace-nowrap">trace {traceId}</span>}
+                    {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 whitespace-nowrap">mall {mallId}</span>}
+                    {/*balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">잔액 {formatNumber(balance)}</span>*/}
+                  </div>
+
                   <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
+                
                 </div>
-                <div className="flex flex-nowrap items-center gap-1 mt-1 text-[10px] text-zinc-500">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${timeAgoToneClass(transactionDate)}`}>
-                    {formatTimeAgo(transactionDate)}
-                  </span>
-                  {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 whitespace-nowrap">trace {traceId}</span>}
-                  {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 whitespace-nowrap">mall {mallId}</span>}
-                  {/*balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">잔액 {formatNumber(balance)}</span>*/}
-                </div>
+                
+
+
               </div>
               <div className="text-right">
                 <div className="text-sm font-semibold text-blue-600 whitespace-nowrap">{formatNumber(amount)}</div>
@@ -547,17 +553,17 @@ export default function BankDepositedPage() {
       )}
       <style jsx global>{`
         @keyframes flashPop {
-          0% { transform: scale(0.94); background: #fff3c4; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.9); }
-          50% { transform: scale(1.05); background: #ffe08a; box-shadow: 0 16px 50px -14px rgba(251, 191, 36, 0.9); }
-          100% { transform: scale(1); background: #fffdf6; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+          0% { transform: scale(0.92); background: #ffe08a; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.95); }
+          45% { transform: scale(1.08); background: #ffd75a; box-shadow: 0 22px 60px -12px rgba(251, 191, 36, 0.95); }
+          100% { transform: scale(1); background: #fff9e1; box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
         }
         @keyframes flashGlow {
-          0% { outline: 3px solid rgba(251, 191, 36, 0.95); }
+          0% { outline: 4px solid rgba(251, 191, 36, 0.95); }
           100% { outline: 0 solid rgba(251, 191, 36, 0); }
         }
         @keyframes flashPulse {
-          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); }
-          50% { box-shadow: 0 0 0 12px rgba(251, 191, 36, 0.0); }
+          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55); }
+          50% { box-shadow: 0 0 0 18px rgba(251, 191, 36, 0.0); }
           100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
         }
         @keyframes borderFlash {
@@ -567,13 +573,13 @@ export default function BankDepositedPage() {
           100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
         }
         .animate-border-flash {
-          animation: borderFlash 1.8s ease-out;
+          animation: borderFlash 2.4s ease-out;
         }
         .flash-new {
           animation:
-            flashPop 1.15s ease-out,
-            flashGlow 3.2s ease-out,
-            flashPulse 2.2s ease-in-out 0s 3;
+            flashPop 1.6s ease-out,
+            flashGlow 4.5s ease-out,
+            flashPulse 3s ease-in-out 0s 4;
         }
       `}</style>
     </>
