@@ -111,6 +111,8 @@ export async function getWebhookLogs({
 
   const safeLimit = Math.min(Math.max(Number(limit) || 5000, 1), 20000);
 
+
+  /*
   const [totalCount, logs] = await Promise.all([
     collection.countDocuments(query),
     collection
@@ -119,6 +121,78 @@ export async function getWebhookLogs({
       .limit(safeLimit)
       .toArray(),
   ]);
+  */
+  /*
+  bankInfos collection
+  {
+    "_id": {
+      "$oid": "697ce1784cac2762e3485731"
+    },
+    "bankName": "농협",
+    "realAccountNumber": "3520946632383",
+    "defaultAccountNumber": "3528879532639",
+    "accountHolder": "김민우",
+    "createdAt": {
+      "$date": "2026-01-30T16:51:04.447Z"
+    },
+    "updatedAt": {
+      "$date": "2026-02-04T05:51:56.474Z"
+    },
+    "aliasAccountNumber": [
+      "3528879532639"
+    ],
+    "touchedAt": {
+      "$date": "2026-02-07T16:41:53.227Z"
+    },
+    "balance": 5646000,
+    "idCardImageUrl": "",
+    "phoneNumber": "01097306240",
+    "realName": "김민우",
+    "residentNumber": "990716-1"
+  }
+
+  fint defaultAccountNumber, accountHolder by
+
+  join bankInfos on body.bank_account_number = bankInfos.realAccountNumber
+
+  */
+  const aggregationPipeline: any[] = [
+    { $match: query },
+    {
+      $lookup: {
+        from: 'bankInfos',
+        localField: 'body.bank_account_number',
+        foreignField: 'realAccountNumber',
+        as: 'bankInfo',
+      },
+    },
+    { $unwind: { path: '$bankInfo', preserveNullAndEmptyArrays: true } },
+    { $sort: { createdAt: -1, _id: -1 } },
+    { $limit: safeLimit },
+    {
+      $project: {
+        event: 1,
+        headers: 1,
+        body: 1,
+        error: 1,
+        createdAt: 1,
+        bankInfo: {
+          bankName: 1,
+          realAccountNumber: 1,
+          defaultAccountNumber: 1,
+          accountHolder: 1,
+        },
+      },
+    },
+  ];
+
+
+  const [totalCount, logs] = await Promise.all([
+    collection.countDocuments(query),
+    collection.aggregate(aggregationPipeline).toArray(),
+  ]);
+
+
 
   return {
     totalCount,

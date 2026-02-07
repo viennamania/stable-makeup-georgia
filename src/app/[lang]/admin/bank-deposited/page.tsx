@@ -123,6 +123,9 @@ interface GroupedAccount {
   logs: WebhookLog[];
   totalAmount: number;
   latestCreatedAt?: string;
+  defaultAccountNumber?: string;
+  accountHolder?: string;
+  bankName: string;
 }
 
 type AccountCardProps = {
@@ -177,30 +180,28 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
       }`}
     >
       <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-zinc-100 bg-[#eef5ff] rounded-t-xl">
+        
         <div className="flex flex-col gap-1">
-          <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>
-          <div className="text-sm font-semibold text-zinc-900 break-all">{group.accountNumber}</div>
-          
-          <div className="w-32 flex items-center gap-2 text-[11px] text-zinc-500">
-            <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">로그 {group.logs.length}</span>
-            {latestBalance !== undefined && latestBalance !== null && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                잔고 {formatNumber(latestBalance)}
-              </span>
-            )}
-            {/*
-            {group.bankCode && (
-              <span className="w-24 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">은행 {group.bankCode}</span>
-            )}
-            */}
+          <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>          
+          <div className="text-sm font-semibold text-zinc-900 break-all">{group.defaultAccountNumber}</div>
+ 
+          <div className="flex text-[12px] text-zinc-600">
+            {group.accountHolder} · {group.bankName}
           </div>
 
         </div>
         <div className="text-right">
-          <div className="text-[11px] text-zinc-500">총액</div>
+          <div className="text-[11px] text-zinc-500">입금 총금액</div>
           <div className="text-sm font-semibold text-blue-700">{totalAmountLabel}</div>
+          {latestBalance !== undefined && latestBalance !== null && (
+            <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold mt-0.5 inline-block">
+              잔고 {formatNumber(latestBalance)}
+            </span>
+          )}
         </div>
+
       </div>
+
 
       <div
         ref={listRef}
@@ -227,7 +228,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[12px] font-bold">
                     {displayOrder}
                   </span>
                   <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
@@ -238,7 +239,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
                   </span>
                   {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200 whitespace-nowrap">trace {traceId}</span>}
                   {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100 whitespace-nowrap">mall {mallId}</span>}
-                  {balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">잔액 {formatNumber(balance)}</span>}
+                  {/*balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100 whitespace-nowrap">잔액 {formatNumber(balance)}</span>*/}
                 </div>
               </div>
               <div className="text-right">
@@ -397,6 +398,7 @@ export default function BankDepositedPage() {
       const accountNumber = body.bank_account_number || "계좌번호 없음";
       const bankCode = body.bank_code;
       const amount = Number(body.amount) || 0;
+      const bankInfo = (log as any).bankInfo || {};
 
       const current: GroupedAccount = map.get(accountNumber) ?? {
         accountNumber,
@@ -404,11 +406,17 @@ export default function BankDepositedPage() {
         logs: [],
         totalAmount: 0,
         latestCreatedAt: log.createdAt,
+        defaultAccountNumber: bankInfo.defaultAccountNumber,
+        accountHolder: bankInfo.accountHolder,
+        bankName: bankInfo.bankName || "알 수 없음",
       };
 
       current.logs.push(log);
       current.totalAmount += amount;
       current.bankCode = current.bankCode || bankCode;
+      current.defaultAccountNumber = current.defaultAccountNumber || bankInfo.defaultAccountNumber;
+      current.accountHolder = current.accountHolder || bankInfo.accountHolder;
+      current.bankName = current.bankName || bankInfo.bankName || "알 수 없음";
 
       const currentTime = current.latestCreatedAt ? new Date(current.latestCreatedAt).getTime() : 0;
       const logTime = log.createdAt ? new Date(log.createdAt).getTime() : 0;
