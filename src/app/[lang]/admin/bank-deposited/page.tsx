@@ -208,12 +208,10 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
             >
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
-                <div className="mt-0.5">
+                <div className="flex flex-wrap items-center gap-1 mt-1 text-[10px] text-zinc-500">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${timeAgoToneClass(transactionDate)}`}>
                     {formatTimeAgo(transactionDate)}
                   </span>
-                </div>
-                <div className="flex flex-wrap gap-1 mt-1 text-[10px] text-zinc-500">
                   {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">trace {traceId}</span>}
                   {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">mall {mallId}</span>}
                   {balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">잔액 {formatNumber(balance)}</span>}
