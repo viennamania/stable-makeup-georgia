@@ -142,11 +142,18 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
 
   const totalAmountLabel = `${formatNumber(group.totalAmount)}`;
 
+  const hasNewLog = useMemo(
+    () => group.logs.some((log, idx) => flashIds[toLogId(log, idx)]),
+    [group.logs, flashIds, toLogId],
+  );
+
   return (
     <div
-      className="relative flex flex-col bg-white rounded-xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow"
+      className={`relative flex flex-col bg-white rounded-xl border shadow-sm hover:shadow-md transition-shadow ${
+        hasNewLog ? "border-amber-400 animate-border-flash" : "border-zinc-200"
+      }`}
     >
-      <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-zinc-100">
+      <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-zinc-100 bg-[#eef5ff] rounded-t-xl">
         <div className="flex flex-col gap-1">
           <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>
           <div className="text-sm font-semibold text-zinc-900 break-all">{group.accountNumber}</div>
@@ -476,6 +483,15 @@ export default function BankDepositedPage() {
           0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); }
           50% { box-shadow: 0 0 0 12px rgba(251, 191, 36, 0.0); }
           100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        @keyframes borderFlash {
+          0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.55); }
+          40% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); }
+          70% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.35); }
+          100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+        .animate-border-flash {
+          animation: borderFlash 1.8s ease-out;
         }
         .flash-new {
           animation:
