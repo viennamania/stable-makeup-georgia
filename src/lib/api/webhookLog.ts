@@ -79,6 +79,7 @@ export async function getWebhookLogs({
 
   const filters: any[] = [];
 
+  
   if (event) {
     filters.push({ event: String(event) });
   }
@@ -86,6 +87,9 @@ export async function getWebhookLogs({
   if (transactionType) {
     filters.push({ 'body.transaction_type': String(transactionType) });
   }
+  
+
+
 
   if (fromDate || toDate) {
     const range: Record<string, Date> = {};

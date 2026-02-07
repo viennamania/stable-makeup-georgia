@@ -419,11 +419,10 @@ export default function BankDepositedPage() {
       map.set(accountNumber, current);
     });
 
-    return Array.from(map.values()).sort((a, b) => {
-      const aTime = a.latestCreatedAt ? new Date(a.latestCreatedAt).getTime() : 0;
-      const bTime = b.latestCreatedAt ? new Date(b.latestCreatedAt).getTime() : 0;
-      return bTime - aTime;
-    });
+    return Array.from(map.values()).sort((a, b) =>
+      (a.accountNumber || "").localeCompare(b.accountNumber || "", "ko-KR", { numeric: true }),
+    );
+
   }, [logs]);
 
   if (!address) {
