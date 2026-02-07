@@ -215,6 +215,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
           const traceId = headers["x-trace-id"] || headers["x-trace-id".toUpperCase()];
           const mallId = headers["x-mall-id"] || headers["x-mall-id".toUpperCase()];
           const balance = body.balance;
+          const displayOrder = group.logs.length - idx;
 
           const rowKey = toLogId(log, idx);
           const isFlash = !!flashIds[rowKey];
@@ -225,7 +226,12 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
               className={`px-3 py-2 flex items-start justify-between gap-3 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
             >
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[10px] font-bold">
+                    {displayOrder}
+                  </span>
+                  <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
+                </div>
                 <div className="flex flex-nowrap items-center gap-1 mt-1 text-[10px] text-zinc-500">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${timeAgoToneClass(transactionDate)}`}>
                     {formatTimeAgo(transactionDate)}
@@ -266,6 +272,7 @@ export default function BankDepositedPage() {
   const [flashIds, setFlashIds] = useState<Record<string, boolean>>({});
   const prevIdsRef = useRef<Set<string>>(new Set());
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [selectedRange, setSelectedRange] = useState<"today" | "yesterday" | "dayBeforeYesterday">("today");
 
   const refreshInterval = 10_000; // 10 seconds
 
@@ -310,7 +317,7 @@ export default function BankDepositedPage() {
       const response = await fetch("/api/webhookLog/getDeposited", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // fetch today's all
+        body: JSON.stringify({ range: selectedRange }),
       });
 
       if (!response.ok) {
@@ -336,6 +343,9 @@ export default function BankDepositedPage() {
       return;
     }
 
+    // 범위가 바뀌면 기존 하이라이트/ID 추적을 리셋
+    prevIdsRef.current = new Set();
+
     fetchLogs();
 
     const id = setInterval(() => {
@@ -344,7 +354,7 @@ export default function BankDepositedPage() {
 
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address]);
+  }, [address, selectedRange]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -358,6 +368,14 @@ export default function BankDepositedPage() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const rangeOptions: { key: "today" | "yesterday" | "dayBeforeYesterday"; label: string }[] = [
+    { key: "today", label: "오늘" },
+    { key: "yesterday", label: "어제" },
+    { key: "dayBeforeYesterday", label: "그제" },
+  ];
+
+  const selectedRangeLabel = rangeOptions.find((r) => r.key === selectedRange)?.label || "오늘";
 
   const chainObj = useMemo(() => (
     chain === "ethereum"
@@ -452,13 +470,32 @@ export default function BankDepositedPage() {
             <span className="text-[11px] bg-green-500 text-white px-2 py-0.5 rounded-full">최신순</span>
             <span className="text-[11px] bg-blue-500 text-white px-2 py-0.5 rounded-full">10초 자동 새로고침</span>
           </div>
+          <div className="flex items-center gap-1 bg-white/70 rounded-lg px-2 py-1 border border-zinc-200">
+            {rangeOptions.map((opt) => {
+              const isActive = opt.key === selectedRange;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setSelectedRange(opt.key)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all ${
+                    isActive
+                      ? "bg-[#3167b4] text-white border-[#3167b4] shadow-sm"
+                      : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white rounded-xl shadow-md border border-zinc-200 px-3 py-2">
           <div className="flex items-center gap-3">
             <div className="text-sm text-zinc-500">표시</div>
             <div className="text-xl font-semibold text-[#1f2937]">{logs.length.toLocaleString('ko-KR')}건</div>
-            <div className="text-xs text-zinc-400">/ 오늘 전체</div>
+            <div className="text-xs text-zinc-400">/ {selectedRangeLabel} 전체</div>
             <div className="text-xs text-green-700 font-semibold">계좌 {groupedByAccount.length.toLocaleString('ko-KR')}개</div>
           </div>
           <div className="text-xs text-zinc-500">
