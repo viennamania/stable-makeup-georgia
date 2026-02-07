@@ -155,6 +155,15 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
   };
 
   const totalAmountLabel = `${formatNumber(group.totalAmount)}`;
+  const latestBalance = useMemo(() => {
+    if (!group.logs.length) return undefined;
+    const latest = group.logs.reduce((prev, curr) => {
+      const prevTime = prev?.createdAt ? new Date(prev.createdAt).getTime() : 0;
+      const currTime = curr?.createdAt ? new Date(curr.createdAt).getTime() : 0;
+      return currTime > prevTime ? curr : prev;
+    }, group.logs[0]);
+    return latest?.body?.balance;
+  }, [group.logs]);
 
   const hasNewLog = useMemo(
     () => group.logs.some((log, idx) => flashIds[toLogId(log, idx)]),
@@ -171,12 +180,21 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
         <div className="flex flex-col gap-1">
           <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>
           <div className="text-sm font-semibold text-zinc-900 break-all">{group.accountNumber}</div>
-          <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+          
+          <div className="w-32 flex items-center gap-2 text-[11px] text-zinc-500">
             <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">로그 {group.logs.length}</span>
-            {group.bankCode && (
-              <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">은행 {group.bankCode}</span>
+            {latestBalance !== undefined && latestBalance !== null && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                잔고 {formatNumber(latestBalance)}
+              </span>
             )}
+            {/*
+            {group.bankCode && (
+              <span className="w-24 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">은행 {group.bankCode}</span>
+            )}
+            */}
           </div>
+
         </div>
         <div className="text-right">
           <div className="text-[11px] text-zinc-500">총액</div>
