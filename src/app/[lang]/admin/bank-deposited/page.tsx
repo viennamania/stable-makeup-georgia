@@ -106,6 +106,113 @@ interface GroupedAccount {
   latestCreatedAt?: string;
 }
 
+type AccountCardProps = {
+  group: GroupedAccount;
+  flashIds: Record<string, boolean>;
+  toLogId: (log: WebhookLog, idx: number) => string;
+};
+
+const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) => {
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const [showInnerTop, setShowInnerTop] = useState(false);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      setShowInnerTop(el.scrollTop > 60);
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollInnerTop = () => {
+    if (listRef.current) {
+      listRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const totalAmountLabel = `${formatNumber(group.totalAmount)}`;
+
+  return (
+    <div
+      className="relative flex flex-col bg-white rounded-xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-zinc-100">
+        <div className="flex flex-col gap-1">
+          <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>
+          <div className="text-sm font-semibold text-zinc-900 break-all">{group.accountNumber}</div>
+          <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+            <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">로그 {group.logs.length}</span>
+            {group.bankCode && (
+              <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">은행 {group.bankCode}</span>
+            )}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[11px] text-zinc-500">총액</div>
+          <div className="text-sm font-semibold text-blue-700">{totalAmountLabel}</div>
+        </div>
+      </div>
+
+      <div
+        ref={listRef}
+        className="divide-y divide-zinc-100 max-h-[280px] overflow-y-auto"
+      >
+        {group.logs.map((log, idx) => {
+          const body = log.body || {};
+          const headers = log.headers || {};
+          const transactionDate = body.transaction_date;
+          const transactionName = body.transaction_name;
+          const amount = body.amount;
+          const traceId = headers["x-trace-id"] || headers["x-trace-id".toUpperCase()];
+          const mallId = headers["x-mall-id"] || headers["x-mall-id".toUpperCase()];
+          const balance = body.balance;
+
+          const rowKey = toLogId(log, idx);
+          const isFlash = !!flashIds[rowKey];
+
+          return (
+            <div
+              key={rowKey}
+              className={`px-3 py-2 flex items-start justify-between gap-3 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
+                <div className="text-[11px] text-zinc-500 flex items-center gap-2">
+                  <span>{formatDateTime(transactionDate)}</span>
+                  <span className="text-[10px] text-amber-700 font-semibold">{formatTimeAgo(transactionDate)}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1 text-[10px] text-zinc-500">
+                  {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">trace {traceId}</span>}
+                  {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">mall {mallId}</span>}
+                  {balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">잔액 {formatNumber(balance)}</span>}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-semibold text-blue-600 whitespace-nowrap">{formatNumber(amount)}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {showInnerTop && (
+        <button
+          type="button"
+          onClick={scrollInnerTop}
+          className="absolute bottom-2 right-2 z-20 rounded-full bg-[#3167b4] text-white px-3 py-1 text-[11px] font-semibold shadow-md shadow-blue-500/30 hover:bg-[#275290] transition-transform duration-150 hover:-translate-y-0.5"
+        >
+          Top
+        </button>
+      )}
+    </div>
+  );
+};
+
 export default function BankDepositedPage() {
   const activeAccount = useActiveAccount();
   const address = activeAccount?.address;
@@ -323,69 +430,13 @@ export default function BankDepositedPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {groupedByAccount.map((group) => {
-              const totalAmountLabel = `${formatNumber(group.totalAmount)}`;
-
               return (
-                <div
+                <AccountCard
                   key={group.accountNumber}
-                  className="flex flex-col bg-white rounded-xl border border-zinc-200 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-zinc-100">
-                    <div className="flex flex-col gap-1">
-                      <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>
-                      <div className="text-sm font-semibold text-zinc-900 break-all">{group.accountNumber}</div>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">로그 {group.logs.length}</span>
-                        {group.bankCode && (
-                          <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">은행 {group.bankCode}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[11px] text-zinc-500">총액</div>
-                      <div className="text-base font-semibold text-blue-700">{totalAmountLabel}</div>
-                    </div>
-                  </div>
-
-                  <div className="divide-y divide-zinc-100 max-h-[280px] overflow-y-auto">
-                    {group.logs.map((log, idx) => {
-                      const body = log.body || {};
-                      const headers = log.headers || {};
-                      const transactionDate = body.transaction_date;
-                      const transactionName = body.transaction_name;
-                      const amount = body.amount;
-                      const traceId = headers["x-trace-id"] || headers["x-trace-id".toUpperCase()];
-                      const mallId = headers["x-mall-id"] || headers["x-mall-id".toUpperCase()];
-                      const balance = body.balance;
-
-                      const rowKey = toLogId(log, idx);
-                      const isFlash = !!flashIds[rowKey];
-
-                      return (
-                        <div
-                          key={rowKey}
-                          className={`px-3 py-2 flex items-start justify-between gap-3 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
-                            <div className="text-[11px] text-zinc-500 flex items-center gap-2">
-                              <span>{formatDateTime(transactionDate)}</span>
-                              <span className="text-[10px] text-amber-700 font-semibold">{formatTimeAgo(transactionDate)}</span>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-1 text-[10px] text-zinc-500">
-                              {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">trace {traceId}</span>}
-                              {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">mall {mallId}</span>}
-                              {balance !== undefined && <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">잔액 {formatNumber(balance)}</span>}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-semibold text-blue-600 whitespace-nowrap">{formatNumber(amount)}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                  group={group}
+                  flashIds={flashIds}
+                  toLogId={toLogId}
+                />
               );
             })}
           </div>
