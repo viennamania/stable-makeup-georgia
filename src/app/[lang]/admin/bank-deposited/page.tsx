@@ -71,23 +71,6 @@ const formatDateTime = (value: any) => {
   return date.toLocaleString("ko-KR");
 };
 
-const formatTimeAgo = (value: any) => {
-  if (!value) return "";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  const diff = Date.now() - date.getTime();
-  const sec = Math.floor(diff / 1000);
-  const min = Math.floor(sec / 60);
-  const hour = Math.floor(min / 60);
-  const day = Math.floor(hour / 24);
-
-  if (sec < 60) return `${sec}초 전`;
-  if (min < 60) return `${min}분 전`;
-  if (hour < 24) return `${hour}시간 전`;
-  return `${day}일 전`;
-};
-
 interface WebhookLog {
   _id?: string;
   event?: string;
@@ -165,7 +148,6 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
         {group.logs.map((log, idx) => {
           const body = log.body || {};
           const headers = log.headers || {};
-          const transactionDate = body.transaction_date;
           const transactionName = body.transaction_name;
           const amount = body.amount;
           const traceId = headers["x-trace-id"] || headers["x-trace-id".toUpperCase()];
@@ -182,10 +164,6 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
             >
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-zinc-900 truncate">{transactionName || "-"}</div>
-                <div className="text-[11px] text-zinc-500 flex items-center gap-2">
-                  <span>{formatDateTime(transactionDate)}</span>
-                  <span className="text-[10px] text-amber-700 font-semibold">{formatTimeAgo(transactionDate)}</span>
-                </div>
                 <div className="flex flex-wrap gap-1 mt-1 text-[10px] text-zinc-500">
                   {traceId && <span className="px-2 py-0.5 rounded-full bg-zinc-100 border border-zinc-200">trace {traceId}</span>}
                   {mallId && <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">mall {mallId}</span>}
