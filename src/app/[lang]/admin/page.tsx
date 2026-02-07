@@ -2654,6 +2654,15 @@ export default function Index({ params }: any) {
                     >
                       은행 계좌 관리
                     </button>
+                    <button
+                      onClick={() => {
+                        const url = `/${params.lang}/admin/bank-deposited`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full bg-blue-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    >
+                      은행 입금 로그
+                    </button>
 
                     {/*
                     <button

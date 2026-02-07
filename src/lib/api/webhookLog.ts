@@ -59,3 +59,65 @@ export async function insertWebhookLog(data: {
     ...payload,
   };
 }
+
+
+export async function getWebhookLogs({
+  event = '',
+  transactionType = '',
+  limit = 50,
+  fromDate = '',
+  toDate = '',
+}: {
+  event?: string;
+  transactionType?: string;
+  limit?: number;
+  fromDate?: string | Date;
+  toDate?: string | Date;
+}) {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('webhookLogs');
+
+  const filters: any[] = [];
+
+  if (event) {
+    filters.push({ event: String(event) });
+  }
+
+  if (transactionType) {
+    filters.push({ 'body.transaction_type': String(transactionType) });
+  }
+
+  if (fromDate || toDate) {
+    const range: Record<string, Date> = {};
+
+    if (fromDate) {
+      const start = fromDate instanceof Date ? fromDate : new Date(fromDate);
+      range.$gte = start;
+    }
+
+    if (toDate) {
+      const end = toDate instanceof Date ? toDate : new Date(toDate);
+      range.$lte = end;
+    }
+
+    filters.push({ createdAt: range });
+  }
+
+  const query = filters.length ? { $and: filters } : {};
+
+  const safeLimit = Math.min(Math.max(Number(limit) || 5000, 1), 20000);
+
+  const [totalCount, logs] = await Promise.all([
+    collection.countDocuments(query),
+    collection
+      .find(query)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(safeLimit)
+      .toArray(),
+  ]);
+
+  return {
+    totalCount,
+    logs,
+  };
+}
