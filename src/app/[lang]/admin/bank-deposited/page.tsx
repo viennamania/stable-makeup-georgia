@@ -107,6 +107,25 @@ const timeAgoToneClass = (value: any) => {
   return "bg-red-200 text-red-900";
 };
 
+const KST_OFFSET = 9 * 60 * 60 * 1000;
+
+function toKstDateString(offsetDays: number) {
+  const now = new Date();
+  const kst = new Date(now.getTime() + KST_OFFSET);
+  kst.setUTCDate(kst.getUTCDate() - offsetDays);
+  const y = kst.getUTCFullYear();
+  const m = kst.getUTCMonth() + 1;
+  const d = kst.getUTCDate();
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][kst.getUTCDay()];
+  return `${y}년 ${m.toString().padStart(2, "0")}월 ${d.toString().padStart(2, "0")}일 (${weekday}) KST`;
+}
+
+const csvEscape = (value: any) => {
+  if (value === null || value === undefined) return "\"\"";
+  const str = String(value).replace(/"/g, '""');
+  return `"${str}"`;
+};
+
 interface WebhookLog {
   _id?: string;
   event?: string;
@@ -126,6 +145,7 @@ interface GroupedAccount {
   defaultAccountNumber?: string;
   accountHolder?: string;
   bankName: string;
+  prevBalance?: number;
 }
 
 interface PendingOrder {
@@ -158,9 +178,10 @@ type AccountCardProps = {
   group: GroupedAccount;
   flashIds: Record<string, boolean>;
   toLogId: (log: WebhookLog, idx: number) => string;
+  onExport: (group: GroupedAccount) => void;
 };
 
-const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) => {
+const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId, onExport }) => {
   const listRef = useRef<HTMLDivElement | null>(null);
   const [showInnerTop, setShowInnerTop] = useState(false);
 
@@ -208,7 +229,21 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
       <div className="flex items-start justify-between gap-2 px-3 py-1.5 border-b border-zinc-100 bg-[#eef5ff] rounded-t-xl">
         
         <div className="flex flex-col gap-1">
-          <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>          
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</span>
+            <button
+              type="button"
+              onClick={() => onExport(group)}
+              className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[10px] font-semibold text-zinc-700 hover:bg-zinc-50"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3v12" strokeLinecap="round" />
+                <path d="M8 11l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4 17h16" strokeLinecap="round" />
+              </svg>
+              엑셀
+            </button>
+          </div>
           <div className="text-sm font-semibold text-zinc-900 break-all">{group.defaultAccountNumber}</div>
  
           <div className="flex text-sm font-semibold text-zinc-900 gap-1 items-center">
@@ -216,14 +251,21 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
           </div>
 
         </div>
-        <div className="text-right">
+          <div className="flex flex-col items-end gap-1">
           <div className="text-[11px] text-zinc-500">입금 총금액</div>
           <div className="text-sm font-semibold text-blue-700">{totalAmountLabel}</div>
-          {latestBalance !== undefined && latestBalance !== null && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold mt-0.5 inline-block">
-              잔고 {formatNumber(latestBalance)}
-            </span>
-          )}
+          <div className="flex flex-col items-end gap-1 mt-1">
+            {group.prevBalance !== undefined && (
+              <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 border border-zinc-200 text-[11px] font-semibold inline-flex items-center gap-1">
+                전일 잔고 {formatNumber(group.prevBalance)}
+              </span>
+            )}
+            {latestBalance !== undefined && latestBalance !== null && (
+              <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[11px] font-semibold inline-flex items-center gap-1">
+                당일 잔고 {formatNumber(latestBalance)}
+              </span>
+            )}
+          </div>
         </div>
 
       </div>
@@ -311,6 +353,7 @@ export default function BankDepositedPage() {
   const [pendingFlashIds, setPendingFlashIds] = useState<Record<string, boolean>>({});
   const [pendingFadeIds, setPendingFadeIds] = useState<Record<string, boolean>>({});
   const prevPendingIdsRef = useRef<Set<string>>(new Set());
+  const [prevBalances, setPrevBalances] = useState<Record<string, number | undefined>>({});
 
   const refreshInterval = 10_000; // 10 seconds
 
@@ -365,8 +408,10 @@ export default function BankDepositedPage() {
 
       const data = await response.json();
       const nextLogs: WebhookLog[] = data?.result?.logs || [];
+      const nextPrevBalances: Record<string, number | undefined> = data?.prevBalances || {};
       markNewEntries(nextLogs);
       setLogs(nextLogs);
+      setPrevBalances(nextPrevBalances);
       setFetchedAt(new Date());
     } catch (error) {
       toast.error("웹훅 로그 조회에 실패했습니다.");
@@ -407,26 +452,101 @@ export default function BankDepositedPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, selectedRange]);
 
-  useEffect(() => {
-    const onScroll = () => {
-      setShowScrollTop(window.scrollY > 240);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+useEffect(() => {
+  const onScroll = () => {
+    setShowScrollTop(window.scrollY > 240);
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
+
+const rangeOptions: { key: "today" | "yesterday" | "dayBeforeYesterday"; label: string }[] = [
+  { key: "today", label: "오늘" },
+  { key: "yesterday", label: "어제" },
+  { key: "dayBeforeYesterday", label: "그제" },
+];
+
+const selectedRangeLabel = rangeOptions.find((r) => r.key === selectedRange)?.label || "오늘";
+const selectedRangeOffset = selectedRange === "today" ? 0 : selectedRange === "yesterday" ? 1 : 2;
+const selectedDateString = useMemo(() => toKstDateString(selectedRangeOffset), [selectedRangeOffset]);
+const [countdown, setCountdown] = useState<string>("--:--:--");
+
+useEffect(() => {
+  const updateCountdown = () => {
+    const now = new Date();
+    const kstNow = new Date(now.getTime() + KST_OFFSET);
+    const midnight = new Date(kstNow);
+    midnight.setUTCHours(0, 0, 0, 0);
+    midnight.setUTCDate(midnight.getUTCDate() + 1 - selectedRangeOffset);
+    const diff = midnight.getTime() - kstNow.getTime();
+    if (diff <= 0) {
+      setCountdown("00:00:00");
+      return;
+    }
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    setCountdown(`${pad(h)}:${pad(m)}:${pad(s)}`);
+  };
+
+  updateCountdown();
+  const id = setInterval(updateCountdown, 1000);
+  return () => clearInterval(id);
+}, [selectedRangeOffset]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const rangeOptions: { key: "today" | "yesterday" | "dayBeforeYesterday"; label: string }[] = [
-    { key: "today", label: "오늘" },
-    { key: "yesterday", label: "어제" },
-    { key: "dayBeforeYesterday", label: "그제" },
-  ];
+  const exportAccountLogs = (group: GroupedAccount) => {
+    if (typeof window === "undefined") return;
 
-  const selectedRangeLabel = rangeOptions.find((r) => r.key === selectedRange)?.label || "오늘";
+    // 최신 잔고: createdAt 기준 가장 최근 balance
+    type Latest = { balance?: number; time: number };
+    const latestBalance: number | undefined = group.logs.reduce<Latest | null>((acc, log) => {
+      const bal = log.body?.balance;
+      const t = log.createdAt ? new Date(log.createdAt).getTime() : -Infinity;
+      if (bal === undefined) return acc;
+      if (!acc || t > acc.time) return { balance: bal, time: t };
+      return acc;
+    }, null)?.balance;
+
+    const headers = ["거래명", "금액", "거래시간", "잔액", "계좌번호"];
+    const rows = group.logs.map((log) => {
+      const body = log.body || {};
+      const transactionDate = body.transaction_date;
+      const transactionName = body.transaction_name;
+      const amount = body.amount;
+      const balance = body.balance;
+      const accountNumber = body.bank_account_number || group.accountNumber;
+
+      return [
+        csvEscape(transactionName || "-"),
+        csvEscape(amount ?? ""),
+        csvEscape(transactionDate ? formatDateTime(transactionDate) : ""),
+        csvEscape(balance ?? ""),
+        csvEscape(accountNumber || ""),
+      ].join(",");
+    });
+
+    const firstLine = [
+      csvEscape("전일 잔고"),
+      csvEscape(group.prevBalance ?? ""),
+      csvEscape("당일 잔고"),
+      csvEscape(latestBalance ?? ""),
+    ].join(",");
+
+    const csv = [firstLine, headers.map(csvEscape).join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `deposits_${group.accountNumber}_${Date.now()}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const fetchPendingOrders = async () => {
     try {
@@ -528,6 +648,7 @@ export default function BankDepositedPage() {
         defaultAccountNumber: bankInfo.defaultAccountNumber,
         accountHolder: bankInfo.accountHolder,
         bankName: bankInfo.bankName || "알 수 없음",
+        prevBalance: prevBalances[accountNumber],
       };
 
       current.logs.push(log);
@@ -536,6 +657,7 @@ export default function BankDepositedPage() {
       current.defaultAccountNumber = current.defaultAccountNumber || bankInfo.defaultAccountNumber;
       current.accountHolder = current.accountHolder || bankInfo.accountHolder;
       current.bankName = current.bankName || bankInfo.bankName || "알 수 없음";
+      current.prevBalance = current.prevBalance ?? prevBalances[accountNumber];
 
       const currentTime = current.latestCreatedAt ? new Date(current.latestCreatedAt).getTime() : 0;
       const logTime = log.createdAt ? new Date(log.createdAt).getTime() : 0;
@@ -550,7 +672,7 @@ export default function BankDepositedPage() {
       (a.accountNumber || "").localeCompare(b.accountNumber || "", "ko-KR", { numeric: true }),
     );
 
-  }, [logs]);
+  }, [logs, prevBalances]);
 
   if (!address) {
     return (
@@ -589,31 +711,39 @@ export default function BankDepositedPage() {
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
         <div className="py-0 w-full space-y-4">
 
-        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2 bg-black/10 p-2 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Image src="/icon-bank.png" alt="Bank" width={35} height={35} className="w-7 h-7" />
-            <div className="text-lg font-semibold">은행 입금 웹훅 로그</div>
-            <span className="text-[11px] bg-green-500 text-white px-2 py-0.5 rounded-full">최신순</span>
-            <span className="text-[11px] bg-blue-500 text-white px-2 py-0.5 rounded-full">10초 자동 새로고침</span>
-          </div>
-          <div className="flex items-center gap-1 bg-white/70 rounded-lg px-2 py-1 border border-zinc-200">
-            {rangeOptions.map((opt) => {
-              const isActive = opt.key === selectedRange;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setSelectedRange(opt.key)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all ${
-                    isActive
-                      ? "bg-[#3167b4] text-white border-[#3167b4] shadow-sm"
-                      : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
+        <div className="w-full flex flex-col gap-2 bg-black/10 p-3 rounded-lg">
+        <div className="flex items-center gap-2">
+          <Image src="/icon-bank.png" alt="Bank" width={35} height={35} className="w-7 h-7" />
+          <div className="text-lg font-semibold">은행 입금 웹훅 로그</div>
+          <span className="text-[11px] bg-green-500 text-white px-2 py-0.5 rounded-full">최신순</span>
+          <span className="text-[11px] bg-blue-500 text-white px-2 py-0.5 rounded-full">10초 자동 새로고침</span>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="text-lg font-bold text-[#0f172a]">{selectedDateString}</div>
+              <div className="px-3 py-1 rounded-md bg-[#0f172a] text-white text-sm font-mono tracking-widest animate-pulse-slow">
+                {countdown}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 bg-white/70 rounded-lg px-2 py-1 border border-zinc-200">
+              {rangeOptions.map((opt) => {
+                const isActive = opt.key === selectedRange;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setSelectedRange(opt.key)}
+                    className={`px-3 py-1.5 text-sm font-semibold rounded-md border transition-all ${
+                      isActive
+                        ? "bg-[#3167b4] text-white border-[#3167b4] shadow-sm"
+                        : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -718,6 +848,7 @@ export default function BankDepositedPage() {
                   group={group}
                   flashIds={flashIds}
                   toLogId={toLogId}
+                  onExport={exportAccountLogs}
                 />
               );
             })}
@@ -774,11 +905,21 @@ export default function BankDepositedPage() {
         }
         @keyframes pendingFade {
           0% { opacity: 1; transform: translateY(0) scale(1); }
-          40% { opacity: 0.7; transform: translateY(4px) scale(0.99); }
-          100% { opacity: 0; transform: translateY(8px) scale(0.97); }
+          40% { opacity: 0.8; transform: translateY(6px) scale(0.99); }
+          75% { opacity: 0.55; transform: translateY(10px) scale(0.96); }
+          100% { opacity: 0; transform: translateY(12px) scale(0.92); }
         }
         .pending-fade {
-          animation: pendingFade 0.8s ease-in forwards;
+          animation: pendingFade 1.25s ease-in forwards;
+          transform-origin: center;
+        }
+        @keyframes pulseSlow {
+          0% { opacity: 0.9; }
+          50% { opacity: 1; }
+          100% { opacity: 0.9; }
+        }
+        .animate-pulse-slow {
+          animation: pulseSlow 1.4s ease-in-out infinite;
         }
         .flash-new {
           animation:

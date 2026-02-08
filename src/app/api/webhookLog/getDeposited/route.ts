@@ -47,7 +47,35 @@ export async function POST(request: NextRequest) {
     limit: limit || 20000,
   });
 
-  return NextResponse.json({ result });
+  // 이전 날짜(선택된 날짜의 바로 전날) 마지막 입금 잔고 맵
+  const prevOffset = rangeToOffset(range) + 1;
+  const { start: prevStart, end: prevEnd } = getKSTRangesByOffset(prevOffset);
+  const prevLogs = await getWebhookLogs({
+    event: "banktransfer_webhook",
+    transactionType: "deposited",
+    fromDate: prevStart,
+    toDate: prevEnd,
+    limit: 20000,
+  });
+
+  const prevBalancesMap = new Map<string, { balance?: number; time: number }>();
+  (prevLogs.logs || []).forEach((log: any) => {
+    const body = log.body || {};
+    const accountNumber = body.bank_account_number || "계좌번호 없음";
+    const balance = body.balance;
+    const time = log.createdAt ? new Date(log.createdAt).getTime() : -Infinity;
+    const prev = prevBalancesMap.get(accountNumber);
+    const prevTime = prev?.time ?? -Infinity;
+    if (time > prevTime) {
+      prevBalancesMap.set(accountNumber, { balance, time });
+    }
+  });
+  const prevBalances: Record<string, number | undefined> = {};
+  prevBalancesMap.forEach((value, key) => {
+    prevBalances[key] = value.balance;
+  });
+
+  return NextResponse.json({ result, prevBalances });
 }
 
 export async function GET() {
