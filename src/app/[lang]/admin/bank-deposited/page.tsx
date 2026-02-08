@@ -61,7 +61,7 @@ const formatNumber = (value: any) => {
   }
   const num = typeof value === "number" ? value : Number(value);
   if (Number.isNaN(num)) return String(value);
-  return num.toLocaleString("ko-KR");
+  return num.toLocaleString("ko-KR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
 const formatDateTime = (value: any) => {
@@ -119,6 +119,28 @@ function toKstDateString(offsetDays: number) {
   const weekday = ["일", "월", "화", "수", "목", "금", "토"][kst.getUTCDay()];
   return `${y}년 ${m.toString().padStart(2, "0")}월 ${d.toString().padStart(2, "0")}일 (${weekday}) KST`;
 }
+
+const useCountUp = (value: number, duration = 800) => {
+  const [display, setDisplay] = useState<number>(value);
+  useEffect(() => {
+    const start = display;
+    const end = value;
+    const diff = end - start;
+    if (diff === 0 || !Number.isFinite(diff)) return;
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startTime) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      setDisplay(Math.round(start + diff * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+  }, [value]);
+
+  return display;
+};
 
 const csvEscape = (value: any) => {
   if (value === null || value === undefined) return "\"\"";
@@ -180,6 +202,9 @@ type DepositToast = {
   subtitle?: string;
   amount?: number;
   time?: string | Date;
+  depositor?: string;
+  depositCount?: number;
+  depositSum?: number;
 };
 
 type AccountCardProps = {
@@ -188,6 +213,11 @@ type AccountCardProps = {
   toLogId: (log: WebhookLog, idx: number) => string;
   onExport: (group: GroupedAccount) => void;
 };
+
+const toPendingId = (order: PendingOrder) =>
+  (order as any)?._id?.toString?.() ||
+  order.tradeId ||
+  (order.createdAt ? `${order.createdAt}-${order.krwAmount ?? ""}-${order.buyerBankAccountNumber ?? ""}` : `${Math.random()}`);
 
 const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId, onExport }) => {
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -212,7 +242,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId, onE
     }
   };
 
-  const totalAmountLabel = `${formatNumber(group.totalAmount)}`;
+  const totalAmountAnimated = useCountUp(group.totalAmount, 800);
   const latestBalance = useMemo(() => {
     if (!group.logs.length) return undefined;
     const latest = group.logs.reduce((prev, curr) => {
@@ -261,7 +291,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId, onE
         </div>
           <div className="flex flex-col items-end gap-1">
           <div className="text-[11px] text-zinc-500">입금 총금액</div>
-          <div className="text-sm font-semibold text-blue-700">{totalAmountLabel}</div>
+          <div className="text-sm font-semibold text-blue-700">{formatNumber(totalAmountAnimated)}</div>
           <div className="flex flex-col items-end gap-1 mt-1">
             {group.prevBalance !== undefined && (
               <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 border border-zinc-200 text-[11px] font-semibold inline-flex items-center gap-1">
@@ -363,6 +393,7 @@ export default function BankDepositedPage() {
   const prevPendingIdsRef = useRef<Set<string>>(new Set());
   const [prevBalances, setPrevBalances] = useState<Record<string, number | undefined>>({});
   const [depositToasts, setDepositToasts] = useState<DepositToast[]>([]);
+  const pendingOrdersRef = useRef<PendingOrder[]>([]);
 
   const refreshInterval = 10_000; // 10 seconds
 
@@ -398,6 +429,17 @@ export default function BankDepositedPage() {
 
       // 토스트 생성
       const toastPayloads: DepositToast[] = [];
+      // depositor 별 카운트/총액 준비
+      const depositorCounts: Record<string, number> = {};
+      const depositorSums: Record<string, number> = {};
+      nextLogs.forEach((log) => {
+        const name = log.body?.transaction_name || "";
+        const amt = Number(log.body?.amount) || 0;
+        if (!name) return;
+        depositorCounts[name] = (depositorCounts[name] || 0) + 1;
+        depositorSums[name] = (depositorSums[name] || 0) + amt;
+      });
+
       newIds.forEach((id) => {
         const log = nextLogs.find((l, i) => toLogId(l, i) === id);
         const body = log?.body || {};
@@ -407,12 +449,18 @@ export default function BankDepositedPage() {
         const account = bankInfo.defaultAccountNumber || body.bank_account_number || "계좌번호 없음";
         const bankName = bankInfo.bankName || body.bank_name || body.bank_code || "";
         const holder = bankInfo.accountHolder || body.account_holder || body.bank_account_holder || "";
+        const depositor = body.transaction_name || "";
+        const depositCount = depositor ? depositorCounts[depositor] || 1 : undefined;
+        const depositSum = depositor ? depositorSums[depositor] || undefined : undefined;
         toastPayloads.push({
           id: `toast-${id}`,
           title,
           subtitle: [bankName, holder, account].filter(Boolean).join(" · "),
           amount,
           time: body.transaction_date || log?.createdAt,
+          depositor,
+          depositCount,
+          depositSum,
         });
       });
 
@@ -511,10 +559,10 @@ const rangeOptions: { key: "today" | "yesterday" | "dayBeforeYesterday"; label: 
   { key: "dayBeforeYesterday", label: "그제" },
 ];
 
-const selectedRangeLabel = rangeOptions.find((r) => r.key === selectedRange)?.label || "오늘";
-const selectedRangeOffset = selectedRange === "today" ? 0 : selectedRange === "yesterday" ? 1 : 2;
-const selectedDateString = useMemo(() => toKstDateString(selectedRangeOffset), [selectedRangeOffset]);
-const [countdown, setCountdown] = useState<string>("--:--:--");
+  const selectedRangeLabel = rangeOptions.find((r) => r.key === selectedRange)?.label || "오늘";
+  const selectedRangeOffset = selectedRange === "today" ? 0 : selectedRange === "yesterday" ? 1 : 2;
+  const selectedDateString = useMemo(() => toKstDateString(selectedRangeOffset), [selectedRangeOffset]);
+  const [countdown, setCountdown] = useState<string>("--:--:--");
 
 useEffect(() => {
   const updateCountdown = () => {
@@ -601,23 +649,21 @@ useEffect(() => {
       const data = await res.json();
       const next: PendingOrder[] = (data?.orders as PendingOrder[]) || [];
 
-      const toId = (order: PendingOrder, idx = 0) =>
-        (order as any)?._id?.toString?.() ||
-        (order.createdAt ? `${order.createdAt}-${idx}` : `${idx}-${Math.random()}`);
+      const prevOrders = pendingOrdersRef.current;
+      const prevIds = prevPendingIdsRef.current;
+      const newIds: string[] = [];
+      const removedIds: string[] = [];
 
-    const prevIds = prevPendingIdsRef.current;
-    const newIds: string[] = [];
-    const removedIds: string[] = [];
-
-      next.forEach((order: PendingOrder, idx: number) => {
-        const id = toId(order, idx);
+      next.forEach((order: PendingOrder) => {
+        const id = toPendingId(order);
         if (!prevIds.has(id)) newIds.push(id);
       });
 
-      prevIds.forEach((id) => {
-      const stillExists = next.some((order: PendingOrder, idx: number) => toId(order, idx) === id);
-      if (!stillExists) removedIds.push(id);
-    });
+      prevOrders.forEach((order) => {
+        const id = toPendingId(order);
+        const stillExists = next.some((o) => toPendingId(o) === id);
+        if (!stillExists) removedIds.push(id);
+      });
 
       if (newIds.length) {
         setPendingFlashIds((prev) => {
@@ -642,21 +688,37 @@ useEffect(() => {
           const updated = { ...prev };
           removedIds.forEach((id) => {
             updated[id] = true;
-            setTimeout(() => {
-              setPendingFadeIds((current) => {
-                if (!current[id]) return current;
-                const copy = { ...current };
-                delete copy[id];
-                return copy;
-              });
-            }, 500);
           });
           return updated;
         });
+
+        removedIds.forEach((id) => {
+          setTimeout(() => {
+            setPendingOrders((prev) => {
+              const filtered = prev.filter((order) => toPendingId(order) !== id);
+              pendingOrdersRef.current = filtered;
+              return filtered;
+            });
+          }, 1300); // matches fade duration
+
+          setTimeout(() => {
+            setPendingFadeIds((prev) => {
+              if (!prev[id]) return prev;
+              const copy = { ...prev };
+              delete copy[id];
+              return copy;
+            });
+          }, 1400);
+        });
       }
 
-    prevPendingIdsRef.current = new Set(next.map((order, idx) => toId(order, idx)));
-    setPendingOrders(next);
+      // keep fading cards in the list until animation ends
+      const removedOrders = prevOrders.filter((o) => removedIds.includes(toPendingId(o)));
+      const merged = removedOrders.length ? [...next, ...removedOrders] : next;
+
+      prevPendingIdsRef.current = new Set(merged.map((order) => toPendingId(order)));
+      pendingOrdersRef.current = merged;
+      setPendingOrders(merged);
       setPendingFetchedAt(new Date());
     } catch (err) {
       // quiet fail; could add toast if needed
@@ -720,6 +782,12 @@ useEffect(() => {
 
   }, [logs, prevBalances]);
 
+  const totalAmount = useMemo(
+    () => groupedByAccount.reduce((sum, acc) => sum + acc.totalAmount, 0),
+    [groupedByAccount],
+  );
+  const totalAmountAnimated = useCountUp(totalAmount);
+
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -771,6 +839,21 @@ useEffect(() => {
                     {toast.subtitle && (
                       <div className="text-[11px] text-zinc-500 truncate">{toast.subtitle}</div>
                     )}
+                    {toast.depositor && (
+                      <div className="text-[11px] text-blue-800 font-semibold flex gap-1 items-center">
+                        <span>{toast.depositor}</span>
+                        {toast.depositCount !== undefined && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-100">
+                            {toast.depositCount}번째
+                          </span>
+                        )}
+                        {toast.depositSum !== undefined && (
+                          <span className="px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            누적 {formatNumber(toast.depositSum)}원
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {toast.time && (
                       <div className="mt-1 text-[10px] text-zinc-400">{formatTimeAgo(toast.time)}</div>
                     )}
@@ -787,51 +870,113 @@ useEffect(() => {
           ))}
         </div>
 
-        <div className="w-full flex flex-col gap-2 bg-black/10 p-3 rounded-lg">
-        <div className="flex items-center gap-2">
-          <Image src="/icon-bank.png" alt="Bank" width={35} height={35} className="w-7 h-7" />
-          <div className="text-lg font-semibold">은행 입금 웹훅 로그</div>
-          <span className="text-[11px] bg-green-500 text-white px-2 py-0.5 rounded-full">최신순</span>
-          <span className="text-[11px] bg-blue-500 text-white px-2 py-0.5 rounded-full">10초 자동 새로고침</span>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <div className="text-lg font-bold text-[#0f172a]">{selectedDateString}</div>
-              <div className="px-3 py-1 rounded-md bg-[#0f172a] text-white text-sm font-mono tracking-widest animate-pulse-slow">
-                {countdown}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white shadow-[0_14px_38px_-18px_rgba(0,0,0,0.6)] px-4 py-5">
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.12),transparent_28%),radial-gradient(circle_at_75%_15%,rgba(16,185,129,0.12),transparent_26%),radial-gradient(circle_at_60%_90%,rgba(236,72,153,0.08),transparent_28%)]" />
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between relative">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-lg shadow-emerald-500/25 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M3 10h18" strokeLinecap="round" />
+                    <path d="M4 10l8-6 8 6" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5 10v8" />
+                    <path d="M19 10v8" />
+                    <path d="M9 10v8" />
+                    <path d="M15 10v8" />
+                    <path d="M3 18h18" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm uppercase tracking-[0.15em] text-slate-300">Bank Webhook</div>
+                  <div className="text-lg font-bold leading-tight">은행 입금 웹훅 로그</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-200 border border-emerald-400/40 text-[11px] font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                  최신순
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-200 border border-blue-400/40 text-[11px] font-semibold">
+                  10초 자동 새로고침
+                </span>
               </div>
             </div>
-            <div className="flex items-center gap-1 bg-white/70 rounded-lg px-2 py-1 border border-zinc-200">
-              {rangeOptions.map((opt) => {
-                const isActive = opt.key === selectedRange;
-                return (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setSelectedRange(opt.key)}
-                    className={`px-3 py-1.5 text-sm font-semibold rounded-md border transition-all ${
-                      isActive
-                        ? "bg-[#3167b4] text-white border-[#3167b4] shadow-sm"
-                        : "bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+              <div className="flex items-center gap-2 bg-white/5 backdrop-blur px-3 py-2 rounded-xl border border-white/10 shadow-inner">
+                <div className="text-xs text-slate-200">선택 날짜</div>
+                <div className="text-sm sm:text-base font-semibold text-white">{selectedDateString}</div>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-2 rounded-xl border border-slate-800 shadow-inner">
+                <div className="text-[11px] text-slate-300">자정까지</div>
+                <div className="text-lg font-mono tracking-[0.25em] text-amber-100 drop-shadow-sm">
+                  {countdown}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 bg-white/5 backdrop-blur rounded-xl px-2 py-1 border border-white/10 shadow-inner">
+                {rangeOptions.map((opt) => {
+                  const isActive = opt.key === selectedRange;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setSelectedRange(opt.key)}
+                      className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-all ${
+                        isActive
+                          ? "bg-white text-slate-900 shadow-lg shadow-blue-500/20"
+                          : "text-slate-200 hover:bg-white/10"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white rounded-xl shadow-md border border-zinc-200 px-3 py-2">
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-zinc-500">표시</div>
-            <div className="text-xl font-semibold text-[#1f2937]">{logs.length.toLocaleString('ko-KR')}건</div>
-            <div className="text-xs text-zinc-400">/ {selectedRangeLabel} 전체</div>
-            <div className="text-xs text-green-700 font-semibold">계좌 {groupedByAccount.length.toLocaleString('ko-KR')}개</div>
-          </div>
-          <div className="text-xs text-zinc-500">
-            {fetchedAt ? `업데이트: ${formatDateTime(fetchedAt)}` : '업데이트 대기중...'}
+        <div className="bg-white/95 backdrop-blur rounded-2xl shadow-lg border border-slate-200 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs text-slate-500">표시</span>
+                <span className="text-2xl font-bold text-slate-900 leading-none">
+                  {logs.length.toLocaleString("ko-KR")}건
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="h-5 w-px bg-slate-200" aria-hidden />
+                <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                  {selectedRangeLabel}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="h-5 w-px bg-slate-200" aria-hidden />
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-xs font-semibold flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 9l8-6 8 6v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+                    <path d="M9 22V12h6v10" />
+                  </svg>
+                  계좌 {groupedByAccount.length.toLocaleString("ko-KR")}개
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 pl-1">
+                <span className="h-5 w-px bg-slate-200" aria-hidden />
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-slate-500 font-semibold">총액</span>
+                  <span className="text-2xl font-black text-blue-700 tracking-tight drop-shadow-sm">
+                    {formatNumber(totalAmountAnimated)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="text-[11px] text-slate-500">
+              {fetchedAt ? `업데이트: ${formatDateTime(fetchedAt)}` : "업데이트 대기중..."}
+            </div>
           </div>
         </div>
 
@@ -848,7 +993,7 @@ useEffect(() => {
               const buyerInfo = order?.buyerBankInfo || {};
               const sellerInfo = order?.sellerBankInfo || {};
               const storeLogo = order?.storeLogo;
-              const cardId = order?._id?.toString?.() || (order?.createdAt ? `${order.createdAt}-${idx}` : `empty-${idx}`);
+              const cardId = order ? toPendingId(order) : `empty-${idx}`;
               return (
                 <div
                   key={cardId}
@@ -981,13 +1126,20 @@ useEffect(() => {
         }
         @keyframes pendingFade {
           0% { opacity: 1; transform: translateY(0) scale(1); }
-          40% { opacity: 0.8; transform: translateY(6px) scale(0.99); }
-          75% { opacity: 0.55; transform: translateY(10px) scale(0.96); }
-          100% { opacity: 0; transform: translateY(12px) scale(0.92); }
+          35% { opacity: 0.9; transform: translateY(4px) scale(0.995); }
+          70% { opacity: 0.55; transform: translateY(10px) scale(0.97); }
+          85% { opacity: 0.35; transform: translateY(14px) scale(0.94); filter: blur(0); }
+          100% { opacity: 0; transform: translateY(16px) scale(0.9); filter: blur(2px); }
         }
         .pending-fade {
-          animation: pendingFade 1.25s ease-in forwards;
+          animation: pendingFade 1.85s ease-in forwards, pendingBoom 0.55s ease-out 1.35s forwards;
           transform-origin: center;
+        }
+        @keyframes pendingBoom {
+          0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.15); transform: scale(0.95) rotate(-1deg); }
+          30% { box-shadow: 0 0 0 12px rgba(239,68,68,0.12); transform: scale(1.03) rotate(1deg); }
+          60% { box-shadow: 0 0 0 22px rgba(239,68,68,0.05); transform: scale(0.98) rotate(-2deg); }
+          100% { box-shadow: 0 0 0 30px rgba(239,68,68,0); transform: scale(0.9) rotate(0deg); }
         }
         @keyframes pulseSlow {
           0% { opacity: 0.9; }
