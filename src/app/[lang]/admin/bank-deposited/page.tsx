@@ -531,19 +531,21 @@ useEffect(() => {
       ].join(",");
     });
 
+    // 헤더 컬럼 수(5)에 맞춰 첫 줄도 5칸으로 작성
     const firstLine = [
       csvEscape("전일 잔고"),
       csvEscape(group.prevBalance ?? ""),
       csvEscape("당일 잔고"),
       csvEscape(latestBalance ?? ""),
+      csvEscape(""),
     ].join(",");
 
     const csv = [firstLine, headers.map(csvEscape).join(","), ...rows].join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `deposits_${group.accountNumber}_${Date.now()}.xlsx`;
+    a.download = `deposits_${group.accountNumber}_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
