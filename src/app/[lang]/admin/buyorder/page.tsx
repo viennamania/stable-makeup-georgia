@@ -611,6 +611,10 @@ export default function Index({ params }: any) {
 
   const router = useRouter();
 
+  const menuButtonBase =
+    "flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 " +
+    "bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] " +
+    "hover:-translate-y-0.5 hover:shadow-md transition-all duration-200";
 
 
   /*
@@ -5046,45 +5050,23 @@ const fetchBuyOrders = async () => {
           
 
 
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+            <div className="flex flex-wrap md:flex-nowrap items-center gap-2 mb-4 overflow-x-auto pb-1">
 
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/store')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  가맹점관리
+              <button onClick={() => router.push('/' + params.lang + '/admin/store')} className={menuButtonBase}>
+                가맹점관리
               </button>
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  에이전트관리
+              <button onClick={() => router.push('/' + params.lang + '/admin/agent')} className={menuButtonBase}>
+                에이전트관리
               </button>
 
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  회원관리
+              <button onClick={() => router.push('/' + params.lang + '/admin/member')} className={menuButtonBase}>
+                회원관리
               </button>
 
-              <div className='flex w-32 items-center justify-center gap-2
-              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+              <div className="flex w-32 shrink-0 items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold rounded-xl px-3 py-2 shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] border border-amber-300">
                 <Image
                   src="/icon-buyorder.png"
                   alt="Trade"
@@ -5092,66 +5074,31 @@ const fetchBuyOrders = async () => {
                   height={35}
                   className="w-4 h-4"
                 />
-                <div className="text-sm font-semibold">
+                <div className="text-sm font-semibold drop-shadow-sm">
                   구매주문관리
                 </div>
               </div>
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P 거래내역
+              <button onClick={() => router.push('/' + params.lang + '/admin/trade-history')} className={menuButtonBase}>
+                P2P 거래내역
               </button>
 
               {version !== 'bangbang' && (
-                <button
-                  onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                <button onClick={() => router.push('/' + params.lang + '/admin/clearance-history')} className={menuButtonBase}>
                   청산관리
-              </button>
+                </button>
               )}
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(가맹)
+              <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className={menuButtonBase}>
+                P2P통계(가맹)
               </button>
 
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(AG)
+              <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')} className={menuButtonBase}>
+                P2P통계(AG)
               </button>
 
               {version !== 'bangbang' && (
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                <button onClick={() => router.push('/' + params.lang + '/admin/escrow-history')} className={menuButtonBase}>
                   보유량내역
                 </button>
               )}
@@ -5797,7 +5744,7 @@ const fetchBuyOrders = async () => {
             </div>
 
             {showSellerBankStats && (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start">
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 items-start">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
                   <div
                     key={index}
@@ -5870,8 +5817,8 @@ const fetchBuyOrders = async () => {
                     </div>
 
                     <div className="w-full flex items-center justify-between text-xs">
-                      <span className="text-sm text-zinc-500">잔액(원)</span>
-                      <span className="text-xl font-extrabold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
+                      <span className="text-xs text-zinc-500">잔액(원)</span>
+                      <span className="text-sm font-semibold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
                         {lastestBalanceArray && lastestBalanceArray[index] !== undefined
                           ? lastestBalanceArray[index].toLocaleString()
                           : '잔액정보없음'}
