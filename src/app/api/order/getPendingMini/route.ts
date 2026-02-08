@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
       $match: {
         status: { $in: PENDING_STATUSES },
         createdAtDate: { $gte: start, $lte: end },
+        privateSale: { $ne: true },
       },
     },
     { $sort: { createdAtDate: -1, _id: -1 } },
@@ -70,5 +71,41 @@ export async function GET(request: NextRequest) {
     },
   ]).toArray();
 
-  return NextResponse.json({ orders: docs });
+  const paymentConfirmed = await collection
+    .aggregate([
+      {
+        $addFields: {
+          paymentConfirmedAtDate: { $toDate: "$paymentConfirmedAt" },
+        },
+      },
+      {
+        $match: {
+          status: "paymentConfirmed",
+          paymentConfirmedAtDate: { $gte: start, $lte: end },
+          privateSale: { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: {
+              $convert: {
+                input: { $ifNull: ["$paymentAmount", { $ifNull: ["$krwAmount", 0] }] },
+                to: "double",
+                onError: 0,
+                onNull: 0,
+              },
+            },
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ])
+    .toArray();
+
+  const paymentConfirmedSum = paymentConfirmed?.[0]?.total ?? 0;
+  const paymentConfirmedCount = paymentConfirmed?.[0]?.count ?? 0;
+
+  return NextResponse.json({ orders: docs, paymentConfirmedSum, paymentConfirmedCount });
 }

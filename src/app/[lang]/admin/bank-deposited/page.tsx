@@ -390,10 +390,14 @@ export default function BankDepositedPage() {
   const [pendingFetchedAt, setPendingFetchedAt] = useState<Date | null>(null);
   const [pendingFlashIds, setPendingFlashIds] = useState<Record<string, boolean>>({});
   const [pendingFadeIds, setPendingFadeIds] = useState<Record<string, boolean>>({});
+  const [paymentConfirmedSum, setPaymentConfirmedSum] = useState<number | null>(null);
+  const [paymentConfirmedCount, setPaymentConfirmedCount] = useState<number | null>(null);
   const prevPendingIdsRef = useRef<Set<string>>(new Set());
   const [prevBalances, setPrevBalances] = useState<Record<string, number | undefined>>({});
   const [depositToasts, setDepositToasts] = useState<DepositToast[]>([]);
   const pendingOrdersRef = useRef<PendingOrder[]>([]);
+  const paymentConfirmedSumAnimated = useCountUp(paymentConfirmedSum ?? 0, 900);
+  const paymentConfirmedCountAnimated = useCountUp(paymentConfirmedCount ?? 0, 900);
 
   const refreshInterval = 10_000; // 10 seconds
 
@@ -648,6 +652,10 @@ useEffect(() => {
       if (!res.ok) throw new Error("failed");
       const data = await res.json();
       const next: PendingOrder[] = (data?.orders as PendingOrder[]) || [];
+      const sumConfirmed = Number(data?.paymentConfirmedSum ?? 0) || 0;
+      const countConfirmed = Number(data?.paymentConfirmedCount ?? 0) || 0;
+      setPaymentConfirmedSum(sumConfirmed);
+      setPaymentConfirmedCount(countConfirmed);
 
       const prevOrders = pendingOrdersRef.current;
       const prevIds = prevPendingIdsRef.current;
@@ -722,6 +730,8 @@ useEffect(() => {
       setPendingFetchedAt(new Date());
     } catch (err) {
       // quiet fail; could add toast if needed
+      setPaymentConfirmedSum(null);
+      setPaymentConfirmedCount(null);
     }
   };
 
@@ -966,13 +976,13 @@ useEffect(() => {
 
               <div className="flex items-center gap-2 pl-1">
                 <span className="h-5 w-px bg-slate-200" aria-hidden />
-                <div className="flex items-baseline gap-2">
-                  <span className="text-xs text-slate-500 font-semibold">총액</span>
-                  <span className="text-2xl font-black text-blue-700 tracking-tight drop-shadow-sm">
-                    {formatNumber(totalAmountAnimated)}
-                  </span>
-                </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs text-slate-500 font-semibold">총액</span>
+                <span className="text-2xl font-black text-blue-700 tracking-tight drop-shadow-sm font-mono">
+                  {formatNumber(totalAmountAnimated)}
+                </span>
               </div>
+            </div>
             </div>
             <div className="text-[11px] text-slate-500">
               {fetchedAt ? `업데이트: ${formatDateTime(fetchedAt)}` : "업데이트 대기중..."}
@@ -980,10 +990,68 @@ useEffect(() => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm px-3 py-2 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-[#1f2937]">진행중 구매주문</div>
-            <div className="text-[10px] text-zinc-500">
+{groupedByAccount.length === 0 ? (
+          <div className="w-full bg-white rounded-lg shadow-md border border-dashed border-zinc-300 p-8 text-center text-gray-500">
+            조회된 웹훅 로그가 없습니다.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3">
+            {groupedByAccount.map((group) => {
+              return (
+                <AccountCard
+                  key={group.accountNumber}
+                  group={group}
+                  flashIds={flashIds}
+                  toLogId={toLogId}
+                  onExport={exportAccountLogs}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-slate-200 shadow-lg shadow-slate-200/60 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-3 space-y-3 mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-md shadow-slate-500/30">
+                <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 6h16" strokeLinecap="round" />
+                  <path d="M4 10h16" strokeLinecap="round" />
+                  <path d="M10 14h10" strokeLinecap="round" />
+                  <path d="M10 18h6" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <div className="text-xs uppercase tracking-[0.12em] text-slate-500">Pending Orders</div>
+                <div className="text-base font-semibold text-slate-900">진행중 구매주문</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 bg-white/90 backdrop-blur rounded-xl border border-slate-200 px-3 py-2 shadow-inner">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 text-white flex items-center justify-center shadow">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 3v18" strokeLinecap="round" />
+                  <path d="M6 9h12" strokeLinecap="round" />
+                  <path d="M9 6h6" strokeLinecap="round" />
+                  <path d="M9 12h6" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="leading-tight">
+                <div className="text-[11px] text-slate-500">전체 결제금액 (결제확정)</div>
+                <div className="text-lg font-bold text-slate-900 tracking-tight font-mono">
+                  {paymentConfirmedSum === null ? "—" : `${formatNumber(paymentConfirmedSumAnimated)}원`}
+                </div>
+              </div>
+              <div className="flex flex-col text-[11px] text-slate-500 leading-tight">
+                <span>건수</span>
+                <span className="text-sm font-semibold text-slate-900">
+                  {paymentConfirmedCount === null ? "—" : `${formatNumber(paymentConfirmedCountAnimated)}건`}
+                </span>
+              </div>
+              <span className="text-[11px] text-slate-400 whitespace-nowrap">{selectedRangeLabel} 기준</span>
+            </div>
+
+            <div className="text-[11px] text-slate-500">
               {pendingFetchedAt ? `업데이트: ${formatDateTime(pendingFetchedAt)}` : "업데이트 대기중..."}
             </div>
           </div>
@@ -1055,26 +1123,6 @@ useEffect(() => {
 })}
 </div>
 </div>
-
-{groupedByAccount.length === 0 ? (
-          <div className="w-full bg-white rounded-lg shadow-md border border-dashed border-zinc-300 p-8 text-center text-gray-500">
-            조회된 웹훅 로그가 없습니다.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3">
-            {groupedByAccount.map((group) => {
-              return (
-                <AccountCard
-                  key={group.accountNumber}
-                  group={group}
-                  flashIds={flashIds}
-                  toLogId={toLogId}
-                  onExport={exportAccountLogs}
-                />
-              );
-            })}
-          </div>
-        )}
 
         </div>
       </main>
