@@ -128,6 +128,31 @@ interface GroupedAccount {
   bankName: string;
 }
 
+interface PendingOrder {
+  _id?: string;
+  status?: string;
+  krwAmount?: number;
+  usdtAmount?: number;
+  rate?: number;
+  buyer?: string;
+  nickname?: string;
+  depositName?: string;
+  buyerBankAccountNumber?: string;
+  createdAt?: string;
+  storeName?: string;
+  storeLogo?: string;
+  buyerBankInfo?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountHolder?: string;
+  };
+  sellerBankInfo?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountHolder?: string;
+  };
+}
+
 type AccountCardProps = {
   group: GroupedAccount;
   flashIds: Record<string, boolean>;
@@ -179,7 +204,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
         hasNewLog ? "border-amber-400 animate-border-flash" : "border-zinc-200"
       }`}
     >
-      <div className="flex items-start justify-between gap-2 px-3 py-2 border-b border-zinc-100 bg-[#eef5ff] rounded-t-xl">
+      <div className="flex items-start justify-between gap-2 px-3 py-1.5 border-b border-zinc-100 bg-[#eef5ff] rounded-t-xl">
         
         <div className="flex flex-col gap-1">
           <div className="text-[11px] uppercase tracking-wide text-zinc-500">계좌번호</div>          
@@ -205,7 +230,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
 
       <div
         ref={listRef}
-        className="divide-y divide-zinc-100 max-h-[280px] overflow-y-auto"
+        className="divide-y divide-zinc-100 max-h-[110px] overflow-y-auto"
       >
         {group.logs.map((log, idx) => {
           const body = log.body || {};
@@ -224,7 +249,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ group, flashIds, toLogId }) =
           return (
             <div
               key={rowKey}
-              className={`px-3 py-2 flex items-start justify-between gap-2 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
+              className={`px-3 py-1.5 flex items-start justify-between gap-2 hover:bg-zinc-50 ${isFlash ? "flash-new" : ""}`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -280,6 +305,11 @@ export default function BankDepositedPage() {
   const prevIdsRef = useRef<Set<string>>(new Set());
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [selectedRange, setSelectedRange] = useState<"today" | "yesterday" | "dayBeforeYesterday">("today");
+  const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
+  const [pendingFetchedAt, setPendingFetchedAt] = useState<Date | null>(null);
+  const [pendingFlashIds, setPendingFlashIds] = useState<Record<string, boolean>>({});
+  const [pendingFadeIds, setPendingFadeIds] = useState<Record<string, boolean>>({});
+  const prevPendingIdsRef = useRef<Set<string>>(new Set());
 
   const refreshInterval = 10_000; // 10 seconds
 
@@ -364,6 +394,19 @@ export default function BankDepositedPage() {
   }, [address, selectedRange]);
 
   useEffect(() => {
+    if (!address) {
+      setPendingOrders([]);
+      return;
+    }
+    fetchPendingOrders();
+    const id = setInterval(() => {
+      fetchPendingOrders();
+    }, refreshInterval);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, selectedRange]);
+
+  useEffect(() => {
     const onScroll = () => {
       setShowScrollTop(window.scrollY > 240);
     };
@@ -383,6 +426,75 @@ export default function BankDepositedPage() {
   ];
 
   const selectedRangeLabel = rangeOptions.find((r) => r.key === selectedRange)?.label || "오늘";
+
+  const fetchPendingOrders = async () => {
+    try {
+      const res = await fetch(`/api/order/getPendingMini?range=${selectedRange}`);
+      if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      const next = data?.orders || [];
+
+      const toId = (order: PendingOrder, idx = 0) =>
+        (order as any)?._id?.toString?.() ||
+        (order.createdAt ? `${order.createdAt}-${idx}` : `${idx}-${Math.random()}`);
+
+    const prevIds = prevPendingIdsRef.current;
+    const newIds: string[] = [];
+    const removedIds: string[] = [];
+
+    next.forEach((order, idx) => {
+      const id = toId(order, idx);
+      if (!prevIds.has(id)) newIds.push(id);
+    });
+
+    prevIds.forEach((id) => {
+      const stillExists = next.some((order, idx) => toId(order, idx) === id);
+      if (!stillExists) removedIds.push(id);
+    });
+
+      if (newIds.length) {
+        setPendingFlashIds((prev) => {
+          const updated = { ...prev };
+          newIds.forEach((id) => {
+            updated[id] = true;
+            setTimeout(() => {
+              setPendingFlashIds((current) => {
+                if (!current[id]) return current;
+                const copy = { ...current };
+                delete copy[id];
+                return copy;
+              });
+            }, 2500);
+          });
+          return updated;
+        });
+      }
+
+      if (removedIds.length) {
+        setPendingFadeIds((prev) => {
+          const updated = { ...prev };
+          removedIds.forEach((id) => {
+            updated[id] = true;
+            setTimeout(() => {
+              setPendingFadeIds((current) => {
+                if (!current[id]) return current;
+                const copy = { ...current };
+                delete copy[id];
+                return copy;
+              });
+            }, 500);
+          });
+          return updated;
+        });
+      }
+
+    prevPendingIdsRef.current = new Set(next.map((order, idx) => toId(order, idx)));
+    setPendingOrders(next);
+      setPendingFetchedAt(new Date());
+    } catch (err) {
+      // quiet fail; could add toast if needed
+    }
+  };
 
   const chainObj = useMemo(() => (
     chain === "ethereum"
@@ -516,12 +628,88 @@ export default function BankDepositedPage() {
           </div>
         </div>
 
-        {groupedByAccount.length === 0 ? (
+        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm px-3 py-2 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-[#1f2937]">진행중 구매주문</div>
+            <div className="text-[10px] text-zinc-500">
+              {pendingFetchedAt ? `업데이트: ${formatDateTime(pendingFetchedAt)}` : "업데이트 대기중..."}
+            </div>
+          </div>
+          <div className="flex flex-row gap-2 overflow-x-auto py-1 scrollbar-thin justify-start sm:justify-end w-full min-h-[120px]">
+            {(pendingOrders.length === 0 ? Array.from({ length: 1 }) : pendingOrders).map((raw, idx) => {
+              const order = raw as PendingOrder | undefined;
+              const buyerInfo = order?.buyerBankInfo || {};
+              const sellerInfo = order?.sellerBankInfo || {};
+              const storeLogo = order?.storeLogo;
+              const cardId = order?._id?.toString?.() || (order?.createdAt ? `${order.createdAt}-${idx}` : `empty-${idx}`);
+              return (
+                <div
+                  key={cardId}
+                  className={`min-w-[88vw] max-w-[88vw] sm:min-w-[220px] sm:max-w-[240px] rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm flex flex-col gap-1 ${
+                    pendingFlashIds[cardId] ? "pending-flash" : ""
+                  } ${pendingFadeIds[cardId] ? "pending-fade" : ""}`}
+                >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-zinc-100 overflow-hidden flex items-center justify-center">
+                          {storeLogo ? (
+                            <Image src={storeLogo} alt="store" width={32} height={32} className="object-cover w-full h-full" />
+                          ) : (
+                            <span className="text-[10px] text-zinc-500">{pendingOrders.length === 0 ? "No data" : "Store"}</span>
+                          )}
+                        </div>
+                        <div className="text-xs font-semibold text-zinc-900 truncate">
+                          {order?.storeName || (pendingOrders.length === 0 ? "진행중 주문 없음" : "가맹점 미지정")}
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-blue-700 whitespace-nowrap">
+                        {order?.krwAmount ? `${formatNumber(order.krwAmount)}원` : (pendingOrders.length === 0 ? "-" : "-")}
+                      </div>
+                    </div>
+                    {order?.tradeId && (
+                      <div className="text-[10px]">
+                        <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 border border-sky-200 font-mono">
+                          주문번호 {order.tradeId}
+                        </span>
+                      </div>
+                    )}
+                  <div className="flex flex-wrap items-center gap-1">
+                    {order?.depositName ? (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300 whitespace-nowrap text-[11px] font-bold">
+                        구매자 입금명 {order.depositName}
+                      </span>
+                    ) : pendingOrders.length === 0 ? (
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200 whitespace-nowrap text-[11px]">
+                        구매자 입금명 없음
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1 text-[10px] text-zinc-600">
+                    {order?.sellerBankInfo?.accountHolder ? (
+                      <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                        판매자 {sellerInfo.accountHolder} {sellerInfo.accountNumber ? `(${sellerInfo.accountNumber})` : ""}
+                      </span>
+                    ) : pendingOrders.length === 0 ? (
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200 whitespace-nowrap">
+                        판매자 정보 없음
+                      </span>
+                    ) : null}
+                  </div>
+      <div className="text-[10px] text-zinc-500 whitespace-nowrap text-right">
+        {order?.createdAt ? formatTimeAgo(order.createdAt) : (pendingOrders.length === 0 ? "—" : "")}
+      </div>
+    </div>
+  );
+})}
+</div>
+</div>
+
+{groupedByAccount.length === 0 ? (
           <div className="w-full bg-white rounded-lg shadow-md border border-dashed border-zinc-300 p-8 text-center text-gray-500">
             조회된 웹훅 로그가 없습니다.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-3">
             {groupedByAccount.map((group) => {
               return (
                 <AccountCard
@@ -574,6 +762,22 @@ export default function BankDepositedPage() {
         }
         .animate-border-flash {
           animation: borderFlash 2.4s ease-out;
+        }
+        @keyframes pendingFlash {
+          0% { transform: translateY(-6px) scale(0.97); box-shadow: 0 12px 30px -18px rgba(0,0,0,0.28); }
+          40% { transform: translateY(0) scale(1.03); box-shadow: 0 16px 32px -14px rgba(49,103,180,0.35); }
+          100% { transform: translateY(0) scale(1); box-shadow: 0 8px 20px -14px rgba(0,0,0,0.16); }
+        }
+        .pending-flash {
+          animation: pendingFlash 0.9s ease-out;
+        }
+        @keyframes pendingFade {
+          0% { opacity: 1; transform: translateY(0) scale(1); }
+          40% { opacity: 0.7; transform: translateY(4px) scale(0.99); }
+          100% { opacity: 0; transform: translateY(8px) scale(0.97); }
+        }
+        .pending-fade {
+          animation: pendingFade 0.8s ease-in forwards;
         }
         .flash-new {
           animation:
