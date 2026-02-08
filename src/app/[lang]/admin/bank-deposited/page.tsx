@@ -1104,9 +1104,9 @@ useEffect(() => {
                       </span>
                     ) : null}
                   </div>
-                  <div className="flex flex-wrap items-center gap-1 text-[10px] text-zinc-600">
+                  <div className="flex flex-wrap items-center gap-1 text-[12px] text-zinc-800">
                     {order?.sellerBankInfo?.accountHolder ? (
-                      <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                      <span className="px-3 py-0.5 rounded-full bg-blue-50 text-blue-900 border border-blue-100 whitespace-nowrap font-semibold">
                         판매자 {sellerInfo.accountHolder} {sellerInfo.accountNumber ? `(${sellerInfo.accountNumber})` : ""}
                       </span>
                     ) : pendingOrders.length === 0 ? (
