@@ -2384,7 +2384,7 @@ export default function SettingsPage({ params }: any) {
                         
                         {/* 결제 URL settings */}
                         {/* store paymentUrl */}
-                        <div className='w-full flex flex-col items-start justify-center gap-2
+                        <div className='hidden w-full flex-col items-start justify-center gap-2
                             border border-gray-400 p-4 rounded-lg'>
 
                             <div className='w-full flex flex-col items-center justify-between gap-2
@@ -2489,7 +2489,7 @@ export default function SettingsPage({ params }: any) {
                                 {/* divider */}
                                 <div className='mt-4 w-full h-[1px] bg-zinc-300'></div>
 
-                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+                                <div className='hidden w-full flex-col items-center justify-center gap-2'>
 
                                     <div className="w-full flex flex-row items-center justify-start gap-2
                                         border-b border-gray-300 pb-2">
@@ -2569,7 +2569,7 @@ export default function SettingsPage({ params }: any) {
                                 {/* divider */}
                                 <div className='mt-4 w-full h-[1px] bg-zinc-300'></div>
 
-                                <div className='w-full flex flex-col items-center justify-center gap-2'>
+                                <div className='hidden w-full flex-col items-center justify-center gap-2'>
 
                                     <div className="w-full flex flex-row items-center justify-start gap-2
                                         border-b border-gray-300 pb-2">
@@ -2664,7 +2664,7 @@ export default function SettingsPage({ params }: any) {
 
                         {/* 콜백 URL settings */}
                         {/* store paymentCallbackUrl */}
-                        <div className='w-full flex flex-col items-start justify-center gap-2
+                        <div className='hidden w-full flex-col items-start justify-center gap-2
                             border border-gray-400 p-4 rounded-lg'>
 
                             <div className='w-full flex flex-col items-center justify-between gap-2
