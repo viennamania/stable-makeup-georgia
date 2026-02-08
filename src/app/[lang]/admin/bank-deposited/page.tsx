@@ -174,6 +174,14 @@ interface PendingOrder {
   };
 }
 
+type DepositToast = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  amount?: number;
+  time?: string | Date;
+};
+
 type AccountCardProps = {
   group: GroupedAccount;
   flashIds: Record<string, boolean>;
@@ -354,6 +362,7 @@ export default function BankDepositedPage() {
   const [pendingFadeIds, setPendingFadeIds] = useState<Record<string, boolean>>({});
   const prevPendingIdsRef = useRef<Set<string>>(new Set());
   const [prevBalances, setPrevBalances] = useState<Record<string, number | undefined>>({});
+  const [depositToasts, setDepositToasts] = useState<DepositToast[]>([]);
 
   const refreshInterval = 10_000; // 10 seconds
 
@@ -370,11 +379,11 @@ export default function BankDepositedPage() {
       if (!prevIds.has(id)) newIds.push(id);
     });
 
-    if (newIds.length) {
-      setFlashIds((prev) => {
-        const updated = { ...prev };
-        newIds.forEach((id) => {
-          updated[id] = true;
+      if (newIds.length) {
+        setFlashIds((prev) => {
+          const updated = { ...prev };
+          newIds.forEach((id) => {
+            updated[id] = true;
           setTimeout(() => {
             setFlashIds((current) => {
               if (!current[id]) return current;
@@ -386,6 +395,41 @@ export default function BankDepositedPage() {
         });
         return updated;
       });
+
+      // 토스트 생성
+      const toastPayloads: DepositToast[] = [];
+      newIds.forEach((id) => {
+        const log = nextLogs.find((l, i) => toLogId(l, i) === id);
+        const body = log?.body || {};
+        const bankInfo = (log as any)?.bankInfo || {};
+        const amount = body.amount;
+        const title = body.transaction_name || "입금";
+        const account = bankInfo.defaultAccountNumber || body.bank_account_number || "계좌번호 없음";
+        const bankName = bankInfo.bankName || body.bank_name || body.bank_code || "";
+        const holder = bankInfo.accountHolder || body.account_holder || body.bank_account_holder || "";
+        toastPayloads.push({
+          id: `toast-${id}`,
+          title,
+          subtitle: [bankName, holder, account].filter(Boolean).join(" · "),
+          amount,
+          time: body.transaction_date || log?.createdAt,
+        });
+      });
+
+      if (toastPayloads.length) {
+        setDepositToasts((prev) => {
+          const next = [...toastPayloads, ...prev];
+          // 오래된 토스트 자동 제거 (최대 6개 유지)
+          return next.slice(0, 6);
+        });
+
+        // 각 토스트별 자동 제거
+        toastPayloads.forEach((t) => {
+          setTimeout(() => {
+            setDepositToasts((prev) => prev.filter((x) => x.id !== t.id));
+          }, 8500);
+        });
+      }
     }
 
     prevIdsRef.current = new Set(nextLogs.map((log, idx) => toLogId(log, idx)));
@@ -713,6 +757,36 @@ useEffect(() => {
       <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
         <div className="py-0 w-full space-y-4">
 
+        {/* 입금 토스트 스택 */}
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 w-[320px] sm:w-[360px] pointer-events-none">
+          {depositToasts.map((toast) => (
+            <div
+              key={toast.id}
+              className="pointer-events-auto overflow-hidden rounded-2xl border border-amber-300 bg-white shadow-[0_16px_40px_-18px_rgba(0,0,0,0.35)] animate-slide-in"
+            >
+              <div className="px-4 py-3 bg-gradient-to-r from-amber-50 via-white to-amber-50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-bold text-amber-800 truncate">{toast.title}</div>
+                    {toast.subtitle && (
+                      <div className="text-[11px] text-zinc-500 truncate">{toast.subtitle}</div>
+                    )}
+                    {toast.time && (
+                      <div className="mt-1 text-[10px] text-zinc-400">{formatTimeAgo(toast.time)}</div>
+                    )}
+                  </div>
+                  {toast.amount !== undefined && (
+                    <div className="text-base font-extrabold text-[#0f172a] whitespace-nowrap bg-gradient-to-r from-blue-50 via-white to-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-[0_4px_12px_-8px_rgba(15,23,42,0.25)]">
+                      {formatNumber(toast.amount)}원
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="h-1 bg-amber-300 animate-toast-bar" />
+            </div>
+          ))}
+        </div>
+
         <div className="w-full flex flex-col gap-2 bg-black/10 p-3 rounded-lg">
         <div className="flex items-center gap-2">
           <Image src="/icon-bank.png" alt="Bank" width={35} height={35} className="w-7 h-7" />
@@ -922,6 +996,21 @@ useEffect(() => {
         }
         .animate-pulse-slow {
           animation: pulseSlow 1.4s ease-in-out infinite;
+        }
+        @keyframes slideIn {
+          0% { transform: translateX(0) translateY(-14px) scale(0.98); opacity: 0; }
+          45% { transform: translateX(0) translateY(0) scale(1.01); opacity: 1; }
+          100% { transform: translateX(0) translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-slide-in {
+          animation: slideIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.2);
+        }
+        @keyframes toastBar {
+          from { transform: scaleX(1); transform-origin: right; }
+          to { transform: scaleX(0); transform-origin: right; }
+        }
+        .animate-toast-bar {
+          animation: toastBar 8s linear forwards;
         }
         .flash-new {
           animation:
