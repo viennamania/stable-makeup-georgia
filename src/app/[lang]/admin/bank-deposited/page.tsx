@@ -141,6 +141,7 @@ interface PendingOrder {
   createdAt?: string;
   storeName?: string;
   storeLogo?: string;
+  tradeId?: string;
   buyerBankInfo?: {
     bankName?: string;
     accountNumber?: string;
@@ -432,7 +433,7 @@ export default function BankDepositedPage() {
       const res = await fetch(`/api/order/getPendingMini?range=${selectedRange}`);
       if (!res.ok) throw new Error("failed");
       const data = await res.json();
-      const next = data?.orders || [];
+      const next: PendingOrder[] = (data?.orders as PendingOrder[]) || [];
 
       const toId = (order: PendingOrder, idx = 0) =>
         (order as any)?._id?.toString?.() ||
@@ -442,13 +443,13 @@ export default function BankDepositedPage() {
     const newIds: string[] = [];
     const removedIds: string[] = [];
 
-    next.forEach((order, idx) => {
-      const id = toId(order, idx);
-      if (!prevIds.has(id)) newIds.push(id);
-    });
+      next.forEach((order: PendingOrder, idx: number) => {
+        const id = toId(order, idx);
+        if (!prevIds.has(id)) newIds.push(id);
+      });
 
-    prevIds.forEach((id) => {
-      const stillExists = next.some((order, idx) => toId(order, idx) === id);
+      prevIds.forEach((id) => {
+      const stillExists = next.some((order: PendingOrder, idx: number) => toId(order, idx) === id);
       if (!stillExists) removedIds.push(id);
     });
 
