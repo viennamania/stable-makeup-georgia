@@ -4783,9 +4783,36 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
     return null;
   }
 
-
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+
+
+
+  /*
+  // find document by queueId
+  // insert transactionHash, from, to into transactionHashLog collection
+  const existingOrder = await collection.findOne<any>(
+    { queueId: data.queueId }
+  );
+  if (!existingOrder) {
+    return { success: false };
+  }
+
+  const from = existingOrder?.seller;
+  const to = existingOrder?.buyer;
+  const usdtAmount = existingOrder?.usdtAmount || 0;
+
+  const transactionHashLogCollection = client.db(dbName).collection('transactionHashLogs');
+  await transactionHashLogCollection.insertOne({
+    transactionHash: data.transactionHash,
+    from: from,
+    to: to,
+    usdtAmount: usdtAmount,
+    createdAt: new Date().toISOString(),
+  });
+  */
+
+
   const result = await collection.updateOne(
     { queueId: data.queueId },
     { $set: {

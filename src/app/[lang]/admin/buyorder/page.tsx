@@ -5787,45 +5787,42 @@ const fetchBuyOrders = async () => {
                             {item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '기타은행'}
                           </button>
                         </div>
-                        <span className="text-xs text-zinc-500 truncate leading-tight">
+                        <span className="text-sm text-zinc-600 truncate leading-tight">
                           {item.bankUserInfo?.[0]?.accountHolder || '예금주 없음'} · {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
                         </span>
-                        <span className="text-[11px] text-zinc-400 truncate leading-tight" style={{ fontFamily: 'monospace' }}>
-                          실계좌번호: {item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || '-'}
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1">
+                        <button
+                          className="text-xs px-2 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 shrink-0"
+                          onClick={() =>
+                            fetchAliasTransfers(
+                              item.bankUserInfo?.[0]?.realAccountNumber
+                              || item.bankUserInfo?.[0]?.accountNumber
+                              || item._id
+                              || '기타은행',
+                              {
+                                bankName: item.bankUserInfo?.[0]?.bankName,
+                                accountHolder: item.bankUserInfo?.[0]?.accountHolder,
+                                aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                                defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                                realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || '',
+                              }
+                            )
+                          }
+                        >
+                          입금내역
+                        </button>
+                        <span className="text-sm font-semibold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
+                          {lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                            ? lastestBalanceArray[index].toLocaleString()
+                            : '잔액정보없음'}
                         </span>
                       </div>
-                      <button
-                        className="text-xs px-2 py-1 rounded-md border border-zinc-300 text-zinc-600 hover:bg-zinc-100 shrink-0"
-                        onClick={() =>
-                          fetchAliasTransfers(
-                            item.bankUserInfo?.[0]?.realAccountNumber
-                            || item.bankUserInfo?.[0]?.accountNumber
-                            || item._id
-                            || '기타은행',
-                            {
-                              bankName: item.bankUserInfo?.[0]?.bankName,
-                              accountHolder: item.bankUserInfo?.[0]?.accountHolder,
-                              aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                              defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                              realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || '',
-                            }
-                          )
-                        }
-                      >
-                        입금내역
-                      </button>
+
                     </div>
 
-                    <div className="w-full flex items-center justify-between text-xs">
-                      <span className="text-xs text-zinc-500">잔액(원)</span>
-                      <span className="text-sm font-semibold text-amber-600 tracking-tight balance-flash-target" style={{ fontFamily: 'monospace' }}>
-                        {lastestBalanceArray && lastestBalanceArray[index] !== undefined
-                          ? lastestBalanceArray[index].toLocaleString()
-                          : '잔액정보없음'}
-                      </span>
-                    </div>
-
-                    <div className="w-full flex items-center justify-between text-xs">
+                    <div className="w-full flex items-center justify-between text-sm font-semibold">
                       <span className="font-semibold text-zinc-600">{item.totalCount?.toLocaleString() || '0'}</span>
                       <span className="font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
                         {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
@@ -5994,84 +5991,53 @@ const fetchBuyOrders = async () => {
           </div>
           
 
-
+          {/* sellersBalance array row */}
           {sellersBalance.length > 0 && (
-            <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-4 overflow-x-auto">
-
+            <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-3 overflow-x-auto pb-1">
               {sellersBalance.map((seller, index) => (
-                <div key={index}
-                  //className="flex flex-row items-center justify-between gap-4
-                 // bg-white/80
-                  //p-4 rounded-lg shadow-md
-                  //backdrop-blur-md
-                  //"
-                  // if currentUsdtBalanceArray[index] is changed, then animate the background color
-                  className={`flex flex-col sm:flex-row items-center justify-between gap-4
-                  p-4 rounded-lg shadow-md
-                  backdrop-blur-md
+                <div
+                  key={index}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl border border-slate-200 shadow-sm bg-white/90 min-w-[260px]
                   ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
-                    ? 'bg-green-100/80 animate-pulse'
-                    : 'bg-white/80'}
-                  `}
-                  >
-                  <div className="flex flex-row items-center gap-4">
-                    <Image
-                      src="/icon-seller.png"
-                      alt="Seller"
-                      width={40}
-                      height={40}
-                      className="w-10 h-10"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold">
-                        {seller.nickname}
-                      </span>
+                    ? 'ring-1 ring-emerald-200'
+                    : ''}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Image src="/icon-seller.png" alt="Seller" width={34} height={34} className="w-8 h-8" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-semibold text-slate-900 truncate">{seller.nickname}</span>
                       <button
-                        className="text-sm text-zinc-600 underline"
+                        className="text-[12px] text-slate-500 underline truncate"
                         onClick={() => {
                           navigator.clipboard.writeText(seller.walletAddress);
                           toast.success(Copied_Wallet_Address);
-                        } }
+                        }}
+                        title={seller.walletAddress}
                       >
                         {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                       </button>
                     </div>
                   </div>
-                  <div className="flex flex-row items-center gap-2">
-                    <Image
-                      src="/icon-tether.png"
-                      alt="USDT"
-                      width={30}
-                      height={30}
-                      className="w-7 h-7"
-                    />
-                    <span className="text-2xl font-semibold text-[#409192]"
-                      style={{ fontFamily: 'monospace' }}>
-                      {
-                        //Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 
-                        currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
+                    <span className="text-xl font-bold text-[#0f766e] font-mono leading-none">
+                      {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
                         ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.00'
-                      }
+                        : '0.00'}
                     </span>
                   </div>
 
-                  {/* if seller nickname is 'seller', then show withdraw button */}
                   {seller.nickname === 'seller' && (
                     <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
-                      }}
-                      className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                      onClick={() => router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress)}
+                      className="ml-2 shrink-0 rounded-lg bg-[#3167b4] text-white text-xs font-semibold px-3 py-1.5 hover:bg-[#285497] transition"
                     >
                       출금하기
                     </button>
                   )}
-
                 </div>
               ))}
-
             </div>
           )}
 
