@@ -1042,6 +1042,7 @@ export default function Index({ params }: any) {
 
 
   const [agentcode, setAgentcode] = useState('');
+  const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
   useEffect(() => {
     setAgentcode(paramAgentcode || '');
   }, [paramAgentcode]);
@@ -1054,28 +1055,32 @@ export default function Index({ params }: any) {
   const [totalCount, setTotalCount] = useState(0);
   const [searchCount, setSearchCount] = useState(0);
 
-  const fetchAllStore = async () => {
+  const fetchAllStore = async (overrideAgentcode?: string) => {
     if (fetchingAllStore) {
       return;
     }
     setFetchingAllStore(true);
+    const selectedAgent =
+      overrideAgentcode !== undefined
+        ? overrideAgentcode
+        : (agentcode || paramAgentcode || '');
+    const payload: any = {
+      walletAddress: address,
+      limit: Number(limitValue),
+      page: Number(pageValue),
+      searchStore: searchStore,
+      agentcode: selectedAgent,
+      //fromDate: searchFromDate,
+      //toDate: searchToDate,
+    };
+    if (!payload.agentcode) delete payload.agentcode;
+
     const response = await fetch('/api/store/getAllStores', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json',
       },
-      body: JSON.stringify(
-        {
-          walletAddress: address,
-          limit: Number(limitValue),
-          page: Number(pageValue),
-          searchStore: searchStore,
-          agentcode: paramAgentcode,
-
-          //fromDate: searchFromDate,
-          //toDate: searchToDate,
-        }
-      ),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       setFetchingAllStore(false);
@@ -1131,7 +1136,7 @@ export default function Index({ params }: any) {
     }
     fetchAllStore();
 
-  } , [address, limitValue, pageValue, paramAgentcode, ]);
+  } , [address, limitValue, pageValue, agentcode, paramAgentcode]);
   
 
 
@@ -2391,39 +2396,140 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-row items-center justify-end gap-2">
+              <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/90 border border-slate-200 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.35)] rounded-2xl px-4 py-3 sm:px-6 sm:py-4">
 
+                {/* 가맹점 검색 / 에이전트 필터 */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 flex-wrap">
+                  {/* 커스텀 에이전트 셀렉터 */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      disabled={fetchingAllAgents}
+                      onClick={() => setAgentDropdownOpen((v) => !v)}
+                      className="flex items-center gap-3 px-3 py-2 w-96 sm:w-[28rem] rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-slate-100 overflow-hidden border border-slate-200 flex items-center justify-center">
+                        {(() => {
+                          const selected = allAgents.find((a: any) => a.agentcode === agentcode);
+                          if (selected?.agentLogo) {
+                            return (
+                              <Image
+                                src={selected.agentLogo}
+                                alt={selected.agentName || 'agent'}
+                                width={36}
+                                height={36}
+                                className="w-9 h-9 object-cover"
+                              />
+                            );
+                          }
+                          return <span className="text-[11px] text-slate-400">ALL</span>;
+                        })()}
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-[11px] text-slate-500">에이전트</span>
+                        <span className="text-sm font-semibold text-slate-800">
+                          {agentcode
+                            ? (() => {
+                                const selected = allAgents.find((a: any) => a.agentcode === agentcode);
+                                return selected ? `${selected.agentName} (${selected.agentcode})` : agentcode;
+                              })()
+                            : '전체'}
+                        </span>
+                      </div>
+                      <span className="ml-auto text-slate-400 text-xs">▼</span>
+                    </button>
 
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">검색수량</div>
-                  <div className="flex flex-row items-center gap-2 text-lg font-semibold text-zinc-500">
-                    {
-
-                        totalCount || 0
-                      
-                    }
+                    {agentDropdownOpen && (
+                      <div className="absolute z-30 mt-2 w-96 sm:w-[28rem] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                        <button
+                          type="button"
+                          className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-slate-700 text-sm"
+                          onClick={() => {
+                            setAgentcode('');
+                            setPageValue(1);
+                            router.push(`/${params.lang}/admin/store?page=1`);
+                            fetchAllStore('');
+                            setAgentDropdownOpen(false);
+                          }}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] text-slate-500">
+                            ALL
+                          </div>
+                          <span className="font-semibold">에이전트 전체</span>
+                        </button>
+                        <div className="border-t border-slate-100"></div>
+                        {allAgents.map((agent: any) => (
+                          <button
+                            type="button"
+                            key={agent.agentcode}
+                            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-slate-800 text-sm"
+                            onClick={() => {
+                              setAgentcode(agent.agentcode);
+                              setPageValue(1);
+                              router.push(`/${params.lang}/admin/store?agentcode=${agent.agentcode}&page=1`);
+                              fetchAllStore(agent.agentcode);
+                              setAgentDropdownOpen(false);
+                            }}
+                          >
+                            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+                              {agent.agentLogo ? (
+                                <Image
+                                  src={agent.agentLogo}
+                                  alt={agent.agentName || 'agent'}
+                                  width={32}
+                                  height={32}
+                                  className="w-8 h-8 object-cover"
+                                />
+                              ) : (
+                                <span className="text-[11px] text-slate-400">NA</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-start">
+                              <span className="font-semibold">{agent.agentName || '-'}</span>
+                              <span className="text-[11px] text-slate-500">{agent.agentcode}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
+                  <input
+                    disabled={!isAdmin || fetchingAllStore}
+                    type="text"
+                    value={searchStore}
+                    onChange={(e) => setSearchStorecode(e.target.value)}
+                    placeholder="가맹점 코드, 이름"
+                    className="w-64 sm:w-72 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1d4ed8]/70 focus:border-[#1d4ed8]/60 transition-all"
+                  />
+
+                <button
+                  onClick={() => {
+                    setPageValue(1);
+                    fetchAllStore();
+                  }}
+                  className={`
+                    w-28 sm:w-32 h-10
+                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8]
+                    text-white text-sm font-semibold rounded-xl
+                    shadow-[0_10px_25px_-14px_rgba(37,99,235,0.8)]
+                    hover:translate-y-[-1px] hover:shadow-[0_12px_26px_-12px_rgba(37,99,235,0.9)]
+                    active:translate-y-0
+                    transition-all duration-200
+                    ${!isAdmin || fetchingAllStore ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                  disabled={!isAdmin || fetchingAllStore}
+                >
+                  {fetchingAllStore ? '검색중...' : '검색'}
+                </button>
                 </div>
 
-                {/*
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">검색수량</div>
-                  <div className="flex flex-row items-center gap-2">
-                    {
- 
-                        searchCount || 0
-                      
-                    }
-                  </div>
+                <div className="flex flex-row items-center justify-end gap-2 text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 shadow-inner">
+                  <span className="text-slate-500">검색수량</span>
+                  <span className="text-lg font-semibold text-slate-900">
+                    {totalCount || 0}
+                  </span>
                 </div>
-                */}
-
-              </div>
-
-              <div className="w-full flex
-                flex-col sm:flex-row items-center justify-between gap-5">
-
-                {/* 가맹점 추가 입력은 모달에서 처리 */}
 
 
 
@@ -2465,42 +2571,7 @@ export default function Index({ params }: any) {
                 </div>
                 */}
 
-
-
-                {/* search bar */}
-                {/* searchStore */}
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-                  <input
-                    disabled={!isAdmin || fetchingAllStore}
-                    type="text"
-                    value={searchStore}
-                    onChange={(e) => setSearchStorecode(e.target.value)}
-                    placeholder="가맹점 코드, 이름"
-                    className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  />
-
-                  <button
-                    onClick={() => {
-                      setPageValue(1);
-                      fetchAllStore();
-                    }}
-                    //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                    className={`
-                      w-32
-                      bg-[#3167b4] text-white px-4 py-2 rounded-lg
-                      ${!isAdmin || fetchingAllStore ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                    
-
-                    disabled={!isAdmin || fetchingAllStore}
-                  >
-                    {fetchingAllStore ? '검색중...' : '검색'}
-                  </button>
-
-                </div>
-
               </div>
-
 
 
               {/*
