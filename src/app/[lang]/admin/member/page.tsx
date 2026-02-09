@@ -2645,7 +2645,7 @@ export default function Index({ params }: any) {
         </ModalUser>
 
         <ModalUser isOpen={isAddModalOpen} onClose={closeAddModal}>
-          <div className="w-full max-w-md bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-2xl border border-slate-100">
+          <div className="w-full bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-2xl border border-slate-100">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <div className="text-[22px] font-bold text-slate-900">회원 추가</div>
