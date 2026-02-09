@@ -565,6 +565,7 @@ export default function Index({ params }: any) {
 
   const [nativeBalance, setNativeBalance] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [isAddStoreModalOpen, setAddStoreModalOpen] = useState(false);
   useEffect(() => {
 
     // get the balance
@@ -1832,7 +1833,7 @@ export default function Index({ params }: any) {
                           //    "/admin/" + params.center
                           //);
                       });
-                  } }
+                  }}
 
                   className="flex items-center justify-center gap-2
                     bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
@@ -1854,11 +1855,7 @@ export default function Index({ params }: any) {
     );
   }
 
-
-
-
   return (
-
     <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
 
 
@@ -2199,119 +2196,22 @@ export default function Index({ params }: any) {
 
 
 
-            {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-            {/* memnu buttons same width left side */}
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
-
-                <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                  <Image
-                    src="/icon-store.png"
-                    alt="Store"
-                    width={35}
-                    height={35}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-sm font-semibold">
-                    가맹점관리
-                  </div>
-                </div>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    에이전트관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/member')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    회원관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    구매주문관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    P2P 거래내역
-                </button>
-
-                {version !== 'bangbang' && (
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    청산관리
-                </button>
-                )}
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(가맹)
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(AG)
-              </button>
-
+                        {/* 메뉴: 회원관리 페이지 스타일 */}
+            <div className="flex flex-wrap md:flex-nowrap items-center gap-2 mb-4 overflow-x-auto pb-1">
+              <div className="flex w-32 shrink-0 items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold rounded-xl px-3 py-2 shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] border border-amber-300">
+                <Image src="/icon-store.png" alt="Store" width={35} height={35} className="w-4 h-4" />
+                <div className="text-sm font-semibold drop-shadow-sm">가맹점관리</div>
+              </div>
+              <button onClick={() => router.push('/' + params.lang + '/admin/agent')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">에이전트관리</button>
+              <button onClick={() => router.push('/' + params.lang + '/admin/member')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">회원관리</button>
+              <button onClick={() => router.push('/' + params.lang + '/admin/buyorder')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">구매주문관리</button>
+              <button onClick={() => router.push('/' + params.lang + '/admin/trade-history')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">P2P 거래내역</button>
               {version !== 'bangbang' && (
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  보유량내역
-              </button>
+                <button onClick={() => router.push('/' + params.lang + '/admin/clearance-history')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">청산관리</button>
               )}
-
+              <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">P2P통계(가맹)</button>
+              <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">P2P통계(AG)</button>
             </div>
-
-
 
             <div className='flex flex-row items-center gap-2 justify-start w-full'>
                 <Image
@@ -2325,7 +2225,16 @@ export default function Index({ params }: any) {
                 <div className="text-xl font-semibold">
                   가맹점관리
                 </div>
-
+                <button
+                  onClick={() => {
+                    setStoreCode('');
+                    setAddStoreModalOpen(true);
+                  }}
+                  className="ml-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold shadow-sm hover:shadow-md"
+                >
+                  <span className="text-base leading-none">＋</span>
+                  가맹점 추가
+                </button>
             </div>
 
 
@@ -2514,93 +2423,7 @@ export default function Index({ params }: any) {
               <div className="w-full flex
                 flex-col sm:flex-row items-center justify-between gap-5">
 
-                {/* 가맹점 추가 input and button */}
-                <div className="flex flex-col sm:flex-row items-center gap-2">
-
-
-                  {/* select agent code */}
-                  <select
-                    disabled={!isAdmin || insertingStore}
-                    value={agentcode}
-                    onChange={(e) => {
-                      
-                      //setAgentcode(e.target.value);
-
-                      router.push(
-                        `/${params.lang}/admin/store?agentcode=${e.target.value}`
-                      );
-
-                    } }
-                    className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">
-                      에이전트 전체
-                    </option>
-                    {allAgents.map((agent: any) => (
-                      <option key={agent.agentcode} value={agent.agentcode}>
-                        {agent.agentName} ({agent.agentcode})
-                      </option>
-                    ))}
-                  </select>
-
-
-                  <input
-                    disabled={!isAdmin || insertingStore}
-                    type="text"
-                    value={storeCode}
-                    onChange={(e) => {
-
-                      setStoreCode(e.target.value)
-
-                    } }
-                    placeholder="가맹점 코드"
-                    className="hidden w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    disabled={!isAdmin || insertingStore}
-                    type="text"
-                    value={storeName}
-                    onChange={(e) => {
-
-                      setStoreName(e.target.value)
-
-                    } }
-                    placeholder="가맹점 이름"
-                    className="w-52 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  
-                  <button
-                    disabled={!isAdmin || insertingStore || fetchingAllStore}
-                    onClick={() => {
-
-                      // check if store code already exists
-                      if (allStore.find((item) => item.storecode === storeCode)) {
-                        toast.error('가맹점 코드가 이미 존재합니다.');
-                        return;
-                      }
-
-                      // check if store name length is less than 2
-                      if (storeName.length < 2) {
-                        toast.error('가맹점 이름은 2자 이상이어야 합니다.');
-                        return;
-                      }
-                      // check if store name length is less than 20
-                      if (storeName.length > 10) {
-                        toast.error('가맹점 이름은 10자 이하여야 합니다.');
-                        return;
-                      }
-
-                      insertStore();
-                    }}
-                    className={`bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full
-                      ${!isAdmin
-                      || insertingStore
-                      || fetchingAllStore
-                      ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {insertingStore ? '가맹점 추가 중...' : '가맹점 추가'}
-                  </button>
-                </div>
+                {/* 가맹점 추가 입력은 모달에서 처리 */}
 
 
 
@@ -2689,17 +2512,11 @@ export default function Index({ params }: any) {
 
                 <div className="w-full overflow-x-auto">
 
-                  <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
+                  <table className="w-full table-auto border border-slate-300 rounded-xl overflow-hidden text-sm text-slate-800">
 
-                    <thead
-                      className="bg-zinc-800 text-white text-sm font-thin
-                       w-full"
-                      style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      }}
-                    >
+                    <thead className="bg-slate-900 text-white text-xs font-semibold uppercase tracking-[0.04em]">
                       <tr>
-                        <th className="p-2">
+                        <th className="px-3 py-2 border-b border-slate-300 text-left align-top whitespace-nowrap">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
                               가맹점 이름
@@ -2716,7 +2533,7 @@ export default function Index({ params }: any) {
                         {/*
                         <th className="p-2">가맹점타입</th>
                         */}
-                        <th className="p-2">
+                        <th className="px-3 py-2 border-b border-slate-300 text-left align-top whitespace-nowrap">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
                               회원수(명)
@@ -2737,7 +2554,7 @@ export default function Index({ params }: any) {
 
 
 
-                        <th className="p-2">
+                        <th className="px-3 py-2 border-b border-slate-300 text-left align-top whitespace-nowrap">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
                               홈페이지
@@ -2764,7 +2581,7 @@ export default function Index({ params }: any) {
 
                         {/* USDT지갑 잔고 */}
                         {version !== 'bangbang' && (
-                        <th className="p-2">
+                        <th className="px-3 py-2 border-b border-slate-300 text-left align-top whitespace-nowrap">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
                               결제용 USDT지갑
@@ -2777,7 +2594,7 @@ export default function Index({ params }: any) {
                         </th>
                         )}
 
-                        <th className="p-2">
+                        <th className="px-3 py-2 border-b border-slate-300 text-left align-top whitespace-nowrap">
                           <div className="flex flex-col items-center justify-center gap-2">
                             <span className="text-center">
                               PG 수수료 USDT지갑
@@ -2871,14 +2688,10 @@ export default function Index({ params }: any) {
                       {allStore?.map((item, index) => (
 
                         
-                        <tr key={index} className={`
-                          ${
-                            index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-                          }
-                        `}>
+                        <tr key={index} className={index % 2 === 0 ? "bg-white" : "bg-slate-50"}>
 
                           <td className={`
-                            p-2
+                            px-3 py-2 border-b border-slate-200
                             ${item?.backgroundColor &&
                               "bg-" + item.backgroundColor + " "
                               
@@ -2969,13 +2782,11 @@ export default function Index({ params }: any) {
                             
                           </td>
                           {/*
-                          <td className="p-2">
+                          <td className="px-3 py-2 border-b border-slate-200 align-top">
                             {item.storeType}
                           </td>
                           */}
-                          <td className="
-                            p-2
-                            ">
+                          <td className="px-3 py-2 border-b border-slate-200 align-top">
  
                             <div className=" h-56
                               w-28
@@ -3017,7 +2828,7 @@ export default function Index({ params }: any) {
                             </div>
                           </td>
                           {/*
-                          <td className="p-2">
+                          <td className="px-3 py-2 border-b border-slate-200 align-top">
                             <div className="flex flex-col items-center gap-2">
                               <span className="text-sm text-gray-500">
                                 {
@@ -3042,7 +2853,7 @@ export default function Index({ params }: any) {
 
 
 
-                          <td className="p-2">
+                          <td className="px-3 py-2 border-b border-slate-200 align-top">
 
                             <div className="h-56
                               w-16 
@@ -3933,21 +3744,73 @@ export default function Index({ params }: any) {
           </div>
 
 
-          
-
-
-
-
-
-          
         </div>
-
 
         <Modal isOpen={isModalOpen} onClose={closeModal}>
             <TradeDetail
                 closeModal={closeModal}
                 //goChat={goChat}
             />
+        </Modal>
+
+        <Modal isOpen={isAddStoreModalOpen} onClose={() => setAddStoreModalOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <div className="text-lg font-bold text-slate-900">가맹점 추가</div>
+                <div className="text-xs text-slate-500">가맹점 코드와 이름을 입력하세요.</div>
+              </div>
+              <button className="text-sm text-slate-500 hover:text-slate-700" onClick={() => setAddStoreModalOpen(false)}>닫기</button>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <select
+                disabled={!isAdmin || insertingStore}
+                value={agentcode}
+                onChange={(e) => {
+                  router.push(`/${params.lang}/admin/store?agentcode=${e.target.value}`);
+                }}
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400"
+              >
+                <option value="">에이전트 전체</option>
+                {allAgents.map((agent: any) => (
+                  <option key={agent.agentcode} value={agent.agentcode}>
+                    {agent.agentName} ({agent.agentcode})
+                  </option>
+                ))}
+              </select>
+
+              <input
+                disabled={!isAdmin || insertingStore}
+                type="text"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                placeholder="가맹점 이름"
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setAddStoreModalOpen(false)}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200"
+              >
+                취소
+              </button>
+              <button
+                disabled={!isAdmin || insertingStore}
+                onClick={() => {
+                  if (storeName.length < 2) return toast.error('가맹점 이름은 2자 이상이어야 합니다.');
+                  if (storeName.length > 10) return toast.error('가맹점 이름은 10자 이하여야 합니다.');
+                  insertStore();
+                  setAddStoreModalOpen(false);
+                }}
+                className={`px-5 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 shadow-md hover:shadow-lg ${(!isAdmin || insertingStore) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {insertingStore ? '추가 중...' : '추가'}
+              </button>
+            </div>
+          </div>
         </Modal>
 
 
@@ -4077,5 +3940,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
