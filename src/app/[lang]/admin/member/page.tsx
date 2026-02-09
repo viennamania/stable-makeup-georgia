@@ -190,7 +190,7 @@ const wallets = [
 export default function Index({ params }: any) {
 
   const searchParams = useSearchParams()!;
- 
+
   // limit, page number params
 
   const limit = searchParams.get('limit') || 20;
@@ -884,8 +884,11 @@ export default function Index({ params }: any) {
 
 
 
-  const [storePaymentUrl, setStorePaymentUrl] = useState(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
+  ///////const [storePaymentUrl, setStorePaymentUrl] = useState(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
 
+
+
+  const [storePaymentUrl, setStorePaymentUrl] = useState(paymentUrl + '/' + params.lang + '/' + clientId);
 
 
   const [storeAdminWalletAddress, setStoreAdminWalletAddress] = useState("");
@@ -894,6 +897,18 @@ export default function Index({ params }: any) {
   const [store, setStore] = useState(null) as any;
 
   useEffect(() => {
+
+    if (!searchParamsStorecode) {
+      setStore(null);
+      setStoreAdminWalletAddress("");
+      
+      //setStorePaymentUrl(paymentUrl + '/' + params.lang + '/' + clientId + '/' + params.center + '/payment');
+
+      ////setStorePaymentUrl(paymentUrl + '/' + params.lang + '/' + clientId);
+
+
+      return;
+    }
 
     setFetchingStore(true);
 
@@ -923,8 +938,8 @@ export default function Index({ params }: any) {
 
           setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
-          data.result?.paymentUrl ? setStorePaymentUrl(data.result?.paymentUrl)
-                                  : setStorePaymentUrl(paymentUrl + '/' + params.lang + '/' + clientId + '/' + searchParamsStorecode + '/payment');
+          //data.result?.paymentUrl ? setStorePaymentUrl(data.result?.paymentUrl)
+          //                        : setStorePaymentUrl(paymentUrl + '/' + params.lang + '/' + clientId + '/' + searchParamsStorecode + '/payment');
 
         }
 
@@ -1454,7 +1469,10 @@ export default function Index({ params }: any) {
   const [storeTotalCount, setStoreTotalCount] = useState(0);
   const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
   const selectedStore = useMemo(
-    () => allStores.find((s: any) => s.storecode === selectedStorecode) || allStores[0] || null,
+    () => allStores.find((s: any) => s.storecode === selectedStorecode)
+      || allStores.find((s: any) => s.storecode === "")
+      || allStores[0]
+      || null,
     [allStores, selectedStorecode],
   );
   const fetchAllStores = async () => {
@@ -1483,14 +1501,17 @@ export default function Index({ params }: any) {
 
     const data = await response.json();
     const sorted = (data.result.stores || []).slice().sort((a: any, b: any) => (b.storeName || "").localeCompare(a.storeName || "", "ko-KR"));
-    setAllStores(sorted);
+    const storeList = [
+      {
+        storecode: "",
+        storeName: "전체",
+        storeLogo: "/icon-store.png",
+      },
+      ...sorted,
+    ];
+    setAllStores(storeList);
     setStoreTotalCount(data.result.totalCount);
     setFetchingAllStores(false);
-    if (!searchParamsStorecode && sorted.length > 0) {
-      setSelectedStorecode(sorted[0].storecode);
-      router.push(`/${params.lang}/admin/member?storecode=${sorted[0].storecode}&limit=${limit}&page=1`);
-      setStoreDropdownOpen(false);
-    }
     return data.result.stores;
   }
   useEffect(() => {
@@ -1502,9 +1523,12 @@ export default function Index({ params }: any) {
   }, [address]);
 
   useEffect(() => {
-    if (searchParamsStorecode) {
-      setSelectedStorecode(searchParamsStorecode);
+    // URL 쿼리에 storecode가 없을 때는 '전체'로 세팅
+    if (!searchParamsStorecode) {
+      setSelectedStorecode("");
+      return;
     }
+    setSelectedStorecode(searchParamsStorecode);
   }, [searchParamsStorecode]);
 
   //console.log('allStores', allStores);
@@ -1928,7 +1952,9 @@ export default function Index({ params }: any) {
                       />
                       <div className="flex flex-col text-left min-w-0">
                         <span className="truncate">{selectedStore?.storeName || "가맹점 없음"}</span>
-                        <span className="text-[11px] text-slate-500 truncate">{selectedStore?.storecode || ""}</span>
+                        <span className="text-[11px] text-slate-500 truncate">
+                          {selectedStore?.storecode === "" ? "전체" : (selectedStore?.storecode || "")}
+                        </span>
                       </div>
                     </div>
                     <span className="text-xs text-slate-500">{storeDropdownOpen ? "닫기" : "선택"}</span>
@@ -1942,7 +1968,12 @@ export default function Index({ params }: any) {
                           onClick={() => {
                             setSelectedStorecode(item.storecode);
                             setStoreDropdownOpen(false);
-                            router.push(`/${params.lang}/admin/member?storecode=${item.storecode}&limit=${limitValue}&page=1`);
+                            const base = `/${params.lang}/admin/member?limit=${limitValue}&page=1`;
+                            if (item.storecode === "") {
+                              router.push(base);
+                            } else {
+                              router.push(`${base}&storecode=${item.storecode}`);
+                            }
                           }}
                           className="w-full px-3 py-2 flex items-center gap-2 hover:bg-emerald-50"
                         >
@@ -1955,7 +1986,9 @@ export default function Index({ params }: any) {
                           />
                           <div className="flex flex-col text-left">
                             <span className="text-sm font-semibold text-slate-800">{item.storeName}</span>
-                            <span className="text-[11px] text-slate-500">{item.storecode}</span>
+                            <span className="text-[11px] text-slate-500">
+                              {item.storecode === "" ? "전체" : item.storecode}
+                            </span>
                           </div>
                         </button>
                       ))}
@@ -2371,13 +2404,14 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(
-                                      storePaymentUrl + '?'
+                                      storePaymentUrl + '/' + item.storecode + '/payment'
+                                      + '?'
                                       + 'storeUser=' + item.nickname
                                       + '&depositBankName=' + item?.buyer?.depositBankName
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
                                       + '&depositName=' + item?.buyer?.depositName
                                       + '&depositAmountKrw=' + depositAmountKrw[index]
-                                      + '&accessToken=' + store?.accessToken
+                                      + '&accessToken=' + item?.storeInfo?.accessToken
                                     );
                                     toast.success('회원 홈페이지 링크가 복사되었습니다.');
                                   }}
@@ -2392,13 +2426,14 @@ export default function Index({ params }: any) {
                                 <button
                                   onClick={() => {
                                     window.open(
-                                      storePaymentUrl + '?'
+                                      storePaymentUrl + '/' + item.storecode + '/payment'
+                                      + '?'
                                       + 'storeUser=' + item.nickname
                                       + '&depositBankName=' + item?.buyer?.depositBankName
                                       + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
                                       + '&depositName=' + item?.buyer?.depositName
                                       + '&depositAmountKrw=' + depositAmountKrw[index]
-                                      + '&accessToken=' + store?.accessToken,
+                                      + '&accessToken=' + item?.storeInfo?.accessToken,
                                       '_blank'
                                     );
                                     toast.success('회원 홈페이지를 새창으로 열었습니다.');

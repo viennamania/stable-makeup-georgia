@@ -4,6 +4,7 @@ import clientPromise from '../mongodb';
 import { dbName } from '../mongodb';
 import { id } from 'ethers/lib/utils';
 import { ObjectId } from 'mongodb';
+import { access } from 'fs';
 
 export interface UserProps {
   /*
@@ -1105,6 +1106,66 @@ export async function getAllBuyers(
   // if storecode is empty, return all users
 
   
+
+  // user.storecode joine stores collection to get store.accessToken
+
+  const users = await collection.aggregate<UserProps>([
+    {
+      $lookup: {
+        from: 'stores',
+        localField: 'storecode',
+        foreignField: 'storecode',
+        as: 'storeInfo',
+      },
+    },
+    {
+      $unwind: { path: '$storeInfo', preserveNullAndEmptyArrays: true }
+    },
+    {
+      $match: {
+        nickname: { $regex: String(search), $options: 'i' },
+        'buyer.depositName': { $regex: String(depositName), $options: 'i' },
+        'storecode': { $regex: String(storecode), $options: 'i' },
+        'storeInfo.agentcode': { $regex: String(agentcode), $options: 'i' },
+        walletAddress: { $exists: true, $ne: null },
+        $or: [
+          { verified: { $exists: false } },
+          { verified: false },
+        ]
+      }
+    },
+    {
+      $project: {
+        id: 1,
+        createdAt: 1,
+        nickname: 1,
+        walletAddress: 1,
+        storecode: 1,
+        store: 1,
+        buyer: 1,
+        buyOrderStatus: 1,
+        totalPaymentConfirmedCount: 1,
+        totalPaymentConfirmedKrwAmount: 1,
+        totalPaymentConfirmedUsdtAmount: 1,
+
+        userType: 1,
+        liveOnAndOff: 1,
+
+        storeInfo: { accessToken: 1 },
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $skip: (page - 1) * limit
+    },
+    {
+      $limit: limit
+    }
+  ]).toArray();
+
+  /*
   const users = await collection
     .find<UserProps>(
       {
@@ -1144,6 +1205,9 @@ export async function getAllBuyers(
     .limit(limit)
     .skip((page - 1) * limit)
     .toArray();
+    */
+
+
 
   const totalCount = await collection.countDocuments(
     {
