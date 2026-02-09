@@ -505,6 +505,7 @@ export default function Index({ params }: any) {
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
 
   
   useEffect(() => {
@@ -685,6 +686,11 @@ export default function Index({ params }: any) {
   const closeModal = () => setModalOpen(false);
   const openModal = () => setModalOpen(true);
   const closeAddModal = () => setAddModalOpen(false);
+  const handleKeyboardState = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (e.getModifierState) {
+      setCapsLockOn(!!e.getModifierState("CapsLock"));
+    }
+  };
 
   
 
@@ -2182,8 +2188,7 @@ export default function Index({ params }: any) {
                         <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[120px]">
                           USDT지갑
                         </th>
-                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[140px]">충전금액(원)</th>
-                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[140px]">결제페이지</th>
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[200px]">충전/결제</th>
                         <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[110px]">주문상태</th>
 
                         <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[130px]">잔액확인</th>
@@ -2347,7 +2352,7 @@ export default function Index({ params }: any) {
 
                           {/* depositAmountKrw input */}
                           <td className="px-3 py-3 border-b border-slate-100 align-top">
-                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
+                            <div className="flex flex-col items-start justify-center gap-2">
                               <input
                                 type="text"
                                 value={depositAmountKrw[index]}
@@ -2361,87 +2366,53 @@ export default function Index({ params }: any) {
                                 placeholder="충전금액"
                                 className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4] tabular-nums"
                               />
+
+                              <div className="flex flex-row items-center justify-start gap-2">
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      storePaymentUrl + '?'
+                                      + 'storeUser=' + item.nickname
+                                      + '&depositBankName=' + item?.buyer?.depositBankName
+                                      + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
+                                      + '&depositName=' + item?.buyer?.depositName
+                                      + '&depositAmountKrw=' + depositAmountKrw[index]
+                                      + '&accessToken=' + store?.accessToken
+                                    );
+                                    toast.success('회원 홈페이지 링크가 복사되었습니다.');
+                                  }}
+                                  className="inline-flex items-center gap-1.5 bg-emerald-500 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-600 transition whitespace-nowrap"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V5a2 2 0 012-2h6a2 2 0 012 2v10a2 2 0 01-2 2h-2m-4 0H6a2 2 0 01-2-2V9a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2z" />
+                                  </svg>
+                                  복사
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    window.open(
+                                      storePaymentUrl + '?'
+                                      + 'storeUser=' + item.nickname
+                                      + '&depositBankName=' + item?.buyer?.depositBankName
+                                      + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
+                                      + '&depositName=' + item?.buyer?.depositName
+                                      + '&depositAmountKrw=' + depositAmountKrw[index]
+                                      + '&accessToken=' + store?.accessToken,
+                                      '_blank'
+                                    );
+                                    toast.success('회원 홈페이지를 새창으로 열었습니다.');
+                                  }}
+                                  className="inline-flex items-center gap-1.5 bg-indigo-500 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 transition whitespace-nowrap"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 9h6m-6 4h6m-8 5h10a2 2 0 002-2V8l-4-4H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 3v4a1 1 0 001 1h4" />
+                                  </svg>
+                                  새창열기
+                                </button>
+                              </div>
                             </div>
-                          </td>
-
-
-                          <td className="px-3 py-3 border-b border-slate-100 align-top">
-
-                            <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
-
- 
-
-                              {/* Modal open */}
-                              {/*
-                              <button
-                                onClick={() => {
-                                  
-                                  setSelectedItem({
-                                    ...item,
-                                    depositAmountKrw: depositAmountKrw[index],
-                                  });
-                                  openModal();
-
-                                }}
-                                className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
-                              >
-                                보기
-                              </button>
-                              */}
-
-
-
-
-                              {/* 복사 버튼 */}
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    storePaymentUrl + '?'
-                                    + 'storeUser=' + item.nickname
-                                    + '&depositBankName=' + item?.buyer?.depositBankName
-                                    + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
-                                    + '&depositName=' + item?.buyer?.depositName
-                                    + '&depositAmountKrw=' + depositAmountKrw[index]
-                                    + '&accessToken=' + store?.accessToken
-                                  );
-                                  toast.success('회원 홈페이지 링크가 복사되었습니다.');
-                                }}
-                                className="inline-flex items-center gap-1.5 bg-emerald-500 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-600 transition whitespace-nowrap"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V5a2 2 0 012-2h6a2 2 0 012 2v10a2 2 0 01-2 2h-2m-4 0H6a2 2 0 01-2-2V9a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2z" />
-                                </svg>
-                                복사
-                              </button>
-
-
-                              {/* 새창 열기 버튼 */}
-                              <button
-                                onClick={() => {
-                                  window.open(
-                                    storePaymentUrl + '?'
-                                    + 'storeUser=' + item.nickname
-                                    + '&depositBankName=' + item?.buyer?.depositBankName
-                                    + '&depositBankAccountNumber=' + item?.buyer?.depositBankAccountNumber
-                                    + '&depositName=' + item?.buyer?.depositName
-                                    + '&depositAmountKrw=' + depositAmountKrw[index]
-                                    + '&accessToken=' + store?.accessToken,
-                                    '_blank'
-                                  );
-                                  toast.success('회원 홈페이지를 새창으로 열었습니다.');
-                                }}
-                                className="inline-flex items-center gap-1.5 bg-indigo-500 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 transition whitespace-nowrap"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 9h6m-6 4h6m-8 5h10a2 2 0 002-2V8l-4-4H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 3v4a1 1 0 001 1h4" />
-                                </svg>
-                                새창열기
-                              </button>
-                              
-                            </div>
-
                           </td>
 
 
@@ -2674,18 +2645,18 @@ export default function Index({ params }: any) {
         </ModalUser>
 
         <ModalUser isOpen={isAddModalOpen} onClose={closeAddModal}>
-          <div className="w-full max-w-xl bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
-            <div className="flex items-start justify-between">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <div className="text-[22px] font-bold text-slate-900">회원 추가</div>
                 <div className="text-xs text-slate-500 mt-1">새 회원 정보를 입력해 등록하세요.</div>
               </div>
-              <button
-                onClick={closeAddModal}
-                className="text-sm text-slate-500 hover:text-slate-700"
-              >
-                닫기
-              </button>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-bold tracking-tight shadow-sm ${capsLockOn ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-amber-900 border border-amber-300' : 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 border border-slate-300'}`}>
+                  <span className={`w-2 h-2 rounded-full ${capsLockOn ? 'bg-red-500 shadow-[0_0_0_3px_rgba(248,113,113,0.2)]' : 'bg-slate-400'}`} />
+                  {capsLockOn ? 'CapsLock 켜짐' : 'CapsLock 꺼짐'}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
@@ -2695,6 +2666,8 @@ export default function Index({ params }: any) {
                 value={userCode}
                 onChange={(e) => setUserCode(e.target.value)}
                 placeholder="회원 아이디"
+                onKeyUp={handleKeyboardState}
+                onKeyDown={handleKeyboardState}
                 className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
               />
               <span className="text-[11px] text-slate-500 -mt-2">로그인에 사용할 고유 아이디</span>
@@ -2704,6 +2677,8 @@ export default function Index({ params }: any) {
                 value={userPassword}
                 onChange={(e) => setUserPassword(e.target.value)}
                 placeholder="회원 비밀번호"
+                onKeyUp={handleKeyboardState}
+                onKeyDown={handleKeyboardState}
                 className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
               />
               <span className="text-[11px] text-slate-500 -mt-2">숫자/문자 조합 4~12자 권장</span>
@@ -2713,6 +2688,8 @@ export default function Index({ params }: any) {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="회원 이름"
+                onKeyUp={handleKeyboardState}
+                onKeyDown={handleKeyboardState}
                 className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
               />
               <span className="text-[11px] text-slate-500 -mt-2">화면에 표시될 이름</span>
@@ -2722,6 +2699,8 @@ export default function Index({ params }: any) {
                 value={userBankDepositName}
                 onChange={(e) => setUserBankDepositName(e.target.value)}
                 placeholder="회원 입금자명"
+                onKeyUp={handleKeyboardState}
+                onKeyDown={handleKeyboardState}
                 className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
               />
               <span className="text-[11px] text-slate-500 -mt-2">입금 시 표시되는 예금주명</span>
@@ -2729,6 +2708,8 @@ export default function Index({ params }: any) {
                 disabled={insertingUserCode}
                 value={userBankName}
                 onChange={(e) => setUserBankName(e.target.value)}
+                onKeyUp={handleKeyboardState}
+                onKeyDown={handleKeyboardState}
                 className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
               >
                 <option value="">은행선택</option>
@@ -2768,6 +2749,8 @@ export default function Index({ params }: any) {
                 value={userBankAccountNumber}
                 onChange={(e) => setUserBankAccountNumber(e.target.value)}
                 placeholder="회원 계좌번호"
+                onKeyUp={handleKeyboardState}
+                onKeyDown={handleKeyboardState}
                 className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
               />
               <span className="text-[11px] text-slate-500 -mt-2">숫자만 입력해주세요</span>
