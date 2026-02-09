@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, use, act, useMemo } from "react";
 
 import Image from "next/image";
 
@@ -479,6 +479,10 @@ export default function Index({ params }: any) {
 
 
   const router = useRouter();
+  const menuButtonBase =
+    "flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 " +
+    "bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] " +
+    "hover:-translate-y-0.5 hover:shadow-md transition-all duration-200";
 
 
 
@@ -500,6 +504,7 @@ export default function Index({ params }: any) {
 
 
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
 
   
   useEffect(() => {
@@ -679,6 +684,7 @@ export default function Index({ params }: any) {
 
   const closeModal = () => setModalOpen(false);
   const openModal = () => setModalOpen(true);
+  const closeAddModal = () => setAddModalOpen(false);
 
   
 
@@ -1438,7 +1444,13 @@ export default function Index({ params }: any) {
   // get All stores
   const [fetchingAllStores, setFetchingAllStores] = useState(false);
   const [allStores, setAllStores] = useState([] as any[]);
+  const [selectedStorecode, setSelectedStorecode] = useState<string>(searchParamsStorecode);
   const [storeTotalCount, setStoreTotalCount] = useState(0);
+  const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
+  const selectedStore = useMemo(
+    () => allStores.find((s: any) => s.storecode === selectedStorecode) || allStores[0] || null,
+    [allStores, selectedStorecode],
+  );
   const fetchAllStores = async () => {
     if (fetchingAllStores) {
       return;
@@ -1464,15 +1476,15 @@ export default function Index({ params }: any) {
     }
 
     const data = await response.json();
-    
-    console.log('getAllStores data', data);
-
-
-
-
-    setAllStores(data.result.stores);
+    const sorted = (data.result.stores || []).slice().sort((a: any, b: any) => (b.storeName || "").localeCompare(a.storeName || "", "ko-KR"));
+    setAllStores(sorted);
     setStoreTotalCount(data.result.totalCount);
     setFetchingAllStores(false);
+    if (!searchParamsStorecode && sorted.length > 0) {
+      setSelectedStorecode(sorted[0].storecode);
+      router.push(`/${params.lang}/admin/member?storecode=${sorted[0].storecode}&limit=${limit}&page=1`);
+      setStoreDropdownOpen(false);
+    }
     return data.result.stores;
   }
   useEffect(() => {
@@ -1482,6 +1494,12 @@ export default function Index({ params }: any) {
     }
     fetchAllStores();
   }, [address]);
+
+  useEffect(() => {
+    if (searchParamsStorecode) {
+      setSelectedStorecode(searchParamsStorecode);
+    }
+  }, [searchParamsStorecode]);
 
   //console.log('allStores', allStores);
 
@@ -1671,10 +1689,8 @@ export default function Index({ params }: any) {
                           //    "/admin/" + params.center
                           //);
                       });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  }}
+                  className="flex items-center justify-center gap-2 bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -1826,127 +1842,22 @@ export default function Index({ params }: any) {
 
 
 
-
-
-
-
-      
           {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-          {/* memnu buttons same width left side */}
-          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
-
-
-
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/store')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover: scale-105
-                  transition-all duration-200 ease-in-out
-                  ">
-                  가맹점관리
-              </button>
-
-              <button
-                onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
-                에이전트관리
-            </button>
-
-              <div className='flex w-32 items-center justify-center gap-2
-              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                <Image
-                  src="/icon-user.png"
-                  alt="Buyer"
-                  width={35}
-                  height={35}
-                  className="w-4 h-4"
-                />
-                <div className="text-sm font-semibold">
-                  회원관리
-                </div>
+          <div className="flex flex-wrap md:flex-nowrap items-center gap-2 mb-4 overflow-x-auto pb-1">
+            <button onClick={() => router.push('/' + params.lang + '/admin/store')} className={menuButtonBase}>가맹점관리</button>
+            <button onClick={() => router.push('/' + params.lang + '/admin/agent')} className={menuButtonBase}>에이전트관리</button>
+            <div className="flex w-32 shrink-0 items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 text-sm font-semibold rounded-xl px-3 py-2 shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] border border-amber-300">
+              <Image src="/icon-user.png" alt="Buyer" width={35} height={35} className="w-4 h-4" />
+              <div className="text-sm font-semibold drop-shadow-sm">회원관리</div>
             </div>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover: scale-105
-                  transition-all duration-200 ease-in-out
-                  ">
-                  구매주문관리
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover: scale-105
-                  transition-all duration-200 ease-in-out
-                  ">
-                  P2P 거래내역
-              </button>
-
-              {version !== 'bangbang' && (
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover: scale-105
-                    transition-all duration-200 ease-in-out
-                    ">
-                    청산관리
-                </button>
-              )}
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(가맹)
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(AG)
-              </button>
-
-              { version !== 'bangbang' && (
-                <button
-                    onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  보유량내역
-                </button>
-              )}
-
+            <button onClick={() => router.push('/' + params.lang + '/admin/buyorder')} className={menuButtonBase}>구매주문관리</button>
+            <button onClick={() => router.push('/' + params.lang + '/admin/trade-history')} className={menuButtonBase}>P2P 거래내역</button>
+            {version !== 'bangbang' && (
+              <button onClick={() => router.push('/' + params.lang + '/admin/escrow-history')} className={menuButtonBase}>청산관리</button>
+            )}
+            <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className={menuButtonBase}>P2P통계(가맹)</button>
+            <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')} className={menuButtonBase}>P2P통계(AG)</button>
           </div>
-
-
 
 
 
@@ -1964,245 +1875,107 @@ export default function Index({ params }: any) {
               </div>
           </div>
 
+          {/* 가맹점 선택 - 상단 배치 */}
+          <div className="w-full mt-3 max-w-md">
+            {fetchingAllStores ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Image
+                  src="/loading.png"
+                  alt="Loading"
+                  width={20}
+                  height={20}
+                  className="animate-spin"
+                />
+                불러오는 중...
+              </div>
+            ) : (
+              <div className="w-full p-3 bg-white/95 border border-slate-200 rounded-xl shadow-sm flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src="/icon-store.png"
+                      alt="Store"
+                      width={20}
+                      height={20}
+                      className="rounded-lg w-5 h-5"
+                    />
+                    <span className="text-sm font-semibold text-slate-900">가맹점 선택</span>
+                  </div>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                    {storeTotalCount.toLocaleString()}곳
+                  </span>
+                </div>
 
-
-
-
-
-          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
-
-  
-
-
-
-
-            <div className="w-full flex flex-row items-center justify-end gap-5">
-
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">{Total}</div>
-                <div className="
-                  h-10 w-10
-                  text-center
-                  flex flex-row items-center gap-2">
-                  {
-
-                        totalCount || 0
-
-                    
-                  }
+                <div className="relative w-full sm:min-w-[260px]">
+                  <button
+                    type="button"
+                    onClick={() => setStoreDropdownOpen((o) => !o)}
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 flex items-center justify-between gap-3 hover:border-emerald-300 hover:ring-1 hover:ring-emerald-200 transition"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Image
+                        src={selectedStore?.storeLogo || "/icon-store.png"}
+                        alt="store"
+                        width={28}
+                        height={28}
+                        className="w-7 h-7 rounded-md object-cover border border-slate-200"
+                      />
+                      <div className="flex flex-col text-left min-w-0">
+                        <span className="truncate">{selectedStore?.storeName || "가맹점 없음"}</span>
+                        <span className="text-[11px] text-slate-500 truncate">{selectedStore?.storecode || ""}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-slate-500">{storeDropdownOpen ? "닫기" : "선택"}</span>
+                  </button>
+                  {storeDropdownOpen && (
+                    <div className="absolute z-30 mt-2 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                      {allStores.map((item: any, index: number) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setSelectedStorecode(item.storecode);
+                            setStoreDropdownOpen(false);
+                            router.push(`/${params.lang}/admin/member?storecode=${item.storecode}&limit=${limitValue}&page=1`);
+                          }}
+                          className="w-full px-3 py-2 flex items-center gap-2 hover:bg-emerald-50"
+                        >
+                          <Image
+                            src={item.storeLogo || "/icon-store.png"}
+                            alt="store"
+                            width={24}
+                            height={24}
+                            className="w-6 h-6 rounded-md object-cover border border-slate-200"
+                          />
+                          <div className="flex flex-col text-left">
+                            <span className="text-sm font-semibold text-slate-800">{item.storeName}</span>
+                            <span className="text-[11px] text-slate-500">{item.storecode}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-
-
-            </div>
-
-
+            )}
           </div>
 
 
 
 
-          {/* 바이어 추가 input and button */}
-          <div className="
-            flex flex-col sm:flex-col items-start justify-center gap-2">
 
 
-            <div className="w-full flex flex-row items-center justify-between gap-2">
-
-              <input
-                disabled={insertingUserCode}
-                type="text"
-                value={userCode}
-                onChange={(e) => {
-
-
-                  setUserCode(e.target.value);
-
-                } }
-                placeholder="회원 아이디"
-                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-              {/* userPassword */}
-              <input
-                disabled={insertingUserCode}
-                type="text"
-                value={userPassword}
-                onChange={(e) => setUserPassword(e.target.value)}
-                placeholder="회원 비밀번호"
-                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-
-  
-              <input
-                disabled={insertingUserCode}
-                type="text"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                placeholder="회원 이름"
-                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-            </div>
-
-
-            <div className="w-full flex flex-row items-center justify-between gap-2">
-
-
-              {/* userBankDepositName */}
-              <input
-                disabled={insertingUserCode}
-                type="text"
-                value={userBankDepositName}
-                onChange={(e) => setUserBankDepositName(e.target.value)}
-                placeholder="회원 입금자명"
-                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-
-
-              {/* userBankName */}
-
-              <select
-                disabled={insertingUserCode}
-                value={userBankName}
-                onChange={(e) => setUserBankName(e.target.value)}
-                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">
-                  은행선택
-                </option>
-                <option value="카카오뱅크">
-                  카카오뱅크
-                </option>
-                <option value="케이뱅크">
-                  케이뱅크
-                </option>
-                <option value="토스뱅크">
-                  토스뱅크
-                </option>
-                <option value="국민은행">
-                  국민은행
-                </option>
-                <option value="우리은행">
-                  우리은행
-                </option>
-                <option value="신한은행">
-                  신한은행
-                </option>
-                <option value="농협">
-                  농협
-                </option>
-                <option value="새마을금고">
-                  새마을금고
-                </option>
-                <option value="우체국">
-                  우체국
-                </option>
-                <option value="산림조합">
-                  산림조합
-                </option>
-                <option value="기업은행">
-                  기업은행
-                </option>
-                <option value="하나은행">
-                  하나은행
-                </option>
-                <option value="외환은행">
-                  외환은행
-                </option>
-                <option value="SC제일은행">
-                  SC제일은행
-                </option>
-                <option value="부산은행">
-                  부산은행
-                </option>
-                <option value="대구은행">
-                  대구은행
-                </option>
-                <option value="전북은행">
-                  전북은행
-                </option>
-                <option value="경북은행">
-                  경북은행
-                </option>
-                <option value="경남은행">
-                  경남은행
-                </option>
-                <option value="광주은행">
-                  광주은행
-                </option>
-                <option value="제주은행">
-                  제주은행
-                </option>
-                <option value="수협">
-                  수협
-                </option>
-                <option value="신협">
-                  신협
-                </option>
-                <option value="저축은행">
-                  저축은행
-                </option>
-                <option value="씨티은행">
-                  씨티은행
-                </option>
-                <option value="대신은행">
-                  대신은행
-                </option>
-                <option value="동양종합금융">
-                  동양종합금융
-                </option>
-                <option value="JT친애저축은행">
-                  JT친애저축은행
-                </option>
-                <option value="산업은행">
-                  산업은행
-                </option>
-              </select>
-
-          
-
-              {/* userBankAccountNumber */}
-              <input
-                disabled={insertingUserCode}
-                type="text"
-                value={userBankAccountNumber}
-                onChange={(e) => setUserBankAccountNumber(e.target.value)}
-                placeholder="회원 계좌번호"
-                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-            </div>
-
-        
-            
+          {/* 바이어 추가: 버튼 + 모달 */}
+          <div className="w-full max-w-3xl flex items-center justify-between">
+            <div className="text-sm font-semibold text-slate-700">회원 추가</div>
             <button
-              disabled={insertingUserCode}
-              onClick={() => {
-
-                // check if store name length is less than 2
-                if (userName.length < 2) {
-                  toast.error('회원 이름은 2자 이상이어야 합니다.');
-                  return;
-                }
-                // check if store name length is less than 20
-                if (userName.length > 10) {
-                  toast.error('회원 이름은 10자 이하여야 합니다.');
-                  return;
-                }
-
-                confirm(
-                  `정말 ${userCode} (${userName})을 추가하시겠습니까?`
-                ) && insertBuyer();
-
-              }}
-              className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg w-full
-                ${insertingUserCode ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => setAddModalOpen(true)}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md text-sm font-semibold"
             >
-              {insertingUserCode ? '회원추가 중...' : '회원추가'}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+              회원 추가하기
             </button>
           </div>
 
@@ -2212,79 +1985,23 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-2 mt-4">
+          <div className="w-full mt-4 rounded-2xl border border-slate-200 bg-white/95 shadow-sm p-4 flex flex-col lg:flex-row items-start lg:items-stretch justify-start gap-4">
 
-
-
-
-
-
-            {/* search bar */}
-
-            {/* select storecode */}
-            <div className="flex flex-row items-center gap-2">
-              {fetchingAllStores ? (
-                <Image
-                  src="/loading.png"
-                  alt="Loading"
-                  width={20}
-                  height={20}
-                  className="animate-spin"
-                />
-              ) : (
-                <div className="flex flex-row items-center gap-2">
-
-                  
-                  <Image
-                    src="/icon-store.png"
-                    alt="Store"
-                    width={20}
-                    height={20}
-                    className="rounded-lg w-5 h-5"
-                  />
-
-                  <span className="
-                    w-32
-                    text-sm font-semibold">
-                    가맹점 선택
-                  </span>
-
-
-                  <select
-                    
-                    //value={searchStorecode}
-                    value={searchParamsStorecode || ""}
-
-                    onChange={(e) => {
-                      router.push(
-                        `/${params.lang}/admin/member?storecode=${e.target.value}&limit=${limitValue}&page=1`
-                      );
-
-                    }}
-                    disabled={fetchingAllStores}
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
-                  >
-                    <option value="">전체</option>
-                    {allStores && allStores.map((item, index) => (
-                      <option key={index} value={item.storecode}
-                        className="flex flex-row items-center justify-start gap-2"
-                      >
-                        
-                        {item.storeName}{' '}({item.storecode})
-
-                      </option>
-                    ))}
-                  </select>
-
-                </div>
-
-              )}
+            <div className="w-full flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-slate-700">검색 / 결과</span>
+                <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-sm font-bold text-slate-900 tabular-nums">
+                  합계 {Number(totalCount || 0).toLocaleString('ko-KR')}
+                </span>
+              </div>
             </div>
-        
 
-          
 
-            <div className="flex flex-row items-center gap-2">
+
+
+
+
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full">
 
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
@@ -2295,7 +2012,7 @@ export default function Index({ params }: any) {
                     value={searchBuyer}
                     onChange={(e) => setSearchBuyer(e.target.value)}
                     placeholder="회원 아이디"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
 
                 </div>
@@ -2306,7 +2023,7 @@ export default function Index({ params }: any) {
                     value={searchDepositName}
                     onChange={(e) => setSearchDepositName(e.target.value)}
                     placeholder="입금자명"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
 
                 </div>
@@ -2314,15 +2031,13 @@ export default function Index({ params }: any) {
 
 
               {/* 검색 버튼 */}
-              <div className="
-              w-32
-              flex flex-row items-center gap-2">
+              <div className="w-full md:w-32 flex flex-row items-center gap-2">
                 <button
                   onClick={() => {
                     setPageValue(1);
                     fetchAllBuyer();
                   }}
-                  className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
+                  className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-4 py-2 rounded-lg w-full shadow-sm hover:shadow-md hover:from-sky-600 hover:to-blue-700 transition"
                   disabled={fetchingAllBuyer}
                 >
                   <div className="flex flex-row items-center justify-between gap-2">
@@ -2344,127 +2059,75 @@ export default function Index({ params }: any) {
             </div>
 
 
-          </div>
-
-
-            <div className="w-full flex flex-row items-center justify-end gap-2">
-
-              <div className="flex flex-row items-center justify-center gap-2
-              bg-white/80
-              p-2 rounded-lg shadow-md
-              backdrop-blur-md
-              ">
-                {loadingTotalNumberOfBuyOrders ? (
-                  <Image
-                    src="/loading.png"
-                    alt="Loading"
-                    width={20}
-                    height={20}
-                    className="w-6 h-6 animate-spin"
-                  />
-                ) : (
-                  <Image
-                    src="/icon-buyorder.png"
-                    alt="Buy Order"
-                    width={35}
-                    height={35}
-                    className="w-6 h-6"
-                  />
-                )}
-
-
-                <p className="text-lg text-red-500 font-semibold">
-                  {
-                  totalNumberOfBuyOrders
-                  }
-                </p>
-
-                {totalNumberOfBuyOrders > 0 && (
-                  <div className="flex flex-row items-center justify-center gap-2">
+            <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-2">
+              <div className="flex flex-wrap items-center justify-end gap-3 w-full">
+                <div className="flex items-center gap-3 bg-gradient-to-r from-white via-slate-50 to-sky-50 border border-slate-200 px-4 py-3 rounded-xl shadow-sm min-w-[220px]">
+                  {loadingTotalNumberOfBuyOrders ? (
                     <Image
-                      src="/icon-notification.gif"
-                      alt="Notification"
-                      width={50}
-                      height={50}
-                      className="w-15 h-15 object-cover"
-                      
+                      src="/loading.png"
+                      alt="Loading"
+                      width={20}
+                      height={20}
+                      className="w-6 h-6 animate-spin"
                     />
+                  ) : (
+                    <Image
+                      src="/icon-buyorder.png"
+                      alt="Buy Order"
+                      width={28}
+                      height={28}
+                      className="w-6 h-6"
+                    />
+                  )}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-slate-500">구매주문 총건</span>
+                    <span className="text-lg font-bold text-slate-900 tabular-nums">{totalNumberOfBuyOrders?.toLocaleString?.('ko-KR') ?? totalNumberOfBuyOrders}</span>
+                  </div>
+                  <button
+                    onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
+                    className="ml-auto inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-500 to-blue-600 text-[11px] font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md whitespace-nowrap"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+                    이동
+                  </button>
+                </div>
+
+                {version !== 'bangbang' && (
+                  <div className="flex items-center gap-3 bg-gradient-to-r from-white via-slate-50 to-amber-50 border border-slate-200 px-4 py-3 rounded-xl shadow-sm min-w-[220px]">
+                    {loadingTotalNumberOfClearanceOrders ? (
+                      <Image
+                        src="/loading.png"
+                        alt="Loading"
+                        width={20}
+                        height={20}
+                        className="w-6 h-6 animate-spin"
+                      />
+                    ) : (
+                      <Image
+                        src="/icon-clearance.png"
+                        alt="Clearance"
+                        width={28}
+                        height={28}
+                        className="w-6 h-6"
+                      />
+                    )}
+                    <div className="flex flex-col">
+                      <span className="text-xs text-slate-500">청산 대기 건</span>
+                      <span className="text-lg font-bold text-slate-900 tabular-nums">{totalNumberOfClearanceOrders?.toLocaleString?.('ko-KR') ?? totalNumberOfClearanceOrders}</span>
+                    </div>
                     <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/admin/buyorder');
-                      }}
-                      className="flex items-center justify-center gap-2
-                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                      onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
+                      className="ml-auto inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 text-[11px] font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md whitespace-nowrap"
                     >
-                      <span className="text-sm">
-                        구매주문관리
-                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+                      이동
                     </button>
                   </div>
                 )}
               </div>
-
-
-              {/* Clearance Orders */}
-              {version !== 'bangbang' && (
-              <div className="flex flex-row items-center justify-center gap-2
-              bg-white/80
-              p-2 rounded-lg shadow-md
-              backdrop-blur-md
-              ">
-
-                {loadingTotalNumberOfClearanceOrders ? (
-                  <Image
-                    src="/loading.png"
-                    alt="Loading"
-                    width={20}
-                    height={20}
-                    className="w-6 h-6 animate-spin"
-                  />
-                ) : (
-                  <Image
-                    src="/icon-clearance.png"
-                    alt="Clearance"
-                    width={35}
-                    height={35}
-                    className="w-6 h-6"
-                  />
-                )}
-
-                <p className="text-lg text-yellow-500 font-semibold">
-                  {
-                  totalNumberOfClearanceOrders
-                  }
-                </p>
-
-                {totalNumberOfClearanceOrders > 0 && (
-                  <div className="flex flex-row items-center justify-center gap-2">
-                    <Image
-                      src="/icon-notification.gif"
-                      alt="Notification"
-                      width={50}
-                      height={50}
-                      className="w-15 h-15 object-cover"
-                      
-                    />
-                    <button
-                      onClick={() => {
-                        router.push('/' + params.lang + '/admin/clearance-history');
-                      }}
-                      className="flex items-center justify-center gap-2
-                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                    >
-                      <span className="text-sm">
-                        청산관리
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
-              )}
-
-          
             </div>
+
+          </div>
 
 
 
@@ -2476,61 +2139,54 @@ export default function Index({ params }: any) {
               {tableView ? (
 
 
-                <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-auto rounded-2xl border border-slate-200 bg-white/95 shadow-sm">
 
-                  <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+                  <table className="min-w-[1150px] w-full text-sm text-slate-700">
 
-                    <thead
-                      className="bg-zinc-800 text-white text-sm font-semibold"
-                      style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      }}
-                    >
+                    <thead className="bg-slate-50 text-slate-900 text-[12px] font-semibold uppercase tracking-[0.02em] sticky top-0 z-10">
                       <tr>
 
-                        <th className="
-                          p-2">
-                            <div className="flex flex-col items-center justify-center gap-2">
-                              <span>가입일시</span>
-                            </div>
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[120px]">
+                          <div className="flex flex-col items-start justify-center gap-1">
+                            <span>가입일시</span>
+                          </div>
                         </th>
                         {/* 회원상태 */}
-                        <th className="p-2">
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[90px]">
                           <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
                             <span>회원 상태</span>
                           </div>
                         </th>
 
-                        <th className="p-2">
-                          <div className="flex flex-col sm:flex-row items-start justify-start gap-2">
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[180px]">
+                          <div className="flex flex-col items-start gap-1 leading-tight">
                             <span>회원 아이디</span>
-                            <span>가맹점 </span>
+                            <span className="text-[11px] text-slate-500">가맹점</span>
                           </div>
                         </th>
 
-                        <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[150px]">
+                          <div className="flex flex-col items-start justify-center gap-2">
                             <span>회원은행정보</span>
                           </div>
                         </th>
 
-                        <th className="p-2">
-                          <div className="flex flex-col items-center justify-center gap-2">
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[190px]">
+                          <div className="flex flex-col items-start justify-center gap-2">
                             <span>결제건수(건)</span>
                             <span>결제금액(원)</span>
                             <span>구매량(USDT)</span>
                           </div>
                           </th>
 
-                        <th className="
-                          p-2">
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[120px]">
                           USDT지갑
                         </th>
-                        <th className="p-2">충전금액(원)</th>
-                        <th className="p-2">결제페이지</th>
-                        <th className="p-2">주문상태</th>
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[140px]">충전금액(원)</th>
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[140px]">결제페이지</th>
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[110px]">주문상태</th>
 
-                        <th className="p-2">잔액확인</th>
+                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[130px]">잔액확인</th>
                       </tr>
                     </thead>
 
@@ -2540,14 +2196,12 @@ export default function Index({ params }: any) {
                       {allBuyer.map((item, index) => (
 
                         
-                        <tr key={index} className={`
-                          ${
-                            index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-                          }
-                        `}>
+                        <tr
+                          key={index}
+                          className="even:bg-slate-50/60 hover:bg-emerald-50 transition-colors"
+                        >
 
-                          <td className="
-                            p-2">
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <span className="text-sm text-zinc-500">
                                 {new Date(item.createdAt).toLocaleDateString('ko-KR', {
@@ -2568,7 +2222,7 @@ export default function Index({ params }: any) {
                           </td>
 
                           {/* 회원상태  liveOnAndOff  true => 정상상태 , false => 차단상태 */}
-                          <td className="p-2">
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
                             <div className="flex flex-col items-start justify-center gap-2">
                               {item?.liveOnAndOff === false ? (
                                 <span className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs">
@@ -2582,34 +2236,25 @@ export default function Index({ params }: any) {
                             </div>
                           </td>
                         
-                          <td className="p-2">
-                            <div className="flex flex-col items-start justify-center gap-2">
-
-                              <div className="
-                                flex flex-col sm:flex-row items-start justify-between gap-2">
-
-                                <div className="
-                                  w-40
-                                  flex flex-col items-center justify-start gap-2">
-                                  <span className="text-lg text-zinc-500">
-                                    {item.nickname}
-                                  </span>
-                                  {item?.userType === ''
-                                  ? <span className="bg-gray-500 text-white px-2 py-1 rounded-lg text-xs">일반</span>
-                                  : item?.userType === 'AAA'
-                                    ? <span className="bg-red-500 text-white px-2 py-1 rounded-lg text-xs">1등급</span>
-                                    : item?.userType === 'BBB'
-                                      ? <span className="bg-orange-500 text-white px-2 py-1 rounded-lg text-xs">2등급</span>
-                                      : item?.userType === 'CCC'
-                                        ? <span className="bg-yellow-500 text-white px-2 py-1 rounded-lg text-xs">3등급</span>
-                                        : item?.userType === 'DDD'
-                                          ? <span className="bg-green-500 text-white px-2 py-1 rounded-lg text-xs">4등급</span>
-                                          : <span className="bg-gray-500 text-white px-2 py-1 rounded-lg text-xs">일반</span>
-                                  }
-                                </div>
-                                <span className="text-sm text-zinc-500 text-right">
-                                  {item?.store?.storeName}<br />({item?.store?.storecode})
-                                </span>
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-base font-semibold text-slate-900">{item.nickname}</span>
+                                {item?.userType === ''
+                                ? <span className="bg-gray-500 text-white px-2 py-0.5 rounded-full text-[11px]">일반</span>
+                                : item?.userType === 'AAA'
+                                  ? <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-[11px]">1등급</span>
+                                  : item?.userType === 'BBB'
+                                    ? <span className="bg-orange-500 text-white px-2 py-0.5 rounded-full text-[11px]">2등급</span>
+                                    : item?.userType === 'CCC'
+                                      ? <span className="bg-yellow-500 text-white px-2 py-0.5 rounded-full text-[11px]">3등급</span>
+                                      : item?.userType === 'DDD'
+                                        ? <span className="bg-green-500 text-white px-2 py-0.5 rounded-full text-[11px]">4등급</span>
+                                        : <span className="bg-gray-500 text-white px-2 py-0.5 rounded-full text-[11px]">일반</span>
+                                }
+                              </div>
+                              <div className="text-sm text-slate-600 leading-tight">
+                                {item?.store?.storeName} ({item?.store?.storecode})
                               </div>
 
                               <button
@@ -2618,9 +2263,11 @@ export default function Index({ params }: any) {
                                     `/${params.lang}/admin/member-settings?storecode=${item?.storecode}&walletAddress=${item?.walletAddress}`
                                   );
                                 }}
-                                className="mt-2 bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
+                                className="mt-2 inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-500 to-blue-600 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition whitespace-nowrap"
                               >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536M16.5 3.5a2.121 2.121 0 113 3L7 19H4v-3L16.5 3.5z" />
+                                </svg>
                                 변경하기
                               </button>
 
@@ -2628,13 +2275,13 @@ export default function Index({ params }: any) {
 
                           </td>
 
-                          <td className="p-2">
-                            <div className="flex flex-col items-start justify-center gap-2">
-                              <span>{item?.buyer?.depositBankName}</span>
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
+                            <div className="flex flex-col items-start justify-center gap-1">
+                              <span className="text-sm font-semibold text-slate-800">{item?.buyer?.depositBankName}</span>
                               
-                              <span>{item?.buyer?.depositBankAccountNumber}</span>
+                              <span className="text-[13px] text-slate-600 tabular-nums">{item?.buyer?.depositBankAccountNumber}</span>
                               
-                              <span>{item?.buyer?.depositName}</span>
+                              <span className="text-[12px] text-slate-500">{item?.buyer?.depositName}</span>
                             </div>
 
                             {/* 변경하기 button */}
@@ -2655,42 +2302,23 @@ export default function Index({ params }: any) {
 
                           </td>
 
-                          <td className="p-2">
-                            <div className="flex flex-col items-end mr-2 justify-center gap-2">
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
+                            <div className="flex flex-col items-end mr-2 justify-center gap-2 text-right">
 
-                              {item?.totalPaymentConfirmedCount ? (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  {item?.totalPaymentConfirmedCount}
-                                </div>
-                              ) : (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  0 건
-                                </div>
-                              )}
-                                
+                              <div className="text-xs text-slate-500">건수</div>
+                              <div className="text-base font-semibold text-slate-900 tabular-nums">
+                                {Number(item?.totalPaymentConfirmedCount || 0).toLocaleString('ko-KR')}
+                              </div>
 
-                              {item?.totalPaymentConfirmedKrwAmount ? (
+                              <div className="text-xs text-slate-500">금액(원)</div>
+                              <div className="text-base font-semibold text-emerald-700 tabular-nums">
+                                {Number(item?.totalPaymentConfirmedKrwAmount || 0).toLocaleString('ko-KR')}
+                              </div>
 
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  {Number(item?.totalPaymentConfirmedKrwAmount)?.toLocaleString('ko-KR')}
-                                  {' '}원
-                                </div>
-                              ) : (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  0 원
-                                </div>
-                              )}
-
-                              {item?.totalPaymentConfirmedUsdtAmount ? (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  {Number(item?.totalPaymentConfirmedUsdtAmount)?.toLocaleString('ko-KR')}
-                                  {' '}USDT
-                                </div>
-                              ) : (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                  0 USDT
-                                </div>
-                              )}
+                              <div className="text-xs text-slate-500">USDT</div>
+                              <div className="text-base font-semibold text-sky-700 tabular-nums">
+                                {Number(item?.totalPaymentConfirmedUsdtAmount || 0).toLocaleString('ko-KR')}
+                              </div>
 
                             </div>
                             
@@ -2698,15 +2326,17 @@ export default function Index({ params }: any) {
 
 
 
-                          <td className="
-                            p-2">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(item?.walletAddress);
-                                toast.success(Copied_Wallet_Address);
-                              } }
-                              className="text-sm text-zinc-500 underline"
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item?.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                } }
+                              className="inline-flex items-center gap-1 text-sm text-slate-700 hover:text-slate-900 underline underline-offset-2 whitespace-nowrap"
                             >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16h8m-8-4h8m-2-9H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7l-4-4z" />
+                            </svg>
                             {
                                 item?.walletAddress && (
                                   item.walletAddress.substring(0, 6) + '...' + item.walletAddress.substring(item.walletAddress.length - 4)
@@ -2716,7 +2346,7 @@ export default function Index({ params }: any) {
                           </td>
 
                           {/* depositAmountKrw input */}
-                          <td className="p-2">
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
                             <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
                               <input
                                 type="text"
@@ -2729,13 +2359,13 @@ export default function Index({ params }: any) {
                                   });
                                 }}
                                 placeholder="충전금액"
-                                className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                                className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4] tabular-nums"
                               />
                             </div>
                           </td>
 
 
-                          <td className="p-2">
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
 
                             <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
 
@@ -2777,9 +2407,11 @@ export default function Index({ params }: any) {
                                   );
                                   toast.success('회원 홈페이지 링크가 복사되었습니다.');
                                 }}
-                                className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
+                                className="inline-flex items-center gap-1.5 bg-emerald-500 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-600 transition whitespace-nowrap"
                               >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V5a2 2 0 012-2h6a2 2 0 012 2v10a2 2 0 01-2 2h-2m-4 0H6a2 2 0 01-2-2V9a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2z" />
+                                </svg>
                                 복사
                               </button>
 
@@ -2799,9 +2431,12 @@ export default function Index({ params }: any) {
                                   );
                                   toast.success('회원 홈페이지를 새창으로 열었습니다.');
                                 }}
-                                className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
+                                className="inline-flex items-center gap-1.5 bg-indigo-500 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:bg-indigo-600 transition whitespace-nowrap"
                               >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 9h6m-6 4h6m-8 5h10a2 2 0 002-2V8l-4-4H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 3v4a1 1 0 001 1h4" />
+                                </svg>
                                 새창열기
                               </button>
                               
@@ -2810,7 +2445,7 @@ export default function Index({ params }: any) {
                           </td>
 
 
-                          <td className="p-2">
+                          <td className="px-3 py-3 border-b border-slate-100 align-top">
                             <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
                               <span className="text-sm text-zinc-500">
                                 {
@@ -2844,7 +2479,7 @@ export default function Index({ params }: any) {
 
                            {/* 잔고확인 버튼 */}
                            {/* USDT 잔액 */}
-                           <td className="p-2">
+                           <td className="px-3 py-3 border-b border-slate-100 align-top">
                              <div className="w-24
                                flex flex-col items-between justify-between gap-2">
  
@@ -2866,24 +2501,14 @@ export default function Index({ params }: any) {
                                <button
                                  //disabled={!isAdmin || insertingStore}
                                  onClick={() => {
-                                   //if (!isAdmin || insertingStore) return;
-                                   //getBalance(item.storecode);
- 
                                    getBalanceOfWalletAddress(item.walletAddress);
-           
- 
-                                   //toast.success('잔액을 가져왔습니다.');
- 
-                                   // toast usdtBalance[index] is updated
-                                   //toast.success(`잔액을 가져왔습니다. 현재 잔액: ${usdtBalance[index] ? usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'} USDT`);
- 
                                  }}
-                                 className={`
-                                   w-full mb-2
-                                   bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                   hover:bg-[#3167b4]/80
-                                 `}
+                                 className="w-full mb-2 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-sky-500 to-blue-600 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition whitespace-nowrap"
                                >
+                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                 </svg>
                                  잔액 확인하기
                                </button>
  
@@ -2895,12 +2520,11 @@ export default function Index({ params }: any) {
                                    clearanceWalletAddress(item.walletAddress);
                                    toast.success('잔액을 회수했습니다.');
                                  }}
-                                 className={`
-                                   w-full mb-2
-                                   bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                   hover:bg-[#3167b4]/80
-                                 `}
+                                 className="w-full mb-2 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition whitespace-nowrap"
                                >
+                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v8m0 0l-3-3m3 3l3-3M6 4h12l-1 14H7L6 4z" />
+                                 </svg>
                                  잔액 회수하기
                                </button>
                                 
@@ -3047,6 +2671,131 @@ export default function Index({ params }: any) {
                 closeModal={closeModal}
                 selectedItem={selectedItem}
             />
+        </ModalUser>
+
+        <ModalUser isOpen={isAddModalOpen} onClose={closeAddModal}>
+          <div className="w-full max-w-xl bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col">
+                <div className="text-[22px] font-bold text-slate-900">회원 추가</div>
+                <div className="text-xs text-slate-500 mt-1">새 회원 정보를 입력해 등록하세요.</div>
+              </div>
+              <button
+                onClick={closeAddModal}
+                className="text-sm text-slate-500 hover:text-slate-700"
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              <input
+                disabled={insertingUserCode}
+                type="text"
+                value={userCode}
+                onChange={(e) => setUserCode(e.target.value)}
+                placeholder="회원 아이디"
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <span className="text-[11px] text-slate-500 -mt-2">로그인에 사용할 고유 아이디</span>
+              <input
+                disabled={insertingUserCode}
+                type="text"
+                value={userPassword}
+                onChange={(e) => setUserPassword(e.target.value)}
+                placeholder="회원 비밀번호"
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <span className="text-[11px] text-slate-500 -mt-2">숫자/문자 조합 4~12자 권장</span>
+              <input
+                disabled={insertingUserCode}
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="회원 이름"
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <span className="text-[11px] text-slate-500 -mt-2">화면에 표시될 이름</span>
+              <input
+                disabled={insertingUserCode}
+                type="text"
+                value={userBankDepositName}
+                onChange={(e) => setUserBankDepositName(e.target.value)}
+                placeholder="회원 입금자명"
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <span className="text-[11px] text-slate-500 -mt-2">입금 시 표시되는 예금주명</span>
+              <select
+                disabled={insertingUserCode}
+                value={userBankName}
+                onChange={(e) => setUserBankName(e.target.value)}
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                <option value="">은행선택</option>
+                <option value="카카오뱅크">카카오뱅크</option>
+                <option value="케이뱅크">케이뱅크</option>
+                <option value="토스뱅크">토스뱅크</option>
+                <option value="국민은행">국민은행</option>
+                <option value="우리은행">우리은행</option>
+                <option value="신한은행">신한은행</option>
+                <option value="농협">농협</option>
+                <option value="새마을금고">새마을금고</option>
+                <option value="우체국">우체국</option>
+                <option value="산림조합">산림조합</option>
+                <option value="기업은행">기업은행</option>
+                <option value="하나은행">하나은행</option>
+                <option value="외환은행">외환은행</option>
+                <option value="SC제일은행">SC제일은행</option>
+                <option value="부산은행">부산은행</option>
+                <option value="대구은행">대구은행</option>
+                <option value="전북은행">전북은행</option>
+                <option value="경북은행">경북은행</option>
+                <option value="경남은행">경남은행</option>
+                <option value="광주은행">광주은행</option>
+                <option value="제주은행">제주은행</option>
+                <option value="수협">수협</option>
+                <option value="신협">신협</option>
+                <option value="저축은행">저축은행</option>
+                <option value="씨티은행">씨티은행</option>
+                <option value="대신은행">대신은행</option>
+                <option value="동양종합금융">동양종합금융</option>
+                <option value="JT친애저축은행">JT친애저축은행</option>
+                <option value="산업은행">산업은행</option>
+              </select>
+              <input
+                disabled={insertingUserCode}
+                type="text"
+                value={userBankAccountNumber}
+                onChange={(e) => setUserBankAccountNumber(e.target.value)}
+                placeholder="회원 계좌번호"
+                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+              <span className="text-[11px] text-slate-500 -mt-2">숫자만 입력해주세요</span>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={closeAddModal}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition"
+              >
+                취소
+              </button>
+              <button
+                disabled={insertingUserCode}
+                onClick={() => {
+                  if (userName.length < 2) return toast.error('회원 이름은 2자 이상이어야 합니다.');
+                  if (userName.length > 10) return toast.error('회원 이름은 10자 이하여야 합니다.');
+                  if (confirm(`정말 ${userCode} (${userName})을 추가하시겠습니까?`)) {
+                    insertBuyer();
+                    closeAddModal();
+                  }
+                }}
+                className={`px-5 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md hover:shadow-lg ${insertingUserCode ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {insertingUserCode ? '추가 중...' : '추가'}
+              </button>
+            </div>
+          </div>
         </ModalUser>
         
 
@@ -3219,5 +2968,3 @@ const TradeDetail = (
     );
   };
   */}
-
-
