@@ -1720,10 +1720,11 @@ export async function insertBuyOrder(data: any) {
     );
 
 
-
+    /*
     const updated = await collection.findOne<OrderProps>(
-      { _id: result.insertedId }
+      { _id: result.insertedId },
     );
+    */
 
     return {
 

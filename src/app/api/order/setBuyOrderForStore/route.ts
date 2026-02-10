@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
   const {
     clientid,
     storecode,
-    storeUser,
-    krwAmount,
+    userid,
+    amount,
     returnUrl,
   } = body;
 
   ///console.log("setBuyOrder =====  body", body);
 
-  if (!clientid || !storecode || !storeUser || !krwAmount) {
+  if (!clientid || !storecode || !userid || !amount) {
 
     return NextResponse.json({
       result: null,
@@ -76,7 +76,8 @@ export async function POST(request: NextRequest) {
 
   }
 
-  const nickname = storeUser;
+  const nickname = userid;
+  const krwAmount = Number(amount);
 
 
   // 
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
   if (!userInfo) {
     return NextResponse.json({
       result: null,
-      error: "Invalid storecode or nickname",
+      error: "Invalid storecode or userid",
     }
     , { status: 400 });
   }
