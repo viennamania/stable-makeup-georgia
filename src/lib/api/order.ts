@@ -4764,7 +4764,11 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
   const result = await collection.updateOne(
     { _id: new ObjectId(data.orderId+'')},
     { $set: {
+      
       queueId: data.queueId,
+      // queue update date time
+      queueUpdatedAt: new Date().toISOString(),
+
       status: 'paymentConfirmed',
       paymentConfirmedAt: new Date().toISOString(),
     } }
