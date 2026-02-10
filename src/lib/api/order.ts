@@ -4790,7 +4790,7 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
 
   
 
-  
+  /*
   // find document by queueId
   // insert transactionHash, from, to into transactionHashLog collection
   const existingOrder = await collection.findOne<any>(
@@ -4814,6 +4814,7 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
     amount: amount,
     createdAt: new Date().toISOString(),
   });
+  */
   
 
 
