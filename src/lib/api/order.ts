@@ -1632,7 +1632,10 @@ export async function insertBuyOrder(data: any) {
 
 
 
-  const tradeId = Math.floor(Math.random() * 900000000) + 100000000 + '';
+  //const tradeId = Math.floor(Math.random() * 900000000) + 100000000 + '';
+  // more long number for tradeId
+  const tradeId = Math.floor(Math.random() * 9000000000) + 1000000000 + ''; 
+
 
   ///console.log('insertBuyOrder tradeId: ' + tradeId);
 
