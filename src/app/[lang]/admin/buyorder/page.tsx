@@ -1486,6 +1486,7 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [showUnmatched, setShowUnmatched] = useState(true);
   const unmatchedScrollRef = useRef<HTMLDivElement | null>(null);
   const [togglingAlarmId, setTogglingAlarmId] = useState<string | null>(null);
+  const [markingUnmatchedId, setMarkingUnmatchedId] = useState<string | null>(null);
   const lastAlarmSoundRef = useRef<number>(0);
   const [unmatchedCountdown, setUnmatchedCountdown] = useState('00:00:00');
 
@@ -2177,6 +2178,54 @@ const depositAmountMatches = useMemo(() => {
       );
     } finally {
       setTogglingAlarmId(null);
+    }
+  };
+
+  // 미신청 입금내역 → 입금 처리
+  const markUnmatchedAsDeposited = async (transfer: any) => {
+    const id = transfer?._id;
+    if (!id) {
+      toast.error('유효하지 않은 입금 내역입니다.');
+      return;
+    }
+
+    const amount = Number(transfer?.amount) || 0;
+    const depositor = transfer?.transactionName || '-';
+    const account = transfer?.bankAccountNumber || transfer?.account || '-';
+    const storeName = transfer?.storeInfo?.storeName || '미지정 가맹점';
+
+    const confirmed = window.confirm(
+      [
+        '이 입금을 처리하시겠습니까?',
+        `가맹점: ${storeName}`,
+        `입금자명: ${depositor}`,
+        `금액: ${amount.toLocaleString()}원`,
+        `계좌: ${account}`,
+      ].join('\n')
+    );
+    if (!confirmed) return;
+
+    try {
+      setMarkingUnmatchedId(id);
+      const res = await fetch('/api/bankTransfer/mark-success', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          memo: transfer?.memo || 'admin marked deposited',
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || '입금 처리에 실패했습니다.');
+      }
+      toast.success('입금 처리 완료');
+      await fetchUnmatchedTransfers();
+    } catch (error: any) {
+      console.error('mark-success failed', error);
+      toast.error(error?.message || '입금 처리에 실패했습니다.');
+    } finally {
+      setMarkingUnmatchedId(null);
     }
   };
 
@@ -5929,6 +5978,7 @@ const fetchBuyOrders = async () => {
                       <div className="flex items-center justify-between text-[11px] text-zinc-500">
                         <span className="font-semibold text-zinc-600">No.{unmatchedTransfers.length - index}</span>
                         <div className="flex items-center gap-1">
+                          {/*
                           <button
                             className={`px-2 py-[2px] text-[10px] rounded-full border ${
                               transfer.alarmOn === false
@@ -5940,9 +5990,24 @@ const fetchBuyOrders = async () => {
                           >
                             {transfer.alarmOn === false ? '알람 끔' : '알람 켬'}
                           </button>
+                          */}
+
                           <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">
                             {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
                           </span>
+
+                          <button
+                            className={`px-3 py-1.5 rounded-md text-xs font-semibold text-white shadow-sm transition
+                              ${markingUnmatchedId === (transfer._id || '')
+                                ? 'bg-emerald-400 cursor-wait opacity-80'
+                                : 'bg-emerald-600 hover:bg-emerald-700'}
+                            `}
+                            onClick={() => markUnmatchedAsDeposited(transfer)}
+                            disabled={!!markingUnmatchedId}
+                          >
+                            {markingUnmatchedId === (transfer._id || '') ? '처리중...' : '삭제'}
+                          </button>
+
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-2">
@@ -5980,6 +6045,7 @@ const fetchBuyOrders = async () => {
                           </span>
                         </div>
                       </div>
+
                     </div>
                       );
                     });

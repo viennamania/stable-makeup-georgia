@@ -1640,10 +1640,6 @@ export async function insertBuyOrder(data: any) {
 
   const collection = client.db(dbName).collection('buyorders');
 
-
-
-
-
   const result = await collection.insertOne(
 
     {

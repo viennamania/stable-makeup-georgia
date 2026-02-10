@@ -2501,3 +2501,34 @@ export async function upsertBankUserAndBalance(
 
   return result;
 }
+
+
+// getUserWalletAddressByStorecodeAndNickname
+export async function getUserWalletAddressByStorecodeAndNickname(
+  storecode: string,
+  nickname: string,
+): Promise<any> {
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const results = await collection.findOne<UserProps>(
+    {
+      storecode: storecode,
+      nickname: nickname,
+    },
+    { projection: {
+      _id: 0,
+      walletAddress: 1,
+      buyer: 1
+    } }
+  ) as any;
+
+
+  if (results) {
+    return results;
+  } else {
+    return null;
+  }
+
+}
