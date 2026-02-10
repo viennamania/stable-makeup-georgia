@@ -4788,11 +4788,14 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
 
 
 
-  /*
+  
+
+  
   // find document by queueId
   // insert transactionHash, from, to into transactionHashLog collection
   const existingOrder = await collection.findOne<any>(
-    { queueId: data.queueId }
+    { queueId: data.queueId },
+    { projection: { chain: 1, seller: 1, buyer: 1, usdtAmount: 1 } }
   );
   if (!existingOrder) {
     return { success: false };
@@ -4800,17 +4803,21 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
 
   const from = existingOrder?.seller;
   const to = existingOrder?.buyer;
-  const usdtAmount = existingOrder?.usdtAmount || 0;
+  const amount = existingOrder?.usdtAmount || 0;
 
   const transactionHashLogCollection = client.db(dbName).collection('transactionHashLogs');
   await transactionHashLogCollection.insertOne({
+    chain: existingOrder.chain,
     transactionHash: data.transactionHash,
     from: from,
     to: to,
-    usdtAmount: usdtAmount,
+    amount: amount,
     createdAt: new Date().toISOString(),
   });
-  */
+  
+
+
+
 
 
   const result = await collection.updateOne(
