@@ -44,18 +44,39 @@ export async function POST(request: NextRequest) {
   const {
     clientid,
     storecode,
-    nickname,
+    storeUser,
     krwAmount,
     returnUrl,
   } = body;
 
-  console.log("setBuyOrder =====  body", body);
+  ///console.log("setBuyOrder =====  body", body);
+
+  if (!clientid || !storecode || !storeUser || !krwAmount) {
+
+    return NextResponse.json({
+      result: null,
+      error: "Missing required fields",
+    }
+    , { status: 400 });
+    
+  }
 
   // check clientid
 
   const client = await getOne(clientid);
 
 
+  if (!client) {
+
+    return NextResponse.json({
+      result: null,
+      error: "Invalid clientid",
+    }
+    , { status: 400 });
+
+  }
+
+  const nickname = storeUser;
 
 
   // 
@@ -65,9 +86,6 @@ export async function POST(request: NextRequest) {
 
   // get usdtAmount, rate by krwAmount
 
-
-  let rate = 0; // clients.exchangeRateUSDT.KRW
-  let usdtAmount = 0;
 
   const privateSale = false;
 
@@ -102,19 +120,9 @@ export async function POST(request: NextRequest) {
     
   }
 
-  
 
-  if (!client) {
 
-    return NextResponse.json({
-      result: null,
-      error: "Invalid clientid",
-    }
-    , { status: 400 });
-
-  }
-
-  rate = client.exchangeRateUSDT?.KRW || 0;
+  const rate = client.exchangeRateUSDT?.KRW || 0;
 
   if (rate <= 0) {
 
@@ -126,7 +134,7 @@ export async function POST(request: NextRequest) {
 
   }
 
-  usdtAmount = Number((krwAmount / rate).toFixed(2));
+  const usdtAmount = Number((krwAmount / rate).toFixed(2));
 
 
 
