@@ -35,21 +35,25 @@ curl -X POST https://www.stable.makeup/api/order/setBuyOrderForStore \
   }'
 
 */
+/*
+// mgorlkxu => 캘리포니아 storecode
+// zkeyujk => userid
+curl -X GET "https://www.stable.makeup/api/order/setBuyOrderForStore?clientid=150b53f165222304af7c45dc45c73863&storecode=mgorlkxu&nickname=zkeyujk&krwAmount=10000&returnUrl="
 
 
-export async function POST(request: NextRequest) {
+curl -X GET "http://localhost:3000/api/order/setBuyOrderForStore?clientid=150b53f165222304af7c45dc45c73863&storecode=mgorlkxu&nickname=zkeyujk&krwAmount=10000&returnUrl="
 
-  const body = await request.json();
+*/
 
-  const {
-    clientid,
-    storecode,
-    userid,
-    amount,
-    returnUrl,
-  } = body;
+async function handleSetBuyOrder(payload: Record<string, any>) {
 
-  ///console.log("setBuyOrder =====  body", body);
+  const clientid = payload.clientid || payload.clientId;
+  const storecode = payload.storecode || payload.storeCode;
+  const userid = payload.userid || payload.userId || payload.nickname;
+  const amount = payload.amount ?? payload.krwAmount;
+  const returnUrl = payload.returnUrl;
+
+  ///console.log("setBuyOrder =====  body", payload);
 
   if (!clientid || !storecode || !userid || !amount) {
 
@@ -181,4 +185,24 @@ export async function POST(request: NextRequest) {
     
   });
   
+}
+
+
+export async function POST(request: NextRequest) {
+
+  try {
+    const body = await request.json();
+    return handleSetBuyOrder(body);
+  } catch (error) {
+    return NextResponse.json({
+      result: null,
+      error: "Invalid JSON body",
+    }, { status: 400 });
+  }
+}
+
+
+export async function GET(request: NextRequest) {
+  const payload = Object.fromEntries(request.nextUrl.searchParams.entries());
+  return handleSetBuyOrder(payload);
 }
