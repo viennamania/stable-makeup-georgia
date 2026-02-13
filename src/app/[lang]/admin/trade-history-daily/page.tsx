@@ -1284,6 +1284,46 @@ const fetchBuyOrders = async () => {
 
 
 
+  const parsedLimit = Number(limit) > 0 ? Number(limit) : 10;
+  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / parsedLimit));
+  const currentPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
+  const currentPageStart = Number(totalCount) === 0 ? 0 : (currentPage - 1) * parsedLimit + 1;
+  const currentPageEnd = Math.min(currentPage * parsedLimit, Number(totalCount));
+
+  const pageTotalTradeCount = buyOrders.reduce((sum, order) => sum + (Number(order.totalCount) || 0), 0);
+  const pageTotalTradeUsdt = buyOrders.reduce((sum, order) => sum + (Number(order.totalUsdtAmount) || 0), 0);
+  const pageTotalTradeKrw = buyOrders.reduce((sum, order) => sum + (Number(order.totalKrwAmount) || 0), 0);
+  const pageTotalSettlementCount = buyOrders.reduce((sum, order) => sum + (Number(order.totalSettlementCount) || 0), 0);
+  const pageTotalSettlementUsdt = buyOrders.reduce((sum, order) => sum + (Number(order.totalSettlementAmount) || 0), 0);
+  const pageTotalSettlementKrw = buyOrders.reduce((sum, order) => sum + (Number(order.totalSettlementAmountKRW) || 0), 0);
+  const pageTotalAgentFeeUsdt = buyOrders.reduce((sum, order) => sum + (Number(order.totalAgentFeeAmount) || 0), 0);
+  const pageTotalAgentFeeKrw = buyOrders.reduce((sum, order) => sum + (Number(order.totalAgentFeeAmountKRW) || 0), 0);
+  const pageTotalPgFeeUsdt = buyOrders.reduce((sum, order) => sum + (Number(order.totalFeeAmount) || 0), 0);
+  const pageTotalPgFeeKrw = buyOrders.reduce((sum, order) => sum + (Number(order.totalFeeAmountKRW) || 0), 0);
+  const pageTotalClearanceCount = buyOrders.reduce((sum, order) => sum + (Number(order.totalClearanceCount) || 0), 0);
+  const pageTotalClearanceUsdt = buyOrders.reduce((sum, order) => sum + (Number(order.totalClearanceUsdtAmount) || 0), 0);
+  const pageTotalClearanceKrw = buyOrders.reduce((sum, order) => sum + (Number(order.totalClearanceKrwAmount) || 0), 0);
+
+  const buildDailyHistoryQuery = ({
+    storecode,
+    limit: nextLimit,
+    page: nextPage,
+  }: {
+    storecode?: string;
+    limit?: number;
+    page?: number;
+  }) => {
+    const query = new URLSearchParams({
+      storecode: storecode ?? searchStorecode,
+      limit: String(nextLimit ?? parsedLimit),
+      page: String(nextPage ?? currentPage),
+    });
+
+    return `/${params.lang}/admin/trade-history-daily?${query.toString()}`;
+  };
+
+
+
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
@@ -1380,12 +1420,12 @@ const fetchBuyOrders = async () => {
 
   return (
 
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+    <main className="min-h-[100vh] w-full max-w-screen-2xl mx-auto px-4 pb-10 pt-4 text-zinc-800">
 
 
-      <div className="py-0 w-full">
+      <div className="w-full py-0">
 
-        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="mb-4 flex w-full flex-col items-center justify-between gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
           {/*
           <div className="w-full flex flex-row items-center justify-start gap-2">
             <button
@@ -1413,12 +1453,12 @@ const fetchBuyOrders = async () => {
           {address && !loadingUser && (
 
 
-            <div className="w-full flex flex-row items-center justify-end gap-2">
+            <div className="flex w-full flex-row items-center justify-end gap-2">
               <button
                 onClick={() => {
                   router.push('/' + params.lang + '/admin/profile-settings');
                 }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                className="flex items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100"
               >
                 <div className="flex flex-row items-center justify-center gap-2">
                   {isAdmin && (
@@ -1435,7 +1475,7 @@ const fetchBuyOrders = async () => {
                       </span>
                     </div>
                   )}
-                  <span className="text-sm text-[#f3f4f6]">
+                  <span className="text-sm text-zinc-700">
                     {user?.nickname || "프로필"}
                   </span>
 
@@ -1457,8 +1497,7 @@ const fetchBuyOrders = async () => {
                       });
                   } }
 
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:bg-zinc-700"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -1478,7 +1517,7 @@ const fetchBuyOrders = async () => {
         </div>
 
 
-        <div className="flex flex-col items-start justify-center gap-2">
+        <div className="mt-4 flex flex-col items-start justify-center gap-3">
 
           
 
@@ -1506,80 +1545,49 @@ const fetchBuyOrders = async () => {
 
 
           {/* memnu buttons same width left side */}
-          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+          <div className="mb-3 flex w-full items-center justify-start gap-2 overflow-x-auto pb-1">
 
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/store')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 가맹점관리
             </button>
 
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 에이전트관리
             </button>
 
 
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/member')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 회원관리
             </button>
 
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 구매주문관리
             </button>
 
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 P2P 거래내역
             </button>
 
             {version !== 'bangbang' && (
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 청산관리
             </button>
             )}
 
 
-            <div className='flex w-32 items-center justify-center gap-2
-            bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+            <div className='flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl bg-zinc-900 px-3 py-2 text-sm text-white'>
               <Image
                 src="/icon-statistics.png"
                 alt="Statistics"
@@ -1594,24 +1602,14 @@ const fetchBuyOrders = async () => {
 
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 P2P통계(AG)
             </button>
 
             {version !== 'bangbang' && (
             <button
                 onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                 보유량내역
             </button>
             )}
@@ -1620,7 +1618,7 @@ const fetchBuyOrders = async () => {
 
 
 
-          <div className='flex flex-row items-center space-x-4'>
+          <div className='flex flex-wrap items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm'>
             <Image
               src="/icon-statistics.png"
               alt="Statistics"
@@ -1629,20 +1627,20 @@ const fetchBuyOrders = async () => {
               className="w-6 h-6"
             />
 
-            <div className="text-xl font-semibold">
+            <div className="text-xl font-semibold tracking-tight text-zinc-800">
               P2P통계(가맹)
             </div>
 
             {/* 일별, 가맹점별 */}
             <div className="flex flex-row items-start justify-start gap-2">
-              <span className="text-sm font-semibold bg-blue-500 text-white px-2 py-1 rounded-lg">
+              <span className="rounded-lg bg-zinc-900 px-2 py-1 text-sm font-semibold text-white">
                 일별
               </span>
               <button
                 onClick={() => {
                   router.push('/' + params.lang + '/admin/trade-history-stores');
                 }}
-                className="text-sm font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-300"
+                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1 text-sm font-semibold text-zinc-700 hover:bg-zinc-100"
               >
                 가맹점별
               </button>
@@ -1659,12 +1657,12 @@ const fetchBuyOrders = async () => {
 
 
 
-          <div className="w-full flex flex-col sm:flex-row items-center justify-start gap-3">
+          <div className="w-full flex flex-col items-start justify-start gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
 
 
 
             {/* select storecode */}
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex w-full flex-row items-center gap-2">
 
                 <Image
                   src="/icon-store.png"
@@ -1688,12 +1686,15 @@ const fetchBuyOrders = async () => {
 
                   // storecode parameter is passed to fetchBuyOrders
                   onChange={(e) => {
-                    router.push('/' + params.lang + '/admin/trade-history-daily?storecode=' + e.target.value);
+                    router.push(buildDailyHistoryQuery({
+                      storecode: e.target.value,
+                      page: 1,
+                    }));
                   }}
 
 
 
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                 >
                   <option value="">전체</option>
 
@@ -1732,7 +1733,7 @@ const fetchBuyOrders = async () => {
                   가맹점 수수료 설정
                 </span>
               </div>
-              <span className="text-sm text-zinc-500">
+              <div className="text-sm text-zinc-500">
                 {!fetchingAllStores ? (searchStorecode && store && store.storeName) ? (
                   <div className="flex flex-row items-center justify-start gap-2">
                     <span className="text-sm font-semibold">
@@ -1751,7 +1752,7 @@ const fetchBuyOrders = async () => {
                     가맹점 정보를 불러오는 중...
                   </span>
                 )}
-              </span>
+              </div>
             </div>
 
 
@@ -1885,144 +1886,177 @@ const fetchBuyOrders = async () => {
 
           </div>
 
+          <div className="mt-4 w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
 
+            <table className="w-full min-w-[1280px] table-auto border-collapse">
 
-
-          <div className="w-full overflow-x-auto">
-
-            <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
-
-              <thead className="bg-zinc-200">
+              <thead className="bg-zinc-900/95 text-zinc-100 text-xs font-semibold uppercase tracking-wide">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                    날짜
-                  </th>
-                  {/* align right */}
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                    P2P 거래수(건)
-                  </th>
-
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                  <th className="px-4 py-3 text-left">날짜</th>
+                  <th className="px-4 py-3 text-right">P2P 거래수(건)</th>
+                  <th className="px-4 py-3 text-right">
                     P2P 거래량(USDT)<br/>
                     P2P 거래금액(원)
                   </th>
-
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                  <th className="px-4 py-3 text-right">
                     결제수(건)<br/>미결제수(건)
                   </th>
-
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                  <th className="px-4 py-3 text-right">
                     결제량(USDT)<br/>
                     결제금액(원)
                   </th>
-                  
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                  <th className="px-4 py-3 text-right">
                     AG 수수료량(USDT)<br/>
                     AG 수수료금액(원)
                   </th>
-
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                  <th className="px-4 py-3 text-right">
                     PG 수수료량(USDT)<br/>
                     PG 수수료금액(원)
                   </th>
-
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                    청산수(건)
-                  </th>
-
-                  <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
+                  <th className="px-4 py-3 text-right">청산수(건)</th>
+                  <th className="px-4 py-3 text-right">
                     청산량(USDT)<br/>
                     청산금액(원)
                   </th>
-
                 </tr>
               </thead>
 
               <tbody>
                 {buyOrders.map((order, index) => (
-                  <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
-                    
-                    <td className="px-4 py-2 text-lg text-zinc-700">
+                  <tr key={index} className={index % 2 === 0 ? "border-b border-zinc-100 bg-white" : "border-b border-zinc-100 bg-zinc-50"}>
+                    <td className="px-4 py-3 text-sm font-medium text-zinc-700">
                       {new Date(order.date).toLocaleDateString('ko-KR')}
                     </td>
 
-                    {/* align right */}
-                    <td className="px-4 py-2 text-lg text-zinc-700 text-right">
+                    <td className="px-4 py-3 text-right text-sm font-medium text-zinc-700">
                       {order.totalCount ? order.totalCount.toLocaleString() : 0}
                     </td>
 
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex flex-col items-end">
-                        <span className="text-lg text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
-                        <span className="text-lg text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
                       </div>
                     </td>
                     
-                    <td className="px-4 py-2 text-lg text-zinc-700 text-right">
+                    <td className="px-4 py-3 text-right text-sm font-medium text-zinc-700">
                       {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
                       {' / '}
                       {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
                     </td>
 
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex flex-col items-end">
-                        <span className="text-lg text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
-                        <span className="text-lg text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex flex-col items-end">
-                        <span className="text-lg text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalAgentFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
-                        <span className="text-lg text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalAgentFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex flex-col items-end">
-                        <span className="text-lg text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalFeeAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
-                        <span className="text-lg text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalFeeAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
                       </div>
                     </td>
 
-                    <td className="px-4 py-2 text-lg text-zinc-700 text-right">
+                    <td className="px-4 py-3 text-right text-sm font-medium text-zinc-700">
                       {order.totalClearanceCount ? order.totalClearanceCount.toLocaleString() : 0}
                     </td>
 
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-3">
                       <div className="flex flex-col items-end">
-                        <span className="text-lg text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-[#409192] font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalClearanceUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
-                        <span className="text-lg text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
+                        <span className="text-sm text-yellow-600 font-semibold" style={{ fontFamily: 'monospace' }}>
                           {Number(order.totalClearanceKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         </span>
                       </div>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
+
+              <tfoot className="bg-zinc-50 text-sm text-zinc-700">
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-sm text-zinc-500">
-                    
+                  <td className="px-4 py-3 font-semibold">현재 페이지 합계</td>
+                  <td className="px-4 py-3 text-right font-semibold">{pageTotalTradeCount.toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-end">
+                      <span className="font-semibold text-[#409192]" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalTradeUsdt.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                      <span className="font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalTradeKrw.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold">
+                    {pageTotalSettlementCount.toLocaleString()} / {(pageTotalTradeCount - pageTotalSettlementCount).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-end">
+                      <span className="font-semibold text-[#409192]" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalSettlementUsdt.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                      <span className="font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalSettlementKrw.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-end">
+                      <span className="font-semibold text-[#409192]" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalAgentFeeUsdt.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                      <span className="font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalAgentFeeKrw.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-end">
+                      <span className="font-semibold text-[#409192]" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalPgFeeUsdt.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                      <span className="font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalPgFeeKrw.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold">{pageTotalClearanceCount.toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-end">
+                      <span className="font-semibold text-[#409192]" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalClearanceUsdt.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                      <span className="font-semibold text-yellow-600" style={{ fontFamily: 'monospace' }}>
+                        {pageTotalClearanceKrw.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               </tfoot>
@@ -2030,12 +2064,99 @@ const fetchBuyOrders = async () => {
 
           </div>
 
+          <div className="mt-5 flex w-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-zinc-600">
+              <span>페이지당</span>
+              <select
+                value={parsedLimit}
+                onChange={(e) => {
+                  router.push(buildDailyHistoryQuery({
+                    limit: Number(e.target.value),
+                    page: 1,
+                  }));
+                }}
+                className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="mr-2 text-sm text-zinc-500">
+                {currentPageStart.toLocaleString()}-{currentPageEnd.toLocaleString()} / {Number(totalCount).toLocaleString()}건
+              </span>
+
+              <button
+                disabled={currentPage <= 1}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                onClick={() => {
+                  router.push(buildDailyHistoryQuery({ page: 1 }));
+                }}
+              >
+                처음
+              </button>
+
+              <button
+                disabled={currentPage <= 1}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                onClick={() => {
+                  router.push(buildDailyHistoryQuery({ page: currentPage - 1 }));
+                }}
+              >
+                이전
+              </button>
+
+              <span className="min-w-[70px] text-center text-sm font-medium text-zinc-700">
+                {currentPage} / {totalPages}
+              </span>
+
+              <button
+                disabled={currentPage >= totalPages}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                }`}
+                onClick={() => {
+                  router.push(buildDailyHistoryQuery({ page: currentPage + 1 }));
+                }}
+              >
+                다음
+              </button>
+
+              <button
+                disabled={currentPage >= totalPages}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                }`}
+                onClick={() => {
+                  router.push(buildDailyHistoryQuery({ page: totalPages }));
+                }}
+              >
+                마지막
+              </button>
+            </div>
+          </div>
+
         </div>
 
       
 
             
-        <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
+        <div className="mt-5 flex w-full flex-col items-center justify-center gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
           <div className="text-sm text-zinc-600">
             © 2024 Stable Makeup. All rights reserved.
           </div>
@@ -2198,6 +2319,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
-
