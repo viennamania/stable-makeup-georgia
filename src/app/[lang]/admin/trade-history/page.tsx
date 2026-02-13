@@ -2723,6 +2723,25 @@ const fetchBuyOrders = async () => {
 
 
 
+  const adminMenuItems = [
+    { label: "가맹점관리", href: `/${params.lang}/admin/store` },
+    { label: "에이전트관리", href: `/${params.lang}/admin/agent` },
+    { label: "회원관리", href: `/${params.lang}/admin/member` },
+    { label: "구매주문관리", href: `/${params.lang}/admin/buyorder` },
+    { label: "P2P 거래내역", href: `/${params.lang}/admin/trade-history`, active: true },
+    ...(version !== "bangbang"
+      ? [{ label: "청산관리", href: `/${params.lang}/admin/clearance-history` }]
+      : []),
+    { label: "P2P통계(가맹)", href: `/${params.lang}/admin/trade-history-daily` },
+    { label: "P2P통계(AG)", href: `/${params.lang}/admin/trade-history-daily-agent` },
+    ...(version !== "bangbang"
+      ? [{ label: "보유량내역", href: `/${params.lang}/admin/escrow-history` }]
+      : []),
+  ];
+
+  const compactInputClass =
+    "h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 shadow-sm outline-none transition focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20";
+
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
@@ -2786,16 +2805,16 @@ const fetchBuyOrders = async () => {
 
   return (
 
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+    <main className="mx-auto flex min-h-[100vh] w-full max-w-screen-2xl items-start justify-center px-2 pb-8 pt-3 sm:px-4">
 
       {/* fixed position right and vertically center */}
       <div className="
-        flex
-        fixed right-4 top-1/2 transform -translate-y-1/2
+        hidden xl:flex
+        fixed right-3 top-1/2 transform -translate-y-1/2
         z-40
         ">
 
-          <div className="w-full flex flex-col items-end justify-center gap-4">
+          <div className="w-full flex flex-col items-end justify-center gap-3">
 
 
 
@@ -3028,9 +3047,9 @@ const fetchBuyOrders = async () => {
       </div>
 
 
-      <div className="py-0 w-full">
+      <div className="w-full">
 
-        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="mb-3 w-full rounded-xl border border-zinc-200/80 bg-white/90 p-2 shadow-sm backdrop-blur">
             
           {/*
           <div className="w-full flex flex-row items-center justify-start gap-2">
@@ -3059,12 +3078,12 @@ const fetchBuyOrders = async () => {
           {address && !loadingUser && (
 
 
-            <div className="w-full flex flex-row items-center justify-end gap-2">
+            <div className="w-full flex flex-wrap items-center justify-end gap-2">
               <button
                 onClick={() => {
                   router.push('/' + params.lang + '/admin/profile-settings');
                 }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                className="flex h-9 items-center rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 transition hover:border-[#3167b4]/40 hover:bg-zinc-50"
               >
                 <div className="flex flex-row items-center justify-center gap-2">
                   {isAdmin && (
@@ -3076,12 +3095,12 @@ const fetchBuyOrders = async () => {
                         height={20}
                         className="rounded-lg w-5 h-5"
                       />
-                      <span className="text-sm text-yellow-500">
+                      <span className="text-sm text-yellow-600">
                         전체 관리자
                       </span>
                     </div>
                   )}
-                  <span className="text-sm text-[#f3f4f6]">
+                  <span className="text-sm text-zinc-700">
                     {user?.nickname || "프로필"}
                   </span>
 
@@ -3103,8 +3122,7 @@ const fetchBuyOrders = async () => {
                       });
                   } }
 
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  className="flex h-9 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -3127,7 +3145,7 @@ const fetchBuyOrders = async () => {
 
 
 
-        <div className="flex flex-col items-start justify-center gap-2 mt-4">
+        <div className="mt-1 flex flex-col items-start gap-3 rounded-xl border border-zinc-200/80 bg-white/90 p-3 shadow-sm backdrop-blur">
           
           {/* USDT 가격 binance market price */}
           {/*
@@ -3155,132 +3173,52 @@ const fetchBuyOrders = async () => {
 
 
 
-          {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
-          {/* memnu buttons same width left side */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 items-center justify-start mb-4">
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/store')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  가맹점관리
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  에이전트관리
-              </button>
-
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  회원관리
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  구매주문관리
-              </button>
-
-              <div className='flex w-32 items-center justify-center gap-2
-              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                <Image
-                  src="/icon-trade.png"
-                  alt="Trade"
-                  width={35}
-                  height={35}
-                  className="w-4 h-4"
-                />
-                <div className="text-sm font-semibold">
-                  P2P 거래내역
-                </div>
-              </div>
-
-              {version !== 'bangbang' && (
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  청산관리
-              </button>
+          <div className="w-full overflow-x-auto pb-1">
+            <div className="inline-flex min-w-full items-center gap-1.5 whitespace-nowrap rounded-lg border border-zinc-200 bg-zinc-50/80 p-1.5">
+              {adminMenuItems.map((item) =>
+                item.active ? (
+                  <div
+                    key={item.label}
+                    className="flex h-8 items-center gap-1.5 rounded-md bg-[#3167b4] px-3 text-sm font-semibold text-white"
+                  >
+                    <Image
+                      src="/icon-trade.png"
+                      alt="Trade"
+                      width={16}
+                      height={16}
+                      className="h-4 w-4"
+                    />
+                    {item.label}
+                  </div>
+                ) : (
+                  <button
+                    key={item.label}
+                    onClick={() => router.push(item.href)}
+                    className="flex h-8 items-center rounded-md border border-transparent bg-white px-3 text-sm text-zinc-700 transition hover:border-zinc-200 hover:bg-zinc-100"
+                  >
+                    {item.label}
+                  </button>
+                )
               )}
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(가맹)
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(AG)
-              </button>
-
-              {version !== 'bangbang' && (
-              <button
-                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  보유량내역
-              </button>
-              )}
-
+            </div>
           </div>
 
-
-          <div className='flex flex-row items-center space-x-4'>
-            <Image
-              src="/icon-trade.png"
-              alt="Trade"
-              width={35}
-              height={35}
-              className="w-6 h-6"
-            />
-
-            <div className="text-xl font-semibold">
-              P2P 거래내역
+          <div className='flex w-full flex-wrap items-center justify-between gap-2'>
+            <div className='flex flex-row items-center gap-2'>
+              <Image
+                src="/icon-trade.png"
+                alt="Trade"
+                width={20}
+                height={20}
+                className="h-5 w-5"
+              />
+              <div className="text-base font-semibold tracking-tight text-zinc-800">
+                P2P 거래내역
+              </div>
             </div>
+            <span className="rounded-md bg-zinc-100 px-2 py-1 text-xs text-zinc-500">
+              실시간 관리 콘솔
+            </span>
           </div>
 
 
@@ -3323,11 +3261,11 @@ const fetchBuyOrders = async () => {
           </div>
 
 
-          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="w-full flex flex-col gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 p-2 xl:flex-row xl:items-end xl:justify-between">
 
 
             {/* select storecode */}
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
 
                 <Image
                   src="/icon-store.png"
@@ -3337,9 +3275,7 @@ const fetchBuyOrders = async () => {
                   className="rounded-lg w-5 h-5"
                 />
 
-                <span className="
-                  w-20
-                  text-sm font-semibold">
+                <span className="text-sm font-semibold text-zinc-600">
                   가맹점 선택
                 </span>
 
@@ -3356,7 +3292,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                  className="w-32 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className={`${compactInputClass} w-[180px]`}
                 >
                   <option value="">전체</option>
 
@@ -3382,7 +3318,7 @@ const fetchBuyOrders = async () => {
 
             {/* serach fromDate and toDate */}
             {/* DatePicker for fromDate and toDate */}
-            <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
               <div className="flex flex-row items-center gap-2">
                 <Image
                   src="/icon-calendar.png"
@@ -3395,7 +3331,7 @@ const fetchBuyOrders = async () => {
                   type="date"
                   value={searchFromDate}
                   onChange={(e) => setSearchFormDate(e.target.value)}
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className={`${compactInputClass} w-[150px]`}
                 />
               </div>
               
@@ -3413,7 +3349,7 @@ const fetchBuyOrders = async () => {
                   type="date"
                   value={searchToDate}
                   onChange={(e) => setSearchToDate(e.target.value)}
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className={`${compactInputClass} w-[150px]`}
                 />
               </div>
 
@@ -3427,7 +3363,7 @@ const fetchBuyOrders = async () => {
                       setSearchFormDate(today.toISOString().split("T")[0]);
                       setSearchToDate(today.toISOString().split("T")[0]);
                     }}
-                    className="text-sm text-zinc-500 underline"
+                    className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
                   >
                     오늘
                   </button>
@@ -3441,7 +3377,7 @@ const fetchBuyOrders = async () => {
                       setSearchFormDate(yesterday.toISOString().split("T")[0]);
                       setSearchToDate(yesterday.toISOString().split("T")[0]);
                     }}
-                    className="text-sm text-zinc-500 underline"
+                    className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
                   >
                     어제
                   </button>
@@ -3450,28 +3386,28 @@ const fetchBuyOrders = async () => {
             </div>
 
             {/* search depositName */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex w-full flex-col items-start gap-2 xl:w-auto">
 
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+              <div className="flex w-full flex-col items-center gap-2 xl:flex-row xl:justify-end">
                 {/* search nickname */}
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex w-full flex-row items-center gap-2 xl:w-auto">
                   <input
                     type="text"
                     value={searchBuyer}
                     onChange={(e) => setSearchBuyer(e.target.value)}
                     placeholder="회원 아이디"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className={`${compactInputClass} w-full xl:w-[160px]`}
                   />
                 </div>
 
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex w-full flex-row items-center gap-2 xl:w-auto">
                   <input
                     type="text"
                     value={searchDepositName}
                     onChange={(e) => setSearchDepositName(e.target.value)}
                     placeholder="입금자명"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className={`${compactInputClass} w-full xl:w-[160px]`}
                   />
                 </div>
 
@@ -3488,21 +3424,19 @@ const fetchBuyOrders = async () => {
                 */}
 
                 {/* search store bank account number */}
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex w-full flex-row items-center gap-2 xl:w-auto">
                   <input
                     type="text"
                     value={searchStoreBankAccountNumber}
                     onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
                     placeholder="판매자 입금통장"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className={`${compactInputClass} w-full xl:w-[180px]`}
                   /> 
                 </div>
 
 
                 {/* 검색 버튼 */}
-                <div className="
-                  w-28  
-                  flex flex-row items-center gap-2">
+                <div className="flex w-full flex-row items-center gap-2 xl:w-auto">
                   <button
                     onClick={() => {
                       setPageValue(1);
@@ -3526,19 +3460,16 @@ const fetchBuyOrders = async () => {
                       ///getTradeSummary();
                     }}
                     //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
-                    className={`${
-                      fetchingBuyOrders ? 'bg-gray-400' : 'bg-[#3167b4]'
-                    }
-                    text-white px-4 py-2 rounded-lg w-full
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out`}
+                    className={`flex h-9 w-full items-center justify-center rounded-md px-3 text-sm text-white transition xl:w-auto ${
+                      fetchingBuyOrders
+                        ? 'cursor-not-allowed bg-zinc-400'
+                        : 'bg-[#3167b4] hover:bg-[#2b5a9e]'
+                    }`}
                     title="검색"
 
                     disabled={fetchingBuyOrders}
                   >
-                    <div className="flex flex-row items-center justify-between gap-2">
+                    <div className="flex flex-row items-center justify-center gap-1.5">
                       <Image
                         src="/icon-search.png"
                         alt="Search"
@@ -3561,9 +3492,9 @@ const fetchBuyOrders = async () => {
                       exportToCSV('P2P_거래내역');
                   }}
                   disabled={isExporting}
-                  className={`${isExporting ? "bg-gray-500" : "bg-green-500"} text-white p-2 rounded-lg
-                      hover:bg-green-600
-                  `}
+                  className={`h-9 rounded-md px-3 text-sm text-white transition ${
+                    isExporting ? "bg-gray-500" : "bg-green-500 hover:bg-green-600"
+                  }`}
                 >
                     {isExporting ? "Exporting..." : "엑셀"}
                 </button>
@@ -3575,7 +3506,7 @@ const fetchBuyOrders = async () => {
           </div>
 
 
-          <div className="flex flex-row items-center gap-5">
+          <div className="flex w-full flex-wrap items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50/70 p-2">
             {/* manualConfirmPayment checkbox */}
             <div className="flex flex-row items-center gap-2">
               <input
@@ -3591,7 +3522,7 @@ const fetchBuyOrders = async () => {
             </div>
 
 
-            <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               {/* checkbox for searchOrderStatus is 'cancelled' */}
               {/* 거래취소 */}
               {/* 거래완료 */}
@@ -3605,7 +3536,7 @@ const fetchBuyOrders = async () => {
                     setPageValue(1);
                     //fetchBuyOrders();
                   }}
-                  className="w-5 h-5"
+                  className="h-4 w-4"
                 />
                 <label className="text-sm text-zinc-500">거래취소</label>
               </div>
@@ -3619,7 +3550,7 @@ const fetchBuyOrders = async () => {
                     
                     //fetchBuyOrders();
                   }}
-                  className="w-5 h-5"
+                  className="h-4 w-4"
                 />
                 <label className="text-sm text-zinc-500">거래완료</label>
               </div>
@@ -3699,14 +3630,12 @@ const fetchBuyOrders = async () => {
 
           {/* trade summary */}
 
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-2
-            w-full
-            bg-zinc-100/50
-            p-4 rounded-lg shadow-md
-            ">
+          <div className="w-full rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
+
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
 
             <div className="w-full sm:w-1/3
-              flex flex-col sm:flex-row items-start justify-start gap-4">
+              flex flex-col sm:flex-row items-start justify-start gap-3">
 
               <Image
                 src="/icon-trade.png"
@@ -3758,7 +3687,7 @@ const fetchBuyOrders = async () => {
             </div>
 
             {/* divider */}
-            <div className="hidden sm:block w-0.5 h-52 bg-zinc-300"></div>  
+            <div className="hidden h-44 w-0.5 bg-zinc-300 sm:block"></div>  
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
 
@@ -3795,7 +3724,7 @@ const fetchBuyOrders = async () => {
             <div className="w-full sm:w-2/3 flex flex-col items-start justify-center gap-2">
 
               <div className="w-full
-                flex flex-col sm:flex-row items-start justify-center gap-4">
+                flex flex-wrap items-start justify-start gap-3">
 
                 {['', 'AAA', 'BBB', 'CCC', 'DDD'].map((type, index) => (
 
@@ -3903,7 +3832,7 @@ const fetchBuyOrders = async () => {
 
               {/* buyOrderStats.totalBySellerBankAccountNumber */}
               <div className="w-full
-                grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
+                grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6
                 items-start justify-start">
 
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
@@ -3959,6 +3888,7 @@ const fetchBuyOrders = async () => {
 
               </div>
 
+            </div>
             </div>
 
 
@@ -4255,12 +4185,12 @@ const fetchBuyOrders = async () => {
           {tableView ? (
 
 
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm">
 
-              <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+              <table className="w-full min-w-[1180px] table-auto border-collapse">
 
                 <thead
-                  className="bg-zinc-800 text-white text-sm"
+                  className="bg-zinc-900/90 text-sm text-white"
                   style={{
                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
                   }}
@@ -4355,7 +4285,7 @@ const fetchBuyOrders = async () => {
                       
                       <tr key={index} className={`
                         ${
-                          index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
+                          index % 2 === 0 ? 'bg-white' : 'bg-zinc-50'
 
 
                           //item.walletAddress === address ?
@@ -4374,18 +4304,13 @@ const fetchBuyOrders = async () => {
                           <div className="
                             w-48
                             flex flex-col items-start justify-start gap-2
-                            bg-zinc-100
-                            rounded-lg
-                            border border-zinc-800
-                            hover:bg-zinc-200
-                            cursor-pointer
-                            transition-all duration-200 ease-in-out
-                            hover:scale-105
-                            hover:shadow-lg
-                            hover:shadow-zinc-500/50
-                            hover:cursor-pointer
+                            rounded-md
+                            border border-zinc-200
+                            bg-white
                             p-2
-
+                            cursor-pointer
+                            transition-colors duration-200 ease-in-out
+                            hover:bg-zinc-50
                             "
                             onClick={() => {
                               // copy traideId to clipboard
@@ -6489,7 +6414,7 @@ const fetchBuyOrders = async () => {
 
       
 
-          <div className="mt-4 flex flex-row items-center justify-center gap-4">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white/90 p-2 shadow-sm">
 
 
             <div className="flex flex-row items-center gap-2">
@@ -6500,7 +6425,7 @@ const fetchBuyOrders = async () => {
                   router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${page}`)
                 }
 
-                className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
+                className="h-8 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 outline-none transition focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -6512,7 +6437,7 @@ const fetchBuyOrders = async () => {
             {/* 처음으로 */}
             <button
               disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) <= 1 ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
               onClick={() => {
                 router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=1`)
               }}
@@ -6523,7 +6448,7 @@ const fetchBuyOrders = async () => {
 
             <button
               disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) <= 1 ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
               onClick={() => {
                 
                 router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) - 1}`)
@@ -6535,14 +6460,14 @@ const fetchBuyOrders = async () => {
             </button>
 
 
-            <span className="text-sm text-zinc-500">
+            <span className="px-2 text-sm text-zinc-500">
               {page} / {Math.ceil(Number(totalCount) / Number(limit))}
             </span>
 
 
             <button
               disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
               onClick={() => {
                 
                 router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) + 1}`)
@@ -6555,7 +6480,7 @@ const fetchBuyOrders = async () => {
             {/* 마지막으로 */}
             <button
               disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
               onClick={() => {
                 
                 router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`)
@@ -6712,6 +6637,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
-

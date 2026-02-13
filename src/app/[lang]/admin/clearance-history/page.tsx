@@ -2530,6 +2530,55 @@ export default function Index({ params }: any) {
 
 
 
+  const parsedLimit = Number(limit) > 0 ? Number(limit) : 20;
+  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / parsedLimit));
+  const currentPage = Math.min(Math.max(Number(page) || 1, 1), totalPages);
+  const currentPageStart = Number(totalCount) === 0 ? 0 : (currentPage - 1) * parsedLimit + 1;
+  const currentPageEnd = Math.min(currentPage * parsedLimit, Number(totalCount));
+  const currentPageUsdtTotal = buyOrders.reduce((sum, item) => sum + (Number(item.usdtAmount) || 0), 0);
+  const currentPageKrwTotal = buyOrders.reduce((sum, item) => sum + (Number(item.krwAmount) || 0), 0);
+
+  const buildHistoryQuery = ({
+    page: nextPage,
+    limit: nextLimit,
+    storecode,
+    fromDate,
+    toDate,
+    searchBuyer: nextSearchBuyer,
+    searchDepositName: nextSearchDepositName,
+    searchStoreBankAccountNumber: nextSearchStoreBankAccountNumber,
+    searchBuyerBankAccountNumber: nextSearchBuyerBankAccountNumber,
+    searchTradeId: nextSearchTradeId,
+  }: {
+    page?: number;
+    limit?: number;
+    storecode?: string;
+    fromDate?: string;
+    toDate?: string;
+    searchBuyer?: string;
+    searchDepositName?: string;
+    searchStoreBankAccountNumber?: string;
+    searchBuyerBankAccountNumber?: string;
+    searchTradeId?: string;
+  }) => {
+    const query = new URLSearchParams({
+      storecode: storecode ?? searchStorecode,
+      limit: String(nextLimit ?? parsedLimit),
+      page: String(nextPage ?? currentPage),
+      fromDate: fromDate ?? searchFromDate,
+      toDate: toDate ?? searchToDate,
+      searchBuyer: nextSearchBuyer ?? searchBuyer,
+      searchDepositName: nextSearchDepositName ?? searchDepositName,
+      searchStoreBankAccountNumber: nextSearchStoreBankAccountNumber ?? searchStoreBankAccountNumber,
+      searchBuyerBankAccountNumber: nextSearchBuyerBankAccountNumber ?? searchBuyerBankAccountNumber,
+      searchTradeId: nextSearchTradeId ?? searchTradeId,
+    });
+
+    return `/${params.lang}/admin/clearance-history?${query.toString()}`;
+  };
+
+
+
   if (!address) {
     return (
       <div className="flex flex-col items-center justify-center">
@@ -2623,7 +2672,7 @@ export default function Index({ params }: any) {
 
   return (
 
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+    <main className="min-h-[100vh] w-full max-w-screen-2xl mx-auto px-4 pb-10 pt-4 text-zinc-800">
 
 
 
@@ -2839,9 +2888,9 @@ export default function Index({ params }: any) {
 
 
 
-      <div className="py-0 w-full">
+      <div className="w-full py-0">
 
-        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="mb-4 flex w-full flex-col items-center justify-between gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
             
           {/*
           <div className="w-full flex flex-row items-center justify-start gap-2">
@@ -2870,12 +2919,12 @@ export default function Index({ params }: any) {
           {address && !loadingUser && (
 
 
-            <div className="w-full flex flex-row items-center justify-end gap-2">
+            <div className="flex w-full flex-row items-center justify-end gap-2">
               <button
                 onClick={() => {
                   router.push('/' + params.lang + '/admin/profile-settings');
                 }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                className="flex items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100"
               >
                 <div className="flex flex-row items-center justify-center gap-2">
                   {isAdmin && (
@@ -2914,8 +2963,7 @@ export default function Index({ params }: any) {
                       });
                   } }
 
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:bg-zinc-700"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -2968,66 +3016,40 @@ export default function Index({ params }: any) {
 
           {/* 홈 / 가맹점관리 / 회원관리 / 구매주문관리 */}
           {/* memnu buttons same width left side */}
-          <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
+          <div className="mb-3 flex w-full items-center justify-start gap-2 overflow-x-auto pb-1">
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/store')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   가맹점관리
               </button>
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   에이전트관리
               </button>
 
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   회원관리
               </button>
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   구매주문관리
               </button>
 
                 <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   P2P 거래내역
               </button>
 
-              <div className='flex w-32 items-center justify-center gap-2
-              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+              <div className='flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl bg-zinc-900 px-3 py-2 text-sm text-white'>
                 <Image
                   src="/icon-clearance.png"
                   alt="Clearance"
@@ -3041,43 +3063,28 @@ export default function Index({ params }: any) {
               </div>
 
 
-              <button
+                <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   P2P통계(가맹)
               </button>
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   P2P통계(AG)
               </button>
 
               <button
                   onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
                   보유량내역
               </button>
 
           </div>
 
 
-          <div className='flex flex-row items-center space-x-4'>
+          <div className='flex flex-row items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm'>
               <Image
                 src="/icon-clearance.png"
                 alt="Clearance"
@@ -3086,7 +3093,7 @@ export default function Index({ params }: any) {
                 className="w-6 h-6"
               />
 
-              <div className="text-xl font-semibold">
+              <div className="text-xl font-semibold tracking-tight text-zinc-800">
                 청산관리
               </div>
 
@@ -3097,9 +3104,9 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-3">
+          <div className="w-full flex flex-col items-start justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm xl:flex-row">
 
-            <div className="flex flex-col items-start justify-center gap-2">
+            <div className="flex w-full flex-col items-start justify-center gap-3">
 
               {/* select storecode */}
               <div className="flex flex-row items-center gap-2">
@@ -3112,7 +3119,7 @@ export default function Index({ params }: any) {
                     className="animate-spin"
                   />
                 ) : (
-                  <div className="flex flex-row items-center gap-2">
+                  <div className="flex w-full flex-row items-center gap-2">
 
                     
                     <Image
@@ -3136,9 +3143,12 @@ export default function Index({ params }: any) {
 
                       // storecode parameter is passed to fetchBuyOrders
                       onChange={(e) => {
-                        router.push('/' + params.lang + '/admin/clearance-history?storecode=' + e.target.value);
+                        router.push(buildHistoryQuery({
+                          storecode: e.target.value,
+                          page: 1,
+                        }));
                       }}
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                     >
                       <option value="">전체</option>
                       {allStores && allStores.map((item, index) => (
@@ -3175,18 +3185,13 @@ export default function Index({ params }: any) {
                     //onChange={(e) => setSearchFormDate(e.target.value)}
 
                     onChange={(e) => {
-                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
-                      '&fromDate=' + e.target.value +
-                      '&toDate=' + searchToDate +
-                      '&searchBuyer=' + searchBuyer +
-                      '&searchDepositName=' + searchDepositName +
-                      '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
-                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
-                      '&searchTradeId=' + searchTradeId
-                      );
+                      router.push(buildHistoryQuery({
+                        fromDate: e.target.value,
+                        page: 1,
+                      }));
                     }}
 
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                   />
                 </div>
 
@@ -3207,18 +3212,13 @@ export default function Index({ params }: any) {
                     //onChange={(e) => setSearchToDate(e.target.value)}
 
                     onChange={(e) => {
-                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
-                      '&fromDate=' + searchFromDate +
-                      '&toDate=' + e.target.value +
-                      '&searchBuyer=' + searchBuyer +
-                      '&searchDepositName=' + searchDepositName +
-                      '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
-                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
-                      '&searchTradeId=' + searchTradeId
-                      );
+                      router.push(buildHistoryQuery({
+                        toDate: e.target.value,
+                        page: 1,
+                      }));
                     }}
                     
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                   />
                 </div>
 
@@ -3232,17 +3232,13 @@ export default function Index({ params }: any) {
                       const dd = String(today.getDate()).padStart(2, '0');
                       const formattedToday = `${yyyy}-${mm}-${dd}`;
 
-                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
-                      '&fromDate=' + formattedToday +
-                      '&toDate=' + formattedToday +
-                      '&searchBuyer=' + searchBuyer +
-                      '&searchDepositName=' + searchDepositName +
-                      '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
-                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
-                      '&searchTradeId=' + searchTradeId
-                      );
+                      router.push(buildHistoryQuery({
+                        fromDate: formattedToday,
+                        toDate: formattedToday,
+                        page: 1,
+                      }));
                     }}
-                    className="bg-[#3167b4] text-white px-3 py-1 rounded-lg text-sm"
+                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100"
                   >
                     오늘
                   </button>
@@ -3256,17 +3252,13 @@ export default function Index({ params }: any) {
                       const dd = String(yesterday.getDate()).padStart(2, '0');
                       const formattedYesterday = `${yyyy}-${mm}-${dd}`;
 
-                      router.push('/' + params.lang + '/admin/clearance-history?storecode=' + searchStorecode +
-                      '&fromDate=' + formattedYesterday +
-                      '&toDate=' + formattedYesterday +
-                      '&searchBuyer=' + searchBuyer +
-                      '&searchDepositName=' + searchDepositName +
-                      '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber +
-                      '&searchBuyerBankAccountNumber=' + searchBuyerBankAccountNumber +
-                      '&searchTradeId=' + searchTradeId
-                      );
+                      router.push(buildHistoryQuery({
+                        fromDate: formattedYesterday,
+                        toDate: formattedYesterday,
+                        page: 1,
+                      }));
                     }}
-                    className="bg-[#3167b4] text-white px-3 py-1 rounded-lg text-sm"
+                    className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100"
                   >
                     어제
                   </button>
@@ -3282,7 +3274,7 @@ export default function Index({ params }: any) {
 
 
             {/* search depositName */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex w-full flex-col items-center gap-2 xl:w-auto">
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                 {/* search Trade ID */}
@@ -3292,7 +3284,7 @@ export default function Index({ params }: any) {
                     value={searchTradeId}
                     onChange={(e) => setSearchTradeId(e.target.value)}
                     placeholder="주문번호"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                   />
                 </div>
 
@@ -3303,7 +3295,7 @@ export default function Index({ params }: any) {
                     value={searchBuyer}
                     onChange={(e) => setSearchBuyer(e.target.value)}
                     placeholder="구매자 아이디"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                   />
                 </div>
 
@@ -3313,7 +3305,7 @@ export default function Index({ params }: any) {
                     value={searchDepositName}
                     onChange={(e) => setSearchDepositName(e.target.value)}
                     placeholder="입금자명"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                   />
                 </div>
               
@@ -3324,7 +3316,7 @@ export default function Index({ params }: any) {
                     value={searchBuyerBankAccountNumber}
                     onChange={(e) => setSearchBuyerBankAccountNumber(e.target.value)}
                     placeholder="구매자 통장번호"
-                    className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                   /> 
                 </div>
 
@@ -3333,13 +3325,13 @@ export default function Index({ params }: any) {
               </div>
 
               {/* searchStoreBankAccountNumber */}
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex w-full flex-row items-center gap-2">
                 <input
                   type="text"
                   value={searchStoreBankAccountNumber}
                   onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
                   placeholder="판매자 통장번호"
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                 /> 
               </div>
 
@@ -3388,9 +3380,9 @@ export default function Index({ params }: any) {
                   exportToCSV('청산내역');
               }}
               disabled={isExporting}
-              className={`${isExporting ? "bg-gray-500" : "bg-green-500"} text-white p-2 rounded-lg
-                  hover:bg-green-600
-              `}
+              className={`h-10 rounded-xl px-4 text-sm font-medium transition-colors ${
+                isExporting ? "bg-zinc-300 text-zinc-500" : "bg-zinc-900 text-white hover:bg-zinc-700"
+              }`}
             >
                 {isExporting ? "Exporting..." : "엑셀"}
             </button>
@@ -3403,20 +3395,16 @@ export default function Index({ params }: any) {
 
           {/* trade summary */}
 
-          <div className="w-full flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
-          bg-white/80
-          p-4 rounded-lg shadow-md
-          backdrop-blur-md
-          ">
+          <div className="mb-4 grid w-full grid-cols-1 gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:grid-cols-3">
 
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50/70 p-3">
               <div className="text-sm">청산수(건)</div>
               <div className="text-xl font-semibold text-zinc-500">
                 {buyOrderStats.totalCount ?.toLocaleString()}
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50/70 p-3">
               <div className="text-sm">청산량(USDT)</div>
               <div className="flex flex-row items-center justify-center gap-1">
                 <Image
@@ -3434,7 +3422,7 @@ export default function Index({ params }: any) {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50/70 p-3">
               <div className="text-sm">청산금액(원)</div>
               <div className="flex flex-row items-center justify-center gap-1">
                 <div className="text-xl font-semibold text-yellow-600"
@@ -3596,9 +3584,8 @@ export default function Index({ params }: any) {
           {/* 구매자 통장별 청산통계 */}
           <div className="w-full
             flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
-            bg-white/80
-            p-4 rounded-lg shadow-md
-            backdrop-blur-md
+            rounded-2xl border border-zinc-200 bg-white
+            p-4 shadow-sm
           ">
 
             <div className="flex flex-row items-center justify-center gap-2">
@@ -3617,14 +3604,14 @@ export default function Index({ params }: any) {
 
 
             <div className="w-full
-              grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4
+              grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3
               items-start justify-start">
               
               {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
                 <div
                   key={index}
                   className="flex flex-col gap-2 items-center
-                  border border-zinc-300 rounded-lg p-2">
+                  rounded-xl border border-zinc-200 bg-zinc-50 p-2">
 
                   <div className="flex flex-row items-start justify-start gap-1">
                     <Image
@@ -3766,9 +3753,8 @@ export default function Index({ params }: any) {
           {/* 판매자 통장별 청산통계 */}
           <div className="w-full
             flex flex-col sm:flex-row items-start justify-start gap-4 mb-4
-            bg-white/80
-            p-4 rounded-lg shadow-md
-            backdrop-blur-md
+            rounded-2xl border border-zinc-200 bg-white
+            p-4 shadow-sm
           ">
 
             <div className="flex flex-row items-center justify-center gap-2">
@@ -3784,11 +3770,11 @@ export default function Index({ params }: any) {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
               {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
                 <div key={index} className="flex flex-col gap-2 items-center
-                  border border-zinc-300 rounded-lg
-                  bg-white/90
+                  rounded-xl border border-zinc-200
+                  bg-zinc-50
                   p-4
                 ">
 
@@ -3849,17 +3835,14 @@ export default function Index({ params }: any) {
           {/* if sm medai, tehn non overflow */}
           {tableView ? (
 
-            <div className="w-full overflow-x-auto mt-4">
-              <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+            <div className="mt-4 w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+              <table className="w-full min-w-[1120px] table-auto border-collapse">
 
                 <thead
-                  className="bg-zinc-800 text-white text-sm font-semibold"
-                  style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  }}
+                  className="bg-zinc-900/95 text-zinc-100 text-xs font-semibold uppercase tracking-wide"
                 >
                   <tr>
-                    <th className="p-2">
+                    <th className="px-3 py-3">
                       <div className="flex flex-col items-start justify-center">
                         ️<span className="text-sm">가맹점</span>
                         <span className="text-sm">#{TID}</span>
@@ -3867,13 +3850,13 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="p-2">
+                    <th className="px-3 py-3">
                       <div className="flex flex-col items-start justify-center">
                       구매자 정보
                       </div>
                     </th>
 
-                    <th className="p-2">
+                    <th className="px-3 py-3">
                       <div className="flex flex-col items-end justify-center">
                         <span className="text-sm">{Buy_Amount}(USDT)</span>
                         <span className="text-sm">{Price}(원)</span>
@@ -3881,19 +3864,19 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="p-2">
+                    <th className="px-3 py-3">
                       <div className="flex flex-col items-start justify-center">
                         판매자 정보
                       </div>
                     </th>
 
-                    <th className="p-2">입금액(원)</th>
-                    <th className="p-2">{Status}</th>
+                    <th className="px-3 py-3">입금액(원)</th>
+                    <th className="px-3 py-3">{Status}</th>
 
 
-                    <th className="p-2">출금상태</th>
+                    <th className="px-3 py-3">출금상태</th>
 
-                    <th className="p-2">
+                    <th className="px-3 py-3">
                       상세
                     </th>
 
@@ -3908,7 +3891,7 @@ export default function Index({ params }: any) {
                     
                     <tr key={index} className={`
                       ${
-                        index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
+                        index % 2 === 0 ? 'bg-white' : 'bg-zinc-50'
 
 
                         //item.walletAddress === address ?
@@ -4991,6 +4974,21 @@ export default function Index({ params }: any) {
 
                 </tbody>
 
+                <tfoot className="bg-zinc-50 text-sm text-zinc-600">
+                  <tr>
+                    <td colSpan={8} className="border-t border-zinc-200 px-4 py-3">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <span>
+                          현재 페이지 {currentPageStart.toLocaleString()}-{currentPageEnd.toLocaleString()} / {Number(totalCount).toLocaleString()}건
+                        </span>
+                        <span className="font-medium text-zinc-700">
+                          페이지 합계: {currentPageUsdtTotal.toLocaleString()} USDT / {currentPageKrwTotal.toLocaleString()} KRW
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </tfoot>
+
               </table>
             </div>
 
@@ -5929,25 +5927,18 @@ export default function Index({ params }: any) {
 
       
 
-          <div className="mt-4 flex flex-row items-center justify-center gap-4">
-
-
-            <div className="flex flex-row items-center gap-2">
+          <div className="mt-5 flex w-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-zinc-600">
+              <span>페이지당</span>
               <select
-                value={limit}
-                onChange={(e) =>
-                  
-                  //router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${page}`)
-
-                  router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
-                    + `&limit=${Number(e.target.value)}&page=1`
-                    + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
-                  )
-
-
-                }
-
-                className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
+                value={parsedLimit}
+                onChange={(e) => {
+                  router.push(buildHistoryQuery({
+                    limit: Number(e.target.value),
+                    page: 1,
+                  }));
+                }}
+                className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -5956,83 +5947,71 @@ export default function Index({ params }: any) {
               </select>
             </div>
 
-            {/* 처음으로 */}
-            <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                //router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=1`)
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="mr-2 text-sm text-zinc-500">
+                {currentPageStart.toLocaleString()}-{currentPageEnd.toLocaleString()} / {Number(totalCount).toLocaleString()}건
+              </span>
 
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
-                  + `&limit=${Number(limit)}&page=1`
-                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
-                )
+              <button
+                disabled={currentPage <= 1}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                onClick={() => {
+                  router.push(buildHistoryQuery({ page: 1 }));
+                }}
+              >
+                처음
+              </button>
 
-              }}
-            >
-              처음으로
-            </button>
+              <button
+                disabled={currentPage <= 1}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                onClick={() => {
+                  router.push(buildHistoryQuery({ page: currentPage - 1 }));
+                }}
+              >
+                이전
+              </button>
 
+              <span className="min-w-[70px] text-center text-sm font-medium text-zinc-700">
+                {currentPage} / {totalPages}
+              </span>
 
-            <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                ////router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) - 1}`)
+              <button
+                disabled={currentPage >= totalPages}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                }`}
+                onClick={() => {
+                  router.push(buildHistoryQuery({ page: currentPage + 1 }));
+                }}
+              >
+                다음
+              </button>
 
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
-                  + `&limit=${Number(limit)}&page=${Number(page) - 1}`
-                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
-                )
-
-
-              }}
-            >
-              이전
-            </button>
-
-
-            <span className="text-sm text-zinc-500">
-              {page} / {Math.ceil(Number(totalCount) / Number(limit))}
-            </span>
-
-
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                ///router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) + 1}`)
-
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
-                  + `&limit=${Number(limit)}&page=${Number(page) + 1}`
-                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
-                )
-
-              }}
-            >
-              다음
-            </button>
-
-            {/* 마지막으로 */}
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                ///router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`)
-
-                router.push(`/${params.lang}/admin/clearance-history?storecode=${searchStorecode}`
-                  + `&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`
-                  + `&fromDate=${searchFromDate}&toDate=${searchToDate}`
-                )
-
-              }}
-            >
-              마지막으로
-            </button>
-
+              <button
+                disabled={currentPage >= totalPages}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                }`}
+                onClick={() => {
+                  router.push(buildHistoryQuery({ page: totalPages }));
+                }}
+              >
+                마지막
+              </button>
+            </div>
           </div>
 
 
@@ -6180,6 +6159,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
-
