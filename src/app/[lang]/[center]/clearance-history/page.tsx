@@ -778,15 +778,15 @@ export default function Index({ params }: any) {
 
 
   // limit number
-  const [limitValue, setLimitValue] = useState(limit || 20);
+  const [limitValue, setLimitValue] = useState(Number(limit) || 20);
   useEffect(() => {
-    setLimitValue(limit || 20);
+    setLimitValue(Number(limit) || 20);
   }, [limit]);
 
   // page number
-  const [pageValue, setPageValue] = useState(page || 1);
+  const [pageValue, setPageValue] = useState(Number(page) || 1);
   useEffect(() => {
-    setPageValue(page || 1);
+    setPageValue(Number(page) || 1);
   }, [page]);
 
 
@@ -865,6 +865,21 @@ export default function Index({ params }: any) {
 
 
   const [totalCount, setTotalCount] = useState(0);
+
+  const currentLimit = Math.max(1, Number(limitValue) || Number(limit) || 10);
+  const currentPage = Math.max(1, Number(page) || 1);
+  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / currentLimit));
+  const canMovePrev = currentPage > 1;
+  const canMoveNext = currentPage < totalPages;
+
+  const moveToPage = (targetPage: number, nextLimit = currentLimit) => {
+    const normalizedPage = Math.min(totalPages, Math.max(1, targetPage || 1));
+    setPageValue(normalizedPage);
+    pushClearanceHistoryParams({
+      nextLimit,
+      nextPage: normalizedPage,
+    });
+  };
 
   //const [totalClearanceCount, setTotalClearanceCount] = useState(0);
   //const [totalClearanceAmount, setTotalClearanceAmount] = useState(0);
@@ -2970,7 +2985,7 @@ export default function Index({ params }: any) {
 
   return (
 
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
+    <main className="p-3 sm:p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto bg-gradient-to-b from-zinc-100 to-zinc-50">
 
 
 
@@ -3184,12 +3199,7 @@ export default function Index({ params }: any) {
 
       <div className="py-0 w-full">
 
-        <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
-          p-2 rounded-lg mb-4
-          ${store?.backgroundColor ?
-            "bg-" + store.backgroundColor + " " :
-            "bg-black/10"
-          }`}>
+        <div className="w-full flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-3 shadow-sm backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between mb-4">
 
 
             <div className="flex flex-row items-center gap-2">
@@ -3242,7 +3252,7 @@ export default function Index({ params }: any) {
                       }}
                       className="
                       items-center justify-center
-                      bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                      bg-zinc-900 text-sm text-zinc-50 px-4 py-2 rounded-xl border border-zinc-800 hover:bg-zinc-800 transition"
                     >
                       <div className="
                         w-40 xl:w-48
@@ -3284,7 +3294,7 @@ export default function Index({ params }: any) {
                         className="
                           w-32
                           flex items-center justify-center gap-2
-                          bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                          bg-white text-sm text-zinc-700 px-4 py-2 rounded-xl border border-zinc-200 hover:bg-zinc-50 transition"
                     >
                       <Image
                         src="/icon-logout.webp"
@@ -3336,26 +3346,22 @@ export default function Index({ params }: any) {
           */}
 
 
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">
+          <div className="w-full overflow-x-auto pb-1 mb-4">
+
+              <div className="min-w-max flex flex-row items-center gap-2 rounded-2xl border border-zinc-200 bg-white/90 p-2 shadow-sm">
 
               <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
+                  className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
+                  hover:bg-zinc-50 hover:text-zinc-900 transition
                   ">
                   회원관리
               </button>
 
               <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/buyorder')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
+                  className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
+                  hover:bg-zinc-50 hover:text-zinc-900 transition
                   ">
                   구매주문관리
               </button>
@@ -3363,18 +3369,15 @@ export default function Index({ params }: any) {
 
               <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
+                  className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
+                  hover:bg-zinc-50 hover:text-zinc-900 transition
                   ">
                   P2P 거래내역
               </button>
 
 
-              <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+              <div className='flex h-10 items-center justify-center gap-2
+                rounded-xl border border-emerald-600 bg-emerald-600 px-4 text-sm text-white'>
                 <Image
                   src="/icon-clearance.png"
                   alt="Trade"
@@ -3382,7 +3385,7 @@ export default function Index({ params }: any) {
                   height={35}
                   className="w-4 h-4"
                 />
-                <div className="text-sm font-semibold">
+                <div className="text-sm font-semibold whitespace-nowrap">
                   판매(거래소)
                 </div>
               </div>
@@ -3390,32 +3393,28 @@ export default function Index({ params }: any) {
 
               <button
                 onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
+                className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
+                hover:bg-zinc-50 hover:text-zinc-900 transition
                 ">
                   출금(회원)
               </button>
 
               <button
                 onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
+                className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
+                hover:bg-zinc-50 hover:text-zinc-900 transition
                 ">
                   통계(일별)
               </button>
+
+              </div>
 
           </div>
 
 
   
 
-          <div className='flex flex-row items-center space-x-4'>
+          <div className='flex flex-row items-center gap-3 rounded-xl bg-white/70 px-3 py-2 border border-zinc-200 w-fit'>
               <Image
                 src="/icon-clearance.png"
                 alt="Clearance"
@@ -3424,7 +3423,7 @@ export default function Index({ params }: any) {
                 className="w-6 h-6"
               />
 
-              <div className="text-xl font-semibold">
+              <div className="text-xl font-semibold tracking-tight text-zinc-900">
                 판매(거래소)
               </div>
 
@@ -3573,13 +3572,13 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="mt-5 selection:w-full flex flex-col sm:flex-row items-between justify-between gap-3">
+          <div className="mt-5 w-full flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white/90 p-3 shadow-sm">
 
 
 
             {/* serach fromDate and toDate */}
             {/* DatePicker for fromDate and toDate */}
-            <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
               <div className="flex flex-row items-center gap-2">
                 <Image
                   src="/icon-calendar.png"
@@ -3592,7 +3591,7 @@ export default function Index({ params }: any) {
                   type="date"
                   value={searchFromDate}
                   onChange={(e) => setSearchFormDate(e.target.value)}
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 p-2 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-300"
                 />
               </div>
 
@@ -3610,14 +3609,14 @@ export default function Index({ params }: any) {
                   type="date"
                   value={searchToDate}
                   onChange={(e) => setSearchToDate(e.target.value)}
-                  className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  className="w-full rounded-xl border border-zinc-300 bg-zinc-50 p-2 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-300"
                 />
               </div>
 
               {/* 오늘, 어제 버튼 */}
               <div className="flex flex-row items-center gap-2">
                 <button
-                  className="bg-[#3167b4] text-white px-3 py-1 rounded-lg hover:bg-[#3167b4]/80 text-sm"
+                  className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
                   onClick={() => {
                     const today = new Date();
                     const yyyy = today.getFullYear();
@@ -3632,7 +3631,7 @@ export default function Index({ params }: any) {
                   오늘
                 </button>
                 <button
-                  className="bg-[#3167b4] text-white px-3 py-1 rounded-lg hover:bg-[#3167b4]/80 text-sm"
+                  className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition"
                   onClick={() => {
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
@@ -3648,7 +3647,7 @@ export default function Index({ params }: any) {
                   어제
                 </button>
                 <button
-                  className="bg-zinc-800 text-white px-3 py-1 rounded-lg hover:bg-zinc-700 text-sm"
+                  className="h-9 rounded-xl border border-zinc-900 bg-zinc-900 px-3 text-sm font-semibold text-white hover:bg-zinc-800 transition"
                   onClick={() => {
                     applyDateSearchParams(searchFromDate, searchToDate);
                   }}
@@ -3684,11 +3683,7 @@ export default function Index({ params }: any) {
 
           {/* trade summary */}
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2
-            w-full
-            bg-zinc-100/50
-            p-4 rounded-lg shadow-md
-            ">
+          <div className="w-full rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
 
             {/*
             <div className="w-full xl:w-1/3 flex flex-row items-start justify-between gap-2 pl-4 pr-4">
@@ -3807,12 +3802,11 @@ export default function Index({ params }: any) {
           {/* buyOrderStats.totalByBuyerBankAccountNumber */}
           <div className="w-full
             flex flex-col sm:flex-row items-start justify-start gap-4
-            bg-white/80
-            p-4 rounded-lg shadow-md
-            backdrop-blur-md
+            bg-white
+            p-4 rounded-2xl border border-zinc-200 shadow-sm
           ">
 
-            <div className="w-24 text-sm font-semibold mb-2 sm:mb-0">
+            <div className="w-full sm:w-24 text-sm font-semibold mb-2 sm:mb-0 text-zinc-800">
               구매자<br />통장별<br />청산통계
             </div>
 
@@ -3822,7 +3816,7 @@ export default function Index({ params }: any) {
               {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
                 <div key={index} className="flex flex-col gap-2 items-center
                   border border-zinc-200 rounded-lg p-4
-                  bg-zinc-50 shadow-md
+                  bg-zinc-50 shadow-sm
                 ">
 
                   <div className="flex flex-row items-center justify-center gap-1">
@@ -4034,7 +4028,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full grid grid-cols-1 xl:grid-cols-[minmax(340px,420px)_minmax(0,1fr)] gap-5 items-start">
+          <div className="w-full grid grid-cols-1 xl:grid-cols-[minmax(320px,390px)_minmax(0,1fr)] gap-4 items-start">
 
             {/* store.withdrawalBankInfo */}
             {/*
@@ -4068,21 +4062,20 @@ export default function Index({ params }: any) {
             */}
 
             {/* buyOrderStats.totalBySellerBankAccountNumber */}
-            <div className="w-full min-w-0 flex flex-col items-start justify-start gap-3
-              bg-white/80
-              p-4 rounded-lg shadow-md
-              backdrop-blur-md
+            <div className="w-full min-w-0 flex flex-col items-start justify-start gap-2
+              bg-white
+              p-3 rounded-2xl border border-zinc-200 shadow-sm
             ">
 
               <div className="text-sm font-semibold leading-tight">
                 판매자<br />통장별<br />청산통계
               </div>
 
-              <div className="grid w-full grid-cols-1 gap-3">
+              <div className="grid w-full grid-cols-1 gap-2">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="min-w-0 flex flex-col gap-2 items-stretch
-                    border border-zinc-200 rounded-lg p-4
-                    bg-zinc-50 shadow-md
+                  <div key={index} className="min-w-0 flex flex-col gap-1.5 items-stretch
+                    border border-zinc-200 rounded-lg p-2.5
+                    bg-zinc-50 shadow-sm
                   ">
 
                     <div className="flex w-full min-w-0 flex-row items-center gap-1">
@@ -4144,30 +4137,29 @@ export default function Index({ params }: any) {
 
             </div>
 
-            <div className="w-full min-w-0 flex flex-col gap-2
-              bg-white/80
-              p-4 rounded-lg shadow-md
-              backdrop-blur-md
+            <div className="w-full min-w-0 flex flex-col gap-1.5
+              bg-white
+              p-3 rounded-2xl border border-zinc-200 shadow-sm
             ">
 
-              <div className="text-sm font-semibold mb-2 sm:mb-0">
+              <div className="text-sm font-semibold mb-1 sm:mb-0">
                 판매자 지갑
               </div>
 
-              <div className="grid w-full gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid w-full gap-2.5 md:grid-cols-2 2xl:grid-cols-3">
                 {sellersBalance?.map((seller, index) => (
                   <div
                     key={index}
-                    className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-3"
+                    className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 flex flex-col gap-2"
                   >
-                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 border border-zinc-200">
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-100 border border-zinc-200">
                         <Image
                           src="/icon-seller.png"
                           alt="Seller"
-                          width={32}
-                          height={32}
-                          className="w-8 h-8"
+                          width={28}
+                          height={28}
+                          className="w-7 h-7"
                         />
                       </div>
 
@@ -4193,13 +4185,13 @@ export default function Index({ params }: any) {
                         onClick={() => {
                           router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
                         }}
-                        className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg border border-zinc-300 bg-white text-[#3167b4] text-sm font-semibold hover:bg-zinc-50 transition"
+                        className="shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg border border-zinc-300 bg-white text-[#3167b4] text-sm font-semibold hover:bg-zinc-50 transition"
                       >
                         출금하기
                       </button>
                     </div>
 
-                    <div className="min-w-0 flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-700">
+                    <div className="min-w-0 flex flex-wrap items-center gap-1.5 text-sm font-semibold text-emerald-700">
                       <Image
                         src="/icon-tether.png"
                         alt="USDT"
@@ -4207,7 +4199,7 @@ export default function Index({ params }: any) {
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-lg sm:text-xl font-bold leading-none" style={{ fontFamily: 'monospace' }}>
+                      <span className="text-base sm:text-lg font-bold leading-none" style={{ fontFamily: 'monospace' }}>
                         {Number(seller.currentUsdtBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       </span>
                       <span className="text-xs text-zinc-500 font-medium">USDT</span>
@@ -4234,20 +4226,17 @@ export default function Index({ params }: any) {
           {tableView ? (
 
 
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
 
-              <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
+              <table className="clearance-compact-table min-w-[1280px] w-full table-auto border-collapse">
 
 
                 <thead
-                  className="bg-zinc-800 text-white text-sm font-semibold"
-                  style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  }}
+                  className="sticky top-0 z-10 bg-zinc-900/95 text-zinc-100 text-xs font-semibold backdrop-blur-sm"
                 >
                   <tr>
-                    <th className="p-2">
-                      <div className="flex flex-col items-center justify-start gap-2">
+                    <th className="w-[180px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                      <div className="flex flex-col items-center justify-start gap-1">
                         <span className="text-sm">
                           #{TID}
                         </span>
@@ -4257,7 +4246,7 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="p-2">
+                    <th className="w-[260px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-start">
                         <span className="text-sm">
                           {Buyer}
@@ -4265,7 +4254,7 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="p-2">
+                    <th className="w-[170px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-end">
                         <span>
                           판매량(USDT)
@@ -4278,13 +4267,13 @@ export default function Index({ params }: any) {
                         </span>
                       </div>
                     </th>
-                    <th className="p-2">결제통장</th>
+                    <th className="w-[240px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">결제통장</th>
                     {/*
                     <th className="p-2">{Payment_Amount}</th>
                     */}
 
-                    <th className="p-2">
-                      <div className="flex flex-col items-center justify-start gap-2">
+                    <th className="w-[250px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                      <div className="flex flex-col items-center justify-start gap-1">
                         <span className="text-sm">
                           {Seller}
                         </span>
@@ -4293,8 +4282,8 @@ export default function Index({ params }: any) {
                         </span>
                       </div>
                     </th>
-                    <th className="p-2">거래취소</th>
-                    <th className="p-2">
+                    <th className="w-[170px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">거래취소</th>
+                    <th className="w-[220px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       {
                       //isProcessingSendTransaction
                       isProcessingSendTransaction.current
@@ -4318,57 +4307,48 @@ export default function Index({ params }: any) {
                       )}
                     </th>
 
-                    <th className="p-2">출금상태</th>
+                    <th className="w-[120px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">출금상태</th>
                   </tr>
                 </thead>
 
                 {/* if my trading, then tr has differenc color */}
-                <tbody>
+                <tbody className="text-[13px] text-zinc-700">
 
                   {buyOrders.map((item, index) => (
 
                     
                     <tr key={index} className={`
                       ${
-                        index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-
-
-                        //item.walletAddress === address ?
-                        
-
+                        index % 2 === 0 ? 'bg-white' : 'bg-zinc-50/70'
                       }
+                      border-t border-zinc-200/80 hover:bg-zinc-50 transition-colors
                     `}>
                     
 
-                      <td className="p-2">
+                      <td className="px-2 py-2 align-top">
 
                         <button
                           className="
-                            w-36 
-                            flex flex-col items-start justify-start gap-2
-                            bg-zinc-100
+                            w-[170px]
+                            flex flex-col items-start justify-start gap-1.5
+                            bg-zinc-50
                             rounded-lg
-                            border border-zinc-800
-                            hover:bg-zinc-200
-                            cursor-pointer
-                            transition-all duration-200 ease-in-out
-                            hover:scale-105
-                            hover:shadow-lg
-                            hover:shadow-zinc-500/50
-                            hover:cursor-pointer
-                            p-2
+                            border border-zinc-200
+                            hover:bg-zinc-100
+                            transition-colors duration-150
+                            px-2 py-1.5
                           "
                           onClick={() => {
                             navigator.clipboard.writeText(item.tradeId);
                             toast.success("거래번호가 복사되었습니다.");
                           }}
                         >
-                          <span className="text-lg font-semibold text-zinc-500">
+                          <span className="text-xs font-semibold text-zinc-500 tracking-wide">
                             #{item.tradeId}
                           </span>
-                          <div className="flex flex-col items-center gap-2">
+                          <div className="flex flex-col items-start gap-1">
 
-                            <span className="text-sm text-zinc-500">
+                            <span className="text-[11px] text-zinc-500 whitespace-nowrap">
                             {
                               new Date(item.createdAt).toLocaleDateString(params.lang, {
                                 year: 'numeric',
@@ -4377,7 +4357,7 @@ export default function Index({ params }: any) {
                               })
                             }
                             </span>
-                            <span className="text-lg text-zinc-500">
+                            <span className="text-xs font-medium text-zinc-600 whitespace-nowrap">
                             {
                               new Date(item.createdAt).toLocaleTimeString(params.lang, {
                                 hour: '2-digit',
@@ -4387,7 +4367,7 @@ export default function Index({ params }: any) {
                             }
                             </span>
 
-                            <div className="text-sm text-zinc-500">
+                            <div className="text-[11px] text-zinc-500">
                               {params.lang === 'ko' ? (
                                 <p>{
                                   new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
@@ -4418,17 +4398,17 @@ export default function Index({ params }: any) {
 
                       </td>
                       
-                      <td className="p-2">
-                        <div className="flex flex-col gap-1">
+                      <td className="px-2 py-2 align-top">
+                        <div className="flex flex-col gap-1.5">
                           <div className="flex flex-row items-center gap-1">
                             <Image
                               src="/icon-user.png"
                               alt="User"
-                              width={20}
-                              height={20}
-                              className="rounded-lg w-5 h-5"
+                              width={16}
+                              height={16}
+                              className="rounded-lg w-4 h-4"
                             />
-                            <span className="text-sm text-zinc-600 font-semibold">
+                            <span className="text-[13px] text-zinc-700 font-semibold">
                               {item?.buyer?.nickname ?
                                 item?.buyer?.nickname
                                 : item.nickname || '익명'}
@@ -4436,25 +4416,25 @@ export default function Index({ params }: any) {
                           </div>
 
                           {/* item?.buyer?.bankInfo?.bankName, item?.buyer?.bankInfo?.accountNumber, item?.buyer?.bankInfo?.accountHolder */}
-                          <div className="flex flex-row items-center gap-1">
+                          <div className="flex flex-row flex-wrap items-center gap-1">
                             <Image
                               src="/icon-bank.png"
                               alt="Bank"
-                              width={20}
-                              height={20}
-                              className="rounded-lg w-5 h-5"
+                              width={16}
+                              height={16}
+                              className="rounded-lg w-4 h-4"
                             />
-                            <span className="text-sm text-zinc-600 font-semibold">
+                            <span className="text-xs text-zinc-600 font-medium">
                               {item?.buyer?.bankInfo?.bankName}
                             </span>
-                            <span className="text-sm text-zinc-600 font-semibold">
+                            <span className="text-xs text-zinc-600 font-medium break-all">
                               {item?.buyer?.bankInfo?.accountNumber?.length > 8 ?
                                 item?.buyer?.bankInfo?.accountNumber.slice(0, 4) + '...' + item?.buyer?.bankInfo?.accountNumber.slice(-4)
                                 :
                                 item?.buyer?.bankInfo?.accountNumber
                               }
                             </span>
-                            <span className="text-sm text-zinc-600 font-semibold">
+                            <span className="text-xs text-zinc-600 font-medium">
                               {item?.buyer?.bankInfo?.accountHolder}
                             </span>
                           </div>
@@ -4464,16 +4444,16 @@ export default function Index({ params }: any) {
                             <Image
                               src="/icon-shield.png"
                               alt="Shield"
-                              width={20}
-                              height={20}
-                              className="rounded-lg w-5 h-5"
+                              width={16}
+                              height={16}
+                              className="rounded-lg w-4 h-4"
                             />
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(item.walletAddress);
                                 toast.success('지갑주소가 클립보드에 복사되었습니다.');
                               }}
-                              className="text-sm text-zinc-500 font-semibold hover:text-blue-500 underline"
+                              className="text-xs text-zinc-500 font-medium hover:text-blue-500 underline whitespace-nowrap"
                               title="지갑주소 복사"
                             >
                               {item?.buyer?.walletAddress ? (
@@ -4489,18 +4469,18 @@ export default function Index({ params }: any) {
 
 
 
-                      <td className="p-2">
-                        <div className="flex flex-col gap-2 items-end justify-start">
+                      <td className="px-2 py-2 align-top">
+                        <div className="flex flex-col gap-1.5 items-end justify-start whitespace-nowrap">
 
                           <div className="flex flex-row gap-2 items-center justify-center">
                             <Image
                               src="/icon-tether.png"
                               alt="Tether"
-                              width={20}
-                              height={20}
-                              className="w-5 h-5"
+                              width={16}
+                              height={16}
+                              className="w-4 h-4"
                             />
-                            <span className="text-xl text-[#409192] font-semibold"
+                            <span className="text-base text-[#409192] font-semibold"
                               style={{ fontFamily: 'monospace' }}
                             >
                               {item.usdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -4509,14 +4489,14 @@ export default function Index({ params }: any) {
 
 
                           <div className="flex flex-row items-center gap-1">
-                            <span className="text-xl text-yellow-600 font-semibold"
+                            <span className="text-sm text-yellow-600 font-semibold"
                               style={{ fontFamily: 'monospace' }}
                             >
                               {Number(item.krwAmount)?.toLocaleString()}
                             </span>
                           </div>
 
-                          <span className="text-sm text-zinc-500"
+                          <span className="text-xs text-zinc-500"
                             style={{ fontFamily: 'monospace' }}
                           >
                             {
@@ -4528,23 +4508,23 @@ export default function Index({ params }: any) {
                       </td>
 
 
-                      <td className="p-2">
+                      <td className="px-2 py-2 align-top">
 
                         {item?.buyer?.nickname ? (
 
-                          <div className="flex flex-row items-center gap-2 justify-center">
-                            <div className="text-lg font-semibold text-yellow-600">
+                          <div className="flex max-w-[230px] flex-col items-start gap-1">
+                            <div className="text-sm font-semibold text-yellow-600">
                               {item.buyer?.nickname}
                             </div>
 
-                            <div className="flex flex-col gap-2 items-center justify-center">
-                              <div className="text-lg font-semibold text-zinc-500">
+                            <div className="flex flex-col gap-0.5 items-start justify-center">
+                              <div className="text-xs font-medium text-zinc-600">
                                 {item.buyer?.depositBankName}
                               </div>
-                              <div className="text-lg font-semibold text-zinc-500">
+                              <div className="text-xs font-medium text-zinc-600 break-all">
                                 {item.buyer?.depositBankAccountNumber}
                               </div>
-                              <div className="text-lg font-semibold text-zinc-500">
+                              <div className="text-xs font-medium text-zinc-600">
                                 {item.buyer?.depositName}
                               </div>
                             </div>
@@ -4552,11 +4532,11 @@ export default function Index({ params }: any) {
 
                         ) : (
 
-                          <div className="flex flex-col gap-2 items-center justify-center">
-                            <div className="text-lg font-semibold text-zinc-500">
+                          <div className="flex max-w-[230px] flex-col gap-0.5 items-start justify-center">
+                            <div className="text-xs font-medium text-zinc-600">
                               {item.seller?.bankInfo?.bankName}
                             </div>
-                            <div className="text-lg font-semibold text-zinc-500">
+                            <div className="text-xs font-medium text-zinc-600 break-all">
                               {
                                 item.seller?.bankInfo?.accountNumber
                                 && item.seller?.bankInfo?.accountNumber.length > 5
@@ -4564,7 +4544,7 @@ export default function Index({ params }: any) {
                                 : item.seller?.bankInfo?.accountNumber
                               }
                             </div>
-                            <div className="text-lg font-semibold text-zinc-500">
+                            <div className="text-xs font-medium text-zinc-600">
                               {item.seller?.bankInfo?.accountHolder}
                             </div>
                           </div>
@@ -4612,12 +4592,12 @@ export default function Index({ params }: any) {
                       </td>
                       */}
 
-                      <td className="p-2">
-                        <div className="flex flex-row items-center gap-2 justify-center">
+                      <td className="px-2 py-2 align-top">
+                        <div className="flex min-w-[220px] flex-col items-start gap-1.5">
                           {/* status */}
                           {item.status === 'ordered' && (
-                            <div className="text-sm text-yellow-500 font-semibold
-                              border border-yellow-500 rounded-lg p-2
+                            <div className="text-xs text-yellow-600 font-semibold
+                              border border-yellow-300 rounded-md px-2 py-1
                             ">
                               {Buy_Order_Opened}
                             </div>
@@ -4626,16 +4606,16 @@ export default function Index({ params }: any) {
 
                           {item.status === 'accepted' && (
 
-                            <div className="flex flex-row gap-2 items-center justify-center">
+                            <div className="flex flex-wrap gap-1.5 items-center">
                               
-                              <div className="text-sm text-zinc-500
-                                border border-zinc-500 rounded-lg p-2
+                              <div className="text-xs text-zinc-600
+                                border border-zinc-300 rounded-md px-2 py-1
                                 ">
                                 {item.seller?.nickname}
                               </div>
 
-                              <div className="text-sm text-[#409192]
-                                border border-green-600 rounded-lg p-2
+                              <div className="text-xs text-[#409192]
+                                border border-green-500 rounded-md px-2 py-1
                                 ">
                                 {Trade_Started}
                               </div>
@@ -4647,40 +4627,42 @@ export default function Index({ params }: any) {
                           )}
 
                           {item.status === 'paymentRequested' && (
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="flex flex-col gap-1.5 items-start justify-center">
 
-                              {item.seller?.nickname && (
-                                <div className="flex flex-row gap-1 items-center justify-center">
+                              <div className="flex w-full flex-wrap items-center gap-2">
+                                {item.seller?.nickname && (
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <Image
+                                      src="/icon-seller.png"
+                                      alt="Seller"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className="text-sm font-semibold text-zinc-600">
+                                      {item.seller?.nickname}
+                                    </span>
+                                  </div>
+                                )}
+
+                                <div className="flex flex-row gap-1 items-center justify-start">
                                   <Image
-                                    src="/icon-seller.png"
-                                    alt="Seller"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
+                                    src="/icon-shield.png"
+                                    alt="Shield"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
                                   />
-                                  <span className="text-lg font-semibold text-zinc-500">
-                                    {item.seller?.nickname}
+                                  <span className="text-xs text-zinc-700 font-semibold">
+                                    {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
                                   </span>
                                 </div>
-                              )}
-
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                <Image
-                                  src="/icon-shield.png"
-                                  alt="Shield"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm text-zinc-800 font-semibold">
-                                  {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
-                                </span>
                               </div>
 
 
                               
-                              <div className="text-sm text-yellow-600
-                                border border-yellow-600 rounded-lg p-2
+                              <div className="text-xs text-yellow-600
+                                border border-yellow-400 rounded-md px-2 py-1
                                 ">
                                 USDT 전송요청
                               </div>
@@ -4692,36 +4674,38 @@ export default function Index({ params }: any) {
                           )}
 
                           {item.status === 'cancelled' && (
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="flex flex-col gap-1.5 items-start justify-center">
 
-                              <div className="flex flex-row gap-1 items-center justify-center">
-                                <Image
-                                  src="/icon-seller.png"
-                                  alt="Seller"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm text-zinc-500">
-                                  {item.seller?.nickname}
-                                </span>
-                              </div>
-                              
-                              <div className="flex flex-row gap-1 items-center justify-center">
-                                <Image
-                                  src="/icon-shield.png"
-                                  alt="Shield"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm text-zinc-800 font-semibold">
-                                  {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
-                                </span>
+                              <div className="flex w-full flex-wrap items-center gap-2">
+                                <div className="flex flex-row gap-1 items-center justify-start">
+                                  <Image
+                                    src="/icon-seller.png"
+                                    alt="Seller"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-xs text-zinc-500">
+                                    {item.seller?.nickname}
+                                  </span>
+                                </div>
+                                
+                                <div className="flex flex-row gap-1 items-center justify-start">
+                                  <Image
+                                    src="/icon-shield.png"
+                                    alt="Shield"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-xs text-zinc-800 font-semibold">
+                                    {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
+                                  </span>
+                                </div>
                               </div>
 
-                              <div className="text-sm text-red-600
-                                border border-red-600 rounded-lg p-2
+                              <div className="text-xs text-red-600
+                                border border-red-400 rounded-md px-2 py-1
                               ">
                                 {
                                   Cancelled_at
@@ -4734,57 +4718,55 @@ export default function Index({ params }: any) {
 
                           {/* if status is accepted, show payment request button */}
                           {item.status === 'paymentConfirmed' && (
-                            <div className="flex flex-col gap-2 items-center justify-center">
+                            <div className="flex flex-col gap-1.5 items-start justify-center">
 
-                              {item.seller?.nickname && (
-                                <div className="flex flex-row gap-1 items-center justify-center">
+                              <div className="flex w-full flex-wrap items-center gap-2">
+                                {item.seller?.nickname && (
+                                  <div className="flex flex-row gap-1 items-center justify-start">
+                                    <Image
+                                      src="/icon-seller.png"
+                                      alt="Seller"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className="text-sm font-semibold text-zinc-600">
+                                      {item.seller?.nickname}
+                                    </span>
+                                  </div>
+                                )}
+
+                                <div className="flex flex-row gap-1 items-center justify-start">
                                   <Image
-                                    src="/icon-seller.png"
-                                    alt="Seller"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
+                                    src="/icon-shield.png"
+                                    alt="Shield"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
                                   />
-                                  <span className="text-lg font-semibold text-zinc-500">
-                                    {item.seller?.nickname}
+                                  <span className="text-xs text-zinc-800 font-semibold">
+                                    {
+                                      item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
+                                    }
                                   </span>
                                 </div>
-                              )}
-
-                              <div className="flex flex-row gap-1 items-center justify-center">
-                                <Image
-                                  src="/icon-shield.png"
-                                  alt="Shield"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm text-zinc-800 font-semibold">
-                                  {
-                                    item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
-                                  }
-                                </span>
                               </div>
 
 
-                              <span className="text-sm text-green-600
-                                border border-green-600 rounded-lg p-2
+                              <span className="text-xs text-green-600
+                                border border-green-500 rounded-md px-2 py-1
                                 ">
                                 {Completed}
                               </span>
 
                               {item.transactionHash && item.transactionHash !== '0x' ? (
                               <button
-                                className="text-sm text-blue-600 font-semibold
-                                  border border-blue-600 rounded-lg p-2
-                                  bg-blue-100
+                                className="text-xs text-blue-700 font-semibold
+                                  border border-blue-300 rounded-md px-2 py-1
+                                  bg-blue-50
                                   w-full text-center
-                                  hover:bg-blue-200
-                                  cursor-pointer
-                                  transition-all duration-200 ease-in-out
-                                  hover:scale-105
-                                  hover:shadow-lg
-                                  hover:shadow-blue-500/50
+                                  hover:bg-blue-100
+                                  transition-colors duration-150
                                 "
 
                                 onClick={() => {
@@ -4809,18 +4791,18 @@ export default function Index({ params }: any) {
                                   <Image
                                     src={`/logo-chain-${chain}.png`}
                                     alt="Chain"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4"
                                   />
-                                  <span className="text-sm">
+                                  <span className="text-xs">
                                     USDT 전송내역(구매자)
                                   </span>
                                 </div>
                               </button>
                               ) : (
-                                  <div className="text-sm text-green-600 font-semibold
-                                    border border-green-600 rounded-lg p-2
+                                  <div className="text-xs text-green-600 font-semibold
+                                    border border-green-500 rounded-md px-2 py-1
                                     ">
                                     TXID 업데이트 중...
                                   </div>
@@ -4832,16 +4814,12 @@ export default function Index({ params }: any) {
                               && item?.settlement?.txid !== '0x'
                               && (
                                 <button
-                                  className="text-sm text-blue-600 font-semibold
-                                    border border-blue-600 rounded-lg p-2
-                                    bg-blue-100
+                                  className="text-xs text-blue-700 font-semibold
+                                    border border-blue-300 rounded-md px-2 py-1
+                                    bg-blue-50
                                     w-full text-center
-                                    hover:bg-blue-200
-                                    cursor-pointer
-                                    transition-all duration-200 ease-in-out
-                                    hover:scale-105
-                                    hover:shadow-lg
-                                    hover:shadow-blue-500/50
+                                    hover:bg-blue-100
+                                    transition-colors duration-150
                                   "
 
                                   onClick={() => {
@@ -4867,11 +4845,11 @@ export default function Index({ params }: any) {
                                     <Image
                                       src={`/logo-chain-${chain}.png`}
                                       alt="Chain"
-                                      width={20}
-                                      height={20}
-                                      className="w-5 h-5"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4"
                                     />
-                                    <span className="text-sm">
+                                    <span className="text-xs">
                                       USDT 전송내역(회원)
                                     </span>
                                   </div>
@@ -4884,8 +4862,8 @@ export default function Index({ params }: any) {
 
 
                           {item.status === 'completed' && (
-                            <div className="text-sm text-[#409192]
-                              border border-green-600 rounded-lg p-2
+                            <div className="text-xs text-[#409192]
+                              border border-green-500 rounded-md px-2 py-1
                               ">
                               {Completed_at}
                             </div>
@@ -4896,15 +4874,15 @@ export default function Index({ params }: any) {
 
 
 
-                      <td className="p-2">
+                      <td className="px-2 py-2 align-top">
 
                         <div className="
-                        flex flex-row gap-2 items-start justify-start">
+                        min-w-[150px] flex flex-col gap-1.5 items-start justify-start">
 
 
                           {item.status === 'accepted' && store?.adminWalletAddress === address && (
                             
-                            <div className="flex flex-row items-center gap-2">
+                            <div className="flex flex-row items-center gap-1.5">
                               <input
                                 type="checkbox"
                                 checked={agreementForCancelTrade[index]}
@@ -4918,10 +4896,10 @@ export default function Index({ params }: any) {
                                 disabled={cancellings[index] || !agreementForCancelTrade[index]}
               
                                 className={`
-                                  w-32 h-8
+                                  w-full h-7
                                   flex flex-row
                                   items-center justify-center
-                                  gap-1 text-sm text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                  gap-1 text-xs text-white px-2 py-1 rounded-md ${cancellings[index] || !agreementForCancelTrade[index] ? 'bg-gray-500' : 'bg-red-500 hover:bg-red-600'}`}
                                   
                                 onClick={() => {
                                   cancelTrade(item._id, index);
@@ -4937,7 +4915,7 @@ export default function Index({ params }: any) {
                                   />
                                 )}
                                 
-                                <span className="text-sm">{Cancel_My_Trade}</span>
+                                <span className="text-xs">{Cancel_My_Trade}</span>
                               
                               </button>
                             </div>
@@ -4952,15 +4930,15 @@ export default function Index({ params }: any) {
                       </td>
 
 
-                      <td className="p-2">
+                      <td className="px-2 py-2 align-top">
 
                         <div className="
-                          w-32
-                          flex flex-row gap-2 items-start justify-start">
+                          w-[190px]
+                          flex flex-col gap-1.5 items-start justify-start">
 
                           {/*item.status === 'accepted' && item.seller && item.seller.walletAddress === address && (
                             
-                            <div className="flex flex-row items-center gap-2">
+                            <div className="flex flex-row items-center gap-1.5">
                               <input
                                 type="checkbox"
                                 checked={agreementForCancelTrade[index]}
@@ -5016,13 +4994,13 @@ export default function Index({ params }: any) {
                               <button
                                 disabled={acceptingBuyOrder[index] || !agreementForTrade[index]}
                                 className={`
-                                  w-full h-8
+                                  w-full h-7
                                   flex flex-row 
                                   items-center justify-center
-                                  gap-1 text-sm text-white px-2 py-1 rounded-md
+                                  gap-1 text-xs text-white px-2 py-1 rounded-md
                                   ${acceptingBuyOrder[index] || !agreementForTrade[index] ?
                                     'bg-zinc-500 text-white' :
-                                    'bg-green-500 text-white '}
+                                    'bg-green-500 text-white hover:bg-green-600'}
                                 `}
                                 onClick={() => {
                                   acceptBuyOrder(index, item._id, smsReceiverMobileNumber);
@@ -5037,7 +5015,7 @@ export default function Index({ params }: any) {
                                     className="w-4 h-4 animate-spin "
                                   />
                                 )}
-                                <span className="text-sm">{Buy_Order_Accept}</span>
+                                <span className="text-xs">{Buy_Order_Accept}</span>
                                 
                               </button>
                             </div>
@@ -5053,7 +5031,7 @@ export default function Index({ params }: any) {
                           {
                             store?.adminWalletAddress === address &&
                             item.status === 'accepted' && (
-                            <div className="flex flex-row gap-2">
+                            <div className="flex flex-row gap-1.5">
 
                               {/* check box for agreement */}
                               <input
@@ -5076,8 +5054,8 @@ export default function Index({ params }: any) {
                                 disabled={escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index]}
                                 
                                 className={`
-                                  w-full h-8
-                                  flex flex-row gap-1 text-sm text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500'}`}
+                                  w-full h-7
+                                  flex flex-row gap-1 text-xs text-white px-2 py-1 rounded-md ${escrowing[index] || requestingPayment[index] || !requestPaymentCheck[index] ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
                                 onClick={() => {
 
                                   requestPayment(
@@ -5095,7 +5073,7 @@ export default function Index({ params }: any) {
                                   height={16}
                                   className={escrowing[index] || requestingPayment[index] ? 'animate-spin' : 'hidden'}
                                 />
-                                <span className="text-sm">
+                                <span className="text-xs">
                                   {Request_Payment}
                                 </span>
                               
@@ -5116,9 +5094,9 @@ export default function Index({ params }: any) {
                           {item.seller && item.seller.walletAddress === address &&   
                           item.status === 'paymentRequested' && (
 
-                            <div className="w-full flex flex-row gap-2">
+                            <div className="w-full flex flex-col gap-1.5">
 
-                              <div className="w-full flex flex-col gap-2 items-start justify-center">
+                              <div className="w-full flex flex-col gap-1.5 items-start justify-center">
 
                                 {/*
                                 <input
@@ -5144,13 +5122,13 @@ export default function Index({ params }: any) {
                                     isProcessingSendTransaction.current
                                   }
                                   className={`
-                                    w-full h-8
+                                    w-full h-7
                                     flex flex-row
                                     items-center justify-center
-                                    gap-1 text-sm text-white px-2 py-1 rounded-md ${
+                                    gap-1 text-xs text-white px-2 py-1 rounded-md ${
                                     //isProcessingSendTransaction
                                     isProcessingSendTransaction.current
-                                    ? 'bg-gray-500' : 'bg-green-500'}`}
+                                    ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
 
 
                                   onClick={(e) => {
@@ -5182,12 +5160,12 @@ export default function Index({ params }: any) {
                                         height={20}
                                         className="w-4 h-4 animate-spin "
                                       />
-                                      <span className="text-sm">
+                                      <span className="text-xs">
                                         USDT 전송중...
                                       </span>
                                     </div>
                                   ) : (
-                                    <span className="text-sm">
+                                    <span className="text-xs">
                                       USDT 전송
                                     </span>
                                   )}
@@ -5196,7 +5174,7 @@ export default function Index({ params }: any) {
 
                                 {/* warning message */}
                                 {sendingTransaction[index] && (
-                                  <div className="flex flex-row gap-1 items-center justify-center">
+                                  <div className="flex flex-row gap-1 items-start justify-start">
                                     <Image
                                       src="/icon-warning.png"
                                       alt="Warning"
@@ -5204,7 +5182,7 @@ export default function Index({ params }: any) {
                                       height={16}
                                       className="w-4 h-4"
                                     />
-                                    <span className="text-sm text-red-600">
+                                    <span className="text-[11px] text-red-600">
                                       전송중에 절대 새로고침하거나 뒤로가기를 하지 마세요.
                                     </span>
                                   </div>
@@ -5215,7 +5193,7 @@ export default function Index({ params }: any) {
 
 
                               {!isWithoutEscrow && (
-                                <div className="flex flex-row gap-2">
+                                <div className="flex flex-row gap-1.5">
 
                                   <input
                                     disabled={rollbackingPayment[index]}
@@ -5236,10 +5214,10 @@ export default function Index({ params }: any) {
                                   <button
                                     disabled={rollbackingPayment[index] || !rollbackPaymentCheck[index]}
                                     className={`
-                                      w-32 h-8
+                                      w-full h-7
                                       flex flex-row
                                       items-center justify-center
-                                      gap-1 text-sm text-white px-2 py-1 rounded-md ${rollbackingPayment[index] || !rollbackPaymentCheck[index] ? 'bg-gray-500' : 'bg-red-500'}`}
+                                      gap-1 text-xs text-white px-2 py-1 rounded-md ${rollbackingPayment[index] || !rollbackPaymentCheck[index] ? 'bg-gray-500' : 'bg-red-500 hover:bg-red-600'}`}
                                     onClick={() => {
                                       rollbackPayment(
                                         index,
@@ -5258,7 +5236,7 @@ export default function Index({ params }: any) {
                                         height={16}
                                         className={rollbackingPayment[index] ? 'animate-spin' : 'hidden'}
                                       />
-                                      <span className="text-sm">
+                                      <span className="text-xs">
                                         에스크로 취소
                                       </span>
 
@@ -5274,7 +5252,7 @@ export default function Index({ params }: any) {
 
                           {item.seller && item.seller.walletAddress !== address &&   
                           item.status === 'paymentRequested' && (
-                            <div className="text-sm text-yellow-600 font-semibold">
+                            <div className="text-xs text-yellow-600 font-semibold">
                               구매자에개 {item.usdtAmount.toFixed(3).replace(/\.?0+$/, '')} USDT 전송중...
                             </div>
                           )}
@@ -5288,22 +5266,22 @@ export default function Index({ params }: any) {
 
 
                       {/* 출금상태: buyer.depositCompleted */}
-                      <td className="p-2">
+                      <td className="px-2 py-2 align-top">
 
                         {item.status !== 'cancelled' && (
                           <>   
                             {item?.buyer?.depositCompleted !== true
                             ? (
-                              <div className="text-sm text-red-600
+                              <div className="text-xs text-red-600
                               flex flex-row items-center gap-2
-                              border border-red-600
+                              border border-red-400
                               rounded-md px-2 py-1">
                                 출금대기중
                               </div>
                             ) : (
-                              <div className="text-sm text-[#409192]
+                              <div className="text-xs text-[#409192]
                               flex flex-row items-center gap-2
-                              border border-green-600
+                              border border-green-400
                               rounded-md px-2 py-1">
                                 출금완료
                               </div>
@@ -6267,124 +6245,109 @@ export default function Index({ params }: any) {
     
 
         {/* pagination */}
-        {/* url query string */}
-        {/* 1 2 3 4 5 6 7 8 9 10 */}
-        {/* ?limit=10&page=1 */}
-        {/* submit button */}
-        {/* totalPage = Math.ceil(totalCount / limit) */}
-        <div className="mt-4 flex flex-row items-center justify-center gap-4">
+        <div className="mt-4 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-600">
+              <span className="rounded-full bg-zinc-100 px-2.5 py-1 font-semibold text-zinc-700">
+                총 {Number(totalCount).toLocaleString()}건
+              </span>
+              <span>페이지당</span>
+              <select
+                value={limitValue}
+                onChange={(e) => {
+                  const nextLimit = Number(e.target.value);
+                  setLimitValue(nextLimit);
+                  moveToPage(1, nextLimit);
+                }}
+                className="h-8 rounded-lg border border-zinc-300 bg-white px-2 text-xs font-medium text-zinc-700 outline-none transition focus:border-zinc-500"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
 
+            <div className="flex flex-wrap items-center gap-1">
+              <button
+                disabled={!canMovePrev}
+                className={`h-8 rounded-lg px-3 text-xs font-semibold transition ${canMovePrev ? 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100' : 'border border-zinc-200 bg-zinc-100 text-zinc-400'}`}
+                onClick={() => moveToPage(1)}
+              >
+                처음
+              </button>
 
-          <div className="flex flex-row items-center gap-2">
-            <select
-              value={limit}
-              onChange={(e) =>
-                pushClearanceHistoryParams({
-                  nextLimit: Number(e.target.value),
-                  nextPage: Number(page),
-                })
+              <button
+                disabled={!canMovePrev}
+                className={`h-8 rounded-lg px-3 text-xs font-semibold transition ${canMovePrev ? 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100' : 'border border-zinc-200 bg-zinc-100 text-zinc-400'}`}
+                onClick={() => moveToPage(currentPage - 1)}
+              >
+                이전
+              </button>
 
-              }
+              <span className="inline-flex h-8 min-w-[88px] items-center justify-center rounded-lg border border-zinc-300 bg-zinc-50 px-2 text-xs font-semibold text-zinc-700">
+                {currentPage} / {totalPages}
+              </span>
 
-              className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
+              <button
+                disabled={!canMoveNext}
+                className={`h-8 rounded-lg px-3 text-xs font-semibold transition ${canMoveNext ? 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100' : 'border border-zinc-200 bg-zinc-100 text-zinc-400'}`}
+                onClick={() => moveToPage(currentPage + 1)}
+              >
+                다음
+              </button>
+
+              <button
+                disabled={!canMoveNext}
+                className={`h-8 rounded-lg px-3 text-xs font-semibold transition ${canMoveNext ? 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100' : 'border border-zinc-200 bg-zinc-100 text-zinc-400'}`}
+                onClick={() => moveToPage(totalPages)}
+              >
+                마지막
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={pageValue}
+                onChange={(e) => setPageValue(Math.max(1, Number(e.target.value) || 1))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    moveToPage(pageValue);
+                  }
+                }}
+                className="h-8 w-20 rounded-lg border border-zinc-300 bg-white px-2 text-xs text-zinc-700 outline-none focus:border-zinc-500"
+              />
+              <button
+                className="h-8 rounded-lg bg-zinc-900 px-3 text-xs font-semibold text-white transition hover:bg-zinc-700"
+                onClick={() => moveToPage(pageValue)}
+              >
+                이동
+              </button>
+            </div>
           </div>
-
-          {/* 처음으로 */}
-          <button
-            disabled={Number(page) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
-              pushClearanceHistoryParams({
-                nextLimit: Number(limit),
-                nextPage: 1,
-              });
-
-            }
-          }
-          >
-            처음
-          </button>
-
-
-          <button
-            disabled={Number(page) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
-              pushClearanceHistoryParams({
-                nextLimit: Number(limit),
-                nextPage: Number(page) - 1,
-              });
-
-            }}
-          >
-            이전
-          </button>
-
-
-          <span className="text-sm text-zinc-500">
-            {page} / {Math.ceil(Number(totalCount) / Number(limit))}
-          </span>
-
-
-          <button
-            disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
-              pushClearanceHistoryParams({
-                nextLimit: Number(limit),
-                nextPage: Number(page) + 1,
-              });
-
-            }}
-          >
-            다음
-          </button>
-
-          {/* 마지막 */}
-          <button
-            disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
-              pushClearanceHistoryParams({
-                nextLimit: Number(limit),
-                nextPage: Math.ceil(Number(totalCount) / Number(limit)),
-              });
-
-            }}
-          >
-            마지막
-          </button>
-
-
         </div>
 
-
-        
-
-        <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
-          <div className="text-sm text-zinc-600">
-            © 2024 Stable Makeup. All rights reserved.
+        <footer className="mt-5 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-zinc-500">
+              © {new Date().getFullYear()} Stable Makeup. All rights reserved.
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <a href={`/${params.lang}/terms-of-service`} className="rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition hover:bg-zinc-100">
+                이용약관
+              </a>
+              <a href={`/${params.lang}/privacy-policy`} className="rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition hover:bg-zinc-100">
+                개인정보처리방침
+              </a>
+              <a href={`/${params.lang}/contact`} className="rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition hover:bg-zinc-100">
+                고객센터
+              </a>
+            </div>
           </div>
-          <div className="text-sm text-zinc-600">
-            <a href={`/${params.lang}/terms-of-service`} className="text-blue-500 hover:underline">
-              이용약관
-            </a>
-            {' | '}
-            <a href={`/${params.lang}/privacy-policy`} className="text-blue-500 hover:underline">
-              개인정보처리방침
-            </a>
-            {' | '}
-            <a href={`/${params.lang}/contact`} className="text-blue-500 hover:underline">
-              고객센터
-            </a>
-          </div>
-        </div> 
+        </footer>
 
 
           
