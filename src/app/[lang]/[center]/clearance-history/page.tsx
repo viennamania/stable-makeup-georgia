@@ -201,6 +201,12 @@ const wallets = [
   }),
 ];
 
+const getKstToday = () => {
+  const today = new Date();
+  today.setHours(today.getHours() + 9);
+  return today.toISOString().split('T')[0];
+};
+
 
 // get escrow wallet address
 
@@ -214,6 +220,9 @@ export default function Index({ params }: any) {
   const searchParams = useSearchParams()!;
  
   const wallet = searchParams?.get('wallet');
+  const querySearchMyOrders = searchParams?.get('searchMyOrders');
+  const queryFromDate = searchParams?.get('fromDate');
+  const queryToDate = searchParams?.get('toDate');
 
 
   // limit, page number params
@@ -761,7 +770,10 @@ export default function Index({ params }: any) {
   
 
 
-  const [searchMyOrders, setSearchMyOrders] = useState(false);
+  const [searchMyOrders, setSearchMyOrders] = useState(querySearchMyOrders === 'true');
+  useEffect(() => {
+    setSearchMyOrders(querySearchMyOrders === 'true');
+  }, [querySearchMyOrders]);
 
 
 
@@ -780,29 +792,72 @@ export default function Index({ params }: any) {
 
 
 // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState("");
-  // set today's date in YYYY-MM-DD format
+  const [searchFromDate, setSearchFormDate] = useState(queryFromDate || getKstToday());
+  const [searchToDate, setSearchToDate] = useState(queryToDate || getKstToday());
   useEffect(() => {
-    const today = new Date();
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+    setSearchFormDate(queryFromDate || getKstToday());
+    setSearchToDate(queryToDate || getKstToday());
+  }, [queryFromDate, queryToDate]);
 
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchFormDate(formattedDate);
-  }, []);
+  const pushClearanceHistoryParams = ({
+    nextLimit = Number(limit),
+    nextPage = Number(page),
+    nextSearchMyOrders = searchMyOrders,
+    nextFromDate = searchFromDate,
+    nextToDate = searchToDate,
+    nextWallet = wallet || '',
+  }: {
+    nextLimit?: number;
+    nextPage?: number;
+    nextSearchMyOrders?: boolean;
+    nextFromDate?: string;
+    nextToDate?: string;
+    nextWallet?: string;
+  }) => {
+    const nextParams = new URLSearchParams(searchParams?.toString() || '');
 
+    nextParams.set('limit', String(nextLimit));
+    nextParams.set('page', String(nextPage));
+    nextParams.set('searchMyOrders', String(nextSearchMyOrders));
 
+    if (nextWallet) {
+      nextParams.set('wallet', nextWallet);
+    } else {
+      nextParams.delete('wallet');
+    }
 
+    if (nextFromDate) {
+      nextParams.set('fromDate', nextFromDate);
+    } else {
+      nextParams.delete('fromDate');
+    }
 
-  const [searchToDate, setSearchToDate] = useState("");
+    if (nextToDate) {
+      nextParams.set('toDate', nextToDate);
+    } else {
+      nextParams.delete('toDate');
+    }
 
-  // set today's date in YYYY-MM-DD format
-  useEffect(() => {
-    const today = new Date();
-    today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
+    router.push(`/${params.lang}/${params.center}/clearance-history?${nextParams.toString()}`);
+  };
 
-    const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    setSearchToDate(formattedDate);
-  }, []);
+  const applyDateSearchParams = (fromDate: string, toDate: string) => {
+    if (!fromDate || !toDate) {
+      toast.error('조회 기간을 선택하세요.');
+      return;
+    }
+
+    if (fromDate > toDate) {
+      toast.error('시작일은 종료일보다 늦을 수 없습니다.');
+      return;
+    }
+
+    pushClearanceHistoryParams({
+      nextPage: 1,
+      nextFromDate: fromDate,
+      nextToDate: toDate,
+    });
+  };
 
 
 
@@ -3571,6 +3626,7 @@ export default function Index({ params }: any) {
                     const formattedToday = `${yyyy}-${mm}-${dd}`;
                     setSearchFormDate(formattedToday);
                     setSearchToDate(formattedToday);
+                    applyDateSearchParams(formattedToday, formattedToday);
                   }}
                 >
                   오늘
@@ -3586,9 +3642,18 @@ export default function Index({ params }: any) {
                     const formattedYesterday = `${yyyy}-${mm}-${dd}`;
                     setSearchFormDate(formattedYesterday);
                     setSearchToDate(formattedYesterday);
+                    applyDateSearchParams(formattedYesterday, formattedYesterday);
                   }}
                 >
                   어제
+                </button>
+                <button
+                  className="bg-zinc-800 text-white px-3 py-1 rounded-lg hover:bg-zinc-700 text-sm"
+                  onClick={() => {
+                    applyDateSearchParams(searchFromDate, searchToDate);
+                  }}
+                >
+                  검색
                 </button>
               </div>
             </div>
@@ -3969,7 +4034,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="w-full grid grid-cols-1 xl:grid-cols-[minmax(340px,420px)_minmax(0,1fr)] gap-5 items-start">
 
             {/* store.withdrawalBankInfo */}
             {/*
@@ -4003,26 +4068,24 @@ export default function Index({ params }: any) {
             */}
 
             {/* buyOrderStats.totalBySellerBankAccountNumber */}
-            <div className="flex flex-col sm:flex-row items-start justify-start gap-4
+            <div className="w-full min-w-0 flex flex-col items-start justify-start gap-3
               bg-white/80
               p-4 rounded-lg shadow-md
               backdrop-blur-md
             ">
 
-              <div className="w-24 text-sm font-semibold mb-2 sm:mb-0">
+              <div className="text-sm font-semibold leading-tight">
                 판매자<br />통장별<br />청산통계
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4
-                w-full
-              ">
+              <div className="grid w-full grid-cols-1 gap-3">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="flex flex-col gap-2 items-center
+                  <div key={index} className="min-w-0 flex flex-col gap-2 items-stretch
                     border border-zinc-200 rounded-lg p-4
                     bg-zinc-50 shadow-md
                   ">
 
-                    <div className="flex flex-row items-center justify-center gap-1">
+                    <div className="flex w-full min-w-0 flex-row items-center gap-1">
                       <Image
                         src="/icon-bank.png"
                         alt="Bank"
@@ -4032,7 +4095,7 @@ export default function Index({ params }: any) {
                       />
                       {/* copy account number button */}
                       <button
-                        className="text-sm font-semibold underline text-blue-600"
+                        className="min-w-0 flex-1 truncate text-left text-sm font-semibold underline text-blue-600"
                         onClick={() => {
                           const accountNumber = item._id || '기타은행';
                           navigator.clipboard.writeText(accountNumber)
@@ -4049,35 +4112,30 @@ export default function Index({ params }: any) {
                       </button>
                     </div>
 
-                    <div className="flex flex-row items-center justify-center gap-2">
-
-                      <div className="text-sm font-semibold">
-                        {item.totalCount?.toLocaleString() || '0'}
+                    <div className="w-full min-w-0 flex flex-col items-start gap-1">
+                      <div className="inline-flex w-fit items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
+                        {item.totalCount?.toLocaleString() || '0'}건
                       </div>
 
-                      <div className="flex flex-col gap-1 items-end justify-center">
-                        <div className="flex flex-row items-center justify-center gap-1">
-                          <Image
-                            src="/icon-tether.png"
-                            alt="Tether"
-                            width={20}
-                            height={20}
-                            className="w-5 h-5"
-                          />
-                          <span className="text-sm font-semibold text-green-600"
-                            style={{ fontFamily: 'monospace' }}>
-                            {item.totalUsdtAmount
-                              ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              : '0.000'}
-                          </span>
-                        </div>
-                        <div className="flex flex-row items-center justify-center gap-1">
-                          <span className="text-sm font-semibold text-yellow-600"
-                            style={{ fontFamily: 'monospace' }}>
-                            {item.totalKrwAmount?.toLocaleString() || '0'}
-                          </span>
-                        </div>
+                      <div className="flex w-full min-w-0 flex-row items-center gap-1">
+                        <Image
+                          src="/icon-tether.png"
+                          alt="Tether"
+                          width={20}
+                          height={20}
+                          className="w-5 h-5"
+                        />
+                        <span className="block min-w-0 truncate whitespace-nowrap text-sm font-semibold text-green-600"
+                          style={{ fontFamily: 'monospace' }}>
+                          {item.totalUsdtAmount
+                            ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            : '0.000'}
+                        </span>
                       </div>
+                      <span className="block w-full min-w-0 truncate whitespace-nowrap pl-6 text-sm font-semibold text-yellow-600"
+                        style={{ fontFamily: 'monospace' }}>
+                        {item.totalKrwAmount?.toLocaleString() || '0'}
+                      </span>
                     </div>
 
                   </div>
@@ -4086,7 +4144,7 @@ export default function Index({ params }: any) {
 
             </div>
 
-            <div className="flex flex-col gap-2
+            <div className="w-full min-w-0 flex flex-col gap-2
               bg-white/80
               p-4 rounded-lg shadow-md
               backdrop-blur-md
@@ -4096,66 +4154,68 @@ export default function Index({ params }: any) {
                 판매자 지갑
               </div>
 
-              <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid w-full gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {sellersBalance?.map((seller, index) => (
                   <div
                     key={index}
-                    className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 flex items-center gap-4"
+                    className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-3"
                   >
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 border border-zinc-200">
-                      <Image
-                        src="/icon-seller.png"
-                        alt="Seller"
-                        width={32}
-                        height={32}
-                        className="w-8 h-8"
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-zinc-900 truncate">{seller.nickname}</span>
-                        <span className="px-2 py-0.5 text-[11px] rounded-full border border-zinc-200 text-zinc-600 bg-white">
-                          SELLER
-                        </span>
-                      </div>
-                      <button
-                        className="mt-1 text-sm text-blue-600 hover:text-blue-700 underline underline-offset-2"
-                        onClick={() => {
-                          navigator.clipboard.writeText(seller.walletAddress);
-                          toast.success(Copied_Wallet_Address);
-                        }}
-                      >
-                        {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
-                      </button>
-                      <div className="mt-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-100 border border-zinc-200">
                         <Image
-                          src="/icon-tether.png"
-                          alt="USDT"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
+                          src="/icon-seller.png"
+                          alt="Seller"
+                          width={32}
+                          height={32}
+                          className="w-8 h-8"
                         />
-                        <span className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'monospace' }}>
-                          {Number(seller.currentUsdtBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        </span>
-                        <span className="text-xs text-zinc-500 font-medium">USDT</span>
                       </div>
-                    </div>
 
-                    <div className="flex flex-col items-end gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="max-w-full truncate text-sm font-semibold text-zinc-900">{seller.nickname}</span>
+                          <span className="px-2 py-0.5 text-[11px] rounded-full border border-zinc-200 text-zinc-600 bg-white">
+                            SELLER
+                          </span>
+                        </div>
+                        <button
+                          className="mt-1 inline-block max-w-full truncate text-sm text-blue-600 hover:text-blue-700 underline underline-offset-2"
+                          onClick={() => {
+                            navigator.clipboard.writeText(seller.walletAddress);
+                            toast.success(Copied_Wallet_Address);
+                          }}
+                        >
+                          {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                        </button>
+                      </div>
+
                       <button
                         onClick={() => {
                           router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
                         }}
-                        className="px-3 py-2 rounded-lg border border-zinc-300 bg-white text-[#3167b4] text-sm font-semibold hover:bg-zinc-50 transition"
+                        className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg border border-zinc-300 bg-white text-[#3167b4] text-sm font-semibold hover:bg-zinc-50 transition"
                       >
                         출금하기
                       </button>
-                      <span className="text-[11px] text-zinc-500">
-                        잔액 확인: {seller.settlementUpdatedAt ? new Date(seller.settlementUpdatedAt).toLocaleString('ko-KR') : '–'}
-                      </span>
                     </div>
+
+                    <div className="min-w-0 flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-700">
+                      <Image
+                        src="/icon-tether.png"
+                        alt="USDT"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                      <span className="text-lg sm:text-xl font-bold leading-none" style={{ fontFamily: 'monospace' }}>
+                        {Number(seller.currentUsdtBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </span>
+                      <span className="text-xs text-zinc-500 font-medium">USDT</span>
+                    </div>
+
+                    <span className="text-[11px] text-zinc-500 leading-4 break-words">
+                      잔액 확인: {seller.settlementUpdatedAt ? new Date(seller.settlementUpdatedAt).toLocaleString('ko-KR') : '–'}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -6219,8 +6279,10 @@ export default function Index({ params }: any) {
             <select
               value={limit}
               onChange={(e) =>
-                
-                router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(e.target.value)}&page=${page}&wallet=${wallet}&searchMyOrders=${searchMyOrders}`)
+                pushClearanceHistoryParams({
+                  nextLimit: Number(e.target.value),
+                  nextPage: Number(page),
+                })
 
               }
 
@@ -6238,8 +6300,10 @@ export default function Index({ params }: any) {
             disabled={Number(page) <= 1}
             className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=1`);
+              pushClearanceHistoryParams({
+                nextLimit: Number(limit),
+                nextPage: 1,
+              });
 
             }
           }
@@ -6252,8 +6316,10 @@ export default function Index({ params }: any) {
             disabled={Number(page) <= 1}
             className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=${Number(page) - 1}`);
+              pushClearanceHistoryParams({
+                nextLimit: Number(limit),
+                nextPage: Number(page) - 1,
+              });
 
             }}
           >
@@ -6270,8 +6336,10 @@ export default function Index({ params }: any) {
             disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
             className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=${Number(page) + 1}`);
+              pushClearanceHistoryParams({
+                nextLimit: Number(limit),
+                nextPage: Number(page) + 1,
+              });
 
             }}
           >
@@ -6283,8 +6351,10 @@ export default function Index({ params }: any) {
             disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
             className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
             onClick={() => {
-              
-              router.push(`/${params.lang}/${params.center}/clearance-history?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
+              pushClearanceHistoryParams({
+                nextLimit: Number(limit),
+                nextPage: Math.ceil(Number(totalCount) / Number(limit)),
+              });
 
             }}
           >

@@ -6,6 +6,7 @@ import {
   getContract,
   sendAndConfirmTransaction,
   sendTransaction,
+  waitForReceipt,
 } from "thirdweb";
 
 import { balanceOf, transfer } from "thirdweb/extensions/erc20";
@@ -40,6 +41,16 @@ export async function POST(request: NextRequest) {
     amount,
   } = body;
 
+  if (!walletAddress || !toAddress || !amount) {
+    return NextResponse.json({
+      result: null,
+      success: false,
+      error: "Missing required fields: walletAddress, toAddress, amount",
+    }, { status: 400 });
+  }
+
+  console.log("WithdrawVault Request Body:", body);
+
 
   const client = createThirdwebClient({
     secretKey: process.env.THIRDWEB_SECRET_KEY || "",
@@ -54,7 +65,49 @@ export async function POST(request: NextRequest) {
 
 
   // vault access token
-  const vaultAccessToken = process.env.THIRDWEB_VAULT_ACCESS_TOKEN || "";
+  const vaultAccessToken = process.env.THIRDWEB_VAULT_ACCESS_TOKEN?.trim() || "";
+
+  if (!vaultAccessToken) {
+    return NextResponse.json({
+      result: null,
+      success: false,
+      error: "Missing THIRDWEB_VAULT_ACCESS_TOKEN",
+      message: "Set THIRDWEB_VAULT_ACCESS_TOKEN in server env (.env.local) and restart the server.",
+    }, { status: 500 });
+  }
+
+  let senderEoaAddress = walletAddress as string;
+
+  try {
+    const serverWallets = await Engine.getServerWallets({ client });
+    const accounts = serverWallets?.accounts || [];
+    const normalizedRequestedAddress = String(walletAddress).toLowerCase();
+
+    const matched = accounts.find((account: any) => {
+      const eoa = String(account?.address || "").toLowerCase();
+      const smart = String(account?.smartAccountAddress || "").toLowerCase();
+      return normalizedRequestedAddress === eoa || normalizedRequestedAddress === smart;
+    });
+
+    if (!matched) {
+      return NextResponse.json({
+        result: null,
+        success: false,
+        error: "Sender wallet is not registered in Thirdweb Vault",
+        message: `Requested sender address (${walletAddress}) is not a vault server wallet EOA.`,
+      }, { status: 400 });
+    }
+
+    senderEoaAddress = matched.address;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({
+      result: null,
+      success: false,
+      error: "Failed to validate vault server wallet",
+      message: errorMessage,
+    }, { status: 500 });
+  }
 
   /*
   const wallet = Engine.serverWallet({
@@ -67,7 +120,7 @@ export async function POST(request: NextRequest) {
   const wallet = Engine.serverWallet({
     client,
     vaultAccessToken,
-    address: walletAddress, // your server wallet signer (EOA) address
+    address: senderEoaAddress, // vault server wallet signer (EOA) address
   });
   
 
@@ -116,24 +169,44 @@ export async function POST(request: NextRequest) {
 
     console.log("Transaction enqueued with ID:", transactionId);
 
-    const { transactionHash } = await Engine.waitForTransactionHash({
+    const waitResult = await Engine.waitForTransactionHash({
       client,
       transactionId,
     });
+    const { transactionHash } = waitResult;
     console.log("Transaction sent:", transactionHash);
 
+    const receipt = await waitForReceipt(waitResult);
+    const transactionSuccess = receipt.status === "success";
+
+    if (!transactionSuccess) {
+      return NextResponse.json({
+        result: null,
+        success: false,
+        transactionId,
+        transactionHash,
+        receiptStatus: receipt.status,
+        error: "Transfer failed: transaction reverted",
+      }, { status: 500 });
+    }
 
   
     return NextResponse.json({
       result: "Transfer successful",
+      success: true,
+      transactionId,
       transactionHash,
+      receiptStatus: receipt.status,
     });
 
   } catch (error) {
     console.error("Error during transfer:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json({
       result: null,
+      success: false,
       error: "Transfer failed",
+      message: errorMessage,
     }, { status: 500 });
   }
 

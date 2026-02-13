@@ -572,7 +572,9 @@ export default function SendUsdt({ params }: any) {
 
       //console.log("withdrawVault", data);
 
-      if (data.result) {
+      const isSuccess = data?.success ?? Boolean(data?.result);
+
+      if (isSuccess) {
         toast.success(USDT_sent_successfully);
 
         // reset amount
@@ -592,8 +594,7 @@ export default function SendUsdt({ params }: any) {
         });
 
       } else {
-        //toast.error(Failed_to_send_USDT);
-        toast.success(USDT_sent_successfully);
+        toast.error(data?.message || data?.error || Failed_to_send_USDT);
       }
 
 
