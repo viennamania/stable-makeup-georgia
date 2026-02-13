@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 
+
+  /*
   let senderEoaAddress = walletAddress as string;
 
   try {
@@ -109,12 +111,9 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 
-  /*
-  const wallet = Engine.serverWallet({
-    client,
-    address: "0xf7a2B5aD9398c0E4c98ed35086617764275Bd752", // your server wallet signer (EOA) address
-  });
-  */
+  console.log("Using sender EOA address:", senderEoaAddress);
+
+
  
   
   const wallet = Engine.serverWallet({
@@ -122,6 +121,21 @@ export async function POST(request: NextRequest) {
     vaultAccessToken,
     address: senderEoaAddress, // vault server wallet signer (EOA) address
   });
+  */
+
+  console.log("Using wallet address:", walletAddress);
+  // ERC4337 Smart Account address is used as the signer for the transaction, and the vault access token is used to authenticate the request to the vault. The vault will then use its own logic to determine which server wallet (EOA) to use for signing the transaction on behalf of the smart account.
+
+
+  const wallet = Engine.serverWallet({
+    client,
+    vaultAccessToken,
+    address: walletAddress, // Smart Account address used as the signer
+  });
+
+  ///console.log("wallet created for address:", wallet);
+
+
   
 
   const contract = getContract({
