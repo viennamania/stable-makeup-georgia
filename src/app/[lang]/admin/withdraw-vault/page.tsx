@@ -683,11 +683,17 @@ export default function SendUsdt({ params }: any) {
   } , [recipient?.walletAddress]);
 
 
+  const formattedWalletBalance = Number(walletBalance || 0)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const senderName = userInfo?.nickname || Anonymous;
+  const canSend = Boolean(address && recipient?.walletAddress && amount && !sending);
+
   if (!address) {
     return (
-      <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
-        <div className="text-lg font-semibold">
-          {Please_connect_your_wallet_first}
+      <main className="min-h-[100vh] bg-zinc-100 px-4 py-10">
+        <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+          <div className="text-lg font-semibold text-zinc-700">{Please_connect_your_wallet_first}</div>
         </div>
       </main>
     );
@@ -695,9 +701,9 @@ export default function SendUsdt({ params }: any) {
 
   if (loadingUser) {
     return (
-      <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
-        <div className="text-lg font-semibold">
-          회원 정보를 불러오는 중...
+      <main className="min-h-[100vh] bg-zinc-100 px-4 py-10">
+        <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+          <div className="text-lg font-semibold text-zinc-700">회원 정보를 불러오는 중...</div>
         </div>
       </main>
     );
@@ -705,401 +711,251 @@ export default function SendUsdt({ params }: any) {
 
   if (!isAdmin) {
     return (
-      <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
-        <div className="text-red-500 text-lg font-semibold">
-          You do not have permission to access this page.
+      <main className="min-h-[100vh] bg-zinc-100 px-4 py-10">
+        <div className="mx-auto max-w-lg rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+          <div className="text-lg font-semibold text-red-500">You do not have permission to access this page.</div>
         </div>
       </main>
     );
   }
 
-
-
   return (
-
-    <main className="p-4 min-h-[100vh] flex items-start justify-center container max-w-screen-sm mx-auto">
-
-      <div className="py-0 w-full ">
-
-  
-        {params.center && (
-            <div className="w-full flex flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-                <span className="text-sm text-zinc-500">
-                {params.center}
-                </span>
+    <main className="min-h-[100vh] bg-zinc-100 px-4 py-6 sm:py-10">
+      <div className="mx-auto w-full max-w-4xl">
+        <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-lg sm:p-6">
+          {params.center && (
+            <div className="mb-5 inline-flex items-center rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold tracking-wide text-zinc-600">
+              CENTER {params.center}
             </div>
-        )}
+          )}
 
-        <div className="w-full flex flex-col gap-2 items-center justify-start text-zinc-500 text-lg">
-            {/* go back button */}
-            <div className="w-full flex justify-start items-center gap-2">
-                <button
-                    onClick={() => window.history.back()}
-                    className="flex items-center justify-center bg-gray-200 rounded-full p-2">
-                    <Image
-                        src="/icon-back.png"
-                        alt="Back"
-                        width={20}
-                        height={20}
-                        className="rounded-full"
-                    />
-                </button>
-                {/* title */}
-                <span className="text-sm text-gray-500 font-semibold">
-                    돌아가기
-                </span>
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={() => window.history.back()}
+              className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-semibold text-zinc-600 transition hover:bg-zinc-50"
+            >
+              <Image
+                src="/icon-back.png"
+                alt="Back"
+                width={18}
+                height={18}
+                className="rounded-full"
+              />
+              돌아가기
+            </button>
+          </div>
+
+          <div className="mt-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-200">
+              <Image
+                src="/logo-tether.svg"
+                alt="USDT"
+                width={24}
+                height={24}
+                className="h-6 w-6"
+              />
             </div>
+            <div>
+              <div className="text-2xl font-bold text-zinc-900">{Withdraw_USDT}</div>
+              <div className="text-sm text-zinc-500">Vault 지갑에서 USDT를 안전하게 전송합니다.</div>
+            </div>
+          </div>
 
-        </div>
-
-
-        <div className="mt-4 w-full flex flex-col items-start justify-center gap-6">
-
-            <div className='flex flex-row items-center gap-4'>
-
-              <div className='flex flex-row items-center gap-2'>
+          <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+            <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Sender Wallet</div>
+              <div className="mt-3 flex items-start gap-2">
                 <Image
-                  src="/logo-tether.svg"
+                  src="/icon-shield.png"
+                  alt="shield"
+                  width={18}
+                  height={18}
+                  className="mt-0.5 h-[18px] w-[18px]"
+                />
+                <span className="break-all text-sm font-semibold text-zinc-700">{walletAddress}</span>
+              </div>
+
+              <div className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 ring-1 ring-zinc-200">
+                <Image
+                  src="/icon-seller.png"
+                  alt="seller"
+                  width={18}
+                  height={18}
+                />
+                <span className="text-sm font-semibold text-zinc-800">{senderName}</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-4 sm:p-5">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Available Balance</div>
+              <div className="mt-3 flex items-end gap-2">
+                <Image
+                  src="/token-usdt-icon.png"
                   alt="USDT"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
+                  width={30}
+                  height={30}
+                  className="mb-1 rounded-full"
                 />
+                <span
+                  className="text-3xl font-bold text-emerald-700 sm:text-4xl"
+                  style={{ fontFamily: 'monospace' }}
+                >
+                  {formattedWalletBalance}
+                </span>
+                <span className="mb-1 text-sm font-semibold text-emerald-700/80">USDT</span>
               </div>
+            </div>
+          </div>
 
-              <div className="text-xl font-semibold">
-                {Withdraw_USDT}
-              </div>
+          <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="text-base font-semibold text-zinc-900">{Enter_the_amount_and_recipient_address}</div>
 
+            <div className="mt-4">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Amount</label>
+              <input
+                disabled={sending}
+                type="number"
+                className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-3xl font-bold text-zinc-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 sm:text-4xl"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value as any)}
+              />
             </div>
 
+            <div className="mt-4">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Recipient</label>
 
-
-            {/* walletAddress and userInfo and walletBalance */}
-            <div className='w-full flex flex-col gap-2 items-start justify-between'>
-
-              <div className='w-full flex flex-row gap-2 items-center justify-between'>
-
-                <div className='flex flex-col gap-1 items-start justify-center'>
-
-                  <div className='flex flex-row items-start justify-start gap-1'>
-                    <Image
-                      src="/icon-shield.png"
-                      alt="shield"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    <span className='text-sm text-gray-800 font-semibold'>
-                      {walletAddress}
-                    </span>
-                  </div>
-
-                  {userInfo ? (
-                    <div className='text-lg font-semibold flex flex-row gap-2 items-center justify-center'>
-
-                      <Image
-                        src='/icon-seller.png'
-                        alt='seller'
-                        width={20}
-                        height={20}
-                      />
-
-                      <span>
-                        {userInfo?.nickname || Anonymous}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className='text-lg font-semibold'>
-                      {Anonymous}
-                    </div>
-                  )}
-
-                </div>
-
-                <div className='flex flex-row items-center justify-start gap-1'>
-                  <Image
-                    src="/token-usdt-icon.png"
-                    alt="USDT"
-                    width={30}
-                    height={30}
-                    className="rounded-full"
-                  />
-                  {/* monospace font for wallet balance */}
-                  <span className='text-4xl font-semibold text-green-600'
-                    style={{
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {walletBalance && Number(walletBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  </span>
-                </div>
-
-              </div>
-
-            </div>
-           
-
-
-
-
-              <div className="text-lg">
-                보낼 금액과 받는 사람을 선택하세요.
-              </div>
-
-
-              <div className='mb-5 flex flex-col gap-5 items-start justify-between'>
-
-                <input
-                  disabled={sending}
-                  type="number"
-                  //placeholder="Enter amount"
-                  className=" w-64 p-2 border border-gray-300 rounded text-black text-5xl font-semibold "
-                  
-                  value={amount}
-
-                  onChange={(e) => (
-
-                    // check if the value is a number
-
-
-                    // check if start 0, if so remove it
-
-                    //e.target.value = e.target.value.replace(/^0+/, ''),
-
-
-
-                    // check balance
-
-                    setAmount(e.target.value as any)
-
-                  )}
-                />
-           
-
-            
-            
-                {!wantToReceiveWalletAddress ? (
-                  <>
-                  <div className='w-full flex flex-row gap-5 items-center justify-between'>
+              {!wantToReceiveWalletAddress ? (
+                <>
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                     <select
                       disabled={sending}
-
-                      className="
-                        
-                        w-56 p-2 border border-gray-300 rounded text-black text-2xl font-semibold "
-                        
-                      value={
-                        recipient?.nickname
-                      }
-
-
+                      className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-3 text-base font-semibold text-zinc-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                      value={recipient?.nickname}
                       onChange={(e) => {
-
                         const selectedUser = users.find((user) => user.nickname === e.target.value) as any;
-
-                        console.log("selectedUser", selectedUser);
-
                         setRecipient(selectedUser);
-
-                      } } 
-
+                      }}
                     >
                       <option value="">{Select_a_user}</option>
-                      
-
                       {users.map((user) => (
                         <option key={user.id} value={user.nickname}>{user.nickname}</option>
                       ))}
                     </select>
 
-                    {/* select user profile image */}
-
-                    <div className=" w-full flex flex-row gap-2 items-center justify-center">
+                    <div className="flex min-h-[42px] items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3">
                       <Image
                         src={recipient?.avatar || '/icon-user.png'}
                         alt="profile"
-                        width={38}
-                        height={38}
-                        className="w-9 h-9 rounded-full"
-                        style={{
-                          objectFit: 'cover',
-                        }}
+                        width={34}
+                        height={34}
+                        className="h-8 w-8 rounded-full object-cover"
                       />
-
                       {recipient?.walletAddress && (
                         <Image
                           src="/verified.png"
-                          alt="check"
-                          width={28}
-                          height={28}
+                          alt="verified"
+                          width={20}
+                          height={20}
                         />
                       )}
-
                     </div>
-
-                    
-
-
                   </div>
-              
 
-                    {/* input wallet address */}
-                    
-                    <input
-                      disabled={true}
-                      type="text"
-                      placeholder={User_wallet_address}
-                      className=" w-80 xl:w-96 p-2 border border-gray-300 rounded text-white bg-black text-sm xl:text-sm font-semibold mt-2"
-                      value={recipient?.walletAddress}
-                      onChange={(e) => {
-      
-                        
-                        
-                          getUserByWalletAddress(e.target.value)
-
-                          .then((data) => {
-
-                            //console.log("data", data);
-
-                            const checkUser = data;
-
-                            if (checkUser) {
-                              setRecipient(checkUser as any);
-                            } else {
-                              
-                              setRecipient({
-                                ...recipient,
-                                walletAddress: e.target.value,
-                              });
-                              
-                            }
-
+                  <input
+                    disabled={true}
+                    type="text"
+                    placeholder={User_wallet_address}
+                    className="mt-3 w-full rounded-xl border border-zinc-300 bg-zinc-900 px-3 py-3 text-sm font-semibold text-zinc-100"
+                    value={recipient?.walletAddress}
+                    onChange={(e) => {
+                      getUserByWalletAddress(e.target.value).then((data) => {
+                        const checkUser = data;
+                        if (checkUser) {
+                          setRecipient(checkUser as any);
+                        } else {
+                          setRecipient({
+                            ...recipient,
+                            walletAddress: e.target.value,
                           });
-
-                      } }
-                    />
-
-
-          
-
-
+                        }
+                      });
+                    }}
+                  />
                 </>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <input
+                    disabled={sending}
+                    type="text"
+                    placeholder={User_wallet_address}
+                    className="w-full rounded-xl border border-zinc-300 bg-zinc-900 px-3 py-3 text-sm font-semibold text-zinc-100"
+                    value={recipient.walletAddress}
+                    onChange={(e) => setRecipient({
+                      ...recipient,
+                      walletAddress: e.target.value,
+                    })}
+                  />
 
-                ) : (
-
-                  <div className='flex flex-col gap-5 items-center justify-between'>
-                    <input
-                      disabled={sending}
-                      type="text"
-                      placeholder={User_wallet_address}
-                      className=" w-80 xl:w-96 p-2 border border-gray-300 rounded text-white bg-black text-sm xl:text-sm font-semibold"
-                      value={recipient.walletAddress}
-                      onChange={(e) => setRecipient({
-                        ...recipient,
-                        walletAddress: e.target.value,
-                      })}
-                    />
-
-                    {isWhateListedUser ? (
-                      <div className="flex flex-row gap-2 items-center justify-center">
-
-
-                        <Image
-                          src={recipient.avatar || '/profile-default.png'}
-                          alt="profile"
-                          width={30}
-                          height={30}
-                          className="rounded-full"
-                          style={{
-                            objectFit: 'cover',
-                            width: '38px',
-                            height: '38px',
-                          }}
-                        />
-                        <div className="text-white">{recipient?.nickname}</div>
-                        <Image
-                          src="/verified.png"
-                          alt="check"
-                          width={30}
-                          height={30}
-                        />
-                        
-                      </div>
-                    ) : (
-                      <>
-
+                  {isWhateListedUser ? (
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 ring-1 ring-emerald-200">
+                      <Image
+                        src={recipient.avatar || '/profile-default.png'}
+                        alt="profile"
+                        width={30}
+                        height={30}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                      <div className="text-sm font-semibold text-emerald-700">{recipient?.nickname}</div>
+                      <Image
+                        src="/verified.png"
+                        alt="verified"
+                        width={20}
+                        height={20}
+                      />
+                    </div>
+                  ) : (
+                    <>
                       {recipient?.walletAddress && (
-                        <div className='flex flex-row gap-2 items-center justify-center'>
-                          {/* dot icon */}
-                          <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-
-                          <div className="text-red-500">
-                            {This_address_is_not_white_listed}<br />
-                            {If_you_are_sure_please_click_the_send_button}
-                          </div>
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                          {This_address_is_not_white_listed}
+                          <br />
+                          {If_you_are_sure_please_click_the_send_button}
                         </div>
-
                       )}
-
-                      </>
-                    )}
-
-
-
-                  </div>
-
-                )} 
-
-              </div>
-
-
-              <button
-                disabled={!address || !recipient?.walletAddress || !amount || sending }
-                onClick={sendUsdt}
-                className={`mt-10 w-full p-2 rounded-lg text-xl font-semibold
-
-                    ${
-                    !address || !recipient?.walletAddress || !amount || sending
-                    ?'bg-gray-300 text-gray-400'
-                    : 'bg-green-500 text-white'
-                    }
-                   
-                   `}
-              >
-                  {Send_USDT}
-              </button>
-
-              <div className="w-full flex flex-row gap-2 text-xl font-semibold">
-
-                {/* sending rotate animation with white color*/}
-                {sending && (
-                  <div className="
-                    w-6 h-6
-                    border-2 border-zinc-800
-                    rounded-full
-                    animate-spin
-                  ">
-                    <Image
-                      src="/loading.png"
-                      alt="loading"
-                      width={24}
-                      height={24}
-                    />
-                  </div>
-                )}
-                <div className="text-zinc-800">
-                  {sending ? Sending : ''}
+                    </>
+                  )}
                 </div>
+              )}
+            </div>
 
+            <button
+              disabled={!canSend}
+              onClick={sendUsdt}
+              className={`mt-6 w-full rounded-xl px-4 py-3 text-lg font-bold transition ${
+                canSend
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-200 hover:brightness-105'
+                  : 'cursor-not-allowed bg-zinc-200 text-zinc-400'
+              }`}
+            >
+              {Send_USDT}
+            </button>
+
+            {sending && (
+              <div className="mt-3 flex items-center gap-2 text-sm font-semibold text-zinc-600">
+                <Image
+                  src="/loading.png"
+                  alt="loading"
+                  width={18}
+                  height={18}
+                  className="h-[18px] w-[18px] animate-spin"
+                />
+                <span>{Sending}</span>
               </div>
-
+            )}
+          </div>
         </div>
-
       </div>
-
     </main>
-
   );
 
 }
