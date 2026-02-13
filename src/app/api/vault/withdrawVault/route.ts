@@ -29,6 +29,7 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 import { access } from "fs";
+import { sign } from "crypto";
 
 
 export async function POST(request: NextRequest) {
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
   }
 
   console.log("Using sender EOA address:", senderEoaAddress);
-
+  
 
  
   
@@ -123,17 +124,154 @@ export async function POST(request: NextRequest) {
   });
   */
 
-  console.log("Using wallet address:", walletAddress);
-  // ERC4337 Smart Account address is used as the signer for the transaction, and the vault access token is used to authenticate the request to the vault. The vault will then use its own logic to determine which server wallet (EOA) to use for signing the transaction on behalf of the smart account.
+/*
+const wallet = Engine.serverWallet({
+  client,
+  vaultAccessToken,
+  address: "0xc055aD6149C32A504e6C5D6Be407671b4733aF81",
+  chain: defineChain(56),
+  executionOptions: {
+    type: "ERC4337",
+    signerAddress: "0x3Ac093D84D3ab98255E4B95ce23b481cD01afDAa",
+    smartAccountAddress: "0xc055aD6149C32A504e6C5D6Be407671b4733aF81",
+    entrypointVersion: "0.7",
+  },
+});
+*/
 
-
+  /*
   const wallet = Engine.serverWallet({
     client,
     vaultAccessToken,
-    address: walletAddress, // Smart Account address used as the signer
+    address: walletAddress,
+    chain: chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
+    executionOptions: {
+      type: "ERC4337",
+      signerAddress: walletAddress,
+      smartAccountAddress: walletAddress,
+      entrypointVersion: "0.7",
+    },
   });
+  */
 
   ///console.log("wallet created for address:", wallet);
+
+
+
+
+
+
+
+  /*
+  const wallet = Engine.serverWallet({
+    client,
+    vaultAccessToken,
+    address: walletAddress,
+    chain: chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
+  });
+  */
+
+
+
+
+
+
+
+
+
+/*
+const wallet = Engine.serverWallet({
+    client,
+    vaultAccessToken,
+    address: "0xc055aD6149C32A504e6C5D6Be407671b4733aF81",
+    chain: chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
+    executionOptions: {
+      type: "ERC4337",
+      signerAddress: "0x3Ac093D84D3ab98255E4B95ce23b481cD01afDAa",
+      smartAccountAddress: "0xc055aD6149C32A504e6C5D6Be407671b4733aF81",
+      entrypointVersion: "0.7",
+    },
+  });
+  */
+
+
+
+// signer address (EOA) for the smart account
+// signerAddress
+
+  let senderEoaAddress = walletAddress as string;
+
+  try {
+    const serverWallets = await Engine.getServerWallets({ client });
+    const accounts = serverWallets?.accounts || [];
+    const normalizedRequestedAddress = String(walletAddress).toLowerCase();
+
+    const matched = accounts.find((account: any) => {
+      const eoa = String(account?.address || "").toLowerCase();
+      const smart = String(account?.smartAccountAddress || "").toLowerCase();
+      return normalizedRequestedAddress === eoa || normalizedRequestedAddress === smart;
+    });
+
+    if (!matched) {
+      return NextResponse.json({
+        result: null,
+        success: false,
+        error: "Sender wallet is not registered in Thirdweb Vault",
+        message: `Requested sender address (${walletAddress}) is not a vault server wallet EOA.`,
+      }, { status: 400 });
+    }
+
+    senderEoaAddress = matched.address;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({
+      result: null,
+      success: false,
+      error: "Failed to validate vault server wallet",
+      message: errorMessage,
+    }, { status: 500 });
+  }
+
+
+
+
+const wallet = Engine.serverWallet({
+    client,
+    vaultAccessToken,
+    address: walletAddress,
+    chain: chain === "ethereum" ? ethereum :
+            chain === "polygon" ? polygon :
+            chain === "arbitrum" ? arbitrum :
+            chain === "bsc" ? bsc : arbitrum,
+    executionOptions: {
+      type: "ERC4337",
+      
+      //signerAddress: "0x3Ac093D84D3ab98255E4B95ce23b481cD01afDAa",
+      signerAddress: senderEoaAddress,
+
+
+      smartAccountAddress: walletAddress,
+
+      entrypointVersion: "0.7",
+    },
+  });
+
+
+
+
+
+
+
+
 
 
   
@@ -164,6 +302,16 @@ export async function POST(request: NextRequest) {
     // OPTIONAL: the contract's abi
     //abi: [...],
   });
+
+
+
+
+
+
+
+
+
+
 
 
   
