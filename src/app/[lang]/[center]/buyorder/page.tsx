@@ -813,8 +813,12 @@ export default function Index({ params }: any) {
 
 
 
-  const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(false);
-  const [searchOrderStatusCompleted, setSearchOrderStatusCompleted] = useState(false);
+  const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(
+    searchParams?.get('searchOrderStatusCancelled') === 'true'
+  );
+  const [searchOrderStatusCompleted, setSearchOrderStatusCompleted] = useState(
+    searchParams?.get('searchOrderStatusCompleted') === 'true'
+  );
 
 
   const [searchMyOrders, setSearchMyOrders] = useState(false);
@@ -824,16 +828,16 @@ export default function Index({ params }: any) {
 
   const [limitValue, setLimitValue] = useState(20);
   useEffect(() => {
-    const limit = searchParams?.get('limit') || 20;
-    setLimitValue(Number(limit));
+    const limit = Number(searchParams?.get('limit') || 20);
+    setLimitValue(limit > 0 ? limit : 20);
   }, [searchParams]);
 
 
 
   const [pageValue, setPageValue] = useState(1);
   useEffect(() => {
-    const page = searchParams?.get('page') || 1;
-    setPageValue(Number(page));
+    const page = Number(searchParams?.get('page') || 1);
+    setPageValue(page > 0 ? page : 1);
   }, [searchParams]);
 
 
@@ -843,8 +847,8 @@ export default function Index({ params }: any) {
   const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
 
   // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
-  const [searchToDate, setSearchToDate] = useState(formattedDate);
+  const [searchFromDate, setSearchFormDate] = useState(searchParams?.get('fromDate') || formattedDate);
+  const [searchToDate, setSearchToDate] = useState(searchParams?.get('toDate') || formattedDate);
 
  
 
@@ -857,6 +861,16 @@ export default function Index({ params }: any) {
 
   // search store bank account number
   const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState(searchParams?.get('searchStoreBankAccountNumber') || "");
+
+  useEffect(() => {
+    setSearchBuyer(searchParams?.get('searchBuyer') || "");
+    setSearchDepositName(searchParams?.get('searchDepositName') || "");
+    setSearchStoreBankAccountNumber(searchParams?.get('searchStoreBankAccountNumber') || "");
+    setSearchOrderStatusCancelled(searchParams?.get('searchOrderStatusCancelled') === 'true');
+    setSearchOrderStatusCompleted(searchParams?.get('searchOrderStatusCompleted') === 'true');
+    setSearchFormDate(searchParams?.get('fromDate') || formattedDate);
+    setSearchToDate(searchParams?.get('toDate') || formattedDate);
+  }, [searchParams, formattedDate]);
 
 
 
@@ -924,6 +938,70 @@ export default function Index({ params }: any) {
       totalBySellerBankAccountNumber: [],
       totalBySellerAliesBankAccountNumber: [],
     });
+
+  const parsedLimitValue = Number(limitValue) > 0 ? Number(limitValue) : 20;
+  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / parsedLimitValue));
+  const currentPage = Math.min(Math.max(Number(pageValue) || 1, 1), totalPages);
+  const currentPageStart = Number(totalCount) === 0 ? 0 : (currentPage - 1) * parsedLimitValue + 1;
+  const currentPageEnd = Math.min(currentPage * parsedLimitValue, Number(totalCount));
+
+  const buildBuyorderQuery = ({
+    limit,
+    page,
+    buyer,
+    depositName,
+    bankAccountNumber,
+    fromDate,
+    toDate,
+    cancelled,
+    completed,
+  }: {
+    limit?: number;
+    page?: number;
+    buyer?: string;
+    depositName?: string;
+    bankAccountNumber?: string;
+    fromDate?: string;
+    toDate?: string;
+    cancelled?: boolean;
+    completed?: boolean;
+  }) => {
+    const query = new URLSearchParams({
+      limit: String(limit ?? parsedLimitValue),
+      page: String(page ?? currentPage),
+    });
+
+    const buyerValue = (buyer ?? searchBuyer).trim();
+    const depositNameValue = (depositName ?? searchDepositName).trim();
+    const bankAccountNumberValue = (bankAccountNumber ?? searchStoreBankAccountNumber).trim();
+    const fromDateValue = (fromDate ?? searchFromDate).trim();
+    const toDateValue = (toDate ?? searchToDate).trim();
+
+    if (buyerValue) {
+      query.set('searchBuyer', buyerValue);
+    }
+    if (depositNameValue) {
+      query.set('searchDepositName', depositNameValue);
+    }
+    if (bankAccountNumberValue) {
+      query.set('searchStoreBankAccountNumber', bankAccountNumberValue);
+    }
+    if (fromDateValue) {
+      query.set('fromDate', fromDateValue);
+    }
+    if (toDateValue) {
+      query.set('toDate', toDateValue);
+    }
+
+    if (cancelled ?? searchOrderStatusCancelled) {
+      query.set('searchOrderStatusCancelled', 'true');
+    }
+    if (completed ?? searchOrderStatusCompleted) {
+      query.set('searchOrderStatusCompleted', 'true');
+    }
+
+    return `/${params.lang}/${params.center}/buyorder?${query.toString()}`;
+  };
 
 
 
@@ -4413,21 +4491,14 @@ const fetchBuyOrders = async () => {
           )*/}
 
 
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">
-
+          <div className="mb-4 flex w-full items-center gap-2 overflow-x-auto pb-1">
               <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
                   회원관리
               </button>
 
-              <div className='flex w-32 items-center justify-center gap-2
-              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+              <div className="flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_-12px_rgba(15,23,42,0.8)]">
                 <Image
                   src="/icon-buyorder.png"
                   alt="Trade"
@@ -4442,12 +4513,7 @@ const fetchBuyOrders = async () => {
 
               <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
                   P2P 거래내역
               </button>
 
@@ -4455,12 +4521,7 @@ const fetchBuyOrders = async () => {
               {version !== 'bangbang' && (
               <button
                   onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
+                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
                   판매(거래소)
               </button>
               )}
@@ -4468,24 +4529,14 @@ const fetchBuyOrders = async () => {
               {version !== 'bangbang' && (
               <button
                 onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
                   출금(회원)
               </button>
               )}
 
               <button
                 onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
-                className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                hover:bg-[#3167b4]/80
-                hover:cursor-pointer
-                hover:scale-105
-                transition-transform duration-200 ease-in-out
-                ">
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
                   통계(일별)
               </button>
 
@@ -5218,23 +5269,7 @@ const fetchBuyOrders = async () => {
                     flex flex-row items-center gap-2">
                     <button
                       onClick={() => {
-                        
-                        ///setPageValue(1);
-
-                        // router
-                        router.push(
-                          '/' + params.lang + '/' + params.center + '/buyorder?page=1' +
-                          '&limit=' + limitValue +
-                          '&searchBuyer=' + searchBuyer +
-                          '&searchDepositName=' + searchDepositName +
-                          '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber
-                        );
-                        
-                        //fetchBuyOrders();
-
-                        //getTradeSummary();
-
-
+                        router.push(buildBuyorderQuery({ page: 1 }));
                       }}
                       //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
                       className={`${
@@ -9417,29 +9452,18 @@ const fetchBuyOrders = async () => {
 
       
 
-        {/* pagination */}
-        {/* url query string */}
-        {/* 1 2 3 4 5 6 7 8 9 10 */}
-        {/* ?limit=10&page=1 */}
-        {/* submit button */}
-        {/* totalPage = Math.ceil(totalCount / limit) */}
-        <div className="mt-4 flex flex-row items-center justify-center gap-4">
-
-
-          <div className="flex flex-row items-center gap-2">
+        <div className="mt-6 flex w-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm text-zinc-600">
+            <span>페이지당</span>
             <select
-              value={limitValue}
-              onChange={(e) =>
-
-                router.push('/' + params.lang + '/' + params.center + '/buyorder?limit=' + e.target.value + '&page=1' +
-                  '&searchBuyer=' + searchBuyer +
-                  '&searchDepositName=' + searchDepositName +
-                  '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber
-                )
-
-              }
-
-              className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
+              value={parsedLimitValue}
+              onChange={(e) => {
+                router.push(buildBuyorderQuery({
+                  limit: Number(e.target.value),
+                  page: 1,
+                }));
+              }}
+              className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
             >
               <option value={10}>10</option>
               <option value={20}>20</option>
@@ -9448,78 +9472,71 @@ const fetchBuyOrders = async () => {
             </select>
           </div>
 
-          {/* 처음 페이지로 이동 */}
-          <button
-            disabled={Number(pageValue) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="mr-2 text-sm text-zinc-500">
+              {currentPageStart.toLocaleString()}-{currentPageEnd.toLocaleString()} / {Number(totalCount).toLocaleString()}건
+            </span>
 
-              router.push('/' + params.lang + '/' + params.center + '/buyorder?limit=' + Number(limitValue) + '&page=1' +
-                '&searchBuyer=' + searchBuyer +
-                '&searchDepositName=' + searchDepositName +
-                '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber
-              );
+            <button
+              disabled={currentPage <= 1}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                currentPage <= 1
+                  ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+              }`}
+              onClick={() => {
+                router.push(buildBuyorderQuery({ page: 1 }));
+              }}
+            >
+              처음
+            </button>
 
-            }}
-          >
-            처음
-          </button>
+            <button
+              disabled={currentPage <= 1}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                currentPage <= 1
+                  ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+              }`}
+              onClick={() => {
+                router.push(buildBuyorderQuery({ page: currentPage - 1 }));
+              }}
+            >
+              이전
+            </button>
 
+            <span className="min-w-[70px] text-center text-sm font-medium text-zinc-700">
+              {currentPage} / {totalPages}
+            </span>
 
-          <button
-            disabled={Number(pageValue) <= 1}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
+            <button
+              disabled={currentPage >= totalPages}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                currentPage >= totalPages
+                  ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-700'
+              }`}
+              onClick={() => {
+                router.push(buildBuyorderQuery({ page: currentPage + 1 }));
+              }}
+            >
+              다음
+            </button>
 
-              router.push('/' + params.lang + '/' + params.center + '/buyorder?limit=' + Number(limitValue) + '&page=' + (Number(pageValue) - 1) +
-                '&searchBuyer=' + searchBuyer +
-                '&searchDepositName=' + searchDepositName +
-                '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber
-              );
-
-            }}
-          >
-            이전
-          </button>
-
-
-          <span className="text-sm text-zinc-500">
-            {pageValue} / {Math.ceil(Number(totalCount) / Number(limitValue))}
-          </span>
-
-
-          <button
-            disabled={Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
-
-              router.push('/' + params.lang + '/' + params.center + '/buyorder?limit=' + Number(limitValue) + '&page=' + (Number(pageValue) + 1) +
-                '&searchBuyer=' + searchBuyer +
-                '&searchDepositName=' + searchDepositName +
-                '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber
-              );
-
-            }}
-          >
-            다음
-          </button>
-
-          {/* 마지막 페이지로 이동 */}
-          <button
-            disabled={Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue))}
-            className={`text-sm text-white px-4 py-2 rounded-md ${Number(pageValue) >= Math.ceil(Number(totalCount) / Number(limitValue)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-            onClick={() => {
-
-              router.push('/' + params.lang + '/' + params.center + '/buyorder?limit=' + Number(limitValue) + '&page=' + Math.ceil(Number(totalCount) / Number(limitValue)) +
-                '&searchBuyer=' + searchBuyer +
-                '&searchDepositName=' + searchDepositName +
-                '&searchStoreBankAccountNumber=' + searchStoreBankAccountNumber
-              );
-
-            }}
-          >
-            마지막
-          </button>
+            <button
+              disabled={currentPage >= totalPages}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                currentPage >= totalPages
+                  ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-700'
+              }`}
+              onClick={() => {
+                router.push(buildBuyorderQuery({ page: totalPages }));
+              }}
+            >
+              마지막
+            </button>
+          </div>
 
         </div>
 
