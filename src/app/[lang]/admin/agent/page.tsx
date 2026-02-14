@@ -191,9 +191,11 @@ export default function Index({ params }: any) {
 
 
   // limit, page number params
-
-  const limit = searchParams.get('limit') || 20;
-  const page = searchParams.get('page') || 1;
+  const limitParam = Number(searchParams.get('limit') || 20);
+  const pageParam = Number(searchParams.get('page') || 1);
+  const parsedLimitParam = limitParam > 0 ? limitParam : 20;
+  const parsedPageParam = pageParam > 0 ? pageParam : 1;
+  const searchAgentParam = (searchParams.get('searchAgent') || "").trim();
 
 
   const activeWallet = useActiveWallet();
@@ -968,7 +970,7 @@ export default function Index({ params }: any) {
 
 
 
-  const [searchAgent, setSearchAgentcode] = useState("");
+  const [searchAgent, setSearchAgentcode] = useState(searchAgentParam);
 
 
   const [searchMyOrders, setSearchMyOrders] = useState(false);
@@ -976,10 +978,16 @@ export default function Index({ params }: any) {
 
 
   // limit number
-  const [limitValue, setLimitValue] = useState(limit || 20);
+  const [limitValue, setLimitValue] = useState(parsedLimitParam);
 
   // page number
-  const [pageValue, setPageValue] = useState(page || 1);
+  const [pageValue, setPageValue] = useState(parsedPageParam);
+
+  useEffect(() => {
+    setLimitValue(parsedLimitParam);
+    setPageValue(parsedPageParam);
+    setSearchAgentcode(searchAgentParam);
+  }, [parsedLimitParam, parsedPageParam, searchAgentParam]);
 
 
 
@@ -990,6 +998,34 @@ export default function Index({ params }: any) {
   const [allAgent, setAllAgent] = useState([] as any[]);
   const [totalCount, setTotalCount] = useState(0);
   const [searchCount, setSearchCount] = useState(0);
+
+  const parsedLimitValue = Number(limitValue) > 0 ? Number(limitValue) : 20;
+  const totalPages = Math.max(1, Math.ceil(Number(totalCount) / parsedLimitValue));
+  const currentPage = Math.min(Math.max(Number(pageValue) || 1, 1), totalPages);
+  const currentPageStart = Number(totalCount) === 0 ? 0 : (currentPage - 1) * parsedLimitValue + 1;
+  const currentPageEnd = Math.min(currentPage * parsedLimitValue, Number(totalCount));
+
+  const buildAgentQuery = ({
+    limit,
+    page,
+    searchAgentValue,
+  }: {
+    limit?: number;
+    page?: number;
+    searchAgentValue?: string;
+  }) => {
+    const query = new URLSearchParams({
+      limit: String(limit ?? parsedLimitValue),
+      page: String(page ?? currentPage),
+    });
+
+    const nextSearchAgent = (searchAgentValue ?? searchAgentParam).trim();
+    if (nextSearchAgent) {
+      query.set('searchAgent', nextSearchAgent);
+    }
+
+    return `/${params.lang}/admin/agent?${query.toString()}`;
+  };
 
   const fetchAllAgent = async () => {
     if (fetchingAllAgent) {
@@ -1006,7 +1042,7 @@ export default function Index({ params }: any) {
           walletAddress: address,
           limit: Number(limitValue),
           page: Number(pageValue),
-          searchAgent: searchAgent,
+          searchAgent: searchAgentParam,
         }
       ),
     });
@@ -1039,7 +1075,8 @@ export default function Index({ params }: any) {
       return;
     }
     fetchAllAgent();
-  } , [address, limitValue, pageValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  } , [address, limitValue, pageValue, searchAgentParam]);
 
 
 
@@ -1397,7 +1434,7 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-        <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
+        <div className="mb-4 flex w-full flex-col items-center justify-between gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm sm:flex-row">
             
           {/*
            <div className="w-full flex flex-row items-center justify-start gap-2">
@@ -1426,12 +1463,12 @@ export default function Index({ params }: any) {
           {address && !loadingUser && (
 
 
-            <div className="w-full flex flex-row items-center justify-end gap-2">
+            <div className="flex w-full flex-row items-center justify-end gap-2">
               <button
                 onClick={() => {
                   router.push('/' + params.lang + '/admin/profile-settings');
                 }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                className="flex items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100"
               >
                 <div className="flex flex-row items-center justify-center gap-2">
                   {isAdmin && (
@@ -1448,7 +1485,7 @@ export default function Index({ params }: any) {
                       </span>
                     </div>
                   )}
-                  <span className="text-sm text-[#f3f4f6]">
+                  <span className="text-sm text-zinc-700">
                     {user?.nickname || "프로필"}
                   </span>
 
@@ -1467,8 +1504,7 @@ export default function Index({ params }: any) {
                       });
                   } }
 
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:bg-zinc-700"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -1495,7 +1531,7 @@ export default function Index({ params }: any) {
 
 
 
-        <div className="mt-4 flex flex-col items-start justify-center gap-2 w-full">
+        <div className="mt-4 flex w-full flex-col items-start justify-center gap-3">
 
 
 
@@ -1525,23 +1561,15 @@ export default function Index({ params }: any) {
 
 
 
-            {/* 홈 / 가맹점관리 / 에이전트관리 / 회원관리 / 구매주문관리 */}
-            {/* memnu buttons same width left side */}
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-2 items-center justify-start mb-4">
-
+            {/* memnu buttons */}
+            <div className="mb-3 flex w-full items-center justify-start gap-2 overflow-x-auto pb-1">
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/store')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  가맹점관리
+                onClick={() => router.push('/' + params.lang + '/admin/store')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                가맹점관리
               </button>
 
-              <div className='flex w-32 items-center justify-center gap-2
-              bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
+              <div className="flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-zinc-900 px-3 py-2 text-sm text-white">
                 <Image
                   src="/icon-agent.png"
                   alt="Agent"
@@ -1555,83 +1583,48 @@ export default function Index({ params }: any) {
               </div>
 
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/member')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  회원관리
+                onClick={() => router.push('/' + params.lang + '/admin/member')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                회원관리
               </button>
 
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  구매주문관리
+                onClick={() => router.push('/' + params.lang + '/admin/buyorder')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                구매주문관리
               </button>
 
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P 거래내역
+                onClick={() => router.push('/' + params.lang + '/admin/trade-history')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                P2P 거래내역
               </button>
 
               {version !== 'bangbang' && (
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  청산관리
+                onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                청산관리
               </button>
               )}
 
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(가맹)
+                onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                P2P통계(가맹)
               </button>
 
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  P2P통계(AG)
+                onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                P2P통계(AG)
               </button>
 
               {version !== 'bangbang' && (
               <button
-                  onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                  보유량내역
+                onClick={() => router.push('/' + params.lang + '/admin/escrow-history')}
+                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-50">
+                보유량내역
               </button>
               )}
 
@@ -1639,7 +1632,7 @@ export default function Index({ params }: any) {
 
 
 
-            <div className='flex flex-row items-center gap-2 justify-start w-full'>
+            <div className="flex w-full flex-wrap items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
                 <Image
                   src="/icon-agent.png"
                   alt="Agent"
@@ -1648,7 +1641,7 @@ export default function Index({ params }: any) {
                   className="w-6 h-6"
                 />
 
-                <div className="text-xl font-semibold">
+                <div className="text-xl font-semibold tracking-tight text-zinc-800">
                   에이전트관리
                 </div>
 
@@ -1657,12 +1650,12 @@ export default function Index({ params }: any) {
 
 
 
-              <div className="w-full flex flex-row items-center justify-end gap-2">
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
 
 
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">전체수량</div>
-                  <div className="flex flex-row items-center gap-2">
+                <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+                  <div className="text-sm text-zinc-500">전체수량</div>
+                  <div className="mt-1 text-2xl font-semibold text-zinc-800">
                     {
   
                         totalCount || 0
@@ -1672,9 +1665,9 @@ export default function Index({ params }: any) {
                 </div>
 
 
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="text-sm">검색수량</div>
-                  <div className="flex flex-row items-center gap-2">
+                <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+                  <div className="text-sm text-zinc-500">검색수량</div>
+                  <div className="mt-1 text-2xl font-semibold text-zinc-800">
                     {
    
                         searchCount || 0
@@ -1685,10 +1678,11 @@ export default function Index({ params }: any) {
 
               </div>
 
-              <div className="w-full flex flex-col sm:flex-row items-start justify-between gap-5">
+              <div className="w-full rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="flex w-full flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
 
                 {/* 에이전트 추가 input and button */}
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex w-full flex-row items-center gap-2 sm:w-auto">
                   <input
                     
                     
@@ -1715,7 +1709,7 @@ export default function Index({ params }: any) {
 
                     } }
                     placeholder="에이전트 이름"
-                    className="w-52 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full sm:w-56 rounded-lg border border-zinc-300 p-2 text-sm focus:border-zinc-400 focus:outline-none"
                   />
                   
                   <button
@@ -1741,7 +1735,7 @@ export default function Index({ params }: any) {
 
                       insertAgent();
                     }}
-                    className={`bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full
+                    className={`w-full rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:bg-zinc-700 sm:w-auto
                       ${!isAdmin || insertingAgent ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     {insertingAgent ? '에이전트 추가 중...' : '에이전트 추가'}
@@ -1750,25 +1744,27 @@ export default function Index({ params }: any) {
 
                 {/* search bar */}
                 {/* searchAgent */}
-                <div className="flex flex-row items-center gap-2">
+                <div className="flex w-full flex-row items-center gap-2 sm:w-auto">
                   <input
                     disabled={!isAdmin || fetchingAllAgent}
                     type="text"
                     value={searchAgent}
                     onChange={(e) => setSearchAgentcode(e.target.value)}
                     placeholder="에이전트 코드, 이름"
-                    className="w-48 p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full rounded-lg border border-zinc-300 p-2 text-sm focus:border-zinc-400 focus:outline-none sm:w-56"
                   />
 
                   <button
                     onClick={() => {
-                      setPageValue(1);
-                      fetchAllAgent();
+                      router.push(buildAgentQuery({
+                        page: 1,
+                        searchAgentValue: searchAgent,
+                      }));
                     }}
                     //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
                     className={`
-                      w-32
-                      bg-[#3167b4] text-white px-4 py-2 rounded-lg
+                      w-28
+                      rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white transition-colors hover:bg-zinc-700
                       ${!isAdmin || fetchingAllAgent ? 'opacity-50 cursor-not-allowed' : ''}
                     `}
                     
@@ -1780,6 +1776,7 @@ export default function Index({ params }: any) {
 
                 </div>
 
+              </div>
               </div>
 
 
@@ -1910,15 +1907,12 @@ export default function Index({ params }: any) {
               {/* table view is horizontal scroll */}
               {tableView ? (
 
-                <div className="w-full overflow-x-auto">
+                <div className="w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
 
-                  <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
+                  <table className="w-full min-w-[980px] table-auto border-collapse">
 
                     <thead
-                      className="bg-zinc-800 text-white text-sm font-semibold w-full"
-                      style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      }}
+                      className="bg-zinc-900/95 text-zinc-100 text-xs font-semibold uppercase tracking-wide"
                     >
                       <tr>
                         <th className="p-2">에이전트</th>
@@ -1958,11 +1952,11 @@ export default function Index({ params }: any) {
                       {allAgent?.map((item, index) => (
 
                         
-                        <tr key={index} className={`
-                          ${
-                            index % 2 === 0 ? 'bg-zinc-100' : 'bg-zinc-200'
-                          }
-                        `}>
+                        <tr key={index} className={
+                          index % 2 === 0
+                            ? 'border-b border-zinc-100 bg-white'
+                            : 'border-b border-zinc-100 bg-zinc-50'
+                        }>
 
                           <td className="p-2">
 
@@ -2389,64 +2383,91 @@ export default function Index({ params }: any) {
 
       
 
-          {/* pagination */}
-          {/* url query string */}
-          {/* 1 2 3 4 5 6 7 8 9 10 */}
-          {/* ?limit=10&page=1 */}
-          {/* submit button */}
-          {/* totalPage = Math.ceil(totalCount / limit) */}
-          <div className="mt-4 flex flex-row items-center justify-center gap-4">
+          <div className="mt-5 flex w-full flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 text-sm text-zinc-600">
+              <span>페이지당</span>
+              <select
+                value={parsedLimitValue}
+                onChange={(e) => {
+                  router.push(buildAgentQuery({
+                    limit: Number(e.target.value),
+                    page: 1,
+                  }));
+                }}
+                className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
 
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="mr-2 text-sm text-zinc-500">
+                {currentPageStart.toLocaleString()}-{currentPageEnd.toLocaleString()} / {Number(totalCount).toLocaleString()}개
+              </span>
 
-            <div className="flex flex-row items-center gap-2">
-                <select
-                  value={limit}
-                  onChange={(e) =>
-                    
-                    router.push(`/${params.lang}/admin/agent?limit=${Number(e.target.value)}&page=${page}`)
+              <button
+                disabled={currentPage <= 1}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                onClick={() => {
+                  router.push(buildAgentQuery({ page: 1 }));
+                }}
+              >
+                처음
+              </button>
 
-                  }
+              <button
+                disabled={currentPage <= 1}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                }`}
+                onClick={() => {
+                  router.push(buildAgentQuery({ page: currentPage - 1 }));
+                }}
+              >
+                이전
+              </button>
 
-                  className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-              </div>
+              <span className="min-w-[70px] text-center text-sm font-medium text-zinc-700">
+                {currentPage} / {totalPages}
+              </span>
 
+              <button
+                disabled={currentPage >= totalPages}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                }`}
+                onClick={() => {
+                  router.push(buildAgentQuery({ page: currentPage + 1 }));
+                }}
+              >
+                다음
+              </button>
 
-            <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/agent?limit=${Number(limit)}&page=${Number(page) - 1}`);
-
-              }}
-            >
-              이전
-            </button>
-
-
-            <span className="text-sm text-zinc-500">
-              {page} / {Math.ceil(Number(totalCount) / Number(limit))}
-            </span>
-
-
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/agent?limit=${Number(limit)}&page=${Number(page) + 1}`);
-
-              }}
-            >
-              다음
-            </button>
-
+              <button
+                disabled={currentPage >= totalPages}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                    : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                }`}
+                onClick={() => {
+                  router.push(buildAgentQuery({ page: totalPages }));
+                }}
+              >
+                마지막
+              </button>
+            </div>
           </div>
 
 
@@ -2594,6 +2615,3 @@ const TradeDetail = (
       </div>
     );
   };
-
-
-
