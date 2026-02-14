@@ -1322,6 +1322,9 @@ export default function SettingsPage({ params }: any) {
                                 <option value="JT친애저축은행" selected={bankName === "JT친애저축은행"}>
                                     JT친애저축은행
                                 </option>
+                                <option value="저축은행" selected={bankName === "저축은행"}>
+                                    저축은행
+                                </option>
                                 <option value="산업은행" selected={bankName === "산업은행"}>
                                     산업은행
                                 </option>

@@ -1144,6 +1144,9 @@ export default function SettingsPage({ params }: any) {
                                                     <option value="059" selected={buyer?.bankInfo?.bankName === "059"}>
                                                         JT친애저축은행
                                                     </option>
+                                                    <option value="050" selected={buyer?.bankInfo?.bankName === "050"}>
+                                                        저축은행
+                                                    </option>
 
                                                 </select>
                                             
