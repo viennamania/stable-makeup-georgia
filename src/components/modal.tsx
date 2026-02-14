@@ -4,14 +4,22 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  panelClassName?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  children,
+  panelClassName = "",
+}) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-[92vw] max-w-lg rounded-2xl border border-zinc-200 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.35)] p-6 relative">
+      <div
+        className={`bg-white w-[92vw] max-w-lg rounded-2xl border border-zinc-200 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.35)] p-6 relative ${panelClassName}`}
+      >
 
         {/*
         <button 

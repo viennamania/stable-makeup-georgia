@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     page,
     searchStore,
     agentcode,
+    sortBy,
 
     fromDate = "",
     toDate = "",
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
     //search: '',
     search: searchStore || '',
     agentcode: agentcode || '',
+    sortBy: sortBy || '',
 
     fromDate: fromDate || '',
     toDate: toDate || '',

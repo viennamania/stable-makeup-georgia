@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, useMemo, use, act } from "react";
 
 import Image from "next/image";
 
@@ -186,6 +186,18 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
+const STORE_PAGE_PARAM_KEY = "page";
+const STORE_LIMIT_PARAM_KEY = "limit";
+const STORE_DEFAULT_PAGE = 1;
+const STORE_DEFAULT_LIMIT = 50;
+const STORE_LIMIT_OPTIONS = [10, 20, 50, 100] as const;
+const STORE_PAGE_BUTTON_WINDOW = 2;
+
+const isValidStoreLimit = (value: number) =>
+  STORE_LIMIT_OPTIONS.includes(
+    value as (typeof STORE_LIMIT_OPTIONS)[number]
+  );
+
 
 
 
@@ -200,9 +212,15 @@ export default function Index({ params }: any) {
 
 
   // limit, page number params
-
-  const limit = searchParams.get('limit') || 50;
-  const page = searchParams.get('page') || 1;
+  const limitParam = Number(searchParams.get(STORE_LIMIT_PARAM_KEY));
+  const pageParam = Number(searchParams.get(STORE_PAGE_PARAM_KEY));
+  const limit = isValidStoreLimit(limitParam)
+    ? limitParam
+    : STORE_DEFAULT_LIMIT;
+  const page =
+    Number.isInteger(pageParam) && pageParam > 0
+      ? pageParam
+      : STORE_DEFAULT_PAGE;
 
 
   const paramAgentcode = searchParams.get('agentcode') || '';
@@ -1006,15 +1024,15 @@ export default function Index({ params }: any) {
 
 
   // limit number
-  const [limitValue, setLimitValue] = useState(limit || 50);
+  const [limitValue, setLimitValue] = useState<number>(limit);
   useEffect(() => {
-    setLimitValue(limit || 50);
+    setLimitValue(limit);
   }, [limit]);
 
   // page number
-  const [pageValue, setPageValue] = useState(page || 1);
+  const [pageValue, setPageValue] = useState<number>(page);
   useEffect(() => {
-    setPageValue(page || 1);
+    setPageValue(page);
   }, [page]);
 
 
@@ -1055,6 +1073,74 @@ export default function Index({ params }: any) {
   const [totalCount, setTotalCount] = useState(0);
   const [searchCount, setSearchCount] = useState(0);
 
+  const totalPages = useMemo(() => {
+    const safeLimit = Number(limitValue) > 0 ? Number(limitValue) : STORE_DEFAULT_LIMIT;
+    return Math.max(1, Math.ceil(Number(totalCount || 0) / safeLimit));
+  }, [limitValue, totalCount]);
+
+  const currentPage = useMemo(() => {
+    if (!Number.isInteger(pageValue) || pageValue < 1) {
+      return STORE_DEFAULT_PAGE;
+    }
+    return Math.min(pageValue, totalPages);
+  }, [pageValue, totalPages]);
+
+  const visiblePages = useMemo(() => {
+    const start = Math.max(STORE_DEFAULT_PAGE, currentPage - STORE_PAGE_BUTTON_WINDOW);
+    const end = Math.min(totalPages, currentPage + STORE_PAGE_BUTTON_WINDOW);
+    const pages: number[] = [];
+    for (let p = start; p <= end; p += 1) {
+      pages.push(p);
+    }
+    return pages;
+  }, [currentPage, totalPages]);
+
+  const firstVisiblePage =
+    visiblePages.length > 0 ? visiblePages[0] : STORE_DEFAULT_PAGE;
+  const lastVisiblePage =
+    visiblePages.length > 0
+      ? visiblePages[visiblePages.length - 1]
+      : STORE_DEFAULT_PAGE;
+
+  const buildStoreListHref = (
+    nextPage: number,
+    nextLimit: number,
+    nextAgentcode: string
+  ) => {
+    const paramsQuery = new URLSearchParams(searchParams.toString());
+    paramsQuery.set(
+      STORE_LIMIT_PARAM_KEY,
+      String(isValidStoreLimit(nextLimit) ? nextLimit : STORE_DEFAULT_LIMIT)
+    );
+    paramsQuery.set(
+      STORE_PAGE_PARAM_KEY,
+      String(Math.max(STORE_DEFAULT_PAGE, nextPage))
+    );
+
+    if (nextAgentcode) {
+      paramsQuery.set("agentcode", nextAgentcode);
+    } else {
+      paramsQuery.delete("agentcode");
+    }
+
+    return `/${params.lang}/admin/store?${paramsQuery.toString()}`;
+  };
+
+  const moveToStorePage = (
+    nextPage: number,
+    nextLimit: number = limitValue,
+    nextAgentcode: string = agentcode || paramAgentcode || ''
+  ) => {
+    const safeLimit = isValidStoreLimit(nextLimit) ? nextLimit : STORE_DEFAULT_LIMIT;
+    const maxPage = Math.max(1, Math.ceil(Number(totalCount || 0) / safeLimit));
+    const safePage = Math.min(Math.max(STORE_DEFAULT_PAGE, nextPage), maxPage);
+
+    setLimitValue(safeLimit);
+    setPageValue(safePage);
+
+    router.push(buildStoreListHref(safePage, safeLimit, nextAgentcode));
+  };
+
   const fetchAllStore = async (overrideAgentcode?: string) => {
     if (fetchingAllStore) {
       return;
@@ -1070,6 +1156,7 @@ export default function Index({ params }: any) {
       page: Number(pageValue),
       searchStore: searchStore,
       agentcode: selectedAgent,
+      sortBy: 'storeNameDesc',
       //fromDate: searchFromDate,
       //toDate: searchToDate,
     };
@@ -1221,9 +1308,24 @@ export default function Index({ params }: any) {
   const [storeDescription, setStoreDescription] = useState('설명입니다.');
   const [storeLogo, setStoreLogo] = useState('https://stable.makeup/logo.png');
   const [storeBanner, setStoreBanner] = useState('https://stable.makeup/logo.png');
+  const [addStoreAgentcode, setAddStoreAgentcode] = useState('');
+  const [addStoreAgentDropdownOpen, setAddStoreAgentDropdownOpen] = useState(false);
 
 
   const [insertingStore, setInsertingStore] = useState(false);
+
+  const closeAddStoreModal = () => {
+    setAddStoreModalOpen(false);
+    setAddStoreAgentDropdownOpen(false);
+  };
+
+  const openAddStoreModal = () => {
+    setStoreCode('');
+    setStoreName('');
+    setAddStoreAgentcode(agentcode || paramAgentcode || '');
+    setAddStoreAgentDropdownOpen(false);
+    setAddStoreModalOpen(true);
+  };
 
   const insertStore = async () => {
 
@@ -1231,7 +1333,7 @@ export default function Index({ params }: any) {
       return;
     }
 
-    if (agentcode === '') {
+    if (addStoreAgentcode === '') {
       toast.error('에이전트 코드를 선택해주세요.');
       return;
     }
@@ -1258,7 +1360,7 @@ export default function Index({ params }: any) {
       },
       body: JSON.stringify(
         {
-          agentcode: agentcode,
+          agentcode: addStoreAgentcode,
           storecode: storeCode || generatedStoreCode,
           storeName: storeName,
           storeType: storeType,
@@ -1841,7 +1943,7 @@ export default function Index({ params }: any) {
                   }}
 
                   className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -1953,7 +2055,7 @@ export default function Index({ params }: any) {
                       router.push('/' + params.lang + '/admin/buyorder');
                     }}
                     className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]"
                   >
                     <span className="text-sm">
                       주문<br />관리
@@ -2046,7 +2148,7 @@ export default function Index({ params }: any) {
                       router.push('/' + params.lang + '/admin/clearance-history');
                     }}
                     className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]"
                   >
                     <span className="text-sm">
                       청산<br />관리
@@ -2099,7 +2201,7 @@ export default function Index({ params }: any) {
                 onClick={() => {
                   router.push('/' + params.lang + '/admin/profile-settings');
                 }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                className="flex bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]"
               >
                 <div className="flex flex-row items-center justify-center gap-2">
                   {isAdmin && (
@@ -2139,7 +2241,7 @@ export default function Index({ params }: any) {
                   } }
 
                   className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]"
               >
                 <Image
                   src="/icon-logout.webp"
@@ -2232,10 +2334,9 @@ export default function Index({ params }: any) {
                 </div>
                 <button
                   onClick={() => {
-                    setStoreCode('');
-                    setAddStoreModalOpen(true);
+                    openAddStoreModal();
                   }}
-                  className="ml-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold shadow-sm hover:shadow-md"
+                  className="ml-auto inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white text-sm font-semibold shadow-sm hover:from-[#1d4ed8] hover:to-[#1e40af] hover:shadow-md"
                 >
                   <span className="text-base leading-none">＋</span>
                   가맹점 추가
@@ -2406,7 +2507,7 @@ export default function Index({ params }: any) {
                       type="button"
                       disabled={fetchingAllAgents}
                       onClick={() => setAgentDropdownOpen((v) => !v)}
-                      className="flex items-center gap-3 px-3 py-2 w-96 sm:w-[28rem] rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="flex items-center gap-3 px-3 py-2 w-72 sm:w-80 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <div className="w-9 h-9 rounded-full bg-slate-100 overflow-hidden border border-slate-200 flex items-center justify-center">
                         {(() => {
@@ -2440,14 +2541,13 @@ export default function Index({ params }: any) {
                     </button>
 
                     {agentDropdownOpen && (
-                      <div className="absolute z-30 mt-2 w-96 sm:w-[28rem] max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                      <div className="absolute z-30 mt-2 w-72 sm:w-80 max-h-72 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
                         <button
                           type="button"
                           className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-slate-700 text-sm"
                           onClick={() => {
                             setAgentcode('');
-                            setPageValue(1);
-                            router.push(`/${params.lang}/admin/store?page=1`);
+                            moveToStorePage(STORE_DEFAULT_PAGE, limitValue, '');
                             fetchAllStore('');
                             setAgentDropdownOpen(false);
                           }}
@@ -2465,8 +2565,7 @@ export default function Index({ params }: any) {
                             className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 text-slate-800 text-sm"
                             onClick={() => {
                               setAgentcode(agent.agentcode);
-                              setPageValue(1);
-                              router.push(`/${params.lang}/admin/store?agentcode=${agent.agentcode}&page=1`);
+                              moveToStorePage(STORE_DEFAULT_PAGE, limitValue, agent.agentcode);
                               fetchAllStore(agent.agentcode);
                               setAgentDropdownOpen(false);
                             }}
@@ -2505,7 +2604,7 @@ export default function Index({ params }: any) {
 
                 <button
                   onClick={() => {
-                    setPageValue(1);
+                    moveToStorePage(STORE_DEFAULT_PAGE, limitValue, agentcode || paramAgentcode || '');
                     fetchAllStore();
                   }}
                   className={`
@@ -2728,7 +2827,7 @@ export default function Index({ params }: any) {
 
                         {/* 청산건수<br/>청산금액(원)<br/>청산수량(USDT) */}
                         {version !== 'bangbang' && (
-                          <th className="p-2">
+                          <th className="p-2 w-36">
 
                           <div className="flex flex-col items-center justify-center gap-2">
                             <div className="flex flex-row items-center justify-center gap-2">   
@@ -2819,7 +2918,7 @@ export default function Index({ params }: any) {
                                   }}
                                   className={`
                                     ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
-                                    w-full bg-zinc-800 text-sm text-white px-2 py-1 rounded-lg hover:bg-zinc-700
+                                    w-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]
                                   `}
                                 >
                                   결제계좌설정
@@ -2841,7 +2940,7 @@ export default function Index({ params }: any) {
                                   }}
                                   className={`
                                     ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
-                                    w-full bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg hover:bg-[#3167b4]/80
+                                    w-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]
                                   `}
                                 >
                                   설정하기
@@ -2889,8 +2988,8 @@ export default function Index({ params }: any) {
                                   );
                                 }}
                                 className="w-full mb-2
-                                bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                hover:bg-[#3167b4]/80"
+                                bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                hover:from-[#1d4ed8] hover:to-[#1e40af]"
                               >
                                 회원관리
                               </button>
@@ -2912,8 +3011,8 @@ export default function Index({ params }: any) {
                                     '/' + params.lang + '/admin/store/' + item.storecode + '/bank'
                                   );
                                 }}
-                                className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                hover:bg-[#3167b4]/80"
+                                className="bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                hover:from-[#1d4ed8] hover:to-[#1e40af]"
                               >
                                 통장관리
                               </button>
@@ -3120,8 +3219,8 @@ export default function Index({ params }: any) {
                                         );
                                       }
                                       }
-                                      className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                      hover:bg-[#3167b4]/80"
+                                      className="bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                      hover:from-[#1d4ed8] hover:to-[#1e40af]"
                                     >
                                       통장관리
                                     </button>
@@ -3191,8 +3290,8 @@ export default function Index({ params }: any) {
                                   className={`
                                     ${!isAdmin ? 'opacity-50 cursor-not-allowed' : ''}
                                     w-full mb-2
-                                    bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80
+                                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                    hover:from-[#1d4ed8] hover:to-[#1e40af]
                                   `}
                                   disabled={!isAdmin}
                               >
@@ -3291,8 +3390,8 @@ export default function Index({ params }: any) {
                                 className={`
                                   ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
                                   w-full mb-2
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80
+                                  bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:from-[#1d4ed8] hover:to-[#1e40af]
                                 `}
                               >
                                 잔액 확인하기
@@ -3458,8 +3557,8 @@ export default function Index({ params }: any) {
                                   }}
                                   className="mb-2
                                   w-full
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
+                                  bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:from-[#1d4ed8] hover:to-[#1e40af]"
                                 >
                                   P2P 거래내역
                                 </button>
@@ -3593,8 +3692,8 @@ export default function Index({ params }: any) {
                                   }}
                                   className="mb-2
                                   w-full
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80"
+                                  bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:from-[#1d4ed8] hover:to-[#1e40af]"
                                 >
                                   결제 및 정산내역
                                 </button>
@@ -3612,7 +3711,7 @@ export default function Index({ params }: any) {
                           {version !== 'bangbang' && (
                           <td className="p-2">
 
-                            <div className="w-44 h-56
+                            <div className="w-36 h-56
                             flex flex-col items-between justify-between gap-2">
 
 
@@ -3679,8 +3778,8 @@ export default function Index({ params }: any) {
                                 className={`
                                   ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
                                   w-full mb-2
-                                  bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:bg-[#3167b4]/80
+                                  bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
+                                  hover:from-[#1d4ed8] hover:to-[#1e40af]
                                 `}
                               >
                                 청산관리
@@ -3733,85 +3832,111 @@ export default function Index({ params }: any) {
           {/* ?limit=10&page=1 */}
           {/* submit button */}
           {/* totalPage = Math.ceil(totalCount / limit) */}
-          <div className="mt-4 flex flex-row items-center justify-center gap-4">
-
-
-            <div className="flex flex-row items-center gap-2">
+          <div className="mt-6 w-full rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_12px_26px_-20px_rgba(15,23,42,0.45)]">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">페이지당</span>
                 <select
-                  value={limit}
+                  value={limitValue}
                   onChange={(e) =>
-                    
-                    router.push(`/${params.lang}/admin/store?limit=${Number(e.target.value)}&page=${page}`)
-
+                    moveToStorePage(
+                      STORE_DEFAULT_PAGE,
+                      Number(e.target.value),
+                      agentcode || paramAgentcode || ''
+                    )
                   }
-
-                  className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
+                  className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8]/20"
                 >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
+                  {STORE_LIMIT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
                 </select>
+                <span className="text-xs text-slate-500">개</span>
               </div>
 
-            {/* 처음 페이지로 이동 */}
-            <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/store?limit=${Number(limit)}&page=1`);
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <button
+                  disabled={currentPage <= STORE_DEFAULT_PAGE}
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={() => moveToStorePage(STORE_DEFAULT_PAGE)}
+                >
+                  처음
+                </button>
+                <button
+                  disabled={currentPage <= STORE_DEFAULT_PAGE}
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={() => moveToStorePage(currentPage - 1)}
+                >
+                  이전
+                </button>
 
-              }
-            }
-            >
-              처음
-            </button>
+                {firstVisiblePage > STORE_DEFAULT_PAGE && (
+                  <>
+                    <button
+                      className="h-9 min-w-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50"
+                      onClick={() => moveToStorePage(STORE_DEFAULT_PAGE)}
+                    >
+                      {STORE_DEFAULT_PAGE}
+                    </button>
+                    {firstVisiblePage > STORE_DEFAULT_PAGE + 1 && (
+                      <span className="px-1 text-sm text-slate-400">...</span>
+                    )}
+                  </>
+                )}
 
-            <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/store?limit=${Number(limit)}&page=${Number(page) - 1}`);
+                {visiblePages.map((pageNumber) => (
+                  <button
+                    key={pageNumber}
+                    onClick={() => moveToStorePage(pageNumber)}
+                    className={`h-9 min-w-9 rounded-lg border px-3 text-sm font-semibold transition-all ${
+                      pageNumber === currentPage
+                        ? 'border-[#1d4ed8] bg-[#1d4ed8] text-white shadow-[0_8px_18px_-10px_rgba(29,78,216,0.8)]'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                ))}
 
-              }}
-            >
-              이전
-            </button>
+                {lastVisiblePage < totalPages && (
+                  <>
+                    {lastVisiblePage < totalPages - 1 && (
+                      <span className="px-1 text-sm text-slate-400">...</span>
+                    )}
+                    <button
+                      className="h-9 min-w-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50"
+                      onClick={() => moveToStorePage(totalPages)}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
 
+                <button
+                  disabled={currentPage >= totalPages}
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={() => moveToStorePage(currentPage + 1)}
+                >
+                  다음
+                </button>
+                <button
+                  disabled={currentPage >= totalPages}
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={() => moveToStorePage(totalPages)}
+                >
+                  마지막
+                </button>
+              </div>
 
-            <span className="text-sm text-zinc-500">
-              {page} / {Math.ceil(Number(totalCount) / Number(limit))}
-            </span>
-
-
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/store?limit=${Number(limit)}&page=${Number(page) + 1}`);
-
-              }}
-            >
-              다음
-            </button>
-
-            {/* 마지막 페이지로 이동 */}
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/store?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`);
-
-              }
-            }
-            >
-              마지막
-            </button>
-
+              <div className="text-sm text-slate-600">
+                <span className="font-semibold text-slate-900">{currentPage}</span>
+                {" / "}
+                <span className="font-semibold text-slate-900">{totalPages}</span>
+                {" 페이지"}
+              </div>
+            </div>
           </div>
 
 
@@ -3824,32 +3949,111 @@ export default function Index({ params }: any) {
             />
         </Modal>
 
-        <Modal isOpen={isAddStoreModalOpen} onClose={() => setAddStoreModalOpen(false)}>
-          <div className="w-full max-w-md bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-2xl">
+        <Modal
+          isOpen={isAddStoreModalOpen}
+          onClose={closeAddStoreModal}
+          panelClassName="max-w-sm p-5"
+        >
+          <div className="w-full flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <div className="text-lg font-bold text-slate-900">가맹점 추가</div>
-                <div className="text-xs text-slate-500">가맹점 코드와 이름을 입력하세요.</div>
+                <div className="text-xs text-slate-500">가맹점 이름을 입력하세요.</div>
               </div>
-              <button className="text-sm text-slate-500 hover:text-slate-700" onClick={() => setAddStoreModalOpen(false)}>닫기</button>
             </div>
 
             <div className="flex flex-col gap-3">
-              <select
-                disabled={!isAdmin || insertingStore}
-                value={agentcode}
-                onChange={(e) => {
-                  router.push(`/${params.lang}/admin/store?agentcode=${e.target.value}`);
-                }}
-                className="w-full p-3 border border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-400"
-              >
-                <option value="">에이전트 전체</option>
-                {allAgents.map((agent: any) => (
-                  <option key={agent.agentcode} value={agent.agentcode}>
-                    {agent.agentName} ({agent.agentcode})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  disabled={!isAdmin || insertingStore || fetchingAllAgents}
+                  onClick={() => setAddStoreAgentDropdownOpen((prev) => !prev)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 text-left transition-all hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <div className="w-9 h-9 rounded-full bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                    {(() => {
+                      const selected = allAgents.find((a: any) => a.agentcode === addStoreAgentcode);
+                      if (selected?.agentLogo) {
+                        return (
+                          <Image
+                            src={selected.agentLogo}
+                            alt={selected.agentName || 'agent'}
+                            width={36}
+                            height={36}
+                            className="w-9 h-9 object-cover"
+                          />
+                        );
+                      }
+                      return <span className="text-[10px] text-slate-400">AG</span>;
+                    })()}
+                  </div>
+
+                  <div className="min-w-0 flex-1 flex flex-col">
+                    <span className="text-[11px] text-slate-500">에이전트</span>
+                    {(() => {
+                      const selected = allAgents.find((a: any) => a.agentcode === addStoreAgentcode);
+                      if (!selected) {
+                        return <span className="text-sm font-semibold text-slate-500">에이전트를 선택하세요</span>;
+                      }
+                      return (
+                        <>
+                          <span className="text-sm font-semibold text-slate-900 truncate">
+                            {selected.agentName || '-'}
+                          </span>
+                          <span className="text-[11px] text-slate-500 truncate">
+                            {selected.agentcode}
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    {addStoreAgentDropdownOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {addStoreAgentDropdownOpen && (
+                  <div className="absolute z-40 mt-2 w-full max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+                    {allAgents.map((agent: any) => (
+                      <button
+                        key={agent.agentcode}
+                        type="button"
+                        onClick={() => {
+                          setAddStoreAgentcode(agent.agentcode);
+                          setAddStoreAgentDropdownOpen(false);
+                        }}
+                        className={`w-full px-3 py-2 flex items-center gap-3 text-left transition-colors ${
+                          addStoreAgentcode === agent.agentcode
+                            ? 'bg-blue-50'
+                            : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                          {agent.agentLogo ? (
+                            <Image
+                              src={agent.agentLogo}
+                              alt={agent.agentName || 'agent'}
+                              width={32}
+                              height={32}
+                              className="w-8 h-8 object-cover"
+                            />
+                          ) : (
+                            <span className="text-[10px] text-slate-400">NA</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex flex-col">
+                          <span className="text-sm font-semibold text-slate-900 truncate">
+                            {agent.agentName || '-'}
+                          </span>
+                          <span className="text-[11px] text-slate-500 truncate">
+                            {agent.agentcode}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <input
                 disabled={!isAdmin || insertingStore}
@@ -3863,7 +4067,7 @@ export default function Index({ params }: any) {
 
             <div className="flex justify-end gap-2 pt-2">
               <button
-                onClick={() => setAddStoreModalOpen(false)}
+                onClick={closeAddStoreModal}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200"
               >
                 취소
@@ -3874,9 +4078,9 @@ export default function Index({ params }: any) {
                   if (storeName.length < 2) return toast.error('가맹점 이름은 2자 이상이어야 합니다.');
                   if (storeName.length > 10) return toast.error('가맹점 이름은 10자 이하여야 합니다.');
                   insertStore();
-                  setAddStoreModalOpen(false);
+                  closeAddStoreModal();
                 }}
-                className={`px-5 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 shadow-md hover:shadow-lg ${(!isAdmin || insertingStore) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`px-5 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] shadow-md hover:from-[#1d4ed8] hover:to-[#1e40af] hover:shadow-lg ${(!isAdmin || insertingStore) ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {insertingStore ? '추가 중...' : '추가'}
               </button>

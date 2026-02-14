@@ -1132,6 +1132,7 @@ export async function getAllStores(
     page,
     search,
     agentcode,
+    sortBy = '',
 
     fromDate = new Date(0).toISOString(),
     toDate = new Date().toISOString(),
@@ -1140,6 +1141,7 @@ export async function getAllStores(
     page: number;
     search: string;
     agentcode: string;
+    sortBy?: string;
 
     fromDate?: string;
     toDate?: string;
@@ -1179,6 +1181,15 @@ export async function getAllStores(
 
 
   try {
+    const sortStage =
+      sortBy === 'storeNameDesc'
+        ? { storeName: -1, createdAt: -1 }
+        : { totalUsdtAmount: -1, createdAt: -1 };
+    const aggregateOptions =
+      sortBy === 'storeNameDesc'
+        ? { collation: { locale: 'ko', strength: 1 } }
+        : {};
+
     const stores = await collection.aggregate([
       { $match: query },
       {
@@ -1257,14 +1268,12 @@ export async function getAllStores(
         },
       },
       
-      //{ $sort: { createdAt: -1 } }, // Sort by createdAt in descending order
-      // sort by totalUsdtAmount in descending order
-      { $sort: { totalUsdtAmount: -1, createdAt: -1 } }, // Sort by totalUsdtAmount in descending order and then by createdAt in descending order
+      { $sort: sortStage },
 
 
       { $skip: (page - 1) * limit },
       { $limit: limit },
-    ]).toArray();
+    ], aggregateOptions).toArray();
 
 
 
