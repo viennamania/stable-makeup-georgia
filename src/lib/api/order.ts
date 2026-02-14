@@ -3139,6 +3139,9 @@ export async function getBuyOrdersGroupByStorecodeDaily(
   console.log('getBuyOrdersGroupByStorecodeDaily toDateValue: ' + toDateValue);
 
 
+  const normalizedStorecode = (storecode || "").trim();
+  const escapedStorecode = normalizedStorecode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   // order by date descending
   
   const pipeline = [
@@ -3146,7 +3149,9 @@ export async function getBuyOrdersGroupByStorecodeDaily(
       $match: {
         
        // if storecode is not empty, then match storecode
-        storecode: storecode ? { $regex: String(storecode), $options: 'i' } : { $ne: null },
+        storecode: normalizedStorecode
+          ? { $regex: `^${escapedStorecode}$`, $options: 'i' }
+          : { $ne: null },
 
 
         status: 'paymentConfirmed',

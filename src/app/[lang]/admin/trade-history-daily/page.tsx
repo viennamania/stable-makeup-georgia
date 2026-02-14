@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, useRef, use, act } from "react";
 
 import Image from "next/image";
 
@@ -152,13 +152,7 @@ export default function Index({ params }: any) {
   const page = searchParams.get('page') || 1;
 
 
-  const searchParamsStorecode = searchParams.get('storecode') || "";
-
-
-  const [searchStorecode, setSearchStorecode] = useState("");
-  useEffect(() => {
-    setSearchStorecode(searchParamsStorecode || "");
-  }, [searchParamsStorecode]);
+  const searchStorecode = (searchParams.get('storecode') || "").trim();
 
 
 
@@ -759,78 +753,74 @@ export default function Index({ params }: any) {
 
    
 
-  useEffect(() => {
+  const buyOrdersRequestSeqRef = useRef(0);
 
+  useEffect(() => {
+    const requestSeq = ++buyOrdersRequestSeqRef.current;
+    const controller = new AbortController();
 
     const fetchBuyOrders = async () => {
-
-
       setLoadingBuyOrders(true);
 
-      const response = await fetch('/api/order/getAllBuyOrdersByStorecodeDaily', {
+      try {
+        const response = await fetch('/api/order/getAllBuyOrdersByStorecodeDaily', {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(
-
             {
               storecode: searchStorecode,
               limit: Number(limit),
               page: Number(page),
               walletAddress: address,
               searchMyOrders: searchMyOrders,
-
               fromDate: searchFromDate,
               toDate: searchToDate,
-
               searchBuyer: searchBuyer,
               searchDepositName: searchDepositName,
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
             }
+          ),
+          signal: controller.signal,
+        });
 
-        ),
-      });
+        if (requestSeq !== buyOrdersRequestSeqRef.current) {
+          return;
+        }
 
-      setLoadingBuyOrders(false);
+        if (!response.ok) {
+          setBuyOrders([]);
+          setTotalCount(0);
+          return;
+        }
 
-      if (!response.ok) {
-        return;
+        const data = await response.json();
+
+        if (requestSeq !== buyOrdersRequestSeqRef.current) {
+          return;
+        }
+
+        setBuyOrders(data?.result?.orders || []);
+        setTotalCount(
+          Number(data?.result?.totalCount ?? data?.result?.orders?.length ?? 0)
+        );
+      } catch (error: any) {
+        if (error?.name !== 'AbortError') {
+          console.error('Failed to fetch buy orders by store daily', error);
+        }
+      } finally {
+        if (requestSeq === buyOrdersRequestSeqRef.current) {
+          setLoadingBuyOrders(false);
+        }
       }
-
-
-
-      const data = await response.json();
-
-
-      setBuyOrders(data.result.orders);
-
-      setTotalCount(data.result.totalCount);
-      
-
-
-    }
-
+    };
 
     fetchBuyOrders();
 
-    
-    /*
-    const interval = setInterval(() => {
-
-      fetchBuyOrders();
-
-
-    }, 5000);
-  
-
-    return () => clearInterval(interval);
-    */
-    
-    
-    
-    
-
+    return () => {
+      controller.abort();
+    };
 
   } , [
     limit,
@@ -954,68 +944,77 @@ const fetchBuyOrders = async () => {
   const [store, setStore] = useState(null) as any;
 
   useEffect(() => {
+    if (!searchStorecode) {
+      setStore(null);
+      setStoreAdminWalletAddress("");
+      setFetchingStore(false);
+      return;
+    }
 
-
-    setFetchingStore(true);
+    let cancelled = false;
 
     const fetchData = async () => {
+      setFetchingStore(true);
+
+      try {
         const response = await fetch("/api/store/getOneStore", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              storecode: searchStorecode,
-              ////walletAddress: address,
-            }),
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            storecode: searchStorecode,
+          }),
         });
 
         const data = await response.json();
 
-        //console.log("data", data);
+        if (cancelled) {
+          return;
+        }
 
         if (data.result) {
-
           setStore(data.result);
-
           setStoreAdminWalletAddress(data.result?.adminWalletAddress);
 
           if (data.result?.adminWalletAddress === address) {
             setIsAdmin(true);
           }
-
-      } else {
-        // get store list
-        const response = await fetch("/api/store/getAllStores", {
-          method: "POST",
-          headers: {
+        } else {
+          const listResponse = await fetch("/api/store/getAllStores", {
+            method: "POST",
+            headers: {
               "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-          }),
-        });
-        const data = await response.json();
-        //console.log("getStoreList data", data);
-        setStoreList(data.result.stores);
-        setStore(null);
-        setStoreAdminWalletAddress("");
+            },
+            body: JSON.stringify({}),
+          });
+          const listData = await listResponse.json();
+
+          if (cancelled) {
+            return;
+          }
+
+          setStoreList(listData.result.stores);
+          setStore(null);
+          setStoreAdminWalletAddress("");
+        }
+      } finally {
+        if (!cancelled) {
+          setFetchingStore(false);
+        }
       }
-
-        setFetchingStore(false);
     };
-
-    if (!searchStorecode) {
-      return;
-    }
 
     fetchData();
 
-    // interval to fetch store data every 10 seconds
     const interval = setInterval(() => {
       fetchData();
-    }
-    , 5000);
-    return () => clearInterval(interval);
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
 
   } , [searchStorecode, address]);
 
@@ -1134,6 +1133,8 @@ const fetchBuyOrders = async () => {
   // get All stores
   const [fetchingAllStores, setFetchingAllStores] = useState(false);
   const [allStores, setAllStores] = useState([] as any[]);
+  const [storeDropdownOpen, setStoreDropdownOpen] = useState(false);
+  const storeDropdownRef = useRef<HTMLDivElement | null>(null);
   const [storeTotalCount, setStoreTotalCount] = useState(0);
   const fetchAllStores = async () => {
     if (fetchingAllStores) {
@@ -1173,7 +1174,43 @@ const fetchBuyOrders = async () => {
   }
   useEffect(() => {
     fetchAllStores();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
+
+  useEffect(() => {
+    setStoreDropdownOpen(false);
+  }, [searchStorecode]);
+
+  useEffect(() => {
+    if (!storeDropdownOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        storeDropdownRef.current &&
+        !storeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setStoreDropdownOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setStoreDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [storeDropdownOpen]);
+
+  const selectedStore = allStores.find((item: any) => item.storecode === searchStorecode);
 
 
 
@@ -1657,12 +1694,12 @@ const fetchBuyOrders = async () => {
 
 
 
-          <div className="w-full flex flex-col items-start justify-start gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+          <div className="w-full flex flex-col items-start justify-start gap-4 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between lg:items-center">
 
 
 
             {/* select storecode */}
-            <div className="flex w-full flex-row items-center gap-2">
+            <div className="flex w-full flex-row items-center gap-2 sm:w-auto sm:min-w-[22rem] sm:max-w-[30rem]">
 
                 <Image
                   src="/icon-store.png"
@@ -1673,52 +1710,135 @@ const fetchBuyOrders = async () => {
                 />
 
                 <span className="
-                  w-32
+                  w-24
                   text-sm font-semibold">
                   가맹점 선택
                 </span>
 
+                <div className="relative w-full sm:w-[22rem]" ref={storeDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setStoreDropdownOpen((prev) => !prev)}
+                    className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-left text-sm text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Image
+                        src={selectedStore?.storeLogo || '/icon-store.png'}
+                        alt="Store Logo"
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-lg border border-zinc-200 object-cover"
+                      />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-zinc-800">
+                          {selectedStore?.storeName || '전체 가맹점'}
+                        </div>
+                        <div className="truncate text-xs text-zinc-500">
+                          {selectedStore?.storecode || 'ALL'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {fetchingAllStores && (
+                        <Image
+                          src="/loading.png"
+                          alt="Loading"
+                          width={16}
+                          height={16}
+                          className="h-4 w-4 animate-spin"
+                        />
+                      )}
+                      <svg
+                        className={`h-4 w-4 text-zinc-500 transition-transform ${storeDropdownOpen ? 'rotate-180' : ''}`}
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 011.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </button>
 
-                <select
-                  value={searchStorecode}
-                  
-                  //onChange={(e) => setSearchStorecode(e.target.value)}
+                  {storeDropdownOpen && (
+                    <div className="absolute z-20 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStoreDropdownOpen(false);
+                          router.push(buildDailyHistoryQuery({
+                            storecode: '',
+                            page: 1,
+                          }));
+                        }}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
+                          !searchStorecode ? 'bg-zinc-100' : 'hover:bg-zinc-50'
+                        }`}
+                      >
+                        <Image
+                          src="/icon-store.png"
+                          alt="All Stores"
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded-lg border border-zinc-200 object-cover"
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-zinc-800">
+                            전체 가맹점
+                          </div>
+                          <div className="truncate text-xs text-zinc-500">ALL</div>
+                        </div>
+                      </button>
 
-                  // storecode parameter is passed to fetchBuyOrders
-                  onChange={(e) => {
-                    router.push(buildDailyHistoryQuery({
-                      storecode: e.target.value,
-                      page: 1,
-                    }));
-                  }}
+                      {!fetchingAllStores && allStores.map((item: any, index: number) => (
+                        <button
+                          key={item.storecode || index}
+                          type="button"
+                          onClick={() => {
+                            setStoreDropdownOpen(false);
+                            router.push(buildDailyHistoryQuery({
+                              storecode: item.storecode,
+                              page: 1,
+                            }));
+                          }}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
+                            searchStorecode === item.storecode ? 'bg-zinc-100' : 'hover:bg-zinc-50'
+                          }`}
+                        >
+                          <Image
+                            src={item.storeLogo || '/icon-store.png'}
+                            alt={item.storeName || 'Store'}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-lg border border-zinc-200 object-cover"
+                          />
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-zinc-800">
+                              {item.storeName || '이름 없음'}
+                            </div>
+                            <div className="truncate text-xs text-zinc-500">
+                              {item.storecode || '-'}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
 
-
-
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
-                >
-                  <option value="">전체</option>
-
-                  {fetchingAllStores && (
-                    <option value="" disabled>
-                      가맹점 검색중...
-                    </option>
+                      {!fetchingAllStores && allStores.length === 0 && (
+                        <div className="px-3 py-2 text-sm text-zinc-500">
+                          가맹점이 없습니다.
+                        </div>
+                      )}
+                    </div>
                   )}
-
-                  {!fetchingAllStores && allStores && allStores.map((item, index) => (
-                    <option key={index} value={item.storecode}
-                      className="flex flex-row items-center justify-start gap-2"
-                    >
-                      
-                      {item.storeName}{' '}({item.storecode})
-
-                    </option>
-                  ))}
-                </select>
+                </div>
 
             </div>
 
             {/* 가맹점 정보 */}
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex w-full flex-col items-start gap-2 sm:w-auto sm:flex-1">
 
               <div className="flex flex-row items-center justify-start gap-2">
                 <Image
