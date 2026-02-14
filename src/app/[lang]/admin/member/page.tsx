@@ -14,6 +14,7 @@ import { useRouter }from "next//navigation";
 
 
 import { toast } from 'react-hot-toast';
+import * as XLSX from "xlsx";
 
 import {
   clientId,
@@ -966,6 +967,7 @@ export default function Index({ params }: any) {
   const [fetchingAllBuyer, setFetchingAllBuyer] = useState(false);
   const [allBuyer, setAllBuyer] = useState([] as any[]);
   const [totalCount, setTotalCount] = useState(0);
+  const [downloadingBuyerExcel, setDownloadingBuyerExcel] = useState(false);
     
   const fetchAllBuyer = async () => {
     if (fetchingAllBuyer) {
@@ -1003,6 +1005,149 @@ export default function Index({ params }: any) {
 
     return data.result.users;
   }
+
+  const getUserTypeLabel = (userType: string) => {
+    if (userType === 'AAA') {
+      return '1등급';
+    }
+    if (userType === 'BBB') {
+      return '2등급';
+    }
+    if (userType === 'CCC') {
+      return '3등급';
+    }
+    if (userType === 'DDD') {
+      return '4등급';
+    }
+    return '일반';
+  };
+
+  const getBuyOrderStatusLabel = (status: string) => {
+    if (status === 'ordered') {
+      return '구매주문';
+    }
+    if (status === 'accepted') {
+      return '판매자확정';
+    }
+    if (status === 'paymentRequested') {
+      return '결제요청';
+    }
+    if (status === 'paymentConfirmed') {
+      return '결제완료';
+    }
+    if (status === 'cancelled') {
+      return '거래취소';
+    }
+    return '';
+  };
+
+  const downloadBuyerExcel = async () => {
+    if (downloadingBuyerExcel) {
+      return;
+    }
+
+    setDownloadingBuyerExcel(true);
+
+    try {
+      const batchLimit = 500;
+      let currentPage = 1;
+      let totalCountFromApi = 0;
+      const downloadedUsers: any[] = [];
+
+      while (true) {
+        const response = await fetch('/api/user/getAllBuyers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            storecode: searchParamsStorecode,
+            search: searchBuyer,
+            depositName: searchDepositName,
+            limit: batchLimit,
+            page: currentPage,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('회원 목록을 불러오지 못했습니다.');
+        }
+
+        const payload = await response.json();
+        const users = payload?.result?.users || [];
+        const totalCount = Number(payload?.result?.totalCount || 0);
+
+        if (currentPage === 1) {
+          totalCountFromApi = totalCount;
+        }
+
+        if (!users.length) {
+          break;
+        }
+
+        downloadedUsers.push(...users);
+
+        if (users.length < batchLimit || downloadedUsers.length >= totalCountFromApi) {
+          break;
+        }
+
+        currentPage += 1;
+      }
+
+      if (!downloadedUsers.length) {
+        toast.error('다운로드할 회원이 없습니다.');
+        return;
+      }
+
+      const rows = downloadedUsers.map((item: any, index: number) => ({
+        No: index + 1,
+        가입일시: item?.createdAt
+          ? new Date(item.createdAt).toLocaleString('ko-KR', { hour12: false })
+          : '',
+        회원상태: item?.liveOnAndOff === false ? '차단상태' : '정상상태',
+        회원아이디: item?.nickname || '',
+        회원등급: getUserTypeLabel(item?.userType || ''),
+        가맹점명: item?.store?.storeName || '',
+        가맹점코드: item?.storecode || '',
+        은행명: item?.buyer?.depositBankName || '',
+        계좌번호: item?.buyer?.depositBankAccountNumber || '',
+        입금자명: item?.buyer?.depositName || '',
+        결제건수: Number(item?.totalPaymentConfirmedCount || 0),
+        결제금액원: Number(item?.totalPaymentConfirmedKrwAmount || 0),
+        구매량USDT: Number(item?.totalPaymentConfirmedUsdtAmount || 0),
+        주문상태: getBuyOrderStatusLabel(item?.buyOrderStatus || ''),
+        지갑주소: item?.walletAddress || '',
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Members');
+
+      const now = new Date();
+      const timestamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, '0'),
+        String(now.getDate()).padStart(2, '0'),
+      ].join('-')
+      + '_'
+      + [
+        String(now.getHours()).padStart(2, '0'),
+        String(now.getMinutes()).padStart(2, '0'),
+        String(now.getSeconds()).padStart(2, '0'),
+      ].join('-');
+
+      const safeStorecode = searchParamsStorecode || 'all';
+      const fileName = `member_list_${safeStorecode}_${timestamp}.xlsx`;
+
+      XLSX.writeFile(wb, fileName);
+      toast.success(`회원 ${downloadedUsers.length.toLocaleString('ko-KR')}건을 다운로드했습니다.`);
+    } catch (error: any) {
+      console.error('회원 엑셀 다운로드 실패', error);
+      toast.error(error?.message || '엑셀 다운로드에 실패했습니다.');
+    } finally {
+      setDownloadingBuyerExcel(false);
+    }
+  };
 
   
 
@@ -2069,8 +2214,8 @@ export default function Index({ params }: any) {
               </div>
 
 
-              {/* 검색 버튼 */}
-              <div className="w-full md:w-32 flex flex-row items-center gap-2">
+              {/* 검색/엑셀 버튼 */}
+              <div className="w-full md:w-auto flex flex-row items-center gap-2">
                 <button
                   onClick={() => {
                     setPageValue(1);
@@ -2092,6 +2237,18 @@ export default function Index({ params }: any) {
                     </span>
                   </div>
 
+                </button>
+
+                <button
+                  onClick={downloadBuyerExcel}
+                  className={`px-4 py-2 rounded-lg w-full md:w-auto text-sm font-semibold text-white shadow-sm transition ${
+                    downloadingBuyerExcel
+                      ? 'bg-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 hover:shadow-md'
+                  }`}
+                  disabled={downloadingBuyerExcel}
+                >
+                  {downloadingBuyerExcel ? '다운로드중...' : '엑셀'}
                 </button>
               </div>
 
