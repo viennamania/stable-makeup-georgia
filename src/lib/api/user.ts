@@ -1108,6 +1108,7 @@ export async function getAllBuyers(
   // if storecode is empty, return all users
 
   
+  const normalizedAgentcode = String(agentcode || '').trim();
   const normalizedUserType = String(userType || 'all').trim();
   const userTypeFilter =
     normalizedUserType === 'normal'
@@ -1115,6 +1116,23 @@ export async function getAllBuyers(
       : normalizedUserType !== '' && normalizedUserType !== 'all'
         ? normalizedUserType
         : null;
+  const baseUserMatch = {
+    nickname: { $regex: String(search), $options: 'i' },
+    'buyer.depositName': { $regex: String(depositName), $options: 'i' },
+    'storecode': { $regex: String(storecode), $options: 'i' },
+    ...(userTypeFilter ? { userType: userTypeFilter } : {}),
+    walletAddress: { $exists: true, $ne: null },
+    $or: [
+      { verified: { $exists: false } },
+      { verified: false },
+    ],
+  };
+  const aggregateMatch = {
+    ...baseUserMatch,
+    ...(normalizedAgentcode !== ''
+      ? { 'storeInfo.agentcode': { $regex: normalizedAgentcode, $options: 'i' } }
+      : {}),
+  };
 
 
   // user.storecode joine stores collection to get store.accessToken
@@ -1132,18 +1150,7 @@ export async function getAllBuyers(
       $unwind: { path: '$storeInfo', preserveNullAndEmptyArrays: true }
     },
     {
-      $match: {
-        nickname: { $regex: String(search), $options: 'i' },
-        'buyer.depositName': { $regex: String(depositName), $options: 'i' },
-        'storecode': { $regex: String(storecode), $options: 'i' },
-        'storeInfo.agentcode': { $regex: String(agentcode), $options: 'i' },
-        ...(userTypeFilter ? { userType: userTypeFilter } : {}),
-        walletAddress: { $exists: true, $ne: null },
-        $or: [
-          { verified: { $exists: false } },
-          { verified: false },
-        ]
-      }
+      $match: aggregateMatch
     },
     {
       $project: {
@@ -1218,24 +1225,31 @@ export async function getAllBuyers(
     .toArray();
     */
 
-
-
-  const totalCount = await collection.countDocuments(
-    {
-
-      storecode: { $regex: String(storecode), $options: 'i' },
-      nickname: { $regex: String(search), $options: 'i' },
-      "buyer.depositName": { $regex: String(depositName), $options: 'i' },
-      ...(userTypeFilter ? { userType: userTypeFilter } : {}),
-      walletAddress: { $exists: true, $ne: null },
-      $or: [
-        { verified: { $exists: false } },
-        { verified: false },
-
-
-      ]
-    }
-  );
+  let totalCount = 0;
+  if (normalizedAgentcode !== '') {
+    const totalCountResult = await collection.aggregate<{ totalCount: number }>([
+      {
+        $lookup: {
+          from: 'stores',
+          localField: 'storecode',
+          foreignField: 'storecode',
+          as: 'storeInfo',
+        },
+      },
+      {
+        $unwind: { path: '$storeInfo', preserveNullAndEmptyArrays: true }
+      },
+      {
+        $match: aggregateMatch
+      },
+      {
+        $count: 'totalCount'
+      },
+    ]).toArray();
+    totalCount = totalCountResult[0]?.totalCount || 0;
+  } else {
+    totalCount = await collection.countDocuments(baseUserMatch);
+  }
 
 
 

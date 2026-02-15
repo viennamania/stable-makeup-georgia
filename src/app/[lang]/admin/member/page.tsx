@@ -194,11 +194,19 @@ export default function Index({ params }: any) {
 
   // limit, page number params
 
-  const limit = searchParams.get('limit') || 20;
-  const page = searchParams.get('page') || 1;
+  const limitParam = Number(searchParams.get('limit') || 20);
+  const pageParam = Number(searchParams.get('page') || 1);
+  const parsedLimitParam = limitParam > 0 ? limitParam : 20;
+  const parsedPageParam = pageParam > 0 ? pageParam : 1;
 
 
-  const searchParamsStorecode = searchParams.get('storecode') || "";
+  const searchParamsStorecode = (searchParams.get('storecode') || "").trim();
+  const searchBuyerParam = (searchParams.get('searchBuyer') || "").trim();
+  const searchDepositNameParam = (searchParams.get('searchDepositName') || "").trim();
+  const searchUserTypeCandidate = (searchParams.get('searchUserType') || 'all').trim();
+  const searchUserTypeParam = ['all', 'AAA', 'BBB', 'CCC', 'DDD', 'normal'].includes(searchUserTypeCandidate)
+    ? searchUserTypeCandidate
+    : 'all';
 
 
 
@@ -700,21 +708,6 @@ export default function Index({ params }: any) {
 
 
 
-  // limit number
-  const [limitValue, setLimitValue] = useState(limit || 20);
-  useEffect(() => {
-    setLimitValue(limit || 20);
-  }, [limit]);
-
-  // page number
-  const [pageValue, setPageValue] = useState(page || 1);
-  useEffect(() => {
-    setPageValue(page || 1);
-  }, [page]);
-
-
-
-
   //const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
 
 
@@ -958,10 +951,58 @@ export default function Index({ params }: any) {
 
 
 
-  const [searchBuyer, setSearchBuyer] = useState("");
+  const [searchBuyer, setSearchBuyer] = useState(searchBuyerParam);
 
-  const [searchDepositName, setSearchDepositName] = useState("");
-  const [searchUserType, setSearchUserType] = useState('all');
+  const [searchDepositName, setSearchDepositName] = useState(searchDepositNameParam);
+  const [searchUserType, setSearchUserType] = useState(searchUserTypeParam);
+  useEffect(() => {
+    setSearchBuyer(searchBuyerParam);
+    setSearchDepositName(searchDepositNameParam);
+    setSearchUserType(searchUserTypeParam);
+  }, [searchBuyerParam, searchDepositNameParam, searchUserTypeParam]);
+
+  const buildMemberQuery = ({
+    limit,
+    page,
+    storecode,
+    searchBuyerValue,
+    searchDepositNameValue,
+    searchUserTypeValue,
+  }: {
+    limit?: number;
+    page?: number;
+    storecode?: string;
+    searchBuyerValue?: string;
+    searchDepositNameValue?: string;
+    searchUserTypeValue?: string;
+  }) => {
+    const query = new URLSearchParams({
+      limit: String(limit ?? parsedLimitParam),
+      page: String(page ?? parsedPageParam),
+    });
+
+    const nextStorecode = String(storecode ?? searchParamsStorecode).trim();
+    if (nextStorecode) {
+      query.set('storecode', nextStorecode);
+    }
+
+    const nextSearchBuyer = (searchBuyerValue ?? searchBuyerParam).trim();
+    if (nextSearchBuyer) {
+      query.set('searchBuyer', nextSearchBuyer);
+    }
+
+    const nextSearchDepositName = (searchDepositNameValue ?? searchDepositNameParam).trim();
+    if (nextSearchDepositName) {
+      query.set('searchDepositName', nextSearchDepositName);
+    }
+
+    const nextSearchUserType = String(searchUserTypeValue ?? searchUserTypeParam).trim();
+    if (nextSearchUserType && nextSearchUserType !== 'all') {
+      query.set('searchUserType', nextSearchUserType);
+    }
+
+    return `/${params.lang}/admin/member?${query.toString()}`;
+  };
 
 
   // fetch all buyer user 
@@ -985,11 +1026,11 @@ export default function Index({ params }: any) {
           //storecode: searchStorecode,
           storecode: searchParamsStorecode,
 
-          search: searchBuyer,
-          depositName: searchDepositName,
-          userType: searchUserType,
-          limit: Number(limitValue),
-          page: Number(pageValue),
+          search: searchBuyerParam,
+          depositName: searchDepositNameParam,
+          userType: searchUserTypeParam,
+          limit: Number(parsedLimitParam),
+          page: Number(parsedPageParam),
         }
       ),
     });
@@ -1064,9 +1105,9 @@ export default function Index({ params }: any) {
           },
           body: JSON.stringify({
             storecode: searchParamsStorecode,
-            search: searchBuyer,
-            depositName: searchDepositName,
-            userType: searchUserType,
+            search: searchBuyerParam,
+            depositName: searchDepositNameParam,
+            userType: searchUserTypeParam,
             limit: batchLimit,
             page: currentPage,
           }),
@@ -1160,9 +1201,10 @@ export default function Index({ params }: any) {
       return;
     }
     fetchAllBuyer();
-  ///} , [address, limitValue, pageValue, searchStorecode]);
+  ///} , [address, searchStorecode]);
 
-  } , [address, limitValue, pageValue, searchParamsStorecode]);
+  } , [address, parsedLimitParam, parsedPageParam, searchParamsStorecode, searchBuyerParam, searchDepositNameParam, searchUserTypeParam]);
+  
 
 
 
@@ -2116,12 +2158,12 @@ export default function Index({ params }: any) {
                           onClick={() => {
                             setSelectedStorecode(item.storecode);
                             setStoreDropdownOpen(false);
-                            const base = `/${params.lang}/admin/member?limit=${limitValue}&page=1`;
-                            if (item.storecode === "") {
-                              router.push(base);
-                            } else {
-                              router.push(`${base}&storecode=${item.storecode}`);
-                            }
+                            router.push(
+                              buildMemberQuery({
+                                page: 1,
+                                storecode: item.storecode,
+                              })
+                            );
                           }}
                           className="w-full px-3 py-2 flex items-center gap-2 hover:bg-emerald-50"
                         >
@@ -2220,8 +2262,14 @@ export default function Index({ params }: any) {
                 <div className="mt-3 flex flex-col sm:flex-row items-stretch gap-2.5">
                   <button
                     onClick={() => {
-                      setPageValue(1);
-                      fetchAllBuyer();
+                      router.push(
+                        buildMemberQuery({
+                          page: 1,
+                          searchBuyerValue: searchBuyer,
+                          searchDepositNameValue: searchDepositName,
+                          searchUserTypeValue: searchUserType,
+                        })
+                      );
                     }}
                     className="h-11 min-w-[128px] inline-flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-5 rounded-lg shadow-sm hover:shadow-md hover:from-sky-600 hover:to-blue-700 transition whitespace-nowrap"
                     disabled={fetchingAllBuyer}
@@ -2739,11 +2787,14 @@ export default function Index({ params }: any) {
 
             <div className="flex flex-row items-center gap-2">
               <select
-                value={limit}
+                value={parsedLimitParam}
                 onChange={(e) =>
-                  
-                  router.push(`/${params.lang}/admin/member?limit=${Number(e.target.value)}&page=${page}&storecode=${searchParamsStorecode}`)
-
+                  router.push(
+                    buildMemberQuery({
+                      limit: Number(e.target.value),
+                      page: 1,
+                    })
+                  )
                 }
 
                 className="text-sm bg-zinc-800 text-zinc-200 px-2 py-1 rounded-md"
@@ -2757,12 +2808,10 @@ export default function Index({ params }: any) {
 
             {/* 처음 페이지로 이동 버튼 */}
             <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              disabled={parsedPageParam <= 1}
+              className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                
-                router.push(`/${params.lang}/admin/member?limit=${Number(limit)}&page=1&storecode=${searchParamsStorecode}`);
-
+                router.push(buildMemberQuery({ page: 1 }));
               }}
             >
               처음
@@ -2770,12 +2819,10 @@ export default function Index({ params }: any) {
 
 
             <button
-              disabled={Number(page) <= 1}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              disabled={parsedPageParam <= 1}
+              className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                
-                router.push(`/${params.lang}/admin/member?limit=${Number(limit)}&page=${Number(page) - 1}&storecode=${searchParamsStorecode}`);
-
+                router.push(buildMemberQuery({ page: parsedPageParam - 1 }));
               }}
             >
               이전
@@ -2783,29 +2830,25 @@ export default function Index({ params }: any) {
 
 
             <span className="text-sm text-zinc-500">
-              {page} / {Math.ceil(Number(totalCount) / Number(limit))}
+              {parsedPageParam} / {Math.ceil(Number(totalCount) / Number(parsedLimitParam))}
             </span>
 
 
             <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              disabled={parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam))}
+              className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                
-                router.push(`/${params.lang}/admin/member?limit=${Number(limit)}&page=${Number(page) + 1}&storecode=${searchParamsStorecode}`);
-
+                router.push(buildMemberQuery({ page: parsedPageParam + 1 }));
               }}
             >
               다음
             </button>
 
             <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`text-sm text-white px-4 py-2 rounded-md ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
+              disabled={parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam))}
+              className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                
-                router.push(`/${params.lang}/admin/member?limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}&storecode=${searchParamsStorecode}`);
-
+                router.push(buildMemberQuery({ page: Math.ceil(Number(totalCount) / Number(parsedLimitParam)) }));
               }}
             >
               마지막
