@@ -961,6 +961,7 @@ export default function Index({ params }: any) {
   const [searchBuyer, setSearchBuyer] = useState("");
 
   const [searchDepositName, setSearchDepositName] = useState("");
+  const [searchUserType, setSearchUserType] = useState('all');
 
 
   // fetch all buyer user 
@@ -986,6 +987,7 @@ export default function Index({ params }: any) {
 
           search: searchBuyer,
           depositName: searchDepositName,
+          userType: searchUserType,
           limit: Number(limitValue),
           page: Number(pageValue),
         }
@@ -1064,6 +1066,7 @@ export default function Index({ params }: any) {
             storecode: searchParamsStorecode,
             search: searchBuyer,
             depositName: searchDepositName,
+            userType: searchUserType,
             limit: batchLimit,
             page: currentPage,
           }),
@@ -2169,62 +2172,60 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full mt-4 rounded-2xl border border-slate-200 bg-white/95 shadow-sm p-4 flex flex-col lg:flex-row items-start lg:items-stretch justify-start gap-4">
+          <div className="w-full mt-4 rounded-2xl border border-slate-200 bg-white/95 shadow-sm p-5 flex flex-col gap-5">
 
-            <div className="w-full flex items-center justify-between mb-3">
+            <div className="w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-slate-700">검색 / 결과</span>
                 <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-sm font-bold text-slate-900 tabular-nums">
                   합계 {Number(totalCount || 0).toLocaleString('ko-KR')}
                 </span>
               </div>
+              <span className="text-xs text-slate-500">회원 아이디, 입금자명, 회원등급으로 필터링</span>
             </div>
 
-
-
-
-
-
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 w-full">
-
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                {/* search nickname */}
-                <div className="flex flex-row items-center gap-2">
+            <div className="w-full grid grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_minmax(460px,560px)] gap-4 items-start">
+              <div className="w-full rounded-xl border border-slate-200/80 bg-slate-50/70 p-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
                   <input
                     type="text"
                     value={searchBuyer}
                     onChange={(e) => setSearchBuyer(e.target.value)}
                     placeholder="회원 아이디"
-                    className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full h-11 px-3 border border-slate-200 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
 
-                </div>
-
-                <div className="flex flex-row items-center gap-2">
                   <input
                     type="text"
                     value={searchDepositName}
                     onChange={(e) => setSearchDepositName(e.target.value)}
                     placeholder="입금자명"
-                    className="w-full p-2 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    className="w-full h-11 px-3 border border-slate-200 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   />
 
+                  <select
+                    value={searchUserType}
+                    onChange={(e) => setSearchUserType(e.target.value)}
+                    className="w-full h-11 px-3 border border-slate-200 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                  >
+                    <option value="all">회원등급 전체</option>
+                    <option value="AAA">1등급</option>
+                    <option value="BBB">2등급</option>
+                    <option value="CCC">3등급</option>
+                    <option value="DDD">4등급</option>
+                    <option value="normal">일반</option>
+                  </select>
                 </div>
-              </div>
 
-
-              {/* 검색/엑셀 버튼 */}
-              <div className="w-full md:w-auto flex flex-row items-center gap-2">
-                <button
-                  onClick={() => {
-                    setPageValue(1);
-                    fetchAllBuyer();
-                  }}
-                  className="bg-gradient-to-r from-sky-500 to-blue-600 text-white px-4 py-2 rounded-lg w-full shadow-sm hover:shadow-md hover:from-sky-600 hover:to-blue-700 transition"
-                  disabled={fetchingAllBuyer}
-                >
-                  <div className="flex flex-row items-center justify-between gap-2">
+                <div className="mt-3 flex flex-col sm:flex-row items-stretch gap-2.5">
+                  <button
+                    onClick={() => {
+                      setPageValue(1);
+                      fetchAllBuyer();
+                    }}
+                    className="h-11 min-w-[128px] inline-flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 text-white px-5 rounded-lg shadow-sm hover:shadow-md hover:from-sky-600 hover:to-blue-700 transition whitespace-nowrap"
+                    disabled={fetchingAllBuyer}
+                  >
                     <Image
                       src="/icon-search.png"
                       alt="Search"
@@ -2232,32 +2233,27 @@ export default function Index({ params }: any) {
                       height={20}
                       className="rounded-lg w-5 h-5"
                     />
-                    <span className="text-sm">
+                    <span className="text-sm font-semibold">
                       {fetchingAllBuyer ? '검색중...' : '검색'}
                     </span>
-                  </div>
+                  </button>
 
-                </button>
-
-                <button
-                  onClick={downloadBuyerExcel}
-                  className={`px-4 py-2 rounded-lg w-full md:w-auto text-sm font-semibold text-white shadow-sm transition ${
-                    downloadingBuyerExcel
-                      ? 'bg-slate-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 hover:shadow-md'
-                  }`}
-                  disabled={downloadingBuyerExcel}
-                >
-                  {downloadingBuyerExcel ? '다운로드중...' : '엑셀'}
-                </button>
+                  <button
+                    onClick={downloadBuyerExcel}
+                    className={`h-11 min-w-[112px] px-5 rounded-lg text-sm font-semibold text-white shadow-sm transition whitespace-nowrap ${
+                      downloadingBuyerExcel
+                        ? 'bg-slate-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 hover:shadow-md'
+                    }`}
+                    disabled={downloadingBuyerExcel}
+                  >
+                    {downloadingBuyerExcel ? '다운로드중...' : '엑셀 다운로드'}
+                  </button>
+                </div>
               </div>
 
-            </div>
-
-
-            <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-2">
-              <div className="flex flex-wrap items-center justify-end gap-3 w-full">
-                <div className="flex items-center gap-3 bg-gradient-to-r from-white via-slate-50 to-sky-50 border border-slate-200 px-4 py-3 rounded-xl shadow-sm min-w-[220px]">
+              <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 bg-gradient-to-r from-white via-slate-50 to-sky-50 border border-slate-200 px-4 py-3 rounded-xl shadow-sm min-h-[84px]">
                   {loadingTotalNumberOfBuyOrders ? (
                     <Image
                       src="/loading.png"
@@ -2289,7 +2285,7 @@ export default function Index({ params }: any) {
                 </div>
 
                 {version !== 'bangbang' && (
-                  <div className="flex items-center gap-3 bg-gradient-to-r from-white via-slate-50 to-amber-50 border border-slate-200 px-4 py-3 rounded-xl shadow-sm min-w-[220px]">
+                  <div className="flex items-center gap-3 bg-gradient-to-r from-white via-slate-50 to-amber-50 border border-slate-200 px-4 py-3 rounded-xl shadow-sm min-h-[84px]">
                     {loadingTotalNumberOfClearanceOrders ? (
                       <Image
                         src="/loading.png"
@@ -2322,7 +2318,6 @@ export default function Index({ params }: any) {
                 )}
               </div>
             </div>
-
           </div>
 
 

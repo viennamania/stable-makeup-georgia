@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     storecode,
     search,
     depositName,
+    userType,
     limit,
     page,
   } = body;
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     search,
     depositName,
+    userType: userType || 'all',
     limit: limit || 100,
     page: page || 1,
   });

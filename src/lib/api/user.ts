@@ -1087,6 +1087,7 @@ export async function getAllBuyers(
     storecode,
     search,
     depositName,
+    userType = 'all',
     limit,
     page,
   }: {
@@ -1094,6 +1095,7 @@ export async function getAllBuyers(
     storecode: string;
     search: string;
     depositName: string;
+    userType?: string;
     limit: number;
     page: number;
   }
@@ -1106,6 +1108,14 @@ export async function getAllBuyers(
   // if storecode is empty, return all users
 
   
+  const normalizedUserType = String(userType || 'all').trim();
+  const userTypeFilter =
+    normalizedUserType === 'normal'
+      ? { $in: [null, ''] }
+      : normalizedUserType !== '' && normalizedUserType !== 'all'
+        ? normalizedUserType
+        : null;
+
 
   // user.storecode joine stores collection to get store.accessToken
 
@@ -1127,6 +1137,7 @@ export async function getAllBuyers(
         'buyer.depositName': { $regex: String(depositName), $options: 'i' },
         'storecode': { $regex: String(storecode), $options: 'i' },
         'storeInfo.agentcode': { $regex: String(agentcode), $options: 'i' },
+        ...(userTypeFilter ? { userType: userTypeFilter } : {}),
         walletAddress: { $exists: true, $ne: null },
         $or: [
           { verified: { $exists: false } },
@@ -1215,6 +1226,7 @@ export async function getAllBuyers(
       storecode: { $regex: String(storecode), $options: 'i' },
       nickname: { $regex: String(search), $options: 'i' },
       "buyer.depositName": { $regex: String(depositName), $options: 'i' },
+      ...(userTypeFilter ? { userType: userTypeFilter } : {}),
       walletAddress: { $exists: true, $ne: null },
       $or: [
         { verified: { $exists: false } },
