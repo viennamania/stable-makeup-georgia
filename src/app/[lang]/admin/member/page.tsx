@@ -986,17 +986,17 @@ export default function Index({ params }: any) {
       query.set('storecode', nextStorecode);
     }
 
-    const nextSearchBuyer = (searchBuyerValue ?? searchBuyerParam).trim();
+    const nextSearchBuyer = (searchBuyerValue ?? searchBuyer).trim();
     if (nextSearchBuyer) {
       query.set('searchBuyer', nextSearchBuyer);
     }
 
-    const nextSearchDepositName = (searchDepositNameValue ?? searchDepositNameParam).trim();
+    const nextSearchDepositName = (searchDepositNameValue ?? searchDepositName).trim();
     if (nextSearchDepositName) {
       query.set('searchDepositName', nextSearchDepositName);
     }
 
-    const nextSearchUserType = String(searchUserTypeValue ?? searchUserTypeParam).trim();
+    const nextSearchUserType = String(searchUserTypeValue ?? searchUserType).trim();
     if (nextSearchUserType && nextSearchUserType !== 'all') {
       query.set('searchUserType', nextSearchUserType);
     }
@@ -2251,11 +2251,11 @@ export default function Index({ params }: any) {
                     className="w-full h-11 px-3 border border-slate-200 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
                   >
                     <option value="all">회원등급 전체</option>
+                    <option value="normal">일반등급</option>
                     <option value="AAA">1등급</option>
                     <option value="BBB">2등급</option>
                     <option value="CCC">3등급</option>
                     <option value="DDD">4등급</option>
-                    <option value="normal">일반</option>
                   </select>
                 </div>
 
@@ -2265,6 +2265,7 @@ export default function Index({ params }: any) {
                       router.push(
                         buildMemberQuery({
                           page: 1,
+                          storecode: selectedStorecode,
                           searchBuyerValue: searchBuyer,
                           searchDepositNameValue: searchDepositName,
                           searchUserTypeValue: searchUserType,
@@ -2793,6 +2794,7 @@ export default function Index({ params }: any) {
                     buildMemberQuery({
                       limit: Number(e.target.value),
                       page: 1,
+                      storecode: selectedStorecode,
                     })
                   )
                 }
@@ -2811,7 +2813,7 @@ export default function Index({ params }: any) {
               disabled={parsedPageParam <= 1}
               className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                router.push(buildMemberQuery({ page: 1 }));
+                router.push(buildMemberQuery({ page: 1, storecode: selectedStorecode }));
               }}
             >
               처음
@@ -2822,7 +2824,7 @@ export default function Index({ params }: any) {
               disabled={parsedPageParam <= 1}
               className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam <= 1 ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                router.push(buildMemberQuery({ page: parsedPageParam - 1 }));
+                router.push(buildMemberQuery({ page: parsedPageParam - 1, storecode: selectedStorecode }));
               }}
             >
               이전
@@ -2838,7 +2840,7 @@ export default function Index({ params }: any) {
               disabled={parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam))}
               className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                router.push(buildMemberQuery({ page: parsedPageParam + 1 }));
+                router.push(buildMemberQuery({ page: parsedPageParam + 1, storecode: selectedStorecode }));
               }}
             >
               다음
@@ -2848,7 +2850,7 @@ export default function Index({ params }: any) {
               disabled={parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam))}
               className={`text-sm text-white px-4 py-2 rounded-md ${parsedPageParam >= Math.ceil(Number(totalCount) / Number(parsedLimitParam)) ? 'bg-gray-500' : 'bg-green-500 hover:bg-green-600'}`}
               onClick={() => {
-                router.push(buildMemberQuery({ page: Math.ceil(Number(totalCount) / Number(parsedLimitParam)) }));
+                router.push(buildMemberQuery({ page: Math.ceil(Number(totalCount) / Number(parsedLimitParam)), storecode: selectedStorecode }));
               }}
             >
               마지막

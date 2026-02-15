@@ -1110,12 +1110,16 @@ export async function getAllBuyers(
   
   const normalizedAgentcode = String(agentcode || '').trim();
   const normalizedUserType = String(userType || 'all').trim();
+  const normalizedUserTypeUpper = normalizedUserType.toUpperCase();
+  const gradeUserTypes = ['AAA', 'BBB', 'CCC', 'DDD'];
   const userTypeFilter =
     normalizedUserType === 'normal'
-      ? { $in: [null, ''] }
-      : normalizedUserType !== '' && normalizedUserType !== 'all'
-        ? normalizedUserType
-        : null;
+      ? { $nin: gradeUserTypes }
+      : gradeUserTypes.includes(normalizedUserTypeUpper)
+        ? normalizedUserTypeUpper
+        : normalizedUserType !== '' && normalizedUserType !== 'all'
+          ? normalizedUserType
+          : null;
   const baseUserMatch = {
     nickname: { $regex: String(search), $options: 'i' },
     'buyer.depositName': { $regex: String(depositName), $options: 'i' },
@@ -1153,6 +1157,27 @@ export async function getAllBuyers(
       $match: aggregateMatch
     },
     {
+      $addFields: {
+        userTypeSortOrder: {
+          $switch: {
+            branches: [
+              { case: { $eq: ['$userType', 'AAA'] }, then: 1 },
+              { case: { $eq: ['$userType', 'BBB'] }, then: 2 },
+              { case: { $eq: ['$userType', 'CCC'] }, then: 3 },
+              { case: { $eq: ['$userType', 'DDD'] }, then: 4 },
+            ],
+            default: 0,
+          },
+        },
+      }
+    },
+    {
+      $sort: {
+        userTypeSortOrder: 1,
+        createdAt: -1,
+      }
+    },
+    {
       $project: {
         id: 1,
         createdAt: 1,
@@ -1171,9 +1196,6 @@ export async function getAllBuyers(
 
         storeInfo: { accessToken: 1 },
       }
-    },
-    {
-      $sort: { createdAt: -1 }
     },
     {
       $skip: (page - 1) * limit
