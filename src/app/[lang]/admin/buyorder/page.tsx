@@ -1027,9 +1027,9 @@ const [prioritizePending, setPrioritizePending] = useState(true);
   const [pageValue, setPageValue] = useState(page || 1);
   */
 
- const [limitValue, setLimitValue] = useState(20);
+ const [limitValue, setLimitValue] = useState(50);
   useEffect(() => {
-    const limit = searchParams.get('limit') || 20;
+    const limit = searchParams.get('limit') || 50;
     setLimitValue(Number(limit));
   }, [searchParams]);
 
