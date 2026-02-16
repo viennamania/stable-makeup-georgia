@@ -200,6 +200,7 @@ export default function Index({ params }: any) {
   const paramSearchTradeId = searchParams.get('searchTradeId') || "";
 
   const paramSearchSellerBankAccountNumber = searchParams.get('searchBuyerBankAccountNumber') || "";
+  const paramSearchDepositCompleted = searchParams.get('searchDepositCompleted') === 'true';
 
 
 
@@ -876,6 +877,11 @@ export default function Index({ params }: any) {
 
   // search seller bank account number
   const [searchBuyerBankAccountNumber, setSearchBuyerBankAccountNumber] = useState("");
+  const [searchDepositCompleted, setSearchDepositCompleted] = useState(paramSearchDepositCompleted);
+
+  useEffect(() => {
+    setSearchDepositCompleted(paramSearchDepositCompleted);
+  }, [paramSearchDepositCompleted]);
 
     
 
@@ -1138,6 +1144,8 @@ export default function Index({ params }: any) {
                   searchStoreBankAccountNumber: searchStoreBankAccountNumber,
                   searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
+                  searchDepositCompleted: searchDepositCompleted,
+
                   privateSale: true,
 
                   fromDate: searchFromDate,
@@ -1282,6 +1290,8 @@ export default function Index({ params }: any) {
 
             searchStoreBankAccountNumber: searchStoreBankAccountNumber,
             searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
+
+            searchDepositCompleted: searchDepositCompleted,
 
             privateSale: true,
 
@@ -1550,6 +1560,8 @@ export default function Index({ params }: any) {
                 searchStoreBankAccountNumber: searchStoreBankAccountNumber,
                 searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
+                searchDepositCompleted: searchDepositCompleted,
+
                 privateSale: true,
 
                 fromDate: searchFromDate,
@@ -1776,6 +1788,8 @@ export default function Index({ params }: any) {
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
               searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
+              searchDepositCompleted: searchDepositCompleted,
+
               privateSale: true, 
               
               fromDate: searchFromDate,
@@ -1907,6 +1921,8 @@ export default function Index({ params }: any) {
           searchStoreBankAccountNumber: searchStoreBankAccountNumber,
           searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
+          searchDepositCompleted: searchDepositCompleted,
+
           privateSale: true,
 
           fromDate: searchFromDate,
@@ -2010,6 +2026,8 @@ export default function Index({ params }: any) {
 
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
               searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
+
+              searchDepositCompleted: searchDepositCompleted,
 
               privateSale: true,
 
@@ -2137,6 +2155,7 @@ export default function Index({ params }: any) {
     searchStoreBankAccountNumber,
     searchBuyerBankAccountNumber,
     searchDepositName,
+    searchDepositCompleted,
     
 
 ]);
@@ -2435,6 +2454,8 @@ export default function Index({ params }: any) {
               searchStoreBankAccountNumber: searchStoreBankAccountNumber,
               searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
 
+              searchDepositCompleted: searchDepositCompleted,
+
               privateSale: true,
 
               fromDate: searchFromDate,
@@ -2467,6 +2488,25 @@ export default function Index({ params }: any) {
 
       //items.map((item, index ) => {
       items.map((item: any, index: number) => {
+        const buyerDepositName = String(
+          item?.buyer?.depositName ||
+            item?.buyer?.bankInfo?.accountHolder ||
+            item?.buyer?.bankInfo?.bankAccountHolder ||
+            ""
+        ).trim();
+
+        const buyerDepositBankName = String(
+          item?.buyer?.depositBankName ||
+            item?.buyer?.bankInfo?.bankName ||
+            ""
+        ).trim();
+
+        const buyerDepositBankAccountNumber = String(
+          item?.buyer?.depositBankAccountNumber ||
+            item?.buyer?.bankInfo?.accountNumber ||
+            item?.buyer?.bankInfo?.bankAccountNumber ||
+            ""
+        ).trim();
 
         formattedData.push({
             
@@ -2478,9 +2518,9 @@ export default function Index({ params }: any) {
             '구매자 아이디': item?.buyer?.nickname ? item.buyer?.nickname : item.nickname || '',
             '구매자 지갑주소': item.walletAddress || '',     
 
-            '구매자 예금주명': item.buyer?.depositName || '',
-            '구매자 은행명': item.buyer?.depositBankName || '',
-            '구매자 계좌번호': item.buyer?.depositBankAccountNumber || '',
+            '구매자 예금주명': buyerDepositName,
+            '구매자 은행명': buyerDepositBankName,
+            '구매자 계좌번호': buyerDepositBankAccountNumber,
 
             '판매자 지갑주소': item?.seller?.walletAddress || '',
             '판매자 예금주명': item?.seller?.bankInfo?.accountHolder || '',
@@ -2549,6 +2589,7 @@ export default function Index({ params }: any) {
     searchStoreBankAccountNumber: nextSearchStoreBankAccountNumber,
     searchBuyerBankAccountNumber: nextSearchBuyerBankAccountNumber,
     searchTradeId: nextSearchTradeId,
+    searchDepositCompleted: nextSearchDepositCompleted,
   }: {
     page?: number;
     limit?: number;
@@ -2560,6 +2601,7 @@ export default function Index({ params }: any) {
     searchStoreBankAccountNumber?: string;
     searchBuyerBankAccountNumber?: string;
     searchTradeId?: string;
+    searchDepositCompleted?: boolean;
   }) => {
     const query = new URLSearchParams({
       storecode: storecode ?? searchStorecode,
@@ -2572,6 +2614,7 @@ export default function Index({ params }: any) {
       searchStoreBankAccountNumber: nextSearchStoreBankAccountNumber ?? searchStoreBankAccountNumber,
       searchBuyerBankAccountNumber: nextSearchBuyerBankAccountNumber ?? searchBuyerBankAccountNumber,
       searchTradeId: nextSearchTradeId ?? searchTradeId,
+      searchDepositCompleted: String(nextSearchDepositCompleted ?? searchDepositCompleted),
     });
 
     return `/${params.lang}/admin/clearance-history?${query.toString()}`;
@@ -3333,6 +3376,26 @@ export default function Index({ params }: any) {
                   placeholder="판매자 통장번호"
                   className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none"
                 /> 
+              </div>
+
+              <div className="flex w-full flex-row items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                <input
+                  id="searchDepositCompleted"
+                  type="checkbox"
+                  checked={searchDepositCompleted}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSearchDepositCompleted(checked);
+                    router.push(buildHistoryQuery({
+                      searchDepositCompleted: checked,
+                      page: 1,
+                    }));
+                  }}
+                  className="h-4 w-4"
+                />
+                <label htmlFor="searchDepositCompleted" className="text-sm text-zinc-700">
+                  출금완료만 보기
+                </label>
               </div>
 
 

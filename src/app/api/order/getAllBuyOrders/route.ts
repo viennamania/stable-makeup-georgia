@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 
     searchStoreBankAccountNumber,
     searchBuyerBankAccountNumber,
+    searchDepositCompleted,
 
     fromDate,
     toDate,
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest) {
     userType,
 
   } = body;
+
+  const isSearchDepositCompleted =
+    searchDepositCompleted === true || searchDepositCompleted === "true";
 
   // searchStoreBankAccountNumber
   //console.log("getAllBuyOrders searchStoreBankAccountNumber", searchStoreBankAccountNumber);
@@ -91,6 +95,7 @@ export async function POST(request: NextRequest) {
     searchStoreBankAccountNumber: searchStoreBankAccountNumber || "",
 
     searchBuyerBankAccountNumber: searchBuyerBankAccountNumber || "",
+    searchDepositCompleted: isSearchDepositCompleted,
 
 
     fromDate: fromDate || "",
