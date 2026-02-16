@@ -1210,6 +1210,7 @@ export async function getAllStores(
           storecode: 1,
           storeName: 1,
           storeLogo: 1,
+          favoriteOnAndOff: 1,
           backgroundColor: 1,
    
 
@@ -1813,6 +1814,34 @@ export async function updateViewOnAndOff(
   const result = await collection.updateOne(
     { storecode: storecode },
     { $set: { viewOnAndOff: viewOnAndOff } }
+  );
+  if (result) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+// updateFavoriteOnAndOff
+export async function updateFavoriteOnAndOff(
+  {
+    storecode,
+    favoriteOnAndOff,
+  }: {
+    storecode: string;
+    favoriteOnAndOff: boolean;
+  }
+): Promise<boolean> {
+
+  console.log('updateFavoriteOnAndOff', storecode, favoriteOnAndOff);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const result = await collection.updateOne(
+    { storecode: storecode },
+    { $set: { favoriteOnAndOff: favoriteOnAndOff } }
   );
   if (result) {
     return true;
