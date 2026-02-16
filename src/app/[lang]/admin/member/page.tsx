@@ -1273,35 +1273,16 @@ export default function Index({ params }: any) {
     }
 
 
-    let generatedUserCode = userCode;
-    
-    if (userCode === '') {
-
-      
-      // generate user code
-      // start with lowercase alphabet
-      // lowercase alphabet and number
-      // generate random user code with 4 ~ 20 characters
-      
-      
-      //const randomString = (Math.random().toString(36).substring(2, 10)).toLowerCase();
-
-      // randomString is lowercase alphabet
-      let randomString = '';
-      const characters = 'abcdefghijklmnopqrstuvwxyz';
-      for (let i = 0; i < 8; i++) {
-        randomString += characters.charAt(Math.floor(Math.random() * characters.length));
-      }
-
-      const randomNumber = Math.floor(Math.random() * 1000);
-      const generatedUserCode = randomString + randomNumber;
-
+    const trimmedUserCode = userCode.trim();
+    if (!trimmedUserCode) {
+      toast.error('회원 아이디를 입력해주세요.');
+      return;
     }
 
   
     
 
-    //console.log('generatedUserCode', generatedUserCode);
+    //console.log('trimmedUserCode', trimmedUserCode);
 
 
     setInsertingUserCode(true);
@@ -1317,7 +1298,7 @@ export default function Index({ params }: any) {
 
 
           walletAddress: address,
-          userCode: generatedUserCode,
+          userCode: trimmedUserCode,
           userPassword: userPassword,
           userName: userName,
           userBankDepositName: userBankDepositName,
@@ -1327,15 +1308,15 @@ export default function Index({ params }: any) {
         }
       ),
     });
+    const data = await response.json();
+
     if (!response.ok) {
       setInsertingUserCode(false);
-      toast.error('회원 아이디 추가에 실패했습니다.');
+      toast.error(data?.error || '회원 아이디 추가에 실패했습니다.');
       return;
     }
 
     setInsertingUserCode(false);
-
-    const data = await response.json();
     
     //console.log('setBuyerWithoutWalletAddressByStorecode data', data);
 
@@ -2998,9 +2979,11 @@ export default function Index({ params }: any) {
               <button
                 disabled={insertingUserCode}
                 onClick={() => {
+                  const trimmedUserCode = userCode.trim();
+                  if (!trimmedUserCode) return toast.error('회원 아이디를 입력해주세요.');
                   if (userName.length < 2) return toast.error('회원 이름은 2자 이상이어야 합니다.');
                   if (userName.length > 10) return toast.error('회원 이름은 10자 이하여야 합니다.');
-                  if (confirm(`정말 ${userCode} (${userName})을 추가하시겠습니까?`)) {
+                  if (confirm(`정말 ${trimmedUserCode} (${userName})을 추가하시겠습니까?`)) {
                     insertBuyer();
                     closeAddModal();
                   }

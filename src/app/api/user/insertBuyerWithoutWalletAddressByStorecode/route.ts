@@ -61,8 +61,17 @@ export async function POST(request: NextRequest) {
 
   //console.log("body", body);
 
-  //const nickname = userCode; // trim left and right spaces
-  const nickname = userCode.trim();
+  const nickname = String(userCode || '').trim();
+
+  if (!storecode || !nickname) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: 'storecode와 회원 아이디는 필수입니다.',
+      },
+      { status: 400 }
+    );
+  }
 
   const mobile = "+821012345678";
   const password = "12345678";
@@ -96,17 +105,19 @@ export async function POST(request: NextRequest) {
     ///console.log("user", user);
 
     if (user) {
-      return NextResponse.json({
-        result: "User already exists",
-        walletAddress: user.walletAddress,
-        storecode: user?.storecode,
-        buyOrderStatus: user?.buyOrderStatus,
-        userType: user?.userType || '',
-
-        liveOnAndOff: user?.liveOnAndOff,
-
-        isBlack: user?.isBlack || false,
-      });
+      return NextResponse.json(
+        {
+          result: null,
+          error: '이미 같은 가맹점에 동일한 회원 아이디가 존재합니다.',
+          walletAddress: user.walletAddress,
+          storecode: user?.storecode,
+          buyOrderStatus: user?.buyOrderStatus,
+          userType: user?.userType || '',
+          liveOnAndOff: user?.liveOnAndOff,
+          isBlack: user?.isBlack || false,
+        },
+        { status: 409 }
+      );
     }
 
     
@@ -191,6 +202,16 @@ export async function POST(request: NextRequest) {
       userType: userType,
     });
 
+    if (!result || result?.error) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: result?.error || '회원 추가에 실패했습니다.',
+        },
+        { status: result?.error ? 409 : 500 }
+      );
+    }
+
     // return wallet address to user
 
     return NextResponse.json({
@@ -206,10 +227,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.log("error", error);
 
-    return NextResponse.json({
-      error,
-      
-    });
+    return NextResponse.json(
+      {
+        result: null,
+        error: '회원 추가 처리 중 오류가 발생했습니다.',
+      },
+      { status: 500 }
+    );
   }
 
 
