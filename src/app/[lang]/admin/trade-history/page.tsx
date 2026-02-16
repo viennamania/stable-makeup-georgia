@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, use, act, useMemo } from "react";
 
 import Image from "next/image";
 
@@ -181,6 +181,30 @@ const wallets = [
 
 ];
 
+const getKstDateString = () => {
+  const today = new Date();
+  today.setHours(today.getHours() + 9);
+  return today.toISOString().split('T')[0];
+};
+
+const parsePositiveNumber = (
+  value: string | number | null | undefined,
+  fallback: number
+) => {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+  return fallback;
+};
+
+const parseBooleanQuery = (value: string | null, fallback: boolean) => {
+  if (value === null) {
+    return fallback;
+  }
+  return value === 'true';
+};
+
 
 
 
@@ -189,17 +213,9 @@ const wallets = [
 export default function Index({ params }: any) {
 
   const searchParams = useSearchParams()!;
+  const searchParamsString = searchParams.toString();
  
   const wallet = searchParams.get('wallet');
-
-
-  // limit, page number params
-
-  const limit = searchParams.get('limit') || 20;
-  const page = searchParams.get('page') || 1;
-
-
-  const searchParamsStorecode = searchParams.get('storecode') || "";
   
 
   const contract = getContract({
@@ -799,70 +815,42 @@ export default function Index({ params }: any) {
 
 
 
-  const [searchStorecode, setSearchStorecode] = useState("");
-  useEffect(() => {
-    setSearchStorecode(searchParamsStorecode || "");
-  }, [searchParamsStorecode]);
-  
-  
+  const formattedDate = getKstDateString();
 
-  
- const [limitValue, setLimitValue] = useState(20);
-  useEffect(() => {
-    const limit = searchParams.get('limit') || 20;
-    setLimitValue(Number(limit));
-  }, [searchParams]);
+  const [searchStorecode, setSearchStorecode] = useState(
+    searchParams.get('storecode') || ""
+  );
 
+  const [limitValue, setLimitValue] = useState(
+    parsePositiveNumber(searchParams.get('limit'), 20)
+  );
 
-
-  const [pageValue, setPageValue] = useState(1);
-  useEffect(() => {
-    const page = searchParams.get('page') || 1;
-    setPageValue(Number(page));
-  }, [searchParams]);
-
-
-  const today = new Date();
-  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const [pageValue, setPageValue] = useState(
+    parsePositiveNumber(searchParams.get('page'), 1)
+  );
 
   // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
-  const [searchToDate, setSearchToDate] = useState(formattedDate);
+  const [searchFromDate, setSearchFormDate] = useState(
+    searchParams.get('fromDate') || formattedDate
+  );
+  const [searchToDate, setSearchToDate] = useState(
+    searchParams.get('toDate') || formattedDate
+  );
 
-
-
-
-
-
-
-
-
-
-
-  const [searchBuyer, setSearchBuyer] = useState("");
-  /*
-  useEffect(() => {
-    setSearchBuyer(searchParams.get('buyer') || "");
-  }, [searchParams]);
-  */
-
-
-
-  const [searchDepositName, setSearchDepositName] = useState("");
-
+  const [searchBuyer, setSearchBuyer] = useState(
+    searchParams.get('buyer') || ""
+  );
+  const [searchDepositName, setSearchDepositName] = useState(
+    searchParams.get('depositName') || ""
+  );
 
   // search store bank account number
-  const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] = useState("");
-  /*
-  useEffect(() => {
-    setSearchStoreBankAccountNumber(searchParams.get('storeBankAccountNumber') || "");
-  }, [searchParams]);
-  */
+  const [searchStoreBankAccountNumber, setSearchStoreBankAccountNumber] =
+    useState(searchParams.get('storeBankAccountNumber') || "");
 
-
-
-  const [manualConfirmPayment, setManualConfirmPayment] = useState(false);
+  const [manualConfirmPayment, setManualConfirmPayment] = useState(
+    parseBooleanQuery(searchParams.get('manualConfirmPayment'), false)
+  );
 
   // userTypeEmpty, userTypeA, userTypeB, userTypeC, userTypeD, userTypeE
 
@@ -873,19 +861,176 @@ export default function Index({ params }: any) {
   const [userTypeD, setUserTypeD] = useState(true);
  
 
-  const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(false);
-  const [searchOrderStatusCompleted, setSearchOrderStatusCompleted] = useState(true);
+  const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(
+    parseBooleanQuery(searchParams.get('searchOrderStatusCancelled'), false)
+  );
+  const [searchOrderStatusCompleted, setSearchOrderStatusCompleted] = useState(
+    parseBooleanQuery(searchParams.get('searchOrderStatusCompleted'), true)
+  );
   
 
-  const [searchMyOrders, setSearchMyOrders] = useState(false);
+  const [searchMyOrders, setSearchMyOrders] = useState(
+    parseBooleanQuery(searchParams.get('searchMyOrders'), false)
+  );
 
+  useEffect(() => {
+    setSearchStorecode(searchParams.get('storecode') || "");
+    setLimitValue(parsePositiveNumber(searchParams.get('limit'), 20));
+    setPageValue(parsePositiveNumber(searchParams.get('page'), 1));
+    setSearchFormDate(searchParams.get('fromDate') || formattedDate);
+    setSearchToDate(searchParams.get('toDate') || formattedDate);
+    setSearchBuyer(searchParams.get('buyer') || "");
+    setSearchDepositName(searchParams.get('depositName') || "");
+    setSearchStoreBankAccountNumber(searchParams.get('storeBankAccountNumber') || "");
+    setManualConfirmPayment(
+      parseBooleanQuery(searchParams.get('manualConfirmPayment'), false)
+    );
+    setSearchOrderStatusCancelled(
+      parseBooleanQuery(searchParams.get('searchOrderStatusCancelled'), false)
+    );
+    setSearchOrderStatusCompleted(
+      parseBooleanQuery(searchParams.get('searchOrderStatusCompleted'), true)
+    );
+    setSearchMyOrders(parseBooleanQuery(searchParams.get('searchMyOrders'), false));
+  }, [searchParamsString, formattedDate]);
 
+  const buildTradeHistoryQuery = ({
+    storecode = searchStorecode,
+    limit = limitValue,
+    page = pageValue,
+    fromDate = searchFromDate,
+    toDate = searchToDate,
+    buyer = searchBuyer,
+    depositName = searchDepositName,
+    storeBankAccountNumber = searchStoreBankAccountNumber,
+    manualConfirm = manualConfirmPayment,
+    orderStatusCancelled = searchOrderStatusCancelled,
+    orderStatusCompleted = searchOrderStatusCompleted,
+    myOrders = searchMyOrders,
+  }: {
+    storecode?: string;
+    limit?: number;
+    page?: number;
+    fromDate?: string;
+    toDate?: string;
+    buyer?: string;
+    depositName?: string;
+    storeBankAccountNumber?: string;
+    manualConfirm?: boolean;
+    orderStatusCancelled?: boolean;
+    orderStatusCompleted?: boolean;
+    myOrders?: boolean;
+  } = {}) => {
+    const nextParams = new URLSearchParams();
 
+    const normalizedStorecode = String(storecode || "").trim();
+    const normalizedBuyer = String(buyer || "").trim();
+    const normalizedDepositName = String(depositName || "").trim();
+    const normalizedStoreBankAccountNumber = String(
+      storeBankAccountNumber || ""
+    ).trim();
 
+    if (normalizedStorecode) {
+      nextParams.set('storecode', normalizedStorecode);
+    }
+
+    nextParams.set('limit', String(parsePositiveNumber(limit, 20)));
+    nextParams.set('page', String(parsePositiveNumber(page, 1)));
+    nextParams.set('fromDate', fromDate || formattedDate);
+    nextParams.set('toDate', toDate || formattedDate);
+    nextParams.set('manualConfirmPayment', String(Boolean(manualConfirm)));
+    nextParams.set(
+      'searchOrderStatusCancelled',
+      String(Boolean(orderStatusCancelled))
+    );
+    nextParams.set(
+      'searchOrderStatusCompleted',
+      String(Boolean(orderStatusCompleted))
+    );
+    nextParams.set('searchMyOrders', String(Boolean(myOrders)));
+
+    if (normalizedBuyer) {
+      nextParams.set('buyer', normalizedBuyer);
+    }
+    if (normalizedDepositName) {
+      nextParams.set('depositName', normalizedDepositName);
+    }
+    if (normalizedStoreBankAccountNumber) {
+      nextParams.set('storeBankAccountNumber', normalizedStoreBankAccountNumber);
+    }
+
+    return nextParams.toString();
+  };
+
+  const pushTradeHistoryWithFilters = ({
+    storecode,
+    limit,
+    page,
+    fromDate,
+    toDate,
+    buyer,
+    depositName,
+    storeBankAccountNumber,
+    manualConfirm,
+    orderStatusCancelled,
+    orderStatusCompleted,
+    myOrders,
+  }: {
+    storecode?: string;
+    limit?: number;
+    page?: number;
+    fromDate?: string;
+    toDate?: string;
+    buyer?: string;
+    depositName?: string;
+    storeBankAccountNumber?: string;
+    manualConfirm?: boolean;
+    orderStatusCancelled?: boolean;
+    orderStatusCompleted?: boolean;
+    myOrders?: boolean;
+  } = {}) => {
+    const nextQuery = buildTradeHistoryQuery({
+      storecode,
+      limit,
+      page,
+      fromDate,
+      toDate,
+      buyer,
+      depositName,
+      storeBankAccountNumber,
+      manualConfirm,
+      orderStatusCancelled,
+      orderStatusCompleted,
+      myOrders,
+    });
+
+    router.push(`/${params.lang}/admin/trade-history?${nextQuery}`);
+  };
 
   const [totalCount, setTotalCount] = useState(0);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(Number(totalCount) / Math.max(1, Number(limitValue)))
+  );
+  const currentPage = Math.min(Math.max(1, pageValue), totalPages);
+
+  const paginationPages = useMemo(() => {
+    const visibleCount = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(visibleCount / 2));
+    let endPage = Math.min(totalPages, startPage + visibleCount - 1);
+
+    if (endPage - startPage + 1 < visibleCount) {
+      startPage = Math.max(1, endPage - visibleCount + 1);
+    }
+
+    return Array.from(
+      { length: endPage - startPage + 1 },
+      (_, index) => startPage + index
+    );
+  }, [currentPage, totalPages]);
 
 
 
@@ -2672,6 +2817,36 @@ const fetchBuyOrders = async () => {
 
       //items.map((item, index ) => {
       items.map((item: any, index: number) => {
+        const sellerBankInfo =
+          item?.userType === 'AAA'
+            ? item?.store?.bankInfoAAA
+            : item?.userType === 'BBB'
+            ? item?.store?.bankInfoBBB
+            : item?.userType === 'CCC'
+            ? item?.store?.bankInfoCCC
+            : item?.userType === 'DDD'
+            ? item?.store?.bankInfoDDD
+            : item?.store?.bankInfo || {};
+
+        const sellerBankName = String(sellerBankInfo?.bankName || "").trim();
+        const sellerBankAccountNumber = String(
+          sellerBankInfo?.accountNumber ||
+            sellerBankInfo?.bankAccountNumber ||
+            ""
+        ).trim();
+        const sellerBankAccountHolder = String(
+          sellerBankInfo?.accountHolder ||
+            sellerBankInfo?.bankAccountHolder ||
+            ""
+        ).trim();
+
+        const sellerBankAccountDisplay = [
+          sellerBankName,
+          sellerBankAccountNumber,
+          sellerBankAccountHolder,
+        ]
+          .filter(Boolean)
+          .join("\n");
             
         formattedData.push({
             
@@ -2680,7 +2855,7 @@ const fetchBuyOrders = async () => {
             '주문일시': item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) : '',
             '구매자 아이디': item.nickname,
             '구매자 입금자명': item.buyer.depositName || '',
-            '판매자 은행 계좌': item.store.bankInfo.bankName + ' ' + item.store.bankInfo.bankAccountNumber + ' ' + item.store.bankInfo.bankAccountHolder,
+            '판매자 은행 계좌': sellerBankAccountDisplay,
             '구매 금액': item.krwAmount || 0,
             '테더 수량': item.usdtAmount || 0,
             '구매자 지갑주소': item.walletAddress || '',
@@ -3287,7 +3462,13 @@ const fetchBuyOrders = async () => {
 
                   // storecode parameter is passed to fetchBuyOrders
                   onChange={(e) => {
-                    router.push('/' + params.lang + '/admin/trade-history?storecode=' + e.target.value);
+                    const nextStorecode = e.target.value;
+                    setSearchStorecode(nextStorecode);
+                    setPageValue(1);
+                    pushTradeHistoryWithFilters({
+                      storecode: nextStorecode,
+                      page: 1,
+                    });
                   }}
 
 
@@ -3357,11 +3538,9 @@ const fetchBuyOrders = async () => {
                   {/* 오늘, 어제 */}
                   <button
                     onClick={() => {
-                      // korea time
-                      const today = new Date();
-                      today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-                      setSearchFormDate(today.toISOString().split("T")[0]);
-                      setSearchToDate(today.toISOString().split("T")[0]);
+                      const today = getKstDateString();
+                      setSearchFormDate(today);
+                      setSearchToDate(today);
                     }}
                     className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
                   >
@@ -3369,10 +3548,8 @@ const fetchBuyOrders = async () => {
                   </button>
                   <button
                     onClick={() => {
-                      // korea time yesterday
-                      const today = new Date();
-                      today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-                      const yesterday = new Date(today);
+                      const yesterday = new Date();
+                      yesterday.setHours(yesterday.getHours() + 9);
                       yesterday.setDate(yesterday.getDate() - 1);
                       setSearchFormDate(yesterday.toISOString().split("T")[0]);
                       setSearchToDate(yesterday.toISOString().split("T")[0]);
@@ -3439,25 +3616,15 @@ const fetchBuyOrders = async () => {
                 <div className="flex w-full flex-row items-center gap-2 xl:w-auto">
                   <button
                     onClick={() => {
-                      setPageValue(1);
-                      
-                      fetchBuyOrders();
+                      const nextPage = 1;
+                      setPageValue(nextPage);
+                      pushTradeHistoryWithFilters({
+                        page: nextPage,
+                      });
 
-                      /*
-                      router.push('/' + params.lang + '/admin/trade-history?storecode=' + searchStorecode
-                        + '&page=' + pageValue
-                        + '&limit=' + limitValue
-                        + '&fromDate=' + searchFromDate
-                        + '&toDate=' + searchToDate
-                        + '&buyer=' + searchBuyer
-                        + '&depositName=' + searchDepositName
-                        + '&storeBankAccountNumber=' + searchStoreBankAccountNumber
-                      );
-                      */
-
-
-
-                      ///getTradeSummary();
+                      if (pageValue === nextPage) {
+                        fetchBuyOrders();
+                      }
                     }}
                     //className="bg-[#3167b4] text-white px-4 py-2 rounded-lg w-full"
                     className={`flex h-9 w-full items-center justify-center rounded-md px-3 text-sm text-white transition xl:w-auto ${
@@ -3512,7 +3679,15 @@ const fetchBuyOrders = async () => {
               <input
                 type="checkbox"
                 checked={manualConfirmPayment}
-                onChange={(e) => setManualConfirmPayment(e.target.checked)}
+                onChange={(e) => {
+                  const nextValue = e.target.checked;
+                  setManualConfirmPayment(nextValue);
+                  setPageValue(1);
+                  pushTradeHistoryWithFilters({
+                    manualConfirm: nextValue,
+                    page: 1,
+                  });
+                }}
                 className="w-4 h-4"
                 id="manualConfirmPaymentCheckbox"
               />
@@ -3532,9 +3707,13 @@ const fetchBuyOrders = async () => {
                   type="checkbox"
                   checked={searchOrderStatusCancelled}
                   onChange={(e) => {
-                    setSearchOrderStatusCancelled(e.target.checked);
+                    const nextValue = e.target.checked;
+                    setSearchOrderStatusCancelled(nextValue);
                     setPageValue(1);
-                    //fetchBuyOrders();
+                    pushTradeHistoryWithFilters({
+                      orderStatusCancelled: nextValue,
+                      page: 1,
+                    });
                   }}
                   className="h-4 w-4"
                 />
@@ -3545,10 +3724,13 @@ const fetchBuyOrders = async () => {
                   type="checkbox"
                   checked={searchOrderStatusCompleted}
                   onChange={(e) => {
-                    setSearchOrderStatusCompleted(e.target.checked);
+                    const nextValue = e.target.checked;
+                    setSearchOrderStatusCompleted(nextValue);
                     setPageValue(1);
-                    
-                    //fetchBuyOrders();
+                    pushTradeHistoryWithFilters({
+                      orderStatusCompleted: nextValue,
+                      page: 1,
+                    });
                   }}
                   className="h-4 w-4"
                 />
@@ -6414,82 +6596,139 @@ const fetchBuyOrders = async () => {
 
       
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white/90 p-2 shadow-sm">
-
-
-            <div className="flex flex-row items-center gap-2">
+          <div className="mt-4 flex w-full flex-col gap-3 rounded-xl border border-zinc-200 bg-white/95 p-3 shadow-sm md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-zinc-600">페이지당</span>
               <select
-                value={limit}
-                onChange={(e) =>
-                  
-                  router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(e.target.value)}&page=${page}`)
-                }
+                value={limitValue}
+                onChange={(e) => {
+                  const nextLimit = Number(e.target.value);
+                  const nextTotalPages = Math.max(
+                    1,
+                    Math.ceil(Number(totalCount) / Math.max(1, nextLimit))
+                  );
+                  const nextPage = Math.min(currentPage, nextTotalPages);
 
-                className="h-8 rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-700 outline-none transition focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
+                  setLimitValue(nextLimit);
+                  setPageValue(nextPage);
+                  pushTradeHistoryWithFilters({
+                    limit: nextLimit,
+                    page: nextPage,
+                  });
+                }}
+                className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 outline-none transition focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
               </select>
+              <span className="ml-1 text-xs text-zinc-500">
+                총 {Number(totalCount).toLocaleString()}건
+              </span>
             </div>
 
-            {/* 처음으로 */}
-            <button
-              disabled={Number(page) <= 1}
-              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) <= 1 ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
-              onClick={() => {
-                router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=1`)
-              }}
-            >
-              처음으로
-            </button>
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <button
+                disabled={currentPage <= 1}
+                className={`h-9 rounded-lg border px-3 text-sm font-medium transition ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400'
+                    : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
+                }`}
+                onClick={() => {
+                  if (currentPage <= 1) {
+                    return;
+                  }
+                  const nextPage = 1;
+                  setPageValue(nextPage);
+                  pushTradeHistoryWithFilters({ page: nextPage });
+                }}
+              >
+                {'<<'}
+              </button>
 
+              <button
+                disabled={currentPage <= 1}
+                className={`h-9 rounded-lg border px-3 text-sm font-medium transition ${
+                  currentPage <= 1
+                    ? 'cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400'
+                    : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
+                }`}
+                onClick={() => {
+                  if (currentPage <= 1) {
+                    return;
+                  }
+                  const nextPage = currentPage - 1;
+                  setPageValue(nextPage);
+                  pushTradeHistoryWithFilters({ page: nextPage });
+                }}
+              >
+                {'<'}
+              </button>
 
-            <button
-              disabled={Number(page) <= 1}
-              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) <= 1 ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) - 1}`)
+              {paginationPages.map((number) => (
+                <button
+                  key={`trade-history-page-${number}`}
+                  onClick={() => {
+                    if (number === currentPage) {
+                      return;
+                    }
+                    setPageValue(number);
+                    pushTradeHistoryWithFilters({ page: number });
+                  }}
+                  className={`h-9 min-w-9 rounded-lg border px-3 text-sm font-semibold transition ${
+                    number === currentPage
+                      ? 'border-[#3167b4] bg-[#3167b4] text-white shadow-sm'
+                      : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
+                  }`}
+                >
+                  {number}
+                </button>
+              ))}
 
+              <button
+                disabled={currentPage >= totalPages}
+                className={`h-9 rounded-lg border px-3 text-sm font-medium transition ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400'
+                    : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
+                }`}
+                onClick={() => {
+                  if (currentPage >= totalPages) {
+                    return;
+                  }
+                  const nextPage = currentPage + 1;
+                  setPageValue(nextPage);
+                  pushTradeHistoryWithFilters({ page: nextPage });
+                }}
+              >
+                {'>'}
+              </button>
 
-              }}
-            >
-              이전
-            </button>
+              <button
+                disabled={currentPage >= totalPages}
+                className={`h-9 rounded-lg border px-3 text-sm font-medium transition ${
+                  currentPage >= totalPages
+                    ? 'cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400'
+                    : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400 hover:bg-zinc-50'
+                }`}
+                onClick={() => {
+                  if (currentPage >= totalPages) {
+                    return;
+                  }
+                  const nextPage = totalPages;
+                  setPageValue(nextPage);
+                  pushTradeHistoryWithFilters({ page: nextPage });
+                }}
+              >
+                {'>>'}
+              </button>
 
-
-            <span className="px-2 text-sm text-zinc-500">
-              {page} / {Math.ceil(Number(totalCount) / Number(limit))}
-            </span>
-
-
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Number(page) + 1}`)
-
-              }}
-            >
-              다음
-            </button>
-
-            {/* 마지막으로 */}
-            <button
-              disabled={Number(page) >= Math.ceil(Number(totalCount) / Number(limit))}
-              className={`h-8 rounded-md px-3 text-sm text-white transition ${Number(page) >= Math.ceil(Number(totalCount) / Number(limit)) ? 'bg-gray-400' : 'bg-[#3167b4] hover:bg-[#2b5a9e]'}`}
-              onClick={() => {
-                
-                router.push(`/${params.lang}/admin/trade-history?storecode=${searchStorecode}&limit=${Number(limit)}&page=${Math.ceil(Number(totalCount) / Number(limit))}`)
-
-              }}
-            >
-              마지막으로
-            </button>
-
+              <span className="ml-1 rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-600">
+                {currentPage} / {totalPages}
+              </span>
+            </div>
           </div>
 
 
