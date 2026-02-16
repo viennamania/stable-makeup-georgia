@@ -152,6 +152,7 @@ export async function getStoreByStorecode(
         adminWalletAddress: 1,
         settlementWalletAddress: 1,
         privateSellerWalletAddress: 1,
+        privateSaleWalletAddress: 1,
         agentFeePercent: 1,
         agentFeeWalletAddress: 1,
 
@@ -1211,6 +1212,7 @@ export async function getAllStores(
           storeName: 1,
           storeLogo: 1,
           favoriteOnAndOff: 1,
+          clearanceSortOrder: 1,
           backgroundColor: 1,
    
 
@@ -1848,6 +1850,76 @@ export async function updateFavoriteOnAndOff(
   } else {
     return false;
   }
+}
+
+export async function updateClearanceSortOrders(
+  {
+    orders,
+  }: {
+    orders: {
+      storecode: string;
+      clearanceSortOrder: number;
+    }[];
+  }
+): Promise<boolean> {
+  if (!Array.isArray(orders) || orders.length === 0) {
+    return false;
+  }
+
+  const normalizedOrderMap = new Map<string, number>();
+  for (const order of orders) {
+    const storecode = String(order?.storecode || "").trim();
+    const clearanceSortOrder = Number(order?.clearanceSortOrder);
+    if (
+      storecode &&
+      Number.isFinite(clearanceSortOrder) &&
+      clearanceSortOrder > 0
+    ) {
+      normalizedOrderMap.set(storecode, clearanceSortOrder);
+    }
+  }
+
+  const normalizedOrders = Array.from(normalizedOrderMap.entries()).map(
+    ([storecode, clearanceSortOrder]) => ({
+      storecode,
+      clearanceSortOrder,
+    })
+  );
+
+  if (normalizedOrders.length === 0) {
+    return false;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+
+  const operations = normalizedOrders.map((order) => ({
+    updateOne: {
+      filter: { storecode: order.storecode },
+      update: { $set: { clearanceSortOrder: order.clearanceSortOrder } },
+    },
+  }));
+
+  const result: any = await collection.bulkWrite(operations, { ordered: false });
+
+  if (typeof result?.acknowledged === "boolean") {
+    return result.acknowledged;
+  }
+
+  if (typeof result?.result?.ok === "number") {
+    return result.result.ok === 1;
+  }
+
+  if (typeof result?.matchedCount === "number") {
+    return result.matchedCount >= 0;
+  }
+
+  if (typeof result?.modifiedCount === "number") {
+    return result.modifiedCount >= 0;
+  }
+
+  // bulkWrite가 예외 없이 종료되면 성공으로 간주
+  return true;
 }
 
 

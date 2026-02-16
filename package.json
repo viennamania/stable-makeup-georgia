@@ -2,10 +2,17 @@
 	"name": "next-starter-v5",
 	"version": "0.1.0",
 	"private": true,
+	"engines": {
+		"node": ">=18.17 <22"
+	},
 	"scripts": {
-		"dev": "next dev",
-		"build": "next build",
-		"start": "next start",
+		"check:node": "node -e \"const major=Number(process.versions.node.split('.')[0]); if(!Number.isFinite(major)||major<18||major>=22){console.error('Unsupported Node.js version: '+process.version+'. Use Node 20 (recommended).'); process.exit(1);}\"",
+		"clean:next": "node -e \"const fs=require('fs'); fs.rmSync('.next', { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });\"",
+		"dev": "pnpm run check:node && next dev",
+		"dev:clean": "pnpm run clean:next && pnpm run dev",
+		"build": "pnpm run check:node && next build",
+		"build:clean": "pnpm run clean:next && pnpm run build",
+		"start": "pnpm run check:node && next start",
 		"lint": "next lint"
 	},
 	"dependencies": {

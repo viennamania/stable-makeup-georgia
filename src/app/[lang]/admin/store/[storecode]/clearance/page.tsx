@@ -172,7 +172,8 @@ export default function Index({ params }: any) {
   const queryFromDate = searchParams.get('fromDate');
   const queryToDate = searchParams.get('toDate');
 
-  const storecode = params?.center;
+  const storecode = params?.storecode || params?.center || "";
+  const normalizedStorecode = String(storecode || "").trim();
   const isEmbedded = Boolean(params?.embedded);
 
   console.log("storecode", storecode);
@@ -726,12 +727,12 @@ export default function Index({ params }: any) {
       }
 
       if (isEmbedded) {
-        nextParams.set('storecode', params.storecode);
+        nextParams.set('storecode', storecode);
         router.push(`/${params.lang}/admin/store/clearance-management?${nextParams.toString()}`);
         return;
       }
 
-      router.push(`/${params.lang}/admin/store/${params.storecode}/clearance?${nextParams.toString()}`);
+      router.push(`/${params.lang}/admin/store/${storecode}/clearance?${nextParams.toString()}`);
     };
 
     const moveToPage = (targetPage: number, nextLimit = currentLimit) => {
@@ -753,6 +754,16 @@ export default function Index({ params }: any) {
       });
     };
 
+    const applyAllDateSearch = () => {
+      setSearchFormDate("");
+      setSearchToDate("");
+      pushClearanceParams({
+        nextPage: 1,
+        nextFromDate: "",
+        nextToDate: "",
+      });
+    };
+
     const todayDate = getKstToday();
     const yesterdayDate = getKstDateByOffset(-1);
 
@@ -762,56 +773,53 @@ export default function Index({ params }: any) {
 
 
     const [loadingFetchBuyOrders, setLoadingFetchBuyOrders] = useState(false);
+    const [hasFetchedBuyOrdersOnce, setHasFetchedBuyOrdersOnce] = useState(false);
 
     const fetchBuyOrders = async () => {
 
-      if (!params?.storecode) {
+      if (!storecode) {
         return;
       }
 
       setLoadingFetchBuyOrders(true);
 
-      // api call
-      //const response = await fetch('/api/order/getAllBuyOrders', {
-      const response = await fetch('/api/order/getAllCollectOrdersForSeller', {
+      try {
+        // api call
+        //const response = await fetch('/api/order/getAllBuyOrders', {
+        const response = await fetch('/api/order/getAllCollectOrdersForSeller', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            lang: params.lang,
+            storecode: storecode,
+            limit: Number(limitValue),
+            page: Number(pageValue),
+            walletAddress: address || "",
+            searchMyOrders: address ? searchMyOrders : false,
+            privateSale: true,
+            fromDate: searchFromDate,
+            toDate: searchToDate,
+          })
+        });
 
+        const data = await response.json();
 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          storecode: params.storecode,
-          limit: Number(limitValue),
-          page: Number(pageValue),
-          walletAddress: address || "",
-          searchMyOrders: address ? searchMyOrders : false,
-          privateSale: true,
-          fromDate: searchFromDate,
-          toDate: searchToDate,
-        })
-      });
+        if (data.result) {
+          setBuyOrders(data.result.orders);
+          setTotalCount(data.result.totalCount);
 
-      const data = await response.json();
-
-      
-      //console.log('data', data);
-
-
-
-      if (data.result) {
-        setBuyOrders(data.result.orders);
-        setTotalCount(data.result.totalCount);
-
-        setTotalClearanceCount(data.result.totalClearanceCount);
-        setTotalClearanceAmount(data.result.totalClearanceAmount);
-        setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-        
-
+          setTotalClearanceCount(data.result.totalClearanceCount);
+          setTotalClearanceAmount(data.result.totalClearanceAmount);
+          setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+        }
+      } catch (error) {
+        console.error('fetchBuyOrders error', error);
+      } finally {
+        setLoadingFetchBuyOrders(false);
+        setHasFetchedBuyOrdersOnce(true);
       }
-
-      setLoadingFetchBuyOrders(false);
 
     };
 
@@ -820,7 +828,7 @@ export default function Index({ params }: any) {
 
     useEffect(() => {
 
-        if (!params?.storecode) {
+        if (!storecode) {
           return;
         }
         
@@ -838,7 +846,7 @@ export default function Index({ params }: any) {
         return () => clearInterval(interval);
 
 
-    }, [address, searchMyOrders, params.lang, params.storecode, limitValue, pageValue, searchFromDate, searchToDate]);
+    }, [address, searchMyOrders, params.lang, storecode, limitValue, pageValue, searchFromDate, searchToDate]);
 
 
 
@@ -957,7 +965,7 @@ export default function Index({ params }: any) {
         },
         body: JSON.stringify({
           lang: params.lang,
-          storecode: params.storecode,
+          storecode: storecode,
 
           ////////////walletAddress: address,
           //walletAddress: store.sellerWalletAddress,
@@ -1022,7 +1030,7 @@ export default function Index({ params }: any) {
             lang: params.lang,
             limit: Number(limitValue),
             page: Number(pageValue),
-            storecode: params.storecode,
+            storecode: storecode,
             //storecode: "admin",
 
             walletAddress: address,
@@ -1148,7 +1156,7 @@ export default function Index({ params }: any) {
         },
         body: JSON.stringify({
           orderId: orderId,
-          storecode: params.storecode,
+          storecode: storecode,
           walletAddress: address,
           cancelTradeReason: "cancelled by seller",
         })
@@ -1189,7 +1197,7 @@ export default function Index({ params }: any) {
               lang: params.lang,
               limit: Number(limitValue),
               page: Number(pageValue),
-              storecode: params.storecode,
+              storecode: storecode,
               //storecode: "admin",
               walletAddress: address,
               searchMyOrders: searchMyOrders,
@@ -1348,7 +1356,7 @@ export default function Index({ params }: any) {
       },
       body: JSON.stringify({
         lang: params.lang,
-        chain: params.storecode,
+        chain: storecode,
         orderId: orderId,
         paymentAmount: paymentAmount,
       })
@@ -1476,7 +1484,7 @@ export default function Index({ params }: any) {
         lang: params.lang,
         limit: Number(limitValue),
         page: Number(pageValue),
-        storecode: params.storecode,
+        storecode: storecode,
         walletAddress: address,
         searchMyOrders: searchMyOrders,
         privateSale: true,
@@ -1549,7 +1557,7 @@ export default function Index({ params }: any) {
         },
         body: JSON.stringify(
             {
-            storecode: params.storecode,
+            storecode: normalizedStorecode,
             }
         ),
         });
@@ -1586,7 +1594,7 @@ export default function Index({ params }: any) {
 
         fetchStore();
 
-    } , [params.storecode]);
+    } , [normalizedStorecode]);
 
 
 
@@ -1668,49 +1676,94 @@ export default function Index({ params }: any) {
 
 
     const [sellersBalance, setSellersBalance] = useState([] as any[]);
+    const [loadingSellersBalance, setLoadingSellersBalance] = useState(false);
+    const [refreshingSellersBalance, setRefreshingSellersBalance] = useState(false);
+    const sellersBalanceStorecode = String(
+      store?.storecode || normalizedStorecode || ""
+    ).trim();
     
     useEffect(() => {
+      let mounted = true;
 
-      const fetchSellersBalance = async () => {
+      if (!sellersBalanceStorecode) {
+        setSellersBalance([]);
+        setLoadingSellersBalance(false);
+        setRefreshingSellersBalance(false);
+        return;
+      }
 
-        if (!params.storecode) {
-          return;
+      const fetchSellersBalance = async ({ silent = false }: { silent?: boolean } = {}) => {
+        if (!silent) {
+          setLoadingSellersBalance(true);
+        } else {
+          setRefreshingSellersBalance(true);
         }
 
         try {
           const response = await fetch('/api/user/getAllStoreSellersForBalance', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify(
               {
-                storecode: params.storecode,
+                storecode: sellersBalanceStorecode,
                 limit: 100,
                 page: 1,
               }
             )
           });
 
+          if (!response.ok) {
+            throw new Error(`Failed to fetch sellers balance: ${response.status}`);
+          }
+
           const data = await response.json();
+          if (!mounted) {
+            return;
+          }
+
           if (data.result) {
-            setSellersBalance(data.result.users);
+            setSellersBalance(data.result.users || []);
           } else {
+            if (!silent) {
+              setSellersBalance([]);
+            }
             console.error('Error fetching sellers balance');
           }
         } catch (error) {
+          if (!mounted) {
+            return;
+          }
+          if (!silent) {
+            setSellersBalance([]);
+          }
           console.error('Error fetching sellers balance:', error);
+        } finally {
+          if (!mounted) {
+            return;
+          }
+          if (!silent) {
+            setLoadingSellersBalance(false);
+          } else {
+            setRefreshingSellersBalance(false);
+          }
         }
-      };    
+      };
 
-      fetchSellersBalance();
+      setSellersBalance([]);
+      fetchSellersBalance({ silent: false });
 
-      // interval to fetch every 10 seconds
+      // interval to fetch every 10 seconds without replacing current UI
       const interval = setInterval(() => {
-        fetchSellersBalance();
+        fetchSellersBalance({ silent: true });
       }, 10000);
-      return () => clearInterval(interval);
-    }, [params.storecode]);
+
+      return () => {
+        mounted = false;
+        clearInterval(interval);
+      };
+    }, [sellersBalanceStorecode]);
 
     const buyerBankOptions = [
       store?.bankInfo,
@@ -2743,6 +2796,17 @@ export default function Index({ params }: any) {
                         >
                           어제
                         </button>
+                        <button
+                          type="button"
+                          onClick={applyAllDateSearch}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                            !searchFromDate && !searchToDate
+                              ? 'border-zinc-900 bg-zinc-900 text-white'
+                              : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
+                          }`}
+                        >
+                          전체
+                        </button>
                       </div>
                     </div>
 
@@ -2821,15 +2885,31 @@ export default function Index({ params }: any) {
 
    
 
-                {sellersBalance?.length > 0 && (
-                  <div className="mt-4 w-full rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm">
-                    <div className="mb-2 text-sm font-semibold text-zinc-700">
-                      판매자 지갑 잔고 현황
+                <div className="mt-4 w-full rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm">
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-700">
+                    <span>판매자 지갑 잔고 현황</span>
+                    {refreshingSellersBalance && sellersBalance?.length > 0 && (
+                      <span className="text-[11px] font-medium text-zinc-400">
+                        갱신중...
+                      </span>
+                    )}
+                  </div>
+
+                  {loadingSellersBalance && sellersBalance?.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-500">
+                      판매자 지갑 잔고를 불러오는 중입니다...
                     </div>
+                  )}
 
+                  {!loadingSellersBalance && sellersBalance?.length === 0 && (
+                    <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-500">
+                      표시할 판매자 지갑 잔고가 없습니다.
+                    </div>
+                  )}
+
+                  {sellersBalance?.length > 0 && (
                     <div className="flex w-full flex-wrap items-stretch justify-start gap-2">
-
-                    {sellersBalance?.map((seller, index) => (
+                    {sellersBalance.map((seller, index) => (
                       <div
                         key={index}
                         className="relative flex min-w-[300px] flex-row items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
@@ -2894,7 +2974,13 @@ export default function Index({ params }: any) {
                       
                     ))}
                     </div>
+                  )}
 
+                </div>
+
+                {hasFetchedBuyOrdersOnce && buyOrders.length === 0 && (
+                  <div className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                    오늘 날짜 기준으로 조회된 청산내역이 없습니다. 날짜를 변경하거나 전체 조회를 선택해 주세요.
                   </div>
                 )}
 
