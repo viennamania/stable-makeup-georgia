@@ -4389,6 +4389,9 @@ export async function buyOrderConfirmPayment(data: any) {
       } }
     );
 
+
+    
+
     if (order && order.storecode) {
 
 
@@ -9673,6 +9676,7 @@ export async function checkBuyOrderMatchDeposit(
   buyer: any;
   seller: any;
 } | null> {
+  
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
   
@@ -9701,6 +9705,7 @@ export async function checkBuyOrderMatchDeposit(
   if (result) {
 
     // update check bankTransferMatched to true
+    /*
     const updateResult = await collection.updateOne(
       { tradeId: result.tradeId },
       { $set: { 'buyer.bankTransferMatched': true } }
@@ -9709,6 +9714,7 @@ export async function checkBuyOrderMatchDeposit(
     if (updateResult.modifiedCount !== 1) {
       console.log('checkBuyOrderMatchDeposit: failed to update bankTransferMatched for tradeId: ' + result.tradeId);
     }
+    */
 
 
     return {
