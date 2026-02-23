@@ -134,6 +134,8 @@ export async function POST(request: NextRequest) {
 
     let sellerMemo = "";
 
+    let signerAddress = "";
+
     // 프라이빗 세일인 경우, 판매자의 은행 정보가 있는지 확인한다.
     // 프라이빗 세일이 아닌 경우, 판매자의 은행 정보가 있는지 확인한다.
     if (buyorder.privateSale) {
@@ -155,7 +157,10 @@ export async function POST(request: NextRequest) {
       ) {
         console.log("error");
         console.log("userSeller is null");
-        console.log("userSeller", userSeller);
+        //console.log("userSeller", userSeller);
+
+
+
 
         // delete order
         //await collectionOrders.deleteOne({ _id: order._id });
@@ -189,10 +194,11 @@ export async function POST(request: NextRequest) {
 
       sellerMemo = userSeller?.seller?.bankInfo?.bankName + " " + userSeller?.seller?.bankInfo?.accountNumber + " " + userSeller?.seller?.bankInfo?.accountHolder;
 
-
+      signerAddress = userSeller?.signerAddress || "";
 
 
     } else {
+
 
       sellerStorecode = "admin";
     
@@ -249,6 +255,7 @@ export async function POST(request: NextRequest) {
 
       sellerMemo = userSeller?.seller?.bankInfo?.bankName + " " + userSeller?.seller?.bankInfo?.accountNumber + " " + userSeller?.seller?.bankInfo?.accountHolder;
 
+      signerAddress = userSeller?.signerAddress || "";
     } 
 
 
@@ -261,12 +268,15 @@ export async function POST(request: NextRequest) {
     "sellerStorecode":"admin",
     "sellerMemo":""}
     */
+
+
   
 
     const result = await acceptBuyOrder({
       storecode: storecode,
       orderId: buyorder._id,
       sellerWalletAddress: sellerWalletAddress,
+      signerAddress: signerAddress,
       sellerStorecode: sellerStorecode,
       sellerMemo: sellerMemo,
 

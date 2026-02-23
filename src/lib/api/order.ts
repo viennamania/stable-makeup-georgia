@@ -4111,6 +4111,7 @@ export async function acceptBuyOrder(data: any) {
       
       seller: {
         walletAddress: data.sellerWalletAddress,
+        signerAddress: data.signerAddress,
 
         /*
         nickname: data.sellerNickname,

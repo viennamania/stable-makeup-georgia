@@ -45,6 +45,7 @@ export interface UserProps {
   escrowWalletPrivateKey: string,
 
   walletAddress: string,
+  signerAddress: string,
   walletPrivateKey: string,
   storecode: string,
   seller: any,
