@@ -95,6 +95,8 @@ interface BuyOrder {
 
   escrowTransactionHash: string;
   transactionHash: string;
+  queueId?: string | null;
+  minedAt?: string;
 
   storecode: string;
   store: any;
@@ -106,6 +108,23 @@ interface BuyOrder {
   autoConfirmPayment: boolean;
 
   privateSale: boolean;
+}
+
+interface QueueTransactionCheckResult {
+  orderId: string;
+  status: string;
+  success: boolean;
+  updated: boolean;
+  message: string;
+  queueId?: string;
+  retryTransactionId?: string;
+  transactionHash?: string;
+  engineStatus?: string;
+}
+
+interface QueueCheckBanner {
+  tone: "success" | "warning" | "error";
+  message: string;
 }
 
 
@@ -774,6 +793,209 @@ export default function Index({ params }: any) {
 
     const [loadingFetchBuyOrders, setLoadingFetchBuyOrders] = useState(false);
     const [hasFetchedBuyOrdersOnce, setHasFetchedBuyOrdersOnce] = useState(false);
+    const [checkingQueueTx, setCheckingQueueTx] = useState(false);
+    const [checkingQueueOrderIds, setCheckingQueueOrderIds] = useState<string[]>([]);
+    const [queueCheckSummary, setQueueCheckSummary] = useState("");
+    const [queueCheckResultsByOrderId, setQueueCheckResultsByOrderId] = useState<
+      Record<string, QueueCheckBanner>
+    >({});
+
+    const getPendingQueueCheckOrderIds = () => {
+      return buyOrders
+        .filter((item) => item.transactionHash === "0x" && Boolean(item.queueId))
+        .map((item) => String(item._id || "").trim())
+        .filter(Boolean);
+    };
+
+    const isQueueCheckingOrder = (orderId: string) => {
+      return checkingQueueOrderIds.includes(String(orderId || ""));
+    };
+
+    const syncQueueTransactionHashes = async (targetOrderIds?: string[]) => {
+      const candidateOrderIds = targetOrderIds?.length
+        ? targetOrderIds
+        : getPendingQueueCheckOrderIds();
+
+      const orderIds = Array.from(
+        new Set(
+          candidateOrderIds
+            .map((orderId) => String(orderId || "").trim())
+            .filter(Boolean)
+        )
+      );
+
+      if (orderIds.length === 0) {
+        toast("점검할 queueId 주문이 없습니다.");
+        return;
+      }
+
+      setCheckingQueueTx(true);
+      setCheckingQueueOrderIds(orderIds);
+      setQueueCheckSummary("");
+
+      try {
+        const chunkSize = 20;
+        const orderIdChunks: string[][] = [];
+        for (let i = 0; i < orderIds.length; i += chunkSize) {
+          orderIdChunks.push(orderIds.slice(i, i + chunkSize));
+        }
+
+        const results: QueueTransactionCheckResult[] = [];
+        let checkedCount = 0;
+        let updatedCount = 0;
+        let requeuedCount = 0;
+        let pendingCount = 0;
+        let failedCount = 0;
+
+        for (const orderIdChunk of orderIdChunks) {
+          const response = await fetch("/api/order/checkQueueTransactionHash", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              storecode,
+              orderIds: orderIdChunk,
+              retryFailed: true,
+            }),
+          });
+
+          let data: any = null;
+          try {
+            data = await response.json();
+          } catch (error) {
+            data = null;
+          }
+
+          if (!response.ok || !data?.result) {
+            throw new Error(data?.error || data?.message || "TXID 점검 API 호출 실패");
+          }
+
+          const chunkResults: QueueTransactionCheckResult[] = Array.isArray(data?.result?.results)
+            ? data.result.results
+            : [];
+          const chunkSummary = data?.result?.summary || {};
+
+          results.push(...chunkResults);
+          checkedCount += Number(chunkSummary?.checkedCount || chunkResults.length || 0);
+          updatedCount += Number(chunkSummary?.updatedCount || 0);
+          requeuedCount += Number(chunkSummary?.requeuedCount || 0);
+          pendingCount += Number(chunkSummary?.pendingCount || 0);
+          failedCount += Number(chunkSummary?.failedCount || 0);
+        }
+
+        const banners: Record<string, QueueCheckBanner> = {};
+        const transactionHashByOrderId = new Map<string, string>();
+        const queueIdByOrderId = new Map<string, string>();
+
+        for (const item of results) {
+          const orderId = String(item?.orderId || "").trim();
+          if (!orderId) {
+            continue;
+          }
+
+          const txHash = String(item?.transactionHash || "").trim();
+          if (txHash && txHash !== "0x") {
+            transactionHashByOrderId.set(orderId, txHash);
+          }
+
+          if (item?.status === "updated" && item?.updated) {
+            banners[orderId] = {
+              tone: "success",
+              message: txHash
+                ? `TX 업데이트 완료: ${txHash.slice(0, 10)}...${txHash.slice(-8)}`
+                : "TX 업데이트 완료",
+            };
+            continue;
+          }
+
+          if (item?.status === "updated" || item?.status === "already-has-hash") {
+            banners[orderId] = {
+              tone: "success",
+              message: item?.message || "이미 동기화된 주문입니다.",
+            };
+            continue;
+          }
+
+          if (item?.status === "pending") {
+            banners[orderId] = {
+              tone: "warning",
+              message: item?.message || "아직 처리 중인 queue 입니다.",
+            };
+            continue;
+          }
+
+          if (item?.status === "requeued") {
+            const retryQueueId = String(
+              item?.retryTransactionId || item?.queueId || ""
+            ).trim();
+            if (retryQueueId) {
+              queueIdByOrderId.set(orderId, retryQueueId);
+            }
+            banners[orderId] = {
+              tone: "warning",
+              message: item?.message || "실패 건을 새 queue로 재전송했습니다.",
+            };
+            continue;
+          }
+
+          banners[orderId] = {
+            tone: "error",
+            message: item?.message || "queue 조회 중 오류가 발생했습니다.",
+          };
+        }
+
+        if (Object.keys(banners).length > 0) {
+          setQueueCheckResultsByOrderId((prev) => ({
+            ...prev,
+            ...banners,
+          }));
+        }
+
+        if (transactionHashByOrderId.size > 0 || queueIdByOrderId.size > 0) {
+          setBuyOrders((prev) =>
+            prev.map((order) => {
+              const nextHash = transactionHashByOrderId.get(String(order._id));
+              const nextQueueId = queueIdByOrderId.get(String(order._id));
+              if (!nextHash && !nextQueueId) {
+                return order;
+              }
+              return {
+                ...order,
+                transactionHash: nextHash || order.transactionHash,
+                queueId: nextQueueId || order.queueId,
+              };
+            })
+          );
+        }
+
+        if (checkedCount <= 0) {
+          checkedCount = results.length;
+        }
+
+        const summaryMessage = `점검 ${checkedCount}건 · 업데이트 ${updatedCount}건 · 재전송 ${requeuedCount}건 · 대기 ${pendingCount}건 · 실패 ${failedCount}건`;
+        setQueueCheckSummary(summaryMessage);
+
+        if (updatedCount > 0 || requeuedCount > 0) {
+          toast.success(summaryMessage);
+        } else if (failedCount > 0) {
+          toast.error(summaryMessage);
+        } else {
+          toast(summaryMessage);
+        }
+      } catch (error) {
+        console.error("syncQueueTransactionHashes error", error);
+        const errorMessage =
+          error instanceof Error && error.message
+            ? error.message
+            : "queue 점검 중 오류가 발생했습니다.";
+        setQueueCheckSummary(errorMessage);
+        toast.error(errorMessage);
+      } finally {
+        setCheckingQueueTx(false);
+        setCheckingQueueOrderIds([]);
+      }
+    };
 
     const fetchBuyOrders = async () => {
 
@@ -1797,6 +2019,8 @@ export default function Index({ params }: any) {
     const withdrawConfirmLoading = withdrawConfirmTarget
       ? Boolean(loadingDeposit[withdrawConfirmTarget.index])
       : false;
+    const pendingQueueCheckOrderIds = getPendingQueueCheckOrderIds();
+    const pendingQueueCheckCount = pendingQueueCheckOrderIds.length;
 
 
 
@@ -2823,6 +3047,43 @@ export default function Index({ params }: any) {
 
 
 
+                    <div className="flex w-full xl:w-auto flex-col items-end gap-1">
+                      <button
+                        type="button"
+                        disabled={checkingQueueTx || pendingQueueCheckCount === 0}
+                        onClick={() => syncQueueTransactionHashes(pendingQueueCheckOrderIds)}
+                        className={`
+                          inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition
+                          ${
+                            checkingQueueTx || pendingQueueCheckCount === 0
+                              ? "cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400"
+                              : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          }
+                        `}
+                      >
+                        {checkingQueueTx ? (
+                          <>
+                            <Image
+                              src="/loading.png"
+                              alt="loading"
+                              width={16}
+                              height={16}
+                              className="h-4 w-4 animate-spin"
+                            />
+                            <span>TXID 점검중...</span>
+                          </>
+                        ) : (
+                          <span>TXID 점검 ({pendingQueueCheckCount}건)</span>
+                        )}
+                      </button>
+
+                      {queueCheckSummary && (
+                        <span className="text-[11px] text-zinc-500">
+                          {queueCheckSummary}
+                        </span>
+                      )}
+                    </div>
+
                     <div className="flex w-full xl:w-auto flex-row items-center justify-center gap-4
                       border border-zinc-200
                       bg-zinc-50
@@ -3328,7 +3589,7 @@ export default function Index({ params }: any) {
                           </td>   
 
                           <td className="p-2">
-                            <div className="flex flex-row items-center justify-center gap-2">
+                            <div className="flex flex-col items-center justify-center gap-2">
 
                             {(item.status === 'ordered'
                               || item.status === 'accepted'
@@ -3433,10 +3694,32 @@ export default function Index({ params }: any) {
                                   </div>
                                 </button>
                                 ) : (
-                                <div className="text-sm text-green-600 font-semibold
-                                  border border-green-600 rounded-lg p-2
-                                  ">
-                                  TXID 업데이트 중...
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <div className="text-sm text-green-600 font-semibold border border-green-600 rounded-lg p-2">
+                                    TXID 업데이트 중...
+                                  </div>
+
+                                  {item.queueId ? (
+                                    <button
+                                      type="button"
+                                      disabled={checkingQueueTx || isQueueCheckingOrder(item._id)}
+                                      onClick={() => syncQueueTransactionHashes([item._id])}
+                                      className={`
+                                        rounded-md border px-2 py-1 text-[11px] font-semibold transition
+                                        ${
+                                          checkingQueueTx || isQueueCheckingOrder(item._id)
+                                            ? "cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400"
+                                            : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                        }
+                                      `}
+                                    >
+                                      {isQueueCheckingOrder(item._id) ? "점검중..." : "queue 재확인"}
+                                    </button>
+                                  ) : (
+                                    <span className="text-[11px] text-rose-500">
+                                      queueId 없음
+                                    </span>
+                                  )}
                                 </div>
                                 )}
 
@@ -3504,6 +3787,24 @@ export default function Index({ params }: any) {
                                 <span className="text-sm font-semibold text-yellow-600">
                                   USDT 전송요청
                                 </span>
+
+                                {item.transactionHash === "0x" && item.queueId && (
+                                  <button
+                                    type="button"
+                                    disabled={checkingQueueTx || isQueueCheckingOrder(item._id)}
+                                    onClick={() => syncQueueTransactionHashes([item._id])}
+                                    className={`
+                                      rounded-md border px-2 py-1 text-[11px] font-semibold transition
+                                      ${
+                                        checkingQueueTx || isQueueCheckingOrder(item._id)
+                                          ? "cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400"
+                                          : "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                      }
+                                    `}
+                                  >
+                                    {isQueueCheckingOrder(item._id) ? "점검중..." : "queue 재확인"}
+                                  </button>
+                                )}
 
                                 {/* cancelTrade button */}
                                 {/* functio cancelTrade(index, item._id) */}
@@ -3595,6 +3896,23 @@ export default function Index({ params }: any) {
                             )}
                             {item.status === 'cancelled' && (
                               <span className="text-red-500">{Cancelled}</span>
+                            )}
+
+                            {queueCheckResultsByOrderId[item._id] && (
+                              <div
+                                className={`
+                                  max-w-[180px] text-center text-[11px]
+                                  ${
+                                    queueCheckResultsByOrderId[item._id].tone === "success"
+                                      ? "text-emerald-600"
+                                      : queueCheckResultsByOrderId[item._id].tone === "warning"
+                                      ? "text-amber-600"
+                                      : "text-rose-600"
+                                  }
+                                `}
+                              >
+                                {queueCheckResultsByOrderId[item._id].message}
+                              </div>
                             )}
 
                             </div>
