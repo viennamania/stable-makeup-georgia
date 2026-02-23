@@ -2262,6 +2262,8 @@ export async function getBuyOrders(
     manualConfirmPayment,
 
     userType,
+
+    collectionName = 'buyorders',
   }: {
 
     limit: number;
@@ -2291,6 +2293,8 @@ export async function getBuyOrders(
     manualConfirmPayment: boolean;
 
     userType: string; // 'all', '', 'AAA', 'BBB', 'CCC', 'DDD'
+
+    collectionName?: string;
   }
 
 ): Promise<any> {
@@ -2323,7 +2327,7 @@ export async function getBuyOrders(
 
 
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('buyorders');
+  const collection = client.db(dbName).collection(collectionName);
   const searchDepositCompletedQuery = searchDepositCompleted
     ? { 'buyer.depositCompleted': true }
     : {};

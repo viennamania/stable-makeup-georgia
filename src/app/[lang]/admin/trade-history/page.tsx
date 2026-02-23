@@ -210,7 +210,7 @@ const parseBooleanQuery = (value: string | null, fallback: boolean) => {
 
 
 
-export default function Index({ params }: any) {
+export default function Index({ params, isYear2025 = false }: any) {
 
   const searchParams = useSearchParams()!;
   const searchParamsString = searchParams.toString();
@@ -816,6 +816,14 @@ export default function Index({ params }: any) {
 
 
   const formattedDate = getKstDateString();
+  const defaultFromDate = isYear2025 ? '2025-01-01' : formattedDate;
+  const defaultToDate = isYear2025 ? '2025-12-31' : formattedDate;
+  const tradeHistoryBasePath = isYear2025
+    ? `/${params.lang}/admin/trade-history/2025`
+    : `/${params.lang}/admin/trade-history`;
+  const buyOrdersApiPath = isYear2025
+    ? '/api/order/getAllBuyOrders2025'
+    : '/api/order/getAllBuyOrders';
 
   const [searchStorecode, setSearchStorecode] = useState(
     searchParams.get('storecode') || ""
@@ -831,10 +839,10 @@ export default function Index({ params }: any) {
 
   // search form date to date
   const [searchFromDate, setSearchFormDate] = useState(
-    searchParams.get('fromDate') || formattedDate
+    searchParams.get('fromDate') || defaultFromDate
   );
   const [searchToDate, setSearchToDate] = useState(
-    searchParams.get('toDate') || formattedDate
+    searchParams.get('toDate') || defaultToDate
   );
 
   const [searchBuyer, setSearchBuyer] = useState(
@@ -877,8 +885,8 @@ export default function Index({ params }: any) {
     setSearchStorecode(searchParams.get('storecode') || "");
     setLimitValue(parsePositiveNumber(searchParams.get('limit'), 20));
     setPageValue(parsePositiveNumber(searchParams.get('page'), 1));
-    setSearchFormDate(searchParams.get('fromDate') || formattedDate);
-    setSearchToDate(searchParams.get('toDate') || formattedDate);
+    setSearchFormDate(searchParams.get('fromDate') || defaultFromDate);
+    setSearchToDate(searchParams.get('toDate') || defaultToDate);
     setSearchBuyer(searchParams.get('buyer') || "");
     setSearchDepositName(searchParams.get('depositName') || "");
     setSearchStoreBankAccountNumber(searchParams.get('storeBankAccountNumber') || "");
@@ -892,7 +900,7 @@ export default function Index({ params }: any) {
       parseBooleanQuery(searchParams.get('searchOrderStatusCompleted'), true)
     );
     setSearchMyOrders(parseBooleanQuery(searchParams.get('searchMyOrders'), false));
-  }, [searchParamsString, formattedDate]);
+  }, [searchParamsString, defaultFromDate, defaultToDate]);
 
   const buildTradeHistoryQuery = ({
     storecode = searchStorecode,
@@ -936,8 +944,8 @@ export default function Index({ params }: any) {
 
     nextParams.set('limit', String(parsePositiveNumber(limit, 20)));
     nextParams.set('page', String(parsePositiveNumber(page, 1)));
-    nextParams.set('fromDate', fromDate || formattedDate);
-    nextParams.set('toDate', toDate || formattedDate);
+    nextParams.set('fromDate', fromDate || defaultFromDate);
+    nextParams.set('toDate', toDate || defaultToDate);
     nextParams.set('manualConfirmPayment', String(Boolean(manualConfirm)));
     nextParams.set(
       'searchOrderStatusCancelled',
@@ -1004,7 +1012,7 @@ export default function Index({ params }: any) {
       myOrders,
     });
 
-    router.push(`/${params.lang}/admin/trade-history?${nextQuery}`);
+    router.push(`${tradeHistoryBasePath}?${nextQuery}`);
   };
 
   const [totalCount, setTotalCount] = useState(0);
@@ -1159,6 +1167,10 @@ export default function Index({ params }: any) {
       orderId: string,
       smsNumber: string,
     ) => {
+        if (isYear2025) {
+            toast.error('2025 거래내역 페이지는 조회 전용입니다.');
+            return;
+        }
 
         if (!address) {
             toast.error('Please connect your wallet');
@@ -1217,7 +1229,7 @@ export default function Index({ params }: any) {
 
             setFetchingBuyOrders(true);
 
-            fetch('/api/order/getAllBuyOrders', {
+            fetch(buyOrdersApiPath, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1337,6 +1349,10 @@ export default function Index({ params }: any) {
 
 
     const cancelTrade = async (orderId: string, index: number) => {
+      if (isYear2025) {
+        toast.error('2025 거래내역 페이지는 조회 전용입니다.');
+        return;
+      }
 
 
 
@@ -1374,7 +1390,7 @@ export default function Index({ params }: any) {
 
 
         setFetchingBuyOrders(true);
-        await fetch('/api/order/getAllBuyOrders', {
+        await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -1517,6 +1533,10 @@ export default function Index({ params }: any) {
       tradeId: string,
       amount: number,
     ) => {
+      if (isYear2025) {
+        toast.error('2025 거래내역 페이지는 조회 전용입니다.');
+        return;
+      }
 
 
       // check escrowWalletAddress
@@ -1659,7 +1679,7 @@ export default function Index({ params }: any) {
 
             
             setFetchingBuyOrders(true);
-            await fetch('/api/order/getAllBuyOrders', {
+            await fetch(buyOrdersApiPath, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -1834,6 +1854,10 @@ export default function Index({ params }: any) {
     paymentAmountUsdt: number,
 
   ) => {
+    if (isYear2025) {
+      toast.error('2025 거래내역 페이지는 조회 전용입니다.');
+      return;
+    }
     // confirm payment
     // send usdt to buyer wallet address
 
@@ -1891,7 +1915,7 @@ export default function Index({ params }: any) {
       if (data.result) {
         
         setFetchingBuyOrders(true);
-        await fetch('/api/order/getAllBuyOrders', {
+        await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2017,6 +2041,10 @@ export default function Index({ params }: any) {
     paymentAmountUsdt: number,
 
   ) => {
+    if (isYear2025) {
+      toast.error('2025 거래내역 페이지는 조회 전용입니다.');
+      return;
+    }
     // rollback payment
     // send usdt to seller wallet address
 
@@ -2076,7 +2104,7 @@ export default function Index({ params }: any) {
 
         
         setFetchingBuyOrders(true);
-        await fetch('/api/order/getAllBuyOrders', {
+        await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -2162,6 +2190,10 @@ export default function Index({ params }: any) {
 
 
   const transferEscrowBalance = async () => {
+    if (isYear2025) {
+      toast.error('2025 거래내역 페이지는 조회 전용입니다.');
+      return;
+    }
 
     if (transferingEscrowBalance) {
       return;
@@ -2258,7 +2290,7 @@ export default function Index({ params }: any) {
 
       setFetchingBuyOrders(true);
       
-      const response = await fetch('/api/order/getAllBuyOrders', {
+      const response = await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -2430,7 +2462,7 @@ const fetchBuyOrders = async () => {
   }
   setFetchingBuyOrders(true);
 
-  const response = await fetch('/api/order/getAllBuyOrders', {
+  const response = await fetch(buyOrdersApiPath, {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -2682,6 +2714,13 @@ const fetchBuyOrders = async () => {
   };
 
   useEffect(() => {
+    if (isYear2025) {
+      setTotalNumberOfBuyOrders(0);
+      setProcessingBuyOrders([]);
+      setTotalNumberOfAudioOnBuyOrders(0);
+      return;
+    }
+
     if (!address) {
       setTotalNumberOfBuyOrders(0);
       return;
@@ -2694,7 +2733,7 @@ const fetchBuyOrders = async () => {
     }, 5000);
     return () => clearInterval(interval);
 
-  }, [address]);
+  }, [address, isYear2025]);
 
 
   useEffect(() => {
@@ -2714,6 +2753,12 @@ const fetchBuyOrders = async () => {
   const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
   const [processingClearanceOrders, setProcessingClearanceOrders] = useState([] as BuyOrder[]);
   useEffect(() => {
+    if (isYear2025) {
+      setTotalNumberOfClearanceOrders(0);
+      setProcessingClearanceOrders([]);
+      return;
+    }
+
     if (!address) {
       setTotalNumberOfClearanceOrders(0);
       return;
@@ -2748,7 +2793,7 @@ const fetchBuyOrders = async () => {
     }, 5000);
     return () => clearInterval(interval);
 
-  }, [address]);
+  }, [address, isYear2025]);
 
   useEffect(() => {
     if (totalNumberOfClearanceOrders > 0 && loadingTotalNumberOfClearanceOrders === false) {
@@ -2767,7 +2812,7 @@ const fetchBuyOrders = async () => {
 
       setIsExporting(true);
 
-      const response = await fetch("/api/order/getAllBuyOrders", {
+      const response = await fetch(buyOrdersApiPath, {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
@@ -2903,7 +2948,8 @@ const fetchBuyOrders = async () => {
     { label: "에이전트관리", href: `/${params.lang}/admin/agent` },
     { label: "회원관리", href: `/${params.lang}/admin/member` },
     { label: "구매주문관리", href: `/${params.lang}/admin/buyorder` },
-    { label: "P2P 거래내역", href: `/${params.lang}/admin/trade-history`, active: true },
+    { label: "P2P 거래내역", href: `/${params.lang}/admin/trade-history`, active: !isYear2025 },
+    { label: "P2P 거래내역(2025)", href: `/${params.lang}/admin/trade-history/2025`, active: isYear2025 },
     ...(version !== "bangbang"
       ? [{ label: "청산관리", href: `/${params.lang}/admin/clearance-history` }]
       : []),
@@ -3388,11 +3434,11 @@ const fetchBuyOrders = async () => {
                 className="h-5 w-5"
               />
               <div className="text-base font-semibold tracking-tight text-zinc-800">
-                P2P 거래내역
+                {isYear2025 ? 'P2P 거래내역 (2025)' : 'P2P 거래내역'}
               </div>
             </div>
             <span className="rounded-md bg-zinc-100 px-2 py-1 text-xs text-zinc-500">
-              실시간 관리 콘솔
+              {isYear2025 ? '2025 아카이브' : '실시간 관리 콘솔'}
             </span>
           </div>
 
@@ -3535,30 +3581,44 @@ const fetchBuyOrders = async () => {
               </div>
 
               <div className="flex flex-row items-center gap-2">
-                  {/* 오늘, 어제 */}
+                {isYear2025 ? (
                   <button
                     onClick={() => {
-                      const today = getKstDateString();
-                      setSearchFormDate(today);
-                      setSearchToDate(today);
+                      setSearchFormDate('2025-01-01');
+                      setSearchToDate('2025-12-31');
                     }}
                     className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
                   >
-                    오늘
+                    2025 전체
                   </button>
-                  <button
-                    onClick={() => {
-                      const yesterday = new Date();
-                      yesterday.setHours(yesterday.getHours() + 9);
-                      yesterday.setDate(yesterday.getDate() - 1);
-                      setSearchFormDate(yesterday.toISOString().split("T")[0]);
-                      setSearchToDate(yesterday.toISOString().split("T")[0]);
-                    }}
-                    className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
-                  >
-                    어제
-                  </button>
-                </div>
+                ) : (
+                  <>
+                    {/* 오늘, 어제 */}
+                    <button
+                      onClick={() => {
+                        const today = getKstDateString();
+                        setSearchFormDate(today);
+                        setSearchToDate(today);
+                      }}
+                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
+                    >
+                      오늘
+                    </button>
+                    <button
+                      onClick={() => {
+                        const yesterday = new Date();
+                        yesterday.setHours(yesterday.getHours() + 9);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        setSearchFormDate(yesterday.toISOString().split("T")[0]);
+                        setSearchToDate(yesterday.toISOString().split("T")[0]);
+                      }}
+                      className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-600 transition hover:bg-zinc-100"
+                    >
+                      어제
+                    </button>
+                  </>
+                )}
+              </div>
 
             </div>
 

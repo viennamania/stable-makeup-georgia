@@ -717,7 +717,7 @@ export async function POST(request: NextRequest) {
 
         console.log("Matched tradeId:", tradeId);
       }
-      
+
 
     }
     
@@ -727,9 +727,9 @@ export async function POST(request: NextRequest) {
 
     // insert bank transfer record
     await insertOne({
-      transactionType: transaction_type,
-      bankAccountId: bank_account_id,
-      originalBankAccountNumber: bank_account_number,
+      transactionType: transaction_type, // deposited, withdrawn
+      bankAccountId: bank_account_id, //
+      originalBankAccountNumber: bank_account_number, // 실제 입금자 계좌번호
       bankAccountNumber: bankAccountNumber,
       bankCode: bank_code,
       amount: amount,
