@@ -179,7 +179,7 @@ import * as XLSX from "xlsx";
 
 
 
-export default function Index({ params }: any) {
+export default function Index({ params, isYear2025 = false }: any) {
 
   const searchParams = useSearchParams()!;
  
@@ -893,22 +893,30 @@ export default function Index({ params }: any) {
   const today = new Date();
   today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
   const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const defaultFromDate = isYear2025 ? '2025-01-01' : formattedDate;
+  const defaultToDate = isYear2025 ? '2025-12-31' : formattedDate;
+  const clearanceHistoryBasePath = isYear2025
+    ? `/${params.lang}/admin/clearance-history/2025`
+    : `/${params.lang}/admin/clearance-history`;
+  const buyOrdersApiPath = isYear2025
+    ? '/api/order/getAllBuyOrders2025'
+    : '/api/order/getAllBuyOrders';
 
 
 
   // search form date to date
-  const [searchFromDate, setSearchFormDate] = useState(formattedDate);
+  const [searchFromDate, setSearchFormDate] = useState(defaultFromDate);
   // fromDate parameter
   useEffect(() => {
-    setSearchFormDate(paramFromDate || formattedDate);
-  }, [paramFromDate, formattedDate]);
+    setSearchFormDate(paramFromDate || defaultFromDate);
+  }, [paramFromDate, defaultFromDate]);
 
 
-  const [searchToDate, setSearchToDate] = useState(formattedDate);
+  const [searchToDate, setSearchToDate] = useState(defaultToDate);
   // toDate parameter
   useEffect(() => {
-    setSearchToDate(paramToDate || formattedDate);
-  }, [paramToDate, formattedDate]);
+    setSearchToDate(paramToDate || defaultToDate);
+  }, [paramToDate, defaultToDate]);
   
 
 
@@ -1066,6 +1074,11 @@ export default function Index({ params }: any) {
     smsNumber: string,
   ) => {
 
+      if (isYear2025) {
+        toast.error('2025 청산관리 페이지는 조회 전용입니다.');
+        return;
+      }
+
       if (!address) {
           toast.error('Please connect your wallet');
           return;
@@ -1122,7 +1135,7 @@ export default function Index({ params }: any) {
 
 
 
-          fetch('/api/order/getAllBuyOrders', {
+          fetch(buyOrdersApiPath, {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -1238,6 +1251,11 @@ export default function Index({ params }: any) {
 
   const cancelTrade = async (orderId: string, index: number) => {
 
+    if (isYear2025) {
+      toast.error('2025 청산관리 페이지는 조회 전용입니다.');
+      return;
+    }
+
     if (cancellings[index]) {
       return;
     }
@@ -1269,7 +1287,7 @@ export default function Index({ params }: any) {
       //playSong();
 
 
-      await fetch('/api/order/getAllBuyOrders', {
+      await fetch(buyOrdersApiPath, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1395,6 +1413,11 @@ export default function Index({ params }: any) {
     tradeId: string,
     amount: number,
   ) => {
+
+    if (isYear2025) {
+      toast.error('2025 청산관리 페이지는 조회 전용입니다.');
+      return;
+    }
 
 
     // check escrowWalletAddress
@@ -1538,7 +1561,7 @@ export default function Index({ params }: any) {
           
           //fetchBuyOrders();
           // fetch Buy Orders
-          await fetch('/api/order/getAllBuyOrders', {
+          await fetch(buyOrdersApiPath, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1707,6 +1730,11 @@ export default function Index({ params }: any) {
     paymentAmountUsdt: number,
 
   ) => {
+    if (isYear2025) {
+      toast.error('2025 청산관리 페이지는 조회 전용입니다.');
+      return;
+    }
+
     // confirm payment
     // send usdt to buyer wallet address
 
@@ -1766,7 +1794,7 @@ export default function Index({ params }: any) {
         ///fetchBuyOrders();
 
         // fetch Buy Orders
-        await fetch('/api/order/getAllBuyOrders', {
+        await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1871,6 +1899,11 @@ export default function Index({ params }: any) {
     // call API to set deposit completed
     // update the state to reflect the change
 
+    if (isYear2025) {
+      toast.error('2025 청산관리 페이지는 조회 전용입니다.');
+      return;
+    }
+
     if (loadingDeposit[index]) {
       return;
     }
@@ -1899,7 +1932,7 @@ export default function Index({ params }: any) {
 
     
     // fetch Buy Orders
-    await fetch('/api/order/getAllBuyOrders', {
+    await fetch(buyOrdersApiPath, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2004,7 +2037,7 @@ export default function Index({ params }: any) {
 
       
 
-      const response = await fetch('/api/order/getAllBuyOrders', {
+      const response = await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -2156,6 +2189,7 @@ export default function Index({ params }: any) {
     searchBuyerBankAccountNumber,
     searchDepositName,
     searchDepositCompleted,
+    buyOrdersApiPath,
     
 
 ]);
@@ -2327,6 +2361,13 @@ export default function Index({ params }: any) {
   const [totalNumberOfAudioOnBuyOrders, setTotalNumberOfAudioOnBuyOrders] = useState(0);
 
   useEffect(() => {
+    if (isYear2025) {
+      setTotalNumberOfBuyOrders(0);
+      setProcessingBuyOrders([]);
+      setTotalNumberOfAudioOnBuyOrders(0);
+      return;
+    }
+
     const fetchTotalBuyOrders = async (): Promise<void> => {
       if (!address) {
         setTotalNumberOfBuyOrders(0);
@@ -2363,14 +2404,14 @@ export default function Index({ params }: any) {
     }, 5000);
     return () => clearInterval(interval);
 
-  }, [address]);
+  }, [address, isYear2025]);
 
   useEffect(() => {
-    if (totalNumberOfAudioOnBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
+    if (!isYear2025 && totalNumberOfAudioOnBuyOrders > 0 && loadingTotalNumberOfBuyOrders === false) {
       const audio = new Audio('/notification.wav');
       audio.play();
     }
-  }, [totalNumberOfAudioOnBuyOrders, loadingTotalNumberOfBuyOrders]);
+  }, [totalNumberOfAudioOnBuyOrders, loadingTotalNumberOfBuyOrders, isYear2025]);
 
 
   
@@ -2380,6 +2421,12 @@ export default function Index({ params }: any) {
   const [totalNumberOfClearanceOrders, setTotalNumberOfClearanceOrders] = useState(0);
   const [processingClearanceOrders, setProcessingClearanceOrders] = useState([] as BuyOrder[]);
   useEffect(() => {
+    if (isYear2025) {
+      setTotalNumberOfClearanceOrders(0);
+      setProcessingClearanceOrders([]);
+      return;
+    }
+
     if (!address) {
       setTotalNumberOfClearanceOrders(0);
       return;
@@ -2414,14 +2461,14 @@ export default function Index({ params }: any) {
     }, 5000);
     return () => clearInterval(interval);
 
-  }, [address]);
+  }, [address, isYear2025]);
 
   useEffect(() => {
-    if (totalNumberOfClearanceOrders > 0 && loadingTotalNumberOfClearanceOrders === false) {
+    if (!isYear2025 && totalNumberOfClearanceOrders > 0 && loadingTotalNumberOfClearanceOrders === false) {
       const audio = new Audio('/notification.wav');
       audio.play();
     }
-  }, [totalNumberOfClearanceOrders, loadingTotalNumberOfClearanceOrders]);
+  }, [totalNumberOfClearanceOrders, loadingTotalNumberOfClearanceOrders, isYear2025]);
 
 
 
@@ -2433,7 +2480,7 @@ export default function Index({ params }: any) {
 
       setIsExporting(true);
 
-      const response = await fetch('/api/order/getAllBuyOrders', {
+      const response = await fetch(buyOrdersApiPath, {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -2617,7 +2664,7 @@ export default function Index({ params }: any) {
       searchDepositCompleted: String(nextSearchDepositCompleted ?? searchDepositCompleted),
     });
 
-    return `/${params.lang}/admin/clearance-history?${query.toString()}`;
+    return `${clearanceHistoryBasePath}?${query.toString()}`;
   };
 
 
@@ -3092,7 +3139,14 @@ export default function Index({ params }: any) {
                   P2P 거래내역
               </button>
 
-              <div className='flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 rounded-xl bg-zinc-900 px-3 py-2 text-sm text-white'>
+              <button
+                onClick={() => router.push('/' + params.lang + '/admin/clearance-history')}
+                className={`flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm transition-colors ${
+                  !isYear2025
+                    ? 'border-zinc-900 bg-zinc-900 text-white'
+                    : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                }`}
+              >
                 <Image
                   src="/icon-clearance.png"
                   alt="Clearance"
@@ -3100,10 +3154,26 @@ export default function Index({ params }: any) {
                   height={35}
                   className="w-4 h-4"
                 />
-                <div className="text-sm font-semibold">
-                  청산관리
-                </div>
-              </div>
+                <div className="text-sm font-semibold">청산관리</div>
+              </button>
+
+              <button
+                onClick={() => router.push('/' + params.lang + '/admin/clearance-history/2025')}
+                className={`flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-sm transition-colors ${
+                  isYear2025
+                    ? 'border-zinc-900 bg-zinc-900 text-white'
+                    : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                }`}
+              >
+                <Image
+                  src="/icon-clearance.png"
+                  alt="Clearance 2025"
+                  width={35}
+                  height={35}
+                  className="w-4 h-4"
+                />
+                <div className="text-sm font-semibold">청산관리(2025)</div>
+              </button>
 
 
                 <button
@@ -3137,7 +3207,7 @@ export default function Index({ params }: any) {
               />
 
               <div className="text-xl font-semibold tracking-tight text-zinc-800">
-                청산관리
+                {isYear2025 ? '청산관리 (2025)' : '청산관리'}
               </div>
 
           </div>
