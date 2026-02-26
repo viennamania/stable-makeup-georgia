@@ -21,14 +21,14 @@ const MENU_ITEMS: Array<{ key: RealtimeTopNavTab; label: string; getHref: (lang:
     getHref: (lang: string) => `/${lang}/realtime-banktransfer`,
   },
   {
-    key: "settlement",
-    label: "Settlement",
-    getHref: (lang: string) => `/${lang}/realtime-settlement`,
-  },
-  {
     key: "buyorder",
     label: "BuyOrder",
     getHref: (lang: string) => `/${lang}/realtime-buyorder`,
+  },
+  {
+    key: "settlement",
+    label: "Settlement",
+    getHref: (lang: string) => `/${lang}/realtime-settlement`,
   },
 ];
 

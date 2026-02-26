@@ -439,41 +439,41 @@ export default function RealtimeBankTransferPage() {
   function getMetricToneClassName(tone: "slate" | "emerald" | "rose" | "amber") {
     if (tone === "emerald") {
       return {
-        card: "border-emerald-500/30 bg-emerald-950/25",
-        label: "text-emerald-200",
-        value: "text-emerald-100",
-        meta: "text-emerald-300/75",
-        rail: "bg-emerald-900/45",
-        bar: "bg-emerald-400/90",
+        card: "border-emerald-400/75 bg-gradient-to-br from-emerald-100 to-emerald-50",
+        label: "text-emerald-700",
+        value: "text-emerald-950",
+        meta: "text-emerald-700/90",
+        rail: "bg-emerald-200",
+        bar: "bg-emerald-600",
       };
     }
     if (tone === "rose") {
       return {
-        card: "border-rose-500/30 bg-rose-950/25",
-        label: "text-rose-200",
-        value: "text-rose-100",
-        meta: "text-rose-300/75",
-        rail: "bg-rose-900/45",
-        bar: "bg-rose-400/90",
+        card: "border-rose-400/75 bg-gradient-to-br from-rose-100 to-rose-50",
+        label: "text-rose-700",
+        value: "text-rose-950",
+        meta: "text-rose-700/90",
+        rail: "bg-rose-200",
+        bar: "bg-rose-600",
       };
     }
     if (tone === "amber") {
       return {
-        card: "border-amber-500/30 bg-amber-950/25",
-        label: "text-amber-200",
-        value: "text-amber-100",
-        meta: "text-amber-300/75",
-        rail: "bg-amber-900/45",
-        bar: "bg-amber-400/90",
+        card: "border-amber-400/75 bg-gradient-to-br from-amber-100 to-amber-50",
+        label: "text-amber-700",
+        value: "text-amber-950",
+        meta: "text-amber-700/90",
+        rail: "bg-amber-200",
+        bar: "bg-amber-500",
       };
     }
     return {
-      card: "border-slate-600/70 bg-slate-900/80",
-      label: "text-slate-200",
-      value: "text-slate-100",
-      meta: "text-slate-400",
-      rail: "bg-slate-700/70",
-      bar: "bg-cyan-400/90",
+      card: "border-slate-400/75 bg-gradient-to-br from-slate-100 to-slate-50",
+      label: "text-slate-700",
+      value: "text-slate-900",
+      meta: "text-slate-700/90",
+      rail: "bg-slate-300",
+      bar: "bg-sky-600",
     };
   }
 
