@@ -38,5 +38,28 @@ export async function publishBankTransferEvent(event: BankTransferDashboardEvent
   }
 
   const channel = client.channels.get(BANKTRANSFER_ABLY_CHANNEL);
-  await channel.publish(BANKTRANSFER_ABLY_EVENT_NAME, event);
+
+  const maxRetries = Math.min(Math.max(Number(process.env.REALTIME_PUBLISH_MAX_RETRIES) || 3, 1), 8);
+  const baseDelayMs = Math.min(Math.max(Number(process.env.REALTIME_PUBLISH_RETRY_DELAY_MS) || 200, 50), 5000);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+    try {
+      await channel.publish(
+        {
+          id: event.eventId,
+          name: BANKTRANSFER_ABLY_EVENT_NAME,
+          data: event,
+        },
+        { quickAck: true },
+      );
+      return;
+    } catch (error) {
+      if (attempt >= maxRetries) {
+        throw error;
+      }
+
+      const waitMs = baseDelayMs * 2 ** (attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+  }
 }

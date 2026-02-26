@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
 
 import {
@@ -16,6 +16,9 @@ type RealtimeItem = {
 };
 
 const MAX_EVENTS = 50;
+const RESYNC_LIMIT = 100;
+const RESYNC_INTERVAL_MS = 10_000;
+const RBAC_TOKEN_STORAGE_KEY = "banktransfer_realtime_rbac_token";
 
 function getTransactionTypeLabel(transactionType: string): string {
   if (transactionType === "deposited") {
@@ -30,15 +33,154 @@ function getTransactionTypeLabel(transactionType: string): string {
 export default function RealtimeBankTransferPage() {
   const [events, setEvents] = useState<RealtimeItem[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [connectionErrorMessage, setConnectionErrorMessage] = useState<string | null>(null);
+  const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [rbacToken, setRbacToken] = useState("");
+  const [tokenInput, setTokenInput] = useState("");
+  const [cursor, setCursor] = useState<string | null>(null);
+
+  const cursorRef = useRef<string | null>(null);
 
   const clientId = useMemo(() => {
     return `ops-dashboard-${Math.random().toString(36).slice(2, 10)}`;
   }, []);
 
+  const updateCursor = useCallback((nextCursor: string | null | undefined) => {
+    if (!nextCursor) {
+      return;
+    }
+
+    setCursor((previousCursor) => {
+      if (!previousCursor || nextCursor > previousCursor) {
+        cursorRef.current = nextCursor;
+        return nextCursor;
+      }
+
+      return previousCursor;
+    });
+  }, []);
+
+  const upsertRealtimeEvents = useCallback(
+    (incomingEvents: BankTransferDashboardEvent[]) => {
+      if (incomingEvents.length === 0) {
+        return;
+      }
+
+      setEvents((previousEvents) => {
+        const map = new Map(previousEvents.map((item) => [item.id, item]));
+
+        for (const incomingEvent of incomingEvents) {
+          const nextId =
+            incomingEvent.eventId ||
+            incomingEvent.cursor ||
+            `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+          map.set(nextId, {
+            id: nextId,
+            receivedAt: new Date().toISOString(),
+            data: incomingEvent,
+          });
+        }
+
+        const merged = Array.from(map.values());
+
+        merged.sort((left, right) => {
+          const leftTimestamp = Date.parse(left.data.publishedAt || left.receivedAt);
+          const rightTimestamp = Date.parse(right.data.publishedAt || right.receivedAt);
+          return rightTimestamp - leftTimestamp;
+        });
+
+        return merged.slice(0, MAX_EVENTS);
+      });
+
+      for (const incomingEvent of incomingEvents) {
+        updateCursor(incomingEvent.cursor || null);
+      }
+    },
+    [updateCursor],
+  );
+
+  const syncFromApi = useCallback(
+    async (sinceOverride?: string | null) => {
+      if (!rbacToken) {
+        return;
+      }
+
+      const since = sinceOverride ?? cursorRef.current;
+      const params = new URLSearchParams({
+        limit: String(RESYNC_LIMIT),
+      });
+
+      if (since) {
+        params.set("since", since);
+      }
+
+      setIsSyncing(true);
+
+      const headers = {
+        Authorization: `Bearer ${rbacToken}`,
+      };
+
+      let lastError: string | null = null;
+
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          const response = await fetch(`/api/realtime/banktransfer/events?${params.toString()}`, {
+            method: "GET",
+            headers,
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`HTTP ${response.status} ${text}`);
+          }
+
+          const data = await response.json();
+
+          const incomingEvents = Array.isArray(data.events)
+            ? (data.events as BankTransferDashboardEvent[])
+            : [];
+
+          upsertRealtimeEvents(incomingEvents);
+          updateCursor(typeof data.nextCursor === "string" ? data.nextCursor : null);
+          setSyncErrorMessage(null);
+          setIsSyncing(false);
+          return;
+        } catch (error) {
+          lastError = error instanceof Error ? error.message : "sync failed";
+
+          if (attempt < 3) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 300));
+          }
+        }
+      }
+
+      setSyncErrorMessage(lastError || "재동기화에 실패했습니다.");
+      setIsSyncing(false);
+    },
+    [rbacToken, upsertRealtimeEvents, updateCursor],
+  );
+
   useEffect(() => {
+    const storedToken = window.sessionStorage.getItem(RBAC_TOKEN_STORAGE_KEY) || "";
+    if (storedToken) {
+      setRbacToken(storedToken);
+      setTokenInput(storedToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!rbacToken) {
+      return;
+    }
+
     const realtime = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?clientId=${clientId}`,
+      authHeaders: {
+        Authorization: `Bearer ${rbacToken}`,
+      },
     });
 
     const channel = realtime.channels.get(BANKTRANSFER_ABLY_CHANNEL);
@@ -46,21 +188,22 @@ export default function RealtimeBankTransferPage() {
     const onConnectionStateChange = (stateChange: Ably.ConnectionStateChange) => {
       setConnectionState(stateChange.current);
       if (stateChange.reason) {
-        setErrorMessage(stateChange.reason.message || "Ably connection error");
+        setConnectionErrorMessage(stateChange.reason.message || "Ably connection error");
+      }
+
+      if (stateChange.current === "connected") {
+        void syncFromApi();
       }
     };
 
     const onMessage = (message: Ably.Message) => {
       const data = message.data as BankTransferDashboardEvent;
-      const nextItem: RealtimeItem = {
-        id: message.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        receivedAt: new Date().toISOString(),
-        data,
-      };
-
-      setEvents((prev) => {
-        return [nextItem, ...prev].slice(0, MAX_EVENTS);
-      });
+      upsertRealtimeEvents([
+        {
+          ...data,
+          eventId: data.eventId || String(message.id || ""),
+        },
+      ]);
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -71,7 +214,37 @@ export default function RealtimeBankTransferPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId]);
+  }, [clientId, rbacToken, syncFromApi, upsertRealtimeEvents]);
+
+  useEffect(() => {
+    if (!rbacToken) {
+      return;
+    }
+
+    void syncFromApi(null);
+
+    const timer = window.setInterval(() => {
+      void syncFromApi();
+    }, RESYNC_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [rbacToken, syncFromApi]);
+
+  const saveRbacToken = useCallback(() => {
+    const normalizedToken = tokenInput.trim();
+    setRbacToken(normalizedToken);
+    setEvents([]);
+    setCursor(null);
+    cursorRef.current = null;
+
+    if (normalizedToken) {
+      window.sessionStorage.setItem(RBAC_TOKEN_STORAGE_KEY, normalizedToken);
+    } else {
+      window.sessionStorage.removeItem(RBAC_TOKEN_STORAGE_KEY);
+    }
+  }, [tokenInput]);
 
   const sortedEvents = useMemo(() => {
     const toTimestamp = (value: string | null | undefined) => {
@@ -98,6 +271,30 @@ export default function RealtimeBankTransferPage() {
         <span className="font-mono">{BANKTRANSFER_ABLY_EVENT_NAME}</span>
       </p>
 
+      <div className="mt-4 flex w-full flex-wrap items-center gap-2 rounded bg-gray-50 p-3">
+        <input
+          type="password"
+          value={tokenInput}
+          onChange={(event) => setTokenInput(event.target.value)}
+          placeholder="RBAC token"
+          className="min-w-[260px] rounded border border-gray-300 px-3 py-2 text-sm"
+        />
+        <button
+          type="button"
+          onClick={saveRbacToken}
+          className="rounded bg-black px-3 py-2 text-sm text-white"
+        >
+          토큰 적용
+        </button>
+        <button
+          type="button"
+          onClick={() => void syncFromApi(null)}
+          className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-black"
+        >
+          재동기화
+        </button>
+      </div>
+
       <div className="mt-4 flex flex-wrap gap-3 text-sm">
         <div className="rounded bg-gray-100 px-3 py-2">
           Connection: <span className="font-semibold">{connectionState}</span>
@@ -105,11 +302,23 @@ export default function RealtimeBankTransferPage() {
         <div className="rounded bg-gray-100 px-3 py-2">
           Events: <span className="font-semibold">{events.length}</span>
         </div>
+        <div className="rounded bg-gray-100 px-3 py-2">
+          Cursor: <span className="font-mono text-xs">{cursor || "-"}</span>
+        </div>
+        <div className="rounded bg-gray-100 px-3 py-2">
+          Sync: <span className="font-semibold">{isSyncing ? "running" : "idle"}</span>
+        </div>
       </div>
 
-      {errorMessage && (
+      {connectionErrorMessage && (
         <div className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {errorMessage}
+          {connectionErrorMessage}
+        </div>
+      )}
+
+      {syncErrorMessage && (
+        <div className="mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {syncErrorMessage}
         </div>
       )}
 

@@ -1,10 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { BANKTRANSFER_ABLY_CHANNEL } from "@lib/ably/constants";
 import { getAblyRestClient } from "@lib/ably/server";
+import { authorizeRealtimeRequest } from "@lib/realtime/rbac";
 
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  const authResult = authorizeRealtimeRequest(request, ["admin", "viewer"]);
+  if (!authResult.ok) {
+    return NextResponse.json(
+      {
+        status: "error",
+        message: authResult.message,
+      },
+      { status: authResult.status },
+    );
+  }
+
   const ably = getAblyRestClient();
   if (!ably) {
     return NextResponse.json(
@@ -17,10 +30,16 @@ export async function GET(request: NextRequest) {
   }
 
   const clientIdParam = request.nextUrl.searchParams.get("clientId");
-  const clientId = clientIdParam?.trim() || `ops-dashboard-${Date.now()}`;
+  const fallbackClientId = `ops-dashboard-${authResult.role}-${Date.now()}`;
+  const clientId = clientIdParam?.trim() || fallbackClientId;
 
   try {
-    const tokenRequest = await ably.auth.createTokenRequest({ clientId });
+    const tokenRequest = await ably.auth.createTokenRequest({
+      clientId,
+      capability: JSON.stringify({
+        [BANKTRANSFER_ABLY_CHANNEL]: ["subscribe"],
+      }),
+    });
     return NextResponse.json(tokenRequest);
   } catch (error) {
     console.error("Failed to create Ably token request:", error);

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createHash } from "crypto";
 
 
 // getAllUsersByStorecode
@@ -49,6 +50,9 @@ import {
 import {
   publishBankTransferEvent,
 } from "@lib/ably/server";
+import {
+  saveBankTransferRealtimeEvent,
+} from "@lib/api/bankTransferRealtimeEvent";
 import { error } from "console";
 import { memo } from "react";
 
@@ -622,6 +626,31 @@ export async function POST(request: NextRequest) {
 
   const bankAccountNumber = bankInfo?.defaultAccountNumber || bank_account_number;
 
+  const requestIdempotencyKey = (() => {
+    const normalizedTraceId = String(traceId || "").trim();
+    if (normalizedTraceId) {
+      return `trace:${normalizedTraceId}`;
+    }
+
+    const fallbackSource = [
+      String(transaction_type || ""),
+      String(bank_account_id || ""),
+      String(bankAccountNumber || ""),
+      String(amount || ""),
+      String(transaction_name || ""),
+      String(transaction_date || ""),
+      String(processing_date || ""),
+    ].join("|");
+
+    return `hash:${createHash("sha256").update(fallbackSource).digest("hex")}`;
+  })();
+
+  const buildEventId = (status: BankTransferDashboardEvent["status"]) => {
+    const source = `${requestIdempotencyKey}|${status}|banktransfer.updated`;
+    const digest = createHash("sha256").update(source).digest("hex");
+    return `banktransfer-${digest}`;
+  };
+
   const publishDashboardEvent = async ({
     status,
     store,
@@ -638,6 +667,8 @@ export async function POST(request: NextRequest) {
     errorMessage?: string | null;
   }) => {
     const event: BankTransferDashboardEvent = {
+      eventId: buildEventId(status),
+      idempotencyKey: requestIdempotencyKey,
       traceId: traceId || null,
       transactionType: String(transaction_type || ""),
       amount: Number(amount || 0),
@@ -655,7 +686,18 @@ export async function POST(request: NextRequest) {
     };
 
     try {
-      await publishBankTransferEvent(event);
+      const saved = await saveBankTransferRealtimeEvent({
+        eventId: event.eventId,
+        idempotencyKey: event.idempotencyKey,
+        payload: event,
+      });
+
+      if (saved.isDuplicate) {
+        console.log("Duplicate realtime event skipped:", event.eventId);
+        return;
+      }
+
+      await publishBankTransferEvent(saved.event);
     } catch (publishError) {
       console.error("Failed to publish banktransfer realtime event:", publishError);
     }

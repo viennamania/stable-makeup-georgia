@@ -8,6 +8,9 @@ export type BankTransferDashboardStore = {
 };
 
 export type BankTransferDashboardEvent = {
+  eventId: string;
+  idempotencyKey: string;
+  cursor?: string | null;
   traceId: string | null;
   transactionType: string;
   amount: number;
