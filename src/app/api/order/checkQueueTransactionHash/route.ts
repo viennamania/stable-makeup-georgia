@@ -5,6 +5,7 @@ import { transfer } from "thirdweb/extensions/erc20";
 import { ethereum, polygon, arbitrum, bsc } from "thirdweb/chains";
 import clientPromise from "@/lib/mongodb";
 import { dbName } from "@/lib/mongodb";
+import { updateBuyOrderByQueueId } from "@lib/api/order";
 import {
   chain as configuredChain,
   ethereumContractAddressUSDT,
@@ -484,18 +485,20 @@ export async function POST(request: NextRequest) {
 
         if (engineStatus === "CONFIRMED" && onchainStatus !== "REVERTED") {
           if (isValidTransactionHash(transactionHash)) {
-            const updateResult = await collection.updateOne(
-              {
-                _id: target._id,
-                queueId,
-              },
+            const updateResult = await updateBuyOrderByQueueId({
+              orderId,
+              queueId,
+              transactionHash,
+              minedAt: txStatus.confirmedAt || new Date().toISOString(),
+            });
+
+            await collection.updateOne(
+              { _id: target._id, queueId },
               {
                 $set: {
-                  transactionHash,
-                  minedAt: txStatus.confirmedAt || new Date().toISOString(),
                   queueCheckedAt: new Date().toISOString(),
                 },
-              }
+              },
             );
 
             results.push({
@@ -505,12 +508,12 @@ export async function POST(request: NextRequest) {
               queueId,
               status: "updated",
               success: true,
-              updated: updateResult.modifiedCount > 0,
+              updated: Boolean(updateResult),
               transactionHash,
               engineStatus,
               onchainStatus,
               message:
-                updateResult.modifiedCount > 0
+                updateResult
                   ? "transactionHash updated"
                   : "transactionHash already synchronized",
             });

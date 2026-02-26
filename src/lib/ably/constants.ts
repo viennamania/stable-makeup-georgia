@@ -48,7 +48,12 @@ export type BuyOrderStatusRealtimeEvent = {
   amountKrw: number;
   amountUsdt: number;
   buyerName: string | null;
+  buyerWalletAddress: string | null;
   buyerAccountNumber: string | null;
+  transactionHash: string | null;
+  escrowTransactionHash: string | null;
+  queueId: string | null;
+  minedAt: string | null;
   reason: string | null;
   publishedAt: string;
 };

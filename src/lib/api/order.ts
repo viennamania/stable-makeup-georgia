@@ -74,6 +74,9 @@ export interface OrderProps {
   buyer: any,
 
   transactionHash: string,
+  escrowTransactionHash?: string,
+  queueId?: string | null,
+  minedAt?: string | null,
 
   agentcode: string,
 
@@ -100,6 +103,7 @@ const BUYORDER_REALTIME_PROJECTION = {
   _id: 1,
   tradeId: 1,
   status: 1,
+  walletAddress: 1,
   storecode: 1,
   store: 1,
   krwAmount: 1,
@@ -107,6 +111,10 @@ const BUYORDER_REALTIME_PROJECTION = {
   nickname: 1,
   buyer: 1,
   cancelTradeReason: 1,
+  transactionHash: 1,
+  escrowTransactionHash: 1,
+  queueId: 1,
+  minedAt: 1,
 } as const;
 
 function getBuyOrderBuyerName(order: any): string | null {
@@ -129,9 +137,22 @@ function getBuyOrderBuyerAccountNumber(order: any): string | null {
   return raw || null;
 }
 
+function getBuyOrderBuyerWalletAddress(order: any): string | null {
+  const raw = String(order?.walletAddress || order?.buyer?.walletAddress || "").trim();
+  return raw || null;
+}
+
 function toSafeNumber(value: unknown): number {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
+}
+
+function toNormalizedHash(value: unknown): string | null {
+  const raw = String(value || "").trim();
+  if (!raw || raw === "0x") {
+    return null;
+  }
+  return raw;
 }
 
 async function fetchBuyOrderRealtimeSnapshot(
@@ -195,7 +216,12 @@ async function emitBuyOrderStatusRealtimeEvent({
     amountKrw: toSafeNumber(order?.krwAmount),
     amountUsdt: toSafeNumber(order?.usdtAmount),
     buyerName: getBuyOrderBuyerName(order),
+    buyerWalletAddress: getBuyOrderBuyerWalletAddress(order),
     buyerAccountNumber: getBuyOrderBuyerAccountNumber(order),
+    transactionHash: toNormalizedHash(order?.transactionHash),
+    escrowTransactionHash: toNormalizedHash(order?.escrowTransactionHash),
+    queueId: order?.queueId != null ? String(order.queueId).trim() || null : null,
+    minedAt: order?.minedAt ? String(order.minedAt) : null,
     reason: reason || order?.cancelTradeReason || null,
     publishedAt: new Date().toISOString(),
   };
@@ -5005,6 +5031,8 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
     { _id: new ObjectId(data.orderId + '') },
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+  const previousQueueId =
+    previousOrder?.queueId != null ? String(previousOrder.queueId).trim() || null : null;
   const result = await collection.updateOne(
     { _id: new ObjectId(data.orderId+'')},
     { $set: {
@@ -5018,16 +5046,26 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
     } }
   );
 
-  if (result.modifiedCount > 0 && previousStatus !== 'paymentConfirmed') {
+  if (result.modifiedCount > 0) {
     const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
       collection,
       { _id: new ObjectId(data.orderId + '') },
     );
+    const nextStatus =
+      updatedOrder?.status ? String(updatedOrder.status) : previousStatus || "paymentConfirmed";
+    const nextQueueId =
+      updatedOrder?.queueId != null ? String(updatedOrder.queueId).trim() || null : null;
+
+    if (nextStatus === previousStatus && nextQueueId === previousQueueId) {
+      return {
+        success: result.modifiedCount === 1,
+      };
+    }
 
     await emitBuyOrderStatusRealtimeEvent({
       source: "order.buyOrderConfirmPaymentEnqueueTransaction",
       statusFrom: previousStatus,
-      statusTo: "paymentConfirmed",
+      statusTo: nextStatus,
       order: updatedOrder,
       idempotencyParts: [String(data.orderId), String(data.queueId || "")],
     });
@@ -5054,6 +5092,7 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
     { queueId: data.queueId },
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+  const previousTransactionHash = toNormalizedHash(previousOrder?.transactionHash);
 
 
 
@@ -5099,16 +5138,25 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
     } }
   );
 
-  if (result.modifiedCount > 0 && previousStatus !== 'paymentConfirmed') {
+  if (result.modifiedCount > 0) {
     const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
       collection,
       { queueId: data.queueId },
     );
+    const nextStatus =
+      updatedOrder?.status ? String(updatedOrder.status) : previousStatus || "paymentConfirmed";
+    const nextTransactionHash = toNormalizedHash(updatedOrder?.transactionHash);
+
+    if (nextStatus === previousStatus && nextTransactionHash === previousTransactionHash) {
+      return {
+        success: result.modifiedCount === 1,
+      };
+    }
 
     await emitBuyOrderStatusRealtimeEvent({
       source: "order.buyOrderConfirmPaymentCompleted",
       statusFrom: previousStatus,
-      statusTo: "paymentConfirmed",
+      statusTo: nextStatus,
       order: updatedOrder,
       idempotencyParts: [String(data.queueId || ""), String(data.transactionHash || "")],
     });
@@ -5164,6 +5212,7 @@ export async function buyOrderRollbackPayment(data: any) {
     { _id: new ObjectId(data.orderId + '') },
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+  const previousTransactionHash = toNormalizedHash(previousOrder?.transactionHash);
 
 
   const result = await collection.updateOne(
@@ -5212,7 +5261,11 @@ export async function buyOrderRollbackPayment(data: any) {
       { _id: new ObjectId(data.orderId+'') }
     );
 
-    if (updated && previousStatus !== 'cancelled') {
+    const updatedTransactionHash = toNormalizedHash(updated?.transactionHash);
+    if (
+      updated &&
+      (previousStatus !== 'cancelled' || updatedTransactionHash !== previousTransactionHash)
+    ) {
       await emitBuyOrderStatusRealtimeEvent({
         source: "order.buyOrderRollbackPayment",
         statusFrom: previousStatus,
@@ -5326,6 +5379,7 @@ export async function cancelTradeBySeller(
     { _id: new ObjectId(orderId) },
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+  const previousEscrowTransactionHash = toNormalizedHash(previousOrder?.escrowTransactionHash);
 
   // check status is 'accepted' or 'paymentRequested'
 
@@ -5380,7 +5434,12 @@ export async function cancelTradeBySeller(
       { _id: new ObjectId(orderId) }
     );
 
-    if (updated && previousStatus !== 'cancelled') {
+    const updatedEscrowTransactionHash = toNormalizedHash(updated?.escrowTransactionHash);
+    if (
+      updated &&
+      (previousStatus !== 'cancelled' ||
+        updatedEscrowTransactionHash !== previousEscrowTransactionHash)
+    ) {
       await emitBuyOrderStatusRealtimeEvent({
         source: "order.cancelTradeBySeller",
         statusFrom: previousStatus,
@@ -5562,16 +5621,44 @@ export async function updateBuyOrderByQueueId(data: any) {
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  const query =
+    data.orderId && ObjectId.isValid(String(data.orderId))
+      ? { _id: new ObjectId(String(data.orderId)), queueId: data.queueId }
+      : { queueId: data.queueId };
+
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(collection, query);
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+  const previousTransactionHash = toNormalizedHash(previousOrder?.transactionHash);
 
   const result = await collection.updateOne(
-    { queueId: data.queueId },
+    query,
     { $set: {
       transactionHash: data.transactionHash,
       minedAt: data.minedAt,
     } }
   );
 
-  if (result) {
+  if (result.modifiedCount > 0) {
+    const updatedOrder = await fetchBuyOrderRealtimeSnapshot(collection, query);
+    const nextStatus =
+      updatedOrder?.status ? String(updatedOrder.status) : previousStatus || "paymentConfirmed";
+    const nextTransactionHash = toNormalizedHash(updatedOrder?.transactionHash);
+
+    if (updatedOrder && nextTransactionHash !== previousTransactionHash) {
+      await emitBuyOrderStatusRealtimeEvent({
+        source: "order.updateBuyOrderByQueueId",
+        statusFrom: previousStatus,
+        statusTo: nextStatus,
+        order: updatedOrder,
+        idempotencyParts: [
+          String(data.orderId || ""),
+          String(data.queueId || ""),
+          String(data.transactionHash || ""),
+          String(data.minedAt || ""),
+        ],
+      });
+    }
+
     return true;
   } else {
     return false;

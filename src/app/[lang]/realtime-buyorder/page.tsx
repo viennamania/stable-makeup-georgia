@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
 
@@ -8,6 +10,7 @@ import {
   BUYORDER_STATUS_ABLY_EVENT_NAME,
   type BuyOrderStatusRealtimeEvent,
 } from "@lib/ably/constants";
+import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
 
 type RealtimeItem = {
   id: string;
@@ -20,6 +23,7 @@ const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
+const TIME_AGO_TICK_MS = 5_000;
 
 function toTimestamp(value: string | null | undefined): number {
   if (!value) {
@@ -104,13 +108,54 @@ function maskAccountNumber(value: string | null | undefined): string {
   return `${head.replace(/[0-9A-Za-z가-힣]/g, "*")}${tail}`;
 }
 
+function formatShortHash(value: string | null | undefined): string {
+  const hash = String(value || "").trim();
+  if (!hash) {
+    return "-";
+  }
+  if (hash.length <= 20) {
+    return hash;
+  }
+  return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
+}
+
+function formatShortWalletAddress(value: string | null | undefined): string {
+  const address = String(value || "").trim();
+  if (!address) {
+    return "-";
+  }
+  if (address.length <= 14) {
+    return address;
+  }
+  return `${address.slice(0, 8)}...${address.slice(-6)}`;
+}
+
+function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
+  switch (tone) {
+    case "live":
+      return "animate-pulse border-cyan-300/75 bg-cyan-400/22 text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_16px_rgba(34,211,238,0.24)]";
+    case "fresh":
+      return "border-teal-300/65 bg-teal-400/18 text-teal-50 shadow-[0_0_0_1px_rgba(45,212,191,0.2)]";
+    case "recent":
+      return "border-sky-300/55 bg-sky-400/14 text-sky-100";
+    case "normal":
+      return "border-slate-500/50 bg-slate-700/55 text-slate-100";
+    default:
+      return "border-slate-700/70 bg-slate-900/70 text-slate-400";
+  }
+}
+
 export default function RealtimeBuyOrderPage() {
+  const params = useParams();
+  const lang = typeof params?.lang === "string" ? params.lang : "ko";
+
   const [events, setEvents] = useState<RealtimeItem[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
   const [connectionErrorMessage, setConnectionErrorMessage] = useState<string | null>(null);
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const cursorRef = useRef<string | null>(null);
 
@@ -292,6 +337,16 @@ export default function RealtimeBuyOrderPage() {
   }, [syncFromApi]);
 
   useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, TIME_AGO_TICK_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
     const now = Date.now();
     const activeHighlights = events
       .map((item) => item.highlightUntil)
@@ -363,8 +418,105 @@ export default function RealtimeBuyOrderPage() {
     };
   }, [sortedEvents]);
 
+  const metricCards = useMemo(() => {
+    const total = Math.max(1, sortedEvents.length);
+    const toRatio = (count: number) => Math.round((count / total) * 1000) / 10;
+
+    return [
+      {
+        key: "total",
+        title: "총 이벤트",
+        value: sortedEvents.length,
+        ratio: 100,
+        tone: "slate",
+        subtext: "실시간 누적 수신",
+      },
+      {
+        key: "confirmed",
+        title: "결제완료",
+        value: summary.confirmedCount,
+        ratio: toRatio(summary.confirmedCount),
+        tone: "emerald",
+        subtext: "정상 완료 건수",
+      },
+      {
+        key: "pending",
+        title: "진행중(주문/매칭/요청)",
+        value: summary.pendingCount,
+        ratio: toRatio(summary.pendingCount),
+        tone: "amber",
+        subtext: "처리 대기/진행",
+      },
+      {
+        key: "cancelled",
+        title: "취소",
+        value: summary.cancelledCount,
+        ratio: toRatio(summary.cancelledCount),
+        tone: "rose",
+        subtext: "취소/중단 건수",
+      },
+    ] as const;
+  }, [sortedEvents.length, summary.cancelledCount, summary.confirmedCount, summary.pendingCount]);
+
+  function getMetricToneClassName(tone: "slate" | "emerald" | "amber" | "rose") {
+    if (tone === "emerald") {
+      return {
+        card: "border-emerald-500/30 bg-emerald-950/25",
+        label: "text-emerald-200",
+        value: "text-emerald-100",
+        meta: "text-emerald-300/75",
+        bar: "bg-emerald-400/90",
+        rail: "bg-emerald-900/45",
+        dot: "bg-emerald-400",
+      };
+    }
+    if (tone === "amber") {
+      return {
+        card: "border-amber-500/30 bg-amber-950/25",
+        label: "text-amber-200",
+        value: "text-amber-100",
+        meta: "text-amber-300/75",
+        bar: "bg-amber-400/90",
+        rail: "bg-amber-900/45",
+        dot: "bg-amber-400",
+      };
+    }
+    if (tone === "rose") {
+      return {
+        card: "border-rose-500/30 bg-rose-950/25",
+        label: "text-rose-200",
+        value: "text-rose-100",
+        meta: "text-rose-300/75",
+        bar: "bg-rose-400/90",
+        rail: "bg-rose-900/45",
+        dot: "bg-rose-400",
+      };
+    }
+    return {
+      card: "border-slate-600/70 bg-slate-900/80",
+      label: "text-slate-200",
+      value: "text-slate-100",
+      meta: "text-slate-400",
+      bar: "bg-cyan-400/90",
+      rail: "bg-slate-700/70",
+      dot: "bg-cyan-300",
+    };
+  }
+
   return (
     <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
+      <nav className="flex flex-wrap items-center gap-2">
+        <Link
+          href={`/${lang}/realtime-banktransfer`}
+          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
+        >
+          Banktransfer
+        </Link>
+        <span className="rounded-lg border border-cyan-500/45 bg-cyan-500/12 px-3 py-1.5 text-sm font-medium text-cyan-200">
+          BuyOrder
+        </span>
+      </nav>
+
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -415,22 +567,46 @@ export default function RealtimeBuyOrderPage() {
       )}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-slate-400">총 이벤트</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-100">{sortedEvents.length}</p>
-        </div>
-        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-900/20 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-emerald-300/80">결제완료</p>
-          <p className="mt-2 text-2xl font-semibold text-emerald-200">{summary.confirmedCount}</p>
-        </div>
-        <div className="rounded-2xl border border-amber-500/25 bg-amber-900/20 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-amber-300/80">진행중(주문/매칭/요청)</p>
-          <p className="mt-2 text-2xl font-semibold text-amber-200">{summary.pendingCount}</p>
-        </div>
-        <div className="rounded-2xl border border-rose-500/25 bg-rose-900/20 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-rose-300/80">취소</p>
-          <p className="mt-2 text-2xl font-semibold text-rose-200">{summary.cancelledCount}</p>
-        </div>
+        {metricCards.map((metric) => {
+          const tone = getMetricToneClassName(metric.tone);
+
+          return (
+            <article
+              key={metric.key}
+              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-20px_rgba(8,145,178,0.38)] ${tone.card}`}
+            >
+              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/5 blur-2xl" />
+
+              <div className="relative flex items-start justify-between gap-2">
+                <p className={`text-xs uppercase tracking-[0.08em] ${tone.label}`}>{metric.title}</p>
+                <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
+              </div>
+
+              <p className={`relative mt-2 text-3xl font-semibold leading-none tabular-nums ${tone.value}`}>
+                {metric.value.toLocaleString("ko-KR")}
+              </p>
+
+              <div className="relative mt-3 flex items-center justify-between text-xs">
+                <span className={tone.meta}>{metric.subtext}</span>
+                <span className={`${tone.label} font-medium tabular-nums`}>
+                  {metric.key === "total" ? "100.0%" : `${metric.ratio.toFixed(1)}%`}
+                </span>
+              </div>
+
+              <div className={`relative mt-2 h-1.5 overflow-hidden rounded-full ${tone.rail}`}>
+                <div
+                  className={`h-full rounded-full ${tone.bar} transition-all duration-500`}
+                  style={{
+                    width: `${Math.max(
+                      4,
+                      Math.min(100, metric.key === "total" ? 100 : metric.ratio),
+                    )}%`,
+                  }}
+                />
+              </div>
+            </article>
+          );
+        })}
       </section>
 
       <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
@@ -459,7 +635,7 @@ export default function RealtimeBuyOrderPage() {
                   <th className="w-[140px] px-3 py-2">구매자</th>
                   <th className="w-[170px] px-3 py-2">계좌</th>
                   <th className="w-[260px] px-3 py-2">스토어</th>
-                  <th className="w-[320px] px-3 py-2">내역</th>
+                  <th className="w-[420px] px-3 py-2">내역</th>
                 </tr>
               </thead>
               <tbody>
@@ -475,6 +651,7 @@ export default function RealtimeBuyOrderPage() {
                   const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
                   const toLabel = getStatusLabel(item.data.statusTo);
                   const isHighlighted = item.highlightUntil > Date.now();
+                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
 
                   return (
                     <tr
@@ -485,8 +662,13 @@ export default function RealtimeBuyOrderPage() {
                           : "hover:bg-slate-900/55"
                       }`}
                     >
-                      <td className="px-3 py-3 font-mono text-xs text-slate-400">
-                        <div>{item.data.publishedAt || item.receivedAt}</div>
+                      <td className="px-3 py-3 text-xs text-slate-400">
+                        <div
+                          className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
+                        >
+                          {timeInfo.relativeLabel}
+                        </div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
                         {isHighlighted && (
                           <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
                             NEW
@@ -507,11 +689,25 @@ export default function RealtimeBuyOrderPage() {
                       </td>
 
                       <td className="px-3 py-3 text-right">
-                        <div className="font-semibold text-slate-100">{formatKrw(item.data.amountKrw)} KRW</div>
-                        <div className="text-xs text-slate-400">{formatUsdt(item.data.amountUsdt)} USDT</div>
+                        <div className="text-lg font-semibold leading-tight text-cyan-200">
+                          {formatUsdt(item.data.amountUsdt)} USDT
+                        </div>
+                        <div className="mt-1 text-xs text-slate-400">
+                          {formatKrw(item.data.amountKrw)} KRW
+                        </div>
                       </td>
 
-                      <td className="px-3 py-3 text-slate-200">{maskName(item.data.buyerName)}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-col">
+                          <span className="text-slate-200">{maskName(item.data.buyerName)}</span>
+                          <span
+                            className="mt-1 font-mono text-[11px] text-cyan-200"
+                            title={item.data.buyerWalletAddress || ""}
+                          >
+                            {formatShortWalletAddress(item.data.buyerWalletAddress)}
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-3 py-3 font-mono text-xs text-slate-300">{maskAccountNumber(item.data.buyerAccountNumber)}</td>
 
                       <td className="px-3 py-3">
@@ -542,6 +738,19 @@ export default function RealtimeBuyOrderPage() {
                       <td className="px-3 py-3">
                         <div className="font-mono text-xs text-cyan-200">TID: {item.data.tradeId || "-"}</div>
                         <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {item.data.orderId || "-"}</div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {item.data.source || "-"}</div>
+                        <div className="mt-1 font-mono text-[11px] text-violet-200" title={item.data.transactionHash || ""}>
+                          TX: {formatShortHash(item.data.transactionHash)}
+                        </div>
+                        <div className="mt-1 font-mono text-[11px] text-blue-200" title={item.data.escrowTransactionHash || ""}>
+                          Escrow TX: {formatShortHash(item.data.escrowTransactionHash)}
+                        </div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-400">
+                          Queue: {item.data.queueId || "-"}
+                        </div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-500">
+                          Mined: {item.data.minedAt || "-"}
+                        </div>
                         {item.data.reason ? (
                           <div className="mt-1 truncate text-xs text-rose-300">{item.data.reason}</div>
                         ) : (
