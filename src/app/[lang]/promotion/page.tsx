@@ -1478,6 +1478,27 @@ export default function PromotionPage() {
                 </Link>
               </div>
 
+              {walletAddress && (
+                <Link
+                  href={`/${lang}/promotion/user-register`}
+                  className="group mt-3 block overflow-hidden rounded-xl border border-sky-300/65 bg-[linear-gradient(135deg,rgba(14,116,144,0.34),rgba(8,47,73,0.52))] p-3 shadow-[0_18px_28px_-24px_rgba(56,189,248,0.9)] transition hover:-translate-y-0.5 hover:border-sky-200/85 hover:bg-[linear-gradient(135deg,rgba(14,116,144,0.42),rgba(8,47,73,0.64))]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-200/95">
+                        Member Signup
+                      </p>
+                      <p className="mt-1 text-xs text-sky-50 sm:text-sm">
+                        지갑 연결 완료. 회원가입에서 닉네임/아바타/연락처를 등록하세요.
+                      </p>
+                    </div>
+                    <span className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-sky-100/70 bg-sky-300/20 px-3 text-xs font-semibold text-sky-50 transition group-hover:bg-sky-300/32">
+                      회원가입
+                    </span>
+                  </div>
+                </Link>
+              )}
+
               <div className="promo-status-grid mt-3 grid gap-1.5 text-[11px] text-slate-300 sm:flex sm:flex-wrap">
                 <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
                   Connection: <span className="font-semibold text-emerald-200">{connectionState}</span>
