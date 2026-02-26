@@ -93,12 +93,14 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [connectedMobile, setConnectedMobile] = useState("");
   const [connectedEmail, setConnectedEmail] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUploadMessage, setAvatarUploadMessage] = useState<string | null>(null);
 
   const nickname = useMemo(() => sanitizeNickname(nicknameInput), [nicknameInput]);
   const avatar = useMemo(() => avatarInput.trim() || DEFAULT_AVATAR, [avatarInput]);
   const nicknameValid = useMemo(() => isValidNickname(nickname), [nickname]);
   const avatarValid = useMemo(() => isValidAvatarUrl(avatarInput), [avatarInput]);
-  const canSave = !!walletAddress && nicknameValid && avatarValid && !saving;
+  const canSave = !!walletAddress && nicknameValid && avatarValid && !saving && !uploadingAvatar;
 
   const fetchProfile = useCallback(async () => {
     if (!walletAddress) {
@@ -172,6 +174,56 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
         setConnectedEmail("");
       });
   }, [walletAddress]);
+
+  const uploadAvatarFile = useCallback(async (file: File) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarUploadMessage("이미지 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setAvatarUploadMessage("이미지 용량은 10MB 이하여야 합니다.");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setAvatarUploadMessage(null);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          "content-type": file.type || "application/octet-stream",
+        },
+        body: file,
+      });
+
+      if (!response.ok) {
+        throw new Error(`아바타 업로드 실패 (${response.status})`);
+      }
+
+      const data = (await response.json()) as {
+        url?: string;
+      };
+
+      if (!data.url) {
+        throw new Error("업로드 URL을 받지 못했습니다.");
+      }
+
+      setAvatarInput(data.url);
+      setAvatarUploadMessage("아바타 이미지 업로드가 완료되었습니다.");
+    } catch (error) {
+      setAvatarUploadMessage(
+        error instanceof Error ? error.message : "아바타 업로드 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }, []);
 
   const saveProfile = useCallback(async () => {
     setTouched(true);
@@ -393,13 +445,26 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
                 </label>
 
                 <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-slate-600">아바타 이미지 URL</span>
+                  <span className="mb-1 block text-xs font-semibold text-slate-600">아바타 이미지 업로드</span>
                   <input
-                    value={avatarInput}
-                    onChange={(event) => setAvatarInput(event.target.value)}
-                    placeholder="https://... 또는 /profile-default.png"
-                    className="h-11 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) {
+                        return;
+                      }
+                      void uploadAvatarFile(file);
+                      event.currentTarget.value = "";
+                    }}
+                    className="block w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 file:mr-3 file:rounded-lg file:border-0 file:bg-sky-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-sky-500"
                   />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    JPG/PNG/WebP 이미지 파일을 업로드하면 Vercel Blob URL이 자동으로 적용됩니다.
+                  </p>
+                  <p className="mt-1 break-all text-[11px] text-slate-500">
+                    현재 이미지 URL: {avatarInput || DEFAULT_AVATAR}
+                  </p>
                 </label>
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
@@ -415,6 +480,12 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
                   />
                 </div>
               </div>
+
+              {avatarUploadMessage && (
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  {avatarUploadMessage}
+                </div>
+              )}
 
               {touched && !nicknameValid && (
                 <p className="mt-2 text-xs text-rose-600">
@@ -443,7 +514,7 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
                 disabled={!canSave}
                 className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0f766e,#0369a1)] text-sm font-bold text-white shadow-[0_16px_28px_-20px_rgba(2,132,199,0.9)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {saving ? "저장중..." : "회원정보 저장"}
+                {uploadingAvatar ? "이미지 업로드중..." : saving ? "저장중..." : "회원정보 저장"}
               </button>
             </section>
 

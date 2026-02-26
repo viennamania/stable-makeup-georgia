@@ -1067,7 +1067,7 @@ export default function PromotionPage() {
   return (
     <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
       <aside
-        className={`fixed left-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] sm:left-auto sm:right-4 sm:top-4 ${
+        className={`fixed left-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] transition-all sm:left-auto sm:right-4 sm:top-24 ${
           walletPanelOpen ? "" : "max-sm:w-[212px]"
         }`}
       >
