@@ -33,13 +33,24 @@ function toTimestamp(value: string | null | undefined): number {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function isSettlementEvent(event: BuyOrderStatusRealtimeEvent): boolean {
-  const source = String(event.source || "").toLowerCase();
-  return (
-    event.statusTo === "paymentSettled" ||
-    event.statusFrom === "paymentSettled" ||
-    source.includes("settlement")
+function hasSettlementReference(event: BuyOrderStatusRealtimeEvent): boolean {
+  return Boolean(
+    String(event.transactionHash || "").trim() ||
+      String(event.escrowTransactionHash || "").trim() ||
+      String(event.queueId || "").trim() ||
+      String(event.minedAt || "").trim(),
   );
+}
+
+function isCompletedSettlementEvent(event: BuyOrderStatusRealtimeEvent): boolean {
+  if (event.statusTo !== "paymentSettled") {
+    return false;
+  }
+
+  const amountUsdt = Number(event.amountUsdt || 0);
+  const amountKrw = Number(event.amountKrw || 0);
+
+  return amountUsdt > 0 || amountKrw > 0 || hasSettlementReference(event);
 }
 
 function getStatusLabel(status: string | null | undefined): string {
@@ -58,23 +69,6 @@ function getStatusLabel(status: string | null | undefined): string {
       return "취소";
     default:
       return String(status || "-");
-  }
-}
-
-function getStatusClassName(status: string | null | undefined): string {
-  switch (status) {
-    case "paymentSettled":
-      return "border border-emerald-300/65 bg-emerald-500/20 text-emerald-50";
-    case "paymentConfirmed":
-      return "border border-cyan-300/55 bg-cyan-500/18 text-cyan-100";
-    case "paymentRequested":
-      return "border border-amber-300/55 bg-amber-500/18 text-amber-100";
-    case "accepted":
-      return "border border-sky-300/55 bg-sky-500/18 text-sky-100";
-    case "cancelled":
-      return "border border-rose-300/55 bg-rose-500/18 text-rose-100";
-    default:
-      return "border border-slate-500/45 bg-slate-700/50 text-slate-100";
   }
 }
 
@@ -128,15 +122,15 @@ function formatShortWalletAddress(value: string | null | undefined): string {
   return `${address.slice(0, 10)}...${address.slice(-6)}`;
 }
 
-function formatShortHash(value: string | null | undefined): string {
+function formatReadableHash(value: string | null | undefined): string {
   const hash = String(value || "").trim();
   if (!hash) {
     return "-";
   }
-  if (hash.length <= 24) {
+  if (hash.length <= 36) {
     return hash;
   }
-  return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
+  return `${hash.slice(0, 14)}...${hash.slice(-12)}`;
 }
 
 function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
@@ -270,7 +264,7 @@ export default function RealtimeSettlementPage() {
             ? (data.events as BuyOrderStatusRealtimeEvent[])
             : [];
 
-          let settlementEvents = incomingEvents.filter(isSettlementEvent);
+          let settlementEvents = incomingEvents.filter(isCompletedSettlementEvent);
 
           if (!since && settlementEvents.length === 0) {
             try {
@@ -333,7 +327,7 @@ export default function RealtimeSettlementPage() {
 
     const onMessage = (message: Ably.Message) => {
       const data = message.data as BuyOrderStatusRealtimeEvent;
-      if (!isSettlementEvent(data)) {
+      if (!isCompletedSettlementEvent(data)) {
         return;
       }
 
@@ -558,7 +552,7 @@ export default function RealtimeSettlementPage() {
               Settlement Realtime Dashboard
             </h1>
             <p className="mt-1 text-sm text-slate-300">
-              BuyOrder 이벤트 중 정산 관련 항목만 선별해 실시간으로 표시합니다.
+              BuyOrder 중 paymentSettled 완료 및 정산 참조값이 있는 이벤트만 실시간으로 표시합니다.
             </p>
             <p className="mt-1 text-xs text-emerald-300/90">
               Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event:{" "}
@@ -621,7 +615,7 @@ export default function RealtimeSettlementPage() {
         })}
       </section>
 
-      <section className="grid gap-3 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <section className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
           <p className="text-xs uppercase tracking-wide text-slate-400">정산 모니터링</p>
           <div className="mt-3 rounded-xl border border-emerald-400/45 bg-emerald-500/10 px-3 py-3 shadow-[inset_0_0_24px_rgba(16,185,129,0.12)]">
@@ -637,8 +631,18 @@ export default function RealtimeSettlementPage() {
               {formatKrw(summary.totalKrw)} KRW
             </p>
           </div>
+          <div className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-950/35 px-3 py-2 text-xs text-emerald-100">
+            <div className="flex items-center justify-between gap-2">
+              <span>Settlement TX</span>
+              <span className="font-semibold tabular-nums">{summary.txCount.toLocaleString("ko-KR")}건</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between gap-2 text-emerald-200/90">
+              <span>Escrow TX</span>
+              <span className="font-semibold tabular-nums">{summary.escrowTxCount.toLocaleString("ko-KR")}건</span>
+            </div>
+          </div>
           <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2 text-xs text-slate-400">
-            거래 완료 후 정산 반영 이벤트만 추적합니다.
+            정산 완료 + 정산 참조 정보가 확인된 이벤트만 추적합니다.
           </div>
         </div>
 
@@ -648,22 +652,143 @@ export default function RealtimeSettlementPage() {
             <p className="text-xs text-slate-400">최신 이벤트 순</p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-[1480px] border-collapse text-sm">
+          <div className="space-y-2 p-3 md:hidden">
+            {sortedEvents.length === 0 && (
+              <div className="rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-8 text-center text-sm text-slate-500">
+                아직 수신된 정산 이벤트가 없습니다.
+              </div>
+            )}
+
+            {sortedEvents.map((item) => {
+              const isHighlighted = item.highlightUntil > Date.now();
+              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+              const settlementRefReady = hasSettlementReference(item.data);
+
+              return (
+                <article
+                  key={`mobile-${item.id}`}
+                  className={`rounded-xl border p-3 transition-all duration-500 ${
+                    isHighlighted
+                      ? "animate-pulse border-emerald-400/45 bg-emerald-500/10 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.28)]"
+                      : "border-slate-700/80 bg-slate-950/65"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div
+                        className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
+                      >
+                        {timeInfo.relativeLabel}
+                      </div>
+                      <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-base font-semibold leading-tight tabular-nums text-emerald-200">
+                        {formatUsdt(item.data.amountUsdt)}
+                        <span className="ml-1 text-xs font-semibold text-emerald-100">USDT</span>
+                      </div>
+                      <div className="mt-1 text-[11px] tabular-nums text-slate-400">
+                        {formatKrw(item.data.amountKrw)} KRW
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1">
+                    <span className="rounded-full border border-emerald-300/65 bg-emerald-500/22 px-2 py-1 text-xs font-semibold text-emerald-50">
+                      정산완료
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-1 text-xs font-medium ${
+                        settlementRefReady
+                          ? "border-cyan-300/55 bg-cyan-500/16 text-cyan-100"
+                          : "border-amber-300/55 bg-amber-500/16 text-amber-100"
+                      }`}
+                    >
+                      {settlementRefReady ? "참조확인" : "참조대기"}
+                    </span>
+                    {isHighlighted && (
+                      <span className="ml-auto rounded-md border border-emerald-400/40 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-100">
+                        NEW
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">구매자</p>
+                      <p className="mt-1 text-sm text-slate-100">{maskName(item.data.buyerName)}</p>
+                      <p className="mt-1 font-mono text-[11px] text-emerald-200" title={item.data.buyerWalletAddress || ""}>
+                        {formatShortWalletAddress(item.data.buyerWalletAddress)}
+                      </p>
+                      <p className="mt-1 font-mono text-[11px] text-slate-400">
+                        {maskAccountNumber(item.data.buyerAccountNumber)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">스토어</p>
+                      {item.data.store ? (
+                        <div className="mt-1 flex min-w-0 items-center gap-2">
+                          {item.data.store.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.data.store.logo}
+                              alt={item.data.store.name || "store-logo"}
+                              className="h-8 w-8 shrink-0 rounded-md border border-slate-700 object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 shrink-0 rounded-md border border-slate-700 bg-slate-800" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-slate-100">{item.data.store.name || "-"}</p>
+                            <p className="font-mono text-[11px] text-slate-400">{item.data.store.code || "-"}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-500">-</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
+                    <p className="text-[10px] uppercase tracking-[0.08em] text-emerald-300/90">Settlement Hash</p>
+                    <p className="mt-1 font-mono text-violet-200" title={item.data.transactionHash || ""}>
+                      TX: {formatReadableHash(item.data.transactionHash)}
+                    </p>
+                    <p className="mt-1 font-mono text-blue-200" title={item.data.escrowTransactionHash || ""}>
+                      Escrow TX: {formatReadableHash(item.data.escrowTransactionHash)}
+                    </p>
+                    <p className="font-mono text-emerald-200">TID: {item.data.tradeId || "-"}</p>
+                    <p className="mt-1 font-mono text-slate-400">OID: {item.data.orderId || "-"}</p>
+                    <p className="mt-1 font-mono text-slate-500">Source: {item.data.source || "-"}</p>
+                    <p className="mt-1 font-mono text-slate-400">Queue: {item.data.queueId || "-"}</p>
+                    <p className="mt-1 font-mono text-slate-500">Mined: {item.data.minedAt || "-"}</p>
+                    {item.data.reason ? (
+                      <p className="mt-1 truncate text-rose-300">{item.data.reason}</p>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="min-w-[1840px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
-                  <th className="w-[190px] px-3 py-2">시간</th>
-                  <th className="w-[280px] px-3 py-2">상태</th>
-                  <th className="w-[190px] px-3 py-2 text-right">정산 금액</th>
-                  <th className="w-[220px] px-3 py-2">구매자</th>
-                  <th className="w-[260px] px-3 py-2">스토어</th>
-                  <th className="w-[460px] px-3 py-2">정산 참조</th>
+                  <th className="w-[220px] px-3 py-2">시간</th>
+                  <th className="w-[220px] px-3 py-2">정산 상태</th>
+                  <th className="w-[240px] px-3 py-2 text-right">정산 금액</th>
+                  <th className="w-[430px] px-3 py-2">Settlement Hash</th>
+                  <th className="w-[240px] px-3 py-2">구매자</th>
+                  <th className="w-[300px] px-3 py-2">스토어</th>
+                  <th className="w-[420px] px-3 py-2">정산 추적</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedEvents.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-3 py-8 text-center text-slate-500">
+                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
                       아직 수신된 정산 이벤트가 없습니다.
                     </td>
                   </tr>
@@ -674,6 +799,7 @@ export default function RealtimeSettlementPage() {
                   const toLabel = getStatusLabel(item.data.statusTo);
                   const isHighlighted = item.highlightUntil > Date.now();
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                  const settlementRefReady = hasSettlementReference(item.data);
 
                   return (
                     <tr
@@ -700,22 +826,51 @@ export default function RealtimeSettlementPage() {
 
                       <td className="px-3 py-3">
                         <div className="flex flex-wrap items-center gap-1">
-                          <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusFrom)}`}>
-                            {fromLabel}
-                          </span>
-                          <span className="text-slate-500">→</span>
-                          <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusTo)}`}>
+                          <span className="rounded-full border border-emerald-300/65 bg-emerald-500/22 px-2 py-1 text-xs font-semibold text-emerald-50">
                             {toLabel}
                           </span>
+                          <span
+                            className={`rounded-full border px-2 py-1 text-xs font-medium ${
+                              settlementRefReady
+                                ? "border-cyan-300/55 bg-cyan-500/16 text-cyan-100"
+                                : "border-amber-300/55 bg-amber-500/16 text-amber-100"
+                            }`}
+                          >
+                            {settlementRefReady ? "참조확인" : "참조대기"}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs text-slate-400">
+                          이전 상태: <span className="text-slate-300">{fromLabel}</span>
                         </div>
                       </td>
 
                       <td className="px-3 py-3 text-right">
-                        <div className="text-lg font-semibold leading-tight text-emerald-200">
+                        <div className="text-xl font-semibold leading-tight text-emerald-200">
                           {formatUsdt(item.data.amountUsdt)} USDT
                         </div>
-                        <div className="mt-1 text-xs text-slate-400">
+                        <div className="mt-1 text-sm text-slate-300">
                           {formatKrw(item.data.amountKrw)} KRW
+                        </div>
+                      </td>
+
+                      <td className="px-3 py-3">
+                        <div className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.1em] text-emerald-300/90">Settlement TX</p>
+                          <p
+                            className="mt-1 break-all font-mono text-[12px] leading-5 text-emerald-50"
+                            title={item.data.transactionHash || ""}
+                          >
+                            {formatReadableHash(item.data.transactionHash)}
+                          </p>
+                        </div>
+                        <div className="mt-2 rounded-lg border border-blue-500/35 bg-blue-500/10 px-2.5 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.1em] text-blue-200/90">Escrow TX</p>
+                          <p
+                            className="mt-1 break-all font-mono text-[12px] leading-5 text-blue-100"
+                            title={item.data.escrowTransactionHash || ""}
+                          >
+                            {formatReadableHash(item.data.escrowTransactionHash)}
+                          </p>
                         </div>
                       </td>
 
@@ -762,15 +917,9 @@ export default function RealtimeSettlementPage() {
                       <td className="px-3 py-3">
                         <div className="font-mono text-xs text-emerald-200">TID: {item.data.tradeId || "-"}</div>
                         <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {item.data.orderId || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {item.data.source || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-violet-200" title={item.data.transactionHash || ""}>
-                          TX: {formatShortHash(item.data.transactionHash)}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-blue-200" title={item.data.escrowTransactionHash || ""}>
-                          Escrow TX: {formatShortHash(item.data.escrowTransactionHash)}
-                        </div>
                         <div className="mt-1 font-mono text-[11px] text-slate-400">Queue: {item.data.queueId || "-"}</div>
                         <div className="mt-1 font-mono text-[11px] text-slate-500">Mined: {item.data.minedAt || "-"}</div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {item.data.source || "-"}</div>
                         {item.data.reason ? (
                           <div className="mt-1 truncate text-xs text-rose-300">{item.data.reason}</div>
                         ) : (

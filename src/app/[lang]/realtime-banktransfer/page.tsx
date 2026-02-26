@@ -606,7 +606,105 @@ export default function RealtimeBankTransferPage() {
             <p className="text-xs text-slate-400">최신 이벤트 순</p>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="space-y-2 p-3 md:hidden">
+            {sortedEvents.length === 0 && (
+              <div className="rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-8 text-center text-sm text-slate-500">
+                아직 수신된 이벤트가 없습니다.
+              </div>
+            )}
+
+            {sortedEvents.map((item) => {
+              const isHighlighted = item.highlightUntil > Date.now();
+              const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+
+              return (
+                <article
+                  key={`mobile-${item.id}`}
+                  className={`rounded-xl border p-3 transition-all duration-500 ${
+                    isHighlighted
+                      ? "animate-pulse border-cyan-400/40 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.28)]"
+                      : "border-slate-700/80 bg-slate-950/65"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div
+                        className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
+                      >
+                        {timeInfo.relativeLabel}
+                      </div>
+                      <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-base font-semibold tabular-nums text-slate-100">
+                        {formatKrw(item.data.amount)} KRW
+                      </div>
+                      {isHighlighted && (
+                        <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
+                          NEW
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1">
+                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.status)}`}>
+                      {item.data.status || "-"}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${getTransactionTypeClassName(item.data.transactionType)}`}
+                    >
+                      {getTransactionTypeLabel(item.data.transactionType)}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">입금자</p>
+                      <p className="mt-1 text-sm text-slate-100">{maskName(item.data.transactionName)}</p>
+                      <p className="mt-1 font-mono text-[11px] text-slate-400">
+                        {maskAccountNumber(item.data.bankAccountNumber)}
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">스토어</p>
+                      {item.data.store ? (
+                        <div className="mt-1 flex min-w-0 items-center gap-2">
+                          {item.data.store.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.data.store.logo}
+                              alt={item.data.store.name || "store-logo"}
+                              className="h-8 w-8 shrink-0 rounded-md border border-slate-700 object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 shrink-0 rounded-md border border-slate-700 bg-slate-800" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-slate-100">{item.data.store.name || "-"}</p>
+                            <p className="font-mono text-[11px] text-slate-400">
+                              {item.data.store.code || item.data.storecode || "-"}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-500">-</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
+                    <p className="font-mono text-cyan-200">TID: {item.data.tradeId || "-"}</p>
+                    <p className="mt-1 font-mono text-slate-400">Match: {item.data.match || "-"}</p>
+                    <p className="mt-1 font-mono text-slate-500">Trace: {item.data.traceId || "-"}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-[1380px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">

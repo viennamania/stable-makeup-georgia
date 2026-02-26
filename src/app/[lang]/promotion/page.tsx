@@ -581,6 +581,13 @@ export default function PromotionPage() {
 
   const latestBank = sortedBankEvents[0];
   const latestBuy = sortedBuyEvents[0];
+  const latestSettlement = settlementBuyEvents[0];
+  const latestSettlementTimeInfo = latestSettlement
+    ? getRelativeTimeInfo(latestSettlement.data.publishedAt || latestSettlement.receivedAt, nowMs)
+    : null;
+  const isSettlementCtaHot = Boolean(
+    latestSettlement && latestSettlement.highlightUntil > nowMs,
+  );
 
   const summary = useMemo(() => {
     let depositedAmount = 0;
@@ -785,8 +792,8 @@ export default function PromotionPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <article className="col-span-2 rounded-2xl border border-emerald-300/55 bg-emerald-950/40 p-4 shadow-lg shadow-black/25">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <article className="rounded-2xl border border-emerald-300/55 bg-emerald-950/40 p-4 shadow-lg shadow-black/25 sm:col-span-2">
                 <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">핵심 지표 | Settlement USDT</p>
                 <p className="mt-2 text-3xl font-bold leading-none text-emerald-50 sm:text-[2.1rem]">
                   {formatUsdt(summary.settlementUsdt)}
@@ -865,36 +872,85 @@ export default function PromotionPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-emerald-300/50 bg-slate-950/70 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">Realtime Settlement Log</p>
-                <Link
-                  href={`/${lang}/realtime-settlement`}
-                  className="rounded-lg border border-emerald-300/60 bg-emerald-500/18 px-2.5 py-1 text-xs font-semibold text-emerald-50 transition hover:bg-emerald-500/28"
-                >
-                  정산 대시보드
-                </Link>
+            <div
+              className={`promo-settlement-cta rounded-2xl border p-3.5 ${
+                isSettlementCtaHot || isHeroBursting ? "promo-settlement-cta-burst" : ""
+              }`}
+            >
+              <div className="relative flex items-start justify-between gap-2">
+                <div>
+                  <p className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.1em] text-emerald-100">
+                    <span className="promo-live-dot h-2 w-2 rounded-full bg-emerald-300" />
+                    Realtime Settlement Log
+                  </p>
+                  <h3 className="mt-1 text-base font-semibold leading-tight text-emerald-50">
+                    정산 이벤트를 공시 수준으로 즉시 확인
+                  </h3>
+                  <p className="mt-1 text-[11px] text-emerald-200/90">
+                    {latestSettlementTimeInfo
+                      ? `최근 정산 이벤트 ${latestSettlementTimeInfo.relativeLabel}`
+                      : "최근 정산 이벤트 대기 중"}
+                  </p>
+                </div>
+
+                <span className="promo-settlement-ping rounded-full border border-emerald-200/75 bg-emerald-400/24 px-2 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50">
+                  LIVE
+                </span>
               </div>
 
-              <ul className="mt-2 space-y-2">
-                {settlementBuyEvents.slice(0, 3).map((item) => (
-                  <li
-                    key={`spot-${item.id}`}
-                    className="rounded-lg border border-emerald-500/25 bg-emerald-500/8 px-2.5 py-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-xs text-emerald-50">
-                        {item.data.store?.name || "Unknown Store"}
-                      </span>
-                      <span className="font-mono text-[11px] text-emerald-200">
-                        {getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs).relativeLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm font-semibold text-emerald-100">
-                      {formatUsdt(item.data.amountUsdt)} USDT
-                    </p>
-                  </li>
-                ))}
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/12 px-2 py-1.5 text-emerald-100">
+                  <p className="text-[10px] uppercase tracking-[0.09em] text-emerald-200/90">Settlement Count</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums">
+                    {summary.settlementCount.toLocaleString("ko-KR")}건
+                  </p>
+                </div>
+                <div className="rounded-lg border border-cyan-400/35 bg-cyan-500/12 px-2 py-1.5 text-cyan-100">
+                  <p className="text-[10px] uppercase tracking-[0.09em] text-cyan-200/90">Settlement USDT</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums">
+                    {formatUsdt(summary.settlementUsdt)}{" "}
+                    <span className="text-[11px] font-bold tracking-[0.08em]">USDT</span>
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href={`/${lang}/realtime-settlement`}
+                className="promo-settlement-btn mt-3 inline-flex w-full items-center justify-between rounded-xl border border-emerald-200/80 bg-emerald-400/30 px-3 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/36"
+              >
+                <span>정산 대시보드 바로가기</span>
+                <span aria-hidden className="text-base leading-none">
+                  →
+                </span>
+              </Link>
+
+              <ul className="mt-3 space-y-2">
+                {settlementBuyEvents.slice(0, 3).map((item) => {
+                  const isHighlighted = item.highlightUntil > nowMs;
+                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+
+                  return (
+                    <li
+                      key={`spot-${item.id}`}
+                      className={`rounded-xl border px-2.5 py-2 transition-all duration-500 ${
+                        isHighlighted
+                          ? "promo-event-flash border-emerald-300/62 bg-emerald-400/16 shadow-[0_12px_24px_-16px_rgba(16,185,129,0.9)]"
+                          : "border-emerald-500/30 bg-slate-950/58"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs text-emerald-50">
+                          {item.data.store?.name || "Unknown Store"}
+                        </span>
+                        <span className="font-mono text-[11px] text-emerald-200">{timeInfo.relativeLabel}</span>
+                      </div>
+                      <p className="mt-1 text-base font-semibold text-emerald-100">
+                        {formatUsdt(item.data.amountUsdt)}
+                        <span className="ml-1 text-xs font-bold tracking-[0.08em] text-emerald-200">USDT</span>
+                      </p>
+                    </li>
+                  );
+                })}
 
                 {settlementBuyEvents.length === 0 && (
                   <li className="rounded-lg border border-slate-700/70 bg-slate-900/70 px-2.5 py-3 text-xs text-slate-400">
@@ -1200,6 +1256,93 @@ export default function PromotionPage() {
           animation: promoEventFlash 1.2s ease;
         }
 
+        .promo-settlement-cta {
+          position: relative;
+          overflow: hidden;
+          border-color: rgba(110, 231, 183, 0.42);
+          background: linear-gradient(
+            145deg,
+            rgba(5, 46, 36, 0.92) 0%,
+            rgba(3, 15, 28, 0.94) 56%,
+            rgba(6, 78, 59, 0.9) 100%
+          );
+          box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.18),
+            0 18px 36px -22px rgba(16, 185, 129, 0.8);
+        }
+
+        .promo-settlement-cta::before {
+          content: "";
+          position: absolute;
+          inset: -130% -36%;
+          background: linear-gradient(
+            110deg,
+            transparent 36%,
+            rgba(110, 231, 183, 0.2) 50%,
+            rgba(103, 232, 249, 0.28) 58%,
+            transparent 71%
+          );
+          transform: rotate(10deg);
+          animation: promoSettlementSweep 4.7s linear infinite;
+          pointer-events: none;
+        }
+
+        .promo-settlement-cta::after {
+          content: "";
+          position: absolute;
+          inset: -20%;
+          background: radial-gradient(
+            circle at 75% 18%,
+            rgba(16, 185, 129, 0.23) 0%,
+            rgba(2, 6, 23, 0) 58%
+          );
+          animation: promoSettlementAura 2.8s ease-in-out infinite;
+          pointer-events: none;
+        }
+
+        .promo-settlement-cta > * {
+          position: relative;
+          z-index: 1;
+        }
+
+        .promo-settlement-cta-burst {
+          animation: promoSettlementBurst 1.15s ease;
+        }
+
+        .promo-settlement-ping {
+          animation: promoSettlementPing 1.15s ease-out infinite;
+          box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.55);
+        }
+
+        .promo-settlement-btn {
+          position: relative;
+          overflow: hidden;
+          isolation: isolate;
+          animation: promoSettlementBtnLift 2.4s ease-in-out infinite;
+        }
+
+        .promo-settlement-btn::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: -38%;
+          width: 34%;
+          background: linear-gradient(
+            110deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.34) 48%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          transform: skewX(-18deg);
+          animation: promoSettlementBtnShine 2.9s linear infinite;
+          z-index: 0;
+        }
+
+        .promo-settlement-btn > span {
+          position: relative;
+          z-index: 1;
+        }
+
         .promo-marquee-track {
           display: flex;
           width: max-content;
@@ -1287,6 +1430,67 @@ export default function PromotionPage() {
           }
         }
 
+        @keyframes promoSettlementSweep {
+          0% {
+            transform: translate3d(-42%, -18%, 0) rotate(10deg);
+          }
+          100% {
+            transform: translate3d(38%, 22%, 0) rotate(10deg);
+          }
+        }
+
+        @keyframes promoSettlementAura {
+          0%,
+          100% {
+            opacity: 0.56;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.04);
+          }
+        }
+
+        @keyframes promoSettlementBurst {
+          0% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2);
+          }
+          32% {
+            box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.2);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+          }
+        }
+
+        @keyframes promoSettlementPing {
+          0% {
+            box-shadow: 0 0 0 0 rgba(110, 231, 183, 0.66);
+          }
+          100% {
+            box-shadow: 0 0 0 10px rgba(110, 231, 183, 0);
+          }
+        }
+
+        @keyframes promoSettlementBtnLift {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-1px);
+          }
+        }
+
+        @keyframes promoSettlementBtnShine {
+          0% {
+            left: -42%;
+          }
+          100% {
+            left: 132%;
+          }
+        }
+
         @keyframes promoMarquee {
           0% {
             transform: translateX(0);
@@ -1303,6 +1507,10 @@ export default function PromotionPage() {
           .promo-title-shine,
           .promo-hero-burst,
           .promo-event-flash,
+          .promo-settlement-cta,
+          .promo-settlement-cta-burst,
+          .promo-settlement-ping,
+          .promo-settlement-btn,
           .promo-marquee-track {
             animation: none !important;
           }

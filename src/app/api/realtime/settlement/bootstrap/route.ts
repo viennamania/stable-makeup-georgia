@@ -169,6 +169,10 @@ export async function GET(request: NextRequest) {
       .find(
         {
           settlement: { $exists: true, $ne: null },
+          $or: [
+            { "settlement.status": "paymentSettled" },
+            { status: "paymentSettled" },
+          ],
         },
         {
           projection: {
