@@ -1130,13 +1130,25 @@ export default function PromotionPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">My Wallet</p>
               <p className="text-[11px] text-slate-400">고정 지갑 패널</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setWalletPanelOpen((previous) => !previous)}
-              className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100"
-            >
-              {walletPanelOpen ? "접기" : "열기"}
-            </button>
+            <div className="flex items-center gap-1.5">
+              {walletAddress && (
+                <button
+                  type="button"
+                  onClick={() => void copyWalletAddress()}
+                  className="rounded-lg border border-cyan-400/50 bg-cyan-500/14 px-2 py-1 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
+                  title={walletAddress}
+                >
+                  {walletAddressCopied ? "복사됨" : "주소복사"}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setWalletPanelOpen((previous) => !previous)}
+                className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100"
+              >
+                {walletPanelOpen ? "접기" : "열기"}
+              </button>
+            </div>
           </header>
 
           {walletPanelOpen && (
