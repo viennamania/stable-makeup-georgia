@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
+import { createPortal } from "react-dom";
 
 import RealtimeTopNav from "@components/realtime/RealtimeTopNav";
 import {
@@ -179,6 +180,7 @@ export default function RealtimeBuyOrderPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const cursorRef = useRef<string | null>(null);
   const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
@@ -341,6 +343,15 @@ export default function RealtimeBuyOrderPage() {
           const existing = map.get(nextId);
 
           if (existing) {
+            const previousWasPaymentConfirmed = isPaymentConfirmedStatus(existing.data.statusTo);
+            const nextIsPaymentConfirmed = isPaymentConfirmedStatus(incomingEvent.statusTo);
+            if (highlightNew && nextIsPaymentConfirmed && !previousWasPaymentConfirmed) {
+              jackpotCandidates.push({
+                eventId: nextId,
+                event: incomingEvent,
+              });
+            }
+
             map.set(nextId, {
               ...existing,
               data: incomingEvent,
@@ -489,6 +500,10 @@ export default function RealtimeBuyOrderPage() {
       window.clearInterval(timer);
     };
   }, [syncFromApi]);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -667,86 +682,93 @@ export default function RealtimeBuyOrderPage() {
     };
   }
 
+  const jackpotOverlayLayer =
+    isHydrated && typeof document !== "undefined"
+      ? createPortal(
+          jackpotBursts.map((burst) => (
+            <div key={burst.id} className="jackpot-overlay pointer-events-none fixed inset-0 z-[2500]">
+              <div className="party-backdrop" />
+              <div className="party-flash" />
+
+              <div className="party-streamers">
+                {partyStreamerBlueprint.map((streamer, index) => (
+                  <span
+                    key={`${burst.id}-streamer-${index}`}
+                    className="party-streamer"
+                    style={
+                      {
+                        left: `${streamer.left}%`,
+                        animationDelay: `${streamer.delay}ms`,
+                        animationDuration: `${streamer.duration}ms`,
+                        "--stream-tilt": `${streamer.tilt}deg`,
+                        "--stream-color": streamer.color,
+                      } as React.CSSProperties
+                    }
+                  />
+                ))}
+              </div>
+
+              <div className="party-fireworks">
+                {partyFireworkBlueprint.map((firework, fireworkIndex) => (
+                  <span
+                    key={`${burst.id}-firework-${fireworkIndex}`}
+                    className="party-firework"
+                    style={
+                      {
+                        left: `${firework.left}%`,
+                        top: `${firework.top}%`,
+                        animationDelay: `${firework.delay}ms`,
+                        "--firework-scale": String(firework.scale),
+                        "--firework-color": firework.color,
+                      } as React.CSSProperties
+                    }
+                  >
+                    {Array.from({ length: PARTY_FIREWORK_RAY_COUNT }).map((_, rayIndex) => (
+                      <i
+                        key={`${burst.id}-firework-${fireworkIndex}-ray-${rayIndex}`}
+                        className="party-firework-ray"
+                        style={{ transform: `rotate(${(360 / PARTY_FIREWORK_RAY_COUNT) * rayIndex}deg)` }}
+                      />
+                    ))}
+                  </span>
+                ))}
+              </div>
+
+              <div className="party-confetti">
+                {partyConfettiBlueprint.map((particle, index) => (
+                  <span
+                    key={`${burst.id}-confetti-${index}`}
+                    className="party-confetti-piece"
+                    style={
+                      {
+                        left: `${particle.left}%`,
+                        animationDelay: `${particle.delay}ms`,
+                        animationDuration: `${particle.duration}ms`,
+                        width: `${particle.width}px`,
+                        height: `${particle.height}px`,
+                        background: particle.color,
+                        "--confetti-sway": `${particle.sway}px`,
+                        "--confetti-spin": `${particle.spin}deg`,
+                      } as React.CSSProperties
+                    }
+                  />
+                ))}
+              </div>
+
+              <div className="party-center">
+                <p className="party-title">PAYMENT CONFIRMED</p>
+                <p className="party-subtitle">{formatUsdt(burst.amountUsdt)} USDT · {burst.storeLabel}</p>
+              </div>
+            </div>
+          )),
+          document.body,
+        )
+      : null;
+
   return (
     <main className="w-full max-w-[1800px] space-y-5 pt-20 text-slate-100">
       <RealtimeTopNav lang={lang} current="buyorder" />
-
-      {jackpotBursts.map((burst) => (
-        <div key={burst.id} className="jackpot-overlay pointer-events-none fixed inset-0 z-[140]">
-          <div className="party-backdrop" />
-          <div className="party-flash" />
-
-          <div className="party-streamers">
-            {partyStreamerBlueprint.map((streamer, index) => (
-              <span
-                key={`${burst.id}-streamer-${index}`}
-                className="party-streamer"
-                style={
-                  {
-                    left: `${streamer.left}%`,
-                    animationDelay: `${streamer.delay}ms`,
-                    animationDuration: `${streamer.duration}ms`,
-                    "--stream-tilt": `${streamer.tilt}deg`,
-                    "--stream-color": streamer.color,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-          </div>
-
-          <div className="party-fireworks">
-            {partyFireworkBlueprint.map((firework, fireworkIndex) => (
-              <span
-                key={`${burst.id}-firework-${fireworkIndex}`}
-                className="party-firework"
-                style={
-                  {
-                    left: `${firework.left}%`,
-                    top: `${firework.top}%`,
-                    animationDelay: `${firework.delay}ms`,
-                    "--firework-scale": String(firework.scale),
-                    "--firework-color": firework.color,
-                  } as React.CSSProperties
-                }
-              >
-                {Array.from({ length: PARTY_FIREWORK_RAY_COUNT }).map((_, rayIndex) => (
-                  <i
-                    key={`${burst.id}-firework-${fireworkIndex}-ray-${rayIndex}`}
-                    className="party-firework-ray"
-                    style={{ transform: `rotate(${(360 / PARTY_FIREWORK_RAY_COUNT) * rayIndex}deg)` }}
-                  />
-                ))}
-              </span>
-            ))}
-          </div>
-
-          <div className="party-confetti">
-            {partyConfettiBlueprint.map((particle, index) => (
-              <span
-                key={`${burst.id}-confetti-${index}`}
-                className="party-confetti-piece"
-                style={
-                  {
-                    left: `${particle.left}%`,
-                    animationDelay: `${particle.delay}ms`,
-                    animationDuration: `${particle.duration}ms`,
-                    width: `${particle.width}px`,
-                    height: `${particle.height}px`,
-                    background: particle.color,
-                    "--confetti-sway": `${particle.sway}px`,
-                    "--confetti-spin": `${particle.spin}deg`,
-                  } as React.CSSProperties
-                }
-              />
-            ))}
-          </div>
-
-          <div className="party-center">
-            <p className="party-title">PAYMENT CONFIRMED</p>
-            <p className="party-subtitle">{formatUsdt(burst.amountUsdt)} USDT · {burst.storeLabel}</p>
-          </div>
-        </div>
-      ))}
+      {jackpotOverlayLayer}
 
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1521,14 +1543,6 @@ export default function RealtimeBuyOrderPage() {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .jackpot-overlay,
-          .party-flash,
-          .party-streamer,
-          .party-firework,
-          .party-firework-ray,
-          .party-confetti-piece,
-          .party-center,
-          .party-title,
           .jackpot-row-highlight,
           .jackpot-card-highlight,
           .jackpot-status-pill {
