@@ -42,6 +42,12 @@ import {
 import {
   insertWebhookLog,
 } from '@lib/api/webhookLog';
+import {
+  type BankTransferDashboardEvent,
+} from "@lib/ably/constants";
+import {
+  publishBankTransferEvent,
+} from "@lib/ably/server";
 import { error } from "console";
 import { memo } from "react";
 
@@ -614,6 +620,42 @@ export async function POST(request: NextRequest) {
   */
 
   const bankAccountNumber = bankInfo?.defaultAccountNumber || bank_account_number;
+
+  const publishDashboardEvent = async ({
+    status,
+    storecode,
+    tradeId,
+    match,
+    errorMessage,
+  }: {
+    status: BankTransferDashboardEvent["status"];
+    storecode?: string | null;
+    tradeId?: string | null;
+    match?: string | null;
+    errorMessage?: string | null;
+  }) => {
+    const event: BankTransferDashboardEvent = {
+      traceId: traceId || null,
+      transactionType: String(transaction_type || ""),
+      amount: Number(amount || 0),
+      transactionName: String(transaction_name || ""),
+      bankAccountNumber: String(bankAccountNumber || ""),
+      transactionDate: String(transaction_date || ""),
+      processingDate: processing_date ? String(processing_date) : null,
+      status,
+      storecode: storecode || null,
+      tradeId: tradeId || null,
+      match: match || null,
+      errorMessage: errorMessage || null,
+      publishedAt: new Date().toISOString(),
+    };
+
+    try {
+      await publishBankTransferEvent(event);
+    } catch (publishError) {
+      console.error("Failed to publish banktransfer realtime event:", publishError);
+    }
+  };
   
 
 
@@ -657,6 +699,11 @@ export async function POST(request: NextRequest) {
       console.log("No store found for bankAccountNumber:", bankAccountNumber);
       
       errorMessage = "No store found for bankAccountNumber";
+
+      await publishDashboardEvent({
+        status: "error",
+        errorMessage: errorMessage,
+      });
 
       return NextResponse.json({
         status: "error",
@@ -747,10 +794,24 @@ export async function POST(request: NextRequest) {
       memo: '자동 매칭',
     });
 
+    await publishDashboardEvent({
+      status: "stored",
+      storecode: storeInfo?.storecode || null,
+      tradeId: tradeId || null,
+      match: match || null,
+      errorMessage: errorMessage,
+    });
+
 
 
   }  catch (error) {
     console.error("Error processing webhook:", error);
+
+    await publishDashboardEvent({
+      status: "error",
+      errorMessage: "Error processing webhook",
+    });
+
     return NextResponse.json({
       status: "error",
       message: "Error processing webhook",
