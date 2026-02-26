@@ -1202,7 +1202,7 @@ export default function RealtimeBuyOrderPage() {
           </div>
         </div>
       </section>
-      <style jsx>{`
+      <style jsx global>{`
         .jackpot-overlay {
           animation: jackpotOverlayFade ${JACKPOT_BURST_DURATION_MS}ms ease-out both;
           overflow: hidden;
