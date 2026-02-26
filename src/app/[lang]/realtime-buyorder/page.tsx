@@ -30,10 +30,13 @@ const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
-const JACKPOT_BURST_DURATION_MS = 2_600;
+const JACKPOT_BURST_DURATION_MS = 3_300;
 const JACKPOT_MAX_ACTIVE_BURSTS = 3;
 const JACKPOT_TRIGGERED_EVENT_CACHE_LIMIT = 700;
-const JACKPOT_PARTICLE_COUNT = 28;
+const PARTY_CONFETTI_COUNT = 72;
+const PARTY_STREAMER_COUNT = 16;
+const PARTY_FIREWORK_COUNT = 6;
+const PARTY_FIREWORK_RAY_COUNT = 12;
 
 function isPaymentConfirmedStatus(status: string | null | undefined): boolean {
   return status === "paymentConfirmed";
@@ -144,6 +147,11 @@ function formatShortWalletAddress(value: string | null | undefined): string {
   return `${address.slice(0, 8)}...${address.slice(-6)}`;
 }
 
+function getOptionalText(value: string | null | undefined): string | null {
+  const normalized = String(value || "").trim();
+  return normalized || null;
+}
+
 function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   switch (tone) {
     case "live":
@@ -229,27 +237,83 @@ export default function RealtimeBuyOrderPage() {
     jackpotTimerMapRef.current.set(burstId, timer);
   }, [registerJackpotTrigger]);
 
-  const jackpotParticleBlueprint = useMemo(() => {
+  const partyConfettiBlueprint = useMemo(() => {
     const colors = [
-      "rgba(34, 211, 238, 0.9)",
-      "rgba(110, 231, 183, 0.92)",
-      "rgba(250, 204, 21, 0.92)",
-      "rgba(248, 113, 113, 0.88)",
-      "rgba(196, 181, 253, 0.88)",
+      "rgba(52, 211, 153, 0.95)",
+      "rgba(34, 211, 238, 0.95)",
+      "rgba(250, 204, 21, 0.95)",
+      "rgba(244, 114, 182, 0.92)",
+      "rgba(196, 181, 253, 0.92)",
+      "rgba(251, 146, 60, 0.92)",
     ];
 
-    return Array.from({ length: JACKPOT_PARTICLE_COUNT }, (_, index) => {
-      const left = 4 + ((index * 31) % 92);
-      const delay = (index % 8) * 70;
-      const duration = 900 + (index % 6) * 170;
-      const drift = (index % 2 === 0 ? 1 : -1) * (20 + ((index * 11) % 56));
-      const size = 6 + (index % 4) * 2;
+    return Array.from({ length: PARTY_CONFETTI_COUNT }, (_, index) => {
+      const left = 2 + ((index * 37) % 96);
+      const delay = (index % 10) * 90;
+      const duration = 1_240 + (index % 9) * 230;
+      const sway = (index % 2 === 0 ? 1 : -1) * (18 + ((index * 13) % 68));
+      const spin = (index % 2 === 0 ? 1 : -1) * (220 + ((index * 29) % 280));
+      const width = 4 + (index % 4) * 2;
+      const height = 10 + (index % 3) * 5;
+
       return {
         left,
         delay,
         duration,
-        drift,
-        size,
+        sway,
+        spin,
+        width,
+        height,
+        color: colors[index % colors.length],
+      };
+    });
+  }, []);
+
+  const partyStreamerBlueprint = useMemo(() => {
+    const colors = [
+      "rgba(45, 212, 191, 0.9)",
+      "rgba(56, 189, 248, 0.88)",
+      "rgba(250, 204, 21, 0.86)",
+      "rgba(244, 114, 182, 0.84)",
+    ];
+
+    return Array.from({ length: PARTY_STREAMER_COUNT }, (_, index) => {
+      const left = 4 + ((index * 61) % 92);
+      const delay = (index % 8) * 75;
+      const duration = 950 + (index % 5) * 160;
+      const tilt = (index % 2 === 0 ? 1 : -1) * (9 + ((index * 5) % 17));
+
+      return {
+        left,
+        delay,
+        duration,
+        tilt,
+        color: colors[index % colors.length],
+      };
+    });
+  }, []);
+
+  const partyFireworkBlueprint = useMemo(() => {
+    const colors = [
+      "rgba(110, 231, 183, 0.95)",
+      "rgba(250, 204, 21, 0.95)",
+      "rgba(56, 189, 248, 0.95)",
+      "rgba(251, 146, 60, 0.92)",
+      "rgba(244, 114, 182, 0.9)",
+      "rgba(196, 181, 253, 0.92)",
+    ];
+
+    return Array.from({ length: PARTY_FIREWORK_COUNT }, (_, index) => {
+      const left = 12 + ((index * 19) % 76);
+      const top = 14 + ((index * 17) % 30);
+      const delay = 90 + index * 120;
+      const scale = 0.84 + (index % 3) * 0.2;
+
+      return {
+        left,
+        top,
+        delay,
+        scale,
         color: colors[index % colors.length],
       };
     });
@@ -630,48 +694,78 @@ export default function RealtimeBuyOrderPage() {
       </nav>
 
       {jackpotBursts.map((burst) => (
-        <div key={burst.id} className="jackpot-overlay pointer-events-none fixed inset-0 z-[120]">
-          <div className="jackpot-backdrop" />
-          <div className="jackpot-rings">
-            <span className="jackpot-ring jackpot-ring-a" />
-            <span className="jackpot-ring jackpot-ring-b" />
-            <span className="jackpot-ring jackpot-ring-c" />
-          </div>
+        <div key={burst.id} className="jackpot-overlay pointer-events-none fixed inset-0 z-[140]">
+          <div className="party-backdrop" />
+          <div className="party-flash" />
 
-          <div className="jackpot-rays">
-            {Array.from({ length: 12 }).map((_, index) => (
+          <div className="party-streamers">
+            {partyStreamerBlueprint.map((streamer, index) => (
               <span
-                key={`${burst.id}-ray-${index}`}
-                className="jackpot-ray"
-                style={{ transform: `translate(-50%, -50%) rotate(${index * 30}deg)` }}
+                key={`${burst.id}-streamer-${index}`}
+                className="party-streamer"
+                style={
+                  {
+                    left: `${streamer.left}%`,
+                    animationDelay: `${streamer.delay}ms`,
+                    animationDuration: `${streamer.duration}ms`,
+                    "--stream-tilt": `${streamer.tilt}deg`,
+                    "--stream-color": streamer.color,
+                  } as React.CSSProperties
+                }
               />
             ))}
           </div>
 
-          <div className="jackpot-center">
-            <p className="jackpot-title">JACKPOT</p>
-            <p className="jackpot-subtitle">결제완료 · {formatUsdt(burst.amountUsdt)} USDT</p>
-            <p className="jackpot-store">{burst.storeLabel}</p>
+          <div className="party-fireworks">
+            {partyFireworkBlueprint.map((firework, fireworkIndex) => (
+              <span
+                key={`${burst.id}-firework-${fireworkIndex}`}
+                className="party-firework"
+                style={
+                  {
+                    left: `${firework.left}%`,
+                    top: `${firework.top}%`,
+                    animationDelay: `${firework.delay}ms`,
+                    "--firework-scale": String(firework.scale),
+                    "--firework-color": firework.color,
+                  } as React.CSSProperties
+                }
+              >
+                {Array.from({ length: PARTY_FIREWORK_RAY_COUNT }).map((_, rayIndex) => (
+                  <i
+                    key={`${burst.id}-firework-${fireworkIndex}-ray-${rayIndex}`}
+                    className="party-firework-ray"
+                    style={{ transform: `rotate(${(360 / PARTY_FIREWORK_RAY_COUNT) * rayIndex}deg)` }}
+                  />
+                ))}
+              </span>
+            ))}
           </div>
 
-          <div className="jackpot-particles">
-            {jackpotParticleBlueprint.map((particle, index) => (
+          <div className="party-confetti">
+            {partyConfettiBlueprint.map((particle, index) => (
               <span
-                key={`${burst.id}-particle-${index}`}
-                className="jackpot-particle"
+                key={`${burst.id}-confetti-${index}`}
+                className="party-confetti-piece"
                 style={
                   {
                     left: `${particle.left}%`,
                     animationDelay: `${particle.delay}ms`,
                     animationDuration: `${particle.duration}ms`,
-                    width: `${particle.size}px`,
-                    height: `${particle.size * 1.7}px`,
+                    width: `${particle.width}px`,
+                    height: `${particle.height}px`,
                     background: particle.color,
-                    "--drift-x": `${particle.drift}px`,
+                    "--confetti-sway": `${particle.sway}px`,
+                    "--confetti-spin": `${particle.spin}deg`,
                   } as React.CSSProperties
                 }
               />
             ))}
+          </div>
+
+          <div className="party-center">
+            <p className="party-title">PAYMENT CONFIRMED</p>
+            <p className="party-subtitle">{formatUsdt(burst.amountUsdt)} USDT · {burst.storeLabel}</p>
           </div>
         </div>
       ))}
@@ -808,6 +902,20 @@ export default function RealtimeBuyOrderPage() {
               const isHighlighted = item.highlightUntil > Date.now();
               const isJackpotEvent = isPaymentConfirmedStatus(item.data.statusTo);
               const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+              const detailTradeId = getOptionalText(item.data.tradeId);
+              const detailOrderId = getOptionalText(item.data.orderId);
+              const detailSource = getOptionalText(item.data.source);
+              const detailTxHash = getOptionalText(item.data.transactionHash);
+              const detailEscrowTxHash = getOptionalText(item.data.escrowTransactionHash);
+              const detailReason = getOptionalText(item.data.reason);
+              const hasMobileDetails = Boolean(
+                detailTradeId ||
+                  detailOrderId ||
+                  detailSource ||
+                  detailTxHash ||
+                  detailEscrowTxHash ||
+                  detailReason,
+              );
 
               return (
                 <article
@@ -854,13 +962,9 @@ export default function RealtimeBuyOrderPage() {
                     </span>
                     {isHighlighted && (
                       <span
-                        className={`ml-auto rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
-                          isJackpotEvent
-                            ? "jackpot-new-pill border-emerald-200/70 bg-emerald-400/22 text-emerald-50"
-                            : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100"
-                        }`}
+                        className="ml-auto rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100"
                       >
-                        {isJackpotEvent ? "JACKPOT" : "NEW"}
+                        NEW
                       </span>
                     )}
                   </div>
@@ -902,20 +1006,32 @@ export default function RealtimeBuyOrderPage() {
                     </div>
                   </div>
 
-                  <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
-                    <p className="font-mono text-cyan-200">TID: {item.data.tradeId || "-"}</p>
-                    <p className="mt-1 font-mono text-slate-400">OID: {item.data.orderId || "-"}</p>
-                    <p className="mt-1 font-mono text-slate-500">Source: {item.data.source || "-"}</p>
-                    <p className="mt-1 font-mono text-violet-200" title={item.data.transactionHash || ""}>
-                      TX: {formatShortHash(item.data.transactionHash)}
-                    </p>
-                    <p className="mt-1 font-mono text-blue-200" title={item.data.escrowTransactionHash || ""}>
-                      Escrow TX: {formatShortHash(item.data.escrowTransactionHash)}
-                    </p>
-                    {item.data.reason ? (
-                      <p className="mt-1 truncate text-rose-300">{item.data.reason}</p>
-                    ) : null}
-                  </div>
+                  {hasMobileDetails && (
+                    <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
+                      {detailTradeId ? (
+                        <p className="font-mono text-cyan-200">TID: {detailTradeId}</p>
+                      ) : null}
+                      {detailOrderId ? (
+                        <p className="mt-1 font-mono text-slate-400">OID: {detailOrderId}</p>
+                      ) : null}
+                      {detailSource ? (
+                        <p className="mt-1 font-mono text-slate-500">Source: {detailSource}</p>
+                      ) : null}
+                      {detailTxHash ? (
+                        <p className="mt-1 font-mono text-violet-200" title={detailTxHash}>
+                          TX: {formatShortHash(detailTxHash)}
+                        </p>
+                      ) : null}
+                      {detailEscrowTxHash ? (
+                        <p className="mt-1 font-mono text-blue-200" title={detailEscrowTxHash}>
+                          Escrow TX: {formatShortHash(detailEscrowTxHash)}
+                        </p>
+                      ) : null}
+                      {detailReason ? (
+                        <p className="mt-1 truncate text-rose-300">{detailReason}</p>
+                      ) : null}
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -949,6 +1065,14 @@ export default function RealtimeBuyOrderPage() {
                   const isHighlighted = item.highlightUntil > Date.now();
                   const isJackpotEvent = isPaymentConfirmedStatus(item.data.statusTo);
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                  const detailTradeId = getOptionalText(item.data.tradeId);
+                  const detailOrderId = getOptionalText(item.data.orderId);
+                  const detailSource = getOptionalText(item.data.source);
+                  const detailTxHash = getOptionalText(item.data.transactionHash);
+                  const detailEscrowTxHash = getOptionalText(item.data.escrowTransactionHash);
+                  const detailQueueId = getOptionalText(item.data.queueId);
+                  const detailMinedAt = getOptionalText(item.data.minedAt);
+                  const detailReason = getOptionalText(item.data.reason);
 
                   return (
                     <tr
@@ -970,13 +1094,9 @@ export default function RealtimeBuyOrderPage() {
                         <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
                         {isHighlighted && (
                           <span
-                            className={`mt-1 inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
-                              isJackpotEvent
-                                ? "jackpot-new-pill border-emerald-200/70 bg-emerald-400/22 text-emerald-50"
-                                : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100"
-                            }`}
+                            className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100"
                           >
-                            {isJackpotEvent ? "JACKPOT" : "NEW"}
+                            NEW
                           </span>
                         )}
                       </td>
@@ -1045,26 +1165,34 @@ export default function RealtimeBuyOrderPage() {
                       </td>
 
                       <td className="px-3 py-3">
-                        <div className="font-mono text-xs text-cyan-200">TID: {item.data.tradeId || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {item.data.orderId || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {item.data.source || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-violet-200" title={item.data.transactionHash || ""}>
-                          TX: {formatShortHash(item.data.transactionHash)}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-blue-200" title={item.data.escrowTransactionHash || ""}>
-                          Escrow TX: {formatShortHash(item.data.escrowTransactionHash)}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-400">
-                          Queue: {item.data.queueId || "-"}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">
-                          Mined: {item.data.minedAt || "-"}
-                        </div>
-                        {item.data.reason ? (
-                          <div className="mt-1 truncate text-xs text-rose-300">{item.data.reason}</div>
-                        ) : (
-                          <div className="mt-1 text-xs text-slate-500">-</div>
-                        )}
+                        {detailTradeId ? (
+                          <div className="font-mono text-xs text-cyan-200">TID: {detailTradeId}</div>
+                        ) : null}
+                        {detailOrderId ? (
+                          <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {detailOrderId}</div>
+                        ) : null}
+                        {detailSource ? (
+                          <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {detailSource}</div>
+                        ) : null}
+                        {detailTxHash ? (
+                          <div className="mt-1 font-mono text-[11px] text-violet-200" title={detailTxHash}>
+                            TX: {formatShortHash(detailTxHash)}
+                          </div>
+                        ) : null}
+                        {detailEscrowTxHash ? (
+                          <div className="mt-1 font-mono text-[11px] text-blue-200" title={detailEscrowTxHash}>
+                            Escrow TX: {formatShortHash(detailEscrowTxHash)}
+                          </div>
+                        ) : null}
+                        {detailQueueId ? (
+                          <div className="mt-1 font-mono text-[11px] text-slate-400">Queue: {detailQueueId}</div>
+                        ) : null}
+                        {detailMinedAt ? (
+                          <div className="mt-1 font-mono text-[11px] text-slate-500">Mined: {detailMinedAt}</div>
+                        ) : null}
+                        {detailReason ? (
+                          <div className="mt-1 truncate text-xs text-rose-300">{detailReason}</div>
+                        ) : null}
                       </td>
                     </tr>
                   );
@@ -1077,160 +1205,164 @@ export default function RealtimeBuyOrderPage() {
       <style jsx>{`
         .jackpot-overlay {
           animation: jackpotOverlayFade ${JACKPOT_BURST_DURATION_MS}ms ease-out both;
+          overflow: hidden;
+          isolation: isolate;
         }
 
-        .jackpot-backdrop {
+        .party-backdrop {
           position: absolute;
           inset: 0;
           background: radial-gradient(
-              circle at 50% 52%,
-              rgba(52, 211, 153, 0.22) 0%,
-              rgba(34, 211, 238, 0.15) 22%,
-              rgba(15, 23, 42, 0.22) 48%,
-              rgba(2, 6, 23, 0.1) 70%,
-              rgba(2, 6, 23, 0) 100%
+              circle at 50% 38%,
+              rgba(16, 185, 129, 0.24) 0%,
+              rgba(56, 189, 248, 0.2) 30%,
+              rgba(15, 23, 42, 0.5) 68%,
+              rgba(2, 6, 23, 0.66) 100%
             ),
             linear-gradient(
-              120deg,
-              rgba(16, 185, 129, 0.07) 0%,
-              rgba(250, 204, 21, 0.06) 45%,
-              rgba(56, 189, 248, 0.08) 100%
+              125deg,
+              rgba(52, 211, 153, 0.16) 0%,
+              rgba(250, 204, 21, 0.14) 38%,
+              rgba(244, 114, 182, 0.14) 70%,
+              rgba(56, 189, 248, 0.16) 100%
             );
         }
 
-        .jackpot-rings {
+        .party-flash {
+          position: absolute;
+          inset: -30% -20%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0) 64%);
+          mix-blend-mode: screen;
+          opacity: 0;
+          animation: partyFlashPulse 760ms ease-out both;
+        }
+
+        .party-streamers {
           position: absolute;
           inset: 0;
-          display: grid;
-          place-items: center;
+          overflow: hidden;
         }
 
-        .jackpot-ring {
+        .party-streamer {
           position: absolute;
-          border-radius: 9999px;
-          border: 2px solid rgba(167, 243, 208, 0.65);
-          transform: translate(-50%, -50%);
-          left: 50%;
-          top: 50%;
-          filter: drop-shadow(0 0 18px rgba(52, 211, 153, 0.4));
-        }
-
-        .jackpot-ring-a {
-          width: 180px;
-          height: 180px;
-          animation: jackpotRingPulseA 1.1s ease-out both;
-        }
-
-        .jackpot-ring-b {
-          width: 280px;
-          height: 280px;
-          animation: jackpotRingPulseB 1.35s ease-out 80ms both;
-        }
-
-        .jackpot-ring-c {
-          width: 420px;
-          height: 420px;
-          animation: jackpotRingPulseC 1.55s ease-out 120ms both;
-          border-color: rgba(250, 204, 21, 0.5);
-        }
-
-        .jackpot-rays {
-          position: absolute;
-          inset: 0;
-        }
-
-        .jackpot-ray {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          width: 8px;
-          height: 220px;
-          transform-origin: center 6px;
+          top: -124vh;
+          width: 2px;
+          height: 190vh;
+          opacity: 0;
+          transform: translateX(-50%) rotate(var(--stream-tilt));
+          transform-origin: top center;
           background: linear-gradient(
             to bottom,
-            rgba(250, 204, 21, 0.98) 0%,
-            rgba(250, 204, 21, 0.4) 45%,
-            rgba(250, 204, 21, 0) 100%
+            rgba(255, 255, 255, 0.85) 0%,
+            var(--stream-color) 18%,
+            rgba(15, 23, 42, 0) 100%
           );
-          border-radius: 9999px;
-          opacity: 0;
-          animation: jackpotRayBurst 760ms ease-out both;
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.16);
+          animation: partyStreamerDrop cubic-bezier(0.28, 0.86, 0.38, 1) both;
         }
 
-        .jackpot-center {
+        .party-fireworks {
+          position: absolute;
+          inset: 0;
+        }
+
+        .party-firework {
+          position: absolute;
+          width: 0;
+          height: 0;
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(var(--firework-scale));
+          animation: partyFireworkBloom 820ms ease-out both;
+        }
+
+        .party-firework-ray {
+          position: absolute;
+          display: block;
+          left: -2px;
+          top: -2px;
+          width: 4px;
+          height: 92px;
+          opacity: 0;
+          transform-origin: center 2px;
+          border-radius: 9999px;
+          background: linear-gradient(
+            to bottom,
+            rgba(255, 255, 255, 0.95) 0%,
+            var(--firework-color) 34%,
+            rgba(15, 23, 42, 0) 100%
+          );
+          animation: partyFireworkRay 820ms ease-out both;
+          animation-delay: inherit;
+        }
+
+        .party-confetti {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .party-confetti-piece {
+          position: absolute;
+          top: -14vh;
+          border-radius: 2px;
+          opacity: 0;
+          box-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+          animation-name: partyConfettiFall;
+          animation-timing-function: cubic-bezier(0.2, 0.74, 0.32, 1);
+          animation-fill-mode: both;
+        }
+
+        .party-center {
           position: absolute;
           left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
+          top: 11%;
+          width: min(92vw, 640px);
+          padding: 0.88rem 1.2rem;
+          border-radius: 9999px;
           text-align: center;
-          padding: 1rem 1.2rem;
-          border-radius: 1rem;
-          border: 1px solid rgba(167, 243, 208, 0.55);
+          transform: translateX(-50%);
+          border: 1px solid rgba(236, 253, 245, 0.5);
           background: linear-gradient(
             145deg,
-            rgba(5, 46, 36, 0.78) 0%,
-            rgba(17, 24, 39, 0.75) 58%,
-            rgba(8, 145, 178, 0.58) 100%
+            rgba(15, 118, 110, 0.66) 0%,
+            rgba(12, 74, 110, 0.68) 50%,
+            rgba(88, 28, 135, 0.58) 100%
           );
-          box-shadow: 0 0 42px rgba(16, 185, 129, 0.35), 0 0 56px rgba(34, 211, 238, 0.25);
-          animation: jackpotCenterPop 900ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
-          min-width: min(86vw, 500px);
-          backdrop-filter: blur(7px);
+          backdrop-filter: blur(8px);
+          box-shadow: 0 0 50px rgba(16, 185, 129, 0.26), 0 0 60px rgba(250, 204, 21, 0.2);
+          animation: partyCenterRise 880ms cubic-bezier(0.22, 1.14, 0.33, 1) both;
         }
 
-        .jackpot-title {
+        .party-title {
           margin: 0;
-          font-size: clamp(1.7rem, 4.8vw, 2.85rem);
           line-height: 1;
-          letter-spacing: 0.14em;
+          font-size: clamp(1.25rem, 3.9vw, 2.2rem);
+          letter-spacing: 0.12em;
           font-weight: 900;
           color: transparent;
           background-image: linear-gradient(
-            92deg,
+            95deg,
             rgba(250, 204, 21, 1) 0%,
-            rgba(255, 255, 255, 0.96) 36%,
-            rgba(52, 211, 153, 0.98) 72%,
-            rgba(34, 211, 238, 0.95) 100%
+            rgba(255, 255, 255, 0.98) 34%,
+            rgba(110, 231, 183, 0.98) 66%,
+            rgba(34, 211, 238, 0.98) 100%
           );
-          background-size: 220% 100%;
+          background-size: 210% 100%;
           -webkit-background-clip: text;
           background-clip: text;
-          text-shadow: 0 0 18px rgba(250, 204, 21, 0.34);
-          animation: jackpotTitleShine 950ms linear infinite;
+          text-shadow: 0 0 18px rgba(250, 204, 21, 0.28);
+          animation: partyTitleSheen 920ms linear infinite;
         }
 
-        .jackpot-subtitle {
-          margin-top: 0.5rem;
-          font-size: clamp(0.8rem, 2.4vw, 1rem);
-          color: rgba(236, 253, 245, 0.95);
+        .party-subtitle {
+          margin-top: 0.34rem;
+          font-size: clamp(0.72rem, 2.2vw, 0.92rem);
+          color: rgba(240, 253, 250, 0.96);
           font-weight: 700;
-          letter-spacing: 0.05em;
-        }
-
-        .jackpot-store {
-          margin-top: 0.25rem;
-          font-size: clamp(0.68rem, 2vw, 0.86rem);
-          color: rgba(167, 243, 208, 0.9);
+          letter-spacing: 0.03em;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-        }
-
-        .jackpot-particles {
-          position: absolute;
-          inset: 0;
-          overflow: hidden;
-        }
-
-        .jackpot-particle {
-          position: absolute;
-          bottom: 41%;
-          border-radius: 9999px;
-          box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
-          opacity: 0;
-          animation-name: jackpotParticleFlight;
-          animation-timing-function: cubic-bezier(0.21, 0.72, 0.34, 1.01);
-          animation-fill-mode: both;
         }
 
         .jackpot-row-highlight {
@@ -1246,19 +1378,14 @@ export default function RealtimeBuyOrderPage() {
           animation: jackpotStatusPulse 980ms ease-in-out infinite;
         }
 
-        .jackpot-new-pill {
-          box-shadow: 0 0 0 1px rgba(167, 243, 208, 0.42), 0 0 16px rgba(52, 211, 153, 0.42);
-          animation: jackpotStatusPulse 880ms ease-in-out infinite;
-        }
-
         @keyframes jackpotOverlayFade {
           0% {
             opacity: 0;
           }
-          10% {
+          6% {
             opacity: 1;
           }
-          86% {
+          88% {
             opacity: 1;
           }
           100% {
@@ -1266,89 +1393,97 @@ export default function RealtimeBuyOrderPage() {
           }
         }
 
-        @keyframes jackpotRingPulseA {
+        @keyframes partyFlashPulse {
           0% {
+            opacity: 0;
+            transform: scale(0.72);
+          }
+          34% {
             opacity: 0.9;
-            transform: translate(-50%, -50%) scale(0.3);
+            transform: scale(1);
           }
           100% {
             opacity: 0;
-            transform: translate(-50%, -50%) scale(1.8);
+            transform: scale(1.3);
           }
         }
 
-        @keyframes jackpotRingPulseB {
-          0% {
-            opacity: 0.8;
-            transform: translate(-50%, -50%) scale(0.25);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(1.62);
-          }
-        }
-
-        @keyframes jackpotRingPulseC {
-          0% {
-            opacity: 0.75;
-            transform: translate(-50%, -50%) scale(0.2);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(1.48);
-          }
-        }
-
-        @keyframes jackpotRayBurst {
+        @keyframes partyStreamerDrop {
           0% {
             opacity: 0;
-            height: 80px;
+            transform: translateX(-50%) translateY(-18vh) rotate(var(--stream-tilt));
           }
-          35% {
-            opacity: 0.82;
-            height: 240px;
-          }
-          100% {
-            opacity: 0;
-            height: 320px;
-          }
-        }
-
-        @keyframes jackpotCenterPop {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.62);
-          }
-          42% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.06);
-          }
-          100% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-          }
-        }
-
-        @keyframes jackpotTitleShine {
-          0% {
-            background-position: 200% 50%;
-          }
-          100% {
-            background-position: -20% 50%;
-          }
-        }
-
-        @keyframes jackpotParticleFlight {
-          0% {
-            opacity: 0;
-            transform: translate3d(0, 8px, 0) rotate(0deg);
-          }
-          20% {
+          18% {
             opacity: 1;
           }
           100% {
             opacity: 0;
-            transform: translate3d(var(--drift-x), -52vh, 0) rotate(420deg);
+            transform: translateX(-50%) translateY(118vh) rotate(var(--stream-tilt));
+          }
+        }
+
+        @keyframes partyFireworkBloom {
+          0% {
+            opacity: 0;
+          }
+          22% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        @keyframes partyFireworkRay {
+          0% {
+            opacity: 0;
+            height: 30px;
+          }
+          26% {
+            opacity: 1;
+            height: 94px;
+          }
+          100% {
+            opacity: 0;
+            height: 138px;
+          }
+        }
+
+        @keyframes partyConfettiFall {
+          0% {
+            opacity: 0;
+            transform: translate3d(0, -12vh, 0) rotate(0deg);
+          }
+          14% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate3d(var(--confetti-sway), 112vh, 0) rotate(var(--confetti-spin));
+          }
+        }
+
+        @keyframes partyCenterRise {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -18px) scale(0.92);
+          }
+          36% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1.04);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, 0) scale(1);
+          }
+        }
+
+        @keyframes partyTitleSheen {
+          0% {
+            background-position: 210% 50%;
+          }
+          100% {
+            background-position: -16% 50%;
           }
         }
 
@@ -1383,42 +1518,42 @@ export default function RealtimeBuyOrderPage() {
         }
 
         @media (max-width: 640px) {
-          .jackpot-ring-a {
-            width: 130px;
-            height: 130px;
+          .party-center {
+            top: 8%;
+            width: min(95vw, 520px);
+            padding: 0.72rem 0.9rem;
+            border-radius: 1rem;
           }
 
-          .jackpot-ring-b {
-            width: 210px;
-            height: 210px;
+          .party-title {
+            font-size: clamp(1.08rem, 6vw, 1.5rem);
           }
 
-          .jackpot-ring-c {
-            width: 310px;
-            height: 310px;
+          .party-subtitle {
+            font-size: clamp(0.64rem, 3.2vw, 0.84rem);
           }
 
-          .jackpot-ray {
-            height: 165px;
+          .party-firework-ray {
+            height: 74px;
           }
 
-          .jackpot-center {
-            min-width: min(92vw, 460px);
-            padding: 0.8rem 0.9rem;
+          .party-streamer {
+            width: 1.5px;
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .jackpot-overlay,
-          .jackpot-ring,
-          .jackpot-ray,
-          .jackpot-center,
-          .jackpot-title,
-          .jackpot-particle,
+          .party-flash,
+          .party-streamer,
+          .party-firework,
+          .party-firework-ray,
+          .party-confetti-piece,
+          .party-center,
+          .party-title,
           .jackpot-row-highlight,
           .jackpot-card-highlight,
-          .jackpot-status-pill,
-          .jackpot-new-pill {
+          .jackpot-status-pill {
             animation: none !important;
           }
         }
