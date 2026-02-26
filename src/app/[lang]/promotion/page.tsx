@@ -336,7 +336,7 @@ export default function PromotionPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [isHeroBursting, setIsHeroBursting] = useState(false);
-  const [walletPanelOpen, setWalletPanelOpen] = useState(true);
+  const [walletPanelOpen, setWalletPanelOpen] = useState(false);
   const [walletPanelTab, setWalletPanelTab] = useState<"deposit" | "withdraw" | "history">(
     "deposit",
   );
@@ -822,6 +822,27 @@ export default function PromotionPage() {
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 640px)");
+    setWalletPanelOpen(mediaQuery.matches);
+
+    const onMediaQueryChange = (event: MediaQueryListEvent) => {
+      setWalletPanelOpen(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", onMediaQueryChange);
+      return () => {
+        mediaQuery.removeEventListener("change", onMediaQueryChange);
+      };
+    }
+
+    mediaQuery.addListener(onMediaQueryChange);
+    return () => {
+      mediaQuery.removeListener(onMediaQueryChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!walletAddress) {
       setWalletTransfers([]);
       setWalletTransfersLoading(false);
@@ -1061,7 +1082,11 @@ export default function PromotionPage() {
 
   return (
     <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
-      <aside className="fixed right-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] sm:right-4 sm:top-4">
+      <aside
+        className={`fixed left-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] sm:left-auto sm:right-4 sm:top-4 ${
+          walletPanelOpen ? "" : "max-sm:w-[212px]"
+        }`}
+      >
         <section className="overflow-hidden rounded-2xl border border-cyan-300/35 bg-slate-950/88 shadow-[0_18px_42px_-24px_rgba(34,211,238,0.72)] backdrop-blur-xl">
           <header className="flex items-center justify-between border-b border-slate-700/70 px-3 py-2.5">
             <div>
@@ -1390,7 +1415,7 @@ export default function PromotionPage() {
         <div className="promo-orb promo-orb-c" />
       </div>
 
-      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 py-3 sm:space-y-4 sm:px-5 sm:py-5 lg:px-8">
+      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 pb-3 pt-[5.25rem] sm:space-y-4 sm:px-5 sm:pb-5 sm:pt-5 lg:px-8">
         <header
           className={`relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950/86 p-3.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-[24px] sm:p-5 ${isHeroBursting ? "promo-hero-burst" : ""}`}
         >
