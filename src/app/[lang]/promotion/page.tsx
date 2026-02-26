@@ -47,6 +47,14 @@ type WalletTransferRecord = {
   };
 };
 
+type PromotionMemberProfile = {
+  id?: string | number;
+  nickname?: string;
+  avatar?: string;
+  mobile?: string;
+  email?: string;
+};
+
 const MAX_FEED_ITEMS = 180;
 const MAX_SETTLEMENT_FEED_ITEMS = 300;
 const API_SYNC_LIMIT = 140;
@@ -57,6 +65,7 @@ const NEW_EVENT_HIGHLIGHT_MS = 6_000;
 const WALLET_TRANSFER_POLL_INTERVAL_MS = 15_000;
 const WALLET_TRANSFER_FETCH_LIMIT = 20;
 const WALLET_PANEL_HISTORY_LIMIT = 10;
+const PROMOTION_MEMBER_STORECODE = "admin";
 
 const promotionWallets = [
   inAppWallet({
@@ -328,6 +337,8 @@ export default function PromotionPage() {
   const [walletTransfersLoading, setWalletTransfersLoading] = useState(false);
   const [walletTransferError, setWalletTransferError] = useState<string | null>(null);
   const [walletAddressCopied, setWalletAddressCopied] = useState(false);
+  const [memberProfile, setMemberProfile] = useState<PromotionMemberProfile | null>(null);
+  const [memberProfileLoading, setMemberProfileLoading] = useState(false);
 
   const heroBurstTimerRef = useRef<number | null>(null);
   const bankCursorRef = useRef<string | null>(null);
@@ -418,6 +429,43 @@ export default function PromotionPage() {
       setWalletTransferError(error instanceof Error ? error.message : "전송내역 조회에 실패했습니다.");
     } finally {
       setWalletTransfersLoading(false);
+    }
+  }, [walletAddress]);
+
+  const fetchMemberProfile = useCallback(async () => {
+    if (!walletAddress) {
+      setMemberProfile(null);
+      setMemberProfileLoading(false);
+      return;
+    }
+
+    setMemberProfileLoading(true);
+    try {
+      const response = await fetch("/api/user/getUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          storecode: PROMOTION_MEMBER_STORECODE,
+          walletAddress,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`member profile fetch failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as {
+        result?: PromotionMemberProfile | null;
+      };
+
+      setMemberProfile(data.result || null);
+    } catch (error) {
+      console.error("failed to fetch promotion member profile", error);
+      setMemberProfile(null);
+    } finally {
+      setMemberProfileLoading(false);
     }
   }, [walletAddress]);
 
@@ -806,6 +854,10 @@ export default function PromotionPage() {
   }, []);
 
   useEffect(() => {
+    void fetchMemberProfile();
+  }, [fetchMemberProfile]);
+
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 640px)");
     setWalletPanelOpen(mediaQuery.matches);
 
@@ -1063,6 +1115,7 @@ export default function PromotionPage() {
     return walletTransfers.slice(0, WALLET_PANEL_HISTORY_LIMIT);
   }, [walletTransfers]);
   const walletExplorerUrl = useMemo(() => getExplorerAddressUrl(walletAddress), [walletAddress]);
+  const isMemberRegistered = Boolean(memberProfile?.id || memberProfile?.nickname);
 
   return (
     <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
@@ -1481,19 +1534,41 @@ export default function PromotionPage() {
               {walletAddress && (
                 <Link
                   href={`/${lang}/promotion/user-register`}
-                  className="group mt-3 block overflow-hidden rounded-xl border border-sky-300/65 bg-[linear-gradient(135deg,rgba(14,116,144,0.34),rgba(8,47,73,0.52))] p-3 shadow-[0_18px_28px_-24px_rgba(56,189,248,0.9)] transition hover:-translate-y-0.5 hover:border-sky-200/85 hover:bg-[linear-gradient(135deg,rgba(14,116,144,0.42),rgba(8,47,73,0.64))]"
+                  className={`group mt-3 block overflow-hidden rounded-xl border p-3 shadow-[0_18px_28px_-24px_rgba(56,189,248,0.9)] transition hover:-translate-y-0.5 ${
+                    isMemberRegistered
+                      ? "border-emerald-300/65 bg-[linear-gradient(135deg,rgba(5,150,105,0.28),rgba(8,47,73,0.52))] hover:border-emerald-200/85 hover:bg-[linear-gradient(135deg,rgba(5,150,105,0.38),rgba(8,47,73,0.64))]"
+                      : "border-sky-300/65 bg-[linear-gradient(135deg,rgba(14,116,144,0.34),rgba(8,47,73,0.52))] hover:border-sky-200/85 hover:bg-[linear-gradient(135deg,rgba(14,116,144,0.42),rgba(8,47,73,0.64))]"
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-200/95">
-                        Member Signup
+                      <p
+                        className={`text-[10px] font-bold uppercase tracking-[0.14em] ${
+                          isMemberRegistered ? "text-emerald-200/95" : "text-sky-200/95"
+                        }`}
+                      >
+                        {isMemberRegistered ? "Member Registered" : "Member Signup"}
                       </p>
-                      <p className="mt-1 text-xs text-sky-50 sm:text-sm">
-                        지갑 연결 완료. 회원가입에서 닉네임/아바타/연락처를 등록하세요.
+                      <p
+                        className={`mt-1 text-xs sm:text-sm ${
+                          isMemberRegistered ? "text-emerald-50" : "text-sky-50"
+                        }`}
+                      >
+                        {memberProfileLoading
+                          ? "회원 상태를 확인하는 중입니다."
+                          : isMemberRegistered
+                            ? `${memberProfile?.nickname || "회원"}님, 가입이 완료되었습니다. 회원정보를 수정하려면 이동하세요.`
+                            : "지갑 연결 완료. 회원가입에서 닉네임/아바타/연락처를 등록하세요."}
                       </p>
                     </div>
-                    <span className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-sky-100/70 bg-sky-300/20 px-3 text-xs font-semibold text-sky-50 transition group-hover:bg-sky-300/32">
-                      회원가입
+                    <span
+                      className={`inline-flex min-h-[36px] items-center justify-center rounded-lg border px-3 text-xs font-semibold transition ${
+                        isMemberRegistered
+                          ? "border-emerald-100/70 bg-emerald-300/20 text-emerald-50 group-hover:bg-emerald-300/32"
+                          : "border-sky-100/70 bg-sky-300/20 text-sky-50 group-hover:bg-sky-300/32"
+                      }`}
+                    >
+                      {isMemberRegistered ? "회원정보 수정" : "회원가입"}
                     </span>
                   </div>
                 </Link>
