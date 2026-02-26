@@ -407,36 +407,52 @@ export async function updateOne(data: any) {
   const collection = client.db(dbName).collection('users');
 
 
-  // update and return updated user
+  const existingUser = await collection.findOne<UserProps>(
+    {
+      walletAddress: data.walletAddress,
+      storecode: data.storecode,
+    }
+  );
 
-  const checkUser = await collection.findOne<UserProps>(
-    
+  if (!existingUser) {
+    return null;
+  }
+
+  // nickname duplicated by another wallet in same store
+  const duplicatedNickname = await collection.findOne<UserProps>(
     {
       storecode: data.storecode,
       nickname: data.nickname,
+      walletAddress: { $ne: data.walletAddress },
     }
-    
-  )
-      
+  );
 
+  if (duplicatedNickname) {
 
-  if (checkUser) {
-
-    console.log('updateOne exists: ' + JSON.stringify(checkUser));
+    console.log('updateOne duplicated nickname: ' + JSON.stringify(duplicatedNickname));
 
     return null;
   }
 
+  const updatePayload: any = {
+    nickname: data.nickname,
+    updatedAt: new Date().toISOString(),
+  };
 
+  if (typeof data.mobile === 'string' && data.mobile.trim()) {
+    updatePayload.mobile = data.mobile.trim();
+  }
 
-
+  if (typeof data.email === 'string' && data.email.trim()) {
+    updatePayload.email = data.email.trim();
+  }
 
   const result = await collection.updateOne(
     {
       walletAddress: data.walletAddress,
       storecode: data.storecode,
     },
-    { $set: { nickname: data.nickname } }
+    { $set: updatePayload }
   );
 
   if (result) {
