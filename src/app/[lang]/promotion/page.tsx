@@ -70,6 +70,10 @@ function formatUsdt(value: number): string {
   });
 }
 
+function formatPercent(value: number): string {
+  return `${value.toFixed(1)}%`;
+}
+
 function shortenText(
   value: string | null | undefined,
   headLength = 8,
@@ -610,10 +614,15 @@ export default function PromotionPage() {
 
       if (isSettlementBuyEvent(item.data)) {
         settlementCount += 1;
-        settlementUsdt += Number(item.data.amountUsdt || 0);
-        settlementKrw += Number(item.data.amountKrw || 0);
-      }
+      settlementUsdt += Number(item.data.amountUsdt || 0);
+      settlementKrw += Number(item.data.amountKrw || 0);
     }
+  }
+
+    const settlementCountRatio =
+      sortedBuyEvents.length > 0 ? Math.round((settlementCount / sortedBuyEvents.length) * 1000) / 10 : 0;
+    const settlementUsdtRatio =
+      totalUsdt > 0 ? Math.round((settlementUsdt / totalUsdt) * 1000) / 10 : 0;
 
     return {
       totalEvents: sortedBankEvents.length + sortedBuyEvents.length,
@@ -625,6 +634,8 @@ export default function PromotionPage() {
       settlementCount,
       settlementUsdt,
       settlementKrw,
+      settlementCountRatio,
+      settlementUsdtRatio,
     };
   }, [sortedBankEvents, sortedBuyEvents]);
 
@@ -680,14 +691,19 @@ export default function PromotionPage() {
 
       <section className="relative mx-auto w-full max-w-[1520px] space-y-5 px-4 py-6 sm:px-6 lg:px-10">
         <header
-          className={`relative overflow-hidden rounded-[28px] border border-cyan-400/25 bg-slate-950/80 p-6 shadow-[0_26px_80px_-36px_rgba(6,182,212,0.8)] backdrop-blur ${isHeroBursting ? "promo-hero-burst" : ""}`}
+          className={`relative overflow-hidden rounded-[28px] border border-emerald-300/30 bg-slate-950/85 p-6 shadow-[0_26px_84px_-36px_rgba(16,185,129,0.7)] backdrop-blur ${isHeroBursting ? "promo-hero-burst" : ""}`}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(34,211,238,0.22),rgba(2,6,23,0)_46%),radial-gradient(circle_at_88%_30%,rgba(16,185,129,0.2),rgba(2,6,23,0)_40%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(16,185,129,0.3),rgba(2,6,23,0)_45%),radial-gradient(circle_at_85%_28%,rgba(34,211,238,0.2),rgba(2,6,23,0)_42%)]" />
 
           <nav className="relative flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="promo-live-dot h-2.5 w-2.5 rounded-full bg-cyan-300" />
-              <span className="text-xs uppercase tracking-[0.22em] text-cyan-200/95">Realtime Promotion Hub</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="promo-live-dot h-2.5 w-2.5 rounded-full bg-emerald-300" />
+              <span className="text-xs uppercase tracking-[0.22em] text-emerald-100/95">
+                VASP Operated Realtime Hub
+              </span>
+              <span className="rounded-full border border-emerald-300/65 bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-50">
+                VASP 운영
+              </span>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
@@ -704,88 +720,102 @@ export default function PromotionPage() {
               </Link>
               <Link
                 href={`/${lang}/realtime-settlement`}
-                className="rounded-xl border border-emerald-500/55 bg-emerald-500/14 px-3 py-1.5 text-sm text-emerald-100 transition hover:border-emerald-300/75 hover:bg-emerald-400/22"
+                className="rounded-xl border border-emerald-500/65 bg-emerald-500/22 px-3 py-1.5 text-sm font-semibold text-emerald-50 transition hover:border-emerald-300/80 hover:bg-emerald-400/28"
               >
                 Settlement
               </Link>
             </div>
           </nav>
 
-          <div className="relative mt-5 grid gap-5 lg:grid-cols-[1.25fr_1fr]">
+          <div className="relative mt-5 grid gap-5 lg:grid-cols-[1.2fr_1fr]">
             <div>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                <span className="promo-title-shine">실시간 자금 흐름</span>을 공시 수준으로 보여주는 금융 대시보드 허브
+                <span className="promo-title-shine">VASP 운영</span> 기반 USDT 정산 플랫폼
               </h1>
               <p className="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
-                입출금, 주문 상태, 정산 완료 이벤트를 단일 화면에서 동기화합니다. 운영 지표를
-                실시간으로 노출해 결제 신뢰도와 정산 투명성을 동시에 홍보할 수 있습니다.
+                본 플랫폼은 VASP 운영 체계 하에서 USDT 정산 이벤트를 최우선 지표로 공개합니다.
+                입출금, 주문, 정산 데이터가 하나의 실시간 화면에서 연결되어 자금 처리 신뢰를
+                금융기관 수준으로 전달합니다.
               </p>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+                <span className="rounded-full border border-emerald-300/50 bg-emerald-500/15 px-2.5 py-1 text-emerald-100">
+                  VASP 운영 모니터링
+                </span>
+                <span className="rounded-full border border-cyan-300/50 bg-cyan-500/15 px-2.5 py-1 text-cyan-100">
+                  USDT 온체인 정산 추적
+                </span>
+                <span className="rounded-full border border-slate-500/60 bg-slate-800/70 px-2.5 py-1 text-slate-200">
+                  정산 이벤트 우선 공시
+                </span>
+              </div>
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
-                  href={`/${lang}/realtime-banktransfer`}
-                  className="rounded-xl border border-cyan-300/70 bg-cyan-400/20 px-4 py-2 text-sm font-semibold text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/28"
+                  href={`/${lang}/realtime-settlement`}
+                  className="rounded-xl border border-emerald-300/80 bg-emerald-500/30 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/38"
                 >
-                  입출금 라이브 보기
+                  정산 라이브 보기
                 </Link>
                 <Link
                   href={`/${lang}/realtime-buyorder`}
-                  className="rounded-xl border border-emerald-300/70 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/28"
+                  className="rounded-xl border border-cyan-300/70 bg-cyan-400/22 px-4 py-2 text-sm font-semibold text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/30"
                 >
                   BuyOrder 라이브 보기
                 </Link>
                 <Link
-                  href={`/${lang}/realtime-settlement`}
-                  className="rounded-xl border border-emerald-300/70 bg-emerald-500/24 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/34"
+                  href={`/${lang}/realtime-banktransfer`}
+                  className="rounded-xl border border-slate-500/70 bg-slate-800/70 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-slate-300/70"
                 >
-                  정산 라이브 보기
+                  입출금 라이브 보기
                 </Link>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
                 <span className="rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5">
-                  Connection: <span className="font-semibold text-cyan-200">{connectionState}</span>
+                  Connection: <span className="font-semibold text-emerald-200">{connectionState}</span>
                 </span>
                 <span className="rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5">
-                  Sync: <span className="font-semibold text-cyan-200">{isSyncing ? "running" : "idle"}</span>
+                  Sync: <span className="font-semibold text-emerald-200">{isSyncing ? "running" : "idle"}</span>
                 </span>
                 <span className="rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5">
                   Last Update:{" "}
-                  <span className="font-semibold text-cyan-200">{latestTimeInfo.relativeLabel}</span>
+                  <span className="font-semibold text-emerald-200">{latestTimeInfo.relativeLabel}</span>
                 </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <article className="rounded-2xl border border-slate-600/70 bg-slate-900/70 p-4 shadow-lg shadow-black/25">
-                <p className="text-xs uppercase tracking-[0.08em] text-slate-300">전체 이벤트</p>
-                <p className="mt-2 text-3xl font-semibold leading-none text-cyan-100">
-                  {summary.totalEvents.toLocaleString("ko-KR")}
+              <article className="col-span-2 rounded-2xl border border-emerald-300/55 bg-emerald-950/40 p-4 shadow-lg shadow-black/25">
+                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">핵심 지표 | Settlement USDT</p>
+                <p className="mt-2 text-3xl font-bold leading-none text-emerald-50 sm:text-[2.1rem]">
+                  {formatUsdt(summary.settlementUsdt)}
+                  <span className="ml-1 text-base font-semibold text-emerald-200">USDT</span>
                 </p>
-                <p className="mt-2 text-xs text-slate-400">Bank + BuyOrder 통합</p>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="rounded-md border border-emerald-300/40 bg-emerald-500/12 px-2 py-1 text-emerald-100">
+                    정산완료 {summary.settlementCount.toLocaleString("ko-KR")}건
+                  </span>
+                  <span className="text-emerald-200/90">
+                    USDT 기준 비중 {formatPercent(summary.settlementUsdtRatio)}
+                  </span>
+                </div>
               </article>
-              <article className="rounded-2xl border border-emerald-500/45 bg-emerald-950/35 p-4 shadow-lg shadow-black/25">
-                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">입금 누적</p>
-                <p className="mt-2 text-xl font-semibold leading-tight text-emerald-50">
-                  {formatKrw(summary.depositedAmount)} KRW
+
+              <article className="rounded-2xl border border-cyan-500/45 bg-cyan-950/35 p-4 shadow-lg shadow-black/25">
+                <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">플랫폼 USDT</p>
+                <p className="mt-2 text-xl font-semibold leading-tight text-cyan-50">
+                  {formatUsdt(summary.totalUsdt)} USDT
                 </p>
-                <p className="mt-2 text-xs text-emerald-300/80">
-                  {summary.depositedCount.toLocaleString("ko-KR")}건
-                </p>
+                <p className="mt-2 text-xs text-cyan-300/80">BuyOrder 누적 유동량</p>
               </article>
-              <article className="rounded-2xl border border-sky-500/45 bg-sky-950/35 p-4 shadow-lg shadow-black/25">
-                <p className="text-xs uppercase tracking-[0.08em] text-sky-200">결제완료</p>
-                <p className="mt-2 text-3xl font-semibold leading-none text-sky-50">
-                  {summary.confirmedCount.toLocaleString("ko-KR")}
-                </p>
-                <p className="mt-2 text-xs text-sky-300/80">BuyOrder 기준</p>
-              </article>
+
               <article className="rounded-2xl border border-amber-500/45 bg-amber-950/35 p-4 shadow-lg shadow-black/25">
-                <p className="text-xs uppercase tracking-[0.08em] text-amber-200">정산완료</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-amber-200">정산 이벤트 비중</p>
                 <p className="mt-2 text-3xl font-semibold leading-none text-amber-50">
-                  {summary.settlementCount.toLocaleString("ko-KR")}
+                  {formatPercent(summary.settlementCountRatio)}
                 </p>
-                <p className="mt-2 text-xs text-amber-300/80">{formatUsdt(summary.settlementUsdt)} USDT</p>
+                <p className="mt-2 text-xs text-amber-300/80">BuyOrder 이벤트 대비</p>
               </article>
             </div>
           </div>
@@ -803,16 +833,20 @@ export default function PromotionPage() {
           </div>
         )}
 
-        <section className="overflow-hidden rounded-2xl border border-emerald-500/35 bg-[linear-gradient(135deg,rgba(6,78,59,0.5),rgba(2,6,23,0.9))] p-5 shadow-[0_16px_40px_-24px_rgba(16,185,129,0.65)]">
+        <section className="relative overflow-hidden rounded-2xl border border-emerald-400/45 bg-[linear-gradient(135deg,rgba(6,78,59,0.56),rgba(2,6,23,0.92))] p-5 shadow-[0_18px_44px_-24px_rgba(16,185,129,0.72)]">
+          <span className="absolute right-4 top-4 rounded-full border border-emerald-200/70 bg-emerald-400/22 px-2.5 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50">
+            SETTLEMENT PRIORITY
+          </span>
           <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
             <div>
               <p className="text-xs uppercase tracking-[0.12em] text-emerald-200/90">Settlement Spotlight</p>
               <h2 className="mt-1 text-xl font-semibold text-emerald-50">
-                정산 완료 흐름을 실시간 공개해 금융 신뢰를 강화합니다
+                최우선 정산 공시 데스크: VASP 운영 상태를 실시간으로 증명합니다
               </h2>
               <p className="mt-2 max-w-3xl text-sm text-emerald-100/85">
-                체결 이후 정산 반영까지의 이벤트를 분리 모니터링해 정산 지연 리스크를 즉시 확인할 수
-                있습니다. 공개형 정산 대시보드는 운영 투명성과 자금 처리 신뢰도를 동시에 전달합니다.
+                체결 이후 USDT 정산 반영까지의 이벤트를 별도 추적해 정산 지연 리스크를 즉시 식별합니다.
+                대외 공개 화면에서 정산 건수, 정산 금액, 처리 시점을 함께 노출하여 금융 서비스 수준의
+                운영 투명성을 제공합니다.
               </p>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -825,17 +859,20 @@ export default function PromotionPage() {
                 <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
                   {formatKrw(summary.settlementKrw)} KRW
                 </span>
+                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                  정산 비중 {formatPercent(summary.settlementCountRatio)}
+                </span>
               </div>
             </div>
 
-            <div className="rounded-xl border border-emerald-300/40 bg-slate-950/65 p-3">
+            <div className="rounded-xl border border-emerald-300/50 bg-slate-950/70 p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">Latest Settlement</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">Realtime Settlement Log</p>
                 <Link
                   href={`/${lang}/realtime-settlement`}
                   className="rounded-lg border border-emerald-300/60 bg-emerald-500/18 px-2.5 py-1 text-xs font-semibold text-emerald-50 transition hover:bg-emerald-500/28"
                 >
-                  정산 대시보드 이동
+                  정산 대시보드
                 </Link>
               </div>
 
@@ -977,10 +1014,10 @@ export default function PromotionPage() {
           <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-xs uppercase tracking-[0.08em] text-sky-300">BuyOrder Live</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-100">상태 변경 실시간 하이라이트</h2>
+                <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">BuyOrder USDT Live</p>
+                <h2 className="mt-1 text-lg font-semibold text-slate-100">USDT 주문 상태 하이라이트</h2>
               </div>
-              <span className="rounded-full border border-sky-300/60 bg-sky-400/20 px-2 py-1 text-xs font-semibold text-sky-50">
+              <span className="rounded-full border border-cyan-300/60 bg-cyan-400/20 px-2 py-1 text-xs font-semibold text-cyan-50">
                 LIVE
               </span>
             </div>
@@ -1001,7 +1038,7 @@ export default function PromotionPage() {
                         {latestBuy.data.store?.name || "-"}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm font-semibold tabular-nums text-cyan-100">
+                    <p className="mt-1 text-base font-semibold tabular-nums text-cyan-100">
                       {formatUsdt(latestBuy.data.amountUsdt)} USDT
                     </p>
                     <p className="mt-1 font-mono text-[11px] text-slate-400">

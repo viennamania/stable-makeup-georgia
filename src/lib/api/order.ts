@@ -115,6 +115,7 @@ const BUYORDER_REALTIME_PROJECTION = {
   escrowTransactionHash: 1,
   queueId: 1,
   minedAt: 1,
+  settlement: 1,
 } as const;
 
 function getBuyOrderBuyerName(order: any): string | null {
@@ -218,7 +219,11 @@ async function emitBuyOrderStatusRealtimeEvent({
     buyerName: getBuyOrderBuyerName(order),
     buyerWalletAddress: getBuyOrderBuyerWalletAddress(order),
     buyerAccountNumber: getBuyOrderBuyerAccountNumber(order),
-    transactionHash: toNormalizedHash(order?.transactionHash),
+    transactionHash: toNormalizedHash(
+      statusTo === "paymentSettled"
+        ? order?.settlement?.txid || order?.transactionHash
+        : order?.transactionHash,
+    ),
     escrowTransactionHash: toNormalizedHash(order?.escrowTransactionHash),
     queueId: order?.queueId != null ? String(order.queueId).trim() || null : null,
     minedAt: order?.minedAt ? String(order.minedAt) : null,
@@ -9118,6 +9123,12 @@ export async function updateBuyOrderSettlement(
 ): Promise<boolean> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { _id: new ObjectId(orderId) },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+
   // update buyorder
   const result = await collection.updateOne(
     { _id: new ObjectId(orderId) },
@@ -9303,6 +9314,32 @@ export async function updateBuyOrderSettlement(
 
     } catch (error) {
       console.error('Error updating agent with settlement data:', error);
+    }
+
+    try {
+      const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
+        collection,
+        { _id: new ObjectId(orderId) },
+      );
+
+      if (updatedOrder) {
+        await emitBuyOrderStatusRealtimeEvent({
+          source: "order.updateBuyOrderSettlement",
+          statusFrom: previousStatus,
+          statusTo: "paymentSettled",
+          order: updatedOrder,
+          idempotencyParts: [
+            String(settlement?.txid || ""),
+            String(settlement?.settlementAmount || ""),
+            String(settlement?.feeAmount || ""),
+            String(settlement?.agentFeeAmount || ""),
+            String(settlement?.status || ""),
+            String(updater || ""),
+          ],
+        });
+      }
+    } catch (error) {
+      console.error('Failed to emit settlement realtime event:', error);
     }
 
 

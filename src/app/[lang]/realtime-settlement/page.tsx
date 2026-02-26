@@ -270,7 +270,29 @@ export default function RealtimeSettlementPage() {
             ? (data.events as BuyOrderStatusRealtimeEvent[])
             : [];
 
-          const settlementEvents = incomingEvents.filter(isSettlementEvent);
+          let settlementEvents = incomingEvents.filter(isSettlementEvent);
+
+          if (!since && settlementEvents.length === 0) {
+            try {
+              const bootstrapResponse = await fetch(
+                `/api/realtime/settlement/bootstrap?public=1&limit=${RESYNC_LIMIT}`,
+                {
+                  method: "GET",
+                  cache: "no-store",
+                },
+              );
+
+              if (bootstrapResponse.ok) {
+                const bootstrapData = await bootstrapResponse.json();
+                settlementEvents = Array.isArray(bootstrapData.events)
+                  ? (bootstrapData.events as BuyOrderStatusRealtimeEvent[])
+                  : [];
+              }
+            } catch (bootstrapError) {
+              console.error("Failed to fetch settlement bootstrap events:", bootstrapError);
+            }
+          }
+
           upsertRealtimeEvents(settlementEvents, { highlightNew: Boolean(since) });
           updateCursor(typeof data.nextCursor === "string" ? data.nextCursor : null);
           setSyncErrorMessage(null);
