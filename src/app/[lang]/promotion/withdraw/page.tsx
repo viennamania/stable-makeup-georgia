@@ -187,6 +187,10 @@ export default function PromotionWithdrawPage({ params }: { params: { lang: stri
                 wallets={promotionWallets}
                 showAllWallets={false}
                 chain={promotionChain}
+                accountAbstraction={{
+                  chain: promotionChain,
+                  sponsorGas: true,
+                }}
                 theme="dark"
                 locale="ko_KR"
                 connectButton={{

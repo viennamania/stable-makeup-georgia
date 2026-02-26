@@ -255,6 +255,10 @@ export default function PromotionWithdrawProcessingPage({ params }: { params: { 
                 wallets={promotionWallets}
                 showAllWallets={false}
                 chain={promotionChain}
+                accountAbstraction={{
+                  chain: promotionChain,
+                  sponsorGas: true,
+                }}
                 theme="dark"
                 locale="ko_KR"
                 connectButton={{

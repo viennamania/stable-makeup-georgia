@@ -1160,6 +1160,10 @@ export default function PromotionPage() {
                     wallets={promotionWallets}
                     showAllWallets={false}
                     chain={promotionWalletChain}
+                    accountAbstraction={{
+                      chain: promotionWalletChain,
+                      sponsorGas: true,
+                    }}
                     theme="dark"
                     locale="ko_KR"
                     connectButton={{
