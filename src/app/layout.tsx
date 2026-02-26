@@ -107,7 +107,9 @@ export default function RootLayout({
   const [showChain, setShowChain] = useState(false);
 
   const [showCenter, setShowCenter] = useState(false);
-  const hideFixedChrome = pathname?.endsWith("/realtime-banktransfer");
+  const hideFixedChrome =
+    pathname?.endsWith("/realtime-banktransfer") ||
+    pathname?.endsWith("/realtime-buyorder");
 
   return (
 

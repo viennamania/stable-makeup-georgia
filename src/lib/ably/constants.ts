@@ -1,5 +1,7 @@
 export const BANKTRANSFER_ABLY_CHANNEL = "banktransfer-events";
 export const BANKTRANSFER_ABLY_EVENT_NAME = "banktransfer.updated";
+export const BUYORDER_STATUS_ABLY_CHANNEL = "buyorder-status-events";
+export const BUYORDER_STATUS_ABLY_EVENT_NAME = "buyorder.status.changed";
 
 export type BankTransferDashboardStore = {
   code: string | null;
@@ -24,5 +26,29 @@ export type BankTransferDashboardEvent = {
   tradeId: string | null;
   match: string | null;
   errorMessage: string | null;
+  publishedAt: string;
+};
+
+export type BuyOrderRealtimeStore = {
+  code: string | null;
+  logo: string | null;
+  name: string | null;
+};
+
+export type BuyOrderStatusRealtimeEvent = {
+  eventId: string;
+  idempotencyKey: string;
+  cursor?: string | null;
+  source: string;
+  orderId: string | null;
+  tradeId: string | null;
+  statusFrom: string | null;
+  statusTo: string;
+  store: BuyOrderRealtimeStore | null;
+  amountKrw: number;
+  amountUsdt: number;
+  buyerName: string | null;
+  buyerAccountNumber: string | null;
+  reason: string | null;
   publishedAt: string;
 };

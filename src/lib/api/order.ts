@@ -1,4 +1,5 @@
 import { use } from 'react';
+import { createHash } from "crypto";
 import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
@@ -6,6 +7,15 @@ import { dbName } from '../mongodb';
 
 // object id
 import { ObjectId } from 'mongodb';
+import {
+  type BuyOrderStatusRealtimeEvent,
+} from "@lib/ably/constants";
+import {
+  publishBuyOrderStatusEvent,
+} from "@lib/ably/server";
+import {
+  saveBuyOrderStatusRealtimeEvent,
+} from "@lib/api/buyOrderStatusRealtimeEvent";
 
 
 
@@ -84,6 +94,127 @@ export interface OrderProps {
 export interface ResultProps {
   totalCount: number;
   orders: OrderProps[];
+}
+
+const BUYORDER_REALTIME_PROJECTION = {
+  _id: 1,
+  tradeId: 1,
+  status: 1,
+  storecode: 1,
+  store: 1,
+  krwAmount: 1,
+  usdtAmount: 1,
+  nickname: 1,
+  buyer: 1,
+  cancelTradeReason: 1,
+} as const;
+
+function getBuyOrderBuyerName(order: any): string | null {
+  const raw = String(
+    order?.buyer?.depositName ||
+      order?.buyer?.bankInfo?.accountHolder ||
+      order?.nickname ||
+      "",
+  ).trim();
+  return raw || null;
+}
+
+function getBuyOrderBuyerAccountNumber(order: any): string | null {
+  const raw = String(
+    order?.buyer?.bankInfo?.accountNumber ||
+      order?.buyer?.depositBankAccountNumber ||
+      order?.buyer?.bankAccountNumber ||
+      "",
+  ).trim();
+  return raw || null;
+}
+
+function toSafeNumber(value: unknown): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+async function fetchBuyOrderRealtimeSnapshot(
+  collection: any,
+  query: Record<string, any>,
+): Promise<any | null> {
+  return collection.findOne(query, { projection: BUYORDER_REALTIME_PROJECTION });
+}
+
+async function emitBuyOrderStatusRealtimeEvent({
+  source,
+  statusFrom,
+  statusTo,
+  order,
+  reason,
+  idempotencyParts,
+}: {
+  source: string;
+  statusFrom: string | null;
+  statusTo: string;
+  order: any | null;
+  reason?: string | null;
+  idempotencyParts?: Array<string | null | undefined>;
+}) {
+  if (!order || !statusTo) {
+    return;
+  }
+
+  const orderId = order?._id ? String(order._id) : "";
+  const tradeId = String(order?.tradeId || "");
+  const storeCode = String(order?.storecode || order?.store?.storecode || "");
+  const baseKeySource = [
+    source,
+    orderId,
+    tradeId,
+    statusFrom || "",
+    statusTo,
+    ...(idempotencyParts || []),
+  ]
+    .map((value) => String(value || "").trim())
+    .join("|");
+
+  const idempotencyKey = `buyorder:${createHash("sha256").update(baseKeySource).digest("hex")}`;
+  const eventId = `buyorder-status-${createHash("sha256")
+    .update(`${idempotencyKey}|${statusTo}`)
+    .digest("hex")}`;
+
+  const event: BuyOrderStatusRealtimeEvent = {
+    eventId,
+    idempotencyKey,
+    source,
+    orderId: orderId || null,
+    tradeId: tradeId || null,
+    statusFrom: statusFrom || null,
+    statusTo,
+    store: {
+      code: storeCode || null,
+      logo: order?.store?.storeLogo || null,
+      name: order?.store?.storeName || null,
+    },
+    amountKrw: toSafeNumber(order?.krwAmount),
+    amountUsdt: toSafeNumber(order?.usdtAmount),
+    buyerName: getBuyOrderBuyerName(order),
+    buyerAccountNumber: getBuyOrderBuyerAccountNumber(order),
+    reason: reason || order?.cancelTradeReason || null,
+    publishedAt: new Date().toISOString(),
+  };
+
+  try {
+    const saved = await saveBuyOrderStatusRealtimeEvent({
+      eventId: event.eventId,
+      idempotencyKey: event.idempotencyKey,
+      payload: event,
+    });
+
+    if (saved.isDuplicate) {
+      return;
+    }
+
+    await publishBuyOrderStatusEvent(saved.event);
+  } catch (error) {
+    console.error("Failed to publish buyorder status realtime event:", error);
+  }
 }
 
 
@@ -1722,6 +1853,19 @@ export async function insertBuyOrder(data: any) {
       } }
     );
 
+    const createdOrder = await fetchBuyOrderRealtimeSnapshot(
+      collection,
+      { _id: result.insertedId },
+    );
+
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.insertBuyOrder",
+      statusFrom: null,
+      statusTo: "ordered",
+      order: createdOrder,
+      idempotencyParts: [String(result.insertedId), tradeId],
+    });
+
 
     /*
     const updated = await collection.findOne<OrderProps>(
@@ -2030,6 +2174,14 @@ export async function insertBuyOrderForClearance(data: any) {
       { _id: result.insertedId }
     );
 
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.insertBuyOrderForClearance",
+      statusFrom: null,
+      statusTo: "paymentRequested",
+      order: updated,
+      idempotencyParts: [String(result.insertedId), tradeId],
+    });
+
     ///console.log('insertBuyOrderForClearance updated: ' + JSON.stringify(updated));
 
 
@@ -2204,6 +2356,19 @@ export async function insertBuyOrderForUser(data: any) {
 
 
   if (result) {
+
+    const createdOrder = await fetchBuyOrderRealtimeSnapshot(
+      collection,
+      { _id: result.insertedId },
+    );
+
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.insertBuyOrderForUser",
+      statusFrom: null,
+      statusTo: "paymentRequested",
+      order: createdOrder,
+      idempotencyParts: [String(result.insertedId), tradeId],
+    });
 
 
     return {
@@ -4138,6 +4303,21 @@ export async function acceptBuyOrder(data: any) {
 
   if (result) {
 
+    if (result?.value) {
+      const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
+        buyorderCollection,
+        { _id: new ObjectId(data.orderId + "") },
+      );
+
+      await emitBuyOrderStatusRealtimeEvent({
+        source: "order.acceptBuyOrder",
+        statusFrom: "ordered",
+        statusTo: "accepted",
+        order: updatedOrder,
+        idempotencyParts: [String(data.orderId)],
+      });
+    }
+
 
     /*
     const updated = await buyorderCollection.findOne<any>(
@@ -4186,6 +4366,12 @@ export async function buyOrderRequestPayment(data: any) {
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { _id: new ObjectId(data.orderId + '') },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
 
 
   let result = null;
@@ -4261,6 +4447,16 @@ export async function buyOrderRequestPayment(data: any) {
     const updated = await collection.findOne<OrderProps>(
       { _id: new ObjectId(data.orderId + '') }
     );
+
+    if (updated && previousStatus !== 'paymentRequested') {
+      await emitBuyOrderStatusRealtimeEvent({
+        source: "order.buyOrderRequestPayment",
+        statusFrom: previousStatus,
+        statusTo: "paymentRequested",
+        order: updated,
+        idempotencyParts: [String(data.orderId), String(data.transactionHash || "")],
+      });
+    }
 
     return updated;
   } else {
@@ -4753,6 +4949,23 @@ export async function buyOrderConfirmPayment(data: any) {
 
     }
 
+    const confirmedOrder = await fetchBuyOrderRealtimeSnapshot(
+      collection,
+      { _id: new ObjectId(data.orderId + "") },
+    );
+
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.buyOrderConfirmPayment",
+      statusFrom: "paymentRequested",
+      statusTo: "paymentConfirmed",
+      order: confirmedOrder,
+      idempotencyParts: [
+        String(data.orderId),
+        String(data.queueId || ""),
+        String(data.transactionHash || ""),
+      ],
+    });
+
 
 
     return {
@@ -4787,6 +5000,11 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { _id: new ObjectId(data.orderId + '') },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
   const result = await collection.updateOne(
     { _id: new ObjectId(data.orderId+'')},
     { $set: {
@@ -4799,6 +5017,22 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
       paymentConfirmedAt: new Date().toISOString(),
     } }
   );
+
+  if (result.modifiedCount > 0 && previousStatus !== 'paymentConfirmed') {
+    const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
+      collection,
+      { _id: new ObjectId(data.orderId + '') },
+    );
+
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.buyOrderConfirmPaymentEnqueueTransaction",
+      statusFrom: previousStatus,
+      statusTo: "paymentConfirmed",
+      order: updatedOrder,
+      idempotencyParts: [String(data.orderId), String(data.queueId || "")],
+    });
+  }
+
   return {
     success: result.modifiedCount === 1,
   };
@@ -4815,6 +5049,11 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { queueId: data.queueId },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
 
 
 
@@ -4859,6 +5098,21 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
       paymentConfirmedAt: new Date().toISOString(),
     } }
   );
+
+  if (result.modifiedCount > 0 && previousStatus !== 'paymentConfirmed') {
+    const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
+      collection,
+      { queueId: data.queueId },
+    );
+
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.buyOrderConfirmPaymentCompleted",
+      statusFrom: previousStatus,
+      statusTo: "paymentConfirmed",
+      order: updatedOrder,
+      idempotencyParts: [String(data.queueId || ""), String(data.transactionHash || "")],
+    });
+  }
   
   return {
     success: result.modifiedCount === 1,
@@ -4905,6 +5159,11 @@ export async function buyOrderRollbackPayment(data: any) {
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { _id: new ObjectId(data.orderId + '') },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
 
 
   const result = await collection.updateOne(
@@ -4922,7 +5181,7 @@ export async function buyOrderRollbackPayment(data: any) {
     } }
   );
 
-  if (result) {
+  if (result.modifiedCount > 0) {
 
 
     // update user collection buyOrderStatus to "cancelled"
@@ -4952,6 +5211,21 @@ export async function buyOrderRollbackPayment(data: any) {
     const updated = await collection.findOne<any>(
       { _id: new ObjectId(data.orderId+'') }
     );
+
+    if (updated && previousStatus !== 'cancelled') {
+      await emitBuyOrderStatusRealtimeEvent({
+        source: "order.buyOrderRollbackPayment",
+        statusFrom: previousStatus,
+        statusTo: "cancelled",
+        order: updated,
+        reason: String(data.cancelTradeReason || "payment rollback"),
+        idempotencyParts: [
+          String(data.orderId),
+          String(data.queueId || ""),
+          String(data.transactionHash || ""),
+        ],
+      });
+    }
 
     return updated;
   } else {
@@ -5047,6 +5321,12 @@ export async function cancelTradeBySeller(
     return false;
   }
 
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { _id: new ObjectId(orderId) },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+
   // check status is 'accepted' or 'paymentRequested'
 
   // update status to 'cancelled'
@@ -5071,7 +5351,7 @@ export async function cancelTradeBySeller(
     } }
   );
 
-  if (result) {
+  if (result.modifiedCount > 0) {
 
     const order = await collection.findOne<any>(
       { _id: new ObjectId(orderId) },
@@ -5082,13 +5362,15 @@ export async function cancelTradeBySeller(
     // update user status to 'cancelled'
     const userCollection = client.db(dbName).collection('users');
 
-    await userCollection.updateOne(
-      {
-        walletAddress: order.walletAddress,
-        storecode: order.storecode,
-      },
-      { $set: { buyOrderStatus: 'cancelled' } }
-    );
+    if (order) {
+      await userCollection.updateOne(
+        {
+          walletAddress: order.walletAddress,
+          storecode: order.storecode,
+        },
+        { $set: { buyOrderStatus: 'cancelled' } }
+      );
+    }
 
 
 
@@ -5097,6 +5379,21 @@ export async function cancelTradeBySeller(
     const updated = await collection.findOne<OrderProps>(
       { _id: new ObjectId(orderId) }
     );
+
+    if (updated && previousStatus !== 'cancelled') {
+      await emitBuyOrderStatusRealtimeEvent({
+        source: "order.cancelTradeBySeller",
+        statusFrom: previousStatus,
+        statusTo: "cancelled",
+        order: updated,
+        reason: cancelTradeReason || null,
+        idempotencyParts: [
+          String(orderId),
+          String(walletAddress || ""),
+          String(escrowTransactionHash || ""),
+        ],
+      });
+    }
 
     return updated;
 
