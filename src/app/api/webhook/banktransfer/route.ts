@@ -44,6 +44,7 @@ import {
 } from '@lib/api/webhookLog';
 import {
   type BankTransferDashboardEvent,
+  type BankTransferDashboardStore,
 } from "@lib/ably/constants";
 import {
   publishBankTransferEvent,
@@ -623,12 +624,14 @@ export async function POST(request: NextRequest) {
 
   const publishDashboardEvent = async ({
     status,
+    store,
     storecode,
     tradeId,
     match,
     errorMessage,
   }: {
     status: BankTransferDashboardEvent["status"];
+    store?: BankTransferDashboardStore | null;
     storecode?: string | null;
     tradeId?: string | null;
     match?: string | null;
@@ -643,6 +646,7 @@ export async function POST(request: NextRequest) {
       transactionDate: String(transaction_date || ""),
       processingDate: processing_date ? String(processing_date) : null,
       status,
+      store: store || null,
       storecode: storecode || null,
       tradeId: tradeId || null,
       match: match || null,
@@ -796,6 +800,11 @@ export async function POST(request: NextRequest) {
 
     await publishDashboardEvent({
       status: "stored",
+      store: {
+        code: storeInfo?.storecode || null,
+        logo: storeInfo?.storeLogo || null,
+        name: storeInfo?.storeName || null,
+      },
       storecode: storeInfo?.storecode || null,
       tradeId: tradeId || null,
       match: match || null,

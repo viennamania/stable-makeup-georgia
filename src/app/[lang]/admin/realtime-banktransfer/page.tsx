@@ -17,6 +17,16 @@ type RealtimeItem = {
 
 const MAX_EVENTS = 50;
 
+function getTransactionTypeLabel(transactionType: string): string {
+  if (transactionType === "deposited") {
+    return "입금";
+  }
+  if (transactionType === "withdrawn") {
+    return "출금";
+  }
+  return transactionType;
+}
+
 export default function RealtimeBankTransferPage() {
   const [events, setEvents] = useState<RealtimeItem[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
@@ -63,6 +73,23 @@ export default function RealtimeBankTransferPage() {
     };
   }, [clientId]);
 
+  const sortedEvents = useMemo(() => {
+    const toTimestamp = (value: string | null | undefined) => {
+      if (!value) {
+        return 0;
+      }
+
+      const timestamp = Date.parse(value);
+      return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
+    return [...events].sort((a, b) => {
+      const left = toTimestamp(a.data.publishedAt || a.receivedAt);
+      const right = toTimestamp(b.data.publishedAt || b.receivedAt);
+      return right - left;
+    });
+  }, [events]);
+
   return (
     <main className="w-full max-w-5xl rounded-lg bg-white p-6 shadow-md">
       <h1 className="text-2xl font-semibold text-black">Banktransfer Realtime</h1>
@@ -93,7 +120,7 @@ export default function RealtimeBankTransferPage() {
               <th className="px-2 py-2">시간</th>
               <th className="px-2 py-2">상태</th>
               <th className="px-2 py-2">유형</th>
-              <th className="px-2 py-2">금액</th>
+              <th className="px-2 py-2 text-right">금액</th>
               <th className="px-2 py-2">입금자</th>
               <th className="px-2 py-2">계좌</th>
               <th className="px-2 py-2">스토어</th>
@@ -101,22 +128,45 @@ export default function RealtimeBankTransferPage() {
             </tr>
           </thead>
           <tbody>
-            {events.length === 0 && (
+            {sortedEvents.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-2 py-8 text-center text-gray-500">
                   아직 수신된 이벤트가 없습니다.
                 </td>
               </tr>
             )}
-            {events.map((item) => (
+            {sortedEvents.map((item) => (
               <tr key={item.id} className="border-b align-top">
                 <td className="px-2 py-2 font-mono text-xs text-gray-500">{item.receivedAt}</td>
                 <td className="px-2 py-2">{item.data.status}</td>
-                <td className="px-2 py-2">{item.data.transactionType}</td>
-                <td className="px-2 py-2">{item.data.amount.toLocaleString()}</td>
+                <td className="px-2 py-2">{getTransactionTypeLabel(item.data.transactionType)}</td>
+                <td className="px-2 py-2 text-right">{item.data.amount.toLocaleString()}</td>
                 <td className="px-2 py-2">{item.data.transactionName}</td>
                 <td className="px-2 py-2 font-mono">{item.data.bankAccountNumber}</td>
-                <td className="px-2 py-2">{item.data.storecode || "-"}</td>
+                <td className="px-2 py-2">
+                  {item.data.store ? (
+                    <div className="flex min-w-[180px] items-center gap-2">
+                      {item.data.store.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.data.store.logo}
+                          alt={item.data.store.name || "store-logo"}
+                          className="h-8 w-8 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-gray-200" />
+                      )}
+                      <div className="flex flex-col">
+                        <span className="leading-tight text-black">{item.data.store.name || "-"}</span>
+                        <span className="font-mono text-xs leading-tight text-gray-500">
+                          {item.data.store.code || item.data.storecode || "-"}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    "-"
+                  )}
+                </td>
                 <td className="px-2 py-2 font-mono">{item.data.tradeId || "-"}</td>
               </tr>
             ))}

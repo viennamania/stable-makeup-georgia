@@ -1,6 +1,12 @@
 export const BANKTRANSFER_ABLY_CHANNEL = "banktransfer-events";
 export const BANKTRANSFER_ABLY_EVENT_NAME = "banktransfer.updated";
 
+export type BankTransferDashboardStore = {
+  code: string | null;
+  logo: string | null;
+  name: string | null;
+};
+
 export type BankTransferDashboardEvent = {
   traceId: string | null;
   transactionType: string;
@@ -10,6 +16,7 @@ export type BankTransferDashboardEvent = {
   transactionDate: string;
   processingDate: string | null;
   status: "stored" | "error";
+  store: BankTransferDashboardStore | null;
   storecode: string | null;
   tradeId: string | null;
   match: string | null;
