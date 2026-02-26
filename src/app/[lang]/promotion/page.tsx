@@ -47,8 +47,10 @@ type WalletTransferRecord = {
   };
 };
 
-const MAX_FEED_ITEMS = 36;
-const API_SYNC_LIMIT = 80;
+const MAX_FEED_ITEMS = 180;
+const MAX_SETTLEMENT_FEED_ITEMS = 300;
+const API_SYNC_LIMIT = 140;
+const SETTLEMENT_BOOTSTRAP_LIMIT = 300;
 const RESYNC_INTERVAL_MS = 12_000;
 const NOW_TICK_MS = 1_000;
 const NEW_EVENT_HIGHLIGHT_MS = 6_000;
@@ -327,6 +329,7 @@ export default function PromotionPage() {
 
   const [bankEvents, setBankEvents] = useState<BankFeedItem[]>([]);
   const [buyEvents, setBuyEvents] = useState<BuyFeedItem[]>([]);
+  const [settlementEvents, setSettlementEvents] = useState<BuyFeedItem[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
   const [connectionErrorMessage, setConnectionErrorMessage] = useState<string | null>(null);
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
@@ -544,6 +547,57 @@ export default function PromotionPage() {
     [triggerHeroBurst],
   );
 
+  const upsertSettlementEvents = useCallback(
+    (incomingEvents: BuyOrderStatusRealtimeEvent[], highlightNew: boolean) => {
+      if (incomingEvents.length === 0) {
+        return;
+      }
+
+      const now = Date.now();
+      setSettlementEvents((previousEvents) => {
+        const map = new Map(previousEvents.map((item) => [item.id, item]));
+
+        for (const incomingEvent of incomingEvents) {
+          const nextId =
+            incomingEvent.eventId ||
+            incomingEvent.cursor ||
+            `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+          const existing = map.get(nextId);
+          if (existing) {
+            map.set(nextId, {
+              ...existing,
+              data: incomingEvent,
+            });
+            continue;
+          }
+
+          map.set(nextId, {
+            id: nextId,
+            receivedAt: new Date().toISOString(),
+            data: incomingEvent,
+            highlightUntil: highlightNew ? now + NEW_EVENT_HIGHLIGHT_MS : 0,
+          });
+        }
+
+        const merged = Array.from(map.values());
+        merged.sort((left, right) => {
+          return (
+            getEventTimestamp(right.data.publishedAt, right.receivedAt) -
+            getEventTimestamp(left.data.publishedAt, left.receivedAt)
+          );
+        });
+
+        return merged.slice(0, MAX_SETTLEMENT_FEED_ITEMS);
+      });
+
+      if (highlightNew) {
+        triggerHeroBurst();
+      }
+    },
+    [triggerHeroBurst],
+  );
+
   const syncBankEvents = useCallback(
     async (sinceOverride?: string | null) => {
       const since = sinceOverride ?? bankCursorRef.current;
@@ -622,6 +676,35 @@ export default function PromotionPage() {
             : [];
 
           upsertBuyEvents(incomingEvents, Boolean(since));
+          upsertSettlementEvents(
+            incomingEvents.filter((event) => isSettlementBuyEvent(event)),
+            Boolean(since),
+          );
+
+          // Promotion summary should show enough settlement context even when recent buyorder feed is settlement-light.
+          if (!since) {
+            try {
+              const bootstrapResponse = await fetch(
+                `/api/realtime/settlement/bootstrap?public=1&limit=${SETTLEMENT_BOOTSTRAP_LIMIT}`,
+                {
+                  method: "GET",
+                  cache: "no-store",
+                },
+              );
+
+              if (bootstrapResponse.ok) {
+                const bootstrapData = await bootstrapResponse.json();
+                const bootstrapEvents = Array.isArray(bootstrapData.events)
+                  ? (bootstrapData.events as BuyOrderStatusRealtimeEvent[])
+                  : [];
+
+                upsertSettlementEvents(bootstrapEvents, false);
+              }
+            } catch (bootstrapError) {
+              console.error("failed to fetch settlement bootstrap events", bootstrapError);
+            }
+          }
+
           updateCursorValue(
             buyCursorRef,
             typeof data.nextCursor === "string" ? data.nextCursor : null,
@@ -637,7 +720,7 @@ export default function PromotionPage() {
 
       throw new Error(lastError || "buyorder sync failed");
     },
-    [upsertBuyEvents],
+    [upsertBuyEvents, upsertSettlementEvents],
   );
 
   const syncAllEvents = useCallback(
@@ -694,15 +777,14 @@ export default function PromotionPage() {
 
     const onBuyMessage = (message: Ably.Message) => {
       const data = message.data as BuyOrderStatusRealtimeEvent;
-      upsertBuyEvents(
-        [
-          {
-            ...data,
-            eventId: data.eventId || String(message.id || ""),
-          },
-        ],
-        true,
-      );
+      const realtimeEvent = {
+        ...data,
+        eventId: data.eventId || String(message.id || ""),
+      };
+      upsertBuyEvents([realtimeEvent], true);
+      if (isSettlementBuyEvent(realtimeEvent)) {
+        upsertSettlementEvents([realtimeEvent], true);
+      }
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -715,7 +797,7 @@ export default function PromotionPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, syncAllEvents, upsertBankEvents, upsertBuyEvents]);
+  }, [clientId, syncAllEvents, upsertBankEvents, upsertBuyEvents, upsertSettlementEvents]);
 
   useEffect(() => {
     void syncAllEvents(true);
@@ -759,7 +841,7 @@ export default function PromotionPage() {
 
   useEffect(() => {
     const now = Date.now();
-    const candidates = [...bankEvents, ...buyEvents]
+    const candidates = [...bankEvents, ...buyEvents, ...settlementEvents]
       .map((item) => item.highlightUntil)
       .filter((until) => until > now);
 
@@ -793,12 +875,23 @@ export default function PromotionPage() {
           };
         }),
       );
+      setSettlementEvents((previousEvents) =>
+        previousEvents.map((item) => {
+          if (item.highlightUntil > current || item.highlightUntil === 0) {
+            return item;
+          }
+          return {
+            ...item,
+            highlightUntil: 0,
+          };
+        }),
+      );
     }, waitMs);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [bankEvents, buyEvents]);
+  }, [bankEvents, buyEvents, settlementEvents]);
 
   useEffect(() => {
     return () => {
@@ -829,9 +922,16 @@ export default function PromotionPage() {
     });
   }, [buyEvents]);
 
-  const settlementBuyEvents = useMemo(() => {
-    return sortedBuyEvents.filter((item) => isSettlementBuyEvent(item.data));
-  }, [sortedBuyEvents]);
+  const sortedSettlementEvents = useMemo(() => {
+    return [...settlementEvents].sort((left, right) => {
+      return (
+        getEventTimestamp(right.data.publishedAt, right.receivedAt) -
+        getEventTimestamp(left.data.publishedAt, left.receivedAt)
+      );
+    });
+  }, [settlementEvents]);
+
+  const settlementBuyEvents = sortedSettlementEvents;
 
   const latestBank = sortedBankEvents[0];
   const latestBuy = sortedBuyEvents[0];
@@ -850,6 +950,8 @@ export default function PromotionPage() {
     let confirmedCount = 0;
     let pendingCount = 0;
     let totalUsdt = 0;
+    let buyFeedSettlementCount = 0;
+    let buyFeedSettlementUsdt = 0;
     let settlementCount = 0;
     let settlementUsdt = 0;
     let settlementKrw = 0;
@@ -875,16 +977,23 @@ export default function PromotionPage() {
       }
 
       if (isSettlementBuyEvent(item.data)) {
-        settlementCount += 1;
-        settlementUsdt += Number(item.data.amountUsdt || 0);
-        settlementKrw += Number(item.data.amountKrw || 0);
+        buyFeedSettlementCount += 1;
+        buyFeedSettlementUsdt += Number(item.data.amountUsdt || 0);
       }
     }
 
+    for (const item of sortedSettlementEvents) {
+      settlementCount += 1;
+      settlementUsdt += Number(item.data.amountUsdt || 0);
+      settlementKrw += Number(item.data.amountKrw || 0);
+    }
+
     const settlementCountRatio =
-      sortedBuyEvents.length > 0 ? Math.round((settlementCount / sortedBuyEvents.length) * 1000) / 10 : 0;
+      sortedBuyEvents.length > 0
+        ? Math.round((buyFeedSettlementCount / sortedBuyEvents.length) * 1000) / 10
+        : 0;
     const settlementUsdtRatio =
-      totalUsdt > 0 ? Math.round((settlementUsdt / totalUsdt) * 1000) / 10 : 0;
+      totalUsdt > 0 ? Math.round((buyFeedSettlementUsdt / totalUsdt) * 1000) / 10 : 0;
 
     return {
       totalEvents: sortedBankEvents.length + sortedBuyEvents.length,
@@ -899,13 +1008,16 @@ export default function PromotionPage() {
       settlementCountRatio,
       settlementUsdtRatio,
     };
-  }, [sortedBankEvents, sortedBuyEvents]);
+  }, [sortedBankEvents, sortedBuyEvents, sortedSettlementEvents]);
 
   const latestTimestamp = useMemo(() => {
     const bankTime = latestBank ? getEventTimestamp(latestBank.data.publishedAt, latestBank.receivedAt) : 0;
     const buyTime = latestBuy ? getEventTimestamp(latestBuy.data.publishedAt, latestBuy.receivedAt) : 0;
-    return Math.max(bankTime, buyTime);
-  }, [latestBank, latestBuy]);
+    const settlementTime = latestSettlement
+      ? getEventTimestamp(latestSettlement.data.publishedAt, latestSettlement.receivedAt)
+      : 0;
+    return Math.max(bankTime, buyTime, settlementTime);
+  }, [latestBank, latestBuy, latestSettlement]);
 
   const latestTimeInfo = getRelativeTimeInfo(latestTimestamp || null, nowMs);
 
