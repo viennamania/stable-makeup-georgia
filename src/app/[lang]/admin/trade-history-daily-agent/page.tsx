@@ -108,9 +108,7 @@ interface BuyOrder {
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-      ],
+      options: ["email", "google"],
     },
   }),
 ];
@@ -1112,6 +1110,7 @@ export default function Index({ params }: any) {
           <ConnectButton
             client={client}
             wallets={wallets}
+            showAllWallets={false}
             /*
             chain={chain === "ethereum" ? ethereum :
                     chain === "polygon" ? polygon :

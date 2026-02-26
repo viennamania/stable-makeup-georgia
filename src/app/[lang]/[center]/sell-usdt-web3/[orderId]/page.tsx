@@ -108,7 +108,7 @@ interface SellOrder {
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["phone", "email"],
+      options: ["email", "google"],
     },
   }),
 ];
@@ -1343,6 +1343,7 @@ export default function Index({ params }: any) {
                     client={client}
 
                     wallets={wallets}
+                    showAllWallets={false}
                     
                     accountAbstraction={{   
                       
@@ -1390,6 +1391,7 @@ export default function Index({ params }: any) {
                       client={client}
     
                       wallets={wallets}
+                      showAllWallets={false}
                       
                       accountAbstraction={{   
                         

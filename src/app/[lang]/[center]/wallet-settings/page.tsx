@@ -40,7 +40,7 @@ import { add } from 'thirdweb/extensions/farcaster/keyGateway';
 const wallets = [
     inAppWallet({
       auth: {
-        options: ["phone", "email"],
+        options: ["email", "google"],
       },
     }),
 ];
@@ -424,6 +424,7 @@ export default function SettingsPage({ params }: any) {
                                 client={client}
 
                                 wallets={wallets}
+                                showAllWallets={false}
 
                                 theme={"light"}
                                 connectModal={{

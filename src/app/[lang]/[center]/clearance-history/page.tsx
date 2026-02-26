@@ -165,38 +165,16 @@ interface BuyOrder {
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-        "discord",
-        "email",
-        "x",
-        "passkey",
-        "phone",
-        "facebook",
-        "line",
-        "apple",
-        "coinbase",
-      ],
+      options: ["email", "google"],
     },
   }),
-  createWallet("com.coinbase.wallet"),
-  createWallet("me.rainbow"),
-  createWallet("io.rabby"),
-  createWallet("io.zerion.wallet"),
-  createWallet("io.metamask"),
-  createWallet("com.bitget.web3"),
-  createWallet("com.trustwallet.app"),
-  createWallet("com.okex.wallet"),
-
 ];
 */
 
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-      ],
+      options: ["email", "google"],
     },
   }),
 ];
@@ -3210,6 +3188,7 @@ export default function Index({ params }: any) {
                   <ConnectButton
                     client={client}
                     wallets={wallets}
+                    showAllWallets={false}
 
                     
                     theme={"light"}

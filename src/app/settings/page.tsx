@@ -36,7 +36,7 @@ import { add } from 'thirdweb/extensions/farcaster/keyGateway';
 const wallets = [
     inAppWallet({
       auth: {
-        options: ["phone", "email"],
+        options: ["email", "google"],
       },
     }),
 ];
@@ -265,6 +265,7 @@ export default function SettingsPage() {
                             client={client}
 
                             wallets={wallets}
+                            showAllWallets={false}
                             
                             accountAbstraction={{        
                             chain: arbitrum,

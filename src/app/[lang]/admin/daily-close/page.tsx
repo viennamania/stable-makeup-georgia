@@ -116,9 +116,7 @@ interface BuyOrder {
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-      ],
+      options: ["email", "google"],
     },
   }),
 ];
@@ -1250,6 +1248,7 @@ const fetchBuyOrders = async () => {
           <ConnectButton
             client={client}
             wallets={wallets}
+            showAllWallets={false}
             /*
             chain={chain === "ethereum" ? ethereum :
                     chain === "polygon" ? polygon :

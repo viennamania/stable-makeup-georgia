@@ -74,18 +74,7 @@ import {
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-        "discord",
-        "email",
-        "x",
-        //"passkey",
-        //"phone",
-        "facebook",
-        "line",
-        "apple",
-        "coinbase",
-      ],
+      options: ["email", "google"],
     },
   }),
 

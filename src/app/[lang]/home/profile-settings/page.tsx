@@ -62,29 +62,9 @@ const storecode = "admin";
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-        "discord",
-        "email",
-        "x",
-        "passkey",
-        "phone",
-        "facebook",
-        "line",
-        "apple",
-        "coinbase",
-      ],
+      options: ["email", "google"],
     },
   }),
-  createWallet("com.coinbase.wallet"),
-  createWallet("me.rainbow"),
-  createWallet("io.rabby"),
-  createWallet("io.zerion.wallet"),
-  createWallet("io.metamask"),
-  createWallet("com.bitget.web3"),
-  createWallet("com.trustwallet.app"),
-  createWallet("com.okex.wallet"),
-
 ];
 
 
@@ -1062,6 +1042,7 @@ export default function SettingsPage({ params }: any) {
                         <ConnectButton
                         client={client}
                         wallets={wallets}
+                        showAllWallets={false}
 
                         /*
                         accountAbstraction={{

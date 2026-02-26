@@ -58,7 +58,7 @@ import { getDictionary } from "../../dictionaries";
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["phone", "email"],
+      options: ["email", "google"],
     },
   }),
 ];

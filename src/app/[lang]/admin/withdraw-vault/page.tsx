@@ -75,7 +75,7 @@ import {
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["phone", "email"],
+      options: ["email", "google"],
     },
   }),
 ];

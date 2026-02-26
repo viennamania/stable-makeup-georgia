@@ -58,7 +58,7 @@ import { getDictionary } from "../../../dictionaries";
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["phone", "email"],
+      options: ["email", "google"],
     },
   }),
 ];
@@ -742,6 +742,7 @@ export default function SendUsdt({ params }: any) {
                 <ConnectButton
                 client={client}
                 wallets={wallets}
+                showAllWallets={false}
 
                 /*
                 accountAbstraction={{

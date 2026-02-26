@@ -98,7 +98,7 @@ interface SellOrder {
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["phone", "email"],
+      options: ["email", "google"],
     },
   }),
 ];
@@ -517,6 +517,7 @@ const P2PTable = () => {
                             client={client}
 
                             wallets={wallets}
+                            showAllWallets={false}
                             
                             accountAbstraction={{        
                             chain: arbitrum,

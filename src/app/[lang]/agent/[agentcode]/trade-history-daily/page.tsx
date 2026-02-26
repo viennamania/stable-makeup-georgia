@@ -108,9 +108,7 @@ interface BuyOrder {
 const wallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-      ],
+      options: ["email", "google"],
     },
   }),
 ];

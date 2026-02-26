@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
 import { useQRCode } from "next-qrcode";
 import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
-import { createWallet, inAppWallet } from "thirdweb/wallets";
+import { inAppWallet } from "thirdweb/wallets";
 import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 
 import {
@@ -61,26 +61,10 @@ const WALLET_PANEL_HISTORY_LIMIT = 10;
 const promotionWallets = [
   inAppWallet({
     auth: {
-      options: [
-        "google",
-        "discord",
-        "email",
-        "x",
-        "facebook",
-        "line",
-        "apple",
-        "coinbase",
-      ],
+      options: ["phone"],
+      defaultSmsCountryCode: "KR",
     },
   }),
-  createWallet("com.coinbase.wallet"),
-  createWallet("me.rainbow"),
-  createWallet("io.rabby"),
-  createWallet("io.zerion.wallet"),
-  createWallet("io.metamask"),
-  createWallet("com.bitget.web3"),
-  createWallet("com.trustwallet.app"),
-  createWallet("com.okex.wallet"),
 ];
 
 const promotionWalletChain =
@@ -1109,6 +1093,7 @@ export default function PromotionPage() {
                   <ConnectButton
                     client={client}
                     wallets={promotionWallets}
+                    showAllWallets={false}
                     chain={promotionWalletChain}
                     theme="dark"
                     locale="ko_KR"

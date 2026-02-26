@@ -46,7 +46,7 @@ import { balanceOf, transfer } from "thirdweb/extensions/erc20";
 const wallets = [
     inAppWallet({
       auth: {
-        options: ["phone", "email"],
+        options: ["email", "google"],
       },
     }),
 ];
@@ -389,6 +389,7 @@ export default function ProfilePage() {
                             client={client}
 
                             wallets={wallets}
+                            showAllWallets={false}
                             
                             accountAbstraction={{        
                             chain: arbitrum,
