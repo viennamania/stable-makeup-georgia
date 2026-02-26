@@ -621,10 +621,10 @@ export default function PromotionPage() {
 
       if (isSettlementBuyEvent(item.data)) {
         settlementCount += 1;
-      settlementUsdt += Number(item.data.amountUsdt || 0);
-      settlementKrw += Number(item.data.amountKrw || 0);
+        settlementUsdt += Number(item.data.amountUsdt || 0);
+        settlementKrw += Number(item.data.amountKrw || 0);
+      }
     }
-  }
 
     const settlementCountRatio =
       sortedBuyEvents.length > 0 ? Math.round((settlementCount / sortedBuyEvents.length) * 1000) / 10 : 0;
@@ -696,56 +696,56 @@ export default function PromotionPage() {
         <div className="promo-orb promo-orb-c" />
       </div>
 
-      <section className="relative mx-auto w-full max-w-[1520px] space-y-5 px-4 py-6 sm:px-6 lg:px-10">
+      <section className="promo-shell relative mx-auto w-full max-w-[1520px] space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6 lg:px-10">
         <header
-          className={`relative overflow-hidden rounded-[28px] border border-emerald-300/30 bg-slate-950/85 p-6 shadow-[0_26px_84px_-36px_rgba(16,185,129,0.7)] backdrop-blur ${isHeroBursting ? "promo-hero-burst" : ""}`}
+          className={`relative overflow-hidden rounded-2xl border border-emerald-300/30 bg-slate-950/85 p-4 shadow-[0_26px_84px_-36px_rgba(16,185,129,0.7)] backdrop-blur sm:rounded-[28px] sm:p-6 ${isHeroBursting ? "promo-hero-burst" : ""}`}
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(16,185,129,0.3),rgba(2,6,23,0)_45%),radial-gradient(circle_at_85%_28%,rgba(34,211,238,0.2),rgba(2,6,23,0)_42%)]" />
 
-          <nav className="relative flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
+          <nav className="relative flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className="promo-live-dot h-2.5 w-2.5 rounded-full bg-emerald-300" />
-              <span className="text-xs uppercase tracking-[0.22em] text-emerald-100/95">
+              <span className="promo-live-caption text-[10px] uppercase tracking-[0.18em] text-emerald-100/95 sm:text-xs sm:tracking-[0.22em]">
                 VASP Operated Realtime Hub
               </span>
-              <span className="rounded-full border border-emerald-300/65 bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-emerald-50">
+              <span className="rounded-full border border-emerald-300/65 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-50 sm:text-[11px]">
                 VASP 운영
               </span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="promo-nav-links grid w-full grid-cols-1 gap-2 min-[390px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap">
               <Link
                 href={`/${lang}/realtime-banktransfer`}
-                className="rounded-xl border border-slate-600/70 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-600/70 bg-slate-900/70 px-3 py-2 text-center text-xs leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-sm"
               >
                 Banktransfer
               </Link>
               <Link
                 href={`/${lang}/realtime-buyorder`}
-                className="rounded-xl border border-slate-600/70 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-600/70 bg-slate-900/70 px-3 py-2 text-center text-xs leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-sm"
               >
                 BuyOrder
               </Link>
               <Link
                 href={`/${lang}/realtime-settlement`}
-                className="rounded-xl border border-emerald-500/65 bg-emerald-500/22 px-3 py-1.5 text-sm font-semibold text-emerald-50 transition hover:border-emerald-300/80 hover:bg-emerald-400/28"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-emerald-500/65 bg-emerald-500/22 px-3 py-2 text-center text-xs font-semibold leading-tight text-emerald-50 transition hover:border-emerald-300/80 hover:bg-emerald-400/28 sm:text-sm"
               >
                 Settlement
               </Link>
             </div>
           </nav>
 
-          <div className="relative mt-5 grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+          <div className="relative mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[1.2fr_1fr]">
             <div>
-              <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
+              <h1 className="promo-hero-title text-2xl font-semibold leading-tight sm:text-4xl">
                 <span className="promo-title-shine">VASP 운영</span> 기반 USDT 정산 플랫폼
               </h1>
-              <p className="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
+              <p className="promo-hero-copy mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-300 sm:text-base">
                 본 플랫폼은 VASP 운영 체계 하에서 USDT 정산 이벤트를 최우선 지표로 공개합니다.
                 입출금, 주문, 정산 데이터가 하나의 실시간 화면에서 연결되어 자금 처리 신뢰를
                 금융기관 수준으로 전달합니다.
               </p>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px] sm:text-[11px]">
                 <span className="rounded-full border border-emerald-300/50 bg-emerald-500/15 px-2.5 py-1 text-emerald-100">
                   VASP 운영 모니터링
                 </span>
@@ -757,35 +757,35 @@ export default function PromotionPage() {
                 </span>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="promo-cta-grid mt-5 grid grid-cols-1 gap-2 min-[390px]:grid-cols-2 min-[430px]:grid-cols-3 sm:flex sm:flex-wrap sm:gap-3">
                 <Link
                   href={`/${lang}/realtime-settlement`}
-                  className="rounded-xl border border-emerald-300/80 bg-emerald-500/30 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/38"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-300/80 bg-emerald-500/30 px-4 py-2 text-center text-sm font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/38"
                 >
                   정산 라이브 보기
                 </Link>
                 <Link
                   href={`/${lang}/realtime-buyorder`}
-                  className="rounded-xl border border-cyan-300/70 bg-cyan-400/22 px-4 py-2 text-sm font-semibold text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/30"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-300/70 bg-cyan-400/22 px-4 py-2 text-center text-sm font-semibold leading-tight text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/30"
                 >
                   BuyOrder 라이브 보기
                 </Link>
                 <Link
                   href={`/${lang}/realtime-banktransfer`}
-                  className="rounded-xl border border-slate-500/70 bg-slate-800/70 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:-translate-y-0.5 hover:border-slate-300/70"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-500/70 bg-slate-800/70 px-4 py-2 text-center text-sm font-semibold leading-tight text-slate-100 transition hover:-translate-y-0.5 hover:border-slate-300/70"
                 >
                   입출금 라이브 보기
                 </Link>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
-                <span className="rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5">
+              <div className="promo-status-grid mt-4 grid gap-2 text-xs text-slate-300 sm:flex sm:flex-wrap">
+                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5 sm:w-auto">
                   Connection: <span className="font-semibold text-emerald-200">{connectionState}</span>
                 </span>
-                <span className="rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5">
+                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5 sm:w-auto">
                   Sync: <span className="font-semibold text-emerald-200">{isSyncing ? "running" : "idle"}</span>
                 </span>
-                <span className="rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5">
+                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5 sm:w-auto">
                   Last Update:{" "}
                   <span className="font-semibold text-emerald-200">{latestTimeInfo.relativeLabel}</span>
                 </span>
@@ -795,7 +795,7 @@ export default function PromotionPage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <article className="rounded-2xl border border-emerald-300/55 bg-emerald-950/40 p-4 shadow-lg shadow-black/25 sm:col-span-2">
                 <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">핵심 지표 | Settlement USDT</p>
-                <p className="mt-2 text-3xl font-bold leading-none text-emerald-50 sm:text-[2.1rem]">
+                <p className="promo-kpi-value mt-2 text-3xl font-bold leading-none text-emerald-50 sm:text-[2.1rem]">
                   {formatUsdt(summary.settlementUsdt)}
                   <span className="ml-1 text-base font-semibold text-emerald-200">USDT</span>
                 </p>
@@ -819,7 +819,7 @@ export default function PromotionPage() {
 
               <article className="rounded-2xl border border-amber-500/45 bg-amber-950/35 p-4 shadow-lg shadow-black/25">
                 <p className="text-xs uppercase tracking-[0.08em] text-amber-200">정산 이벤트 비중</p>
-                <p className="mt-2 text-3xl font-semibold leading-none text-amber-50">
+                <p className="promo-kpi-value mt-2 text-3xl font-semibold leading-none text-amber-50">
                   {formatPercent(summary.settlementCountRatio)}
                 </p>
                 <p className="mt-2 text-xs text-amber-300/80">BuyOrder 이벤트 대비</p>
@@ -840,17 +840,17 @@ export default function PromotionPage() {
           </div>
         )}
 
-        <section className="relative overflow-hidden rounded-2xl border border-emerald-400/45 bg-[linear-gradient(135deg,rgba(6,78,59,0.56),rgba(2,6,23,0.92))] p-5 shadow-[0_18px_44px_-24px_rgba(16,185,129,0.72)]">
-          <span className="absolute right-4 top-4 rounded-full border border-emerald-200/70 bg-emerald-400/22 px-2.5 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50">
+        <section className="relative overflow-hidden rounded-2xl border border-emerald-400/45 bg-[linear-gradient(135deg,rgba(6,78,59,0.56),rgba(2,6,23,0.92))] p-4 shadow-[0_18px_44px_-24px_rgba(16,185,129,0.72)] sm:p-5">
+          <span className="mb-3 inline-flex rounded-full border border-emerald-200/70 bg-emerald-400/22 px-2.5 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50 sm:absolute sm:right-4 sm:top-4 sm:mb-0">
             SETTLEMENT PRIORITY
           </span>
-          <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
+          <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.25fr_1fr]">
             <div>
               <p className="text-xs uppercase tracking-[0.12em] text-emerald-200/90">Settlement Spotlight</p>
-              <h2 className="mt-1 text-xl font-semibold text-emerald-50">
+              <h2 className="promo-spotlight-title mt-1 text-lg font-semibold text-emerald-50 sm:text-xl">
                 최우선 정산 공시 데스크: VASP 운영 상태를 실시간으로 증명합니다
               </h2>
-              <p className="mt-2 max-w-3xl text-sm text-emerald-100/85">
+              <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-emerald-100/85 sm:text-sm">
                 체결 이후 USDT 정산 반영까지의 이벤트를 별도 추적해 정산 지연 리스크를 즉시 식별합니다.
                 대외 공개 화면에서 정산 건수, 정산 금액, 처리 시점을 함께 노출하여 금융 서비스 수준의
                 운영 투명성을 제공합니다.
@@ -873,17 +873,17 @@ export default function PromotionPage() {
             </div>
 
             <div
-              className={`promo-settlement-cta rounded-2xl border p-3.5 ${
+              className={`promo-settlement-cta rounded-xl border p-3.5 sm:rounded-2xl ${
                 isSettlementCtaHot || isHeroBursting ? "promo-settlement-cta-burst" : ""
               }`}
             >
-              <div className="relative flex items-start justify-between gap-2">
+              <div className="relative flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.1em] text-emerald-100">
                     <span className="promo-live-dot h-2 w-2 rounded-full bg-emerald-300" />
                     Realtime Settlement Log
                   </p>
-                  <h3 className="mt-1 text-base font-semibold leading-tight text-emerald-50">
+                  <h3 className="promo-settlement-title mt-1 text-base font-semibold leading-tight text-emerald-50">
                     정산 이벤트를 공시 수준으로 즉시 확인
                   </h3>
                   <p className="mt-1 text-[11px] text-emerald-200/90">
@@ -893,12 +893,12 @@ export default function PromotionPage() {
                   </p>
                 </div>
 
-                <span className="promo-settlement-ping rounded-full border border-emerald-200/75 bg-emerald-400/24 px-2 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50">
+                <span className="promo-settlement-ping self-start rounded-full border border-emerald-200/75 bg-emerald-400/24 px-2 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50 sm:self-auto">
                   LIVE
                 </span>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                 <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/12 px-2 py-1.5 text-emerald-100">
                   <p className="text-[10px] uppercase tracking-[0.09em] text-emerald-200/90">Settlement Count</p>
                   <p className="mt-1 text-sm font-semibold tabular-nums">
@@ -916,7 +916,7 @@ export default function PromotionPage() {
 
               <Link
                 href={`/${lang}/realtime-settlement`}
-                className="promo-settlement-btn mt-3 inline-flex w-full items-center justify-between rounded-xl border border-emerald-200/80 bg-emerald-400/30 px-3 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/36"
+                className="promo-settlement-btn mt-3 inline-flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-emerald-400/30 px-3 py-2 text-sm font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/36"
               >
                 <span>정산 대시보드 바로가기</span>
                 <span aria-hidden className="text-base leading-none">
@@ -924,7 +924,7 @@ export default function PromotionPage() {
                 </span>
               </Link>
 
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3 space-y-1.5 sm:space-y-2">
                 {settlementBuyEvents.slice(0, 3).map((item) => {
                   const isHighlighted = item.highlightUntil > nowMs;
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
@@ -938,11 +938,13 @@ export default function PromotionPage() {
                           : "border-emerald-500/30 bg-slate-950/58"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate text-xs text-emerald-50">
+                      <div className="promo-event-row flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="promo-event-store truncate text-xs text-emerald-50">
                           {item.data.store?.name || "Unknown Store"}
                         </span>
-                        <span className="font-mono text-[11px] text-emerald-200">{timeInfo.relativeLabel}</span>
+                        <span className="promo-time-badge font-mono text-[11px] text-emerald-200">
+                          {timeInfo.relativeLabel}
+                        </span>
                       </div>
                       <p className="mt-1 text-base font-semibold text-emerald-100">
                         {formatUsdt(item.data.amountUsdt)}
@@ -962,22 +964,22 @@ export default function PromotionPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 xl:grid-cols-2">
-          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-            <div className="flex items-center justify-between gap-2">
+        <section className="grid gap-3 sm:gap-4 xl:grid-cols-2">
+          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-3.5 shadow-lg shadow-black/20 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-xs uppercase tracking-[0.08em] text-emerald-300">Banktransfer Live</p>
                 <h2 className="mt-1 text-lg font-semibold text-slate-100">입출금 실시간 하이라이트</h2>
               </div>
-              <span className="rounded-full border border-emerald-300/60 bg-emerald-400/20 px-2 py-1 text-xs font-semibold text-emerald-50">
+              <span className="rounded-full border border-emerald-300/60 bg-emerald-400/20 px-2 py-1 text-[10px] font-semibold text-emerald-50 sm:text-xs">
                 LIVE
               </span>
             </div>
 
             {latestBank ? (
               <div className="mt-4 rounded-xl border border-slate-600/80 bg-slate-950/70 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 w-full items-center gap-2 sm:w-auto">
                     {latestBank.data.store?.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -989,7 +991,7 @@ export default function PromotionPage() {
                       <div className="h-10 w-10 shrink-0 rounded-md border border-slate-700 bg-slate-800" />
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-100">
+                      <p className="promo-event-store truncate text-sm font-medium text-slate-100">
                         {latestBank.data.store?.name || latestBank.data.storecode || "Unknown Store"}
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
@@ -999,7 +1001,7 @@ export default function PromotionPage() {
                     </div>
                   </div>
                   <span
-                    className={`shrink-0 rounded-md border px-2 py-1 font-mono text-[11px] ${getRelativeTimeBadgeClassName(
+                    className={`promo-time-badge self-start rounded-md border px-2 py-1 font-mono text-[11px] sm:self-auto sm:shrink-0 ${getRelativeTimeBadgeClassName(
                       getRelativeTimeInfo(
                         latestBank.data.publishedAt || latestBank.receivedAt,
                         nowMs,
@@ -1035,9 +1037,9 @@ export default function PromotionPage() {
                         : "border-slate-700/80 bg-slate-950/60"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getTransactionTypeClassName(
                               item.data.transactionType,
@@ -1045,7 +1047,7 @@ export default function PromotionPage() {
                           >
                             {getTransactionTypeLabel(item.data.transactionType)}
                           </span>
-                          <span className="truncate text-xs text-slate-300">
+                          <span className="promo-event-store truncate text-xs text-slate-300">
                             {item.data.store?.name || item.data.storecode || "-"}
                           </span>
                         </div>
@@ -1054,7 +1056,7 @@ export default function PromotionPage() {
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-md border px-1.5 py-1 font-mono text-[10px] ${getRelativeTimeBadgeClassName(
+                        className={`promo-time-badge self-start rounded-md border px-1.5 py-1 font-mono text-[10px] sm:self-auto sm:shrink-0 ${getRelativeTimeBadgeClassName(
                           timeInfo.tone,
                         )}`}
                       >
@@ -1067,22 +1069,22 @@ export default function PromotionPage() {
             </ul>
           </article>
 
-          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-            <div className="flex items-center justify-between gap-2">
+          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-3.5 shadow-lg shadow-black/20 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">BuyOrder USDT Live</p>
                 <h2 className="mt-1 text-lg font-semibold text-slate-100">USDT 주문 상태 하이라이트</h2>
               </div>
-              <span className="rounded-full border border-cyan-300/60 bg-cyan-400/20 px-2 py-1 text-xs font-semibold text-cyan-50">
+              <span className="rounded-full border border-cyan-300/60 bg-cyan-400/20 px-2 py-1 text-[10px] font-semibold text-cyan-50 sm:text-xs">
                 LIVE
               </span>
             </div>
 
             {latestBuy ? (
               <div className="mt-4 rounded-xl border border-slate-600/80 bg-slate-950/70 p-3">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getBuyStatusClassName(
                           latestBuy.data.statusTo,
@@ -1090,7 +1092,7 @@ export default function PromotionPage() {
                       >
                         {getBuyStatusLabel(latestBuy.data.statusTo)}
                       </span>
-                      <span className="truncate text-xs text-slate-300">
+                      <span className="promo-event-store truncate text-xs text-slate-300">
                         {latestBuy.data.store?.name || "-"}
                       </span>
                     </div>
@@ -1102,7 +1104,7 @@ export default function PromotionPage() {
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-md border px-2 py-1 font-mono text-[11px] ${getRelativeTimeBadgeClassName(
+                    className={`promo-time-badge self-start rounded-md border px-2 py-1 font-mono text-[11px] sm:self-auto sm:shrink-0 ${getRelativeTimeBadgeClassName(
                       getRelativeTimeInfo(latestBuy.data.publishedAt || latestBuy.receivedAt, nowMs)
                         .tone,
                     )}`}
@@ -1131,9 +1133,9 @@ export default function PromotionPage() {
                         : "border-slate-700/80 bg-slate-950/60"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span
                             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getBuyStatusClassName(
                               item.data.statusTo,
@@ -1141,7 +1143,7 @@ export default function PromotionPage() {
                           >
                             {getBuyStatusLabel(item.data.statusTo)}
                           </span>
-                          <span className="truncate text-xs text-slate-300">
+                          <span className="promo-event-store truncate text-xs text-slate-300">
                             {item.data.store?.name || "-"}
                           </span>
                         </div>
@@ -1153,7 +1155,7 @@ export default function PromotionPage() {
                         </p>
                       </div>
                       <span
-                        className={`shrink-0 rounded-md border px-1.5 py-1 font-mono text-[10px] ${getRelativeTimeBadgeClassName(
+                        className={`promo-time-badge self-start rounded-md border px-1.5 py-1 font-mono text-[10px] sm:self-auto sm:shrink-0 ${getRelativeTimeBadgeClassName(
                           timeInfo.tone,
                         )}`}
                       >
@@ -1168,7 +1170,7 @@ export default function PromotionPage() {
         </section>
 
         <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
-          <div className="border-b border-slate-700/80 px-4 py-3">
+          <div className="border-b border-slate-700/80 px-3 py-3 sm:px-4">
             <p className="font-semibold text-slate-100">실시간 이벤트 티커</p>
             <p className="text-xs text-slate-400">입출금/주문/정산 이벤트를 자동 순환 표시합니다.</p>
           </div>
@@ -1177,7 +1179,7 @@ export default function PromotionPage() {
               {tickerTexts.map((text, index) => (
                 <span
                   key={`ticker-${index}-${text}`}
-                  className="inline-flex shrink-0 items-center rounded-full border border-cyan-300/35 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100"
+                  className="inline-flex max-w-[80vw] shrink-0 items-center truncate rounded-full border border-cyan-300/35 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100 sm:max-w-none"
                 >
                   {text}
                 </span>
@@ -1497,6 +1499,228 @@ export default function PromotionPage() {
           }
           100% {
             transform: translateX(-50%);
+          }
+        }
+
+        @media (max-width: 430px) {
+          .promo-shell {
+            padding-left: 0.7rem;
+            padding-right: 0.7rem;
+          }
+
+          .promo-live-caption {
+            letter-spacing: 0.12em;
+          }
+
+          .promo-hero-title {
+            font-size: 1.72rem;
+            line-height: 1.26;
+          }
+
+          .promo-hero-copy {
+            font-size: 12.8px;
+          }
+
+          .promo-nav-links > a,
+          .promo-cta-grid > a {
+            padding-left: 0.8rem;
+            padding-right: 0.8rem;
+          }
+
+          .promo-cta-grid > a,
+          .promo-settlement-btn {
+            font-size: 0.81rem;
+          }
+
+          .promo-status-grid > span {
+            font-size: 0.7rem;
+          }
+
+          .promo-spotlight-title {
+            line-height: 1.34;
+          }
+
+          .promo-settlement-title {
+            font-size: 0.95rem;
+          }
+
+          .promo-kpi-value {
+            font-size: 1.65rem;
+          }
+
+          .promo-event-store {
+            max-width: 100%;
+            word-break: break-word;
+          }
+
+          .promo-time-badge {
+            white-space: nowrap;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .promo-shell {
+            padding-left: 0.625rem;
+            padding-right: 0.625rem;
+          }
+
+          .promo-hero-title {
+            font-size: 1.58rem;
+          }
+
+          .promo-hero-copy {
+            font-size: 12.2px;
+          }
+
+          .promo-nav-links {
+            gap: 0.42rem;
+          }
+
+          .promo-nav-links > a {
+            min-height: 40px;
+            font-size: 0.7rem;
+          }
+
+          .promo-cta-grid > a {
+            min-height: 42px;
+            font-size: 0.78rem;
+          }
+
+          .promo-settlement-btn {
+            min-height: 42px;
+            font-size: 0.78rem;
+          }
+
+          .promo-kpi-value {
+            font-size: 1.52rem;
+          }
+
+          .promo-marquee-track > span {
+            max-width: 76vw;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .promo-shell {
+            padding-left: 0.56rem;
+            padding-right: 0.56rem;
+          }
+
+          .promo-live-caption {
+            display: none;
+          }
+
+          .promo-hero-title {
+            font-size: 1.46rem;
+          }
+
+          .promo-hero-copy {
+            font-size: 11.8px;
+          }
+
+          .promo-status-grid > span {
+            font-size: 0.66rem;
+          }
+
+          .promo-settlement-title {
+            font-size: 0.88rem;
+          }
+
+          .promo-settlement-btn span[aria-hidden] {
+            display: none;
+          }
+
+          .promo-kpi-value {
+            font-size: 1.42rem;
+          }
+
+          .promo-time-badge {
+            font-size: 9px;
+          }
+
+          .promo-marquee-track > span {
+            max-width: 72vw;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .promo-shell {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+          }
+
+          .promo-hero-title {
+            font-size: 1.3rem;
+          }
+
+          .promo-hero-copy {
+            font-size: 11.2px;
+          }
+
+          .promo-nav-links > a {
+            font-size: 0.64rem;
+            padding-left: 0.65rem;
+            padding-right: 0.65rem;
+          }
+
+          .promo-cta-grid > a {
+            font-size: 0.72rem;
+            padding-left: 0.65rem;
+            padding-right: 0.65rem;
+          }
+
+          .promo-settlement-btn {
+            font-size: 0.72rem;
+          }
+
+          .promo-status-grid > span {
+            font-size: 0.62rem;
+          }
+
+          .promo-kpi-value {
+            font-size: 1.28rem;
+          }
+
+          .promo-marquee-track > span {
+            max-width: 68vw;
+            font-size: 10px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .promo-grid {
+            background-size: 28px 28px;
+          }
+
+          .promo-orb {
+            filter: blur(14px);
+            opacity: 0.46;
+          }
+
+          .promo-orb-a {
+            left: -90px;
+            top: -70px;
+            height: 220px;
+            width: 220px;
+          }
+
+          .promo-orb-b {
+            right: -70px;
+            top: 190px;
+            height: 200px;
+            width: 200px;
+          }
+
+          .promo-orb-c {
+            left: 20%;
+            bottom: -95px;
+            height: 220px;
+            width: 220px;
+          }
+
+          .promo-marquee-track {
+            gap: 0.5rem;
+            animation-duration: 40s;
           }
         }
 
