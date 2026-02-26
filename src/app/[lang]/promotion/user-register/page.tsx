@@ -715,14 +715,16 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
               </div>
 
               <div className="mt-3 grid gap-2">
-                <button
-                  type="button"
-                  onClick={() => void createEscrowWallet()}
-                  disabled={creatingEscrowWallet || !walletAddress}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0c4a6e,#0369a1)] text-sm font-bold text-white shadow-[0_16px_28px_-20px_rgba(2,132,199,0.9)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {creatingEscrowWallet ? "에스크로 지갑 생성중..." : "회원 에스크로 지갑 생성"}
-                </button>
+                {!escrowWalletAddress && (
+                  <button
+                    type="button"
+                    onClick={() => void createEscrowWallet()}
+                    disabled={creatingEscrowWallet || !walletAddress}
+                    className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0c4a6e,#0369a1)] text-sm font-bold text-white shadow-[0_16px_28px_-20px_rgba(2,132,199,0.9)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {creatingEscrowWallet ? "에스크로 지갑 생성중..." : "회원 에스크로 지갑 생성"}
+                  </button>
+                )}
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <p className="text-xs font-semibold text-slate-700">내 지갑 → 에스크로 지갑 충전</p>
