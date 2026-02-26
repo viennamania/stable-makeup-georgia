@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
 
+import RealtimeTopNav from "@components/realtime/RealtimeTopNav";
 import {
   BUYORDER_STATUS_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_EVENT_NAME,
@@ -668,30 +668,8 @@ export default function RealtimeBuyOrderPage() {
   }
 
   return (
-    <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
-      <nav className="flex flex-wrap items-center gap-2">
-        <Link
-          href={`/${lang}/promotion`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          Promotion
-        </Link>
-        <Link
-          href={`/${lang}/realtime-banktransfer`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          Banktransfer
-        </Link>
-        <Link
-          href={`/${lang}/realtime-settlement`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-200"
-        >
-          Settlement
-        </Link>
-        <span className="rounded-lg border border-cyan-500/45 bg-cyan-500/12 px-3 py-1.5 text-sm font-medium text-cyan-200">
-          BuyOrder
-        </span>
-      </nav>
+    <main className="w-full max-w-[1800px] space-y-5 pt-20 text-slate-100">
+      <RealtimeTopNav lang={lang} current="buyorder" />
 
       {jackpotBursts.map((burst) => (
         <div key={burst.id} className="jackpot-overlay pointer-events-none fixed inset-0 z-[140]">

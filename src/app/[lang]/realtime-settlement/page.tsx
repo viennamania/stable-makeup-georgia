@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
 
+import { chain as configuredChain } from "@/app/config/contractAddresses";
+import RealtimeTopNav from "@components/realtime/RealtimeTopNav";
 import {
   BUYORDER_STATUS_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_EVENT_NAME,
@@ -131,6 +132,50 @@ function formatReadableHash(value: string | null | undefined): string {
     return hash;
   }
   return `${hash.slice(0, 14)}...${hash.slice(-12)}`;
+}
+
+function getExplorerTxUrl(txHash: string | null | undefined): string {
+  const hash = String(txHash || "").trim();
+  if (!hash) {
+    return "";
+  }
+  if (configuredChain === "ethereum") {
+    return `https://etherscan.io/tx/${hash}`;
+  }
+  if (configuredChain === "polygon") {
+    return `https://polygonscan.com/tx/${hash}`;
+  }
+  if (configuredChain === "bsc") {
+    return `https://bscscan.com/tx/${hash}`;
+  }
+  return `https://arbiscan.io/tx/${hash}`;
+}
+
+function openExplorerPopup(url: string): void {
+  if (!url) {
+    return;
+  }
+
+  const width = 1220;
+  const height = 860;
+  const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+  const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+  const features = [
+    `width=${width}`,
+    `height=${height}`,
+    `left=${left}`,
+    `top=${top}`,
+    "resizable=yes",
+    "scrollbars=yes",
+    "status=no",
+    "menubar=no",
+    "toolbar=no",
+    "location=yes",
+    "noopener=yes",
+    "noreferrer=yes",
+  ].join(",");
+
+  window.open(url, "settlement-scan-popup", features);
 }
 
 function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
@@ -520,30 +565,8 @@ export default function RealtimeSettlementPage() {
   }
 
   return (
-    <main className="w-full max-w-[1880px] space-y-5 text-slate-100">
-      <nav className="flex flex-wrap items-center gap-2">
-        <Link
-          href={`/${lang}/promotion`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          Promotion
-        </Link>
-        <Link
-          href={`/${lang}/realtime-banktransfer`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          Banktransfer
-        </Link>
-        <Link
-          href={`/${lang}/realtime-buyorder`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          BuyOrder
-        </Link>
-        <span className="rounded-lg border border-emerald-500/45 bg-emerald-500/12 px-3 py-1.5 text-sm font-medium text-emerald-200">
-          Settlement
-        </span>
-      </nav>
+    <main className="w-full max-w-[1880px] space-y-5 pt-20 text-slate-100">
+      <RealtimeTopNav lang={lang} current="settlement" />
 
       <section className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.2),_rgba(2,6,23,0.97)_54%)] p-6 shadow-[0_20px_70px_-24px_rgba(16,185,129,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -663,6 +686,8 @@ export default function RealtimeSettlementPage() {
               const isHighlighted = item.highlightUntil > Date.now();
               const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
               const settlementRefReady = hasSettlementReference(item.data);
+              const transactionExplorerUrl = getExplorerTxUrl(item.data.transactionHash);
+              const escrowTransactionExplorerUrl = getExplorerTxUrl(item.data.escrowTransactionHash);
 
               return (
                 <article
@@ -752,12 +777,40 @@ export default function RealtimeSettlementPage() {
 
                   <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
                     <p className="text-[10px] uppercase tracking-[0.08em] text-emerald-300/90">Settlement Hash</p>
-                    <p className="mt-1 font-mono text-violet-200" title={item.data.transactionHash || ""}>
-                      TX: {formatReadableHash(item.data.transactionHash)}
-                    </p>
-                    <p className="mt-1 font-mono text-blue-200" title={item.data.escrowTransactionHash || ""}>
-                      Escrow TX: {formatReadableHash(item.data.escrowTransactionHash)}
-                    </p>
+                    {transactionExplorerUrl ? (
+                      <a
+                        href={transactionExplorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          openExplorerPopup(transactionExplorerUrl);
+                        }}
+                        className="mt-1 block cursor-pointer font-mono text-violet-200 underline decoration-violet-300/45 underline-offset-2 transition hover:text-violet-100 hover:decoration-violet-100"
+                        title={item.data.transactionHash || ""}
+                      >
+                        TX: {formatReadableHash(item.data.transactionHash)}
+                      </a>
+                    ) : (
+                      <p className="mt-1 font-mono text-violet-200">TX: -</p>
+                    )}
+                    {escrowTransactionExplorerUrl ? (
+                      <a
+                        href={escrowTransactionExplorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          openExplorerPopup(escrowTransactionExplorerUrl);
+                        }}
+                        className="mt-1 block cursor-pointer font-mono text-blue-200 underline decoration-blue-300/45 underline-offset-2 transition hover:text-blue-100 hover:decoration-blue-100"
+                        title={item.data.escrowTransactionHash || ""}
+                      >
+                        Escrow TX: {formatReadableHash(item.data.escrowTransactionHash)}
+                      </a>
+                    ) : (
+                      <p className="mt-1 font-mono text-blue-200">Escrow TX: -</p>
+                    )}
                     <p className="font-mono text-emerald-200">TID: {item.data.tradeId || "-"}</p>
                     <p className="mt-1 font-mono text-slate-400">OID: {item.data.orderId || "-"}</p>
                     <p className="mt-1 font-mono text-slate-500">Source: {item.data.source || "-"}</p>
@@ -800,6 +853,8 @@ export default function RealtimeSettlementPage() {
                   const isHighlighted = item.highlightUntil > Date.now();
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
                   const settlementRefReady = hasSettlementReference(item.data);
+                  const transactionExplorerUrl = getExplorerTxUrl(item.data.transactionHash);
+                  const escrowTransactionExplorerUrl = getExplorerTxUrl(item.data.escrowTransactionHash);
 
                   return (
                     <tr
@@ -856,21 +911,43 @@ export default function RealtimeSettlementPage() {
                       <td className="px-3 py-3">
                         <div className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-2">
                           <p className="text-[10px] uppercase tracking-[0.1em] text-emerald-300/90">Settlement TX</p>
-                          <p
-                            className="mt-1 break-all font-mono text-[12px] leading-5 text-emerald-50"
-                            title={item.data.transactionHash || ""}
-                          >
-                            {formatReadableHash(item.data.transactionHash)}
-                          </p>
+                          {transactionExplorerUrl ? (
+                            <a
+                              href={transactionExplorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                openExplorerPopup(transactionExplorerUrl);
+                              }}
+                              className="mt-1 block break-all font-mono text-[12px] leading-5 text-emerald-50 underline decoration-emerald-300/45 underline-offset-2 transition hover:text-emerald-100 hover:decoration-emerald-100"
+                              title={item.data.transactionHash || ""}
+                            >
+                              {formatReadableHash(item.data.transactionHash)}
+                            </a>
+                          ) : (
+                            <p className="mt-1 break-all font-mono text-[12px] leading-5 text-emerald-50">-</p>
+                          )}
                         </div>
                         <div className="mt-2 rounded-lg border border-blue-500/35 bg-blue-500/10 px-2.5 py-2">
                           <p className="text-[10px] uppercase tracking-[0.1em] text-blue-200/90">Escrow TX</p>
-                          <p
-                            className="mt-1 break-all font-mono text-[12px] leading-5 text-blue-100"
-                            title={item.data.escrowTransactionHash || ""}
-                          >
-                            {formatReadableHash(item.data.escrowTransactionHash)}
-                          </p>
+                          {escrowTransactionExplorerUrl ? (
+                            <a
+                              href={escrowTransactionExplorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                openExplorerPopup(escrowTransactionExplorerUrl);
+                              }}
+                              className="mt-1 block break-all font-mono text-[12px] leading-5 text-blue-100 underline decoration-blue-300/45 underline-offset-2 transition hover:text-blue-50 hover:decoration-blue-100"
+                              title={item.data.escrowTransactionHash || ""}
+                            >
+                              {formatReadableHash(item.data.escrowTransactionHash)}
+                            </a>
+                          ) : (
+                            <p className="mt-1 break-all font-mono text-[12px] leading-5 text-blue-100">-</p>
+                          )}
                         </div>
                       </td>
 

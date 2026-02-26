@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
 
+import RealtimeTopNav from "@components/realtime/RealtimeTopNav";
 import {
   BANKTRANSFER_ABLY_CHANNEL,
   BANKTRANSFER_ABLY_EVENT_NAME,
@@ -478,30 +478,8 @@ export default function RealtimeBankTransferPage() {
   }
 
   return (
-    <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
-      <nav className="flex flex-wrap items-center gap-2">
-        <Link
-          href={`/${lang}/promotion`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          Promotion
-        </Link>
-        <span className="rounded-lg border border-cyan-500/45 bg-cyan-500/12 px-3 py-1.5 text-sm font-medium text-cyan-200">
-          Banktransfer
-        </span>
-        <Link
-          href={`/${lang}/realtime-buyorder`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
-        >
-          BuyOrder
-        </Link>
-        <Link
-          href={`/${lang}/realtime-settlement`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-200"
-        >
-          Settlement
-        </Link>
-      </nav>
+    <main className="w-full max-w-[1800px] space-y-5 pt-20 text-slate-100">
+      <RealtimeTopNav lang={lang} current="banktransfer" />
 
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.22),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
