@@ -1276,7 +1276,7 @@ export default function PromotionPage() {
                         출금은 전용 화면에서 진행합니다. 연결된 지갑 주소 기준으로 진행하세요.
                       </p>
                       <Link
-                        href={`/${lang}/withdraw-usdt`}
+                        href={`/${lang}/promotion/withdraw`}
                         className="inline-flex min-h-[38px] w-full items-center justify-center rounded-lg border border-amber-300/65 bg-amber-500/20 px-3 py-2 text-xs font-semibold text-amber-50 transition hover:border-amber-200/85 hover:bg-amber-400/28"
                       >
                         출금 화면 열기
