@@ -107,9 +107,16 @@ export default function RootLayout({
   const [showChain, setShowChain] = useState(false);
 
   const [showCenter, setShowCenter] = useState(false);
+  const isPromotionPage = pathname?.endsWith("/promotion");
   const hideFixedChrome =
+    isPromotionPage ||
     pathname?.endsWith("/realtime-banktransfer") ||
-    pathname?.endsWith("/realtime-buyorder");
+    pathname?.endsWith("/realtime-buyorder") ||
+    pathname?.endsWith("/realtime-settlement");
+
+  const appShellClassName = isPromotionPage
+    ? "w-full"
+    : "flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4";
 
   return (
 
@@ -167,7 +174,7 @@ export default function RootLayout({
 
           {/* chain image */}
 
-          <div className="flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4">
+          <div className={appShellClassName}>
 
             {/* fixed position left and vertically top */}
             {/*

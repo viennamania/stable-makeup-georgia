@@ -688,7 +688,7 @@ export default function PromotionPage() {
   }, [sortedBankEvents, sortedBuyEvents, settlementBuyEvents]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#030711] text-slate-100">
+    <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
       <div className="pointer-events-none absolute inset-0">
         <div className="promo-grid absolute inset-0 opacity-55" />
         <div className="promo-orb promo-orb-a" />
