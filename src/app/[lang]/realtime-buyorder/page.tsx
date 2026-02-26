@@ -216,7 +216,7 @@ export default function RealtimeBuyOrderPage() {
     const burst: JackpotBurst = {
       id: burstId,
       amountUsdt: Number(event.amountUsdt || 0),
-      storeLabel: event.store?.name || event.storecode || "Unknown Store",
+      storeLabel: event.store?.name || event.store?.code || "Unknown Store",
     };
 
     setJackpotBursts((previous) => [...previous.slice(-(JACKPOT_MAX_ACTIVE_BURSTS - 1)), burst]);

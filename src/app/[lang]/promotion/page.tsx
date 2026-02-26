@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Ably from "ably";
+import { useQRCode } from "next-qrcode";
+import { ConnectButton, useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { createWallet, inAppWallet } from "thirdweb/wallets";
+import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 
 import {
   BANKTRANSFER_ABLY_CHANNEL,
@@ -14,6 +18,8 @@ import {
   type BuyOrderStatusRealtimeEvent,
 } from "@lib/ably/constants";
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
+import { client } from "@/app/client";
+import { chain as configuredChain } from "@/app/config/contractAddresses";
 
 type BankFeedItem = {
   id: string;
@@ -29,17 +35,84 @@ type BuyFeedItem = {
   highlightUntil: number;
 };
 
+type WalletTransferRecord = {
+  _id?: string;
+  sendOrReceive?: string;
+  transferData?: {
+    transactionHash?: string;
+    fromAddress?: string;
+    toAddress?: string;
+    value?: string | number;
+    timestamp?: string | number;
+  };
+};
+
 const MAX_FEED_ITEMS = 36;
 const API_SYNC_LIMIT = 80;
 const RESYNC_INTERVAL_MS = 12_000;
 const NOW_TICK_MS = 1_000;
 const NEW_EVENT_HIGHLIGHT_MS = 6_000;
+const WALLET_TRANSFER_POLL_INTERVAL_MS = 15_000;
+const WALLET_TRANSFER_FETCH_LIMIT = 20;
+const WALLET_PANEL_HISTORY_LIMIT = 10;
+
+const promotionWallets = [
+  inAppWallet({
+    auth: {
+      options: [
+        "google",
+        "discord",
+        "email",
+        "x",
+        "facebook",
+        "line",
+        "apple",
+        "coinbase",
+      ],
+    },
+  }),
+  createWallet("com.coinbase.wallet"),
+  createWallet("me.rainbow"),
+  createWallet("io.rabby"),
+  createWallet("io.zerion.wallet"),
+  createWallet("io.metamask"),
+  createWallet("com.bitget.web3"),
+  createWallet("com.trustwallet.app"),
+  createWallet("com.okex.wallet"),
+];
+
+const promotionWalletChain =
+  configuredChain === "ethereum"
+    ? ethereum
+    : configuredChain === "polygon"
+      ? polygon
+      : configuredChain === "bsc"
+        ? bsc
+        : arbitrum;
 
 function toTimestamp(value: string | number | null | undefined): number {
   if (value === null || value === undefined) {
     return 0;
   }
-  const raw = Date.parse(String(value));
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const normalized = String(value).trim();
+  if (!normalized) {
+    return 0;
+  }
+
+  if (/^\d{10,13}$/.test(normalized)) {
+    const numeric = Number(normalized);
+    if (!Number.isFinite(numeric)) {
+      return 0;
+    }
+    return normalized.length === 10 ? numeric * 1_000 : numeric;
+  }
+
+  const raw = Date.parse(normalized);
   return Number.isNaN(raw) ? 0 : raw;
 }
 
@@ -72,6 +145,81 @@ function formatUsdt(value: number): string {
 
 function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
+}
+
+function formatWalletAddressCompact(value: string | null | undefined): string {
+  const address = String(value || "").trim();
+  if (!address) {
+    return "-";
+  }
+  if (address.length <= 14) {
+    return address;
+  }
+  return `${address.slice(0, 8)}...${address.slice(-6)}`;
+}
+
+function normalizeTransferUsdt(value: string | number | null | undefined): number {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  const absolute = Math.abs(parsed);
+  if (absolute >= 1e15) {
+    return parsed / 1e18;
+  }
+  if (absolute >= 1e7) {
+    return parsed / 1e6;
+  }
+  return parsed;
+}
+
+function formatWalletTransferTime(value: string | number | null | undefined): string {
+  const timestamp = toTimestamp(value);
+  if (!timestamp) {
+    return "-";
+  }
+  return new Date(timestamp).toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
+function getExplorerTxUrl(txHash: string | null | undefined): string {
+  const hash = String(txHash || "").trim();
+  if (!hash) {
+    return "";
+  }
+  if (configuredChain === "ethereum") {
+    return `https://etherscan.io/tx/${hash}`;
+  }
+  if (configuredChain === "polygon") {
+    return `https://polygonscan.com/tx/${hash}`;
+  }
+  if (configuredChain === "bsc") {
+    return `https://bscscan.com/tx/${hash}`;
+  }
+  return `https://arbiscan.io/tx/${hash}`;
+}
+
+function getExplorerAddressUrl(address: string | null | undefined): string {
+  const normalized = String(address || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  if (configuredChain === "ethereum") {
+    return `https://etherscan.io/address/${normalized}`;
+  }
+  if (configuredChain === "polygon") {
+    return `https://polygonscan.com/address/${normalized}`;
+  }
+  if (configuredChain === "bsc") {
+    return `https://bscscan.com/address/${normalized}`;
+  }
+  return `https://arbiscan.io/address/${normalized}`;
 }
 
 function shortenText(
@@ -172,6 +320,10 @@ function getRelativeTimeBadgeClassName(tone: RelativeTimeTone): string {
 export default function PromotionPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
+  const { Canvas: WalletAddressQrCanvas } = useQRCode();
+  const activeAccount = useActiveAccount();
+  const activeWallet = useActiveWallet();
+  const walletAddress = activeAccount?.address || "";
 
   const [bankEvents, setBankEvents] = useState<BankFeedItem[]>([]);
   const [buyEvents, setBuyEvents] = useState<BuyFeedItem[]>([]);
@@ -181,10 +333,19 @@ export default function PromotionPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [isHeroBursting, setIsHeroBursting] = useState(false);
+  const [walletPanelOpen, setWalletPanelOpen] = useState(true);
+  const [walletPanelTab, setWalletPanelTab] = useState<"deposit" | "withdraw" | "history">(
+    "deposit",
+  );
+  const [walletTransfers, setWalletTransfers] = useState<WalletTransferRecord[]>([]);
+  const [walletTransfersLoading, setWalletTransfersLoading] = useState(false);
+  const [walletTransferError, setWalletTransferError] = useState<string | null>(null);
+  const [walletAddressCopied, setWalletAddressCopied] = useState(false);
 
   const heroBurstTimerRef = useRef<number | null>(null);
   const bankCursorRef = useRef<string | null>(null);
   const buyCursorRef = useRef<string | null>(null);
+  const walletAddressCopiedTimerRef = useRef<number | null>(null);
 
   const clientId = useMemo(() => {
     return `promotion-${Math.random().toString(36).slice(2, 10)}`;
@@ -200,6 +361,78 @@ export default function PromotionPage() {
       heroBurstTimerRef.current = null;
     }, 1_200);
   }, []);
+
+  const copyWalletAddress = useCallback(async () => {
+    if (!walletAddress) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      setWalletAddressCopied(true);
+      if (walletAddressCopiedTimerRef.current) {
+        window.clearTimeout(walletAddressCopiedTimerRef.current);
+      }
+      walletAddressCopiedTimerRef.current = window.setTimeout(() => {
+        setWalletAddressCopied(false);
+        walletAddressCopiedTimerRef.current = null;
+      }, 1_600);
+    } catch (error) {
+      console.error("failed to copy wallet address", error);
+    }
+  }, [walletAddress]);
+
+  const disconnectWallet = useCallback(async () => {
+    if (!activeWallet?.disconnect) {
+      return;
+    }
+    try {
+      await activeWallet.disconnect();
+    } catch (error) {
+      console.error("failed to disconnect wallet", error);
+    }
+  }, [activeWallet]);
+
+  const fetchWalletTransfers = useCallback(async () => {
+    if (!walletAddress) {
+      setWalletTransfers([]);
+      setWalletTransferError(null);
+      setWalletTransfersLoading(false);
+      return;
+    }
+
+    setWalletTransfersLoading(true);
+    try {
+      const response = await fetch("/api/wallet/getTransfersByWalletAddress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress,
+          page: 1,
+          limit: WALLET_TRANSFER_FETCH_LIMIT,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`wallet transfers fetch failed (${response.status}) ${text}`);
+      }
+
+      const data = (await response.json()) as {
+        result?: {
+          transfers?: WalletTransferRecord[];
+        } | null;
+      };
+
+      setWalletTransfers(Array.isArray(data.result?.transfers) ? data.result?.transfers : []);
+      setWalletTransferError(null);
+    } catch (error) {
+      setWalletTransferError(error instanceof Error ? error.message : "전송내역 조회에 실패했습니다.");
+    } finally {
+      setWalletTransfersLoading(false);
+    }
+  }, [walletAddress]);
 
   const upsertBankEvents = useCallback(
     (incomingEvents: BankTransferDashboardEvent[], highlightNew: boolean) => {
@@ -507,6 +740,24 @@ export default function PromotionPage() {
   }, []);
 
   useEffect(() => {
+    if (!walletAddress) {
+      setWalletTransfers([]);
+      setWalletTransfersLoading(false);
+      setWalletTransferError(null);
+      return;
+    }
+
+    void fetchWalletTransfers();
+    const timer = window.setInterval(() => {
+      void fetchWalletTransfers();
+    }, WALLET_TRANSFER_POLL_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchWalletTransfers, walletAddress]);
+
+  useEffect(() => {
     const now = Date.now();
     const candidates = [...bankEvents, ...buyEvents]
       .map((item) => item.highlightUntil)
@@ -554,6 +805,9 @@ export default function PromotionPage() {
       if (heroBurstTimerRef.current) {
         window.clearTimeout(heroBurstTimerRef.current);
       }
+      if (walletAddressCopiedTimerRef.current) {
+        window.clearTimeout(walletAddressCopiedTimerRef.current);
+      }
     };
   }, []);
 
@@ -582,6 +836,7 @@ export default function PromotionPage() {
   const latestBank = sortedBankEvents[0];
   const latestBuy = sortedBuyEvents[0];
   const latestSettlement = settlementBuyEvents[0];
+  const latestBuyWalletExplorerUrl = getExplorerAddressUrl(latestBuy?.data.buyerWalletAddress);
   const latestSettlementTimeInfo = latestSettlement
     ? getRelativeTimeInfo(latestSettlement.data.publishedAt || latestSettlement.receivedAt, nowMs)
     : null;
@@ -687,22 +942,349 @@ export default function PromotionPage() {
     return [...labels, ...labels];
   }, [sortedBankEvents, sortedBuyEvents, settlementBuyEvents]);
 
+  const walletHistoryItems = useMemo(() => {
+    return walletTransfers.slice(0, WALLET_PANEL_HISTORY_LIMIT);
+  }, [walletTransfers]);
+  const walletExplorerUrl = useMemo(() => getExplorerAddressUrl(walletAddress), [walletAddress]);
+
   return (
     <main className="relative w-full min-h-screen overflow-hidden bg-[#030711] text-slate-100">
+      <aside className="fixed right-2 top-2 z-[140] w-[min(calc(100vw-1rem),366px)] sm:right-4 sm:top-4">
+        <section className="overflow-hidden rounded-2xl border border-cyan-300/35 bg-slate-950/88 shadow-[0_18px_42px_-24px_rgba(34,211,238,0.72)] backdrop-blur-xl">
+          <header className="flex items-center justify-between border-b border-slate-700/70 px-3 py-2.5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100">My Wallet</p>
+              <p className="text-[11px] text-slate-400">고정 지갑 패널</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setWalletPanelOpen((previous) => !previous)}
+              className="rounded-lg border border-slate-600/70 bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100"
+            >
+              {walletPanelOpen ? "접기" : "열기"}
+            </button>
+          </header>
+
+          {walletPanelOpen && (
+            <div className="space-y-3 p-3">
+              {!walletAddress ? (
+                <div className="space-y-2">
+                  <ConnectButton
+                    client={client}
+                    wallets={promotionWallets}
+                    chain={promotionWalletChain}
+                    theme="dark"
+                    locale="ko_KR"
+                    connectButton={{
+                      label: "지갑연결하기",
+                      style: {
+                        width: "100%",
+                        minHeight: "42px",
+                        borderRadius: "12px",
+                        border: "1px solid rgba(34,211,238,0.55)",
+                        background:
+                          "linear-gradient(135deg, rgba(8,145,178,0.34), rgba(6,182,212,0.24))",
+                        color: "#ecfeff",
+                        fontWeight: 700,
+                        fontSize: "14px",
+                      },
+                    }}
+                    connectModal={{
+                      size: "wide",
+                      titleIcon: "https://www.stable.makeup/logo.png",
+                      showThirdwebBranding: false,
+                    }}
+                    appMetadata={{
+                      name: "OneClick Stable",
+                      description: "Promotion wallet panel",
+                      url: "https://www.stable.makeup",
+                      logoUrl: "https://www.stable.makeup/logo.png",
+                    }}
+                  />
+                  <p className="text-xs text-slate-400">
+                    로그인하면 입금(주소/QR), 출금, 전송내역을 이 패널에서 바로 확인할 수 있습니다.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-slate-700/70 bg-slate-900/70 px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">Connected Wallet</p>
+                    {walletExplorerUrl ? (
+                      <>
+                        <a
+                          href={walletExplorerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={walletAddress}
+                          className="mt-1 inline-flex w-fit max-w-full font-mono text-sm text-cyan-100 underline decoration-cyan-300/55 underline-offset-2 transition hover:text-cyan-50"
+                        >
+                          {formatWalletAddressCompact(walletAddress)}
+                        </a>
+                        <a
+                          href={walletExplorerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={walletAddress}
+                          className="mt-1 block break-all font-mono text-[11px] text-slate-500 transition hover:text-slate-300"
+                        >
+                          {walletAddress}
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-1 font-mono text-sm text-cyan-100">
+                          {formatWalletAddressCompact(walletAddress)}
+                        </p>
+                        <p className="mt-1 break-all font-mono text-[11px] text-slate-500">{walletAddress}</p>
+                      </>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => void copyWalletAddress()}
+                        className="rounded-lg border border-cyan-400/50 bg-cyan-500/14 px-2 py-1 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
+                      >
+                        주소 복사
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void disconnectWallet()}
+                        className="rounded-lg border border-rose-400/50 bg-rose-500/14 px-2 py-1 text-[11px] font-semibold text-rose-100 transition hover:bg-rose-400/20"
+                      >
+                        연결해제
+                      </button>
+                      {walletAddressCopied && (
+                        <span className="rounded-lg border border-emerald-400/50 bg-emerald-500/16 px-2 py-1 text-[11px] font-semibold text-emerald-100">
+                          복사됨
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <nav className="grid grid-cols-3 gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setWalletPanelTab("deposit")}
+                      className={`rounded-lg border px-2 py-1.5 font-semibold transition ${
+                        walletPanelTab === "deposit"
+                          ? "border-emerald-300/65 bg-emerald-500/20 text-emerald-50"
+                          : "border-slate-700/80 bg-slate-900/70 text-slate-300 hover:border-slate-500/80"
+                      }`}
+                    >
+                      입금
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWalletPanelTab("withdraw")}
+                      className={`rounded-lg border px-2 py-1.5 font-semibold transition ${
+                        walletPanelTab === "withdraw"
+                          ? "border-amber-300/65 bg-amber-500/20 text-amber-50"
+                          : "border-slate-700/80 bg-slate-900/70 text-slate-300 hover:border-slate-500/80"
+                      }`}
+                    >
+                      출금
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWalletPanelTab("history")}
+                      className={`rounded-lg border px-2 py-1.5 font-semibold transition ${
+                        walletPanelTab === "history"
+                          ? "border-cyan-300/65 bg-cyan-500/20 text-cyan-50"
+                          : "border-slate-700/80 bg-slate-900/70 text-slate-300 hover:border-slate-500/80"
+                      }`}
+                    >
+                      전송내역
+                    </button>
+                  </nav>
+
+                  {walletPanelTab === "deposit" && (
+                    <section className="rounded-xl border border-emerald-400/35 bg-emerald-950/26 p-2.5">
+                      <p className="text-[10px] uppercase tracking-[0.1em] text-emerald-200/90">
+                        Deposit Address
+                      </p>
+                      <div className="mt-2 grid gap-2 min-[360px]:grid-cols-[126px_minmax(0,1fr)]">
+                        <div className="flex items-center justify-center rounded-lg border border-emerald-300/45 bg-slate-950/75 p-2">
+                          <WalletAddressQrCanvas
+                            text={walletAddress}
+                            options={{
+                              errorCorrectionLevel: "M",
+                              margin: 1,
+                              scale: 4,
+                              width: 116,
+                              color: {
+                                dark: "#d1fae5",
+                                light: "#0000",
+                              },
+                            }}
+                          />
+                        </div>
+                        <div className="rounded-lg border border-emerald-300/35 bg-slate-950/72 p-2">
+                          <p className="text-[10px] uppercase tracking-[0.08em] text-emerald-200/90">
+                            Wallet Address
+                          </p>
+                          {walletExplorerUrl ? (
+                            <a
+                              href={walletExplorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={walletAddress}
+                              className="mt-1 block break-all font-mono text-[11px] text-emerald-100 underline decoration-emerald-300/55 underline-offset-2 transition hover:text-emerald-50"
+                            >
+                              {walletAddress}
+                            </a>
+                          ) : (
+                            <p className="mt-1 break-all font-mono text-[11px] text-emerald-100">
+                              {walletAddress}
+                            </p>
+                          )}
+                          <p className="mt-1 text-[11px] text-emerald-200/80">
+                            위 주소와 QR 코드로 입금하면 됩니다.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
+                  {walletPanelTab === "withdraw" && (
+                    <section className="space-y-2 rounded-xl border border-amber-400/35 bg-amber-950/25 p-2.5">
+                      <p className="text-[10px] uppercase tracking-[0.1em] text-amber-200/90">
+                        Withdraw
+                      </p>
+                      <p className="text-xs text-amber-100/90">
+                        출금은 전용 화면에서 진행합니다. 연결된 지갑 주소 기준으로 진행하세요.
+                      </p>
+                      <Link
+                        href={`/${lang}/withdraw-usdt`}
+                        className="inline-flex min-h-[38px] w-full items-center justify-center rounded-lg border border-amber-300/65 bg-amber-500/20 px-3 py-2 text-xs font-semibold text-amber-50 transition hover:border-amber-200/85 hover:bg-amber-400/28"
+                      >
+                        출금 화면 열기
+                      </Link>
+                    </section>
+                  )}
+
+                  {walletPanelTab === "history" && (
+                    <section className="space-y-2 rounded-xl border border-cyan-400/35 bg-cyan-950/25 p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] uppercase tracking-[0.1em] text-cyan-200/90">
+                          Transfer History
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void fetchWalletTransfers()}
+                          className="rounded-md border border-cyan-300/55 bg-cyan-500/16 px-1.5 py-1 text-[10px] font-semibold text-cyan-100 transition hover:bg-cyan-400/22"
+                        >
+                          새로고침
+                        </button>
+                      </div>
+
+                      {walletTransfersLoading && (
+                        <div className="rounded-lg border border-slate-700/80 bg-slate-950/72 px-2 py-2 text-xs text-slate-400">
+                          전송내역을 불러오는 중입니다.
+                        </div>
+                      )}
+
+                      {walletTransferError && (
+                        <div className="rounded-lg border border-rose-500/45 bg-rose-950/55 px-2 py-2 text-xs text-rose-200">
+                          {walletTransferError}
+                        </div>
+                      )}
+
+                      {!walletTransfersLoading && !walletTransferError && walletHistoryItems.length === 0 && (
+                        <div className="rounded-lg border border-slate-700/80 bg-slate-950/72 px-2 py-2 text-xs text-slate-400">
+                          표시할 전송내역이 없습니다.
+                        </div>
+                      )}
+
+                      {!walletTransfersLoading && !walletTransferError && walletHistoryItems.length > 0 && (
+                        <ul className="space-y-1.5">
+                          {walletHistoryItems.map((item, index) => {
+                            const tx = item.transferData;
+                            const txHash = String(tx?.transactionHash || "");
+                            const isSend = item.sendOrReceive === "send";
+                            const counterparty = isSend ? tx?.toAddress : tx?.fromAddress;
+                            const usdtValue = normalizeTransferUsdt(tx?.value);
+                            const explorerUrl = getExplorerTxUrl(txHash);
+                            const counterpartyUrl = getExplorerAddressUrl(counterparty);
+
+                            return (
+                              <li
+                                key={item._id || `${txHash}-${index}`}
+                                className="rounded-lg border border-slate-700/75 bg-slate-950/72 p-2"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span
+                                    className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
+                                      isSend
+                                        ? "border-rose-400/55 bg-rose-500/16 text-rose-100"
+                                        : "border-emerald-400/55 bg-emerald-500/16 text-emerald-100"
+                                    }`}
+                                  >
+                                    {isSend ? "출금" : "입금"}
+                                  </span>
+                                  <span className="font-mono text-[10px] text-cyan-100">
+                                    {formatUsdt(usdtValue)} USDT
+                                  </span>
+                                </div>
+                                <p className="mt-1 font-mono text-[10px] text-slate-300">
+                                  상대:{" "}
+                                  {counterpartyUrl ? (
+                                    <a
+                                      href={counterpartyUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title={String(counterparty || "")}
+                                      className="underline decoration-cyan-300/45 underline-offset-2 transition hover:text-cyan-100"
+                                    >
+                                      {formatWalletAddressCompact(counterparty)}
+                                    </a>
+                                  ) : (
+                                    formatWalletAddressCompact(counterparty)
+                                  )}
+                                </p>
+                                <p className="mt-1 font-mono text-[10px] text-slate-500">
+                                  {formatWalletTransferTime(tx?.timestamp)}
+                                </p>
+                                {explorerUrl ? (
+                                  <a
+                                    href={explorerUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={txHash}
+                                    className="mt-1 inline-flex font-mono text-[10px] text-cyan-200 underline underline-offset-2"
+                                  >
+                                    TX: {shortenText(txHash, 10, 8)}
+                                  </a>
+                                ) : (
+                                  <p className="mt-1 font-mono text-[10px] text-slate-500">TX: -</p>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </section>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </section>
+      </aside>
+
       <div className="pointer-events-none absolute inset-0">
-        <div className="promo-grid absolute inset-0 opacity-55" />
+        <div className="promo-grid absolute inset-0 opacity-35" />
         <div className="promo-orb promo-orb-a" />
         <div className="promo-orb promo-orb-b" />
         <div className="promo-orb promo-orb-c" />
       </div>
 
-      <section className="promo-shell relative mx-auto w-full max-w-[1520px] space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6 lg:px-10">
+      <section className="promo-shell relative mx-auto w-full max-w-[1320px] space-y-3 px-2.5 py-3 sm:space-y-4 sm:px-5 sm:py-5 lg:px-8">
         <header
-          className={`relative overflow-hidden rounded-2xl border border-emerald-300/30 bg-slate-950/85 p-4 shadow-[0_26px_84px_-36px_rgba(16,185,129,0.7)] backdrop-blur sm:rounded-[28px] sm:p-6 ${isHeroBursting ? "promo-hero-burst" : ""}`}
+          className={`relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950/86 p-3.5 shadow-[0_18px_42px_-28px_rgba(15,23,42,0.9)] backdrop-blur sm:rounded-[24px] sm:p-5 ${isHeroBursting ? "promo-hero-burst" : ""}`}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_20%,rgba(16,185,129,0.3),rgba(2,6,23,0)_45%),radial-gradient(circle_at_85%_28%,rgba(34,211,238,0.2),rgba(2,6,23,0)_42%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(20,184,166,0.2),rgba(2,6,23,0)_48%),radial-gradient(circle_at_88%_24%,rgba(56,189,248,0.14),rgba(2,6,23,0)_45%)]" />
 
-          <nav className="relative flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <nav className="relative flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span className="promo-live-dot h-2.5 w-2.5 rounded-full bg-emerald-300" />
               <span className="promo-live-caption text-[10px] uppercase tracking-[0.18em] text-emerald-100/95 sm:text-xs sm:tracking-[0.22em]">
@@ -712,94 +1294,90 @@ export default function PromotionPage() {
                 VASP 운영
               </span>
             </div>
-            <div className="promo-nav-links grid w-full grid-cols-1 gap-2 min-[390px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap">
+            <div className="promo-nav-links grid w-full grid-cols-1 gap-1.5 min-[390px]:grid-cols-3 sm:flex sm:w-auto sm:flex-wrap">
               <Link
                 href={`/${lang}/realtime-banktransfer`}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-600/70 bg-slate-900/70 px-3 py-2 text-center text-xs leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-sm"
+                className="inline-flex min-h-[38px] items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/70 px-2.5 py-1.5 text-center text-[11px] leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-xs"
               >
                 Banktransfer
               </Link>
               <Link
                 href={`/${lang}/realtime-buyorder`}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-600/70 bg-slate-900/70 px-3 py-2 text-center text-xs leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-sm"
+                className="inline-flex min-h-[38px] items-center justify-center rounded-lg border border-slate-600/70 bg-slate-900/70 px-2.5 py-1.5 text-center text-[11px] leading-tight text-slate-200 transition hover:border-cyan-300/70 hover:text-cyan-100 sm:text-xs"
               >
                 BuyOrder
               </Link>
               <Link
                 href={`/${lang}/realtime-settlement`}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-emerald-500/65 bg-emerald-500/22 px-3 py-2 text-center text-xs font-semibold leading-tight text-emerald-50 transition hover:border-emerald-300/80 hover:bg-emerald-400/28 sm:text-sm"
+                className="inline-flex min-h-[38px] items-center justify-center rounded-lg border border-emerald-500/65 bg-emerald-500/20 px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight text-emerald-50 transition hover:border-emerald-300/80 hover:bg-emerald-400/24 sm:text-xs"
               >
                 Settlement
               </Link>
             </div>
           </nav>
 
-          <div className="relative mt-4 grid gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[1.2fr_1fr]">
+          <div className="relative mt-3 grid gap-3 sm:mt-4 sm:gap-4 lg:grid-cols-[1.2fr_1fr]">
             <div>
-              <h1 className="promo-hero-title text-2xl font-semibold leading-tight sm:text-4xl">
+              <h1 className="promo-hero-title text-[1.55rem] font-semibold leading-tight sm:text-[2.05rem]">
                 <span className="promo-title-shine">VASP 운영</span> 기반 USDT 정산 플랫폼
               </h1>
-              <p className="promo-hero-copy mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-300 sm:text-base">
-                본 플랫폼은 VASP 운영 체계 하에서 USDT 정산 이벤트를 최우선 지표로 공개합니다.
-                입출금, 주문, 정산 데이터가 하나의 실시간 화면에서 연결되어 자금 처리 신뢰를
-                금융기관 수준으로 전달합니다.
+              <p className="promo-hero-copy mt-2 max-w-xl text-[12.5px] leading-relaxed text-slate-300 sm:text-sm">
+                입출금, 주문, 정산 상태를 한 화면에서 확인하는 실시간 USDT 운영 홈입니다.
+                핵심 지표와 최근 이벤트를 컴팩트하게 제공합니다.
               </p>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-[10px] sm:text-[11px]">
+              <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] sm:text-[11px]">
                 <span className="rounded-full border border-emerald-300/50 bg-emerald-500/15 px-2.5 py-1 text-emerald-100">
                   VASP 운영 모니터링
                 </span>
                 <span className="rounded-full border border-cyan-300/50 bg-cyan-500/15 px-2.5 py-1 text-cyan-100">
                   USDT 온체인 정산 추적
                 </span>
-                <span className="rounded-full border border-slate-500/60 bg-slate-800/70 px-2.5 py-1 text-slate-200">
-                  정산 이벤트 우선 공시
-                </span>
               </div>
 
-              <div className="promo-cta-grid mt-5 grid grid-cols-1 gap-2 min-[390px]:grid-cols-2 min-[430px]:grid-cols-3 sm:flex sm:flex-wrap sm:gap-3">
+              <div className="promo-cta-grid mt-4 grid grid-cols-1 gap-1.5 min-[390px]:grid-cols-2 min-[430px]:grid-cols-3 sm:flex sm:flex-wrap sm:gap-2">
                 <Link
                   href={`/${lang}/realtime-settlement`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-300/80 bg-emerald-500/30 px-4 py-2 text-center text-sm font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/38"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-emerald-300/80 bg-emerald-500/28 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/34"
                 >
                   정산 라이브 보기
                 </Link>
                 <Link
                   href={`/${lang}/realtime-buyorder`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-cyan-300/70 bg-cyan-400/22 px-4 py-2 text-center text-sm font-semibold leading-tight text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/30"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-cyan-300/70 bg-cyan-400/20 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-cyan-50 transition hover:-translate-y-0.5 hover:bg-cyan-300/28"
                 >
                   BuyOrder 라이브 보기
                 </Link>
                 <Link
                   href={`/${lang}/realtime-banktransfer`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-500/70 bg-slate-800/70 px-4 py-2 text-center text-sm font-semibold leading-tight text-slate-100 transition hover:-translate-y-0.5 hover:border-slate-300/70"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-slate-500/70 bg-slate-800/70 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-slate-100 transition hover:-translate-y-0.5 hover:border-slate-300/70"
                 >
                   입출금 라이브 보기
                 </Link>
               </div>
 
-              <div className="promo-status-grid mt-4 grid gap-2 text-xs text-slate-300 sm:flex sm:flex-wrap">
-                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5 sm:w-auto">
+              <div className="promo-status-grid mt-3 grid gap-1.5 text-[11px] text-slate-300 sm:flex sm:flex-wrap">
+                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
                   Connection: <span className="font-semibold text-emerald-200">{connectionState}</span>
                 </span>
-                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5 sm:w-auto">
+                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
                   Sync: <span className="font-semibold text-emerald-200">{isSyncing ? "running" : "idle"}</span>
                 </span>
-                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2.5 py-1.5 sm:w-auto">
+                <span className="w-full rounded-lg border border-slate-700/70 bg-slate-900/75 px-2 py-1 sm:w-auto">
                   Last Update:{" "}
                   <span className="font-semibold text-emerald-200">{latestTimeInfo.relativeLabel}</span>
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <article className="rounded-2xl border border-emerald-300/55 bg-emerald-950/40 p-4 shadow-lg shadow-black/25 sm:col-span-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <article className="rounded-xl border border-emerald-300/45 bg-emerald-950/30 p-3 shadow-lg shadow-black/20 sm:col-span-2">
                 <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">핵심 지표 | Settlement USDT</p>
-                <p className="promo-kpi-value mt-2 text-3xl font-bold leading-none text-emerald-50 sm:text-[2.1rem]">
+                <p className="promo-kpi-value mt-1.5 text-[1.7rem] font-bold leading-none text-emerald-50 sm:text-[1.95rem]">
                   {formatUsdt(summary.settlementUsdt)}
-                  <span className="ml-1 text-base font-semibold text-emerald-200">USDT</span>
+                  <span className="ml-1 text-sm font-semibold text-emerald-200">USDT</span>
                 </p>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
                   <span className="rounded-md border border-emerald-300/40 bg-emerald-500/12 px-2 py-1 text-emerald-100">
                     정산완료 {summary.settlementCount.toLocaleString("ko-KR")}건
                   </span>
@@ -809,20 +1387,20 @@ export default function PromotionPage() {
                 </div>
               </article>
 
-              <article className="rounded-2xl border border-cyan-500/45 bg-cyan-950/35 p-4 shadow-lg shadow-black/25">
+              <article className="rounded-xl border border-cyan-500/40 bg-cyan-950/28 p-3 shadow-lg shadow-black/20">
                 <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">플랫폼 USDT</p>
-                <p className="mt-2 text-xl font-semibold leading-tight text-cyan-50">
+                <p className="mt-1.5 text-lg font-semibold leading-tight text-cyan-50">
                   {formatUsdt(summary.totalUsdt)} USDT
                 </p>
-                <p className="mt-2 text-xs text-cyan-300/80">BuyOrder 누적 유동량</p>
+                <p className="mt-1.5 text-[11px] text-cyan-300/80">BuyOrder 누적 유동량</p>
               </article>
 
-              <article className="rounded-2xl border border-amber-500/45 bg-amber-950/35 p-4 shadow-lg shadow-black/25">
+              <article className="rounded-xl border border-amber-500/40 bg-amber-950/28 p-3 shadow-lg shadow-black/20">
                 <p className="text-xs uppercase tracking-[0.08em] text-amber-200">정산 이벤트 비중</p>
-                <p className="promo-kpi-value mt-2 text-3xl font-semibold leading-none text-amber-50">
+                <p className="promo-kpi-value mt-1.5 text-[1.65rem] font-semibold leading-none text-amber-50">
                   {formatPercent(summary.settlementCountRatio)}
                 </p>
-                <p className="mt-2 text-xs text-amber-300/80">BuyOrder 이벤트 대비</p>
+                <p className="mt-1.5 text-[11px] text-amber-300/80">BuyOrder 이벤트 대비</p>
               </article>
             </div>
           </div>
@@ -840,40 +1418,38 @@ export default function PromotionPage() {
           </div>
         )}
 
-        <section className="relative overflow-hidden rounded-2xl border border-emerald-400/45 bg-[linear-gradient(135deg,rgba(6,78,59,0.56),rgba(2,6,23,0.92))] p-4 shadow-[0_18px_44px_-24px_rgba(16,185,129,0.72)] sm:p-5">
-          <span className="mb-3 inline-flex rounded-full border border-emerald-200/70 bg-emerald-400/22 px-2.5 py-0.5 text-[10px] font-bold tracking-[0.12em] text-emerald-50 sm:absolute sm:right-4 sm:top-4 sm:mb-0">
-            SETTLEMENT PRIORITY
+        <section className="relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/70 p-3.5 shadow-lg shadow-black/20 sm:p-4">
+          <span className="mb-2 inline-flex rounded-full border border-emerald-200/55 bg-emerald-400/14 px-2 py-0.5 text-[10px] font-semibold tracking-[0.1em] text-emerald-100 sm:absolute sm:right-4 sm:top-4 sm:mb-0">
+            SETTLEMENT
           </span>
-          <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.25fr_1fr]">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.2fr_1fr]">
             <div>
-              <p className="text-xs uppercase tracking-[0.12em] text-emerald-200/90">Settlement Spotlight</p>
-              <h2 className="promo-spotlight-title mt-1 text-lg font-semibold text-emerald-50 sm:text-xl">
-                최우선 정산 공시 데스크: VASP 운영 상태를 실시간으로 증명합니다
+              <p className="text-xs uppercase tracking-[0.1em] text-emerald-200/85">Settlement Spotlight</p>
+              <h2 className="promo-spotlight-title mt-1 text-base font-semibold text-emerald-50 sm:text-lg">
+                정산 상태를 우선 노출하는 실시간 공시 카드
               </h2>
-              <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-emerald-100/85 sm:text-sm">
-                체결 이후 USDT 정산 반영까지의 이벤트를 별도 추적해 정산 지연 리스크를 즉시 식별합니다.
-                대외 공개 화면에서 정산 건수, 정산 금액, 처리 시점을 함께 노출하여 금융 서비스 수준의
-                운영 투명성을 제공합니다.
+              <p className="mt-1.5 max-w-3xl text-[12.5px] leading-relaxed text-emerald-100/78 sm:text-[13px]">
+                최근 정산 건수, 금액, 처리 시점을 핵심만 요약해 제공합니다.
               </p>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
                   정산 이벤트 {summary.settlementCount.toLocaleString("ko-KR")}건
                 </span>
-                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
                   {formatUsdt(summary.settlementUsdt)} USDT
                 </span>
-                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
                   {formatKrw(summary.settlementKrw)} KRW
                 </span>
-                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                <span className="rounded-lg border border-emerald-300/35 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-100">
                   정산 비중 {formatPercent(summary.settlementCountRatio)}
                 </span>
               </div>
             </div>
 
             <div
-              className={`promo-settlement-cta rounded-xl border p-3.5 sm:rounded-2xl ${
+              className={`promo-settlement-cta rounded-xl border p-3 sm:rounded-xl ${
                 isSettlementCtaHot || isHeroBursting ? "promo-settlement-cta-burst" : ""
               }`}
             >
@@ -883,8 +1459,8 @@ export default function PromotionPage() {
                     <span className="promo-live-dot h-2 w-2 rounded-full bg-emerald-300" />
                     Realtime Settlement Log
                   </p>
-                  <h3 className="promo-settlement-title mt-1 text-base font-semibold leading-tight text-emerald-50">
-                    정산 이벤트를 공시 수준으로 즉시 확인
+                  <h3 className="promo-settlement-title mt-1 text-sm font-semibold leading-tight text-emerald-50">
+                    최신 정산 이벤트 즉시 확인
                   </h3>
                   <p className="mt-1 text-[11px] text-emerald-200/90">
                     {latestSettlementTimeInfo
@@ -898,7 +1474,7 @@ export default function PromotionPage() {
                 </span>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+              <div className="mt-2.5 grid grid-cols-1 gap-1.5 text-xs sm:grid-cols-2">
                 <div className="rounded-lg border border-emerald-400/35 bg-emerald-500/12 px-2 py-1.5 text-emerald-100">
                   <p className="text-[10px] uppercase tracking-[0.09em] text-emerald-200/90">Settlement Count</p>
                   <p className="mt-1 text-sm font-semibold tabular-nums">
@@ -916,7 +1492,7 @@ export default function PromotionPage() {
 
               <Link
                 href={`/${lang}/realtime-settlement`}
-                className="promo-settlement-btn mt-3 inline-flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-emerald-200/80 bg-emerald-400/30 px-3 py-2 text-sm font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/36"
+                className="promo-settlement-btn mt-2.5 inline-flex min-h-[40px] w-full items-center justify-between gap-2 rounded-lg border border-emerald-200/65 bg-emerald-400/22 px-3 py-1.5 text-xs font-semibold leading-tight text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/30"
               >
                 <span>정산 대시보드 바로가기</span>
                 <span aria-hidden className="text-base leading-none">
@@ -924,7 +1500,7 @@ export default function PromotionPage() {
                 </span>
               </Link>
 
-              <ul className="mt-3 space-y-1.5 sm:space-y-2">
+              <ul className="mt-2.5 space-y-1.5 sm:space-y-2">
                 {settlementBuyEvents.slice(0, 3).map((item) => {
                   const isHighlighted = item.highlightUntil > nowMs;
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
@@ -932,10 +1508,10 @@ export default function PromotionPage() {
                   return (
                     <li
                       key={`spot-${item.id}`}
-                      className={`rounded-xl border px-2.5 py-2 transition-all duration-500 ${
+                      className={`rounded-lg border px-2 py-1.5 transition-all duration-500 ${
                         isHighlighted
-                          ? "promo-event-flash border-emerald-300/62 bg-emerald-400/16 shadow-[0_12px_24px_-16px_rgba(16,185,129,0.9)]"
-                          : "border-emerald-500/30 bg-slate-950/58"
+                          ? "promo-event-flash border-emerald-300/62 bg-emerald-400/14 shadow-[0_10px_18px_-14px_rgba(16,185,129,0.9)]"
+                          : "border-emerald-500/24 bg-slate-950/56"
                       }`}
                     >
                       <div className="promo-event-row flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -964,8 +1540,8 @@ export default function PromotionPage() {
           </div>
         </section>
 
-        <section className="grid gap-3 sm:gap-4 xl:grid-cols-2">
-          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-3.5 shadow-lg shadow-black/20 sm:p-4">
+        <section className="grid gap-2.5 sm:gap-3 xl:grid-cols-2">
+          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/72 p-3 shadow-lg shadow-black/20 sm:p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-xs uppercase tracking-[0.08em] text-emerald-300">Banktransfer Live</p>
@@ -977,7 +1553,7 @@ export default function PromotionPage() {
             </div>
 
             {latestBank ? (
-              <div className="mt-4 rounded-xl border border-slate-600/80 bg-slate-950/70 p-3">
+              <div className="mt-3 rounded-xl border border-slate-600/80 bg-slate-950/70 p-2.5">
                 <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 w-full items-center gap-2 sm:w-auto">
                     {latestBank.data.store?.logo ? (
@@ -1023,7 +1599,7 @@ export default function PromotionPage() {
               </div>
             )}
 
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-2.5 space-y-1.5">
               {sortedBankEvents.slice(0, 6).map((item) => {
                 const isHighlighted = item.highlightUntil > Date.now();
                 const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
@@ -1069,7 +1645,7 @@ export default function PromotionPage() {
             </ul>
           </article>
 
-          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-3.5 shadow-lg shadow-black/20 sm:p-4">
+          <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/72 p-3 shadow-lg shadow-black/20 sm:p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="text-xs uppercase tracking-[0.08em] text-cyan-200">BuyOrder USDT Live</p>
@@ -1081,7 +1657,7 @@ export default function PromotionPage() {
             </div>
 
             {latestBuy ? (
-              <div className="mt-4 rounded-xl border border-slate-600/80 bg-slate-950/70 p-3">
+              <div className="mt-3 rounded-xl border border-slate-600/80 bg-slate-950/70 p-2.5">
                 <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1100,7 +1676,20 @@ export default function PromotionPage() {
                       {formatUsdt(latestBuy.data.amountUsdt)} USDT
                     </p>
                     <p className="mt-1 font-mono text-[11px] text-slate-400">
-                      Buyer: {shortenText(latestBuy.data.buyerWalletAddress, 8, 6)}
+                      Buyer:{" "}
+                      {latestBuyWalletExplorerUrl ? (
+                        <a
+                          href={latestBuyWalletExplorerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={String(latestBuy.data.buyerWalletAddress || "")}
+                          className="underline decoration-cyan-300/45 underline-offset-2 transition hover:text-cyan-100"
+                        >
+                          {shortenText(latestBuy.data.buyerWalletAddress, 8, 6)}
+                        </a>
+                      ) : (
+                        shortenText(latestBuy.data.buyerWalletAddress, 8, 6)
+                      )}
                     </p>
                   </div>
                   <span
@@ -1119,10 +1708,11 @@ export default function PromotionPage() {
               </div>
             )}
 
-            <ul className="mt-3 space-y-2">
+            <ul className="mt-2.5 space-y-1.5">
               {sortedBuyEvents.slice(0, 6).map((item) => {
                 const isHighlighted = item.highlightUntil > Date.now();
                 const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                const buyerWalletExplorerUrl = getExplorerAddressUrl(item.data.buyerWalletAddress);
 
                 return (
                   <li
@@ -1151,7 +1741,20 @@ export default function PromotionPage() {
                           {formatUsdt(item.data.amountUsdt)} USDT
                         </p>
                         <p className="mt-1 font-mono text-[11px] text-slate-400">
-                          Wallet: {shortenText(item.data.buyerWalletAddress, 8, 6)}
+                          Wallet:{" "}
+                          {buyerWalletExplorerUrl ? (
+                            <a
+                              href={buyerWalletExplorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={String(item.data.buyerWalletAddress || "")}
+                              className="underline decoration-cyan-300/45 underline-offset-2 transition hover:text-cyan-100"
+                            >
+                              {shortenText(item.data.buyerWalletAddress, 8, 6)}
+                            </a>
+                          ) : (
+                            shortenText(item.data.buyerWalletAddress, 8, 6)
+                          )}
                         </p>
                       </div>
                       <span
@@ -1169,17 +1772,17 @@ export default function PromotionPage() {
           </article>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
-          <div className="border-b border-slate-700/80 px-3 py-3 sm:px-4">
+        <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/72 shadow-lg shadow-black/20">
+          <div className="border-b border-slate-700/80 px-3 py-2.5 sm:px-4">
             <p className="font-semibold text-slate-100">실시간 이벤트 티커</p>
-            <p className="text-xs text-slate-400">입출금/주문/정산 이벤트를 자동 순환 표시합니다.</p>
+            <p className="text-[11px] text-slate-400">입출금/주문/정산 이벤트를 순환 표시합니다.</p>
           </div>
-          <div className="overflow-hidden px-3 py-3">
+          <div className="overflow-hidden px-3 py-2.5">
             <div className="promo-marquee-track">
               {tickerTexts.map((text, index) => (
                 <span
                   key={`ticker-${index}-${text}`}
-                  className="inline-flex max-w-[80vw] shrink-0 items-center truncate rounded-full border border-cyan-300/35 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100 sm:max-w-none"
+                  className="inline-flex max-w-[78vw] shrink-0 items-center truncate rounded-full border border-cyan-300/30 bg-cyan-400/8 px-2.5 py-0.5 text-[11px] text-cyan-100 sm:max-w-none"
                 >
                   {text}
                 </span>
@@ -1193,47 +1796,47 @@ export default function PromotionPage() {
         .promo-grid {
           background-image: linear-gradient(
               to right,
-              rgba(148, 163, 184, 0.12) 1px,
+              rgba(148, 163, 184, 0.08) 1px,
               transparent 1px
             ),
-            linear-gradient(to bottom, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+            linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
           background-size: 42px 42px;
           mask-image: radial-gradient(circle at 50% 40%, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0) 78%);
-          animation: promoGridMove 22s linear infinite;
+          animation: promoGridMove 30s linear infinite;
         }
 
         .promo-orb {
           position: absolute;
           border-radius: 9999px;
-          filter: blur(18px);
-          opacity: 0.58;
+          filter: blur(24px);
+          opacity: 0.34;
         }
 
         .promo-orb-a {
-          left: -120px;
-          top: -60px;
-          height: 340px;
-          width: 340px;
-          background: rgba(34, 211, 238, 0.34);
-          animation: promoFloatA 12s ease-in-out infinite;
+          left: -100px;
+          top: -50px;
+          height: 300px;
+          width: 300px;
+          background: rgba(34, 211, 238, 0.22);
+          animation: promoFloatA 16s ease-in-out infinite;
         }
 
         .promo-orb-b {
-          right: -80px;
+          right: -60px;
           top: 120px;
-          height: 300px;
-          width: 300px;
-          background: rgba(52, 211, 153, 0.3);
-          animation: promoFloatB 14s ease-in-out infinite;
+          height: 250px;
+          width: 250px;
+          background: rgba(52, 211, 153, 0.2);
+          animation: promoFloatB 18s ease-in-out infinite;
         }
 
         .promo-orb-c {
           left: 35%;
-          bottom: -130px;
-          height: 360px;
-          width: 360px;
-          background: rgba(56, 189, 248, 0.22);
-          animation: promoFloatC 18s ease-in-out infinite;
+          bottom: -120px;
+          height: 300px;
+          width: 300px;
+          background: rgba(56, 189, 248, 0.16);
+          animation: promoFloatC 24s ease-in-out infinite;
         }
 
         .promo-live-dot {
@@ -1261,15 +1864,15 @@ export default function PromotionPage() {
         .promo-settlement-cta {
           position: relative;
           overflow: hidden;
-          border-color: rgba(110, 231, 183, 0.42);
+          border-color: rgba(110, 231, 183, 0.32);
           background: linear-gradient(
             145deg,
-            rgba(5, 46, 36, 0.92) 0%,
-            rgba(3, 15, 28, 0.94) 56%,
-            rgba(6, 78, 59, 0.9) 100%
+            rgba(5, 46, 36, 0.72) 0%,
+            rgba(3, 15, 28, 0.82) 56%,
+            rgba(6, 78, 59, 0.74) 100%
           );
-          box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.18),
-            0 18px 36px -22px rgba(16, 185, 129, 0.8);
+          box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.14),
+            0 14px 26px -20px rgba(16, 185, 129, 0.5);
         }
 
         .promo-settlement-cta::before {
@@ -1279,12 +1882,12 @@ export default function PromotionPage() {
           background: linear-gradient(
             110deg,
             transparent 36%,
-            rgba(110, 231, 183, 0.2) 50%,
-            rgba(103, 232, 249, 0.28) 58%,
+            rgba(110, 231, 183, 0.12) 50%,
+            rgba(103, 232, 249, 0.18) 58%,
             transparent 71%
           );
           transform: rotate(10deg);
-          animation: promoSettlementSweep 4.7s linear infinite;
+          animation: promoSettlementSweep 7.5s linear infinite;
           pointer-events: none;
         }
 
@@ -1294,10 +1897,10 @@ export default function PromotionPage() {
           inset: -20%;
           background: radial-gradient(
             circle at 75% 18%,
-            rgba(16, 185, 129, 0.23) 0%,
+            rgba(16, 185, 129, 0.16) 0%,
             rgba(2, 6, 23, 0) 58%
           );
-          animation: promoSettlementAura 2.8s ease-in-out infinite;
+          animation: promoSettlementAura 4.5s ease-in-out infinite;
           pointer-events: none;
         }
 
@@ -1319,7 +1922,7 @@ export default function PromotionPage() {
           position: relative;
           overflow: hidden;
           isolation: isolate;
-          animation: promoSettlementBtnLift 2.4s ease-in-out infinite;
+          animation: promoSettlementBtnLift 3.2s ease-in-out infinite;
         }
 
         .promo-settlement-btn::after {
@@ -1332,11 +1935,11 @@ export default function PromotionPage() {
           background: linear-gradient(
             110deg,
             rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0.34) 48%,
+            rgba(255, 255, 255, 0.22) 48%,
             rgba(255, 255, 255, 0) 100%
           );
           transform: skewX(-18deg);
-          animation: promoSettlementBtnShine 2.9s linear infinite;
+          animation: promoSettlementBtnShine 4.4s linear infinite;
           z-index: 0;
         }
 
@@ -1348,8 +1951,8 @@ export default function PromotionPage() {
         .promo-marquee-track {
           display: flex;
           width: max-content;
-          gap: 0.75rem;
-          animation: promoMarquee 33s linear infinite;
+          gap: 0.6rem;
+          animation: promoMarquee 42s linear infinite;
         }
 
         @keyframes promoGridMove {
@@ -1513,12 +2116,12 @@ export default function PromotionPage() {
           }
 
           .promo-hero-title {
-            font-size: 1.72rem;
+            font-size: 1.42rem;
             line-height: 1.26;
           }
 
           .promo-hero-copy {
-            font-size: 12.8px;
+            font-size: 12.3px;
           }
 
           .promo-nav-links > a,
@@ -1529,11 +2132,11 @@ export default function PromotionPage() {
 
           .promo-cta-grid > a,
           .promo-settlement-btn {
-            font-size: 0.81rem;
+            font-size: 0.76rem;
           }
 
           .promo-status-grid > span {
-            font-size: 0.7rem;
+            font-size: 0.66rem;
           }
 
           .promo-spotlight-title {
@@ -1541,11 +2144,11 @@ export default function PromotionPage() {
           }
 
           .promo-settlement-title {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
           }
 
           .promo-kpi-value {
-            font-size: 1.65rem;
+            font-size: 1.45rem;
           }
 
           .promo-event-store {
@@ -1565,11 +2168,11 @@ export default function PromotionPage() {
           }
 
           .promo-hero-title {
-            font-size: 1.58rem;
+            font-size: 1.32rem;
           }
 
           .promo-hero-copy {
-            font-size: 12.2px;
+            font-size: 11.9px;
           }
 
           .promo-nav-links {
@@ -1577,22 +2180,22 @@ export default function PromotionPage() {
           }
 
           .promo-nav-links > a {
-            min-height: 40px;
-            font-size: 0.7rem;
+            min-height: 36px;
+            font-size: 0.66rem;
           }
 
           .promo-cta-grid > a {
-            min-height: 42px;
-            font-size: 0.78rem;
+            min-height: 38px;
+            font-size: 0.74rem;
           }
 
           .promo-settlement-btn {
-            min-height: 42px;
-            font-size: 0.78rem;
+            min-height: 38px;
+            font-size: 0.74rem;
           }
 
           .promo-kpi-value {
-            font-size: 1.52rem;
+            font-size: 1.34rem;
           }
 
           .promo-marquee-track > span {
@@ -1611,19 +2214,19 @@ export default function PromotionPage() {
           }
 
           .promo-hero-title {
-            font-size: 1.46rem;
+            font-size: 1.22rem;
           }
 
           .promo-hero-copy {
-            font-size: 11.8px;
+            font-size: 11.5px;
           }
 
           .promo-status-grid > span {
-            font-size: 0.66rem;
+            font-size: 0.63rem;
           }
 
           .promo-settlement-title {
-            font-size: 0.88rem;
+            font-size: 0.82rem;
           }
 
           .promo-settlement-btn span[aria-hidden] {
@@ -1631,15 +2234,15 @@ export default function PromotionPage() {
           }
 
           .promo-kpi-value {
-            font-size: 1.42rem;
+            font-size: 1.26rem;
           }
 
           .promo-time-badge {
-            font-size: 9px;
+            font-size: 8.5px;
           }
 
           .promo-marquee-track > span {
-            max-width: 72vw;
+            max-width: 70vw;
           }
         }
 
@@ -1650,40 +2253,40 @@ export default function PromotionPage() {
           }
 
           .promo-hero-title {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
           }
 
           .promo-hero-copy {
-            font-size: 11.2px;
+            font-size: 11px;
           }
 
           .promo-nav-links > a {
-            font-size: 0.64rem;
-            padding-left: 0.65rem;
-            padding-right: 0.65rem;
+            font-size: 0.6rem;
+            padding-left: 0.56rem;
+            padding-right: 0.56rem;
           }
 
           .promo-cta-grid > a {
-            font-size: 0.72rem;
-            padding-left: 0.65rem;
-            padding-right: 0.65rem;
+            font-size: 0.68rem;
+            padding-left: 0.56rem;
+            padding-right: 0.56rem;
           }
 
           .promo-settlement-btn {
-            font-size: 0.72rem;
+            font-size: 0.68rem;
           }
 
           .promo-status-grid > span {
-            font-size: 0.62rem;
+            font-size: 0.58rem;
           }
 
           .promo-kpi-value {
-            font-size: 1.28rem;
+            font-size: 1.15rem;
           }
 
           .promo-marquee-track > span {
-            max-width: 68vw;
-            font-size: 10px;
+            max-width: 66vw;
+            font-size: 9.5px;
           }
         }
 
@@ -1694,7 +2297,7 @@ export default function PromotionPage() {
 
           .promo-orb {
             filter: blur(14px);
-            opacity: 0.46;
+            opacity: 0.3;
           }
 
           .promo-orb-a {
@@ -1719,8 +2322,8 @@ export default function PromotionPage() {
           }
 
           .promo-marquee-track {
-            gap: 0.5rem;
-            animation-duration: 40s;
+            gap: 0.45rem;
+            animation-duration: 48s;
           }
         }
 
