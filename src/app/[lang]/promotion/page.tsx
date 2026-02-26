@@ -126,6 +126,8 @@ function getBuyStatusLabel(status: string | null | undefined): string {
 
 function getBuyStatusClassName(status: string | null | undefined): string {
   switch (status) {
+    case "paymentSettled":
+      return "border border-emerald-300/60 bg-emerald-400/20 text-emerald-50";
     case "paymentConfirmed":
       return "border border-emerald-300/60 bg-emerald-400/20 text-emerald-50";
     case "paymentRequested":
@@ -137,6 +139,15 @@ function getBuyStatusClassName(status: string | null | undefined): string {
     default:
       return "border border-slate-400/60 bg-slate-500/20 text-slate-100";
   }
+}
+
+function isSettlementBuyEvent(event: BuyOrderStatusRealtimeEvent): boolean {
+  const source = String(event.source || "").toLowerCase();
+  return (
+    event.statusTo === "paymentSettled" ||
+    event.statusFrom === "paymentSettled" ||
+    source.includes("settlement")
+  );
 }
 
 function getRelativeTimeBadgeClassName(tone: RelativeTimeTone): string {
@@ -560,6 +571,10 @@ export default function PromotionPage() {
     });
   }, [buyEvents]);
 
+  const settlementBuyEvents = useMemo(() => {
+    return sortedBuyEvents.filter((item) => isSettlementBuyEvent(item.data));
+  }, [sortedBuyEvents]);
+
   const latestBank = sortedBankEvents[0];
   const latestBuy = sortedBuyEvents[0];
 
@@ -569,6 +584,9 @@ export default function PromotionPage() {
     let confirmedCount = 0;
     let pendingCount = 0;
     let totalUsdt = 0;
+    let settlementCount = 0;
+    let settlementUsdt = 0;
+    let settlementKrw = 0;
 
     for (const item of sortedBankEvents) {
       if (item.data.transactionType === "deposited") {
@@ -589,6 +607,12 @@ export default function PromotionPage() {
       ) {
         pendingCount += 1;
       }
+
+      if (isSettlementBuyEvent(item.data)) {
+        settlementCount += 1;
+        settlementUsdt += Number(item.data.amountUsdt || 0);
+        settlementKrw += Number(item.data.amountKrw || 0);
+      }
     }
 
     return {
@@ -598,6 +622,9 @@ export default function PromotionPage() {
       confirmedCount,
       pendingCount,
       totalUsdt,
+      settlementCount,
+      settlementUsdt,
+      settlementKrw,
     };
   }, [sortedBankEvents, sortedBuyEvents]);
 
@@ -625,6 +652,13 @@ export default function PromotionPage() {
           item.data.store?.name || "Unknown Store"
         }`,
       })),
+      ...settlementBuyEvents.slice(0, 6).map((item) => ({
+        id: `settlement-${item.id}`,
+        timestamp: getEventTimestamp(item.data.publishedAt, item.receivedAt),
+        text: `[Settlement] ${formatUsdt(item.data.amountUsdt)} USDT / ${
+          item.data.store?.name || "Unknown Store"
+        }`,
+      })),
     ].sort((left, right) => right.timestamp - left.timestamp);
 
     if (merged.length === 0) {
@@ -633,7 +667,7 @@ export default function PromotionPage() {
 
     const labels = merged.map((item) => item.text);
     return [...labels, ...labels];
-  }, [sortedBankEvents, sortedBuyEvents]);
+  }, [sortedBankEvents, sortedBuyEvents, settlementBuyEvents]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#030711] text-slate-100">
@@ -668,17 +702,23 @@ export default function PromotionPage() {
               >
                 BuyOrder
               </Link>
+              <Link
+                href={`/${lang}/realtime-settlement`}
+                className="rounded-xl border border-emerald-500/55 bg-emerald-500/14 px-3 py-1.5 text-sm text-emerald-100 transition hover:border-emerald-300/75 hover:bg-emerald-400/22"
+              >
+                Settlement
+              </Link>
             </div>
           </nav>
 
           <div className="relative mt-5 grid gap-5 lg:grid-cols-[1.25fr_1fr]">
             <div>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                <span className="promo-title-shine">실시간 신뢰</span>를 보여주는 금융 이벤트 홈
+                <span className="promo-title-shine">실시간 자금 흐름</span>을 공시 수준으로 보여주는 금융 대시보드 허브
               </h1>
               <p className="mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
-                입출금과 BuyOrder 상태 변화를 공개형 라이브 피드로 즉시 노출합니다. 방문자는 이
-                화면에서 핵심 지표를 확인하고, 상세 대시보드로 바로 이동할 수 있습니다.
+                입출금, 주문 상태, 정산 완료 이벤트를 단일 화면에서 동기화합니다. 운영 지표를
+                실시간으로 노출해 결제 신뢰도와 정산 투명성을 동시에 홍보할 수 있습니다.
               </p>
 
               <div className="mt-5 flex flex-wrap gap-3">
@@ -693,6 +733,12 @@ export default function PromotionPage() {
                   className="rounded-xl border border-emerald-300/70 bg-emerald-400/20 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-300/28"
                 >
                   BuyOrder 라이브 보기
+                </Link>
+                <Link
+                  href={`/${lang}/realtime-settlement`}
+                  className="rounded-xl border border-emerald-300/70 bg-emerald-500/24 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:-translate-y-0.5 hover:bg-emerald-400/34"
+                >
+                  정산 라이브 보기
                 </Link>
               </div>
 
@@ -735,11 +781,11 @@ export default function PromotionPage() {
                 <p className="mt-2 text-xs text-sky-300/80">BuyOrder 기준</p>
               </article>
               <article className="rounded-2xl border border-amber-500/45 bg-amber-950/35 p-4 shadow-lg shadow-black/25">
-                <p className="text-xs uppercase tracking-[0.08em] text-amber-200">진행중</p>
+                <p className="text-xs uppercase tracking-[0.08em] text-amber-200">정산완료</p>
                 <p className="mt-2 text-3xl font-semibold leading-none text-amber-50">
-                  {summary.pendingCount.toLocaleString("ko-KR")}
+                  {summary.settlementCount.toLocaleString("ko-KR")}
                 </p>
-                <p className="mt-2 text-xs text-amber-300/80">{formatUsdt(summary.totalUsdt)} USDT</p>
+                <p className="mt-2 text-xs text-amber-300/80">{formatUsdt(summary.settlementUsdt)} USDT</p>
               </article>
             </div>
           </div>
@@ -756,6 +802,72 @@ export default function PromotionPage() {
             {syncErrorMessage}
           </div>
         )}
+
+        <section className="overflow-hidden rounded-2xl border border-emerald-500/35 bg-[linear-gradient(135deg,rgba(6,78,59,0.5),rgba(2,6,23,0.9))] p-5 shadow-[0_16px_40px_-24px_rgba(16,185,129,0.65)]">
+          <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-emerald-200/90">Settlement Spotlight</p>
+              <h2 className="mt-1 text-xl font-semibold text-emerald-50">
+                정산 완료 흐름을 실시간 공개해 금융 신뢰를 강화합니다
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm text-emerald-100/85">
+                체결 이후 정산 반영까지의 이벤트를 분리 모니터링해 정산 지연 리스크를 즉시 확인할 수
+                있습니다. 공개형 정산 대시보드는 운영 투명성과 자금 처리 신뢰도를 동시에 전달합니다.
+              </p>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                  정산 이벤트 {summary.settlementCount.toLocaleString("ko-KR")}건
+                </span>
+                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                  {formatUsdt(summary.settlementUsdt)} USDT
+                </span>
+                <span className="rounded-lg border border-emerald-300/45 bg-emerald-500/14 px-2.5 py-1 text-xs text-emerald-100">
+                  {formatKrw(summary.settlementKrw)} KRW
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-emerald-300/40 bg-slate-950/65 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs uppercase tracking-[0.08em] text-emerald-200">Latest Settlement</p>
+                <Link
+                  href={`/${lang}/realtime-settlement`}
+                  className="rounded-lg border border-emerald-300/60 bg-emerald-500/18 px-2.5 py-1 text-xs font-semibold text-emerald-50 transition hover:bg-emerald-500/28"
+                >
+                  정산 대시보드 이동
+                </Link>
+              </div>
+
+              <ul className="mt-2 space-y-2">
+                {settlementBuyEvents.slice(0, 3).map((item) => (
+                  <li
+                    key={`spot-${item.id}`}
+                    className="rounded-lg border border-emerald-500/25 bg-emerald-500/8 px-2.5 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-xs text-emerald-50">
+                        {item.data.store?.name || "Unknown Store"}
+                      </span>
+                      <span className="font-mono text-[11px] text-emerald-200">
+                        {getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs).relativeLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm font-semibold text-emerald-100">
+                      {formatUsdt(item.data.amountUsdt)} USDT
+                    </p>
+                  </li>
+                ))}
+
+                {settlementBuyEvents.length === 0 && (
+                  <li className="rounded-lg border border-slate-700/70 bg-slate-900/70 px-2.5 py-3 text-xs text-slate-400">
+                    수신된 정산 이벤트가 없습니다.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section className="grid gap-4 xl:grid-cols-2">
           <article className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
@@ -965,7 +1077,7 @@ export default function PromotionPage() {
         <section className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
             <p className="font-semibold text-slate-100">실시간 이벤트 티커</p>
-            <p className="text-xs text-slate-400">두 채널의 최신 이벤트를 자동 순환 표시합니다.</p>
+            <p className="text-xs text-slate-400">입출금/주문/정산 이벤트를 자동 순환 표시합니다.</p>
           </div>
           <div className="overflow-hidden px-3 py-3">
             <div className="promo-marquee-track">

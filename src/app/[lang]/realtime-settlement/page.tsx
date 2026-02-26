@@ -19,10 +19,10 @@ type RealtimeItem = {
   highlightUntil: number;
 };
 
-const MAX_EVENTS = 150;
-const RESYNC_LIMIT = 120;
-const RESYNC_INTERVAL_MS = 12_000;
-const NEW_EVENT_HIGHLIGHT_MS = 3_600;
+const MAX_EVENTS = 180;
+const RESYNC_LIMIT = 140;
+const RESYNC_INTERVAL_MS = 10_000;
+const NEW_EVENT_HIGHLIGHT_MS = 4_200;
 const TIME_AGO_TICK_MS = 5_000;
 
 function toTimestamp(value: string | null | undefined): number {
@@ -31,6 +31,15 @@ function toTimestamp(value: string | null | undefined): number {
   }
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function isSettlementEvent(event: BuyOrderStatusRealtimeEvent): boolean {
+  const source = String(event.source || "").toLowerCase();
+  return (
+    event.statusTo === "paymentSettled" ||
+    event.statusFrom === "paymentSettled" ||
+    source.includes("settlement")
+  );
 }
 
 function getStatusLabel(status: string | null | undefined): string {
@@ -43,10 +52,10 @@ function getStatusLabel(status: string | null | undefined): string {
       return "결제요청";
     case "paymentConfirmed":
       return "결제완료";
-    case "cancelled":
-      return "취소";
     case "paymentSettled":
       return "정산완료";
+    case "cancelled":
+      return "취소";
     default:
       return String(status || "-");
   }
@@ -54,18 +63,18 @@ function getStatusLabel(status: string | null | undefined): string {
 
 function getStatusClassName(status: string | null | undefined): string {
   switch (status) {
+    case "paymentSettled":
+      return "border border-emerald-300/65 bg-emerald-500/20 text-emerald-50";
     case "paymentConfirmed":
-      return "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200";
+      return "border border-cyan-300/55 bg-cyan-500/18 text-cyan-100";
     case "paymentRequested":
-      return "border border-amber-400/35 bg-amber-500/15 text-amber-200";
+      return "border border-amber-300/55 bg-amber-500/18 text-amber-100";
     case "accepted":
-      return "border border-sky-400/35 bg-sky-500/15 text-sky-200";
+      return "border border-sky-300/55 bg-sky-500/18 text-sky-100";
     case "cancelled":
-      return "border border-rose-400/35 bg-rose-500/15 text-rose-200";
-    case "ordered":
-      return "border border-slate-500/40 bg-slate-700/45 text-slate-100";
+      return "border border-rose-300/55 bg-rose-500/18 text-rose-100";
     default:
-      return "border border-zinc-500/35 bg-zinc-700/45 text-zinc-200";
+      return "border border-slate-500/45 bg-slate-700/50 text-slate-100";
   }
 }
 
@@ -108,36 +117,36 @@ function maskAccountNumber(value: string | null | undefined): string {
   return `${head.replace(/[0-9A-Za-z가-힣]/g, "*")}${tail}`;
 }
 
-function formatShortHash(value: string | null | undefined): string {
-  const hash = String(value || "").trim();
-  if (!hash) {
-    return "-";
-  }
-  if (hash.length <= 20) {
-    return hash;
-  }
-  return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
-}
-
 function formatShortWalletAddress(value: string | null | undefined): string {
   const address = String(value || "").trim();
   if (!address) {
     return "-";
   }
-  if (address.length <= 14) {
+  if (address.length <= 16) {
     return address;
   }
-  return `${address.slice(0, 8)}...${address.slice(-6)}`;
+  return `${address.slice(0, 10)}...${address.slice(-6)}`;
+}
+
+function formatShortHash(value: string | null | undefined): string {
+  const hash = String(value || "").trim();
+  if (!hash) {
+    return "-";
+  }
+  if (hash.length <= 24) {
+    return hash;
+  }
+  return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
 }
 
 function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   switch (tone) {
     case "live":
-      return "animate-pulse border-cyan-300/75 bg-cyan-400/22 text-cyan-50 shadow-[0_0_0_1px_rgba(34,211,238,0.3),0_0_16px_rgba(34,211,238,0.24)]";
+      return "animate-pulse border-emerald-300/75 bg-emerald-400/23 text-emerald-50 shadow-[0_0_0_1px_rgba(52,211,153,0.32),0_0_16px_rgba(52,211,153,0.22)]";
     case "fresh":
-      return "border-teal-300/65 bg-teal-400/18 text-teal-50 shadow-[0_0_0_1px_rgba(45,212,191,0.2)]";
+      return "border-teal-300/65 bg-teal-400/18 text-teal-50";
     case "recent":
-      return "border-sky-300/55 bg-sky-400/14 text-sky-100";
+      return "border-cyan-300/55 bg-cyan-400/15 text-cyan-100";
     case "normal":
       return "border-slate-500/50 bg-slate-700/55 text-slate-100";
     default:
@@ -145,7 +154,7 @@ function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   }
 }
 
-export default function RealtimeBuyOrderPage() {
+export default function RealtimeSettlementPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
 
@@ -160,7 +169,7 @@ export default function RealtimeBuyOrderPage() {
   const cursorRef = useRef<string | null>(null);
 
   const clientId = useMemo(() => {
-    return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
+    return `settlement-dashboard-${Math.random().toString(36).slice(2, 10)}`;
   }, []);
 
   const updateCursor = useCallback((nextCursor: string | null | undefined) => {
@@ -196,7 +205,6 @@ export default function RealtimeBuyOrderPage() {
             `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
           const existing = map.get(nextId);
-
           if (existing) {
             map.set(nextId, {
               ...existing,
@@ -220,7 +228,6 @@ export default function RealtimeBuyOrderPage() {
             toTimestamp(left.data.publishedAt || left.receivedAt)
           );
         });
-
         return merged.slice(0, MAX_EVENTS);
       });
 
@@ -263,7 +270,8 @@ export default function RealtimeBuyOrderPage() {
             ? (data.events as BuyOrderStatusRealtimeEvent[])
             : [];
 
-          upsertRealtimeEvents(incomingEvents, { highlightNew: Boolean(since) });
+          const settlementEvents = incomingEvents.filter(isSettlementEvent);
+          upsertRealtimeEvents(settlementEvents, { highlightNew: Boolean(since) });
           updateCursor(typeof data.nextCursor === "string" ? data.nextCursor : null);
           setSyncErrorMessage(null);
           setIsSyncing(false);
@@ -303,6 +311,10 @@ export default function RealtimeBuyOrderPage() {
 
     const onMessage = (message: Ably.Message) => {
       const data = message.data as BuyOrderStatusRealtimeEvent;
+      if (!isSettlementEvent(data)) {
+        return;
+      }
+
       upsertRealtimeEvents(
         [
           {
@@ -363,10 +375,7 @@ export default function RealtimeBuyOrderPage() {
       setEvents((previous) => {
         const current = Date.now();
         return previous.map((item) => {
-          if (item.highlightUntil > current) {
-            return item;
-          }
-          if (item.highlightUntil === 0) {
+          if (item.highlightUntil > current || item.highlightUntil === 0) {
             return item;
           }
           return {
@@ -392,119 +401,110 @@ export default function RealtimeBuyOrderPage() {
   }, [events]);
 
   const summary = useMemo(() => {
-    const counts = new Map<string, number>();
     let totalKrw = 0;
     let totalUsdt = 0;
+    let settledCount = 0;
+    let txCount = 0;
+    let escrowTxCount = 0;
 
     for (const item of sortedEvents) {
-      const status = String(item.data.statusTo || "unknown");
-      counts.set(status, (counts.get(status) || 0) + 1);
       totalKrw += Number(item.data.amountKrw || 0);
       totalUsdt += Number(item.data.amountUsdt || 0);
+
+      if (item.data.statusTo === "paymentSettled") {
+        settledCount += 1;
+      }
+      if (item.data.transactionHash) {
+        txCount += 1;
+      }
+      if (item.data.escrowTransactionHash) {
+        escrowTxCount += 1;
+      }
     }
 
-    const pendingCount =
-      (counts.get("ordered") || 0) +
-      (counts.get("accepted") || 0) +
-      (counts.get("paymentRequested") || 0);
-
+    const total = Math.max(1, sortedEvents.length);
     return {
+      totalEvents: sortedEvents.length,
       totalKrw,
       totalUsdt,
-      pendingCount,
-      confirmedCount: counts.get("paymentConfirmed") || 0,
-      cancelledCount: counts.get("cancelled") || 0,
-      latestStatus: sortedEvents[0]?.data.statusTo || "-",
+      settledCount,
+      txCount,
+      escrowTxCount,
+      txCoverage: Math.round((txCount / total) * 1000) / 10,
+      escrowCoverage: Math.round((escrowTxCount / total) * 1000) / 10,
+      latestStore:
+        sortedEvents[0]?.data.store?.name ||
+        sortedEvents[0]?.data.store?.code ||
+        "Unknown",
     };
   }, [sortedEvents]);
 
-  const metricCards = useMemo(() => {
-    const total = Math.max(1, sortedEvents.length);
-    const toRatio = (count: number) => Math.round((count / total) * 1000) / 10;
+  const metricCards = [
+    {
+      key: "total",
+      title: "정산 이벤트",
+      value: summary.totalEvents.toLocaleString("ko-KR"),
+      sub: "Settlement 관련 수신",
+      tone: "emerald",
+    },
+    {
+      key: "usdt",
+      title: "총 정산 USDT",
+      value: `${formatUsdt(summary.totalUsdt)} USDT`,
+      sub: "온체인 정산 규모",
+      tone: "cyan",
+    },
+    {
+      key: "krw",
+      title: "총 정산 KRW",
+      value: `${formatKrw(summary.totalKrw)} KRW`,
+      sub: "원화 환산 합계",
+      tone: "slate",
+    },
+    {
+      key: "coverage",
+      title: "해시 추적률",
+      value: `${summary.txCoverage.toFixed(1)}%`,
+      sub: `Escrow ${summary.escrowCoverage.toFixed(1)}%`,
+      tone: "amber",
+    },
+  ] as const;
 
-    return [
-      {
-        key: "total",
-        title: "총 이벤트",
-        value: sortedEvents.length,
-        ratio: 100,
-        tone: "slate",
-        subtext: "실시간 누적 수신",
-      },
-      {
-        key: "confirmed",
-        title: "결제완료",
-        value: summary.confirmedCount,
-        ratio: toRatio(summary.confirmedCount),
-        tone: "emerald",
-        subtext: "정상 완료 건수",
-      },
-      {
-        key: "pending",
-        title: "진행중(주문/매칭/요청)",
-        value: summary.pendingCount,
-        ratio: toRatio(summary.pendingCount),
-        tone: "amber",
-        subtext: "처리 대기/진행",
-      },
-      {
-        key: "cancelled",
-        title: "취소",
-        value: summary.cancelledCount,
-        ratio: toRatio(summary.cancelledCount),
-        tone: "rose",
-        subtext: "취소/중단 건수",
-      },
-    ] as const;
-  }, [sortedEvents.length, summary.cancelledCount, summary.confirmedCount, summary.pendingCount]);
-
-  function getMetricToneClassName(tone: "slate" | "emerald" | "amber" | "rose") {
+  function getMetricToneClassName(tone: "emerald" | "cyan" | "slate" | "amber") {
     if (tone === "emerald") {
       return {
-        card: "border-emerald-500/30 bg-emerald-950/25",
-        label: "text-emerald-200",
-        value: "text-emerald-100",
-        meta: "text-emerald-300/75",
-        bar: "bg-emerald-400/90",
-        rail: "bg-emerald-900/45",
-        dot: "bg-emerald-400",
+        card: "border-emerald-500/35 bg-emerald-950/30",
+        title: "text-emerald-200",
+        value: "text-emerald-50",
+        sub: "text-emerald-300/80",
+      };
+    }
+    if (tone === "cyan") {
+      return {
+        card: "border-cyan-500/35 bg-cyan-950/30",
+        title: "text-cyan-200",
+        value: "text-cyan-50",
+        sub: "text-cyan-300/80",
       };
     }
     if (tone === "amber") {
       return {
-        card: "border-amber-500/30 bg-amber-950/25",
-        label: "text-amber-200",
-        value: "text-amber-100",
-        meta: "text-amber-300/75",
-        bar: "bg-amber-400/90",
-        rail: "bg-amber-900/45",
-        dot: "bg-amber-400",
-      };
-    }
-    if (tone === "rose") {
-      return {
-        card: "border-rose-500/30 bg-rose-950/25",
-        label: "text-rose-200",
-        value: "text-rose-100",
-        meta: "text-rose-300/75",
-        bar: "bg-rose-400/90",
-        rail: "bg-rose-900/45",
-        dot: "bg-rose-400",
+        card: "border-amber-500/35 bg-amber-950/30",
+        title: "text-amber-200",
+        value: "text-amber-50",
+        sub: "text-amber-300/80",
       };
     }
     return {
       card: "border-slate-600/70 bg-slate-900/80",
-      label: "text-slate-200",
+      title: "text-slate-200",
       value: "text-slate-100",
-      meta: "text-slate-400",
-      bar: "bg-cyan-400/90",
-      rail: "bg-slate-700/70",
-      dot: "bg-cyan-300",
+      sub: "text-slate-400",
     };
   }
 
   return (
-    <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
+    <main className="w-full max-w-[1880px] space-y-5 text-slate-100">
       <nav className="flex flex-wrap items-center gap-2">
         <Link
           href={`/${lang}/promotion`}
@@ -519,32 +519,35 @@ export default function RealtimeBuyOrderPage() {
           Banktransfer
         </Link>
         <Link
-          href={`/${lang}/realtime-settlement`}
-          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-200"
+          href={`/${lang}/realtime-buyorder`}
+          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
         >
-          Settlement
-        </Link>
-        <span className="rounded-lg border border-cyan-500/45 bg-cyan-500/12 px-3 py-1.5 text-sm font-medium text-cyan-200">
           BuyOrder
+        </Link>
+        <span className="rounded-lg border border-emerald-500/45 bg-emerald-500/12 px-3 py-1.5 text-sm font-medium text-emerald-200">
+          Settlement
         </span>
       </nav>
 
-      <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
+      <section className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.2),_rgba(2,6,23,0.97)_54%)] p-6 shadow-[0_20px_70px_-24px_rgba(16,185,129,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-emerald-100">
+              Settlement Realtime Dashboard
+            </h1>
             <p className="mt-1 text-sm text-slate-300">
-              공개 대시보드입니다. 구매자 이름/계좌번호는 마스킹되어 표시됩니다.
+              BuyOrder 이벤트 중 정산 관련 항목만 선별해 실시간으로 표시합니다.
             </p>
-            <p className="mt-1 text-xs text-cyan-300/90">
-              Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BUYORDER_STATUS_ABLY_EVENT_NAME}</span>
+            <p className="mt-1 text-xs text-emerald-300/90">
+              Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event:{" "}
+              <span className="font-mono">{BUYORDER_STATUS_ABLY_EVENT_NAME}</span>
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => void syncFromApi(null)}
-            className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 transition hover:bg-cyan-500/20"
+            className="rounded-xl border border-emerald-400/45 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100 transition hover:bg-emerald-500/20"
           >
             재동기화
           </button>
@@ -552,16 +555,16 @@ export default function RealtimeBuyOrderPage() {
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Connection <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
+            Connection <span className="ml-2 font-semibold text-emerald-200">{connectionState}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Sync <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? "running" : "idle"}</span>
+            Sync <span className="ml-2 font-semibold text-emerald-200">{isSyncing ? "running" : "idle"}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Cursor <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
+            Cursor <span className="ml-2 break-all font-mono text-xs text-emerald-200">{cursor || "-"}</span>
           </div>
           <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
-            Last Status <span className="ml-2 font-semibold text-cyan-200">{getStatusLabel(summary.latestStatus)}</span>
+            Latest Store <span className="ml-2 font-semibold text-emerald-200">{summary.latestStore}</span>
           </div>
         </div>
       </section>
@@ -581,91 +584,65 @@ export default function RealtimeBuyOrderPage() {
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metricCards.map((metric) => {
           const tone = getMetricToneClassName(metric.tone);
-
           return (
             <article
               key={metric.key}
-              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-20px_rgba(8,145,178,0.38)] ${tone.card}`}
+              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)] transition-all duration-300 hover:-translate-y-0.5 ${tone.card}`}
             >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/5 blur-2xl" />
-
-              <div className="relative flex items-start justify-between gap-2">
-                <p className={`text-xs uppercase tracking-[0.08em] ${tone.label}`}>{metric.title}</p>
-                <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
-              </div>
-
-              <p className={`relative mt-2 text-3xl font-semibold leading-none tabular-nums ${tone.value}`}>
-                {metric.value.toLocaleString("ko-KR")}
+              <p className={`text-xs uppercase tracking-[0.08em] ${tone.title}`}>{metric.title}</p>
+              <p className={`mt-2 text-2xl font-semibold leading-tight tabular-nums ${tone.value}`}>
+                {metric.value}
               </p>
-
-              <div className="relative mt-3 flex items-center justify-between text-xs">
-                <span className={tone.meta}>{metric.subtext}</span>
-                <span className={`${tone.label} font-medium tabular-nums`}>
-                  {metric.key === "total" ? "100.0%" : `${metric.ratio.toFixed(1)}%`}
-                </span>
-              </div>
-
-              <div className={`relative mt-2 h-1.5 overflow-hidden rounded-full ${tone.rail}`}>
-                <div
-                  className={`h-full rounded-full ${tone.bar} transition-all duration-500`}
-                  style={{
-                    width: `${Math.max(
-                      4,
-                      Math.min(100, metric.key === "total" ? 100 : metric.ratio),
-                    )}%`,
-                  }}
-                />
-              </div>
+              <p className={`mt-2 text-xs ${tone.sub}`}>{metric.sub}</p>
             </article>
           );
         })}
       </section>
 
-      <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <section className="grid gap-3 xl:grid-cols-[380px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-slate-400">누적 금액</p>
-          <div className="mt-3 rounded-xl border border-cyan-400/45 bg-cyan-500/10 px-3 py-3 shadow-[inset_0_0_24px_rgba(34,211,238,0.12)]">
-            <p className="text-[11px] uppercase tracking-[0.1em] text-cyan-300/90">USDT Total</p>
-            <p className="mt-1 text-3xl font-bold leading-none tabular-nums text-cyan-100 drop-shadow-[0_0_12px_rgba(34,211,238,0.3)]">
+          <p className="text-xs uppercase tracking-wide text-slate-400">정산 모니터링</p>
+          <div className="mt-3 rounded-xl border border-emerald-400/45 bg-emerald-500/10 px-3 py-3 shadow-[inset_0_0_24px_rgba(16,185,129,0.12)]">
+            <p className="text-[11px] uppercase tracking-[0.1em] text-emerald-300/90">Settlement USDT</p>
+            <p className="mt-1 text-3xl font-bold leading-none tabular-nums text-emerald-100 drop-shadow-[0_0_12px_rgba(16,185,129,0.3)]">
               {formatUsdt(summary.totalUsdt)}
-              <span className="ml-1 text-base font-semibold text-cyan-200">USDT</span>
+              <span className="ml-1 text-base font-semibold text-emerald-200">USDT</span>
             </p>
           </div>
           <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">KRW Total</p>
+            <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">Settlement KRW</p>
             <p className="mt-1 text-lg font-semibold tabular-nums text-slate-200">
               {formatKrw(summary.totalKrw)} KRW
             </p>
           </div>
-          <div className="mt-4 rounded-xl border border-slate-700/80 bg-slate-950/70 p-3 text-xs text-slate-400">
-            이벤트 기준 합계이며 정산 데이터와 다를 수 있습니다.
+          <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2 text-xs text-slate-400">
+            거래 완료 후 정산 반영 이벤트만 추적합니다.
           </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
-            <p className="font-semibold text-slate-100">실시간 상태 변경</p>
+            <p className="font-semibold text-slate-100">실시간 정산 이벤트</p>
             <p className="text-xs text-slate-400">최신 이벤트 순</p>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-[1360px] border-collapse text-sm">
+            <table className="min-w-[1480px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
                   <th className="w-[190px] px-3 py-2">시간</th>
                   <th className="w-[280px] px-3 py-2">상태</th>
-                  <th className="w-[180px] px-3 py-2 text-right">금액</th>
-                  <th className="w-[140px] px-3 py-2">구매자</th>
-                  <th className="w-[170px] px-3 py-2">계좌</th>
+                  <th className="w-[190px] px-3 py-2 text-right">정산 금액</th>
+                  <th className="w-[220px] px-3 py-2">구매자</th>
                   <th className="w-[260px] px-3 py-2">스토어</th>
-                  <th className="w-[420px] px-3 py-2">내역</th>
+                  <th className="w-[460px] px-3 py-2">정산 참조</th>
                 </tr>
               </thead>
               <tbody>
                 {sortedEvents.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
-                      아직 수신된 이벤트가 없습니다.
+                    <td colSpan={6} className="px-3 py-8 text-center text-slate-500">
+                      아직 수신된 정산 이벤트가 없습니다.
                     </td>
                   </tr>
                 )}
@@ -681,7 +658,7 @@ export default function RealtimeBuyOrderPage() {
                       key={item.id}
                       className={`border-b border-slate-800/80 align-top transition-all duration-500 ${
                         isHighlighted
-                          ? "animate-pulse bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.32)]"
+                          ? "animate-pulse bg-emerald-500/10 shadow-[inset_0_0_0_1px_rgba(52,211,153,0.32)]"
                           : "hover:bg-slate-900/55"
                       }`}
                     >
@@ -693,7 +670,7 @@ export default function RealtimeBuyOrderPage() {
                         </div>
                         <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
                         {isHighlighted && (
-                          <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
+                          <span className="mt-1 inline-flex rounded-md border border-emerald-400/40 bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-100">
                             NEW
                           </span>
                         )}
@@ -712,7 +689,7 @@ export default function RealtimeBuyOrderPage() {
                       </td>
 
                       <td className="px-3 py-3 text-right">
-                        <div className="text-lg font-semibold leading-tight text-cyan-200">
+                        <div className="text-lg font-semibold leading-tight text-emerald-200">
                           {formatUsdt(item.data.amountUsdt)} USDT
                         </div>
                         <div className="mt-1 text-xs text-slate-400">
@@ -724,14 +701,16 @@ export default function RealtimeBuyOrderPage() {
                         <div className="flex flex-col">
                           <span className="text-slate-200">{maskName(item.data.buyerName)}</span>
                           <span
-                            className="mt-1 font-mono text-[11px] text-cyan-200"
+                            className="mt-1 font-mono text-[11px] text-emerald-200"
                             title={item.data.buyerWalletAddress || ""}
                           >
                             {formatShortWalletAddress(item.data.buyerWalletAddress)}
                           </span>
+                          <span className="mt-1 font-mono text-[11px] text-slate-400">
+                            {maskAccountNumber(item.data.buyerAccountNumber)}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-300">{maskAccountNumber(item.data.buyerAccountNumber)}</td>
 
                       <td className="px-3 py-3">
                         {item.data.store ? (
@@ -759,7 +738,7 @@ export default function RealtimeBuyOrderPage() {
                       </td>
 
                       <td className="px-3 py-3">
-                        <div className="font-mono text-xs text-cyan-200">TID: {item.data.tradeId || "-"}</div>
+                        <div className="font-mono text-xs text-emerald-200">TID: {item.data.tradeId || "-"}</div>
                         <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {item.data.orderId || "-"}</div>
                         <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {item.data.source || "-"}</div>
                         <div className="mt-1 font-mono text-[11px] text-violet-200" title={item.data.transactionHash || ""}>
@@ -768,12 +747,8 @@ export default function RealtimeBuyOrderPage() {
                         <div className="mt-1 font-mono text-[11px] text-blue-200" title={item.data.escrowTransactionHash || ""}>
                           Escrow TX: {formatShortHash(item.data.escrowTransactionHash)}
                         </div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-400">
-                          Queue: {item.data.queueId || "-"}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">
-                          Mined: {item.data.minedAt || "-"}
-                        </div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-400">Queue: {item.data.queueId || "-"}</div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-500">Mined: {item.data.minedAt || "-"}</div>
                         {item.data.reason ? (
                           <div className="mt-1 truncate text-xs text-rose-300">{item.data.reason}</div>
                         ) : (
