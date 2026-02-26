@@ -6,9 +6,17 @@ import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 import { inAppWallet } from "thirdweb/wallets";
 import { getUserEmail, getUserPhoneNumber } from "thirdweb/wallets/in-app";
+import { getContract, sendTransaction, waitForReceipt } from "thirdweb";
+import { transfer, balanceOf } from "thirdweb/extensions/erc20";
 
 import { client } from "@/app/client";
-import { chain as configuredChain } from "@/app/config/contractAddresses";
+import {
+  chain as configuredChain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+} from "@/app/config/contractAddresses";
 
 const STORECODE = "admin";
 const DEFAULT_AVATAR = "/profile-default.png";
@@ -31,6 +39,17 @@ const promotionChain =
         ? bsc
         : arbitrum;
 
+const usdtContractAddress =
+  configuredChain === "ethereum"
+    ? ethereumContractAddressUSDT
+    : configuredChain === "polygon"
+      ? polygonContractAddressUSDT
+      : configuredChain === "bsc"
+        ? bscContractAddressUSDT
+        : arbitrumContractAddressUSDT;
+
+const usdtDecimals = configuredChain === "bsc" ? 18 : 6;
+
 type UserProfile = {
   id?: string | number;
   nickname?: string;
@@ -38,6 +57,7 @@ type UserProfile = {
   walletAddress?: string;
   mobile?: string;
   email?: string;
+  escrowWalletAddress?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -83,6 +103,16 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
   const activeAccount = useActiveAccount();
   const walletAddress = activeAccount?.address || "";
 
+  const contract = useMemo(
+    () =>
+      getContract({
+        client,
+        chain: promotionChain,
+        address: usdtContractAddress,
+      }),
+    [],
+  );
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [nicknameInput, setNicknameInput] = useState("");
   const [avatarInput, setAvatarInput] = useState(DEFAULT_AVATAR);
@@ -95,18 +125,30 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
   const [connectedEmail, setConnectedEmail] = useState("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUploadMessage, setAvatarUploadMessage] = useState<string | null>(null);
+  const [escrowWalletAddress, setEscrowWalletAddress] = useState("");
+  const [escrowBalance, setEscrowBalance] = useState<number | null>(null);
+  const [escrowBalanceLoading, setEscrowBalanceLoading] = useState(false);
+  const [creatingEscrowWallet, setCreatingEscrowWallet] = useState(false);
+  const [depositAmountInput, setDepositAmountInput] = useState("");
+  const [depositingEscrow, setDepositingEscrow] = useState(false);
+  const [withdrawingEscrow, setWithdrawingEscrow] = useState(false);
+  const [escrowActionMessage, setEscrowActionMessage] = useState<string | null>(null);
 
   const nickname = useMemo(() => sanitizeNickname(nicknameInput), [nicknameInput]);
   const avatar = useMemo(() => avatarInput.trim() || DEFAULT_AVATAR, [avatarInput]);
   const nicknameValid = useMemo(() => isValidNickname(nickname), [nickname]);
   const avatarValid = useMemo(() => isValidAvatarUrl(avatarInput), [avatarInput]);
   const canSave = !!walletAddress && nicknameValid && avatarValid && !saving && !uploadingAvatar;
+  const parsedDepositAmount = Number(depositAmountInput);
+  const depositAmountValid = Number.isFinite(parsedDepositAmount) && parsedDepositAmount > 0;
 
   const fetchProfile = useCallback(async () => {
     if (!walletAddress) {
       setProfile(null);
       setNicknameInput("");
       setAvatarInput(DEFAULT_AVATAR);
+      setEscrowWalletAddress("");
+      setEscrowBalance(null);
       setLoadingProfile(false);
       return;
     }
@@ -136,11 +178,14 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
       setProfile(nextProfile);
       setNicknameInput(nextProfile?.nickname || "");
       setAvatarInput(nextProfile?.avatar || DEFAULT_AVATAR);
+      setEscrowWalletAddress(String(nextProfile?.escrowWalletAddress || "").trim());
       setErrorMessage(null);
     } catch (error) {
       setProfile(null);
       setNicknameInput("");
       setAvatarInput(DEFAULT_AVATAR);
+      setEscrowWalletAddress("");
+      setEscrowBalance(null);
       setErrorMessage(error instanceof Error ? error.message : "사용자 정보를 불러오지 못했습니다.");
     } finally {
       setLoadingProfile(false);
@@ -224,6 +269,222 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
       setUploadingAvatar(false);
     }
   }, []);
+
+  const fetchEscrowBalance = useCallback(
+    async (nextEscrowWalletAddress?: string) => {
+      const targetAddress = String(nextEscrowWalletAddress || escrowWalletAddress || "").trim();
+      if (!walletAddress || !targetAddress) {
+        setEscrowBalance(null);
+        setEscrowBalanceLoading(false);
+        return;
+      }
+
+      setEscrowBalanceLoading(true);
+      try {
+        const raw = await balanceOf({
+          contract,
+          address: targetAddress,
+        });
+
+        const normalized = Number(raw) / 10 ** usdtDecimals;
+        setEscrowBalance(Number.isFinite(normalized) ? normalized : 0);
+      } catch (error) {
+        console.error("failed to fetch escrow balance", error);
+        setEscrowBalance(0);
+      } finally {
+        setEscrowBalanceLoading(false);
+      }
+    },
+    [contract, escrowWalletAddress, walletAddress],
+  );
+
+  useEffect(() => {
+    void fetchEscrowBalance();
+  }, [fetchEscrowBalance]);
+
+  useEffect(() => {
+    if (!walletAddress || !escrowWalletAddress) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      void fetchEscrowBalance();
+    }, 15_000);
+    return () => window.clearInterval(timer);
+  }, [escrowWalletAddress, fetchEscrowBalance, walletAddress]);
+
+  const createEscrowWallet = useCallback(async () => {
+    setEscrowActionMessage(null);
+
+    if (!walletAddress) {
+      setEscrowActionMessage("지갑 연결 후 에스크로 지갑을 생성할 수 있습니다.");
+      return;
+    }
+
+    if (!profile?.id && !profile?.nickname) {
+      setEscrowActionMessage("먼저 회원정보를 저장한 후 에스크로 지갑을 생성하세요.");
+      return;
+    }
+
+    setCreatingEscrowWallet(true);
+    try {
+      const response = await fetch("/api/order/getEscrowWalletAddress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lang: params.lang,
+          storecode: STORECODE,
+          walletAddress,
+          isSmartAccount: true,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        result?: {
+          escrowWalletAddress?: string;
+          existed?: boolean;
+        } | null;
+        error?: string;
+      };
+
+      if (!response.ok || !data.result?.escrowWalletAddress) {
+        throw new Error(data.error || "에스크로 지갑 생성에 실패했습니다.");
+      }
+
+      const nextEscrowAddress = String(data.result.escrowWalletAddress).trim();
+      setEscrowWalletAddress(nextEscrowAddress);
+      setEscrowActionMessage(
+        data.result.existed
+          ? "기존 에스크로 지갑을 불러왔습니다."
+          : "회원 에스크로 지갑이 생성되었습니다.",
+      );
+      await fetchProfile();
+      await fetchEscrowBalance(nextEscrowAddress);
+    } catch (error) {
+      setEscrowActionMessage(
+        error instanceof Error ? error.message : "에스크로 지갑 생성 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setCreatingEscrowWallet(false);
+    }
+  }, [fetchEscrowBalance, fetchProfile, params.lang, profile?.id, profile?.nickname, walletAddress]);
+
+  const depositToEscrow = useCallback(async () => {
+    setEscrowActionMessage(null);
+
+    if (!walletAddress || !activeAccount) {
+      setEscrowActionMessage("지갑 연결 후 충전할 수 있습니다.");
+      return;
+    }
+
+    if (!escrowWalletAddress) {
+      setEscrowActionMessage("먼저 에스크로 지갑을 생성하세요.");
+      return;
+    }
+
+    if (!depositAmountValid) {
+      setEscrowActionMessage("충전 수량(USDT)을 올바르게 입력하세요.");
+      return;
+    }
+
+    setDepositingEscrow(true);
+    try {
+      const transaction = transfer({
+        contract,
+        to: escrowWalletAddress,
+        amount: parsedDepositAmount,
+      });
+
+      const { transactionHash } = await sendTransaction({
+        transaction,
+        account: activeAccount as any,
+      });
+
+      if (!transactionHash) {
+        throw new Error("트랜잭션 해시를 확인하지 못했습니다.");
+      }
+
+      await waitForReceipt({
+        client,
+        chain: promotionChain,
+        transactionHash,
+      });
+
+      setDepositAmountInput("");
+      setEscrowActionMessage(`충전이 완료되었습니다. TX: ${transactionHash}`);
+      await fetchEscrowBalance();
+    } catch (error) {
+      setEscrowActionMessage(
+        error instanceof Error ? error.message : "에스크로 충전 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setDepositingEscrow(false);
+    }
+  }, [
+    activeAccount,
+    contract,
+    depositAmountValid,
+    escrowWalletAddress,
+    fetchEscrowBalance,
+    parsedDepositAmount,
+    walletAddress,
+  ]);
+
+  const withdrawEscrowAll = useCallback(async () => {
+    setEscrowActionMessage(null);
+
+    if (!walletAddress) {
+      setEscrowActionMessage("지갑 연결 후 회수할 수 있습니다.");
+      return;
+    }
+
+    if (!escrowWalletAddress) {
+      setEscrowActionMessage("먼저 에스크로 지갑을 생성하세요.");
+      return;
+    }
+
+    setWithdrawingEscrow(true);
+    try {
+      const response = await fetch("/api/user/withdrawEscrowAllToWallet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          storecode: STORECODE,
+          walletAddress,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        result?: {
+          amountUsdt?: string;
+          transactionHash?: string | null;
+        } | null;
+        error?: string;
+      };
+
+      if (!response.ok || !data.result) {
+        throw new Error(data.error || "에스크로 회수에 실패했습니다.");
+      }
+
+      const amountText = String(data.result.amountUsdt || "0");
+      if (!data.result.transactionHash) {
+        setEscrowActionMessage(`회수할 에스크로 잔고가 없습니다. (잔고 ${amountText} USDT)`);
+      } else {
+        setEscrowActionMessage(`에스크로 전액 ${amountText} USDT 회수가 완료되었습니다.`);
+      }
+
+      await fetchEscrowBalance();
+    } catch (error) {
+      setEscrowActionMessage(
+        error instanceof Error ? error.message : "에스크로 회수 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setWithdrawingEscrow(false);
+    }
+  }, [escrowWalletAddress, fetchEscrowBalance, walletAddress]);
 
   const saveProfile = useCallback(async () => {
     setTouched(true);
@@ -429,6 +690,82 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
                   {connectedEmail || "-"}
                 </p>
               </div>
+            </section>
+
+            <section className="rounded-3xl border border-cyan-200/80 bg-white p-4 shadow-[0_16px_34px_-26px_rgba(2,132,199,0.55)]">
+              <h2 className="text-sm font-semibold text-slate-900">회원 에스크로 지갑 (Server Smart Wallet)</h2>
+              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                <p className="font-semibold text-slate-700">에스크로 지갑 주소</p>
+                <p className="mt-1 break-all font-mono text-[11px] text-slate-700">
+                  {escrowWalletAddress || "-"}
+                </p>
+                <p className="mt-3 font-semibold text-slate-700">에스크로 잔고</p>
+                <p className="mt-1 text-lg font-bold text-slate-900">
+                  {escrowBalanceLoading
+                    ? "조회중..."
+                    : `${(escrowBalance ?? 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 6,
+                      })} USDT`}
+                </p>
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => void createEscrowWallet()}
+                  disabled={creatingEscrowWallet || !walletAddress}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0c4a6e,#0369a1)] text-sm font-bold text-white shadow-[0_16px_28px_-20px_rgba(2,132,199,0.9)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {creatingEscrowWallet ? "에스크로 지갑 생성중..." : "회원 에스크로 지갑 생성"}
+                </button>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold text-slate-700">내 지갑 → 에스크로 지갑 충전</p>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      value={depositAmountInput}
+                      onChange={(event) => {
+                        const sanitized = event.target.value.replace(/[^\d.]/g, "");
+                        const normalized = sanitized.replace(/(\..*)\./g, "$1");
+                        setDepositAmountInput(normalized);
+                      }}
+                      placeholder="충전 수량 (USDT)"
+                      inputMode="decimal"
+                      className="h-10 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void depositToEscrow()}
+                      disabled={
+                        depositingEscrow ||
+                        creatingEscrowWallet ||
+                        withdrawingEscrow ||
+                        !escrowWalletAddress ||
+                        !depositAmountValid
+                      }
+                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg border border-cyan-600 bg-cyan-600 px-3 text-xs font-semibold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {depositingEscrow ? "충전중..." : "충전하기"}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void withdrawEscrowAll()}
+                  disabled={withdrawingEscrow || creatingEscrowWallet || !escrowWalletAddress}
+                  className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-amber-500 bg-amber-500/10 text-sm font-bold text-amber-700 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {withdrawingEscrow ? "회수중..." : "에스크로 전액 회수하기"}
+                </button>
+              </div>
+
+              {escrowActionMessage && (
+                <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  {escrowActionMessage}
+                </div>
+              )}
             </section>
 
             <section className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)]">

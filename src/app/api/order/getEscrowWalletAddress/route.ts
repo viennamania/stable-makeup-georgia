@@ -1,140 +1,119 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createThirdwebClient } from "thirdweb";
+import { smartWallet, privateKeyToAccount } from "thirdweb/wallets";
+import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
+import { ethers } from "ethers";
 
 import {
-  UserProps,
   getOneByWalletAddress,
-
   setEscrowWalletAddressByWalletAddress,
+} from "@lib/api/user";
+import { chain as configuredChain } from "@/app/config/contractAddresses";
 
-} from '@lib/api/user';
+const serverWalletChain =
+  configuredChain === "ethereum"
+    ? ethereum
+    : configuredChain === "polygon"
+      ? polygon
+      : configuredChain === "bsc"
+        ? bsc
+        : arbitrum;
 
+async function resolveSmartWalletAddress(client: ReturnType<typeof createThirdwebClient>, privateKey: string) {
+  const personalAccount = privateKeyToAccount({
+    client,
+    privateKey,
+  });
 
-//import { ethers } from "ethers";
+  const wallet = smartWallet({
+    chain: serverWalletChain,
+    sponsorGas: true,
+  });
 
-import {
-  createThirdwebClient,
-  eth_getTransactionByHash,
-  getContract,
-  sendAndConfirmTransaction,
-  
-  sendBatchTransaction,
+  const account = await wallet.connect({
+    client,
+    personalAccount,
+  });
 
-
-} from "thirdweb";
-
-//import { polygonAmoy } from "thirdweb/chains";
-import {
-  polygon,
-  arbitrum,
- } from "thirdweb/chains";
-
-import {
-  privateKeyToAccount,
-  smartWallet,
-  getWalletBalance,
-  
- } from "thirdweb/wallets";
-
-
-import {
-  mintTo,
-  totalSupply,
-  transfer,
-  
-  getBalance,
-
-  balanceOf,
-
-} from "thirdweb/extensions/erc20";
-
-
+  return account.address;
+}
 
 export async function POST(request: NextRequest) {
-
   const body = await request.json();
 
-  const { lang, storecode, walletAddress, isSmartAccount } = body;
+  const storecode = String(body?.storecode || "").trim();
+  const walletAddress = String(body?.walletAddress || "").trim();
 
-  console.log("lang", lang);
-  console.log("storecode", storecode);
-  console.log("walletAddress", walletAddress);
-  console.log("isSmartAccount", isSmartAccount);
-
-
-
-
-
-
-  
-  try {
-
-
-    // get user by wallet address
-
-    const user = await getOneByWalletAddress(
-      storecode,
-      walletAddress
+  if (!storecode || !walletAddress) {
+    return NextResponse.json(
+      {
+        error: "Missing required fields: storecode, walletAddress",
+      },
+      { status: 400 },
     );
+  }
 
-    //console.log("user", user);
+  const secretKey = process.env.THIRDWEB_SECRET_KEY || "";
+  if (!secretKey) {
+    return NextResponse.json(
+      {
+        error: "THIRDWEB_SECRET_KEY is required",
+      },
+      { status: 500 },
+    );
+  }
+
+  try {
+    const user = await getOneByWalletAddress(storecode, walletAddress);
 
     if (!user) {
-      return NextResponse.json({
-        result: null,
-      });
+      return NextResponse.json(
+        {
+          error: "User not found",
+        },
+        { status: 404 },
+      );
     }
 
-    let escrowWalletAddress = user.escrowWalletAddress;
-
-    //console.log("escrowWalletAddress", escrowWalletAddress);
-
-    if (escrowWalletAddress) {
+    if (user.escrowWalletAddress && user.escrowWalletPrivateKey) {
       return NextResponse.json({
         result: {
-          escrowWalletAddress: escrowWalletAddress,
-        }
+          escrowWalletAddress: user.escrowWalletAddress,
+          existed: true,
+        },
       });
     }
 
+    const client = createThirdwebClient({
+      secretKey,
+    });
 
+    let escrowWalletPrivateKey = String(user.escrowWalletPrivateKey || "").trim();
+    if (!escrowWalletPrivateKey) {
+      escrowWalletPrivateKey = ethers.Wallet.createRandom().privateKey;
+    }
 
-    let escrowWalletPrivateKey = '';
+    const escrowWalletAddress = await resolveSmartWalletAddress(client, escrowWalletPrivateKey);
 
-
-    const result = await setEscrowWalletAddressByWalletAddress(
+    await setEscrowWalletAddressByWalletAddress(
       storecode,
       walletAddress,
       escrowWalletAddress,
       escrowWalletPrivateKey,
     );
 
-    //console.log("setEscrowWalletAddressByWalletAddress result", result);
-
-
-    if (!result) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
     return NextResponse.json({
       result: {
-        escrowWalletAddress: escrowWalletAddress,
-      }
+        escrowWalletAddress,
+        existed: false,
+      },
     });
-
-
-
   } catch (error) {
-      
-    console.log(" error=====>" + error);
-
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Failed to create escrow wallet",
+      },
+      { status: 500 },
+    );
   }
-
-  
-  return NextResponse.json({
-    result: null,
-  });
-
-
 }
