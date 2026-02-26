@@ -19,11 +19,25 @@ type RealtimeItem = {
   highlightUntil: number;
 };
 
+type JackpotBurst = {
+  id: string;
+  amountUsdt: number;
+  storeLabel: string;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
+const JACKPOT_BURST_DURATION_MS = 2_600;
+const JACKPOT_MAX_ACTIVE_BURSTS = 3;
+const JACKPOT_TRIGGERED_EVENT_CACHE_LIMIT = 700;
+const JACKPOT_PARTICLE_COUNT = 28;
+
+function isPaymentConfirmedStatus(status: string | null | undefined): boolean {
+  return status === "paymentConfirmed";
+}
 
 function toTimestamp(value: string | null | undefined): number {
   if (!value) {
@@ -150,6 +164,7 @@ export default function RealtimeBuyOrderPage() {
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
 
   const [events, setEvents] = useState<RealtimeItem[]>([]);
+  const [jackpotBursts, setJackpotBursts] = useState<JackpotBurst[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
   const [connectionErrorMessage, setConnectionErrorMessage] = useState<string | null>(null);
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
@@ -158,6 +173,8 @@ export default function RealtimeBuyOrderPage() {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const cursorRef = useRef<string | null>(null);
+  const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
+  const triggeredJackpotEventIdsRef = useRef<string[]>([]);
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -177,6 +194,67 @@ export default function RealtimeBuyOrderPage() {
     });
   }, []);
 
+  const registerJackpotTrigger = useCallback((eventId: string): boolean => {
+    const cache = triggeredJackpotEventIdsRef.current;
+    if (cache.includes(eventId)) {
+      return false;
+    }
+
+    cache.push(eventId);
+    if (cache.length > JACKPOT_TRIGGERED_EVENT_CACHE_LIMIT) {
+      cache.splice(0, cache.length - JACKPOT_TRIGGERED_EVENT_CACHE_LIMIT);
+    }
+    return true;
+  }, []);
+
+  const triggerJackpotBurst = useCallback((event: BuyOrderStatusRealtimeEvent, eventId: string) => {
+    if (!registerJackpotTrigger(eventId)) {
+      return;
+    }
+
+    const burstId = `jackpot-${eventId}-${Date.now().toString(36)}`;
+    const burst: JackpotBurst = {
+      id: burstId,
+      amountUsdt: Number(event.amountUsdt || 0),
+      storeLabel: event.store?.name || event.storecode || "Unknown Store",
+    };
+
+    setJackpotBursts((previous) => [...previous.slice(-(JACKPOT_MAX_ACTIVE_BURSTS - 1)), burst]);
+
+    const timer = window.setTimeout(() => {
+      jackpotTimerMapRef.current.delete(burstId);
+      setJackpotBursts((previous) => previous.filter((item) => item.id !== burstId));
+    }, JACKPOT_BURST_DURATION_MS);
+
+    jackpotTimerMapRef.current.set(burstId, timer);
+  }, [registerJackpotTrigger]);
+
+  const jackpotParticleBlueprint = useMemo(() => {
+    const colors = [
+      "rgba(34, 211, 238, 0.9)",
+      "rgba(110, 231, 183, 0.92)",
+      "rgba(250, 204, 21, 0.92)",
+      "rgba(248, 113, 113, 0.88)",
+      "rgba(196, 181, 253, 0.88)",
+    ];
+
+    return Array.from({ length: JACKPOT_PARTICLE_COUNT }, (_, index) => {
+      const left = 4 + ((index * 31) % 92);
+      const delay = (index % 8) * 70;
+      const duration = 900 + (index % 6) * 170;
+      const drift = (index % 2 === 0 ? 1 : -1) * (20 + ((index * 11) % 56));
+      const size = 6 + (index % 4) * 2;
+      return {
+        left,
+        delay,
+        duration,
+        drift,
+        size,
+        color: colors[index % colors.length],
+      };
+    });
+  }, []);
+
   const upsertRealtimeEvents = useCallback(
     (incomingEvents: BuyOrderStatusRealtimeEvent[], options?: { highlightNew?: boolean }) => {
       if (incomingEvents.length === 0) {
@@ -185,6 +263,7 @@ export default function RealtimeBuyOrderPage() {
 
       const highlightNew = options?.highlightNew ?? true;
       const now = Date.now();
+      const jackpotCandidates: Array<{ eventId: string; event: BuyOrderStatusRealtimeEvent }> = [];
 
       setEvents((previousEvents) => {
         const map = new Map(previousEvents.map((item) => [item.id, item]));
@@ -211,6 +290,13 @@ export default function RealtimeBuyOrderPage() {
             data: incomingEvent,
             highlightUntil: highlightNew ? now + NEW_EVENT_HIGHLIGHT_MS : 0,
           });
+
+          if (highlightNew && isPaymentConfirmedStatus(incomingEvent.statusTo)) {
+            jackpotCandidates.push({
+              eventId: nextId,
+              event: incomingEvent,
+            });
+          }
         }
 
         const merged = Array.from(map.values());
@@ -227,8 +313,12 @@ export default function RealtimeBuyOrderPage() {
       for (const incomingEvent of incomingEvents) {
         updateCursor(incomingEvent.cursor || null);
       }
+
+      for (const candidate of jackpotCandidates) {
+        triggerJackpotBurst(candidate.event, candidate.eventId);
+      }
     },
-    [updateCursor],
+    [triggerJackpotBurst, updateCursor],
   );
 
   const syncFromApi = useCallback(
@@ -343,6 +433,16 @@ export default function RealtimeBuyOrderPage() {
 
     return () => {
       window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const timerMap = jackpotTimerMapRef.current;
+    return () => {
+      for (const timer of timerMap.values()) {
+        window.clearTimeout(timer);
+      }
+      timerMap.clear();
     };
   }, []);
 
@@ -529,6 +629,53 @@ export default function RealtimeBuyOrderPage() {
         </span>
       </nav>
 
+      {jackpotBursts.map((burst) => (
+        <div key={burst.id} className="jackpot-overlay pointer-events-none fixed inset-0 z-[120]">
+          <div className="jackpot-backdrop" />
+          <div className="jackpot-rings">
+            <span className="jackpot-ring jackpot-ring-a" />
+            <span className="jackpot-ring jackpot-ring-b" />
+            <span className="jackpot-ring jackpot-ring-c" />
+          </div>
+
+          <div className="jackpot-rays">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <span
+                key={`${burst.id}-ray-${index}`}
+                className="jackpot-ray"
+                style={{ transform: `translate(-50%, -50%) rotate(${index * 30}deg)` }}
+              />
+            ))}
+          </div>
+
+          <div className="jackpot-center">
+            <p className="jackpot-title">JACKPOT</p>
+            <p className="jackpot-subtitle">결제완료 · {formatUsdt(burst.amountUsdt)} USDT</p>
+            <p className="jackpot-store">{burst.storeLabel}</p>
+          </div>
+
+          <div className="jackpot-particles">
+            {jackpotParticleBlueprint.map((particle, index) => (
+              <span
+                key={`${burst.id}-particle-${index}`}
+                className="jackpot-particle"
+                style={
+                  {
+                    left: `${particle.left}%`,
+                    animationDelay: `${particle.delay}ms`,
+                    animationDuration: `${particle.duration}ms`,
+                    width: `${particle.size}px`,
+                    height: `${particle.size * 1.7}px`,
+                    background: particle.color,
+                    "--drift-x": `${particle.drift}px`,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -659,6 +806,7 @@ export default function RealtimeBuyOrderPage() {
               const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
               const toLabel = getStatusLabel(item.data.statusTo);
               const isHighlighted = item.highlightUntil > Date.now();
+              const isJackpotEvent = isPaymentConfirmedStatus(item.data.statusTo);
               const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
 
               return (
@@ -666,7 +814,9 @@ export default function RealtimeBuyOrderPage() {
                   key={`mobile-${item.id}`}
                   className={`rounded-xl border p-3 transition-all duration-500 ${
                     isHighlighted
-                      ? "animate-pulse border-cyan-400/40 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.28)]"
+                      ? isJackpotEvent
+                        ? "jackpot-card-highlight border-emerald-300/55 bg-emerald-500/16 shadow-[inset_0_0_0_1px_rgba(110,231,183,0.35)]"
+                        : "animate-pulse border-cyan-400/40 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.28)]"
                       : "border-slate-700/80 bg-slate-950/65"
                   }`}
                 >
@@ -695,12 +845,22 @@ export default function RealtimeBuyOrderPage() {
                       {fromLabel}
                     </span>
                     <span className="text-slate-500">→</span>
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusTo)}`}>
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(
+                        item.data.statusTo,
+                      )} ${isJackpotEvent ? "jackpot-status-pill" : ""}`}
+                    >
                       {toLabel}
                     </span>
                     {isHighlighted && (
-                      <span className="ml-auto rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
-                        NEW
+                      <span
+                        className={`ml-auto rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
+                          isJackpotEvent
+                            ? "jackpot-new-pill border-emerald-200/70 bg-emerald-400/22 text-emerald-50"
+                            : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100"
+                        }`}
+                      >
+                        {isJackpotEvent ? "JACKPOT" : "NEW"}
                       </span>
                     )}
                   </div>
@@ -787,6 +947,7 @@ export default function RealtimeBuyOrderPage() {
                   const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
                   const toLabel = getStatusLabel(item.data.statusTo);
                   const isHighlighted = item.highlightUntil > Date.now();
+                  const isJackpotEvent = isPaymentConfirmedStatus(item.data.statusTo);
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
 
                   return (
@@ -794,7 +955,9 @@ export default function RealtimeBuyOrderPage() {
                       key={item.id}
                       className={`border-b border-slate-800/80 align-top transition-all duration-500 ${
                         isHighlighted
-                          ? "animate-pulse bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.32)]"
+                          ? isJackpotEvent
+                            ? "jackpot-row-highlight bg-emerald-500/12 shadow-[inset_0_0_0_1px_rgba(110,231,183,0.35)]"
+                            : "animate-pulse bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.32)]"
                           : "hover:bg-slate-900/55"
                       }`}
                     >
@@ -806,8 +969,14 @@ export default function RealtimeBuyOrderPage() {
                         </div>
                         <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
                         {isHighlighted && (
-                          <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
-                            NEW
+                          <span
+                            className={`mt-1 inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
+                              isJackpotEvent
+                                ? "jackpot-new-pill border-emerald-200/70 bg-emerald-400/22 text-emerald-50"
+                                : "border-cyan-400/40 bg-cyan-500/20 text-cyan-100"
+                            }`}
+                          >
+                            {isJackpotEvent ? "JACKPOT" : "NEW"}
                           </span>
                         )}
                       </td>
@@ -818,7 +987,11 @@ export default function RealtimeBuyOrderPage() {
                             {fromLabel}
                           </span>
                           <span className="text-slate-500">→</span>
-                          <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusTo)}`}>
+                          <span
+                            className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(
+                              item.data.statusTo,
+                            )} ${isJackpotEvent ? "jackpot-status-pill" : ""}`}
+                          >
                             {toLabel}
                           </span>
                         </div>
@@ -901,6 +1074,355 @@ export default function RealtimeBuyOrderPage() {
           </div>
         </div>
       </section>
+      <style jsx>{`
+        .jackpot-overlay {
+          animation: jackpotOverlayFade ${JACKPOT_BURST_DURATION_MS}ms ease-out both;
+        }
+
+        .jackpot-backdrop {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(
+              circle at 50% 52%,
+              rgba(52, 211, 153, 0.22) 0%,
+              rgba(34, 211, 238, 0.15) 22%,
+              rgba(15, 23, 42, 0.22) 48%,
+              rgba(2, 6, 23, 0.1) 70%,
+              rgba(2, 6, 23, 0) 100%
+            ),
+            linear-gradient(
+              120deg,
+              rgba(16, 185, 129, 0.07) 0%,
+              rgba(250, 204, 21, 0.06) 45%,
+              rgba(56, 189, 248, 0.08) 100%
+            );
+        }
+
+        .jackpot-rings {
+          position: absolute;
+          inset: 0;
+          display: grid;
+          place-items: center;
+        }
+
+        .jackpot-ring {
+          position: absolute;
+          border-radius: 9999px;
+          border: 2px solid rgba(167, 243, 208, 0.65);
+          transform: translate(-50%, -50%);
+          left: 50%;
+          top: 50%;
+          filter: drop-shadow(0 0 18px rgba(52, 211, 153, 0.4));
+        }
+
+        .jackpot-ring-a {
+          width: 180px;
+          height: 180px;
+          animation: jackpotRingPulseA 1.1s ease-out both;
+        }
+
+        .jackpot-ring-b {
+          width: 280px;
+          height: 280px;
+          animation: jackpotRingPulseB 1.35s ease-out 80ms both;
+        }
+
+        .jackpot-ring-c {
+          width: 420px;
+          height: 420px;
+          animation: jackpotRingPulseC 1.55s ease-out 120ms both;
+          border-color: rgba(250, 204, 21, 0.5);
+        }
+
+        .jackpot-rays {
+          position: absolute;
+          inset: 0;
+        }
+
+        .jackpot-ray {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          width: 8px;
+          height: 220px;
+          transform-origin: center 6px;
+          background: linear-gradient(
+            to bottom,
+            rgba(250, 204, 21, 0.98) 0%,
+            rgba(250, 204, 21, 0.4) 45%,
+            rgba(250, 204, 21, 0) 100%
+          );
+          border-radius: 9999px;
+          opacity: 0;
+          animation: jackpotRayBurst 760ms ease-out both;
+        }
+
+        .jackpot-center {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          text-align: center;
+          padding: 1rem 1.2rem;
+          border-radius: 1rem;
+          border: 1px solid rgba(167, 243, 208, 0.55);
+          background: linear-gradient(
+            145deg,
+            rgba(5, 46, 36, 0.78) 0%,
+            rgba(17, 24, 39, 0.75) 58%,
+            rgba(8, 145, 178, 0.58) 100%
+          );
+          box-shadow: 0 0 42px rgba(16, 185, 129, 0.35), 0 0 56px rgba(34, 211, 238, 0.25);
+          animation: jackpotCenterPop 900ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
+          min-width: min(86vw, 500px);
+          backdrop-filter: blur(7px);
+        }
+
+        .jackpot-title {
+          margin: 0;
+          font-size: clamp(1.7rem, 4.8vw, 2.85rem);
+          line-height: 1;
+          letter-spacing: 0.14em;
+          font-weight: 900;
+          color: transparent;
+          background-image: linear-gradient(
+            92deg,
+            rgba(250, 204, 21, 1) 0%,
+            rgba(255, 255, 255, 0.96) 36%,
+            rgba(52, 211, 153, 0.98) 72%,
+            rgba(34, 211, 238, 0.95) 100%
+          );
+          background-size: 220% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          text-shadow: 0 0 18px rgba(250, 204, 21, 0.34);
+          animation: jackpotTitleShine 950ms linear infinite;
+        }
+
+        .jackpot-subtitle {
+          margin-top: 0.5rem;
+          font-size: clamp(0.8rem, 2.4vw, 1rem);
+          color: rgba(236, 253, 245, 0.95);
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        }
+
+        .jackpot-store {
+          margin-top: 0.25rem;
+          font-size: clamp(0.68rem, 2vw, 0.86rem);
+          color: rgba(167, 243, 208, 0.9);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .jackpot-particles {
+          position: absolute;
+          inset: 0;
+          overflow: hidden;
+        }
+
+        .jackpot-particle {
+          position: absolute;
+          bottom: 41%;
+          border-radius: 9999px;
+          box-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+          opacity: 0;
+          animation-name: jackpotParticleFlight;
+          animation-timing-function: cubic-bezier(0.21, 0.72, 0.34, 1.01);
+          animation-fill-mode: both;
+        }
+
+        .jackpot-row-highlight {
+          animation: jackpotRowGlow 1.2s ease-in-out infinite;
+        }
+
+        .jackpot-card-highlight {
+          animation: jackpotCardGlow 1.1s ease-in-out infinite;
+        }
+
+        .jackpot-status-pill {
+          box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25), 0 0 16px rgba(16, 185, 129, 0.35);
+          animation: jackpotStatusPulse 980ms ease-in-out infinite;
+        }
+
+        .jackpot-new-pill {
+          box-shadow: 0 0 0 1px rgba(167, 243, 208, 0.42), 0 0 16px rgba(52, 211, 153, 0.42);
+          animation: jackpotStatusPulse 880ms ease-in-out infinite;
+        }
+
+        @keyframes jackpotOverlayFade {
+          0% {
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          86% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        @keyframes jackpotRingPulseA {
+          0% {
+            opacity: 0.9;
+            transform: translate(-50%, -50%) scale(0.3);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.8);
+          }
+        }
+
+        @keyframes jackpotRingPulseB {
+          0% {
+            opacity: 0.8;
+            transform: translate(-50%, -50%) scale(0.25);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.62);
+          }
+        }
+
+        @keyframes jackpotRingPulseC {
+          0% {
+            opacity: 0.75;
+            transform: translate(-50%, -50%) scale(0.2);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.48);
+          }
+        }
+
+        @keyframes jackpotRayBurst {
+          0% {
+            opacity: 0;
+            height: 80px;
+          }
+          35% {
+            opacity: 0.82;
+            height: 240px;
+          }
+          100% {
+            opacity: 0;
+            height: 320px;
+          }
+        }
+
+        @keyframes jackpotCenterPop {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.62);
+          }
+          42% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.06);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
+
+        @keyframes jackpotTitleShine {
+          0% {
+            background-position: 200% 50%;
+          }
+          100% {
+            background-position: -20% 50%;
+          }
+        }
+
+        @keyframes jackpotParticleFlight {
+          0% {
+            opacity: 0;
+            transform: translate3d(0, 8px, 0) rotate(0deg);
+          }
+          20% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: translate3d(var(--drift-x), -52vh, 0) rotate(420deg);
+          }
+        }
+
+        @keyframes jackpotStatusPulse {
+          0%,
+          100% {
+            transform: translateZ(0) scale(1);
+          }
+          50% {
+            transform: translateZ(0) scale(1.06);
+          }
+        }
+
+        @keyframes jackpotRowGlow {
+          0%,
+          100% {
+            box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.3);
+          }
+          50% {
+            box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.6), inset 0 0 42px rgba(52, 211, 153, 0.18);
+          }
+        }
+
+        @keyframes jackpotCardGlow {
+          0%,
+          100% {
+            box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.3);
+          }
+          50% {
+            box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.62), inset 0 0 30px rgba(52, 211, 153, 0.24);
+          }
+        }
+
+        @media (max-width: 640px) {
+          .jackpot-ring-a {
+            width: 130px;
+            height: 130px;
+          }
+
+          .jackpot-ring-b {
+            width: 210px;
+            height: 210px;
+          }
+
+          .jackpot-ring-c {
+            width: 310px;
+            height: 310px;
+          }
+
+          .jackpot-ray {
+            height: 165px;
+          }
+
+          .jackpot-center {
+            min-width: min(92vw, 460px);
+            padding: 0.8rem 0.9rem;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .jackpot-overlay,
+          .jackpot-ring,
+          .jackpot-ray,
+          .jackpot-center,
+          .jackpot-title,
+          .jackpot-particle,
+          .jackpot-row-highlight,
+          .jackpot-card-highlight,
+          .jackpot-status-pill,
+          .jackpot-new-pill {
+            animation: none !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }
