@@ -13,11 +13,13 @@ type RealtimeItem = {
   id: string;
   receivedAt: string;
   data: BuyOrderStatusRealtimeEvent;
+  highlightUntil: number;
 };
 
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
+const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 
 function toTimestamp(value: string | null | undefined): number {
   if (!value) {
@@ -49,17 +51,17 @@ function getStatusLabel(status: string | null | undefined): string {
 function getStatusClassName(status: string | null | undefined): string {
   switch (status) {
     case "paymentConfirmed":
-      return "bg-emerald-100 text-emerald-800";
+      return "border border-emerald-400/35 bg-emerald-500/15 text-emerald-200";
     case "paymentRequested":
-      return "bg-amber-100 text-amber-800";
+      return "border border-amber-400/35 bg-amber-500/15 text-amber-200";
     case "accepted":
-      return "bg-sky-100 text-sky-800";
+      return "border border-sky-400/35 bg-sky-500/15 text-sky-200";
     case "cancelled":
-      return "bg-rose-100 text-rose-800";
+      return "border border-rose-400/35 bg-rose-500/15 text-rose-200";
     case "ordered":
-      return "bg-slate-100 text-slate-700";
+      return "border border-slate-500/40 bg-slate-700/45 text-slate-100";
     default:
-      return "bg-zinc-100 text-zinc-700";
+      return "border border-zinc-500/35 bg-zinc-700/45 text-zinc-200";
   }
 }
 
@@ -131,10 +133,13 @@ export default function RealtimeBuyOrderPage() {
   }, []);
 
   const upsertRealtimeEvents = useCallback(
-    (incomingEvents: BuyOrderStatusRealtimeEvent[]) => {
+    (incomingEvents: BuyOrderStatusRealtimeEvent[], options?: { highlightNew?: boolean }) => {
       if (incomingEvents.length === 0) {
         return;
       }
+
+      const highlightNew = options?.highlightNew ?? true;
+      const now = Date.now();
 
       setEvents((previousEvents) => {
         const map = new Map(previousEvents.map((item) => [item.id, item]));
@@ -145,10 +150,21 @@ export default function RealtimeBuyOrderPage() {
             incomingEvent.cursor ||
             `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+          const existing = map.get(nextId);
+
+          if (existing) {
+            map.set(nextId, {
+              ...existing,
+              data: incomingEvent,
+            });
+            continue;
+          }
+
           map.set(nextId, {
             id: nextId,
             receivedAt: new Date().toISOString(),
             data: incomingEvent,
+            highlightUntil: highlightNew ? now + NEW_EVENT_HIGHLIGHT_MS : 0,
           });
         }
 
@@ -202,7 +218,7 @@ export default function RealtimeBuyOrderPage() {
             ? (data.events as BuyOrderStatusRealtimeEvent[])
             : [];
 
-          upsertRealtimeEvents(incomingEvents);
+          upsertRealtimeEvents(incomingEvents, { highlightNew: Boolean(since) });
           updateCursor(typeof data.nextCursor === "string" ? data.nextCursor : null);
           setSyncErrorMessage(null);
           setIsSyncing(false);
@@ -242,12 +258,15 @@ export default function RealtimeBuyOrderPage() {
 
     const onMessage = (message: Ably.Message) => {
       const data = message.data as BuyOrderStatusRealtimeEvent;
-      upsertRealtimeEvents([
-        {
-          ...data,
-          eventId: data.eventId || String(message.id || ""),
-        },
-      ]);
+      upsertRealtimeEvents(
+        [
+          {
+            ...data,
+            eventId: data.eventId || String(message.id || ""),
+          },
+        ],
+        { highlightNew: true },
+      );
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -272,9 +291,48 @@ export default function RealtimeBuyOrderPage() {
     };
   }, [syncFromApi]);
 
+  useEffect(() => {
+    const now = Date.now();
+    const activeHighlights = events
+      .map((item) => item.highlightUntil)
+      .filter((until) => until > now);
+
+    if (activeHighlights.length === 0) {
+      return;
+    }
+
+    const nextExpiryAt = Math.min(...activeHighlights);
+    const waitMs = Math.max(80, nextExpiryAt - now + 20);
+
+    const timer = window.setTimeout(() => {
+      setEvents((previous) => {
+        const current = Date.now();
+        return previous.map((item) => {
+          if (item.highlightUntil > current) {
+            return item;
+          }
+          if (item.highlightUntil === 0) {
+            return item;
+          }
+          return {
+            ...item,
+            highlightUntil: 0,
+          };
+        });
+      });
+    }, waitMs);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [events]);
+
   const sortedEvents = useMemo(() => {
     return [...events].sort((left, right) => {
-      return toTimestamp(right.data.publishedAt || right.receivedAt) - toTimestamp(left.data.publishedAt || left.receivedAt);
+      return (
+        toTimestamp(right.data.publishedAt || right.receivedAt) -
+        toTimestamp(left.data.publishedAt || left.receivedAt)
+      );
     });
   }, [events]);
 
@@ -306,15 +364,15 @@ export default function RealtimeBuyOrderPage() {
   }, [sortedEvents]);
 
   return (
-    <main className="w-full max-w-7xl space-y-4">
-      <section className="rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-800 p-6 text-white shadow-lg">
+    <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
+      <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">BuyOrder Realtime Dashboard</h1>
-            <p className="mt-1 text-sm text-cyan-100">
+            <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
+            <p className="mt-1 text-sm text-slate-300">
               공개 대시보드입니다. 구매자 이름/계좌번호는 마스킹되어 표시됩니다.
             </p>
-            <p className="mt-1 text-xs text-cyan-200">
+            <p className="mt-1 text-xs text-cyan-300/90">
               Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BUYORDER_STATUS_ABLY_EVENT_NAME}</span>
             </p>
           </div>
@@ -322,86 +380,86 @@ export default function RealtimeBuyOrderPage() {
           <button
             type="button"
             onClick={() => void syncFromApi(null)}
-            className="rounded-xl border border-white/25 bg-white/10 px-3 py-2 text-sm text-white backdrop-blur hover:bg-white/20"
+            className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 transition hover:bg-cyan-500/20"
           >
             재동기화
           </button>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm">
-            Connection <span className="ml-2 font-semibold">{connectionState}</span>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+            Connection <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
           </div>
-          <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm">
-            Sync <span className="ml-2 font-semibold">{isSyncing ? "running" : "idle"}</span>
+          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+            Sync <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? "running" : "idle"}</span>
           </div>
-          <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm">
-            Cursor <span className="ml-2 break-all font-mono text-xs">{cursor || "-"}</span>
+          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+            Cursor <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
           </div>
-          <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm">
-            Last Status <span className="ml-2 font-semibold">{getStatusLabel(summary.latestStatus)}</span>
+          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+            Last Status <span className="ml-2 font-semibold text-cyan-200">{getStatusLabel(summary.latestStatus)}</span>
           </div>
         </div>
       </section>
 
       {connectionErrorMessage && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-xl border border-rose-500/40 bg-rose-950/55 px-3 py-2 text-sm text-rose-200">
           {connectionErrorMessage}
         </div>
       )}
 
       {syncErrorMessage && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+        <div className="rounded-xl border border-rose-500/40 bg-rose-950/55 px-3 py-2 text-sm text-rose-200">
           {syncErrorMessage}
         </div>
       )}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-500">총 이벤트</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{sortedEvents.length}</p>
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
+          <p className="text-xs uppercase tracking-wide text-slate-400">총 이벤트</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-100">{sortedEvents.length}</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-500">결제완료</p>
-          <p className="mt-2 text-2xl font-semibold text-emerald-700">{summary.confirmedCount}</p>
+        <div className="rounded-2xl border border-emerald-500/25 bg-emerald-900/20 p-4 shadow-lg shadow-black/20">
+          <p className="text-xs uppercase tracking-wide text-emerald-300/80">결제완료</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-200">{summary.confirmedCount}</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-500">진행중(주문/매칭/요청)</p>
-          <p className="mt-2 text-2xl font-semibold text-amber-700">{summary.pendingCount}</p>
+        <div className="rounded-2xl border border-amber-500/25 bg-amber-900/20 p-4 shadow-lg shadow-black/20">
+          <p className="text-xs uppercase tracking-wide text-amber-300/80">진행중(주문/매칭/요청)</p>
+          <p className="mt-2 text-2xl font-semibold text-amber-200">{summary.pendingCount}</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-slate-500">취소</p>
-          <p className="mt-2 text-2xl font-semibold text-rose-700">{summary.cancelledCount}</p>
+        <div className="rounded-2xl border border-rose-500/25 bg-rose-900/20 p-4 shadow-lg shadow-black/20">
+          <p className="text-xs uppercase tracking-wide text-rose-300/80">취소</p>
+          <p className="mt-2 text-2xl font-semibold text-rose-200">{summary.cancelledCount}</p>
         </div>
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-1">
-          <p className="text-xs uppercase tracking-wide text-slate-500">누적 금액</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{formatKrw(summary.totalKrw)} KRW</p>
-          <p className="mt-1 text-sm text-slate-500">{formatUsdt(summary.totalUsdt)} USDT</p>
-          <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+      <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
+          <p className="text-xs uppercase tracking-wide text-slate-400">누적 금액</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-100">{formatKrw(summary.totalKrw)} KRW</p>
+          <p className="mt-1 text-sm text-cyan-200">{formatUsdt(summary.totalUsdt)} USDT</p>
+          <div className="mt-4 rounded-xl border border-slate-700/80 bg-slate-950/70 p-3 text-xs text-slate-400">
             이벤트 기준 합계이며 정산 데이터와 다를 수 있습니다.
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <p className="font-semibold text-slate-900">실시간 상태 변경</p>
-            <p className="text-xs text-slate-500">최신 이벤트 순</p>
+        <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
+          <div className="border-b border-slate-700/80 px-4 py-3">
+            <p className="font-semibold text-slate-100">실시간 상태 변경</p>
+            <p className="text-xs text-slate-400">최신 이벤트 순</p>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-sm">
+            <table className="min-w-[1360px] border-collapse text-sm">
               <thead>
-                <tr className="border-b bg-slate-50 text-left text-slate-600">
-                  <th className="px-3 py-2">시간</th>
-                  <th className="px-3 py-2">상태</th>
-                  <th className="px-3 py-2 text-right">금액</th>
-                  <th className="px-3 py-2">구매자</th>
-                  <th className="px-3 py-2">계좌</th>
-                  <th className="px-3 py-2">스토어</th>
-                  <th className="px-3 py-2">거래</th>
+                <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
+                  <th className="w-[190px] px-3 py-2">시간</th>
+                  <th className="w-[280px] px-3 py-2">상태</th>
+                  <th className="w-[180px] px-3 py-2 text-right">금액</th>
+                  <th className="w-[140px] px-3 py-2">구매자</th>
+                  <th className="w-[170px] px-3 py-2">계좌</th>
+                  <th className="w-[260px] px-3 py-2">스토어</th>
+                  <th className="w-[320px] px-3 py-2">내역</th>
                 </tr>
               </thead>
               <tbody>
@@ -416,11 +474,24 @@ export default function RealtimeBuyOrderPage() {
                 {sortedEvents.map((item) => {
                   const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
                   const toLabel = getStatusLabel(item.data.statusTo);
+                  const isHighlighted = item.highlightUntil > Date.now();
 
                   return (
-                    <tr key={item.id} className="border-b align-top">
-                      <td className="px-3 py-3 font-mono text-xs text-slate-500">
-                        {item.data.publishedAt || item.receivedAt}
+                    <tr
+                      key={item.id}
+                      className={`border-b border-slate-800/80 align-top transition-all duration-500 ${
+                        isHighlighted
+                          ? "animate-pulse bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.32)]"
+                          : "hover:bg-slate-900/55"
+                      }`}
+                    >
+                      <td className="px-3 py-3 font-mono text-xs text-slate-400">
+                        <div>{item.data.publishedAt || item.receivedAt}</div>
+                        {isHighlighted && (
+                          <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
+                            NEW
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-3 py-3">
@@ -428,7 +499,7 @@ export default function RealtimeBuyOrderPage() {
                           <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusFrom)}`}>
                             {fromLabel}
                           </span>
-                          <span className="text-slate-400">→</span>
+                          <span className="text-slate-500">→</span>
                           <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusTo)}`}>
                             {toLabel}
                           </span>
@@ -436,41 +507,46 @@ export default function RealtimeBuyOrderPage() {
                       </td>
 
                       <td className="px-3 py-3 text-right">
-                        <div className="font-semibold text-slate-900">{formatKrw(item.data.amountKrw)} KRW</div>
-                        <div className="text-xs text-slate-500">{formatUsdt(item.data.amountUsdt)} USDT</div>
+                        <div className="font-semibold text-slate-100">{formatKrw(item.data.amountKrw)} KRW</div>
+                        <div className="text-xs text-slate-400">{formatUsdt(item.data.amountUsdt)} USDT</div>
                       </td>
 
-                      <td className="px-3 py-3">{maskName(item.data.buyerName)}</td>
-                      <td className="px-3 py-3 font-mono text-xs">{maskAccountNumber(item.data.buyerAccountNumber)}</td>
+                      <td className="px-3 py-3 text-slate-200">{maskName(item.data.buyerName)}</td>
+                      <td className="px-3 py-3 font-mono text-xs text-slate-300">{maskAccountNumber(item.data.buyerAccountNumber)}</td>
 
                       <td className="px-3 py-3">
                         {item.data.store ? (
-                          <div className="flex min-w-[180px] items-center gap-2">
+                          <div className="flex min-w-[240px] items-center gap-2">
                             {item.data.store.logo ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={item.data.store.logo}
                                 alt={item.data.store.name || "store-logo"}
-                                className="h-8 w-8 rounded object-cover"
+                                className="h-9 w-9 rounded-md border border-slate-700 object-cover"
                               />
                             ) : (
-                              <div className="h-8 w-8 rounded bg-slate-200" />
+                              <div className="h-9 w-9 rounded-md border border-slate-700 bg-slate-800" />
                             )}
                             <div className="flex flex-col">
-                              <span className="leading-tight text-slate-900">{item.data.store.name || "-"}</span>
-                              <span className="font-mono text-xs leading-tight text-slate-500">
+                              <span className="leading-tight text-slate-100">{item.data.store.name || "-"}</span>
+                              <span className="font-mono text-xs leading-tight text-slate-400">
                                 {item.data.store.code || "-"}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          "-"
+                          <span className="text-slate-500">-</span>
                         )}
                       </td>
 
                       <td className="px-3 py-3">
-                        <div className="font-mono text-xs text-slate-700">{item.data.tradeId || "-"}</div>
-                        <div className="font-mono text-[11px] text-slate-400">{item.data.orderId || "-"}</div>
+                        <div className="font-mono text-xs text-cyan-200">TID: {item.data.tradeId || "-"}</div>
+                        <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {item.data.orderId || "-"}</div>
+                        {item.data.reason ? (
+                          <div className="mt-1 truncate text-xs text-rose-300">{item.data.reason}</div>
+                        ) : (
+                          <div className="mt-1 text-xs text-slate-500">-</div>
+                        )}
                       </td>
                     </tr>
                   );
