@@ -507,6 +507,12 @@ export default function RealtimeBuyOrderPage() {
     <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
       <nav className="flex flex-wrap items-center gap-2">
         <Link
+          href={`/${lang}/promotion`}
+          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
+        >
+          Promotion
+        </Link>
+        <Link
           href={`/${lang}/realtime-banktransfer`}
           className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
         >
@@ -612,8 +618,19 @@ export default function RealtimeBuyOrderPage() {
       <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
           <p className="text-xs uppercase tracking-wide text-slate-400">누적 금액</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-100">{formatKrw(summary.totalKrw)} KRW</p>
-          <p className="mt-1 text-sm text-cyan-200">{formatUsdt(summary.totalUsdt)} USDT</p>
+          <div className="mt-3 rounded-xl border border-cyan-400/45 bg-cyan-500/10 px-3 py-3 shadow-[inset_0_0_24px_rgba(34,211,238,0.12)]">
+            <p className="text-[11px] uppercase tracking-[0.1em] text-cyan-300/90">USDT Total</p>
+            <p className="mt-1 text-3xl font-bold leading-none tabular-nums text-cyan-100 drop-shadow-[0_0_12px_rgba(34,211,238,0.3)]">
+              {formatUsdt(summary.totalUsdt)}
+              <span className="ml-1 text-base font-semibold text-cyan-200">USDT</span>
+            </p>
+          </div>
+          <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2">
+            <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">KRW Total</p>
+            <p className="mt-1 text-lg font-semibold tabular-nums text-slate-200">
+              {formatKrw(summary.totalKrw)} KRW
+            </p>
+          </div>
           <div className="mt-4 rounded-xl border border-slate-700/80 bg-slate-950/70 p-3 text-xs text-slate-400">
             이벤트 기준 합계이며 정산 데이터와 다를 수 있습니다.
           </div>

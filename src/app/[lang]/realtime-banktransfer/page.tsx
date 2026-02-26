@@ -480,6 +480,12 @@ export default function RealtimeBankTransferPage() {
   return (
     <main className="w-full max-w-[1800px] space-y-5 text-slate-100">
       <nav className="flex flex-wrap items-center gap-2">
+        <Link
+          href={`/${lang}/promotion`}
+          className="rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-sm text-slate-300 transition hover:border-cyan-400/60 hover:text-cyan-200"
+        >
+          Promotion
+        </Link>
         <span className="rounded-lg border border-cyan-500/45 bg-cyan-500/12 px-3 py-1.5 text-sm font-medium text-cyan-200">
           Banktransfer
         </span>
