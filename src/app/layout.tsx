@@ -24,6 +24,7 @@ import localFont from "next/font/local";
 
 import Image from "next/image";
 import { useRouter }from "next//navigation";
+import { usePathname } from "next/navigation";
 
 
 
@@ -90,6 +91,7 @@ export default function RootLayout({
 }>) {
 
   const router = useRouter();
+  const pathname = usePathname();
 
   /*
   useEffect(() => {
@@ -105,6 +107,7 @@ export default function RootLayout({
   const [showChain, setShowChain] = useState(false);
 
   const [showCenter, setShowCenter] = useState(false);
+  const hideFixedChrome = pathname?.endsWith("/realtime-banktransfer");
 
   return (
 
@@ -194,6 +197,7 @@ export default function RootLayout({
             */}
 
             {/* fixed position vertically top */}
+            {!hideFixedChrome && (
             <div className="fixed top-2 right-2 z-50 flex flex-col items-end justify-center">
 
 
@@ -399,6 +403,7 @@ export default function RootLayout({
               </div>
 
             </div>
+            )}
             
             {children}
 

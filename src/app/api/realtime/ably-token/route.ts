@@ -7,15 +7,23 @@ import { authorizeRealtimeRequest } from "@lib/realtime/rbac";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
-  const authResult = authorizeRealtimeRequest(request, ["admin", "viewer"]);
-  if (!authResult.ok) {
-    return NextResponse.json(
-      {
-        status: "error",
-        message: authResult.message,
-      },
-      { status: authResult.status },
-    );
+  const isPublic = request.nextUrl.searchParams.get("public") === "1";
+
+  let role: "admin" | "viewer" = "viewer";
+
+  if (!isPublic) {
+    const authResult = authorizeRealtimeRequest(request, ["admin", "viewer"]);
+    if (!authResult.ok) {
+      return NextResponse.json(
+        {
+          status: "error",
+          message: authResult.message,
+        },
+        { status: authResult.status },
+      );
+    }
+
+    role = authResult.role;
   }
 
   const ably = getAblyRestClient();
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
   }
 
   const clientIdParam = request.nextUrl.searchParams.get("clientId");
-  const fallbackClientId = `ops-dashboard-${authResult.role}-${Date.now()}`;
+  const fallbackClientId = `ops-dashboard-${role}-${Date.now()}`;
   const clientId = clientIdParam?.trim() || fallbackClientId;
 
   try {
