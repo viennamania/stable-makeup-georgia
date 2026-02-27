@@ -10110,9 +10110,8 @@ export async function checkBuyOrderMatchDeposit(
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
   
-  //const oneMinuteAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-  // 1 day ago
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  // 10 minutes ago
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   const buyerDepositNameRegex = `^${escapeRegex(String(buyerDepositName || "").trim())}$`;
 
 
@@ -10123,7 +10122,7 @@ export async function checkBuyOrderMatchDeposit(
       'buyer.depositName': { $regex: buyerDepositNameRegex, $options: 'i' }, // case insensitive match
       krwAmount: krwAmount,
 
-      createdAt: { $gte: oneDayAgo },
+      createdAt: { $gte: tenMinutesAgo },
     },
     { projection: {
       tradeId: 1,
@@ -10136,7 +10135,6 @@ export async function checkBuyOrderMatchDeposit(
   if (result) {
 
     // update check bankTransferMatched to true
-    /*
     const updateResult = await collection.updateOne(
       { tradeId: result.tradeId },
       { $set: { 'buyer.bankTransferMatched': true } }
@@ -10145,7 +10143,6 @@ export async function checkBuyOrderMatchDeposit(
     if (updateResult.modifiedCount !== 1) {
       console.log('checkBuyOrderMatchDeposit: failed to update bankTransferMatched for tradeId: ' + result.tradeId);
     }
-    */
 
 
     return {
