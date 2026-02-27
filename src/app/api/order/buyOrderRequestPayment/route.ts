@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
 
     /*
     post
-    https://order.ausua.workers.dev/api/order
+    https://dash.ip-kr.com/api/order
 
     body
     {
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
     */
 
-      const payactionUrl = "https://order.ausua.workers.dev/api/order";
+      const payactionUrl = "https://dash.ip-kr.com/api/order";
       const payactionBody = {
         order_number: buyOrder.tradeId,
         order_amount: buyOrder.krwAmount,
