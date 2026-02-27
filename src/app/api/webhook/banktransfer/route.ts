@@ -142,14 +142,42 @@ export async function POST(request: NextRequest) {
   const webhookKey = request.headers.get("x-webhook-key");
   const mallId = request.headers.get("x-mall-id");
   const traceId = request.headers.get("x-trace-id");
+  const headersPayload = {
+    "x-webhook-key": webhookKey,
+    "x-mall-id": mallId,
+    "x-trace-id": traceId,
+  };
 
   console.log("payaction webhookKey", webhookKey);
   console.log("payaction mallId", mallId);
   console.log("payaction traceId", traceId); // payaction traceId 1747808169270x797731416156850300
 
+  let body: any = null;
+  try {
+    body = await request.json();
+  } catch (parseError) {
+    await insertWebhookLog({
+      event: "banktransfer_store_skipped",
+      headers: headersPayload,
+      body: {
+        reasonCode: "INVALID_JSON_BODY",
+        reason: "Request body JSON parsing failed",
+        stage: "parse_request_body",
+        traceId: traceId || null,
+        mallId: mallId || null,
+      },
+      error: parseError,
+      createdAt: new Date(),
+    });
 
-
-  const body = await request.json();
+    return NextResponse.json(
+      {
+        status: "error",
+        message: "Invalid JSON body",
+      },
+      { status: 400 },
+    );
+  }
 
   console.log("payaction body", body);
 
@@ -198,6 +226,20 @@ export async function POST(request: NextRequest) {
 
 
   if (!body) {
+    await insertWebhookLog({
+      event: "banktransfer_store_skipped",
+      headers: headersPayload,
+      body: {
+        reasonCode: "EMPTY_BODY",
+        reason: "Request body is empty",
+        stage: "validate_body",
+        traceId: traceId || null,
+        mallId: mallId || null,
+      },
+      error: null,
+      createdAt: new Date(),
+    });
+
     return NextResponse.json({
       status: "error",
       message: "body is empty",
@@ -217,6 +259,50 @@ export async function POST(request: NextRequest) {
     balance,
     processing_date,
   } = body;
+
+  const logBankTransferStoreSkip = async ({
+    reasonCode,
+    reason,
+    stage,
+    normalizedBankAccountNumber = null,
+    details = {},
+    error = null,
+  }: {
+    reasonCode: string;
+    reason: string;
+    stage: string;
+    normalizedBankAccountNumber?: string | null;
+    details?: Record<string, unknown>;
+    error?: any;
+  }) => {
+    try {
+      await insertWebhookLog({
+        event: "banktransfer_store_skipped",
+        headers: headersPayload,
+        body: {
+          reasonCode,
+          reason,
+          stage,
+          traceId: traceId || null,
+          mallId: mallId || null,
+          transactionType: toNullableString(transaction_type),
+          bankAccountId: toNullableString(bank_account_id),
+          originalBankAccountNumber: toNullableString(bank_account_number),
+          normalizedBankAccountNumber: toNullableString(normalizedBankAccountNumber),
+          bankCode: toNullableString(bank_code),
+          amount: amount ?? null,
+          transactionDate: toNullableString(transaction_date),
+          transactionName: toNullableString(transaction_name),
+          processingDate: toNullableString(processing_date),
+          ...details,
+        },
+        error,
+        createdAt: new Date(),
+      });
+    } catch (skipLogError) {
+      console.error("Failed to insert banktransfer skip log:", skipLogError);
+    }
+  };
 
  
 
@@ -245,11 +331,7 @@ export async function POST(request: NextRequest) {
 
   const data = {
     event: "banktransfer_webhook",
-    headers: {
-      "x-webhook-key": webhookKey,
-      "x-mall-id": mallId,
-      "x-trace-id": traceId,
-    },
+    headers: headersPayload,
     body: body,
     error: null,
     createdAt: new Date(),
@@ -263,11 +345,26 @@ export async function POST(request: NextRequest) {
 
 
 
-  // touchBankInfoByRealAccountNumber
-  const bankInfo = await touchBankInfoByRealAccountNumber(
-    bank_account_number,
-    balance
-  );
+  let bankInfo: any = null;
+  try {
+    bankInfo = await touchBankInfoByRealAccountNumber(
+      bank_account_number,
+      balance
+    );
+  } catch (touchBankInfoError) {
+    await logBankTransferStoreSkip({
+      reasonCode: "TOUCH_BANK_INFO_FAILED",
+      reason: "Failed to update bankInfo by real account number",
+      stage: "touch_bank_info",
+      normalizedBankAccountNumber: bank_account_number,
+      error: touchBankInfoError,
+    });
+
+    return NextResponse.json({
+      status: "error",
+      message: "Failed to update bankInfo",
+    });
+  }
 
 
 
@@ -794,6 +891,13 @@ export async function POST(request: NextRequest) {
       
       errorMessage = "No store found for bankAccountNumber";
 
+      await logBankTransferStoreSkip({
+        reasonCode: "STORE_NOT_FOUND",
+        reason: "No store found for bankAccountNumber",
+        stage: "resolve_store",
+        normalizedBankAccountNumber: bankAccountNumber,
+      });
+
       await publishDashboardEvent({
         status: "error",
         receiver: baseReceiver,
@@ -919,6 +1023,14 @@ export async function POST(request: NextRequest) {
 
   }  catch (error) {
     console.error("Error processing webhook:", error);
+
+    await logBankTransferStoreSkip({
+      reasonCode: "PROCESSING_ERROR",
+      reason: "Unhandled error while processing banktransfer webhook",
+      stage: "process_webhook",
+      normalizedBankAccountNumber: bankAccountNumber,
+      error,
+    });
 
     await publishDashboardEvent({
       status: "error",

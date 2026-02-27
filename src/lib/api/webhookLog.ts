@@ -64,12 +64,14 @@ export async function insertWebhookLog(data: {
 export async function getWebhookLogs({
   event = '',
   transactionType = '',
+  reasonCode = '',
   limit = 50,
   fromDate = '',
   toDate = '',
 }: {
   event?: string;
   transactionType?: string;
+  reasonCode?: string;
   limit?: number;
   fromDate?: string | Date;
   toDate?: string | Date;
@@ -86,6 +88,10 @@ export async function getWebhookLogs({
 
   if (transactionType) {
     filters.push({ 'body.transaction_type': String(transactionType) });
+  }
+
+  if (reasonCode) {
+    filters.push({ 'body.reasonCode': String(reasonCode) });
   }
   
 
