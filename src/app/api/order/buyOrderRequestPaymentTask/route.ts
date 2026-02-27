@@ -386,7 +386,7 @@ export async function POST(request: NextRequest) {
 
       /*
       post
-      https://dash.ip-kr.com/api/order
+      https://dash.bank-oc.com/api/order
 
       body
       {
@@ -403,7 +403,7 @@ export async function POST(request: NextRequest) {
       }
       */
 
-      const payactionUrl = "https://dash.ip-kr.com/api/order";
+      const payactionUrl = "https://dash.bank-oc.com/api/order";
       const payactionBody = {
         order_number: buyOrder.tradeId,
         order_amount: buyOrder.krwAmount,
