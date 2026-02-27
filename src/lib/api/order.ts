@@ -148,6 +148,10 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0;
 }
 
+function escapeRegex(value: string): string {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function toNormalizedHash(value: unknown): string | null {
   const raw = String(value || "").trim();
   if (!raw || raw === "0x") {
@@ -10109,13 +10113,14 @@ export async function checkBuyOrderMatchDeposit(
   //const oneMinuteAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
   // 1 day ago
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const buyerDepositNameRegex = `^${escapeRegex(String(buyerDepositName || "").trim())}$`;
 
 
   const result = await collection.findOne<any>(
     {
       'buyer.bankTransferMatched': { $ne: true }, // bankTransferMatched is not true
 
-      'buyer.depositName': { $regex: `^${buyerDepositName}$`, $options: 'i' }, // case insensitive match
+      'buyer.depositName': { $regex: buyerDepositNameRegex, $options: 'i' }, // case insensitive match
       krwAmount: krwAmount,
 
       createdAt: { $gte: oneDayAgo },

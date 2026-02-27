@@ -7,6 +7,10 @@ import { dbName } from '../mongodb';
 import { ObjectId } from 'mongodb';
 import { memo } from 'react';
 
+function escapeRegex(value: string): string {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
 // getOne by vactId
 export async function getOne(vactId: string) {
@@ -318,12 +322,13 @@ export async function updateBankTransferMatchAndTradeId({
 
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const oneDayAgoKST = new Date(oneDayAgo.getTime() + 9 * 60 * 60 * 1000);
+  const transactionNameRegex = `^${escapeRegex(String(transactionName || '').trim())}$`;
 
   const result = await collection.updateOne(
     {
       transactionType: 'deposited',
       //transactionName: transactionName,
-      transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
+      transactionName: { $regex: transactionNameRegex, $options: 'i' },
 
       amount: amount,
       transactionDate: { $gte: oneDayAgoKST },
