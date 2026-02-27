@@ -98,6 +98,24 @@ function maskAccountNumber(value: string): string {
   return `${maskedHead}${tail}`;
 }
 
+function getReceiverDisplayInfo(event: BankTransferDashboardEvent): {
+  nickname: string;
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  walletAddress: string;
+} {
+  const receiver = event.receiver;
+
+  return {
+    nickname: String(receiver?.nickname || "").trim(),
+    bankName: String(receiver?.bankName || "").trim(),
+    accountHolder: String(receiver?.accountHolder || "").trim(),
+    accountNumber: String(receiver?.accountNumber || event.bankAccountNumber || "").trim(),
+    walletAddress: String(receiver?.walletAddress || "").trim(),
+  };
+}
+
 function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   switch (tone) {
     case "live":
@@ -594,6 +612,16 @@ export default function RealtimeBankTransferPage() {
             {sortedEvents.map((item) => {
               const isHighlighted = item.highlightUntil > Date.now();
               const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+              const receiverInfo = getReceiverDisplayInfo(item.data);
+              const receiverAccountHolder = receiverInfo.accountHolder
+                ? maskName(receiverInfo.accountHolder)
+                : "-";
+              const receiverAccountNumber = receiverInfo.accountNumber
+                ? maskAccountNumber(receiverInfo.accountNumber)
+                : "-";
+              const receiverBankName = receiverInfo.bankName || "-";
+              const receiverNickname = receiverInfo.nickname || "-";
+              const receiverWalletAddress = receiverInfo.walletAddress || "-";
 
               return (
                 <article
@@ -646,28 +674,16 @@ export default function RealtimeBankTransferPage() {
                     </div>
 
                     <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">스토어</p>
-                      {item.data.store ? (
-                        <div className="mt-1 flex min-w-0 items-center gap-2">
-                          {item.data.store.logo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.data.store.logo}
-                              alt={item.data.store.name || "store-logo"}
-                              className="h-8 w-8 shrink-0 rounded-md border border-slate-700 object-cover"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 shrink-0 rounded-md border border-slate-700 bg-slate-800" />
-                          )}
-                          <div className="min-w-0">
-                            <p className="truncate text-sm text-slate-100">{item.data.store.name || "-"}</p>
-                            <p className="font-mono text-[11px] text-slate-400">
-                              {item.data.store.code || item.data.storecode || "-"}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-xs text-slate-500">-</p>
+                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">입금 수취자</p>
+                      <p className="mt-1 text-sm text-slate-100">{receiverAccountHolder}</p>
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        {receiverBankName} {receiverAccountNumber}
+                      </p>
+                      <p className="mt-1 text-[11px] text-cyan-200">닉네임: {receiverNickname}</p>
+                      {receiverWalletAddress !== "-" && (
+                        <p className="mt-1 break-all font-mono text-[11px] text-slate-500">
+                          Wallet: {receiverWalletAddress}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -692,7 +708,7 @@ export default function RealtimeBankTransferPage() {
                   <th className="w-[170px] px-3 py-2 text-right">금액</th>
                   <th className="w-[140px] px-3 py-2">입금자</th>
                   <th className="w-[170px] px-3 py-2">계좌</th>
-                  <th className="w-[260px] px-3 py-2">스토어</th>
+                  <th className="w-[260px] px-3 py-2">입금 수취자</th>
                   <th className="w-[320px] px-3 py-2">거래/매칭</th>
                 </tr>
               </thead>
@@ -707,6 +723,16 @@ export default function RealtimeBankTransferPage() {
                 {sortedEvents.map((item) => {
                   const isHighlighted = item.highlightUntil > Date.now();
                   const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                  const receiverInfo = getReceiverDisplayInfo(item.data);
+                  const receiverAccountHolder = receiverInfo.accountHolder
+                    ? maskName(receiverInfo.accountHolder)
+                    : "-";
+                  const receiverAccountNumber = receiverInfo.accountNumber
+                    ? maskAccountNumber(receiverInfo.accountNumber)
+                    : "-";
+                  const receiverBankName = receiverInfo.bankName || "-";
+                  const receiverNickname = receiverInfo.nickname || "-";
+                  const receiverWalletAddress = receiverInfo.walletAddress || "-";
 
                   return (
                     <tr
@@ -748,31 +774,21 @@ export default function RealtimeBankTransferPage() {
                       </td>
 
                       <td className="px-3 py-3 text-slate-200">{maskName(item.data.transactionName)}</td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-300">{maskAccountNumber(item.data.bankAccountNumber)}</td>
+                      <td className="px-3 py-3 font-mono text-xs text-slate-300">{receiverAccountNumber}</td>
 
                       <td className="px-3 py-3">
-                        {item.data.store ? (
-                          <div className="flex min-w-[230px] items-center gap-2">
-                            {item.data.store.logo ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.data.store.logo}
-                                alt={item.data.store.name || "store-logo"}
-                                className="h-9 w-9 rounded-md border border-slate-700 object-cover"
-                              />
-                            ) : (
-                              <div className="h-9 w-9 rounded-md border border-slate-700 bg-slate-800" />
-                            )}
-                            <div className="flex flex-col">
-                              <span className="leading-tight text-slate-100">{item.data.store.name || "-"}</span>
-                              <span className="font-mono text-xs leading-tight text-slate-400">
-                                {item.data.store.code || item.data.storecode || "-"}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500">-</span>
-                        )}
+                        <div className="flex min-w-[230px] flex-col">
+                          <span className="leading-tight text-slate-100">{receiverAccountHolder}</span>
+                          <span className="mt-1 text-xs leading-tight text-slate-400">
+                            {receiverBankName} {receiverAccountNumber}
+                          </span>
+                          <span className="mt-1 text-xs leading-tight text-cyan-200">닉네임: {receiverNickname}</span>
+                          {receiverWalletAddress !== "-" && (
+                            <span className="mt-1 break-all font-mono text-[11px] leading-tight text-slate-500">
+                              Wallet: {receiverWalletAddress}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-3 py-3">

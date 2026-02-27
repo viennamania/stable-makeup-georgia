@@ -45,6 +45,7 @@ import {
 } from '@lib/api/webhookLog';
 import {
   type BankTransferDashboardEvent,
+  type BankTransferDashboardReceiver,
   type BankTransferDashboardStore,
 } from "@lib/ably/constants";
 import {
@@ -55,6 +56,42 @@ import {
 } from "@lib/api/bankTransferRealtimeEvent";
 import { error } from "console";
 import { memo } from "react";
+
+function toNullableString(value: unknown): string | null {
+  const normalized = String(value || "").trim();
+  return normalized ? normalized : null;
+}
+
+function normalizeBankAccountNumber(value: unknown): string {
+  return String(value || "").replace(/[\s-]/g, "");
+}
+
+function pickStoreBankInfoByAccountNumber(storeInfo: any, bankAccountNumber: string): any | null {
+  if (!storeInfo) {
+    return null;
+  }
+
+  const target = normalizeBankAccountNumber(bankAccountNumber);
+  const candidates = [
+    storeInfo.bankInfo,
+    storeInfo.bankInfoAAA,
+    storeInfo.bankInfoBBB,
+    storeInfo.bankInfoCCC,
+    storeInfo.bankInfoDDD,
+  ].filter(Boolean);
+
+  if (target) {
+    const matched = candidates.find((candidate) => {
+      const accountNumber = normalizeBankAccountNumber(candidate?.accountNumber);
+      return Boolean(accountNumber) && accountNumber === target;
+    });
+    if (matched) {
+      return matched;
+    }
+  }
+
+  return candidates[0] || null;
+}
 
 // webhook
 // header
@@ -655,6 +692,7 @@ export async function POST(request: NextRequest) {
     status,
     store,
     storecode,
+    receiver,
     tradeId,
     match,
     errorMessage,
@@ -662,6 +700,7 @@ export async function POST(request: NextRequest) {
     status: BankTransferDashboardEvent["status"];
     store?: BankTransferDashboardStore | null;
     storecode?: string | null;
+    receiver?: BankTransferDashboardReceiver | null;
     tradeId?: string | null;
     match?: string | null;
     errorMessage?: string | null;
@@ -679,6 +718,7 @@ export async function POST(request: NextRequest) {
       status,
       store: store || null,
       storecode: storecode || null,
+      receiver: receiver || null,
       tradeId: tradeId || null,
       match: match || null,
       errorMessage: errorMessage || null,
@@ -736,6 +776,14 @@ export async function POST(request: NextRequest) {
 
     let errorMessage = null;
 
+    const baseReceiver: BankTransferDashboardReceiver = {
+      nickname: null,
+      walletAddress: null,
+      bankName: toNullableString(bankInfo?.bankName),
+      accountNumber: toNullableString(bankAccountNumber),
+      accountHolder: toNullableString(bankInfo?.accountHolder),
+    };
+
     // get store by bankAccountNumber
     const storeInfo = await getStoreByBankAccountNumber({
       bankAccountNumber: bankAccountNumber,
@@ -748,6 +796,7 @@ export async function POST(request: NextRequest) {
 
       await publishDashboardEvent({
         status: "error",
+        receiver: baseReceiver,
         errorMessage: errorMessage,
       });
 
@@ -813,6 +862,18 @@ export async function POST(request: NextRequest) {
 
 
     }
+
+    const storeBankInfo = pickStoreBankInfoByAccountNumber(storeInfo, bankAccountNumber);
+    const sellerBankInfo = sellerInfo?.bankInfo || null;
+    const receiver: BankTransferDashboardReceiver = {
+      nickname: toNullableString(sellerInfo?.nickname),
+      walletAddress: toNullableString(sellerInfo?.walletAddress),
+      bankName: toNullableString(sellerBankInfo?.bankName || storeBankInfo?.bankName || bankInfo?.bankName),
+      accountNumber: toNullableString(sellerBankInfo?.accountNumber || bankAccountNumber),
+      accountHolder: toNullableString(
+        sellerBankInfo?.accountHolder || storeBankInfo?.accountHolder || bankInfo?.accountHolder,
+      ),
+    };
     
     
     
@@ -848,6 +909,7 @@ export async function POST(request: NextRequest) {
         name: storeInfo?.storeName || null,
       },
       storecode: storeInfo?.storecode || null,
+      receiver,
       tradeId: tradeId || null,
       match: match || null,
       errorMessage: errorMessage,
@@ -860,6 +922,13 @@ export async function POST(request: NextRequest) {
 
     await publishDashboardEvent({
       status: "error",
+      receiver: {
+        nickname: null,
+        walletAddress: null,
+        bankName: toNullableString(bankInfo?.bankName),
+        accountNumber: toNullableString(bankAccountNumber),
+        accountHolder: toNullableString(bankInfo?.accountHolder),
+      },
       errorMessage: "Error processing webhook",
     });
 

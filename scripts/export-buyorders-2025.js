@@ -26,7 +26,7 @@ async function run() {
     await client.connect();
     const db = client.db(dbName);
     const source = db.collection('buyorders');
-    const target = db.collection('buyorders_2025');
+    const target = db.collection('buyorders_20260210');
 
     const cursor = source.find(
       { createdAt: { $exists: true, $ne: null } },
@@ -67,7 +67,7 @@ async function run() {
 
     console.log(`Scanned: ${scanned}`);
     console.log(`Matched (KST 2025): ${matched}`);
-    console.log(`Written to buyorders_2025: ${written}`);
+    console.log(`Written to buyorders_20260210: ${written}`);
   } catch (err) {
     console.error('Export failed:', err);
     process.exit(1);

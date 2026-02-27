@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     userType: userType === undefined ? 'all' : userType,
 
-    collectionName: 'buyorders_2025',
+    collectionName: 'buyorders_20260210',
   });
 
  

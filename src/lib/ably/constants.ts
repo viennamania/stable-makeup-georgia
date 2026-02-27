@@ -9,6 +9,14 @@ export type BankTransferDashboardStore = {
   name: string | null;
 };
 
+export type BankTransferDashboardReceiver = {
+  nickname: string | null;
+  walletAddress: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
+  accountHolder: string | null;
+};
+
 export type BankTransferDashboardEvent = {
   eventId: string;
   idempotencyKey: string;
@@ -23,6 +31,7 @@ export type BankTransferDashboardEvent = {
   status: "stored" | "error";
   store: BankTransferDashboardStore | null;
   storecode: string | null;
+  receiver: BankTransferDashboardReceiver | null;
   tradeId: string | null;
   match: string | null;
   errorMessage: string | null;

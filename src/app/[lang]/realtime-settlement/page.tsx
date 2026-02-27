@@ -534,33 +534,33 @@ export default function RealtimeSettlementPage() {
   function getMetricToneClassName(tone: "emerald" | "cyan" | "slate" | "amber") {
     if (tone === "emerald") {
       return {
-        card: "border-emerald-300/45 bg-gradient-to-br from-emerald-500/24 via-slate-900/95 to-slate-950/95 shadow-[inset_0_1px_0_rgba(167,243,208,0.16)]",
-        title: "text-emerald-50",
+        card: "border-emerald-500/70 bg-slate-950",
+        title: "text-emerald-200",
         value: "text-white",
-        sub: "text-emerald-100/90",
+        sub: "text-emerald-300",
       };
     }
     if (tone === "cyan") {
       return {
-        card: "border-cyan-300/45 bg-gradient-to-br from-cyan-500/24 via-slate-900/95 to-slate-950/95 shadow-[inset_0_1px_0_rgba(165,243,252,0.16)]",
-        title: "text-cyan-50",
+        card: "border-cyan-500/70 bg-slate-950",
+        title: "text-cyan-200",
         value: "text-white",
-        sub: "text-cyan-100/90",
+        sub: "text-cyan-300",
       };
     }
     if (tone === "amber") {
       return {
-        card: "border-amber-300/50 bg-gradient-to-br from-amber-500/22 via-slate-900/95 to-slate-950/95 shadow-[inset_0_1px_0_rgba(253,230,138,0.14)]",
-        title: "text-amber-50",
+        card: "border-amber-500/70 bg-slate-950",
+        title: "text-amber-200",
         value: "text-white",
-        sub: "text-amber-100/90",
+        sub: "text-amber-300",
       };
     }
     return {
-      card: "border-slate-500/60 bg-gradient-to-br from-slate-700/35 via-slate-900/95 to-slate-950/95 shadow-[inset_0_1px_0_rgba(226,232,240,0.12)]",
-      title: "text-slate-100",
+      card: "border-slate-500/80 bg-slate-900",
+      title: "text-slate-200",
       value: "text-white",
-      sub: "text-slate-200/85",
+      sub: "text-slate-300",
     };
   }
 
