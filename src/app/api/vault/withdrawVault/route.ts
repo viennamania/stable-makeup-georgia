@@ -31,8 +31,19 @@ import {
 import { access } from "fs";
 import { sign } from "crypto";
 
+const WITHDRAW_VAULT_API_DISABLED = true;
+const WITHDRAW_VAULT_API_DISABLED_MESSAGE = "결과를 점검중입니다";
 
 export async function POST(request: NextRequest) {
+
+  if (WITHDRAW_VAULT_API_DISABLED) {
+    return NextResponse.json({
+      result: null,
+      success: false,
+      error: "WithdrawVault API is temporarily disabled",
+      message: WITHDRAW_VAULT_API_DISABLED_MESSAGE,
+    }, { status: 503 });
+  }
 
   const body = await request.json();
   
