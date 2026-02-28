@@ -275,6 +275,21 @@ function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   }
 }
 
+function getRelativeTimeToneClassNameOnLight(tone: RelativeTimeTone): string {
+  switch (tone) {
+    case "live":
+      return "animate-pulse border-cyan-500 bg-cyan-100 text-cyan-900 shadow-[0_0_0_1px_rgba(6,182,212,0.22)]";
+    case "fresh":
+      return "border-emerald-500 bg-emerald-100 text-emerald-900";
+    case "recent":
+      return "border-sky-500 bg-sky-100 text-sky-900";
+    case "normal":
+      return "border-slate-400 bg-slate-100 text-slate-800";
+    default:
+      return "border-zinc-400 bg-zinc-100 text-zinc-700";
+  }
+}
+
 function getKstDateKey(value: Date): string {
   const kst = new Date(value.getTime() + KST_OFFSET_MS);
   const year = kst.getUTCFullYear();
@@ -406,6 +421,7 @@ export default function RealtimeBuyOrderPage() {
   const [pendingBuyOrdersTotalCount, setPendingBuyOrdersTotalCount] = useState(0);
   const [pendingBuyOrdersUpdatedAt, setPendingBuyOrdersUpdatedAt] = useState<string | null>(null);
   const [pendingBuyOrdersErrorMessage, setPendingBuyOrdersErrorMessage] = useState<string | null>(null);
+  const [pendingBuyOrderHighlightUntilMap, setPendingBuyOrderHighlightUntilMap] = useState<Record<string, number>>({});
   const [buyOrderListItems, setBuyOrderListItems] = useState<BuyOrderListItem[]>([]);
   const [buyOrderListTotalCount, setBuyOrderListTotalCount] = useState(0);
   const [buyOrderListPage, setBuyOrderListPage] = useState(1);
@@ -418,6 +434,7 @@ export default function RealtimeBuyOrderPage() {
   const [isStoreFilterOpen, setIsStoreFilterOpen] = useState(false);
   const [buyOrderListUpdatedAt, setBuyOrderListUpdatedAt] = useState<string | null>(null);
   const [buyOrderListErrorMessage, setBuyOrderListErrorMessage] = useState<string | null>(null);
+  const [buyOrderListHighlightUntilMap, setBuyOrderListHighlightUntilMap] = useState<Record<string, number>>({});
   const [isBuyOrderListLoading, setIsBuyOrderListLoading] = useState(false);
   const [copiedTradeId, setCopiedTradeId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -427,6 +444,10 @@ export default function RealtimeBuyOrderPage() {
   const triggeredJackpotEventIdsRef = useRef<string[]>([]);
   const copiedTradeTimerRef = useRef<number | null>(null);
   const storeFilterDropdownRef = useRef<HTMLDivElement | null>(null);
+  const pendingBuyOrderSeenIdsRef = useRef<Set<string>>(new Set());
+  const pendingBuyOrderHighlightInitializedRef = useRef(false);
+  const buyOrderListSeenIdsRef = useRef<Set<string>>(new Set());
+  const buyOrderListHighlightInitializedRef = useRef(false);
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -756,6 +777,46 @@ export default function RealtimeBuyOrderPage() {
             } satisfies PendingBuyOrderItem;
           })
         : [];
+      const nextOrderIds = new Set(
+        nextOrders
+          .map((order) => String(order.orderId || order.tradeId || "").trim())
+          .filter(Boolean),
+      );
+      const now = Date.now();
+
+      if (!pendingBuyOrderHighlightInitializedRef.current) {
+        pendingBuyOrderHighlightInitializedRef.current = true;
+        pendingBuyOrderSeenIdsRef.current = nextOrderIds;
+        setPendingBuyOrderHighlightUntilMap((previousMap) => {
+          const nextMap: Record<string, number> = {};
+          for (const [orderId, highlightUntil] of Object.entries(previousMap)) {
+            if (highlightUntil > now && nextOrderIds.has(orderId)) {
+              nextMap[orderId] = highlightUntil;
+            }
+          }
+          return nextMap;
+        });
+      } else {
+        const addedHighlightMap: Record<string, number> = {};
+        for (const orderId of nextOrderIds) {
+          if (!pendingBuyOrderSeenIdsRef.current.has(orderId)) {
+            addedHighlightMap[orderId] = now + NEW_EVENT_HIGHLIGHT_MS;
+          }
+        }
+        pendingBuyOrderSeenIdsRef.current = nextOrderIds;
+        setPendingBuyOrderHighlightUntilMap((previousMap) => {
+          const nextMap: Record<string, number> = {};
+          for (const [orderId, highlightUntil] of Object.entries(previousMap)) {
+            if (highlightUntil > now && nextOrderIds.has(orderId)) {
+              nextMap[orderId] = highlightUntil;
+            }
+          }
+          for (const [orderId, highlightUntil] of Object.entries(addedHighlightMap)) {
+            nextMap[orderId] = highlightUntil;
+          }
+          return nextMap;
+        });
+      }
 
       setPendingBuyOrders(nextOrders);
       setPendingBuyOrdersTotalCount(Number(data?.totalCount || nextOrders.length));
@@ -814,6 +875,46 @@ export default function RealtimeBuyOrderPage() {
             } satisfies BuyOrderListItem;
           })
         : [];
+      const nextOrderIds = new Set(
+        nextOrders
+          .map((order) => String(order.orderId || order.tradeId || "").trim())
+          .filter(Boolean),
+      );
+      const now = Date.now();
+
+      if (!buyOrderListHighlightInitializedRef.current) {
+        buyOrderListHighlightInitializedRef.current = true;
+        buyOrderListSeenIdsRef.current = nextOrderIds;
+        setBuyOrderListHighlightUntilMap((previousMap) => {
+          const nextMap: Record<string, number> = {};
+          for (const [orderId, highlightUntil] of Object.entries(previousMap)) {
+            if (highlightUntil > now && nextOrderIds.has(orderId)) {
+              nextMap[orderId] = highlightUntil;
+            }
+          }
+          return nextMap;
+        });
+      } else {
+        const addedHighlightMap: Record<string, number> = {};
+        for (const orderId of nextOrderIds) {
+          if (!buyOrderListSeenIdsRef.current.has(orderId)) {
+            addedHighlightMap[orderId] = now + NEW_EVENT_HIGHLIGHT_MS;
+          }
+        }
+        buyOrderListSeenIdsRef.current = nextOrderIds;
+        setBuyOrderListHighlightUntilMap((previousMap) => {
+          const nextMap: Record<string, number> = {};
+          for (const [orderId, highlightUntil] of Object.entries(previousMap)) {
+            if (highlightUntil > now && nextOrderIds.has(orderId)) {
+              nextMap[orderId] = highlightUntil;
+            }
+          }
+          for (const [orderId, highlightUntil] of Object.entries(addedHighlightMap)) {
+            nextMap[orderId] = highlightUntil;
+          }
+          return nextMap;
+        });
+      }
 
       const nextPage = Math.max(1, Number(data?.page || buyOrderListPage));
       const nextTotalPages = Math.max(1, Number(data?.totalPages || 1));
@@ -998,6 +1099,12 @@ export default function RealtimeBuyOrderPage() {
   }, [fetchPendingBuyOrders]);
 
   useEffect(() => {
+    buyOrderListHighlightInitializedRef.current = false;
+    buyOrderListSeenIdsRef.current = new Set();
+    setBuyOrderListHighlightUntilMap({});
+  }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter, buyOrderListStoreCodeFilter]);
+
+  useEffect(() => {
     void fetchBuyOrderList();
   }, [fetchBuyOrderList]);
 
@@ -1065,6 +1172,58 @@ export default function RealtimeBuyOrderPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const now = Date.now();
+    const activeHighlights = Object.values(pendingBuyOrderHighlightUntilMap).filter((highlightUntil) => highlightUntil > now);
+    if (activeHighlights.length === 0) {
+      return;
+    }
+
+    const nextExpireAt = Math.min(...activeHighlights);
+    const timer = window.setTimeout(() => {
+      const current = Date.now();
+      setPendingBuyOrderHighlightUntilMap((previousMap) => {
+        const nextMap: Record<string, number> = {};
+        for (const [orderId, highlightUntil] of Object.entries(previousMap)) {
+          if (highlightUntil > current) {
+            nextMap[orderId] = highlightUntil;
+          }
+        }
+        return nextMap;
+      });
+    }, Math.max(80, nextExpireAt - now + 20));
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [pendingBuyOrderHighlightUntilMap]);
+
+  useEffect(() => {
+    const now = Date.now();
+    const activeHighlights = Object.values(buyOrderListHighlightUntilMap).filter((highlightUntil) => highlightUntil > now);
+    if (activeHighlights.length === 0) {
+      return;
+    }
+
+    const nextExpireAt = Math.min(...activeHighlights);
+    const timer = window.setTimeout(() => {
+      const current = Date.now();
+      setBuyOrderListHighlightUntilMap((previousMap) => {
+        const nextMap: Record<string, number> = {};
+        for (const [orderId, highlightUntil] of Object.entries(previousMap)) {
+          if (highlightUntil > current) {
+            nextMap[orderId] = highlightUntil;
+          }
+        }
+        return nextMap;
+      });
+    }, Math.max(80, nextExpireAt - now + 20));
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [buyOrderListHighlightUntilMap]);
 
   useEffect(() => {
     if (!isStoreFilterOpen) {
@@ -1474,66 +1633,89 @@ export default function RealtimeBuyOrderPage() {
             )}
 
             {pendingBuyOrders.length > 0 && (
-              <div className="overflow-x-auto">
-                <div className="min-w-[1220px] space-y-1">
-                  {pendingBuyOrders.map((order, index) => {
-                    const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
-                    const lineNo = String(index + 1).padStart(3, "0");
-                    const storeLabel = order.storeName || order.storeCode || "-";
-                    const buyerLabel = maskName(order.buyerName);
-                    const hasStoreLogo = Boolean(order.storeLogo);
+              <div className="space-y-1">
+                {pendingBuyOrders.map((order, index) => {
+                  const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
+                  const lineNo = String(index + 1).padStart(3, "0");
+                  const storeLabel = order.storeName || order.storeCode || "-";
+                  const buyerLabel = maskName(order.buyerName);
+                  const hasStoreLogo = Boolean(order.storeLogo);
+                  const copied = Boolean(order.tradeId && copiedTradeId === order.tradeId);
+                  const rowId = String(order.orderId || order.tradeId || "").trim();
+                  const isHighlighted = rowId ? (pendingBuyOrderHighlightUntilMap[rowId] || 0) > Date.now() : false;
 
-                    return (
-                      <article
-                        key={`pending-order-${order.orderId || index}`}
-                        className="flex items-center gap-2 rounded-xl border border-amber-200/80 bg-white/95 px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12)]"
-                      >
+                  return (
+                    <article
+                      key={`pending-order-${order.orderId || index}`}
+                      className={`grid grid-cols-[84px_minmax(0,1.9fr)_minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,1.25fr)_minmax(0,1.15fr)] items-center gap-2 rounded-xl border px-2.5 py-1.5 text-[11px] transition-all duration-500 ${
+                        isHighlighted
+                          ? "new-record-row-highlight border-cyan-300/80 bg-cyan-50/95 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]"
+                          : "border-amber-200/80 bg-white/95 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12)]"
+                      }`}
+                    >
+                      <div className="flex min-w-0 items-center gap-1.5">
                         <span className="shrink-0 rounded border border-amber-300/70 bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-900">
                           {lineNo}
                         </span>
-                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(order.status)}`}>
+                        <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(order.status)}`}>
                           {getStatusLabel(order.status)}
                         </span>
-
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <span
-                            className={`h-7 w-7 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
-                            style={hasStoreLogo ? { backgroundImage: `url(${order.storeLogo})` } : undefined}
-                          />
-                          <span className="min-w-0 truncate text-[13px] font-semibold text-slate-900">{storeLabel}</span>
-                        </div>
-
-                        <div className="w-[172px] shrink-0 text-right">
-                          <p className="font-mono text-[14px] font-bold leading-none tabular-nums text-amber-950">
-                            {formatKrw(order.amountKrw)} KRW
-                          </p>
-                          <p className="font-mono text-[11px] leading-none text-cyan-700">
-                            {formatUsdt(order.amountUsdt)} USDT
-                          </p>
-                        </div>
-
-                        <div className="w-[132px] shrink-0 truncate text-[13px] font-semibold text-slate-900">
-                          {buyerLabel}
-                        </div>
-
-                        <div className="w-[210px] shrink-0 text-right">
-                          <p className="truncate font-mono text-[10px] text-slate-700" title={order.tradeId || "-"}>
-                            {order.tradeId ? `tid:${order.tradeId}` : "-"}
-                          </p>
-                        </div>
-
-                        <div className="w-[188px] shrink-0 text-right">
-                          <span className={`inline-flex rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
-                            {createdAtInfo.relativeLabel}
+                        {isHighlighted && (
+                          <span className="new-record-pill animate-pulse rounded border border-cyan-300 bg-cyan-100 px-1 py-0.5 font-mono text-[9px] font-semibold text-cyan-800">
+                            NEW
                           </span>
-                          <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                            {createdAtInfo.absoluteLabel}
-                          </p>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                        )}
+                      </div>
+
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={`h-7 w-7 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
+                          style={hasStoreLogo ? { backgroundImage: `url(${order.storeLogo})` } : undefined}
+                        />
+                        <span className="min-w-0 truncate text-[13px] font-semibold text-slate-900" title={storeLabel}>
+                          {storeLabel}
+                        </span>
+                      </div>
+
+                      <div className="min-w-0 text-right">
+                        <p className="truncate font-mono text-[13px] font-bold leading-none tabular-nums text-amber-950">
+                          {formatKrw(order.amountKrw)} KRW
+                        </p>
+                        <p className="truncate font-mono text-[10px] leading-none text-cyan-700">
+                          {formatUsdt(order.amountUsdt)} USDT
+                        </p>
+                      </div>
+
+                      <div className="min-w-0 truncate text-[12px] font-semibold text-slate-900">{buyerLabel}</div>
+
+                      <div className="flex min-w-0 items-center justify-end gap-1.5">
+                        <p className="min-w-0 truncate font-mono text-[10px] text-slate-700" title={order.tradeId || "-"}>
+                          {order.tradeId || "-"}
+                        </p>
+                        {order.tradeId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleCopyTradeId(order.tradeId);
+                            }}
+                            className="shrink-0 text-[10px] font-semibold text-cyan-700 underline underline-offset-2 transition hover:text-cyan-900"
+                          >
+                            {copied ? "복사됨" : "복사"}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 text-right">
+                        <span className={`inline-flex rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${getRelativeTimeToneClassNameOnLight(createdAtInfo.tone)}`}>
+                          {createdAtInfo.relativeLabel}
+                        </span>
+                        <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500">
+                          {createdAtInfo.absoluteLabel}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1674,76 +1856,86 @@ export default function RealtimeBuyOrderPage() {
             )}
 
             {buyOrderListItems.length > 0 && (
-              <div className="overflow-x-auto">
-                <div className="min-w-[1040px] space-y-1">
-                  {buyOrderListItems.map((item, index) => {
-                    const storeLabel = item.storeName || item.storeCode || "-";
-                    const buyerLabel = maskName(item.buyerName);
-                    const createdAtInfo = getRelativeTimeInfo(item.createdAt, nowMs);
-                    const rowNo = String((buyOrderListPage - 1) * BUYORDER_LIST_PAGE_LIMIT + index + 1).padStart(3, "0");
-                    const copied = Boolean(item.tradeId && copiedTradeId === item.tradeId);
+              <div className="space-y-1">
+                {buyOrderListItems.map((item, index) => {
+                  const storeLabel = item.storeName || item.storeCode || "-";
+                  const buyerLabel = maskName(item.buyerName);
+                  const createdAtInfo = getRelativeTimeInfo(item.createdAt, nowMs);
+                  const rowNo = String((buyOrderListPage - 1) * BUYORDER_LIST_PAGE_LIMIT + index + 1).padStart(3, "0");
+                  const copied = Boolean(item.tradeId && copiedTradeId === item.tradeId);
+                  const rowId = String(item.orderId || item.tradeId || "").trim();
+                  const isHighlighted = rowId ? (buyOrderListHighlightUntilMap[rowId] || 0) > Date.now() : false;
 
-                    return (
-                      <article
-                        key={`buyorder-list-${item.orderId || index}`}
-                        className="grid grid-cols-[96px_minmax(280px,1.8fr)_170px_120px_210px_188px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
-                      >
-                        <div className="flex min-w-0 items-center gap-1.5">
-                          <span className="font-mono text-[10px] text-slate-400">{rowNo}</span>
-                          <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(item.status)}`}>
-                            {getStatusLabel(item.status)}
+                  return (
+                    <article
+                      key={`buyorder-list-${item.orderId || index}`}
+                      className={`grid grid-cols-[84px_minmax(0,1.9fr)_minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,1.25fr)_minmax(0,1.15fr)] items-center gap-2 rounded-lg border px-2 py-1.5 text-[11px] transition-all duration-500 ${
+                        isHighlighted
+                          ? "new-record-row-highlight border-cyan-300/80 bg-cyan-50 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]"
+                          : "border-slate-200 bg-white shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
+                      }`}
+                    >
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span className="font-mono text-[10px] text-slate-400">{rowNo}</span>
+                        <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(item.status)}`}>
+                          {getStatusLabel(item.status)}
+                        </span>
+                        {isHighlighted && (
+                          <span className="new-record-pill animate-pulse rounded border border-cyan-300 bg-cyan-100 px-1 py-0.5 font-mono text-[9px] font-semibold text-cyan-800">
+                            NEW
                           </span>
-                        </div>
+                        )}
+                      </div>
 
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span
-                            className={`h-6 w-6 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${item.storeLogo ? "bg-white" : "bg-slate-100"}`}
-                            style={item.storeLogo ? { backgroundImage: `url(${item.storeLogo})` } : undefined}
-                          />
-                          <span className="min-w-0 break-all text-[12px] font-medium text-slate-900" title={storeLabel}>
-                            {storeLabel}
-                          </span>
-                        </div>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={`h-6 w-6 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${item.storeLogo ? "bg-white" : "bg-slate-100"}`}
+                          style={item.storeLogo ? { backgroundImage: `url(${item.storeLogo})` } : undefined}
+                        />
+                        <span className="min-w-0 truncate text-[12px] font-medium text-slate-900" title={storeLabel}>
+                          {storeLabel}
+                        </span>
+                      </div>
 
-                        <div className="text-right">
-                          <p className="font-mono text-[12px] font-semibold leading-none tabular-nums text-slate-900">
-                            {formatKrw(item.amountKrw)} KRW
-                          </p>
-                          <p className="font-mono text-[10px] leading-none text-cyan-700">
-                            {formatUsdt(item.amountUsdt)} USDT
-                          </p>
-                        </div>
+                      <div className="min-w-0 text-right">
+                        <p className="truncate font-mono text-[12px] font-semibold leading-none tabular-nums text-slate-900">
+                          {formatKrw(item.amountKrw)} KRW
+                        </p>
+                        <p className="truncate font-mono text-[10px] leading-none text-cyan-700">
+                          {formatUsdt(item.amountUsdt)} USDT
+                        </p>
+                      </div>
 
-                        <div className="truncate text-[12px] font-medium text-slate-900">{buyerLabel}</div>
+                      <div className="min-w-0 truncate text-[12px] font-medium text-slate-900">{buyerLabel}</div>
 
-                        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_42px] items-center gap-1">
-                          <p className="truncate font-mono text-[10px] text-slate-700" title={item.tradeId || "-"}>
-                            {item.tradeId ? `tid:${item.tradeId}` : "-"}
-                          </p>
+                      <div className="flex min-w-0 items-center justify-end gap-1.5">
+                        <p className="min-w-0 truncate font-mono text-[10px] text-slate-700" title={item.tradeId || "-"}>
+                          {item.tradeId || "-"}
+                        </p>
+                        {item.tradeId && (
                           <button
                             type="button"
-                            disabled={!item.tradeId}
                             onClick={() => {
                               void handleCopyTradeId(item.tradeId);
                             }}
-                            className="shrink-0 rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="shrink-0 text-[10px] font-semibold text-cyan-700 underline underline-offset-2 transition hover:text-cyan-900"
                           >
                             {copied ? "복사됨" : "복사"}
                           </button>
-                        </div>
+                        )}
+                      </div>
 
-                        <div className="text-right">
-                          <span className={`inline-flex rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
-                            {createdAtInfo.relativeLabel}
-                          </span>
-                          <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                            {createdAtInfo.absoluteLabel}
-                          </p>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
+                      <div className="min-w-0 text-right">
+                        <span className={`inline-flex rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${getRelativeTimeToneClassNameOnLight(createdAtInfo.tone)}`}>
+                          {createdAtInfo.relativeLabel}
+                        </span>
+                        <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500">
+                          {createdAtInfo.absoluteLabel}
+                        </p>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2063,6 +2255,14 @@ export default function RealtimeBuyOrderPage() {
           animation: jackpotStatusPulse 980ms ease-in-out infinite;
         }
 
+        .new-record-row-highlight {
+          animation: newRecordRowGlow 1.05s ease-in-out infinite;
+        }
+
+        .new-record-pill {
+          animation: newRecordPillBlink 980ms ease-in-out infinite;
+        }
+
         @keyframes jackpotOverlayFade {
           0% {
             opacity: 0;
@@ -2202,6 +2402,26 @@ export default function RealtimeBuyOrderPage() {
           }
         }
 
+        @keyframes newRecordRowGlow {
+          0%,
+          100% {
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.25);
+          }
+          50% {
+            box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.5), inset 0 0 24px rgba(34, 211, 238, 0.18);
+          }
+        }
+
+        @keyframes newRecordPillBlink {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.55;
+          }
+        }
+
         @media (max-width: 640px) {
           .party-center {
             top: 8%;
@@ -2230,7 +2450,9 @@ export default function RealtimeBuyOrderPage() {
         @media (prefers-reduced-motion: reduce) {
           .jackpot-row-highlight,
           .jackpot-card-highlight,
-          .jackpot-status-pill {
+          .jackpot-status-pill,
+          .new-record-row-highlight,
+          .new-record-pill {
             animation: none !important;
           }
         }
