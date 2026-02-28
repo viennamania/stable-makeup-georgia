@@ -43,6 +43,137 @@ function parseKstDateToUtcBoundary(value: string, endOfDay: boolean): Date | nul
   );
 }
 
+function getKstUtcDayRange(referenceDate: Date = new Date()): {
+  dateKst: string;
+  startUtc: Date;
+  endUtc: Date;
+} {
+  const kstNow = new Date(referenceDate.getTime() + KST_OFFSET_MS);
+  const year = kstNow.getUTCFullYear();
+  const month = kstNow.getUTCMonth();
+  const day = kstNow.getUTCDate();
+
+  const startUtc = new Date(Date.UTC(year, month, day, 0, 0, 0, 0) - KST_OFFSET_MS);
+  const endUtc = new Date(Date.UTC(year, month, day, 23, 59, 59, 999) - KST_OFFSET_MS);
+
+  const dateKst = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  return {
+    dateKst,
+    startUtc,
+    endUtc,
+  };
+}
+
+export type BankTransferTodaySummary = {
+  dateKst: string;
+  depositedAmount: number;
+  withdrawnAmount: number;
+  depositedCount: number;
+  withdrawnCount: number;
+  totalCount: number;
+  updatedAt: string;
+};
+
+export async function getBankTransferTodaySummary(): Promise<BankTransferTodaySummary> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('bankTransfers');
+
+  const { dateKst, startUtc, endUtc } = getKstUtcDayRange();
+
+  const summaryResult = await collection
+    .aggregate([
+      {
+        $match: {
+          transactionDateUtc: {
+            $gte: startUtc,
+            $lte: endUtc,
+          },
+        },
+      },
+      {
+        $project: {
+          normalizedType: {
+            $toLower: {
+              $ifNull: [
+                '$transactionType',
+                {
+                  $ifNull: ['$trxType', ''],
+                },
+              ],
+            },
+          },
+          amountValue: {
+            $convert: {
+              input: '$amount',
+              to: 'double',
+              onError: 0,
+              onNull: 0,
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          depositedAmount: {
+            $sum: {
+              $cond: [
+                { $in: ['$normalizedType', ['deposited', 'deposit', '입금']] },
+                '$amountValue',
+                0,
+              ],
+            },
+          },
+          withdrawnAmount: {
+            $sum: {
+              $cond: [
+                { $in: ['$normalizedType', ['withdrawn', 'withdrawal', '출금']] },
+                '$amountValue',
+                0,
+              ],
+            },
+          },
+          depositedCount: {
+            $sum: {
+              $cond: [
+                { $in: ['$normalizedType', ['deposited', 'deposit', '입금']] },
+                1,
+                0,
+              ],
+            },
+          },
+          withdrawnCount: {
+            $sum: {
+              $cond: [
+                { $in: ['$normalizedType', ['withdrawn', 'withdrawal', '출금']] },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ])
+    .toArray();
+
+  const summary = summaryResult?.[0] || {};
+  const depositedAmount = Number(summary.depositedAmount || 0);
+  const withdrawnAmount = Number(summary.withdrawnAmount || 0);
+  const depositedCount = Number(summary.depositedCount || 0);
+  const withdrawnCount = Number(summary.withdrawnCount || 0);
+
+  return {
+    dateKst,
+    depositedAmount,
+    withdrawnAmount,
+    depositedCount,
+    withdrawnCount,
+    totalCount: depositedCount + withdrawnCount,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 
 // getOne by vactId
 export async function getOne(vactId: string) {

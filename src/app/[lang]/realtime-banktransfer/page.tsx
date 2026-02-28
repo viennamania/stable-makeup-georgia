@@ -22,8 +22,19 @@ type RealtimeItem = {
 const MAX_EVENTS = 120;
 const RESYNC_LIMIT = 140;
 const RESYNC_INTERVAL_MS = 10_000;
+const TODAY_SUMMARY_REFRESH_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
+
+type TodaySummary = {
+  dateKst: string;
+  depositedAmount: number;
+  withdrawnAmount: number;
+  depositedCount: number;
+  withdrawnCount: number;
+  totalCount: number;
+  updatedAt: string;
+};
 
 function toTimestamp(value: string | null | undefined): number {
   if (!value) {
@@ -31,6 +42,33 @@ function toTimestamp(value: string | null | undefined): number {
   }
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function getKstDateKey(value: Date): string {
+  const kst = new Date(value.getTime() + 9 * 60 * 60 * 1000);
+  const year = kst.getUTCFullYear();
+  const month = String(kst.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(kst.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getKstDateKeyFromIso(value: string | null | undefined): string | null {
+  const timestamp = toTimestamp(value);
+  if (!timestamp) {
+    return null;
+  }
+  return getKstDateKey(new Date(timestamp));
+}
+
+function normalizeTransactionType(value: string): "deposited" | "withdrawn" | "other" {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "deposited" || normalized === "deposit" || normalized === "입금") {
+    return "deposited";
+  }
+  if (normalized === "withdrawn" || normalized === "withdrawal" || normalized === "출금") {
+    return "withdrawn";
+  }
+  return "other";
 }
 
 function getTransactionTypeLabel(transactionType: string): string {
@@ -142,8 +180,11 @@ export default function RealtimeBankTransferPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
+  const [todaySummaryErrorMessage, setTodaySummaryErrorMessage] = useState<string | null>(null);
 
   const cursorRef = useRef<string | null>(null);
+  const summaryAppliedEventIdsRef = useRef<Set<string>>(new Set());
 
   const clientId = useMemo(() => {
     return `banktransfer-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -269,6 +310,115 @@ export default function RealtimeBankTransferPage() {
     [upsertRealtimeEvents, updateCursor],
   );
 
+  const fetchTodaySummary = useCallback(async () => {
+    try {
+      const response = await fetch("/api/realtime/banktransfer/summary?public=1", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      const summaryData = data?.summary || {};
+
+      const nextSummary: TodaySummary = {
+        dateKst: String(summaryData.dateKst || getKstDateKey(new Date())),
+        depositedAmount: Number(summaryData.depositedAmount || 0),
+        withdrawnAmount: Number(summaryData.withdrawnAmount || 0),
+        depositedCount: Number(summaryData.depositedCount || 0),
+        withdrawnCount: Number(summaryData.withdrawnCount || 0),
+        totalCount: Number(summaryData.totalCount || 0),
+        updatedAt: String(summaryData.updatedAt || new Date().toISOString()),
+      };
+
+      setTodaySummary((previous) => {
+        if (previous?.dateKst !== nextSummary.dateKst) {
+          summaryAppliedEventIdsRef.current.clear();
+        }
+        return nextSummary;
+      });
+      setTodaySummaryErrorMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "오늘 누적 집계 조회 실패";
+      setTodaySummaryErrorMessage(message);
+    }
+  }, []);
+
+  const applyRealtimeEventToTodaySummary = useCallback((event: BankTransferDashboardEvent) => {
+    if (event.status !== "stored") {
+      return;
+    }
+
+    const eventId = String(event.eventId || event.cursor || "").trim();
+    if (eventId) {
+      const appliedSet = summaryAppliedEventIdsRef.current;
+      if (appliedSet.has(eventId)) {
+        return;
+      }
+      appliedSet.add(eventId);
+
+      if (appliedSet.size > 2000) {
+        const recent = Array.from(appliedSet).slice(-1000);
+        appliedSet.clear();
+        for (const id of recent) {
+          appliedSet.add(id);
+        }
+      }
+    }
+
+    const eventDateKey = getKstDateKeyFromIso(event.transactionDate || event.publishedAt);
+    const todayDateKey = getKstDateKey(new Date());
+    if (!eventDateKey || eventDateKey !== todayDateKey) {
+      return;
+    }
+
+    const type = normalizeTransactionType(event.transactionType);
+    if (type === "other") {
+      return;
+    }
+
+    const amount = Number(event.amount || 0);
+    if (!Number.isFinite(amount)) {
+      return;
+    }
+
+    setTodaySummary((previous) => {
+      const base: TodaySummary = previous?.dateKst === todayDateKey
+        ? previous
+        : {
+            dateKst: todayDateKey,
+            depositedAmount: 0,
+            withdrawnAmount: 0,
+            depositedCount: 0,
+            withdrawnCount: 0,
+            totalCount: 0,
+            updatedAt: new Date().toISOString(),
+          };
+
+      if (type === "deposited") {
+        return {
+          ...base,
+          depositedAmount: base.depositedAmount + amount,
+          depositedCount: base.depositedCount + 1,
+          totalCount: base.totalCount + 1,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+
+      return {
+        ...base,
+        withdrawnAmount: base.withdrawnAmount + amount,
+        withdrawnCount: base.withdrawnCount + 1,
+        totalCount: base.totalCount + 1,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }, []);
+
   useEffect(() => {
     const realtime = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?public=1&stream=banktransfer&clientId=${clientId}`,
@@ -284,20 +434,21 @@ export default function RealtimeBankTransferPage() {
 
       if (stateChange.current === "connected") {
         void syncFromApi();
+        void fetchTodaySummary();
       }
     };
 
     const onMessage = (message: Ably.Message) => {
       const data = message.data as BankTransferDashboardEvent;
+      const normalizedEvent: BankTransferDashboardEvent = {
+        ...data,
+        eventId: data.eventId || String(message.id || ""),
+      };
       upsertRealtimeEvents(
-        [
-          {
-            ...data,
-            eventId: data.eventId || String(message.id || ""),
-          },
-        ],
+        [normalizedEvent],
         { highlightNew: true },
       );
+      applyRealtimeEventToTodaySummary(normalizedEvent);
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -308,7 +459,7 @@ export default function RealtimeBankTransferPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, syncFromApi, upsertRealtimeEvents]);
+  }, [applyRealtimeEventToTodaySummary, clientId, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -321,6 +472,18 @@ export default function RealtimeBankTransferPage() {
       window.clearInterval(timer);
     };
   }, [syncFromApi]);
+
+  useEffect(() => {
+    void fetchTodaySummary();
+
+    const timer = window.setInterval(() => {
+      void fetchTodaySummary();
+    }, TODAY_SUMMARY_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchTodaySummary]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -415,7 +578,52 @@ export default function RealtimeBankTransferPage() {
     };
   }, [sortedEvents]);
 
+  const todaySummaryFallback = useMemo(() => {
+    const todayDateKey = getKstDateKey(new Date(nowMs));
+    let depositedCount = 0;
+    let withdrawnCount = 0;
+    let depositedAmount = 0;
+    let withdrawnAmount = 0;
+
+    for (const item of sortedEvents) {
+      if (item.data.status !== "stored") {
+        continue;
+      }
+
+      const eventDateKey = getKstDateKeyFromIso(item.data.transactionDate || item.data.publishedAt);
+      if (!eventDateKey || eventDateKey !== todayDateKey) {
+        continue;
+      }
+
+      const type = normalizeTransactionType(item.data.transactionType);
+      const amount = Number(item.data.amount || 0);
+      if (!Number.isFinite(amount)) {
+        continue;
+      }
+
+      if (type === "deposited") {
+        depositedCount += 1;
+        depositedAmount += amount;
+      } else if (type === "withdrawn") {
+        withdrawnCount += 1;
+        withdrawnAmount += amount;
+      }
+    }
+
+    return {
+      dateKst: todayDateKey,
+      depositedAmount,
+      withdrawnAmount,
+      depositedCount,
+      withdrawnCount,
+      totalCount: depositedCount + withdrawnCount,
+      updatedAt: new Date().toISOString(),
+    } satisfies TodaySummary;
+  }, [nowMs, sortedEvents]);
+
+  const todayTotals = todaySummary || todaySummaryFallback;
   const totalEventsForRatio = Math.max(1, summary.totalEvents);
+  const totalTodayEventsForRatio = Math.max(1, todayTotals.totalCount);
 
   const metricCards = useMemo(() => {
     return [
@@ -429,18 +637,18 @@ export default function RealtimeBankTransferPage() {
       },
       {
         key: "deposited",
-        title: "입금 누적 금액",
-        value: `${formatKrw(summary.depositedAmount)} KRW`,
-        sub: `${summary.depositedCount.toLocaleString("ko-KR")}건`,
-        ratio: (summary.depositedCount / totalEventsForRatio) * 100,
+        title: "오늘 입금 누적 금액",
+        value: `${formatKrw(todayTotals.depositedAmount)} KRW`,
+        sub: `${todayTotals.depositedCount.toLocaleString("ko-KR")}건 · KST`,
+        ratio: (todayTotals.depositedCount / totalTodayEventsForRatio) * 100,
         tone: "emerald",
       },
       {
         key: "withdrawn",
-        title: "출금 누적 금액",
-        value: `${formatKrw(summary.withdrawnAmount)} KRW`,
-        sub: `${summary.withdrawnCount.toLocaleString("ko-KR")}건`,
-        ratio: (summary.withdrawnCount / totalEventsForRatio) * 100,
+        title: "오늘 출금 누적 금액",
+        value: `${formatKrw(todayTotals.withdrawnAmount)} KRW`,
+        sub: `${todayTotals.withdrawnCount.toLocaleString("ko-KR")}건 · KST`,
+        ratio: (todayTotals.withdrawnCount / totalTodayEventsForRatio) * 100,
         tone: "rose",
       },
       {
@@ -452,7 +660,7 @@ export default function RealtimeBankTransferPage() {
         tone: "amber",
       },
     ] as const;
-  }, [summary, totalEventsForRatio]);
+  }, [summary, todayTotals, totalEventsForRatio, totalTodayEventsForRatio]);
 
   function getMetricToneClassName(tone: "slate" | "emerald" | "rose" | "amber") {
     if (tone === "emerald") {
@@ -548,6 +756,12 @@ export default function RealtimeBankTransferPage() {
         </div>
       )}
 
+      {todaySummaryErrorMessage && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
+          오늘 누적 집계 조회 실패: {todaySummaryErrorMessage}
+        </div>
+      )}
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metricCards.map((metric) => {
           const tone = getMetricToneClassName(metric.tone);
@@ -575,15 +789,15 @@ export default function RealtimeBankTransferPage() {
 
       <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-slate-400">거래 지표</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400">거래 지표 (오늘 · KST)</p>
           <div className="mt-3 space-y-2 text-sm">
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
               <span className="text-slate-300">입금 건수</span>
-              <span className="font-semibold tabular-nums text-emerald-200">{summary.depositedCount.toLocaleString("ko-KR")}</span>
+              <span className="font-semibold tabular-nums text-emerald-200">{todayTotals.depositedCount.toLocaleString("ko-KR")}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
               <span className="text-slate-300">출금 건수</span>
-              <span className="font-semibold tabular-nums text-rose-200">{summary.withdrawnCount.toLocaleString("ko-KR")}</span>
+              <span className="font-semibold tabular-nums text-rose-200">{todayTotals.withdrawnCount.toLocaleString("ko-KR")}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-slate-700/70 bg-slate-950/60 px-3 py-2">
               <span className="text-slate-300">매칭 성공</span>
@@ -699,7 +913,7 @@ export default function RealtimeBankTransferPage() {
           </div>
 
           <div className="hidden overflow-x-auto md:block">
-            <table className="min-w-[1380px] border-collapse text-sm">
+            <table className="min-w-[1210px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
                   <th className="w-[190px] px-3 py-2">시간</th>
@@ -707,7 +921,6 @@ export default function RealtimeBankTransferPage() {
                   <th className="w-[120px] px-3 py-2">유형</th>
                   <th className="w-[170px] px-3 py-2 text-right">금액</th>
                   <th className="w-[140px] px-3 py-2">입금자</th>
-                  <th className="w-[170px] px-3 py-2">계좌</th>
                   <th className="w-[260px] px-3 py-2">입금 수취자</th>
                   <th className="w-[320px] px-3 py-2">거래/매칭</th>
                 </tr>
@@ -715,7 +928,7 @@ export default function RealtimeBankTransferPage() {
               <tbody>
                 {sortedEvents.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-3 py-8 text-center text-slate-500">
+                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
                       아직 수신된 이벤트가 없습니다.
                     </td>
                   </tr>
@@ -774,7 +987,6 @@ export default function RealtimeBankTransferPage() {
                       </td>
 
                       <td className="px-3 py-3 text-slate-200">{maskName(item.data.transactionName)}</td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-300">{receiverAccountNumber}</td>
 
                       <td className="px-3 py-3">
                         <div className="flex min-w-[230px] flex-col">
