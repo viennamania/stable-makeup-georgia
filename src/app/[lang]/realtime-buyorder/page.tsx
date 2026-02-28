@@ -43,6 +43,7 @@ type PendingBuyOrderItem = {
   amountUsdt: number;
   buyerName: string | null;
   buyerAccountNumber: string | null;
+  storeLogo: string | null;
   storeName: string | null;
   storeCode: string | null;
 };
@@ -119,24 +120,6 @@ function getStatusClassName(status: string | null | undefined): string {
     default:
       return "border border-zinc-500/35 bg-zinc-700/45 text-zinc-200";
   }
-}
-
-function formatKstDateTime(value: string | null | undefined): string {
-  const timestamp = Date.parse(String(value || ""));
-  if (Number.isNaN(timestamp)) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(timestamp));
 }
 
 function formatKrw(value: number): string {
@@ -679,6 +662,7 @@ export default function RealtimeBuyOrderPage() {
               amountUsdt: Number(item?.amountUsdt || 0),
               buyerName: item?.buyerName ? String(item.buyerName) : null,
               buyerAccountNumber: item?.buyerAccountNumber ? String(item.buyerAccountNumber) : null,
+              storeLogo: item?.storeLogo ? String(item.storeLogo) : null,
               storeName: item?.storeName ? String(item.storeName) : null,
               storeCode: item?.storeCode ? String(item.storeCode) : null,
             } satisfies PendingBuyOrderItem;
@@ -1138,38 +1122,38 @@ export default function RealtimeBuyOrderPage() {
       )}
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
-        <div className="relative overflow-hidden rounded-3xl border border-amber-400/45 bg-[radial-gradient(circle_at_20%_0%,rgba(251,191,36,0.24),rgba(30,41,59,0.96)_42%),linear-gradient(160deg,rgba(15,23,42,0.98),rgba(2,6,23,0.98))] shadow-[0_20px_60px_-22px_rgba(251,191,36,0.45)]">
-          <div className="pointer-events-none absolute -left-8 top-4 h-20 w-20 rounded-full bg-amber-300/20 blur-2xl" />
-          <div className="pointer-events-none absolute -right-8 bottom-10 h-24 w-24 rounded-full bg-cyan-300/15 blur-2xl" />
+        <div className="relative overflow-hidden rounded-3xl border border-amber-300/70 bg-[radial-gradient(circle_at_18%_0%,rgba(251,191,36,0.34),rgba(255,251,235,0.96)_36%),linear-gradient(160deg,rgba(255,255,255,0.98),rgba(250,245,255,0.94))] shadow-[0_20px_60px_-28px_rgba(217,119,6,0.45)]">
+          <div className="pointer-events-none absolute -left-8 top-4 h-20 w-20 rounded-full bg-amber-300/35 blur-2xl" />
+          <div className="pointer-events-none absolute -right-8 bottom-10 h-24 w-24 rounded-full bg-sky-300/25 blur-2xl" />
 
-          <div className="relative border-b border-amber-300/25 px-4 py-3">
+          <div className="relative border-b border-amber-300/40 px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-amber-200/85">Slot Console</p>
-                <p className="mt-0.5 font-semibold text-amber-50">진행중 구매주문 목록</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-amber-700/80">Slot Console</p>
+                <p className="mt-0.5 font-semibold text-amber-950">진행중 구매주문 목록</p>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="rounded border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
+                <span className="rounded border border-amber-400/60 bg-amber-200/65 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
                   JACKPOT {pendingBuyOrdersTotalCount.toLocaleString("ko-KR")}
                 </span>
-                <span className="rounded border border-cyan-300/40 bg-cyan-400/20 px-2 py-0.5 text-[11px] font-semibold text-cyan-100">
+                <span className="rounded border border-cyan-400/60 bg-cyan-200/65 px-2 py-0.5 text-[11px] font-semibold text-cyan-900">
                   REEL {pendingBuyOrders.length.toLocaleString("ko-KR")}
                 </span>
               </div>
             </div>
-            <p className="mt-1 font-mono text-[11px] text-amber-100/70">
+            <p className="mt-1 font-mono text-[11px] text-amber-900/70">
               ordered / accepted / paymentRequested · updated {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs).relativeLabel}
             </p>
 
-            <div className="mt-3 rounded-xl border border-amber-300/25 bg-slate-950/55 p-2">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-amber-200/75">Action Dock (버튼 확장 영역)</p>
+            <div className="mt-3 rounded-xl border border-amber-300/55 bg-white/85 p-2 shadow-[inset_0_0_20px_rgba(251,191,36,0.08)]">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-amber-800/80">Action Dock (버튼 확장 영역)</p>
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {["Slot A", "Slot B", "Slot C", "Slot D"].map((slotLabel) => (
                   <button
                     key={slotLabel}
                     type="button"
                     disabled
-                    className="rounded-lg border border-amber-300/25 bg-amber-400/10 px-2 py-1 text-[11px] font-semibold text-amber-100/65"
+                    className="rounded-lg border border-amber-300/60 bg-amber-100/80 px-2 py-1 text-[11px] font-semibold text-amber-900/75"
                   >
                     {slotLabel}
                   </button>
@@ -1178,62 +1162,65 @@ export default function RealtimeBuyOrderPage() {
             </div>
           </div>
 
-          <div className="relative max-h-[780px] space-y-2 overflow-y-auto bg-[repeating-linear-gradient(180deg,rgba(15,23,42,0.92)_0px,rgba(15,23,42,0.92)_34px,rgba(30,41,59,0.9)_34px,rgba(30,41,59,0.9)_68px)] p-3">
+          <div className="relative max-h-[780px] space-y-1 overflow-y-auto bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.95)_0px,rgba(255,255,255,0.95)_34px,rgba(255,247,237,0.95)_34px,rgba(255,247,237,0.95)_68px)] p-2.5">
             {pendingBuyOrders.length === 0 && (
-              <div className="rounded-xl border border-amber-300/30 bg-slate-950/75 px-3 py-8 text-center">
-                <p className="font-mono text-xs text-amber-100/80">[IDLE] 슬롯에 올라온 진행중 주문이 없습니다.</p>
+              <div className="rounded-xl border border-amber-300/70 bg-white/95 px-3 py-8 text-center">
+                <p className="font-mono text-xs text-amber-900/85">[IDLE] 슬롯에 올라온 진행중 주문이 없습니다.</p>
               </div>
             )}
 
-            {pendingBuyOrders.map((order, index) => {
-              const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
-              const lineNo = String(index + 1).padStart(3, "0");
-              const storeLabel = order.storeName || order.storeCode || "-";
-              const tradeLabel = order.tradeId ? formatShortHash(order.tradeId) : "-";
+            {pendingBuyOrders.length > 0 && (
+              <div className="overflow-x-auto">
+                <div className="min-w-[920px] space-y-1">
+                  {pendingBuyOrders.map((order, index) => {
+                    const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
+                    const lineNo = String(index + 1).padStart(3, "0");
+                    const storeLabel = order.storeName || order.storeCode || "-";
+                    const buyerLabel = maskName(order.buyerName);
+                    const hasStoreLogo = Boolean(order.storeLogo);
 
-              return (
-                <article
-                  key={`pending-order-${order.orderId || index}`}
-                  className="rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(15,23,42,0.92),rgba(30,41,59,0.92)_45%,rgba(15,23,42,0.94))] px-3 py-3 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12),0_12px_24px_-18px_rgba(251,191,36,0.4)]"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-                      <span className="rounded border border-amber-300/35 bg-amber-400/15 px-1.5 py-0.5 text-amber-100">REEL-{lineNo}</span>
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(order.status)}`}>
-                        {getStatusLabel(order.status)}
-                      </span>
-                      <span className={`rounded border px-1.5 py-0.5 font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
-                        {createdAtInfo.relativeLabel}
-                      </span>
-                    </div>
-                    <span className="font-mono text-[11px] text-amber-100/80">{formatKstDateTime(order.createdAt)}</span>
-                  </div>
+                    return (
+                      <article
+                        key={`pending-order-${order.orderId || index}`}
+                        className="flex items-center gap-2 rounded-xl border border-amber-200/80 bg-white/95 px-2.5 py-1.5 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12)]"
+                      >
+                        <span className="shrink-0 rounded border border-amber-300/70 bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-900">
+                          {lineNo}
+                        </span>
+                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(order.status)}`}>
+                          {getStatusLabel(order.status)}
+                        </span>
 
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-2 py-1.5">
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-amber-200/80">KRW POT</p>
-                      <p className="mt-0.5 font-mono text-lg font-semibold leading-none tabular-nums text-amber-50">
-                        {formatKrw(order.amountKrw)}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-2 py-1.5">
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-cyan-200/80">USDT POT</p>
-                      <p className="mt-0.5 font-mono text-lg font-semibold leading-none tabular-nums text-cyan-50">
-                        {formatUsdt(order.amountUsdt)}
-                      </p>
-                    </div>
-                  </div>
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <span
+                            className={`h-7 w-7 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
+                            style={hasStoreLogo ? { backgroundImage: `url(${order.storeLogo})` } : undefined}
+                          />
+                          <span className="min-w-0 truncate text-[13px] font-semibold text-slate-900">{storeLabel}</span>
+                        </div>
 
-                  <div className="mt-2 grid gap-1 rounded-lg border border-slate-700/80 bg-slate-950/65 px-2 py-1.5 font-mono text-[11px]">
-                    <p className="text-cyan-300">tid={tradeLabel}</p>
-                    <p className="text-slate-300">
-                      buyer={maskName(order.buyerName)}:{maskAccountNumber(order.buyerAccountNumber)}
-                    </p>
-                    <p className="text-slate-400">store={storeLabel}</p>
-                  </div>
-                </article>
-              );
-            })}
+                        <div className="w-[172px] shrink-0 text-right">
+                          <p className="font-mono text-[14px] font-bold leading-none tabular-nums text-amber-950">
+                            {formatKrw(order.amountKrw)} KRW
+                          </p>
+                          <p className="font-mono text-[11px] leading-none text-cyan-700">
+                            {formatUsdt(order.amountUsdt)} USDT
+                          </p>
+                        </div>
+
+                        <div className="w-[132px] shrink-0 truncate text-[13px] font-semibold text-slate-900">
+                          {buyerLabel}
+                        </div>
+
+                        <div className="w-[72px] shrink-0 text-right font-mono text-[11px] text-amber-900/80">
+                          {createdAtInfo.relativeLabel}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

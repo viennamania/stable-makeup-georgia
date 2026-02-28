@@ -86,6 +86,7 @@ export type RealtimePendingBuyOrderItem = {
   amountUsdt: number;
   buyerName: string | null;
   buyerAccountNumber: string | null;
+  storeLogo: string | null;
   storeName: string | null;
   storeCode: string | null;
 };
@@ -358,6 +359,7 @@ export async function getRealtimePendingBuyOrders({
     amountUsdt: toSafeNumber(doc?.usdtAmount),
     buyerName: getPendingBuyerName(doc),
     buyerAccountNumber: getPendingBuyerAccountNumber(doc),
+    storeLogo: toNullableText(doc?.store?.storeLogo),
     storeName: toNullableText(doc?.store?.storeName),
     storeCode: toNullableText(doc?.storecode || doc?.store?.storecode),
   }));
