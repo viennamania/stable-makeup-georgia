@@ -8,7 +8,10 @@ import RealtimeTopNav from "@components/realtime/RealtimeTopNav";
 import {
   BANKTRANSFER_ABLY_CHANNEL,
   BANKTRANSFER_ABLY_EVENT_NAME,
+  BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
+  BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME,
   type BankTransferDashboardEvent,
+  type BankTransferUnmatchedRealtimeEvent,
 } from "@lib/ably/constants";
 import { getRelativeTimeInfo, type RelativeTimeTone } from "@lib/realtime/timeAgo";
 
@@ -19,7 +22,15 @@ type RealtimeItem = {
   highlightUntil: number;
 };
 
+type UnmatchedRealtimeItem = {
+  id: string;
+  receivedAt: string;
+  data: BankTransferUnmatchedRealtimeEvent;
+  highlightUntil: number;
+};
+
 const MAX_EVENTS = 120;
+const MAX_UNMATCHED_EVENTS = 80;
 const RESYNC_LIMIT = 140;
 const RESYNC_INTERVAL_MS = 10_000;
 const TODAY_SUMMARY_REFRESH_MS = 10_000;
@@ -279,6 +290,7 @@ export default function RealtimeBankTransferPage() {
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
 
   const [events, setEvents] = useState<RealtimeItem[]>([]);
+  const [unmatchedEvents, setUnmatchedEvents] = useState<UnmatchedRealtimeItem[]>([]);
   const [connectionState, setConnectionState] = useState<Ably.ConnectionState>("initialized");
   const [connectionErrorMessage, setConnectionErrorMessage] = useState<string | null>(null);
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
@@ -362,6 +374,55 @@ export default function RealtimeBankTransferPage() {
       }
     },
     [updateCursor],
+  );
+
+  const upsertUnmatchedEvents = useCallback(
+    (incomingEvents: BankTransferUnmatchedRealtimeEvent[], options?: { highlightNew?: boolean }) => {
+      if (incomingEvents.length === 0) {
+        return;
+      }
+
+      const highlightNew = options?.highlightNew ?? true;
+      const now = Date.now();
+
+      setUnmatchedEvents((previousEvents) => {
+        const map = new Map(previousEvents.map((item) => [item.id, item]));
+
+        for (const incomingEvent of incomingEvents) {
+          const nextId =
+            incomingEvent.eventId ||
+            incomingEvent.cursor ||
+            `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+          const existing = map.get(nextId);
+          if (existing) {
+            map.set(nextId, {
+              ...existing,
+              data: incomingEvent,
+            });
+            continue;
+          }
+
+          map.set(nextId, {
+            id: nextId,
+            receivedAt: new Date().toISOString(),
+            data: incomingEvent,
+            highlightUntil: highlightNew ? now + NEW_EVENT_HIGHLIGHT_MS : 0,
+          });
+        }
+
+        const merged = Array.from(map.values());
+        merged.sort((left, right) => {
+          return (
+            toTimestamp(right.data.publishedAt || right.receivedAt) -
+            toTimestamp(left.data.publishedAt || left.receivedAt)
+          );
+        });
+
+        return merged.slice(0, MAX_UNMATCHED_EVENTS);
+      });
+    },
+    [],
   );
 
   const syncFromApi = useCallback(
@@ -530,7 +591,8 @@ export default function RealtimeBankTransferPage() {
       authUrl: `/api/realtime/ably-token?public=1&stream=banktransfer&clientId=${clientId}`,
     });
 
-    const channel = realtime.channels.get(BANKTRANSFER_ABLY_CHANNEL);
+    const banktransferChannel = realtime.channels.get(BANKTRANSFER_ABLY_CHANNEL);
+    const unmatchedChannel = realtime.channels.get(BANKTRANSFER_UNMATCHED_ABLY_CHANNEL);
 
     const onConnectionStateChange = (stateChange: Ably.ConnectionStateChange) => {
       setConnectionState(stateChange.current);
@@ -557,15 +619,33 @@ export default function RealtimeBankTransferPage() {
       applyRealtimeEventToTodaySummary(normalizedEvent);
     };
 
+    const onUnmatchedMessage = (message: Ably.Message) => {
+      const data = message.data as BankTransferUnmatchedRealtimeEvent;
+      const normalizedEvent: BankTransferUnmatchedRealtimeEvent = {
+        ...data,
+        eventId: data.eventId || String(message.id || ""),
+      };
+      upsertUnmatchedEvents([normalizedEvent], { highlightNew: true });
+    };
+
     realtime.connection.on(onConnectionStateChange);
-    void channel.subscribe(BANKTRANSFER_ABLY_EVENT_NAME, onMessage);
+    void banktransferChannel.subscribe(BANKTRANSFER_ABLY_EVENT_NAME, onMessage);
+    void unmatchedChannel.subscribe(BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME, onUnmatchedMessage);
 
     return () => {
-      channel.unsubscribe(BANKTRANSFER_ABLY_EVENT_NAME, onMessage);
+      banktransferChannel.unsubscribe(BANKTRANSFER_ABLY_EVENT_NAME, onMessage);
+      unmatchedChannel.unsubscribe(BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME, onUnmatchedMessage);
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [applyRealtimeEventToTodaySummary, clientId, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
+  }, [
+    applyRealtimeEventToTodaySummary,
+    clientId,
+    fetchTodaySummary,
+    syncFromApi,
+    upsertRealtimeEvents,
+    upsertUnmatchedEvents,
+  ]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -644,6 +724,39 @@ export default function RealtimeBankTransferPage() {
     };
   }, [events]);
 
+  useEffect(() => {
+    const now = Date.now();
+    const activeHighlights = unmatchedEvents
+      .map((item) => item.highlightUntil)
+      .filter((until) => until > now);
+
+    if (activeHighlights.length === 0) {
+      return;
+    }
+
+    const nextExpiryAt = Math.min(...activeHighlights);
+    const waitMs = Math.max(80, nextExpiryAt - now + 20);
+
+    const timer = window.setTimeout(() => {
+      setUnmatchedEvents((previous) => {
+        const current = Date.now();
+        return previous.map((item) => {
+          if (item.highlightUntil > current || item.highlightUntil === 0) {
+            return item;
+          }
+          return {
+            ...item,
+            highlightUntil: 0,
+          };
+        });
+      });
+    }, waitMs);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [unmatchedEvents]);
+
   const sortedEvents = useMemo(() => {
     return [...events].sort((a, b) => {
       const left = toTimestamp(a.data.publishedAt || a.receivedAt);
@@ -651,6 +764,14 @@ export default function RealtimeBankTransferPage() {
       return right - left;
     });
   }, [events]);
+
+  const sortedUnmatchedEvents = useMemo(() => {
+    return [...unmatchedEvents].sort((a, b) => {
+      const left = toTimestamp(a.data.publishedAt || a.receivedAt);
+      const right = toTimestamp(b.data.publishedAt || b.receivedAt);
+      return right - left;
+    });
+  }, [unmatchedEvents]);
 
   const summary = useMemo(() => {
     let depositedCount = 0;
@@ -763,6 +884,8 @@ export default function RealtimeBankTransferPage() {
             </p>
             <p className="mt-1 text-xs text-cyan-300/90">
               Channel: <span className="font-mono">{BANKTRANSFER_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BANKTRANSFER_ABLY_EVENT_NAME}</span>
+              {" · "}
+              Unmatched: <span className="font-mono">{BANKTRANSFER_UNMATCHED_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME}</span>
             </p>
           </div>
 
@@ -920,6 +1043,58 @@ export default function RealtimeBankTransferPage() {
           </div>
 
           <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
+            <div className="mb-2 rounded-lg border border-amber-500/35 bg-amber-950/30 p-2">
+              <div className="mb-1 flex items-center justify-between">
+                <p className="font-mono text-[11px] font-semibold text-amber-200">UNMATCHED DEPOSIT LIVE</p>
+                <span className="rounded border border-amber-400/40 bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-100">
+                  {sortedUnmatchedEvents.length.toLocaleString("ko-KR")} events
+                </span>
+              </div>
+
+              {sortedUnmatchedEvents.length === 0 ? (
+                <p className="font-mono text-[11px] text-amber-300/60">[WAITING] 미신청입금 이벤트 대기중</p>
+              ) : (
+                <div className="space-y-1">
+                  {sortedUnmatchedEvents.slice(0, 12).map((item, index) => {
+                    const isHighlighted = item.highlightUntil > Date.now();
+                    const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
+                    const receiverInfo = getReceiverDisplayInfo({
+                      ...item.data,
+                      status: "stored",
+                    });
+                    const receiverAccountHolder = receiverInfo.accountHolder
+                      ? maskName(receiverInfo.accountHolder)
+                      : "-";
+                    const receiverAccountNumber = receiverInfo.accountNumber
+                      ? maskAccountNumber(receiverInfo.accountNumber)
+                      : "-";
+                    const receiverBankName = receiverInfo.bankName || "-";
+                    const lineNo = String(sortedUnmatchedEvents.length - index).padStart(4, "0");
+
+                    return (
+                      <div
+                        key={`unmatched-${item.id}`}
+                        className={`rounded border px-2 py-1 font-mono text-[11px] ${
+                          isHighlighted
+                            ? "animate-pulse border-amber-300/55 bg-amber-500/15 text-amber-100"
+                            : "border-amber-900/80 bg-slate-950/45 text-amber-200/90"
+                        }`}
+                      >
+                        <span className="text-amber-500/80">#{lineNo}</span>{" "}
+                        <span className="text-amber-300/80">{timeInfo.absoluteLabel}</span>{" "}
+                        <span className="rounded bg-amber-500/20 px-1 py-0.5 text-[10px] font-semibold text-amber-100">UNMATCHED</span>{" "}
+                        <span>amount={formatKrw(item.data.amount)}KRW</span>{" "}
+                        <span className="text-amber-100">sender={maskName(item.data.transactionName)}:{maskAccountNumber(item.data.bankAccountNumber)}</span>{" "}
+                        <span className="text-amber-300/80">receiver={receiverBankName}/{receiverAccountHolder}/{receiverAccountNumber}</span>{" "}
+                        <span className="text-amber-200/70">reason={item.data.reason || "-"}</span>{" "}
+                        <span className="text-amber-300/60">({timeInfo.relativeLabel})</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {sortedEvents.length === 0 && (
               <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
                 [WAITING] 아직 수신된 이벤트가 없습니다.

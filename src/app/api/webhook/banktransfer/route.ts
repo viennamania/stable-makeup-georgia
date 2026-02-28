@@ -47,9 +47,11 @@ import {
   type BankTransferDashboardEvent,
   type BankTransferDashboardReceiver,
   type BankTransferDashboardStore,
+  type BankTransferUnmatchedRealtimeEvent,
 } from "@lib/ably/constants";
 import {
   publishBankTransferEvent,
+  publishBankTransferUnmatchedEvent,
 } from "@lib/ably/server";
 import {
   saveBankTransferRealtimeEvent,
@@ -815,6 +817,12 @@ export async function POST(request: NextRequest) {
     return `banktransfer-${digest}`;
   };
 
+  const buildUnmatchedEventId = () => {
+    const source = `${requestIdempotencyKey}|unmatched|banktransfer.unmatched`;
+    const digest = createHash("sha256").update(source).digest("hex");
+    return `banktransfer-unmatched-${digest}`;
+  };
+
   const publishDashboardEvent = async ({
     status,
     store,
@@ -867,6 +875,50 @@ export async function POST(request: NextRequest) {
       await publishBankTransferEvent(saved.event);
     } catch (publishError) {
       console.error("Failed to publish banktransfer realtime event:", publishError);
+    }
+  };
+
+  const publishUnmatchedEvent = async ({
+    store,
+    storecode,
+    receiver,
+    tradeId,
+    match,
+    reason,
+    errorMessage,
+  }: {
+    store?: BankTransferDashboardStore | null;
+    storecode?: string | null;
+    receiver?: BankTransferDashboardReceiver | null;
+    tradeId?: string | null;
+    match?: string | null;
+    reason?: string | null;
+    errorMessage?: string | null;
+  }) => {
+    const event: BankTransferUnmatchedRealtimeEvent = {
+      eventId: buildUnmatchedEventId(),
+      idempotencyKey: requestIdempotencyKey,
+      traceId: traceId || null,
+      transactionType: String(transaction_type || ""),
+      amount: Number(amount || 0),
+      transactionName: String(transaction_name || ""),
+      bankAccountNumber: String(bankAccountNumber || ""),
+      transactionDate: transactionDateNormalized,
+      processingDate: processing_date ? String(processing_date) : null,
+      store: store || null,
+      storecode: storecode || null,
+      receiver: receiver || null,
+      tradeId: tradeId || null,
+      match: match || null,
+      reason: reason || null,
+      errorMessage: errorMessage || null,
+      publishedAt: new Date().toISOString(),
+    };
+
+    try {
+      await publishBankTransferUnmatchedEvent(event);
+    } catch (publishError) {
+      console.error("Failed to publish banktransfer unmatched realtime event:", publishError);
     }
   };
   
@@ -1060,6 +1112,26 @@ export async function POST(request: NextRequest) {
       match: match || null,
       errorMessage: errorMessage,
     });
+
+    const isUnmatchedDeposit =
+      String(transaction_type || "").toLowerCase() === "deposited" &&
+      String(match || "").toLowerCase() !== "success";
+
+    if (isUnmatchedDeposit) {
+      await publishUnmatchedEvent({
+        store: {
+          code: storeInfo?.storecode || null,
+          logo: storeInfo?.storeLogo || null,
+          name: storeInfo?.storeName || null,
+        },
+        storecode: storeInfo?.storecode || null,
+        receiver,
+        tradeId: tradeId || null,
+        match: match || null,
+        reason: errorMessage ? "auto_match_check_failed" : "no_matching_buyorder",
+        errorMessage: errorMessage,
+      });
+    }
 
 
 

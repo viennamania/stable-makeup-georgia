@@ -1,5 +1,7 @@
 export const BANKTRANSFER_ABLY_CHANNEL = "banktransfer-events";
 export const BANKTRANSFER_ABLY_EVENT_NAME = "banktransfer.updated";
+export const BANKTRANSFER_UNMATCHED_ABLY_CHANNEL = "banktransfer-unmatched-events";
+export const BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME = "banktransfer.unmatched";
 export const BUYORDER_STATUS_ABLY_CHANNEL = "buyorder-status-events";
 export const BUYORDER_STATUS_ABLY_EVENT_NAME = "buyorder.status.changed";
 
@@ -34,6 +36,27 @@ export type BankTransferDashboardEvent = {
   receiver: BankTransferDashboardReceiver | null;
   tradeId: string | null;
   match: string | null;
+  errorMessage: string | null;
+  publishedAt: string;
+};
+
+export type BankTransferUnmatchedRealtimeEvent = {
+  eventId: string;
+  idempotencyKey: string;
+  cursor?: string | null;
+  traceId: string | null;
+  transactionType: string;
+  amount: number;
+  transactionName: string;
+  bankAccountNumber: string;
+  transactionDate: string;
+  processingDate: string | null;
+  store: BankTransferDashboardStore | null;
+  storecode: string | null;
+  receiver: BankTransferDashboardReceiver | null;
+  tradeId: string | null;
+  match: string | null;
+  reason: string | null;
   errorMessage: string | null;
   publishedAt: string;
 };

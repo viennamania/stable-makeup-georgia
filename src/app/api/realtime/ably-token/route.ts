@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
   BANKTRANSFER_ABLY_CHANNEL,
+  BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_CHANNEL,
 } from "@lib/ably/constants";
 import { getAblyRestClient } from "@lib/ably/server";
@@ -50,8 +51,10 @@ export async function GET(request: NextRequest) {
     capability[BUYORDER_STATUS_ABLY_CHANNEL] = ["subscribe"];
   } else if (stream === "banktransfer") {
     capability[BANKTRANSFER_ABLY_CHANNEL] = ["subscribe"];
+    capability[BANKTRANSFER_UNMATCHED_ABLY_CHANNEL] = ["subscribe"];
   } else {
     capability[BANKTRANSFER_ABLY_CHANNEL] = ["subscribe"];
+    capability[BANKTRANSFER_UNMATCHED_ABLY_CHANNEL] = ["subscribe"];
     capability[BUYORDER_STATUS_ABLY_CHANNEL] = ["subscribe"];
   }
 

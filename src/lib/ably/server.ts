@@ -3,9 +3,12 @@ import * as Ably from "ably";
 import {
   BANKTRANSFER_ABLY_CHANNEL,
   BANKTRANSFER_ABLY_EVENT_NAME,
+  BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
+  BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME,
   BUYORDER_STATUS_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_EVENT_NAME,
   type BankTransferDashboardEvent,
+  type BankTransferUnmatchedRealtimeEvent,
   type BuyOrderStatusRealtimeEvent,
 } from "@lib/ably/constants";
 
@@ -81,6 +84,17 @@ export async function publishBankTransferEvent(event: BankTransferDashboardEvent
   await publishRealtimeEvent({
     channelName: BANKTRANSFER_ABLY_CHANNEL,
     eventName: BANKTRANSFER_ABLY_EVENT_NAME,
+    eventId: event.eventId,
+    payload: event,
+  });
+}
+
+export async function publishBankTransferUnmatchedEvent(
+  event: BankTransferUnmatchedRealtimeEvent,
+): Promise<void> {
+  await publishRealtimeEvent({
+    channelName: BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
+    eventName: BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME,
     eventId: event.eventId,
     payload: event,
   });
