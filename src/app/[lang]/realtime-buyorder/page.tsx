@@ -31,6 +31,8 @@ type TodaySummary = {
   confirmedCount: number;
   confirmedAmountKrw: number;
   confirmedAmountUsdt: number;
+  pgFeeAmountKrw: number;
+  pgFeeAmountUsdt: number;
   updatedAt: string;
 };
 
@@ -731,6 +733,8 @@ export default function RealtimeBuyOrderPage() {
         confirmedCount: Number(summaryData.confirmedCount || 0),
         confirmedAmountKrw: Number(summaryData.confirmedAmountKrw || 0),
         confirmedAmountUsdt: Number(summaryData.confirmedAmountUsdt || 0),
+        pgFeeAmountKrw: Number(summaryData.pgFeeAmountKrw || 0),
+        pgFeeAmountUsdt: Number(summaryData.pgFeeAmountUsdt || 0),
         updatedAt: String(summaryData.updatedAt || new Date().toISOString()),
       };
 
@@ -1335,11 +1339,15 @@ export default function RealtimeBuyOrderPage() {
     confirmedCount: 0,
     confirmedAmountKrw: 0,
     confirmedAmountUsdt: 0,
+    pgFeeAmountKrw: 0,
+    pgFeeAmountUsdt: 0,
     updatedAt: new Date().toISOString(),
   };
   const animatedTodayConfirmedCount = useCountUpValue(todayTotals.confirmedCount);
   const animatedTodayConfirmedAmountKrw = useCountUpValue(todayTotals.confirmedAmountKrw);
   const animatedTodayConfirmedAmountUsdt = useCountUpValue(todayTotals.confirmedAmountUsdt, 3);
+  const animatedTodayPgFeeAmountKrw = useCountUpValue(todayTotals.pgFeeAmountKrw);
+  const animatedTodayPgFeeAmountUsdt = useCountUpValue(todayTotals.pgFeeAmountUsdt, 3);
   const todayDateLabelKst = useMemo(() => getKstDateLabel(new Date(countdownNowMs)), [countdownNowMs]);
   const remainingMsToday = useMemo(() => getRemainingKstMs(countdownNowMs), [countdownNowMs]);
   const countdownLabel = useMemo(() => formatCountdownHms(remainingMsToday), [remainingMsToday]);
@@ -1350,6 +1358,12 @@ export default function RealtimeBuyOrderPage() {
   const confirmedUsdtRatio = summary.confirmedAmountUsdt > 0
     ? Math.max(8, Math.min(100, (todayTotals.confirmedAmountUsdt / summary.confirmedAmountUsdt) * 100))
     : 8;
+  const pgFeeRatio = todayTotals.confirmedAmountUsdt > 0
+    ? Math.max(8, Math.min(100, (todayTotals.pgFeeAmountUsdt / todayTotals.confirmedAmountUsdt) * 100))
+    : 8;
+  const pgFeePercent = todayTotals.confirmedAmountUsdt > 0
+    ? (todayTotals.pgFeeAmountUsdt / todayTotals.confirmedAmountUsdt) * 100
+    : 0;
   const selectedStoreFilterOption = useMemo(() => {
     if (buyOrderListStoreCodeFilter === "all") {
       return null;
@@ -1449,12 +1463,6 @@ export default function RealtimeBuyOrderPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
-            <p className="mt-1 text-xs text-slate-300">
-              공개 대시보드입니다. 구매자 이름/계좌번호는 마스킹되어 표시됩니다.
-            </p>
-            <p className="mt-1 text-[11px] text-cyan-300/90">
-              Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BUYORDER_STATUS_ABLY_EVENT_NAME}</span>
-            </p>
           </div>
 
           <div className="w-full max-w-[920px] space-y-1.5">
@@ -1469,7 +1477,7 @@ export default function RealtimeBuyOrderPage() {
               </button>
             </div>
 
-            <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
               <article className="relative overflow-hidden rounded-lg border border-violet-300/35 bg-gradient-to-br from-indigo-500/22 via-violet-500/14 to-slate-950/72 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(99,102,241,0.75)]">
                 <div className="pointer-events-none absolute -right-10 -top-8 h-24 w-24 rounded-full bg-violet-300/25 blur-2xl" />
                 <p className="relative text-[10px] uppercase tracking-[0.1em] text-violet-100/90">오늘 날짜 (KST)</p>
@@ -1531,6 +1539,27 @@ export default function RealtimeBuyOrderPage() {
                   <div
                     className="h-full rounded-full bg-sky-300 transition-all duration-500"
                     style={{ width: `${confirmedUsdtRatio}%` }}
+                  />
+                </div>
+              </article>
+
+              <article className="relative overflow-hidden rounded-lg border border-amber-300/45 bg-gradient-to-br from-amber-500/22 via-orange-500/14 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(245,158,11,0.75)]">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-300/20 blur-2xl" />
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-amber-100/90">오늘 PG 수수료 (KST)</p>
+                <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-amber-50">
+                  {formatKrw(animatedTodayPgFeeAmountKrw)}
+                  <span className="ml-1 text-xs font-medium text-amber-200/90">KRW</span>
+                </p>
+                <div className="relative mt-1 flex items-center justify-between text-[11px]">
+                  <span className="text-amber-100/90">{formatUsdt(animatedTodayPgFeeAmountUsdt)} USDT</span>
+                  <span className="inline-flex rounded-full border border-amber-300/40 bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-amber-50">
+                    {pgFeePercent.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-amber-100/30">
+                  <div
+                    className="h-full rounded-full bg-amber-300 transition-all duration-500"
+                    style={{ width: `${pgFeeRatio}%` }}
                   />
                 </div>
               </article>

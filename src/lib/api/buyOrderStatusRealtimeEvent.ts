@@ -66,6 +66,8 @@ export type BuyOrderTodaySummary = {
   confirmedCount: number;
   confirmedAmountKrw: number;
   confirmedAmountUsdt: number;
+  pgFeeAmountKrw: number;
+  pgFeeAmountUsdt: number;
   updatedAt: string;
 };
 
@@ -343,6 +345,8 @@ export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
           confirmedCount: { $sum: 1 },
           confirmedAmountKrw: { $sum: "$krwAmount" },
           confirmedAmountUsdt: { $sum: "$usdtAmount" },
+          pgFeeAmountUsdt: { $sum: { $toDouble: { $ifNull: ["$settlement.feeAmount", 0] } } },
+          pgFeeAmountKrw: { $sum: { $toDouble: { $ifNull: ["$settlement.feeAmountKRW", 0] } } },
         },
       },
     ])
@@ -355,6 +359,8 @@ export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
     confirmedCount: Number(summary.confirmedCount || 0),
     confirmedAmountKrw: Number(summary.confirmedAmountKrw || 0),
     confirmedAmountUsdt: Number(summary.confirmedAmountUsdt || 0),
+    pgFeeAmountKrw: Number(summary.pgFeeAmountKrw || 0),
+    pgFeeAmountUsdt: Number(summary.pgFeeAmountUsdt || 0),
     updatedAt: new Date().toISOString(),
   };
 }
