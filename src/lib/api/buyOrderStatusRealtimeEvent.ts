@@ -4,6 +4,7 @@ import clientPromise, { dbName } from "@lib/mongodb";
 import type { BuyOrderStatusRealtimeEvent } from "@lib/ably/constants";
 
 const COLLECTION_NAME = "buyOrderStatusRealtimeEvents";
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 type BuyOrderStatusRealtimeEventDocument = {
   _id: ObjectId;
@@ -26,15 +27,47 @@ async function ensureIndexes() {
       await collection.createIndex({ eventId: 1 }, { unique: true, name: "uniq_eventId" });
       await collection.createIndex({ idempotencyKey: 1, createdAt: -1 }, { name: "idx_idempotency_createdAt" });
       await collection.createIndex({ createdAt: -1 }, { name: "idx_createdAt" });
+      await collection.createIndex(
+        { "payload.statusTo": 1, "payload.publishedAt": -1 },
+        { name: "idx_statusTo_publishedAt" },
+      );
     })();
   }
 
   await ensureIndexesPromise;
 }
 
+function getKstUtcDayRange(referenceDate: Date = new Date()): {
+  dateKst: string;
+  startUtc: Date;
+  endUtc: Date;
+} {
+  const kstNow = new Date(referenceDate.getTime() + KST_OFFSET_MS);
+  const year = kstNow.getUTCFullYear();
+  const month = kstNow.getUTCMonth();
+  const day = kstNow.getUTCDate();
+
+  const startUtc = new Date(Date.UTC(year, month, day, 0, 0, 0, 0) - KST_OFFSET_MS);
+  const endUtc = new Date(Date.UTC(year, month, day, 23, 59, 59, 999) - KST_OFFSET_MS);
+
+  return {
+    dateKst: `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
+    startUtc,
+    endUtc,
+  };
+}
+
 function toCursor(value: ObjectId): string {
   return value.toHexString();
 }
+
+export type BuyOrderTodaySummary = {
+  dateKst: string;
+  confirmedCount: number;
+  confirmedAmountKrw: number;
+  confirmedAmountUsdt: number;
+  updatedAt: string;
+};
 
 export async function saveBuyOrderStatusRealtimeEvent({
   eventId,
@@ -157,5 +190,70 @@ export async function getBuyOrderStatusRealtimeEvents({
   return {
     events,
     nextCursor,
+  };
+}
+
+export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
+  await ensureIndexes();
+
+  const client = await clientPromise;
+  const collection = client
+    .db(dbName)
+    .collection<BuyOrderStatusRealtimeEventDocument>(COLLECTION_NAME);
+
+  const { dateKst, startUtc, endUtc } = getKstUtcDayRange();
+  const startIso = startUtc.toISOString();
+  const endIso = endUtc.toISOString();
+
+  const summaryResult = await collection
+    .aggregate([
+      {
+        $match: {
+          "payload.statusTo": "paymentConfirmed",
+          "payload.publishedAt": {
+            $gte: startIso,
+            $lte: endIso,
+          },
+        },
+      },
+      {
+        $project: {
+          amountKrwValue: {
+            $convert: {
+              input: "$payload.amountKrw",
+              to: "double",
+              onError: 0,
+              onNull: 0,
+            },
+          },
+          amountUsdtValue: {
+            $convert: {
+              input: "$payload.amountUsdt",
+              to: "double",
+              onError: 0,
+              onNull: 0,
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          confirmedCount: { $sum: 1 },
+          confirmedAmountKrw: { $sum: "$amountKrwValue" },
+          confirmedAmountUsdt: { $sum: "$amountUsdtValue" },
+        },
+      },
+    ])
+    .toArray();
+
+  const summary = summaryResult[0] || {};
+
+  return {
+    dateKst,
+    confirmedCount: Number(summary.confirmedCount || 0),
+    confirmedAmountKrw: Number(summary.confirmedAmountKrw || 0),
+    confirmedAmountUsdt: Number(summary.confirmedAmountUsdt || 0),
+    updatedAt: new Date().toISOString(),
   };
 }

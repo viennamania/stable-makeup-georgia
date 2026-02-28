@@ -26,11 +26,25 @@ type JackpotBurst = {
   storeLabel: string;
 };
 
+type TodaySummary = {
+  dateKst: string;
+  confirmedCount: number;
+  confirmedAmountKrw: number;
+  confirmedAmountUsdt: number;
+  updatedAt: string;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
+const TODAY_SUMMARY_REFRESH_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
+const COUNTDOWN_TICK_MS = 1_000;
+const COUNT_UP_MIN_MS = 640;
+const COUNT_UP_MAX_MS = 1_480;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const JACKPOT_BURST_DURATION_MS = 3_300;
 const JACKPOT_MAX_ACTIVE_BURSTS = 3;
 const JACKPOT_TRIGGERED_EVENT_CACHE_LIMIT = 700;
@@ -168,6 +182,126 @@ function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   }
 }
 
+function getKstDateKey(value: Date): string {
+  const kst = new Date(value.getTime() + KST_OFFSET_MS);
+  const year = kst.getUTCFullYear();
+  const month = String(kst.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(kst.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getKstDateKeyFromIso(value: string | null | undefined): string | null {
+  const timestamp = toTimestamp(value);
+  if (!timestamp) {
+    return null;
+  }
+  return getKstDateKey(new Date(timestamp));
+}
+
+function getKstDateLabel(referenceDate: Date): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(referenceDate);
+}
+
+function getRemainingKstMs(referenceMs: number): number {
+  const shifted = new Date(referenceMs + KST_OFFSET_MS);
+  const year = shifted.getUTCFullYear();
+  const month = shifted.getUTCMonth();
+  const day = shifted.getUTCDate();
+  const nextMidnightShiftedMs = Date.UTC(year, month, day + 1, 0, 0, 0, 0);
+  return Math.max(0, nextMidnightShiftedMs - shifted.getTime());
+}
+
+function formatCountdownHms(totalMs: number): string {
+  const totalSec = Math.max(0, Math.floor(totalMs / 1000));
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function easeOutCubic(value: number): number {
+  const clamped = Math.max(0, Math.min(1, value));
+  return 1 - Math.pow(1 - clamped, 3);
+}
+
+function getCountUpDurationMs(fromValue: number, toValue: number): number {
+  const delta = Math.abs(toValue - fromValue);
+  if (delta <= 0) {
+    return COUNT_UP_MIN_MS;
+  }
+
+  const scaled = 520 + Math.log10(delta + 1) * 280;
+  return Math.round(Math.max(COUNT_UP_MIN_MS, Math.min(COUNT_UP_MAX_MS, scaled)));
+}
+
+function useCountUpValue(targetValue: number, fractionDigits = 0): number {
+  const safeTarget = Number.isFinite(targetValue)
+    ? Number(targetValue.toFixed(fractionDigits))
+    : 0;
+  const [displayValue, setDisplayValue] = useState<number>(safeTarget);
+  const previousTargetRef = useRef<number>(safeTarget);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const nextTarget = Number.isFinite(targetValue)
+      ? Number(targetValue.toFixed(fractionDigits))
+      : 0;
+    const startValue = previousTargetRef.current;
+
+    if (rafRef.current !== null) {
+      window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
+    if (startValue === nextTarget) {
+      setDisplayValue(nextTarget);
+      previousTargetRef.current = nextTarget;
+      return;
+    }
+
+    const durationMs = getCountUpDurationMs(startValue, nextTarget);
+    let startTimestamp = 0;
+
+    const animate = (timestamp: number) => {
+      if (!startTimestamp) {
+        startTimestamp = timestamp;
+      }
+
+      const elapsed = timestamp - startTimestamp;
+      const progress = Math.min(1, elapsed / durationMs);
+      const eased = easeOutCubic(progress);
+      const interpolated = startValue + (nextTarget - startValue) * eased;
+      setDisplayValue(Number(interpolated.toFixed(fractionDigits)));
+
+      if (progress < 1) {
+        rafRef.current = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      setDisplayValue(nextTarget);
+      previousTargetRef.current = nextTarget;
+      rafRef.current = null;
+    };
+
+    rafRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [fractionDigits, targetValue]);
+
+  return displayValue;
+}
+
 export default function RealtimeBuyOrderPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
@@ -180,11 +314,15 @@ export default function RealtimeBuyOrderPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [countdownNowMs, setCountdownNowMs] = useState(() => Date.now());
+  const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
+  const [todaySummaryErrorMessage, setTodaySummaryErrorMessage] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const cursorRef = useRef<string | null>(null);
   const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
   const triggeredJackpotEventIdsRef = useRef<string[]>([]);
+  const summaryAppliedEventIdsRef = useRef<Set<string>>(new Set());
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -448,6 +586,98 @@ export default function RealtimeBuyOrderPage() {
     [upsertRealtimeEvents, updateCursor],
   );
 
+  const fetchTodaySummary = useCallback(async () => {
+    try {
+      const response = await fetch("/api/realtime/buyorder/summary?public=1", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      const summaryData = data?.summary || {};
+
+      const nextSummary: TodaySummary = {
+        dateKst: String(summaryData.dateKst || getKstDateKey(new Date())),
+        confirmedCount: Number(summaryData.confirmedCount || 0),
+        confirmedAmountKrw: Number(summaryData.confirmedAmountKrw || 0),
+        confirmedAmountUsdt: Number(summaryData.confirmedAmountUsdt || 0),
+        updatedAt: String(summaryData.updatedAt || new Date().toISOString()),
+      };
+
+      setTodaySummary((previous) => {
+        if (previous?.dateKst !== nextSummary.dateKst) {
+          summaryAppliedEventIdsRef.current.clear();
+        }
+        return nextSummary;
+      });
+      setTodaySummaryErrorMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "오늘 누적 집계 조회 실패";
+      setTodaySummaryErrorMessage(message);
+    }
+  }, []);
+
+  const applyRealtimeEventToTodaySummary = useCallback((event: BuyOrderStatusRealtimeEvent) => {
+    if (!isPaymentConfirmedStatus(event.statusTo)) {
+      return;
+    }
+
+    const eventId = String(event.eventId || event.cursor || "").trim();
+    if (eventId) {
+      const appliedSet = summaryAppliedEventIdsRef.current;
+      if (appliedSet.has(eventId)) {
+        return;
+      }
+      appliedSet.add(eventId);
+
+      if (appliedSet.size > 2000) {
+        const recent = Array.from(appliedSet).slice(-1000);
+        appliedSet.clear();
+        for (const id of recent) {
+          appliedSet.add(id);
+        }
+      }
+    }
+
+    const eventDateKey = getKstDateKeyFromIso(event.publishedAt || event.minedAt);
+    const todayDateKey = getKstDateKey(new Date());
+    if (!eventDateKey || eventDateKey !== todayDateKey) {
+      return;
+    }
+
+    const amountKrw = Number(event.amountKrw || 0);
+    const amountUsdt = Number(event.amountUsdt || 0);
+
+    if (!Number.isFinite(amountKrw) || !Number.isFinite(amountUsdt)) {
+      return;
+    }
+
+    setTodaySummary((previous) => {
+      const base: TodaySummary = previous?.dateKst === todayDateKey
+        ? previous
+        : {
+            dateKst: todayDateKey,
+            confirmedCount: 0,
+            confirmedAmountKrw: 0,
+            confirmedAmountUsdt: 0,
+            updatedAt: new Date().toISOString(),
+          };
+
+      return {
+        ...base,
+        confirmedCount: base.confirmedCount + 1,
+        confirmedAmountKrw: base.confirmedAmountKrw + amountKrw,
+        confirmedAmountUsdt: base.confirmedAmountUsdt + amountUsdt,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }, []);
+
   useEffect(() => {
     const realtime = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?public=1&stream=buyorder&clientId=${clientId}`,
@@ -463,20 +693,21 @@ export default function RealtimeBuyOrderPage() {
 
       if (stateChange.current === "connected") {
         void syncFromApi();
+        void fetchTodaySummary();
       }
     };
 
     const onMessage = (message: Ably.Message) => {
       const data = message.data as BuyOrderStatusRealtimeEvent;
+      const normalizedEvent: BuyOrderStatusRealtimeEvent = {
+        ...data,
+        eventId: data.eventId || String(message.id || ""),
+      };
       upsertRealtimeEvents(
-        [
-          {
-            ...data,
-            eventId: data.eventId || String(message.id || ""),
-          },
-        ],
+        [normalizedEvent],
         { highlightNew: true },
       );
+      applyRealtimeEventToTodaySummary(normalizedEvent);
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -487,7 +718,7 @@ export default function RealtimeBuyOrderPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, syncFromApi, upsertRealtimeEvents]);
+  }, [applyRealtimeEventToTodaySummary, clientId, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -502,6 +733,18 @@ export default function RealtimeBuyOrderPage() {
   }, [syncFromApi]);
 
   useEffect(() => {
+    void fetchTodaySummary();
+
+    const timer = window.setInterval(() => {
+      void fetchTodaySummary();
+    }, TODAY_SUMMARY_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchTodaySummary]);
+
+  useEffect(() => {
     setIsHydrated(true);
   }, []);
 
@@ -509,6 +752,16 @@ export default function RealtimeBuyOrderPage() {
     const timer = window.setInterval(() => {
       setNowMs(Date.now());
     }, TIME_AGO_TICK_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCountdownNowMs(Date.now());
+    }, COUNTDOWN_TICK_MS);
 
     return () => {
       window.clearInterval(timer);
@@ -574,12 +827,21 @@ export default function RealtimeBuyOrderPage() {
     const counts = new Map<string, number>();
     let totalKrw = 0;
     let totalUsdt = 0;
+    let confirmedAmountKrw = 0;
+    let confirmedAmountUsdt = 0;
 
     for (const item of sortedEvents) {
       const status = String(item.data.statusTo || "unknown");
       counts.set(status, (counts.get(status) || 0) + 1);
-      totalKrw += Number(item.data.amountKrw || 0);
-      totalUsdt += Number(item.data.amountUsdt || 0);
+      const amountKrw = Number(item.data.amountKrw || 0);
+      const amountUsdt = Number(item.data.amountUsdt || 0);
+      totalKrw += amountKrw;
+      totalUsdt += amountUsdt;
+
+      if (status === "paymentConfirmed") {
+        confirmedAmountKrw += amountKrw;
+        confirmedAmountUsdt += amountUsdt;
+      }
     }
 
     const pendingCount =
@@ -592,6 +854,8 @@ export default function RealtimeBuyOrderPage() {
       totalUsdt,
       pendingCount,
       confirmedCount: counts.get("paymentConfirmed") || 0,
+      confirmedAmountKrw,
+      confirmedAmountUsdt,
       cancelledCount: counts.get("cancelled") || 0,
       latestStatus: sortedEvents[0]?.data.statusTo || "-",
     };
@@ -636,6 +900,57 @@ export default function RealtimeBuyOrderPage() {
       },
     ] as const;
   }, [sortedEvents.length, summary.cancelledCount, summary.confirmedCount, summary.pendingCount]);
+
+  const todaySummaryFallback = useMemo(() => {
+    const todayDateKey = getKstDateKey(new Date(nowMs));
+    let confirmedCount = 0;
+    let confirmedAmountKrw = 0;
+    let confirmedAmountUsdt = 0;
+
+    for (const item of sortedEvents) {
+      if (!isPaymentConfirmedStatus(item.data.statusTo)) {
+        continue;
+      }
+
+      const eventDateKey = getKstDateKeyFromIso(item.data.publishedAt || item.data.minedAt);
+      if (!eventDateKey || eventDateKey !== todayDateKey) {
+        continue;
+      }
+
+      const amountKrw = Number(item.data.amountKrw || 0);
+      const amountUsdt = Number(item.data.amountUsdt || 0);
+      if (!Number.isFinite(amountKrw) || !Number.isFinite(amountUsdt)) {
+        continue;
+      }
+
+      confirmedCount += 1;
+      confirmedAmountKrw += amountKrw;
+      confirmedAmountUsdt += amountUsdt;
+    }
+
+    return {
+      dateKst: todayDateKey,
+      confirmedCount,
+      confirmedAmountKrw,
+      confirmedAmountUsdt,
+      updatedAt: new Date().toISOString(),
+    } satisfies TodaySummary;
+  }, [nowMs, sortedEvents]);
+
+  const todayTotals = todaySummary || todaySummaryFallback;
+  const animatedTodayConfirmedCount = useCountUpValue(todayTotals.confirmedCount);
+  const animatedTodayConfirmedAmountKrw = useCountUpValue(todayTotals.confirmedAmountKrw);
+  const animatedTodayConfirmedAmountUsdt = useCountUpValue(todayTotals.confirmedAmountUsdt, 3);
+  const todayDateLabelKst = useMemo(() => getKstDateLabel(new Date(countdownNowMs)), [countdownNowMs]);
+  const remainingMsToday = useMemo(() => getRemainingKstMs(countdownNowMs), [countdownNowMs]);
+  const countdownLabel = useMemo(() => formatCountdownHms(remainingMsToday), [remainingMsToday]);
+  const remainingDayRatio = Math.max(0, Math.min(100, (remainingMsToday / ONE_DAY_MS) * 100));
+  const confirmedCountRatio = summary.confirmedCount > 0
+    ? Math.max(8, Math.min(100, (todayTotals.confirmedCount / summary.confirmedCount) * 100))
+    : 8;
+  const confirmedUsdtRatio = summary.confirmedAmountUsdt > 0
+    ? Math.max(8, Math.min(100, (todayTotals.confirmedAmountUsdt / summary.confirmedAmountUsdt) * 100))
+    : 8;
 
   function getMetricToneClassName(tone: "slate" | "emerald" | "amber" | "rose") {
     if (tone === "emerald") {
@@ -771,7 +1086,7 @@ export default function RealtimeBuyOrderPage() {
       {jackpotOverlayLayer}
 
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
             <p className="mt-1 text-sm text-slate-300">
@@ -782,13 +1097,85 @@ export default function RealtimeBuyOrderPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void syncFromApi(null)}
-            className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 transition hover:bg-cyan-500/20"
-          >
-            재동기화
-          </button>
+          <div className="w-full max-w-[980px] space-y-2">
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => void syncFromApi(null)}
+                className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSyncing}
+              >
+                {isSyncing ? "재동기화 중..." : "재동기화"}
+              </button>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <article className="relative overflow-hidden rounded-xl border border-violet-300/35 bg-gradient-to-br from-indigo-500/26 via-violet-500/16 to-slate-950/72 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(99,102,241,0.95)]">
+                <div className="pointer-events-none absolute -right-10 -top-8 h-24 w-24 rounded-full bg-violet-300/25 blur-2xl" />
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-violet-100/90">오늘 날짜 (KST)</p>
+                <p className="relative mt-1 text-lg font-semibold leading-tight text-violet-50">{todayDateLabelKst}</p>
+                <div className="relative mt-2 flex items-end justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-violet-100/80">오늘 남은 시간</p>
+                    <p className="mt-1 font-mono text-2xl font-semibold leading-none tabular-nums text-violet-50 animate-pulse">
+                      {countdownLabel}
+                    </p>
+                  </div>
+                  <span className="inline-flex rounded-full border border-violet-300/45 bg-violet-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-violet-50">
+                    COUNTDOWN
+                  </span>
+                </div>
+                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-violet-100/30">
+                  <div
+                    className="h-full rounded-full bg-violet-300 transition-all duration-700"
+                    style={{ width: `${remainingDayRatio}%` }}
+                  />
+                </div>
+              </article>
+
+              <article className="relative overflow-hidden rounded-xl border border-emerald-400/35 bg-gradient-to-br from-emerald-500/24 via-emerald-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(16,185,129,0.95)]">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-emerald-100/85">오늘 결제완료 거래금액 (KST)</p>
+                <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-emerald-50">
+                  {formatKrw(animatedTodayConfirmedAmountKrw)}
+                  <span className="ml-1 text-sm font-medium text-emerald-200/90">KRW</span>
+                </p>
+                <div className="relative mt-1 flex items-center justify-between text-xs">
+                  <span className="text-emerald-100/90">건수 {animatedTodayConfirmedCount.toLocaleString("ko-KR")}건</span>
+                  <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-50">
+                    LIVE
+                  </span>
+                </div>
+                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
+                  <div
+                    className="h-full rounded-full bg-emerald-300 transition-all duration-500"
+                    style={{ width: `${confirmedCountRatio}%` }}
+                  />
+                </div>
+              </article>
+
+              <article className="relative overflow-hidden rounded-xl border border-sky-400/35 bg-gradient-to-br from-sky-500/24 via-cyan-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(14,165,233,0.95)]">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/20 blur-2xl" />
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-sky-100/85">오늘 결제완료 거래수량 (KST)</p>
+                <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-sky-50">
+                  {formatUsdt(animatedTodayConfirmedAmountUsdt)}
+                  <span className="ml-1 text-sm font-medium text-sky-200/90">USDT</span>
+                </p>
+                <div className="relative mt-1 flex items-center justify-between text-xs">
+                  <span className="text-sky-100/90">건수 {animatedTodayConfirmedCount.toLocaleString("ko-KR")}건</span>
+                  <span className="inline-flex rounded-full border border-sky-300/40 bg-sky-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-sky-50">
+                    LIVE
+                  </span>
+                </div>
+                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-sky-100/30">
+                  <div
+                    className="h-full rounded-full bg-sky-300 transition-all duration-500"
+                    style={{ width: `${confirmedUsdtRatio}%` }}
+                  />
+                </div>
+              </article>
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -816,6 +1203,12 @@ export default function RealtimeBuyOrderPage() {
       {syncErrorMessage && (
         <div className="rounded-xl border border-rose-500/40 bg-rose-950/55 px-3 py-2 text-sm text-rose-200">
           {syncErrorMessage}
+        </div>
+      )}
+
+      {todaySummaryErrorMessage && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
+          오늘 결제완료 집계 조회 실패: {todaySummaryErrorMessage}
         </div>
       )}
 
