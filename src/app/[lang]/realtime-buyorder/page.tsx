@@ -1441,51 +1441,51 @@ export default function RealtimeBuyOrderPage() {
       : null;
 
   return (
-    <main className="w-full max-w-[1800px] space-y-5 pt-20 text-slate-100">
+    <main className="w-full max-w-[1680px] space-y-4 pt-20 text-slate-100">
       <RealtimeTopNav lang={lang} current="buyorder" />
       {jackpotOverlayLayer}
 
-      <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(14,116,144,0.24),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <section className="overflow-hidden rounded-xl border border-slate-700/70 bg-[linear-gradient(160deg,rgba(14,116,144,0.22),rgba(2,6,23,0.96)_48%)] p-4 shadow-[0_14px_38px_-24px_rgba(6,182,212,0.35)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
-            <p className="mt-1 text-sm text-slate-300">
+            <h1 className="text-xl font-semibold tracking-tight text-cyan-100">BuyOrder Realtime Dashboard</h1>
+            <p className="mt-1 text-xs text-slate-300">
               공개 대시보드입니다. 구매자 이름/계좌번호는 마스킹되어 표시됩니다.
             </p>
-            <p className="mt-1 text-xs text-cyan-300/90">
+            <p className="mt-1 text-[11px] text-cyan-300/90">
               Channel: <span className="font-mono">{BUYORDER_STATUS_ABLY_CHANNEL}</span> / Event: <span className="font-mono">{BUYORDER_STATUS_ABLY_EVENT_NAME}</span>
             </p>
           </div>
 
-          <div className="w-full max-w-[980px] space-y-2">
+          <div className="w-full max-w-[920px] space-y-1.5">
             <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => void syncFromApi(null)}
-                className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSyncing}
               >
                 {isSyncing ? "재동기화 중..." : "재동기화"}
               </button>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              <article className="relative overflow-hidden rounded-xl border border-violet-300/35 bg-gradient-to-br from-indigo-500/26 via-violet-500/16 to-slate-950/72 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(99,102,241,0.95)]">
+            <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+              <article className="relative overflow-hidden rounded-lg border border-violet-300/35 bg-gradient-to-br from-indigo-500/22 via-violet-500/14 to-slate-950/72 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(99,102,241,0.75)]">
                 <div className="pointer-events-none absolute -right-10 -top-8 h-24 w-24 rounded-full bg-violet-300/25 blur-2xl" />
-                <p className="relative text-[11px] uppercase tracking-[0.12em] text-violet-100/90">오늘 날짜 (KST)</p>
-                <p className="relative mt-1 text-lg font-semibold leading-tight text-violet-50">{todayDateLabelKst}</p>
-                <div className="relative mt-2 flex items-end justify-between">
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-violet-100/90">오늘 날짜 (KST)</p>
+                <p className="relative mt-1 text-base font-semibold leading-tight text-violet-50">{todayDateLabelKst}</p>
+                <div className="relative mt-1.5 flex items-end justify-between">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.12em] text-violet-100/80">오늘 남은 시간</p>
-                    <p className="mt-1 font-mono text-2xl font-semibold leading-none tabular-nums text-violet-50 animate-pulse">
+                    <p className="text-[10px] uppercase tracking-[0.1em] text-violet-100/80">오늘 남은 시간</p>
+                    <p className="mt-1 font-mono text-xl font-semibold leading-none tabular-nums text-violet-50 animate-pulse">
                       {countdownLabel}
                     </p>
                   </div>
-                  <span className="inline-flex rounded-full border border-violet-300/45 bg-violet-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-violet-50">
+                  <span className="inline-flex rounded-full border border-violet-300/45 bg-violet-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-violet-50">
                     COUNTDOWN
                   </span>
                 </div>
-                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-violet-100/30">
+                <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-violet-100/30">
                   <div
                     className="h-full rounded-full bg-violet-300 transition-all duration-700"
                     style={{ width: `${remainingDayRatio}%` }}
@@ -1493,20 +1493,20 @@ export default function RealtimeBuyOrderPage() {
                 </div>
               </article>
 
-              <article className="relative overflow-hidden rounded-xl border border-emerald-400/35 bg-gradient-to-br from-emerald-500/24 via-emerald-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(16,185,129,0.95)]">
+              <article className="relative overflow-hidden rounded-lg border border-emerald-400/35 bg-gradient-to-br from-emerald-500/20 via-emerald-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(16,185,129,0.75)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
-                <p className="relative text-[11px] uppercase tracking-[0.12em] text-emerald-100/85">오늘 결제완료 거래금액 (KST)</p>
-                <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-emerald-50">
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-emerald-100/85">오늘 결제완료 거래금액 (KST)</p>
+                <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-emerald-50">
                   {formatKrw(animatedTodayConfirmedAmountKrw)}
-                  <span className="ml-1 text-sm font-medium text-emerald-200/90">KRW</span>
+                  <span className="ml-1 text-xs font-medium text-emerald-200/90">KRW</span>
                 </p>
-                <div className="relative mt-1 flex items-center justify-between text-xs">
+                <div className="relative mt-1 flex items-center justify-between text-[11px]">
                   <span className="text-emerald-100/90">건수 {animatedTodayConfirmedCount.toLocaleString("ko-KR")}건</span>
-                  <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-50">
+                  <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-emerald-50">
                     LIVE
                   </span>
                 </div>
-                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
+                <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
                   <div
                     className="h-full rounded-full bg-emerald-300 transition-all duration-500"
                     style={{ width: `${confirmedCountRatio}%` }}
@@ -1514,20 +1514,20 @@ export default function RealtimeBuyOrderPage() {
                 </div>
               </article>
 
-              <article className="relative overflow-hidden rounded-xl border border-sky-400/35 bg-gradient-to-br from-sky-500/24 via-cyan-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(14,165,233,0.95)]">
+              <article className="relative overflow-hidden rounded-lg border border-sky-400/35 bg-gradient-to-br from-sky-500/20 via-cyan-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(14,165,233,0.75)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/20 blur-2xl" />
-                <p className="relative text-[11px] uppercase tracking-[0.12em] text-sky-100/85">오늘 결제완료 거래수량 (KST)</p>
-                <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-sky-50">
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-sky-100/85">오늘 결제완료 거래수량 (KST)</p>
+                <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-sky-50">
                   {formatUsdt(animatedTodayConfirmedAmountUsdt)}
-                  <span className="ml-1 text-sm font-medium text-sky-200/90">USDT</span>
+                  <span className="ml-1 text-xs font-medium text-sky-200/90">USDT</span>
                 </p>
-                <div className="relative mt-1 flex items-center justify-between text-xs">
+                <div className="relative mt-1 flex items-center justify-between text-[11px]">
                   <span className="text-sky-100/90">건수 {animatedTodayConfirmedCount.toLocaleString("ko-KR")}건</span>
-                  <span className="inline-flex rounded-full border border-sky-300/40 bg-sky-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-sky-50">
+                  <span className="inline-flex rounded-full border border-sky-300/40 bg-sky-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-sky-50">
                     LIVE
                   </span>
                 </div>
-                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-sky-100/30">
+                <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-sky-100/30">
                   <div
                     className="h-full rounded-full bg-sky-300 transition-all duration-500"
                     style={{ width: `${confirmedUsdtRatio}%` }}
@@ -1538,17 +1538,17 @@ export default function RealtimeBuyOrderPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+        <div className="mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
             Connection <span className="ml-2 font-semibold text-cyan-200">{connectionState}</span>
           </div>
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+          <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
             Sync <span className="ml-2 font-semibold text-cyan-200">{isSyncing ? "running" : "idle"}</span>
           </div>
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+          <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
             Cursor <span className="ml-2 break-all font-mono text-xs text-cyan-200">{cursor || "-"}</span>
           </div>
-          <div className="rounded-xl border border-slate-700/70 bg-slate-900/65 px-3 py-2 text-sm text-slate-200">
+          <div className="rounded-lg border border-slate-700/70 bg-slate-900/65 px-2 py-1.5 text-xs text-slate-200">
             Last Status <span className="ml-2 font-semibold text-cyan-200">{getStatusLabel(summary.latestStatus)}</span>
           </div>
         </div>
@@ -1584,16 +1584,16 @@ export default function RealtimeBuyOrderPage() {
         </div>
       )}
 
-      <section className="grid gap-3 xl:grid-cols-[minmax(0,0.74fr)_minmax(0,1.06fr)_minmax(0,1.06fr)]">
-        <div className="relative overflow-hidden rounded-3xl border border-amber-300/70 bg-[radial-gradient(circle_at_18%_0%,rgba(251,191,36,0.34),rgba(255,251,235,0.96)_36%),linear-gradient(160deg,rgba(255,255,255,0.98),rgba(250,245,255,0.94))] shadow-[0_20px_60px_-28px_rgba(217,119,6,0.45)]">
+      <section className="grid gap-2.5 xl:grid-cols-[minmax(0,0.62fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="relative overflow-hidden rounded-2xl border border-amber-300/70 bg-[radial-gradient(circle_at_18%_0%,rgba(251,191,36,0.3),rgba(255,251,235,0.97)_38%),linear-gradient(160deg,rgba(255,255,255,0.98),rgba(250,245,255,0.94))] shadow-[0_16px_40px_-28px_rgba(217,119,6,0.42)]">
           <div className="pointer-events-none absolute -left-8 top-4 h-20 w-20 rounded-full bg-amber-300/35 blur-2xl" />
           <div className="pointer-events-none absolute -right-8 bottom-10 h-24 w-24 rounded-full bg-sky-300/25 blur-2xl" />
 
-          <div className="relative border-b border-amber-300/40 px-4 py-3">
+          <div className="relative border-b border-amber-300/40 px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-amber-700/80">Slot Console</p>
-                <p className="mt-0.5 font-semibold text-amber-950">진행중 구매주문 목록</p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-amber-700/80">Live Pending</p>
+                <p className="mt-0.5 text-sm font-semibold text-amber-950">진행중 구매주문 목록</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="rounded border border-amber-400/60 bg-amber-200/65 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
@@ -1608,15 +1608,15 @@ export default function RealtimeBuyOrderPage() {
               ordered / accepted / paymentRequested · updated {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs).relativeLabel}
             </p>
 
-            <div className="mt-3 rounded-xl border border-amber-300/55 bg-white/85 p-2 shadow-[inset_0_0_20px_rgba(251,191,36,0.08)]">
+            <div className="mt-2 rounded-lg border border-amber-300/55 bg-white/85 p-1.5 shadow-[inset_0_0_16px_rgba(251,191,36,0.08)]">
               <p className="text-[10px] uppercase tracking-[0.16em] text-amber-800/80">Action Dock (버튼 확장 영역)</p>
-              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                 {["Slot A", "Slot B", "Slot C", "Slot D"].map((slotLabel) => (
                   <button
                     key={slotLabel}
                     type="button"
                     disabled
-                    className="rounded-lg border border-amber-300/60 bg-amber-100/80 px-2 py-1 text-[11px] font-semibold text-amber-900/75"
+                    className="rounded-md border border-amber-300/60 bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900/75"
                   >
                     {slotLabel}
                   </button>
@@ -1625,7 +1625,7 @@ export default function RealtimeBuyOrderPage() {
             </div>
           </div>
 
-          <div className="relative max-h-[780px] space-y-1 overflow-y-auto bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.95)_0px,rgba(255,255,255,0.95)_34px,rgba(255,247,237,0.95)_34px,rgba(255,247,237,0.95)_68px)] p-2.5">
+          <div className="relative max-h-[780px] space-y-1 overflow-y-auto bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.95)_0px,rgba(255,255,255,0.95)_30px,rgba(255,247,237,0.95)_30px,rgba(255,247,237,0.95)_60px)] p-2">
             {pendingBuyOrders.length === 0 && (
               <div className="rounded-xl border border-amber-300/70 bg-white/95 px-3 py-8 text-center">
                 <p className="font-mono text-xs text-amber-900/85">[IDLE] 슬롯에 올라온 진행중 주문이 없습니다.</p>
@@ -1647,7 +1647,7 @@ export default function RealtimeBuyOrderPage() {
                   return (
                     <article
                       key={`pending-order-${order.orderId || index}`}
-                      className={`grid grid-cols-[84px_minmax(0,1.9fr)_minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,1.25fr)_minmax(0,1.15fr)] items-center gap-2 rounded-xl border px-2.5 py-1.5 text-[11px] transition-all duration-500 ${
+                      className={`grid grid-cols-[74px_88px_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1fr)] items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-all duration-500 ${
                         isHighlighted
                           ? "new-record-row-highlight border-cyan-300/80 bg-cyan-50/95 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]"
                           : "border-amber-200/80 bg-white/95 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12)]"
@@ -1667,42 +1667,42 @@ export default function RealtimeBuyOrderPage() {
                         )}
                       </div>
 
-                      <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex min-w-0 flex-col items-center gap-1 text-center">
                         <span
-                          className={`h-7 w-7 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
+                          className={`h-8 w-8 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
                           style={hasStoreLogo ? { backgroundImage: `url(${order.storeLogo})` } : undefined}
                         />
-                        <span className="min-w-0 truncate text-[13px] font-semibold text-slate-900" title={storeLabel}>
+                        <span className="min-w-0 truncate text-[11px] font-semibold leading-tight text-slate-900" title={storeLabel}>
                           {storeLabel}
                         </span>
                       </div>
 
-                      <div className="min-w-0 text-right">
-                        <p className="truncate font-mono text-[13px] font-bold leading-none tabular-nums text-amber-950">
+                      <div className="min-w-0">
+                        <p className="truncate font-mono text-[12px] font-bold leading-none tabular-nums text-amber-950">
                           {formatKrw(order.amountKrw)} KRW
                         </p>
-                        <p className="truncate font-mono text-[10px] leading-none text-cyan-700">
+                        <p className="mt-0.5 truncate font-mono text-[10px] leading-none text-cyan-700">
                           {formatUsdt(order.amountUsdt)} USDT
                         </p>
+                        <p className="mt-0.5 truncate text-[11px] font-semibold text-slate-900">{buyerLabel}</p>
                       </div>
 
-                      <div className="min-w-0 truncate text-[12px] font-semibold text-slate-900">{buyerLabel}</div>
-
-                      <div className="flex min-w-0 items-center justify-end gap-1.5">
-                        <p className="min-w-0 truncate font-mono text-[10px] text-slate-700" title={order.tradeId || "-"}>
-                          {order.tradeId || "-"}
-                        </p>
+                      <div className="min-w-0 text-right">
                         {order.tradeId && (
                           <button
                             type="button"
                             onClick={() => {
                               void handleCopyTradeId(order.tradeId);
                             }}
-                            className="shrink-0 text-[10px] font-semibold text-cyan-700 underline underline-offset-2 transition hover:text-cyan-900"
+                            title="tradeId 복사"
+                            className={`block max-w-full truncate font-mono text-[10px] underline underline-offset-2 transition ${
+                              copied ? "text-emerald-700 decoration-emerald-500" : "text-cyan-700 decoration-cyan-500 hover:text-cyan-900"
+                            }`}
                           >
-                            {copied ? "복사됨" : "복사"}
+                            {order.tradeId}
                           </button>
                         )}
+                        {!order.tradeId && <span className="font-mono text-[10px] text-slate-400">-</span>}
                       </div>
 
                       <div className="min-w-0 text-right">
@@ -1721,7 +1721,7 @@ export default function RealtimeBuyOrderPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-300/70 bg-white/95 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]">
+        <div className="overflow-hidden rounded-xl border border-slate-300/70 bg-white/95 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.28)]">
           <div className="border-b border-slate-200/80 px-3 py-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold text-slate-900">구매주문 목록</p>
@@ -1869,7 +1869,7 @@ export default function RealtimeBuyOrderPage() {
                   return (
                     <article
                       key={`buyorder-list-${item.orderId || index}`}
-                      className={`grid grid-cols-[84px_minmax(0,1.9fr)_minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,1.25fr)_minmax(0,1.15fr)] items-center gap-2 rounded-lg border px-2 py-1.5 text-[11px] transition-all duration-500 ${
+                      className={`grid grid-cols-[84px_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(0,0.78fr)_minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-all duration-500 ${
                         isHighlighted
                           ? "new-record-row-highlight border-cyan-300/80 bg-cyan-50 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]"
                           : "border-slate-200 bg-white shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
@@ -1908,21 +1908,22 @@ export default function RealtimeBuyOrderPage() {
 
                       <div className="min-w-0 truncate text-[12px] font-medium text-slate-900">{buyerLabel}</div>
 
-                      <div className="flex min-w-0 items-center justify-end gap-1.5">
-                        <p className="min-w-0 truncate font-mono text-[10px] text-slate-700" title={item.tradeId || "-"}>
-                          {item.tradeId || "-"}
-                        </p>
+                      <div className="min-w-0 text-right">
                         {item.tradeId && (
                           <button
                             type="button"
                             onClick={() => {
                               void handleCopyTradeId(item.tradeId);
                             }}
-                            className="shrink-0 text-[10px] font-semibold text-cyan-700 underline underline-offset-2 transition hover:text-cyan-900"
+                            title="tradeId 복사"
+                            className={`block max-w-full truncate font-mono text-[10px] underline underline-offset-2 transition ${
+                              copied ? "text-emerald-700 decoration-emerald-500" : "text-cyan-700 decoration-cyan-500 hover:text-cyan-900"
+                            }`}
                           >
-                            {copied ? "복사됨" : "복사"}
+                            {item.tradeId}
                           </button>
                         )}
+                        {!item.tradeId && <span className="font-mono text-[10px] text-slate-400">-</span>}
                       </div>
 
                       <div className="min-w-0 text-right">
