@@ -885,18 +885,27 @@ export default function RealtimeBuyOrderPage() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
-            <p className="font-semibold text-slate-100">실시간 상태 변경</p>
-            <p className="text-xs text-slate-400">최신 이벤트 순</p>
+            <p className="font-semibold text-slate-100">실시간 BuyOrder 시스템 로그</p>
+            <p className="mt-1 font-mono text-[11px] text-slate-500">tail -f /var/log/buyorder/realtime.log</p>
           </div>
 
-          <div className="space-y-2 p-3 md:hidden">
+          <div className="border-b border-slate-800/80 bg-slate-950/85 px-4 py-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-400/90" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/90" />
+              <span className="ml-2 font-mono text-[11px] text-slate-500">buyorder-realtime@{connectionState}</span>
+            </div>
+          </div>
+
+          <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
             {sortedEvents.length === 0 && (
-              <div className="rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-8 text-center text-sm text-slate-500">
-                아직 수신된 이벤트가 없습니다.
+              <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
+                [WAITING] 아직 수신된 이벤트가 없습니다.
               </div>
             )}
 
-            {sortedEvents.map((item) => {
+            {sortedEvents.map((item, index) => {
               const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
               const toLabel = getStatusLabel(item.data.statusTo);
               const isHighlighted = item.highlightUntil > Date.now();
@@ -907,298 +916,80 @@ export default function RealtimeBuyOrderPage() {
               const detailSource = getOptionalText(item.data.source);
               const detailTxHash = getOptionalText(item.data.transactionHash);
               const detailEscrowTxHash = getOptionalText(item.data.escrowTransactionHash);
+              const detailQueueId = getOptionalText(item.data.queueId);
+              const detailMinedAt = getOptionalText(item.data.minedAt);
               const detailReason = getOptionalText(item.data.reason);
-              const hasMobileDetails = Boolean(
-                detailTradeId ||
-                  detailOrderId ||
-                  detailSource ||
-                  detailTxHash ||
-                  detailEscrowTxHash ||
-                  detailReason,
-              );
+              const lineNo = String(sortedEvents.length - index).padStart(4, "0");
+              const statusTo = String(item.data.statusTo || "").toLowerCase();
+              const level = statusTo === "cancelled" ? "WARN" : statusTo === "paymentConfirmed" ? "INFO" : "TRACE";
+              const levelClassName =
+                level === "WARN"
+                  ? "bg-amber-500/20 text-amber-200"
+                  : level === "INFO"
+                    ? "bg-emerald-500/20 text-emerald-200"
+                    : "bg-slate-700/80 text-slate-200";
+              const storeLabel = item.data.store?.name || item.data.store?.code || "-";
 
               return (
                 <article
-                  key={`mobile-${item.id}`}
-                  className={`rounded-xl border p-3 transition-all duration-500 ${
+                  key={`log-${item.id}`}
+                  className={`rounded-lg border px-3 py-2 transition-all duration-500 ${
                     isHighlighted
                       ? isJackpotEvent
-                        ? "jackpot-card-highlight border-emerald-300/55 bg-emerald-500/16 shadow-[inset_0_0_0_1px_rgba(110,231,183,0.35)]"
-                        : "animate-pulse border-cyan-400/40 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.28)]"
-                      : "border-slate-700/80 bg-slate-950/65"
+                        ? "jackpot-row-highlight border-emerald-300/55 bg-emerald-500/14 shadow-[inset_0_0_0_1px_rgba(110,231,183,0.35)]"
+                        : "border-cyan-400/45 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.26)]"
+                      : "border-slate-800/80 bg-slate-950/65"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div
-                        className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
-                      >
-                        {timeInfo.relativeLabel}
-                      </div>
-                      <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-base font-semibold leading-tight tabular-nums text-cyan-200">
-                        {formatUsdt(item.data.amountUsdt)}
-                        <span className="ml-1 text-xs font-semibold text-cyan-100">USDT</span>
-                      </div>
-                      <div className="mt-1 text-[11px] tabular-nums text-slate-400">
-                        {formatKrw(item.data.amountKrw)} KRW
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap items-center gap-1">
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusFrom)}`}>
-                      {fromLabel}
-                    </span>
-                    <span className="text-slate-500">→</span>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(
-                        item.data.statusTo,
-                      )} ${isJackpotEvent ? "jackpot-status-pill" : ""}`}
-                    >
-                      {toLabel}
+                  <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                    <span className="text-slate-600">#{lineNo}</span>
+                    <span className="text-slate-500">{timeInfo.absoluteLabel}</span>
+                    <span className={`rounded px-1.5 py-0.5 font-semibold ${levelClassName}`}>{level}</span>
+                    <span className={`rounded border px-1.5 py-0.5 font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}>
+                      {timeInfo.relativeLabel}
                     </span>
                     {isHighlighted && (
-                      <span
-                        className="ml-auto rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100"
-                      >
+                      <span className="animate-pulse rounded border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-cyan-100">
                         NEW
                       </span>
                     )}
                   </div>
 
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">구매자</p>
-                      <p className="mt-1 text-sm text-slate-100">{maskName(item.data.buyerName)}</p>
-                      <p className="mt-1 font-mono text-[11px] text-cyan-200" title={item.data.buyerWalletAddress || ""}>
-                        {formatShortWalletAddress(item.data.buyerWalletAddress)}
-                      </p>
-                      <p className="mt-1 font-mono text-[11px] text-slate-400">
-                        {maskAccountNumber(item.data.buyerAccountNumber)}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">스토어</p>
-                      {item.data.store ? (
-                        <div className="mt-1 flex min-w-0 items-center gap-2">
-                          {item.data.store.logo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.data.store.logo}
-                              alt={item.data.store.name || "store-logo"}
-                              className="h-8 w-8 shrink-0 rounded-md border border-slate-700 object-cover"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 shrink-0 rounded-md border border-slate-700 bg-slate-800" />
-                          )}
-                          <div className="min-w-0">
-                            <p className="truncate text-sm text-slate-100">{item.data.store.name || "-"}</p>
-                            <p className="font-mono text-[11px] text-slate-400">{item.data.store.code || "-"}</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-xs text-slate-500">-</p>
-                      )}
-                    </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] leading-relaxed">
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(item.data.statusFrom)}`}>
+                      {fromLabel}
+                    </span>
+                    <span className="text-slate-500">→</span>
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(
+                        item.data.statusTo,
+                      )} ${isJackpotEvent ? "jackpot-status-pill" : ""}`}
+                    >
+                      {toLabel}
+                    </span>
+                    <span className="text-cyan-300">
+                      usdt=<span className="text-cyan-100">{formatUsdt(item.data.amountUsdt)}</span>
+                    </span>
+                    <span className="text-slate-300">
+                      krw=<span className="text-slate-100">{formatKrw(item.data.amountKrw)}</span>
+                    </span>
+                    <span className="text-slate-400">
+                      buyer={maskName(item.data.buyerName)}:{maskAccountNumber(item.data.buyerAccountNumber)}
+                    </span>
+                    <span className="text-cyan-300">wallet={formatShortWalletAddress(item.data.buyerWalletAddress)}</span>
+                    <span className="text-slate-400">store={storeLabel}</span>
+                    {detailTradeId ? <span className="text-cyan-300">tid={detailTradeId}</span> : null}
+                    {detailOrderId ? <span className="text-slate-400">oid={detailOrderId}</span> : null}
+                    {detailSource ? <span className="text-slate-500">source={detailSource}</span> : null}
+                    {detailTxHash ? <span className="text-violet-300">tx={formatShortHash(detailTxHash)}</span> : null}
+                    {detailEscrowTxHash ? <span className="text-blue-300">escrow={formatShortHash(detailEscrowTxHash)}</span> : null}
+                    {detailQueueId ? <span className="text-slate-500">queue={detailQueueId}</span> : null}
+                    {detailMinedAt ? <span className="text-slate-500">mined={detailMinedAt}</span> : null}
+                    {detailReason ? <span className="text-rose-300">reason={detailReason}</span> : null}
                   </div>
-
-                  {hasMobileDetails && (
-                    <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
-                      {detailTradeId ? (
-                        <p className="font-mono text-cyan-200">TID: {detailTradeId}</p>
-                      ) : null}
-                      {detailOrderId ? (
-                        <p className="mt-1 font-mono text-slate-400">OID: {detailOrderId}</p>
-                      ) : null}
-                      {detailSource ? (
-                        <p className="mt-1 font-mono text-slate-500">Source: {detailSource}</p>
-                      ) : null}
-                      {detailTxHash ? (
-                        <p className="mt-1 font-mono text-violet-200" title={detailTxHash}>
-                          TX: {formatShortHash(detailTxHash)}
-                        </p>
-                      ) : null}
-                      {detailEscrowTxHash ? (
-                        <p className="mt-1 font-mono text-blue-200" title={detailEscrowTxHash}>
-                          Escrow TX: {formatShortHash(detailEscrowTxHash)}
-                        </p>
-                      ) : null}
-                      {detailReason ? (
-                        <p className="mt-1 truncate text-rose-300">{detailReason}</p>
-                      ) : null}
-                    </div>
-                  )}
                 </article>
               );
             })}
-          </div>
-
-          <div className="hidden overflow-x-auto md:block">
-            <table className="min-w-[1360px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
-                  <th className="w-[190px] px-3 py-2">시간</th>
-                  <th className="w-[280px] px-3 py-2">상태</th>
-                  <th className="w-[180px] px-3 py-2 text-right">금액</th>
-                  <th className="w-[140px] px-3 py-2">구매자</th>
-                  <th className="w-[170px] px-3 py-2">계좌</th>
-                  <th className="w-[260px] px-3 py-2">스토어</th>
-                  <th className="w-[420px] px-3 py-2">내역</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedEvents.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
-                      아직 수신된 이벤트가 없습니다.
-                    </td>
-                  </tr>
-                )}
-
-                {sortedEvents.map((item) => {
-                  const fromLabel = item.data.statusFrom ? getStatusLabel(item.data.statusFrom) : "초기";
-                  const toLabel = getStatusLabel(item.data.statusTo);
-                  const isHighlighted = item.highlightUntil > Date.now();
-                  const isJackpotEvent = isPaymentConfirmedStatus(item.data.statusTo);
-                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
-                  const detailTradeId = getOptionalText(item.data.tradeId);
-                  const detailOrderId = getOptionalText(item.data.orderId);
-                  const detailSource = getOptionalText(item.data.source);
-                  const detailTxHash = getOptionalText(item.data.transactionHash);
-                  const detailEscrowTxHash = getOptionalText(item.data.escrowTransactionHash);
-                  const detailQueueId = getOptionalText(item.data.queueId);
-                  const detailMinedAt = getOptionalText(item.data.minedAt);
-                  const detailReason = getOptionalText(item.data.reason);
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`border-b border-slate-800/80 align-top transition-all duration-500 ${
-                        isHighlighted
-                          ? isJackpotEvent
-                            ? "jackpot-row-highlight bg-emerald-500/12 shadow-[inset_0_0_0_1px_rgba(110,231,183,0.35)]"
-                            : "animate-pulse bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.32)]"
-                          : "hover:bg-slate-900/55"
-                      }`}
-                    >
-                      <td className="px-3 py-3 text-xs text-slate-400">
-                        <div
-                          className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
-                        >
-                          {timeInfo.relativeLabel}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
-                        {isHighlighted && (
-                          <span
-                            className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100"
-                          >
-                            NEW
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap items-center gap-1">
-                          <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.statusFrom)}`}>
-                            {fromLabel}
-                          </span>
-                          <span className="text-slate-500">→</span>
-                          <span
-                            className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(
-                              item.data.statusTo,
-                            )} ${isJackpotEvent ? "jackpot-status-pill" : ""}`}
-                          >
-                            {toLabel}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3 text-right">
-                        <div className="text-lg font-semibold leading-tight text-cyan-200">
-                          {formatUsdt(item.data.amountUsdt)} USDT
-                        </div>
-                        <div className="mt-1 text-xs text-slate-400">
-                          {formatKrw(item.data.amountKrw)} KRW
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3">
-                        <div className="flex flex-col">
-                          <span className="text-slate-200">{maskName(item.data.buyerName)}</span>
-                          <span
-                            className="mt-1 font-mono text-[11px] text-cyan-200"
-                            title={item.data.buyerWalletAddress || ""}
-                          >
-                            {formatShortWalletAddress(item.data.buyerWalletAddress)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 font-mono text-xs text-slate-300">{maskAccountNumber(item.data.buyerAccountNumber)}</td>
-
-                      <td className="px-3 py-3">
-                        {item.data.store ? (
-                          <div className="flex min-w-[240px] items-center gap-2">
-                            {item.data.store.logo ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.data.store.logo}
-                                alt={item.data.store.name || "store-logo"}
-                                className="h-9 w-9 rounded-md border border-slate-700 object-cover"
-                              />
-                            ) : (
-                              <div className="h-9 w-9 rounded-md border border-slate-700 bg-slate-800" />
-                            )}
-                            <div className="flex flex-col">
-                              <span className="leading-tight text-slate-100">{item.data.store.name || "-"}</span>
-                              <span className="font-mono text-xs leading-tight text-slate-400">
-                                {item.data.store.code || "-"}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500">-</span>
-                        )}
-                      </td>
-
-                      <td className="px-3 py-3">
-                        {detailTradeId ? (
-                          <div className="font-mono text-xs text-cyan-200">TID: {detailTradeId}</div>
-                        ) : null}
-                        {detailOrderId ? (
-                          <div className="mt-1 font-mono text-[11px] text-slate-400">OID: {detailOrderId}</div>
-                        ) : null}
-                        {detailSource ? (
-                          <div className="mt-1 font-mono text-[11px] text-slate-500">Source: {detailSource}</div>
-                        ) : null}
-                        {detailTxHash ? (
-                          <div className="mt-1 font-mono text-[11px] text-violet-200" title={detailTxHash}>
-                            TX: {formatShortHash(detailTxHash)}
-                          </div>
-                        ) : null}
-                        {detailEscrowTxHash ? (
-                          <div className="mt-1 font-mono text-[11px] text-blue-200" title={detailEscrowTxHash}>
-                            Escrow TX: {formatShortHash(detailEscrowTxHash)}
-                          </div>
-                        ) : null}
-                        {detailQueueId ? (
-                          <div className="mt-1 font-mono text-[11px] text-slate-400">Queue: {detailQueueId}</div>
-                        ) : null}
-                        {detailMinedAt ? (
-                          <div className="mt-1 font-mono text-[11px] text-slate-500">Mined: {detailMinedAt}</div>
-                        ) : null}
-                        {detailReason ? (
-                          <div className="mt-1 truncate text-xs text-rose-300">{detailReason}</div>
-                        ) : null}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
         </div>
       </section>
