@@ -34,10 +34,25 @@ type TodaySummary = {
   updatedAt: string;
 };
 
+type PendingBuyOrderItem = {
+  orderId: string;
+  tradeId: string | null;
+  status: "ordered" | "accepted" | "paymentRequested";
+  createdAt: string | null;
+  amountKrw: number;
+  amountUsdt: number;
+  buyerName: string | null;
+  buyerAccountNumber: string | null;
+  storeName: string | null;
+  storeCode: string | null;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
 const TODAY_SUMMARY_REFRESH_MS = 10_000;
+const PENDING_BUYORDER_REFRESH_MS = 10_000;
+const PENDING_BUYORDER_FETCH_LIMIT = 30;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
 const COUNTDOWN_TICK_MS = 1_000;
@@ -52,9 +67,14 @@ const PARTY_CONFETTI_COUNT = 72;
 const PARTY_STREAMER_COUNT = 16;
 const PARTY_FIREWORK_COUNT = 6;
 const PARTY_FIREWORK_RAY_COUNT = 12;
+const PENDING_BUYORDER_STATUS_SET = new Set(["ordered", "accepted", "paymentRequested"]);
 
 function isPaymentConfirmedStatus(status: string | null | undefined): boolean {
   return status === "paymentConfirmed";
+}
+
+function isPendingBuyOrderStatus(status: string | null | undefined): status is PendingBuyOrderItem["status"] {
+  return PENDING_BUYORDER_STATUS_SET.has(String(status || ""));
 }
 
 function toTimestamp(value: string | null | undefined): number {
@@ -99,6 +119,24 @@ function getStatusClassName(status: string | null | undefined): string {
     default:
       return "border border-zinc-500/35 bg-zinc-700/45 text-zinc-200";
   }
+}
+
+function formatKstDateTime(value: string | null | undefined): string {
+  const timestamp = Date.parse(String(value || ""));
+  if (Number.isNaN(timestamp)) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(timestamp));
 }
 
 function formatKrw(value: number): string {
@@ -309,6 +347,10 @@ export default function RealtimeBuyOrderPage() {
   const [countdownNowMs, setCountdownNowMs] = useState(() => Date.now());
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
   const [todaySummaryErrorMessage, setTodaySummaryErrorMessage] = useState<string | null>(null);
+  const [pendingBuyOrders, setPendingBuyOrders] = useState<PendingBuyOrderItem[]>([]);
+  const [pendingBuyOrdersTotalCount, setPendingBuyOrdersTotalCount] = useState(0);
+  const [pendingBuyOrdersUpdatedAt, setPendingBuyOrdersUpdatedAt] = useState<string | null>(null);
+  const [pendingBuyOrdersErrorMessage, setPendingBuyOrdersErrorMessage] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const cursorRef = useRef<string | null>(null);
@@ -608,6 +650,51 @@ export default function RealtimeBuyOrderPage() {
     }
   }, []);
 
+  const fetchPendingBuyOrders = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        public: "1",
+        limit: String(PENDING_BUYORDER_FETCH_LIMIT),
+      });
+      const response = await fetch(`/api/realtime/buyorder/pending?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      const nextOrders = Array.isArray(data?.orders)
+        ? (data.orders as Array<Record<string, unknown>>).map((item) => {
+            const statusRaw = String(item?.status || "");
+            return {
+              orderId: String(item?.orderId || ""),
+              tradeId: item?.tradeId ? String(item.tradeId) : null,
+              status: isPendingBuyOrderStatus(statusRaw) ? statusRaw : "ordered",
+              createdAt: item?.createdAt ? String(item.createdAt) : null,
+              amountKrw: Number(item?.amountKrw || 0),
+              amountUsdt: Number(item?.amountUsdt || 0),
+              buyerName: item?.buyerName ? String(item.buyerName) : null,
+              buyerAccountNumber: item?.buyerAccountNumber ? String(item.buyerAccountNumber) : null,
+              storeName: item?.storeName ? String(item.storeName) : null,
+              storeCode: item?.storeCode ? String(item.storeCode) : null,
+            } satisfies PendingBuyOrderItem;
+          })
+        : [];
+
+      setPendingBuyOrders(nextOrders);
+      setPendingBuyOrdersTotalCount(Number(data?.totalCount || nextOrders.length));
+      setPendingBuyOrdersUpdatedAt(data?.updatedAt ? String(data.updatedAt) : new Date().toISOString());
+      setPendingBuyOrdersErrorMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "진행중 주문 조회 실패";
+      setPendingBuyOrdersErrorMessage(message);
+    }
+  }, []);
+
   useEffect(() => {
     const realtime = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?public=1&stream=buyorder&clientId=${clientId}`,
@@ -624,6 +711,7 @@ export default function RealtimeBuyOrderPage() {
       if (stateChange.current === "connected") {
         void syncFromApi();
         void fetchTodaySummary();
+        void fetchPendingBuyOrders();
       }
     };
 
@@ -643,6 +731,12 @@ export default function RealtimeBuyOrderPage() {
       ) {
         void fetchTodaySummary();
       }
+      if (
+        isPendingBuyOrderStatus(normalizedEvent.statusTo) ||
+        isPendingBuyOrderStatus(normalizedEvent.statusFrom)
+      ) {
+        void fetchPendingBuyOrders();
+      }
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -653,7 +747,7 @@ export default function RealtimeBuyOrderPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
+  }, [clientId, fetchPendingBuyOrders, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -678,6 +772,18 @@ export default function RealtimeBuyOrderPage() {
       window.clearInterval(timer);
     };
   }, [fetchTodaySummary]);
+
+  useEffect(() => {
+    void fetchPendingBuyOrders();
+
+    const timer = window.setInterval(() => {
+      void fetchPendingBuyOrders();
+    }, PENDING_BUYORDER_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchPendingBuyOrders]);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -1025,24 +1131,76 @@ export default function RealtimeBuyOrderPage() {
         </div>
       )}
 
-      <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
-          <p className="text-xs uppercase tracking-wide text-slate-400">누적 금액</p>
-          <div className="mt-3 rounded-xl border border-cyan-400/45 bg-cyan-500/10 px-3 py-3 shadow-[inset_0_0_24px_rgba(34,211,238,0.12)]">
-            <p className="text-[11px] uppercase tracking-[0.1em] text-cyan-300/90">USDT Total</p>
-            <p className="mt-1 text-3xl font-bold leading-none tabular-nums text-cyan-100 drop-shadow-[0_0_12px_rgba(34,211,238,0.3)]">
-              {formatUsdt(summary.totalUsdt)}
-              <span className="ml-1 text-base font-semibold text-cyan-200">USDT</span>
+      {pendingBuyOrdersErrorMessage && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
+          진행중 구매주문 목록 조회 실패: {pendingBuyOrdersErrorMessage}
+        </div>
+      )}
+
+      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
+        <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
+          <div className="border-b border-slate-700/80 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-semibold text-slate-100">진행중 구매주문 목록</p>
+              <div className="flex items-center gap-1.5">
+                <span className="rounded border border-cyan-400/45 bg-cyan-500/15 px-2 py-0.5 text-[11px] font-medium text-cyan-100">
+                  총 {pendingBuyOrdersTotalCount.toLocaleString("ko-KR")}건
+                </span>
+                <span className="rounded border border-slate-600/70 bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-200">
+                  표시 {pendingBuyOrders.length.toLocaleString("ko-KR")}건
+                </span>
+              </div>
+            </div>
+            <p className="mt-1 font-mono text-[11px] text-slate-500">
+              ordered / accepted / paymentRequested · updated {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs).relativeLabel}
             </p>
           </div>
-          <div className="mt-3 rounded-lg border border-slate-700/80 bg-slate-950/70 px-3 py-2">
-            <p className="text-[11px] uppercase tracking-[0.1em] text-slate-400">KRW Total</p>
-            <p className="mt-1 text-lg font-semibold tabular-nums text-slate-200">
-              {formatKrw(summary.totalKrw)} KRW
-            </p>
-          </div>
-          <div className="mt-4 rounded-xl border border-slate-700/80 bg-slate-950/70 p-3 text-xs text-slate-400">
-            이벤트 기준 합계이며 정산 데이터와 다를 수 있습니다.
+
+          <div className="max-h-[780px] space-y-2 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
+            {pendingBuyOrders.length === 0 && (
+              <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
+                [WAITING] 진행중 구매주문이 없습니다.
+              </div>
+            )}
+
+            {pendingBuyOrders.map((order, index) => {
+              const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
+              const lineNo = String(index + 1).padStart(3, "0");
+              const storeLabel = order.storeName || order.storeCode || "-";
+              const tradeLabel = order.tradeId ? formatShortHash(order.tradeId) : "-";
+
+              return (
+                <article
+                  key={`pending-order-${order.orderId || index}`}
+                  className="rounded-xl border border-slate-800/80 bg-slate-950/65 px-3 py-2"
+                >
+                  <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                    <span className="text-slate-600">#{lineNo}</span>
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(order.status)}`}>
+                      {getStatusLabel(order.status)}
+                    </span>
+                    <span className={`rounded border px-1.5 py-0.5 font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
+                      {createdAtInfo.relativeLabel}
+                    </span>
+                    <span className="text-slate-500">{formatKstDateTime(order.createdAt)}</span>
+                  </div>
+
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px]">
+                    <span className="text-cyan-300">tid={tradeLabel}</span>
+                    <span className="text-slate-300">
+                      krw=<span className="text-slate-100">{formatKrw(order.amountKrw)}</span>
+                    </span>
+                    <span className="text-cyan-300">
+                      usdt=<span className="text-cyan-100">{formatUsdt(order.amountUsdt)}</span>
+                    </span>
+                    <span className="text-slate-400">
+                      buyer={maskName(order.buyerName)}:{maskAccountNumber(order.buyerAccountNumber)}
+                    </span>
+                    <span className="text-slate-400">store={storeLabel}</span>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
 

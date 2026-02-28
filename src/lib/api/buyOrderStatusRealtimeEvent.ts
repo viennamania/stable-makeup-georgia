@@ -69,6 +69,81 @@ export type BuyOrderTodaySummary = {
   updatedAt: string;
 };
 
+type PendingBuyOrderStatus = "ordered" | "accepted" | "paymentRequested";
+
+const PENDING_BUYORDER_STATUSES: PendingBuyOrderStatus[] = [
+  "ordered",
+  "accepted",
+  "paymentRequested",
+];
+
+export type RealtimePendingBuyOrderItem = {
+  orderId: string;
+  tradeId: string | null;
+  status: PendingBuyOrderStatus;
+  createdAt: string | null;
+  amountKrw: number;
+  amountUsdt: number;
+  buyerName: string | null;
+  buyerAccountNumber: string | null;
+  storeName: string | null;
+  storeCode: string | null;
+};
+
+export type RealtimePendingBuyOrderResult = {
+  totalCount: number;
+  orders: RealtimePendingBuyOrderItem[];
+  updatedAt: string;
+};
+
+function toNullableText(value: unknown): string | null {
+  const normalized = String(value || "").trim();
+  return normalized || null;
+}
+
+function toIsoString(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  const text = String(value).trim();
+  if (!text) {
+    return null;
+  }
+
+  const timestamp = Date.parse(text);
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  return new Date(timestamp).toISOString();
+}
+
+function toSafeNumber(value: unknown): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : 0;
+}
+
+function getPendingBuyerName(order: any): string | null {
+  return toNullableText(
+    order?.buyer?.depositName ||
+      order?.buyer?.bankInfo?.accountHolder ||
+      order?.nickname,
+  );
+}
+
+function getPendingBuyerAccountNumber(order: any): string | null {
+  return toNullableText(
+    order?.buyer?.bankInfo?.accountNumber ||
+      order?.buyer?.depositBankAccountNumber ||
+      order?.buyer?.bankAccountNumber,
+  );
+}
+
 export async function saveBuyOrderStatusRealtimeEvent({
   eventId,
   idempotencyKey,
@@ -232,6 +307,64 @@ export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
     confirmedCount: Number(summary.confirmedCount || 0),
     confirmedAmountKrw: Number(summary.confirmedAmountKrw || 0),
     confirmedAmountUsdt: Number(summary.confirmedAmountUsdt || 0),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export async function getRealtimePendingBuyOrders({
+  limit = 24,
+}: {
+  limit?: number;
+} = {}): Promise<RealtimePendingBuyOrderResult> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+
+  const safeLimit = Math.min(Math.max(Number(limit) || 24, 1), 100);
+  const query = {
+    privateSale: { $ne: true },
+    status: { $in: PENDING_BUYORDER_STATUSES },
+  };
+
+  const [totalCount, docs] = await Promise.all([
+    collection.countDocuments(query),
+    collection
+      .find(query, {
+        projection: {
+          _id: 1,
+          tradeId: 1,
+          status: 1,
+          createdAt: 1,
+          krwAmount: 1,
+          usdtAmount: 1,
+          nickname: 1,
+          buyer: 1,
+          storecode: 1,
+          store: 1,
+        },
+      })
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(safeLimit)
+      .toArray(),
+  ]);
+
+  const orders: RealtimePendingBuyOrderItem[] = docs.map((doc: any) => ({
+    orderId: String(doc?._id || ""),
+    tradeId: toNullableText(doc?.tradeId),
+    status: PENDING_BUYORDER_STATUSES.includes(doc?.status)
+      ? (doc.status as PendingBuyOrderStatus)
+      : "ordered",
+    createdAt: toIsoString(doc?.createdAt),
+    amountKrw: toSafeNumber(doc?.krwAmount),
+    amountUsdt: toSafeNumber(doc?.usdtAmount),
+    buyerName: getPendingBuyerName(doc),
+    buyerAccountNumber: getPendingBuyerAccountNumber(doc),
+    storeName: toNullableText(doc?.store?.storeName),
+    storeCode: toNullableText(doc?.storecode || doc?.store?.storecode),
+  }));
+
+  return {
+    totalCount,
+    orders,
     updatedAt: new Date().toISOString(),
   };
 }
