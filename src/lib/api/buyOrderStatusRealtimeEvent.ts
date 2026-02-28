@@ -70,11 +70,25 @@ export type BuyOrderTodaySummary = {
 };
 
 type PendingBuyOrderStatus = "ordered" | "accepted" | "paymentRequested";
+type RealtimeBuyOrderListStatus =
+  | PendingBuyOrderStatus
+  | "paymentConfirmed"
+  | "cancelled"
+  | "paymentSettled";
 
 const PENDING_BUYORDER_STATUSES: PendingBuyOrderStatus[] = [
   "ordered",
   "accepted",
   "paymentRequested",
+];
+
+const BUYORDER_LIST_STATUSES: RealtimeBuyOrderListStatus[] = [
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+  "cancelled",
+  "paymentSettled",
 ];
 
 export type RealtimePendingBuyOrderItem = {
@@ -94,6 +108,29 @@ export type RealtimePendingBuyOrderItem = {
 export type RealtimePendingBuyOrderResult = {
   totalCount: number;
   orders: RealtimePendingBuyOrderItem[];
+  updatedAt: string;
+};
+
+export type RealtimeBuyOrderListItem = {
+  orderId: string;
+  tradeId: string | null;
+  status: RealtimeBuyOrderListStatus;
+  createdAt: string | null;
+  amountKrw: number;
+  amountUsdt: number;
+  buyerName: string | null;
+  buyerAccountNumber: string | null;
+  storeLogo: string | null;
+  storeName: string | null;
+  storeCode: string | null;
+};
+
+export type RealtimeBuyOrderListResult = {
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  orders: RealtimeBuyOrderListItem[];
   updatedAt: string;
 };
 
@@ -127,6 +164,10 @@ function toIsoString(value: unknown): string | null {
 function toSafeNumber(value: unknown): number {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
+}
+
+function escapeRegex(value: string): string {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function getPendingBuyerName(order: any): string | null {
@@ -366,6 +407,101 @@ export async function getRealtimePendingBuyOrders({
 
   return {
     totalCount,
+    orders,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export async function getRealtimeBuyOrderSearchList({
+  page = 1,
+  limit = 10,
+  status = "all",
+  searchQuery = "",
+}: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  searchQuery?: string;
+} = {}): Promise<RealtimeBuyOrderListResult> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+
+  const safeLimit = Math.min(Math.max(Number(limit) || 10, 1), 50);
+  const requestedPage = Math.max(Number(page) || 1, 1);
+  const normalizedStatus = String(status || "all").trim();
+  const searchText = String(searchQuery || "").trim();
+
+  const query: Record<string, unknown> = {
+    privateSale: { $ne: true },
+  };
+
+  if (BUYORDER_LIST_STATUSES.includes(normalizedStatus as RealtimeBuyOrderListStatus)) {
+    query.status = normalizedStatus;
+  }
+
+  if (searchText) {
+    const pattern = new RegExp(escapeRegex(searchText), "i");
+    query.$or = [
+      { tradeId: { $regex: pattern } },
+      { storecode: { $regex: pattern } },
+      { "store.storeName": { $regex: pattern } },
+      { nickname: { $regex: pattern } },
+      { "buyer.depositName": { $regex: pattern } },
+      { "buyer.bankInfo.accountHolder": { $regex: pattern } },
+      { "buyer.bankInfo.accountNumber": { $regex: pattern } },
+      { "buyer.depositBankAccountNumber": { $regex: pattern } },
+    ];
+  }
+
+  const totalCount = await collection.countDocuments(query);
+  const totalPages = Math.max(1, Math.ceil(totalCount / safeLimit));
+  const safePage = Math.min(requestedPage, totalPages);
+
+  const docs = await collection
+    .find(query, {
+      projection: {
+        _id: 1,
+        tradeId: 1,
+        status: 1,
+        createdAt: 1,
+        krwAmount: 1,
+        usdtAmount: 1,
+        nickname: 1,
+        buyer: 1,
+        storecode: 1,
+        store: 1,
+      },
+    })
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((safePage - 1) * safeLimit)
+    .limit(safeLimit)
+    .toArray();
+
+  const orders: RealtimeBuyOrderListItem[] = docs.map((doc: any) => {
+    const normalizedDocStatus = BUYORDER_LIST_STATUSES.includes(doc?.status)
+      ? (doc.status as RealtimeBuyOrderListStatus)
+      : "ordered";
+
+    return {
+      orderId: String(doc?._id || ""),
+      tradeId: toNullableText(doc?.tradeId),
+      status: normalizedDocStatus,
+      createdAt: toIsoString(doc?.createdAt),
+      amountKrw: toSafeNumber(doc?.krwAmount),
+      amountUsdt: toSafeNumber(doc?.usdtAmount),
+      buyerName: getPendingBuyerName(doc),
+      buyerAccountNumber: getPendingBuyerAccountNumber(doc),
+      storeLogo: toNullableText(doc?.store?.storeLogo),
+      storeName: toNullableText(doc?.store?.storeName),
+      storeCode: toNullableText(doc?.storecode || doc?.store?.storecode),
+    };
+  });
+
+  return {
+    totalCount,
+    page: safePage,
+    limit: safeLimit,
+    totalPages,
     orders,
     updatedAt: new Date().toISOString(),
   };

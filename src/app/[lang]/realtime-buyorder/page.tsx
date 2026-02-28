@@ -48,12 +48,37 @@ type PendingBuyOrderItem = {
   storeCode: string | null;
 };
 
+type BuyOrderListStatusFilter =
+  | "all"
+  | "ordered"
+  | "accepted"
+  | "paymentRequested"
+  | "paymentConfirmed"
+  | "cancelled"
+  | "paymentSettled";
+
+type BuyOrderListItem = {
+  orderId: string;
+  tradeId: string | null;
+  status: Exclude<BuyOrderListStatusFilter, "all">;
+  createdAt: string | null;
+  amountKrw: number;
+  amountUsdt: number;
+  buyerName: string | null;
+  buyerAccountNumber: string | null;
+  storeLogo: string | null;
+  storeName: string | null;
+  storeCode: string | null;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
 const TODAY_SUMMARY_REFRESH_MS = 10_000;
 const PENDING_BUYORDER_REFRESH_MS = 10_000;
 const PENDING_BUYORDER_FETCH_LIMIT = 30;
+const BUYORDER_LIST_REFRESH_MS = 12_000;
+const BUYORDER_LIST_PAGE_LIMIT = 12;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
 const COUNTDOWN_TICK_MS = 1_000;
@@ -69,6 +94,23 @@ const PARTY_STREAMER_COUNT = 16;
 const PARTY_FIREWORK_COUNT = 6;
 const PARTY_FIREWORK_RAY_COUNT = 12;
 const PENDING_BUYORDER_STATUS_SET = new Set(["ordered", "accepted", "paymentRequested"]);
+const BUYORDER_LIST_STATUS_SET = new Set([
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+  "cancelled",
+  "paymentSettled",
+]);
+const BUYORDER_LIST_STATUS_OPTIONS: Array<{ value: BuyOrderListStatusFilter; label: string }> = [
+  { value: "all", label: "전체 상태" },
+  { value: "ordered", label: "주문접수" },
+  { value: "accepted", label: "매칭완료" },
+  { value: "paymentRequested", label: "결제요청" },
+  { value: "paymentConfirmed", label: "결제완료" },
+  { value: "cancelled", label: "취소" },
+  { value: "paymentSettled", label: "정산완료" },
+];
 
 function isPaymentConfirmedStatus(status: string | null | undefined): boolean {
   return status === "paymentConfirmed";
@@ -76,6 +118,10 @@ function isPaymentConfirmedStatus(status: string | null | undefined): boolean {
 
 function isPendingBuyOrderStatus(status: string | null | undefined): status is PendingBuyOrderItem["status"] {
   return PENDING_BUYORDER_STATUS_SET.has(String(status || ""));
+}
+
+function isBuyOrderListStatus(value: string | null | undefined): value is BuyOrderListItem["status"] {
+  return BUYORDER_LIST_STATUS_SET.has(String(value || ""));
 }
 
 function toTimestamp(value: string | null | undefined): number {
@@ -334,6 +380,16 @@ export default function RealtimeBuyOrderPage() {
   const [pendingBuyOrdersTotalCount, setPendingBuyOrdersTotalCount] = useState(0);
   const [pendingBuyOrdersUpdatedAt, setPendingBuyOrdersUpdatedAt] = useState<string | null>(null);
   const [pendingBuyOrdersErrorMessage, setPendingBuyOrdersErrorMessage] = useState<string | null>(null);
+  const [buyOrderListItems, setBuyOrderListItems] = useState<BuyOrderListItem[]>([]);
+  const [buyOrderListTotalCount, setBuyOrderListTotalCount] = useState(0);
+  const [buyOrderListPage, setBuyOrderListPage] = useState(1);
+  const [buyOrderListTotalPages, setBuyOrderListTotalPages] = useState(1);
+  const [buyOrderListStatusFilter, setBuyOrderListStatusFilter] = useState<BuyOrderListStatusFilter>("all");
+  const [buyOrderListQueryInput, setBuyOrderListQueryInput] = useState("");
+  const [buyOrderListQuery, setBuyOrderListQuery] = useState("");
+  const [buyOrderListUpdatedAt, setBuyOrderListUpdatedAt] = useState<string | null>(null);
+  const [buyOrderListErrorMessage, setBuyOrderListErrorMessage] = useState<string | null>(null);
+  const [isBuyOrderListLoading, setIsBuyOrderListLoading] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const cursorRef = useRef<string | null>(null);
@@ -679,6 +735,84 @@ export default function RealtimeBuyOrderPage() {
     }
   }, []);
 
+  const fetchBuyOrderList = useCallback(async () => {
+    setIsBuyOrderListLoading(true);
+    try {
+      const params = new URLSearchParams({
+        public: "1",
+        page: String(buyOrderListPage),
+        limit: String(BUYORDER_LIST_PAGE_LIMIT),
+        status: buyOrderListStatusFilter,
+      });
+
+      if (buyOrderListQuery) {
+        params.set("q", buyOrderListQuery);
+      }
+
+      const response = await fetch(`/api/realtime/buyorder/list?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      const nextOrders = Array.isArray(data?.orders)
+        ? (data.orders as Array<Record<string, unknown>>).map((item) => {
+            const rawStatus = String(item?.status || "");
+            return {
+              orderId: String(item?.orderId || ""),
+              tradeId: item?.tradeId ? String(item.tradeId) : null,
+              status: isBuyOrderListStatus(rawStatus) ? rawStatus : "ordered",
+              createdAt: item?.createdAt ? String(item.createdAt) : null,
+              amountKrw: Number(item?.amountKrw || 0),
+              amountUsdt: Number(item?.amountUsdt || 0),
+              buyerName: item?.buyerName ? String(item.buyerName) : null,
+              buyerAccountNumber: item?.buyerAccountNumber ? String(item.buyerAccountNumber) : null,
+              storeLogo: item?.storeLogo ? String(item.storeLogo) : null,
+              storeName: item?.storeName ? String(item.storeName) : null,
+              storeCode: item?.storeCode ? String(item.storeCode) : null,
+            } satisfies BuyOrderListItem;
+          })
+        : [];
+
+      const nextPage = Math.max(1, Number(data?.page || buyOrderListPage));
+      const nextTotalPages = Math.max(1, Number(data?.totalPages || 1));
+
+      setBuyOrderListItems(nextOrders);
+      setBuyOrderListTotalCount(Number(data?.totalCount || 0));
+      setBuyOrderListTotalPages(nextTotalPages);
+      setBuyOrderListPage((previous) => (previous === nextPage ? previous : nextPage));
+      setBuyOrderListUpdatedAt(data?.updatedAt ? String(data.updatedAt) : new Date().toISOString());
+      setBuyOrderListErrorMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "구매주문 목록 조회 실패";
+      setBuyOrderListErrorMessage(message);
+    } finally {
+      setIsBuyOrderListLoading(false);
+    }
+  }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter]);
+
+  const handleBuyOrderListSearchSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const nextQuery = buyOrderListQueryInput.trim();
+      setBuyOrderListPage(1);
+      setBuyOrderListQuery(nextQuery);
+    },
+    [buyOrderListQueryInput],
+  );
+
+  const handleBuyOrderListFilterReset = useCallback(() => {
+    setBuyOrderListStatusFilter("all");
+    setBuyOrderListQueryInput("");
+    setBuyOrderListQuery("");
+    setBuyOrderListPage(1);
+  }, []);
+
   useEffect(() => {
     const realtime = new Ably.Realtime({
       authUrl: `/api/realtime/ably-token?public=1&stream=buyorder&clientId=${clientId}`,
@@ -696,6 +830,7 @@ export default function RealtimeBuyOrderPage() {
         void syncFromApi();
         void fetchTodaySummary();
         void fetchPendingBuyOrders();
+        void fetchBuyOrderList();
       }
     };
 
@@ -721,6 +856,7 @@ export default function RealtimeBuyOrderPage() {
       ) {
         void fetchPendingBuyOrders();
       }
+      void fetchBuyOrderList();
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -731,7 +867,7 @@ export default function RealtimeBuyOrderPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, fetchPendingBuyOrders, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
+  }, [clientId, fetchBuyOrderList, fetchPendingBuyOrders, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -768,6 +904,20 @@ export default function RealtimeBuyOrderPage() {
       window.clearInterval(timer);
     };
   }, [fetchPendingBuyOrders]);
+
+  useEffect(() => {
+    void fetchBuyOrderList();
+  }, [fetchBuyOrderList]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void fetchBuyOrderList();
+    }, BUYORDER_LIST_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchBuyOrderList]);
 
   useEffect(() => {
     setIsHydrated(true);
@@ -1121,7 +1271,13 @@ export default function RealtimeBuyOrderPage() {
         </div>
       )}
 
-      <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
+      {buyOrderListErrorMessage && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
+          구매주문 목록 조회 실패: {buyOrderListErrorMessage}
+        </div>
+      )}
+
+      <section className="grid gap-3 xl:grid-cols-[minmax(0,0.74fr)_minmax(0,1.06fr)_minmax(0,1.06fr)]">
         <div className="relative overflow-hidden rounded-3xl border border-amber-300/70 bg-[radial-gradient(circle_at_18%_0%,rgba(251,191,36,0.34),rgba(255,251,235,0.96)_36%),linear-gradient(160deg,rgba(255,255,255,0.98),rgba(250,245,255,0.94))] shadow-[0_20px_60px_-28px_rgba(217,119,6,0.45)]">
           <div className="pointer-events-none absolute -left-8 top-4 h-20 w-20 rounded-full bg-amber-300/35 blur-2xl" />
           <div className="pointer-events-none absolute -right-8 bottom-10 h-24 w-24 rounded-full bg-sky-300/25 blur-2xl" />
@@ -1221,6 +1377,149 @@ export default function RealtimeBuyOrderPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-300/70 bg-white/95 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]">
+          <div className="border-b border-slate-200/80 px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-900">구매주문 목록</p>
+              <span className="rounded-md border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+                총 {buyOrderListTotalCount.toLocaleString("ko-KR")}건
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500">
+              updated {getRelativeTimeInfo(buyOrderListUpdatedAt, nowMs).relativeLabel}
+            </p>
+
+            <form
+              onSubmit={handleBuyOrderListSearchSubmit}
+              className="mt-2 grid gap-1.5 sm:grid-cols-[118px_minmax(0,1fr)_72px_72px]"
+            >
+              <select
+                value={buyOrderListStatusFilter}
+                onChange={(event) => {
+                  setBuyOrderListStatusFilter(event.target.value as BuyOrderListStatusFilter);
+                  setBuyOrderListPage(1);
+                }}
+                className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-cyan-400"
+              >
+                {BUYORDER_LIST_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={buyOrderListQueryInput}
+                onChange={(event) => {
+                  setBuyOrderListQueryInput(event.target.value);
+                }}
+                placeholder="거래ID/가맹점/입금자 검색"
+                className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
+              />
+              <button
+                type="submit"
+                className="h-8 rounded-md border border-cyan-300 bg-cyan-50 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-100"
+              >
+                검색
+              </button>
+              <button
+                type="button"
+                onClick={handleBuyOrderListFilterReset}
+                className="h-8 rounded-md border border-slate-300 bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              >
+                초기화
+              </button>
+            </form>
+          </div>
+
+          <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(241,245,249,0.96))] p-2">
+            {buyOrderListItems.length === 0 && (
+              <div className="rounded-lg border border-slate-200 bg-white px-3 py-8 text-center text-xs text-slate-500">
+                {isBuyOrderListLoading ? "[LOADING] 목록을 불러오는 중..." : "[EMPTY] 조건에 맞는 주문이 없습니다."}
+              </div>
+            )}
+
+            {buyOrderListItems.length > 0 && (
+              <div className="overflow-x-auto">
+                <div className="min-w-[760px] space-y-1">
+                  {buyOrderListItems.map((item, index) => {
+                    const storeLabel = item.storeName || item.storeCode || "-";
+                    const buyerLabel = maskName(item.buyerName);
+                    const tradeLabel = item.tradeId ? formatShortHash(item.tradeId) : "-";
+                    const createdAtInfo = getRelativeTimeInfo(item.createdAt, nowMs);
+                    const rowNo = String((buyOrderListPage - 1) * BUYORDER_LIST_PAGE_LIMIT + index + 1).padStart(3, "0");
+
+                    return (
+                      <article
+                        key={`buyorder-list-${item.orderId || index}`}
+                        className="grid grid-cols-[96px_minmax(0,1.35fr)_170px_130px_120px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
+                      >
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <span className="font-mono text-[10px] text-slate-400">{rowNo}</span>
+                          <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(item.status)}`}>
+                            {getStatusLabel(item.status)}
+                          </span>
+                        </div>
+
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={`h-6 w-6 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${item.storeLogo ? "bg-white" : "bg-slate-100"}`}
+                            style={item.storeLogo ? { backgroundImage: `url(${item.storeLogo})` } : undefined}
+                          />
+                          <span className="truncate text-[12px] font-medium text-slate-900">{storeLabel}</span>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="font-mono text-[12px] font-semibold leading-none tabular-nums text-slate-900">
+                            {formatKrw(item.amountKrw)} KRW
+                          </p>
+                          <p className="font-mono text-[10px] leading-none text-cyan-700">
+                            {formatUsdt(item.amountUsdt)} USDT
+                          </p>
+                        </div>
+
+                        <div className="truncate text-[12px] font-medium text-slate-900">{buyerLabel}</div>
+
+                        <div className="text-right font-mono text-[10px] text-slate-500">
+                          <p className="truncate">{tradeLabel}</p>
+                          <p>{createdAtInfo.relativeLabel}</p>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-slate-200/80 bg-white px-3 py-2">
+            <p className="text-[11px] text-slate-600">
+              page {buyOrderListPage} / {buyOrderListTotalPages}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setBuyOrderListPage((previous) => Math.max(1, previous - 1));
+                }}
+                disabled={buyOrderListPage <= 1 || isBuyOrderListLoading}
+                className="h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                이전
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setBuyOrderListPage((previous) => Math.min(buyOrderListTotalPages, previous + 1));
+                }}
+                disabled={buyOrderListPage >= buyOrderListTotalPages || isBuyOrderListLoading}
+                className="h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                다음
+              </button>
+            </div>
           </div>
         </div>
 
