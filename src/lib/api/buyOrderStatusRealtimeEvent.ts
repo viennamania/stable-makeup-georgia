@@ -194,45 +194,23 @@ export async function getBuyOrderStatusRealtimeEvents({
 }
 
 export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
-  await ensureIndexes();
-
   const client = await clientPromise;
-  const collection = client
-    .db(dbName)
-    .collection<BuyOrderStatusRealtimeEventDocument>(COLLECTION_NAME);
+  const collection = client.db(dbName).collection("buyorders");
 
   const { dateKst, startUtc, endUtc } = getKstUtcDayRange();
   const startIso = startUtc.toISOString();
-  const endIso = endUtc.toISOString();
+  // Keep boundary behavior aligned with admin/buyorder totals.
+  const endIso = new Date(`${dateKst}T23:59:59+09:00`).toISOString();
 
   const summaryResult = await collection
     .aggregate([
       {
         $match: {
-          "payload.statusTo": "paymentConfirmed",
-          "payload.publishedAt": {
+          status: "paymentConfirmed",
+          privateSale: false,
+          createdAt: {
             $gte: startIso,
-            $lte: endIso,
-          },
-        },
-      },
-      {
-        $project: {
-          amountKrwValue: {
-            $convert: {
-              input: "$payload.amountKrw",
-              to: "double",
-              onError: 0,
-              onNull: 0,
-            },
-          },
-          amountUsdtValue: {
-            $convert: {
-              input: "$payload.amountUsdt",
-              to: "double",
-              onError: 0,
-              onNull: 0,
-            },
+            $lt: endIso,
           },
         },
       },
@@ -240,8 +218,8 @@ export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
         $group: {
           _id: null,
           confirmedCount: { $sum: 1 },
-          confirmedAmountKrw: { $sum: "$amountKrwValue" },
-          confirmedAmountUsdt: { $sum: "$amountUsdtValue" },
+          confirmedAmountKrw: { $sum: "$krwAmount" },
+          confirmedAmountUsdt: { $sum: "$usdtAmount" },
         },
       },
     ])

@@ -190,14 +190,6 @@ function getKstDateKey(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function getKstDateKeyFromIso(value: string | null | undefined): string | null {
-  const timestamp = toTimestamp(value);
-  if (!timestamp) {
-    return null;
-  }
-  return getKstDateKey(new Date(timestamp));
-}
-
 function getKstDateLabel(referenceDate: Date): string {
   return new Intl.DateTimeFormat("ko-KR", {
     timeZone: "Asia/Seoul",
@@ -322,7 +314,6 @@ export default function RealtimeBuyOrderPage() {
   const cursorRef = useRef<string | null>(null);
   const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
   const triggeredJackpotEventIdsRef = useRef<string[]>([]);
-  const summaryAppliedEventIdsRef = useRef<Set<string>>(new Set());
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -609,73 +600,12 @@ export default function RealtimeBuyOrderPage() {
         updatedAt: String(summaryData.updatedAt || new Date().toISOString()),
       };
 
-      setTodaySummary((previous) => {
-        if (previous?.dateKst !== nextSummary.dateKst) {
-          summaryAppliedEventIdsRef.current.clear();
-        }
-        return nextSummary;
-      });
+      setTodaySummary(nextSummary);
       setTodaySummaryErrorMessage(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "오늘 누적 집계 조회 실패";
       setTodaySummaryErrorMessage(message);
     }
-  }, []);
-
-  const applyRealtimeEventToTodaySummary = useCallback((event: BuyOrderStatusRealtimeEvent) => {
-    if (!isPaymentConfirmedStatus(event.statusTo)) {
-      return;
-    }
-
-    const eventId = String(event.eventId || event.cursor || "").trim();
-    if (eventId) {
-      const appliedSet = summaryAppliedEventIdsRef.current;
-      if (appliedSet.has(eventId)) {
-        return;
-      }
-      appliedSet.add(eventId);
-
-      if (appliedSet.size > 2000) {
-        const recent = Array.from(appliedSet).slice(-1000);
-        appliedSet.clear();
-        for (const id of recent) {
-          appliedSet.add(id);
-        }
-      }
-    }
-
-    const eventDateKey = getKstDateKeyFromIso(event.publishedAt || event.minedAt);
-    const todayDateKey = getKstDateKey(new Date());
-    if (!eventDateKey || eventDateKey !== todayDateKey) {
-      return;
-    }
-
-    const amountKrw = Number(event.amountKrw || 0);
-    const amountUsdt = Number(event.amountUsdt || 0);
-
-    if (!Number.isFinite(amountKrw) || !Number.isFinite(amountUsdt)) {
-      return;
-    }
-
-    setTodaySummary((previous) => {
-      const base: TodaySummary = previous?.dateKst === todayDateKey
-        ? previous
-        : {
-            dateKst: todayDateKey,
-            confirmedCount: 0,
-            confirmedAmountKrw: 0,
-            confirmedAmountUsdt: 0,
-            updatedAt: new Date().toISOString(),
-          };
-
-      return {
-        ...base,
-        confirmedCount: base.confirmedCount + 1,
-        confirmedAmountKrw: base.confirmedAmountKrw + amountKrw,
-        confirmedAmountUsdt: base.confirmedAmountUsdt + amountUsdt,
-        updatedAt: new Date().toISOString(),
-      };
-    });
   }, []);
 
   useEffect(() => {
@@ -707,7 +637,12 @@ export default function RealtimeBuyOrderPage() {
         [normalizedEvent],
         { highlightNew: true },
       );
-      applyRealtimeEventToTodaySummary(normalizedEvent);
+      if (
+        isPaymentConfirmedStatus(normalizedEvent.statusTo) ||
+        isPaymentConfirmedStatus(normalizedEvent.statusFrom)
+      ) {
+        void fetchTodaySummary();
+      }
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -718,7 +653,7 @@ export default function RealtimeBuyOrderPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [applyRealtimeEventToTodaySummary, clientId, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
+  }, [clientId, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -901,43 +836,13 @@ export default function RealtimeBuyOrderPage() {
     ] as const;
   }, [sortedEvents.length, summary.cancelledCount, summary.confirmedCount, summary.pendingCount]);
 
-  const todaySummaryFallback = useMemo(() => {
-    const todayDateKey = getKstDateKey(new Date(nowMs));
-    let confirmedCount = 0;
-    let confirmedAmountKrw = 0;
-    let confirmedAmountUsdt = 0;
-
-    for (const item of sortedEvents) {
-      if (!isPaymentConfirmedStatus(item.data.statusTo)) {
-        continue;
-      }
-
-      const eventDateKey = getKstDateKeyFromIso(item.data.publishedAt || item.data.minedAt);
-      if (!eventDateKey || eventDateKey !== todayDateKey) {
-        continue;
-      }
-
-      const amountKrw = Number(item.data.amountKrw || 0);
-      const amountUsdt = Number(item.data.amountUsdt || 0);
-      if (!Number.isFinite(amountKrw) || !Number.isFinite(amountUsdt)) {
-        continue;
-      }
-
-      confirmedCount += 1;
-      confirmedAmountKrw += amountKrw;
-      confirmedAmountUsdt += amountUsdt;
-    }
-
-    return {
-      dateKst: todayDateKey,
-      confirmedCount,
-      confirmedAmountKrw,
-      confirmedAmountUsdt,
-      updatedAt: new Date().toISOString(),
-    } satisfies TodaySummary;
-  }, [nowMs, sortedEvents]);
-
-  const todayTotals = todaySummary || todaySummaryFallback;
+  const todayTotals = todaySummary || {
+    dateKst: getKstDateKey(new Date(countdownNowMs)),
+    confirmedCount: 0,
+    confirmedAmountKrw: 0,
+    confirmedAmountUsdt: 0,
+    updatedAt: new Date().toISOString(),
+  };
   const animatedTodayConfirmedCount = useCountUpValue(todayTotals.confirmedCount);
   const animatedTodayConfirmedAmountKrw = useCountUpValue(todayTotals.confirmedAmountKrw);
   const animatedTodayConfirmedAmountUsdt = useCountUpValue(todayTotals.confirmedAmountUsdt, 3);
