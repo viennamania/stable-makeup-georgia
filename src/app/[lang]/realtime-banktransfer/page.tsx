@@ -906,18 +906,27 @@ export default function RealtimeBankTransferPage() {
 
         <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
           <div className="border-b border-slate-700/80 px-4 py-3">
-            <p className="font-semibold text-slate-100">실시간 입출금 내역</p>
-            <p className="text-xs text-slate-400">최신 이벤트 순</p>
+            <p className="font-semibold text-slate-100">실시간 입출금 시스템 로그</p>
+            <p className="mt-1 font-mono text-[11px] text-slate-500">tail -f /var/log/banktransfer/realtime.log</p>
           </div>
 
-          <div className="space-y-2 p-3 md:hidden">
+          <div className="border-b border-slate-800/80 bg-slate-950/85 px-4 py-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-400/90" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/90" />
+              <span className="ml-2 font-mono text-[11px] text-slate-500">banktransfer-realtime@{connectionState}</span>
+            </div>
+          </div>
+
+          <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
             {sortedEvents.length === 0 && (
-              <div className="rounded-xl border border-slate-700/80 bg-slate-950/70 px-3 py-8 text-center text-sm text-slate-500">
-                아직 수신된 이벤트가 없습니다.
+              <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
+                [WAITING] 아직 수신된 이벤트가 없습니다.
               </div>
             )}
 
-            {sortedEvents.map((item) => {
+            {sortedEvents.map((item, index) => {
               const isHighlighted = item.highlightUntil > Date.now();
               const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
               const receiverInfo = getReceiverDisplayInfo(item.data);
@@ -928,185 +937,59 @@ export default function RealtimeBankTransferPage() {
                 ? maskAccountNumber(receiverInfo.accountNumber)
                 : "-";
               const receiverBankName = receiverInfo.bankName || "-";
-              const receiverNickname = receiverInfo.nickname || "-";
-              const receiverWalletAddress = receiverInfo.walletAddress || "-";
+              const status = String(item.data.status || "").toLowerCase();
+              const level = status === "error" ? "ERROR" : status === "stored" ? "INFO" : "WARN";
+              const type = getTransactionTypeLabel(item.data.transactionType).toUpperCase();
+              const lineNo = String(sortedEvents.length - index).padStart(4, "0");
 
               return (
                 <article
-                  key={`mobile-${item.id}`}
-                  className={`rounded-xl border p-3 transition-all duration-500 ${
+                  key={`log-${item.id}`}
+                  className={`rounded-lg border px-3 py-2 transition-all duration-500 ${
                     isHighlighted
-                      ? "animate-pulse border-cyan-400/40 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.28)]"
-                      : "border-slate-700/80 bg-slate-950/65"
+                      ? "border-cyan-400/45 bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.26)]"
+                      : "border-slate-800/80 bg-slate-950/65"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div
-                        className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
-                      >
-                        {timeInfo.relativeLabel}
-                      </div>
-                      <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-base font-semibold tabular-nums text-slate-100">
-                        {formatKrw(item.data.amount)} KRW
-                      </div>
-                      {isHighlighted && (
-                        <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
-                          NEW
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap items-center gap-1">
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.status)}`}>
-                      {item.data.status || "-"}
+                  <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] leading-relaxed">
+                    <span className="text-slate-600">#{lineNo}</span>
+                    <span className="text-slate-500">{timeInfo.absoluteLabel}</span>
+                    <span className={`rounded px-1.5 py-0.5 font-semibold ${
+                      level === "ERROR"
+                        ? "bg-rose-500/20 text-rose-200"
+                        : level === "INFO"
+                          ? "bg-emerald-500/20 text-emerald-200"
+                          : "bg-amber-500/20 text-amber-200"
+                    }`}>
+                      {level}
                     </span>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${getTransactionTypeClassName(item.data.transactionType)}`}
-                    >
-                      {getTransactionTypeLabel(item.data.transactionType)}
+                    <span className={`rounded px-1.5 py-0.5 font-semibold ${
+                      type === "입금"
+                        ? "bg-cyan-500/20 text-cyan-200"
+                        : type === "출금"
+                          ? "bg-fuchsia-500/20 text-fuchsia-200"
+                          : "bg-slate-700/80 text-slate-200"
+                    }`}>
+                      {type}
                     </span>
-                  </div>
-
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">입금자</p>
-                      <p className="mt-1 text-sm text-slate-100">{maskName(item.data.transactionName)}</p>
-                      <p className="mt-1 font-mono text-[11px] text-slate-400">
-                        {maskAccountNumber(item.data.bankAccountNumber)}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2">
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-slate-400">입금 수취자</p>
-                      <p className="mt-1 text-sm text-slate-100">{receiverAccountHolder}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {receiverBankName} {receiverAccountNumber}
-                      </p>
-                      <p className="mt-1 text-[11px] text-cyan-200">닉네임: {receiverNickname}</p>
-                      {receiverWalletAddress !== "-" && (
-                        <p className="mt-1 break-all font-mono text-[11px] text-slate-500">
-                          Wallet: {receiverWalletAddress}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60 px-2.5 py-2 text-[11px]">
-                    <p className="font-mono text-cyan-200">TID: {item.data.tradeId || "-"}</p>
-                    <p className="mt-1 font-mono text-slate-400">Match: {item.data.match || "-"}</p>
-                    <p className="mt-1 font-mono text-slate-500">Trace: {item.data.traceId || "-"}</p>
+                    <span className="text-slate-300">amount=<span className="text-slate-100">{formatKrw(item.data.amount)}KRW</span></span>
+                    <span className="text-slate-400">sender={maskName(item.data.transactionName)}:{maskAccountNumber(item.data.bankAccountNumber)}</span>
+                    <span className="text-slate-400">receiver={receiverBankName}/{receiverAccountHolder}/{receiverAccountNumber}</span>
+                    <span className="text-cyan-300">tid={item.data.tradeId || "-"}</span>
+                    <span className={item.data.match ? "text-emerald-300" : "text-amber-300"}>
+                      match={item.data.match || "-"}
+                    </span>
+                    <span className="text-slate-500">trace={item.data.traceId || "-"}</span>
+                    <span className="text-slate-600">({timeInfo.relativeLabel})</span>
+                    {isHighlighted && (
+                      <span className="animate-pulse rounded border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-cyan-100">
+                        NEW
+                      </span>
+                    )}
                   </div>
                 </article>
               );
             })}
-          </div>
-
-          <div className="hidden overflow-x-auto md:block">
-            <table className="min-w-[1210px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-slate-700/80 bg-slate-950/90 text-left text-slate-300">
-                  <th className="w-[190px] px-3 py-2">시간</th>
-                  <th className="w-[130px] px-3 py-2">처리</th>
-                  <th className="w-[120px] px-3 py-2">유형</th>
-                  <th className="w-[170px] px-3 py-2 text-right">금액</th>
-                  <th className="w-[140px] px-3 py-2">입금자</th>
-                  <th className="w-[260px] px-3 py-2">입금 수취자</th>
-                  <th className="w-[320px] px-3 py-2">거래/매칭</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedEvents.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
-                      아직 수신된 이벤트가 없습니다.
-                    </td>
-                  </tr>
-                )}
-                {sortedEvents.map((item) => {
-                  const isHighlighted = item.highlightUntil > Date.now();
-                  const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
-                  const receiverInfo = getReceiverDisplayInfo(item.data);
-                  const receiverAccountHolder = receiverInfo.accountHolder
-                    ? maskName(receiverInfo.accountHolder)
-                    : "-";
-                  const receiverAccountNumber = receiverInfo.accountNumber
-                    ? maskAccountNumber(receiverInfo.accountNumber)
-                    : "-";
-                  const receiverBankName = receiverInfo.bankName || "-";
-                  const receiverNickname = receiverInfo.nickname || "-";
-                  const receiverWalletAddress = receiverInfo.walletAddress || "-";
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`border-b border-slate-800/80 align-top transition-all duration-500 ${
-                        isHighlighted
-                          ? "animate-pulse bg-cyan-500/10 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.32)]"
-                          : "hover:bg-slate-900/55"
-                      }`}
-                    >
-                      <td className="px-3 py-3 text-xs text-slate-400">
-                        <div
-                          className={`inline-flex rounded-md border px-2 py-1 font-mono text-[11px] font-semibold tabular-nums ${getRelativeTimeToneClassName(timeInfo.tone)}`}
-                        >
-                          {timeInfo.relativeLabel}
-                        </div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">{timeInfo.absoluteLabel}</div>
-                        {isHighlighted && (
-                          <span className="mt-1 inline-flex rounded-md border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-cyan-100">
-                            NEW
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-3 py-3">
-                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${getStatusClassName(item.data.status)}`}>
-                          {item.data.status || "-"}
-                        </span>
-                      </td>
-
-                      <td className="px-3 py-3">
-                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${getTransactionTypeClassName(item.data.transactionType)}`}>
-                          {getTransactionTypeLabel(item.data.transactionType)}
-                        </span>
-                      </td>
-
-                      <td className="px-3 py-3 text-right font-semibold tabular-nums text-slate-100">
-                        {formatKrw(item.data.amount)}
-                      </td>
-
-                      <td className="px-3 py-3 text-slate-200">{maskName(item.data.transactionName)}</td>
-
-                      <td className="px-3 py-3">
-                        <div className="flex min-w-[230px] flex-col">
-                          <span className="leading-tight text-slate-100">{receiverAccountHolder}</span>
-                          <span className="mt-1 text-xs leading-tight text-slate-400">
-                            {receiverBankName} {receiverAccountNumber}
-                          </span>
-                          <span className="mt-1 text-xs leading-tight text-cyan-200">닉네임: {receiverNickname}</span>
-                          {receiverWalletAddress !== "-" && (
-                            <span className="mt-1 break-all font-mono text-[11px] leading-tight text-slate-500">
-                              Wallet: {receiverWalletAddress}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-3">
-                        <div className="font-mono text-xs text-cyan-200">TID: {item.data.tradeId || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-400">Match: {item.data.match || "-"}</div>
-                        <div className="mt-1 font-mono text-[11px] text-slate-500">Trace: {item.data.traceId || "-"}</div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
         </div>
       </section>
