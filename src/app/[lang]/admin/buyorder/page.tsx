@@ -1023,9 +1023,15 @@ const [prioritizePending, setPrioritizePending] = useState(true);
 
 
 
-  const today = new Date();
-  today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-  const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const getKstDateString = (offsetDays = 0) => {
+    const kst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    kst.setUTCDate(kst.getUTCDate() + offsetDays);
+    const y = kst.getUTCFullYear();
+    const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(kst.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+  const formattedDate = getKstDateString();
 
   // search form date to date
   const [searchFromDate, setSearchFormDate] = useState(formattedDate);
@@ -5342,11 +5348,9 @@ const fetchBuyOrders = async () => {
                     {/* 오늘, 어제 */}
                     <button
                       onClick={() => {
-                        // korea time
-                        const today = new Date();
-                        today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-                        setSearchFormDate(today.toISOString().split("T")[0]);
-                        setSearchToDate(today.toISOString().split("T")[0]);
+                        const todayKst = getKstDateString();
+                        setSearchFormDate(todayKst);
+                        setSearchToDate(todayKst);
                       }}
                       className="text-sm text-zinc-500 underline"
                     >
@@ -5354,13 +5358,9 @@ const fetchBuyOrders = async () => {
                     </button>
                     <button
                       onClick={() => {
-                        // korea time yesterday
-                        const today = new Date();
-                        today.setHours(today.getHours() + 9); // Adjust for Korean timezone (UTC+9)
-                        const yesterday = new Date(today);
-                        yesterday.setDate(yesterday.getDate() - 1);
-                        setSearchFormDate(yesterday.toISOString().split("T")[0]);
-                        setSearchToDate(yesterday.toISOString().split("T")[0]);
+                        const yesterdayKst = getKstDateString(-1);
+                        setSearchFormDate(yesterdayKst);
+                        setSearchToDate(yesterdayKst);
                       }}
                       className="text-sm text-zinc-500 underline"
                     >

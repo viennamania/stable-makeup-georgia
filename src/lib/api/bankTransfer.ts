@@ -11,6 +11,38 @@ function escapeRegex(value: string): string {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+function parseKstDateToUtcBoundary(value: string, endOfDay: boolean): Date | null {
+  const normalized = String(value || '').trim();
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const validate = new Date(Date.UTC(year, month - 1, day));
+  if (
+    validate.getUTCFullYear() !== year ||
+    validate.getUTCMonth() !== month - 1 ||
+    validate.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const hour = endOfDay ? 23 : 0;
+  const minute = endOfDay ? 59 : 0;
+  const second = endOfDay ? 59 : 0;
+  const millisecond = endOfDay ? 999 : 0;
+
+  return new Date(
+    Date.UTC(year, month - 1, day, hour, minute, second, millisecond) - KST_OFFSET_MS,
+  );
+}
+
 
 // getOne by vactId
 export async function getOne(vactId: string) {
@@ -162,16 +194,22 @@ export async function getBankTransfers(
     const dateRangeUtc: any = {};
 
     if (fromDate) {
-      const start = new Date(`${fromDate}T00:00:00.000Z`);
-      dateRangeUtc.$gte = start;
+      const start = parseKstDateToUtcBoundary(fromDate, false);
+      if (start) {
+        dateRangeUtc.$gte = start;
+      }
     }
 
     if (toDate) {
-      const end = new Date(`${toDate}T23:59:59.999Z`);
-      dateRangeUtc.$lte = end;
+      const end = parseKstDateToUtcBoundary(toDate, true);
+      if (end) {
+        dateRangeUtc.$lte = end;
+      }
     }
 
-    filters.push({ transactionDateUtc: dateRangeUtc });
+    if (Object.keys(dateRangeUtc).length > 0) {
+      filters.push({ transactionDateUtc: dateRangeUtc });
+    }
   }
 
   const query = filters.length ? { $and: filters } : {};
