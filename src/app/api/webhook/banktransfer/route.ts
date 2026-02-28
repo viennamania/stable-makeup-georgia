@@ -947,21 +947,31 @@ export async function POST(request: NextRequest) {
       // check match from buyorders collection
       // when buyerDepositName and krwAmount match
 
-      const matchResult = await checkBuyOrderMatchDeposit({
-        buyerDepositName: transaction_name,
-        krwAmount: amount,
-      });
+      try {
+        const matchResult = await checkBuyOrderMatchDeposit({
+          buyerDepositName: transaction_name,
+          krwAmount: amount,
+        });
 
-      console.log("checkBuyOrderMatchDeposit result", matchResult);
+        console.log("checkBuyOrderMatchDeposit result", matchResult);
 
-      if (matchResult) {
-        match = 'success';
-        tradeId = matchResult.tradeId;
-        buyerInfo = matchResult.buyer;
+        if (matchResult) {
+          match = 'success';
+          tradeId = matchResult.tradeId;
+          buyerInfo = matchResult.buyer;
 
-        sellerInfo = matchResult.seller;
+          sellerInfo = matchResult.seller;
 
-        console.log("Matched tradeId:", tradeId);
+          console.log("Matched tradeId:", tradeId);
+        }
+      } catch (matchError: any) {
+        console.error("checkBuyOrderMatchDeposit failed:", matchError);
+        const matchErrorMessage = matchError?.message
+          ? `Auto match check failed: ${matchError.message}`
+          : "Auto match check failed";
+        errorMessage = errorMessage
+          ? `${errorMessage} | ${matchErrorMessage}`
+          : matchErrorMessage;
       }
 
 
