@@ -592,7 +592,7 @@ export default function BankTransferPage({ params }: any) {
               )}
 
               {bankTransfers.map((transfer, index) => {
-                const transactionDate = transfer.transactionDate || transfer.regDate || transfer.createdAt;
+                const transactionDate = transfer.transactionDateUtc || transfer.regDate || transfer.createdAt;
                 const transactionName = transfer.transactionName || transfer.sender || '-';
                 const amount = transfer.amount;
                 const bankAccountNumber = transfer.bankAccountNumber || transfer.account || transfer.custAccnt || '-';

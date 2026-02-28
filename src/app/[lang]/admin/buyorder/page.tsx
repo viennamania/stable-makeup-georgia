@@ -1841,7 +1841,7 @@ const depositAmountMatches = useMemo(() => {
           BankAccountNumber: t.bankAccountNumber || aliasPanelAccountNumber || '',
           BankName: t.bankName || aliasPanelBankName || '',
           AccountHolder: t.accountHolder || aliasPanelAccountHolder || '',
-          TransactionDate: t.transactionDate || t.processingDate || t.regDate || '',
+          TransactionDate: t.transactionDateUtc || t.processingDate || t.regDate || '',
           Balance: Number(t.balance) || 0,
           TradeId: t.tradeId || '',
           UserId: t.userId || '',
@@ -1961,8 +1961,8 @@ const depositAmountMatches = useMemo(() => {
         return typeRaw === 'deposited' || typeRaw === 'deposit' || typeRaw === '입금';
       });
       filtered.sort((a: any, b: any) =>
-        new Date(b.transactionDate || b.regDate || 0).getTime() -
-        new Date(a.transactionDate || a.regDate || 0).getTime()
+        new Date(b.transactionDateUtc || b.regDate || 0).getTime() -
+        new Date(a.transactionDateUtc || a.regDate || 0).getTime()
       );
       setDepositOptions(filtered);
     } catch (err) {
@@ -2097,8 +2097,8 @@ const depositAmountMatches = useMemo(() => {
       });
 
       filtered.sort((a, b) =>
-        new Date(b.transactionDate || b.regDate || 0).getTime() -
-        new Date(a.transactionDate || a.regDate || 0).getTime()
+        new Date(b.transactionDateUtc || b.regDate || 0).getTime() -
+        new Date(a.transactionDateUtc || a.regDate || 0).getTime()
       );
 
       const totalAmt = filtered.reduce((sum, cur) => sum + (Number(cur.amount) || 0), 0);
@@ -2254,7 +2254,7 @@ const depositAmountMatches = useMemo(() => {
         BankAccountNumber: t.bankAccountNumber || '',
         BankName: bankInfo.bankName || '',
         AccountHolder: bankInfo.accountHolder || '',
-        TransactionDate: t.transactionDate || t.processingDate || t.regDate || '',
+        TransactionDate: t.transactionDateUtc || t.processingDate || t.regDate || '',
         Balance: Number(t.balance) || 0,
         AlarmOn: t.alarmOn === false ? 'OFF' : 'ON',
       };
@@ -5937,7 +5937,7 @@ const fetchBuyOrders = async () => {
                   {(() => {
                     const timestamps = unmatchedTransfers
                       .map((t) => {
-                        const d = new Date(t.transactionDate || t.processingDate || t.regDate);
+                        const d = new Date(t.transactionDateUtc || t.processingDate || t.regDate);
                         return Number.isNaN(d.getTime()) ? null : d.getTime();
                       })
                       .filter((v) => v !== null) as number[];
@@ -5945,7 +5945,7 @@ const fetchBuyOrders = async () => {
                     const newest = timestamps.length ? Math.max(...timestamps) : null;
                     return unmatchedTransfers.map((transfer, index) => {
                       const cardProps = getUnmatchedCardProps(
-                        transfer.transactionDate || transfer.processingDate || transfer.regDate,
+                        transfer.transactionDateUtc || transfer.processingDate || transfer.regDate,
                         oldest,
                         newest
                       );
@@ -5973,7 +5973,7 @@ const fetchBuyOrders = async () => {
                           */}
 
                           <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">
-                            {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
+                            {formatTimeAgo(transfer.transactionDateUtc || transfer.processingDate || transfer.regDate)}
                           </span>
 
                           <button
@@ -9923,7 +9923,7 @@ const fetchBuyOrders = async () => {
                         </div>
                         <div className="flex flex-col items-end gap-1 w-full sm:w-auto text-right">
                           {(() => {
-                            const rawDate = trx.transactionDate || trx.regDate;
+                            const rawDate = trx.transactionDateUtc || trx.regDate;
                             const dt = rawDate ? new Date(rawDate) : null;
                             const isValid = dt && !Number.isNaN(dt.getTime());
                             const dateLabel = isValid
@@ -10333,7 +10333,7 @@ const fetchBuyOrders = async () => {
                         </span>
                         <span className="text-[12px] text-zinc-600 font-medium flex items-center gap-1">
                           <span className="text-emerald-500 text-xs">●</span>
-                          {formatKstDateTime(trx.transactionDate || trx.regDate)}
+                          {formatKstDateTime(trx.transactionDateUtc || trx.regDate)}
                         </span>
                       </div>
                     </label>

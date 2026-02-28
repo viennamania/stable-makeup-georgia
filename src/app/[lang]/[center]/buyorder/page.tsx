@@ -1356,8 +1356,8 @@ export default function Index({ params }: any) {
         if (typeof m === 'object') return false;
         return true;
       }).sort((a, b) =>
-        new Date(b.transactionDate || b.regDate || 0).getTime() -
-        new Date(a.transactionDate || a.regDate || 0).getTime()
+        new Date(b.transactionDateUtc || b.regDate || 0).getTime() -
+        new Date(a.transactionDateUtc || a.regDate || 0).getTime()
       );
 
       setUnmatchedTransfers(filtered);
@@ -5543,14 +5543,14 @@ const fetchBuyOrders = async () => {
                   {(() => {
                     const timestamps = unmatchedTransfers
                       .map((t) => {
-                        const d = new Date(t.transactionDate || t.processingDate || t.regDate);
+                        const d = new Date(t.transactionDateUtc || t.processingDate || t.regDate);
                         return Number.isNaN(d.getTime()) ? null : d.getTime();
                       })
                       .filter((v) => v !== null) as number[];
                     const oldest = timestamps.length ? Math.min(...timestamps) : null;
                     const newest = timestamps.length ? Math.max(...timestamps) : null;
                     return unmatchedTransfers.map((transfer, index) => {
-                      const ts = new Date(transfer.transactionDate || transfer.processingDate || transfer.regDate).getTime();
+                      const ts = new Date(transfer.transactionDateUtc || transfer.processingDate || transfer.regDate).getTime();
                       const ratio = (oldest !== null && newest !== null && newest !== oldest)
                         ? 1 - Math.max(0, Math.min(1, (ts - oldest) / (newest - oldest)))
                         : 0.5;
@@ -5565,7 +5565,7 @@ const fetchBuyOrders = async () => {
                       <div className="flex items-center justify-between text-[11px] text-zinc-500">
                         <span className="font-semibold text-zinc-600">No.{unmatchedTransfers.length - index}</span>
                         <span className="px-2 py-[2px] text-[10px] font-semibold rounded-full bg-white/70 text-rose-600 border border-rose-100">
-                          {formatTimeAgo(transfer.transactionDate || transfer.processingDate || transfer.regDate)}
+                          {formatTimeAgo(transfer.transactionDateUtc || transfer.processingDate || transfer.regDate)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-2">
@@ -9809,7 +9809,7 @@ const fetchBuyOrders = async () => {
                               {trx.amount !== undefined ? Number(trx.amount).toLocaleString() : '-'}
                             </span>
                             <span className="text-[11px] text-zinc-500 whitespace-nowrap">
-                              {formatKstDateTime(trx.transactionDate || trx.regDate)}
+                              {formatKstDateTime(trx.transactionDateUtc || trx.regDate)}
                             </span>
                             {trx.tradeId && (
                               <button

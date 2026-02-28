@@ -159,32 +159,19 @@ export async function getBankTransfers(
   }
 
   if (fromDate || toDate) {
-    const dateRangeDate: any = {};
-    const dateRangeIsoString: any = {};
-    const dateRangeKstString: any = {};
+    const dateRangeUtc: any = {};
 
     if (fromDate) {
       const start = new Date(`${fromDate}T00:00:00.000Z`);
-      dateRangeDate.$gte = start;
-      dateRangeIsoString.$gte = start.toISOString();
-      dateRangeKstString.$gte = `${fromDate} 00:00:00`;
+      dateRangeUtc.$gte = start;
     }
 
     if (toDate) {
       const end = new Date(`${toDate}T23:59:59.999Z`);
-      dateRangeDate.$lte = end;
-      dateRangeIsoString.$lte = end.toISOString();
-      dateRangeKstString.$lte = `${toDate} 23:59:59`;
+      dateRangeUtc.$lte = end;
     }
 
-    filters.push({
-      $or: [
-        { transactionDateUtc: dateRangeDate },
-        { transactionDate: dateRangeDate },
-        { transactionDate: dateRangeIsoString },
-        { transactionDate: dateRangeKstString },
-      ],
-    });
+    filters.push({ transactionDateUtc: dateRangeUtc });
   }
 
   const query = filters.length ? { $and: filters } : {};
@@ -227,7 +214,7 @@ export async function getBankTransfers(
 
   const transfers = await collection
     .find(query)
-    .sort({ transactionDateUtc: -1, transactionDate: -1, regDate: -1, _id: -1 })
+    .sort({ transactionDateUtc: -1, _id: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
     .toArray();
@@ -325,8 +312,7 @@ export async function updateBankTransferMatchAndTradeId({
   //const oneMinuteAgo = new Date(Date.now() - 1 * 60 * 1000);
   //const oneMinuteAgoKST = new Date(oneMinuteAgo.getTime() + 9 * 60 * 60 * 1000);
 
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const oneDayAgoKST = new Date(oneDayAgo.getTime() + 9 * 60 * 60 * 1000);
+  const oneDayAgoUtc = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const transactionNameRegex = `^${escapeRegex(String(transactionName || '').trim())}$`;
 
   const result = await collection.updateOne(
@@ -336,7 +322,7 @@ export async function updateBankTransferMatchAndTradeId({
       transactionName: { $regex: transactionNameRegex, $options: 'i' },
 
       amount: amount,
-      transactionDate: { $gte: oneDayAgoKST },
+      transactionDateUtc: { $gte: oneDayAgoUtc },
       match: null,
       tradeId: null,
     },
@@ -380,7 +366,7 @@ export async function isBankTransferMultipleTimes({
     transactionType: 'deposited',
     transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
     amount: amount,
-    transactionDate: { $gte: oneMinuteBefore, $lte: oneMinuteAfter },
+    transactionDateUtc: { $gte: oneMinuteBefore, $lte: oneMinuteAfter },
   });
 
   return count > 1;
@@ -405,23 +391,24 @@ export async function matchBankTransfersToPaymentAmount({
   const client = await clientPromise;
   const collection = client.db(dbName).collection('bankTransfers');
 
-  // 오늘 날짜 구하기 (KST 기준)
+  // 오늘 날짜 구하기 (KST 기준) -> UTC 경계로 변환
   const now = new Date();
-  const kstOffset = 9 * 60; // KST is UTC+9
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const kstNow = new Date(utc + (kstOffset * 60000));
-
-  const startOfDay = new Date(kstNow.getFullYear(), kstNow.getMonth(), kstNow.getDate(), 0, 0, 0);
-  const endOfDay = new Date(kstNow.getFullYear(), kstNow.getMonth(), kstNow.getDate(), 23, 59, 59, 999);
+  const kstMs = now.getTime() + 9 * 60 * 60 * 1000;
+  const kstNow = new Date(kstMs);
+  const y = kstNow.getUTCFullYear();
+  const m = kstNow.getUTCMonth();
+  const d = kstNow.getUTCDate();
+  const startOfDayUtc = new Date(Date.UTC(y, m, d, 0, 0, 0) - 9 * 60 * 60 * 1000);
+  const endOfDayUtc = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) - 9 * 60 * 60 * 1000);
 
   // find unmatched bank transfers for today
   const unmatchedTransfers = await collection.find({
     transactionType: 'deposited',
     transactionName: { $regex: `^${transactionName}$`, $options: 'i' },
     amount: { $gt: 0 },
-    transactionDate: { $gte: startOfDay, $lte: endOfDay },
+    transactionDateUtc: { $gte: startOfDayUtc, $lte: endOfDayUtc },
     match: null,
-  }).sort({ transactionDate: 1 }).toArray();
+  }).sort({ transactionDateUtc: 1 }).toArray();
 
   const matchedTransfers: any[] = [];
   let accumulatedAmount = 0;

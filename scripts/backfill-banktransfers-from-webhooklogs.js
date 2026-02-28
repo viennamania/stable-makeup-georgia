@@ -218,6 +218,10 @@ async function run() {
         }
 
         const transactionDateUtc = parseWebhookDateToUtc(transactionDateRaw);
+        if (!transactionDateUtc) {
+          invalid += 1;
+          continue;
+        }
         const transactionDateNormalized = transactionDateUtc
           ? transactionDateUtc.toISOString()
           : transactionDateRaw;
@@ -229,23 +233,10 @@ async function run() {
           transactionName,
         };
 
-        const dedupeDateOr = [];
-        if (transactionDateUtc) {
-          dedupeDateOr.push({ transactionDateUtc });
-        }
-        if (transactionDateNormalized) {
-          dedupeDateOr.push({ transactionDate: transactionDateNormalized });
-        }
-        if (transactionDateRaw && transactionDateRaw !== transactionDateNormalized) {
-          dedupeDateOr.push({ transactionDate: transactionDateRaw });
-        }
-        if (transactionDateRaw) {
-          dedupeDateOr.push({ transactionDateRaw });
-        }
-
-        const dedupeQuery = dedupeDateOr.length
-          ? { ...dedupeBase, $or: dedupeDateOr }
-          : dedupeBase;
+        const dedupeQuery = {
+          ...dedupeBase,
+          transactionDateUtc,
+        };
 
         const existing = await bankTransfers.findOne(dedupeQuery, { projection: { _id: 1 } });
         if (existing) {
@@ -375,4 +366,3 @@ async function run() {
 }
 
 run();
-
