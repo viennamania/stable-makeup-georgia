@@ -25,6 +25,11 @@ const RESYNC_INTERVAL_MS = 10_000;
 const TODAY_SUMMARY_REFRESH_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
+const COUNTDOWN_TICK_MS = 1_000;
+const COUNT_UP_MIN_MS = 640;
+const COUNT_UP_MAX_MS = 1_480;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 type TodaySummary = {
   dateKst: string;
@@ -169,6 +174,106 @@ function getRelativeTimeToneClassName(tone: RelativeTimeTone): string {
   }
 }
 
+function getKstDateLabel(referenceDate: Date): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  }).format(referenceDate);
+}
+
+function getRemainingKstMs(referenceMs: number): number {
+  const shifted = new Date(referenceMs + KST_OFFSET_MS);
+  const year = shifted.getUTCFullYear();
+  const month = shifted.getUTCMonth();
+  const day = shifted.getUTCDate();
+  const nextMidnightShiftedMs = Date.UTC(year, month, day + 1, 0, 0, 0, 0);
+  return Math.max(0, nextMidnightShiftedMs - shifted.getTime());
+}
+
+function formatCountdownHms(totalMs: number): string {
+  const totalSec = Math.max(0, Math.floor(totalMs / 1000));
+  const hours = Math.floor(totalSec / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function easeOutCubic(value: number): number {
+  const clamped = Math.max(0, Math.min(1, value));
+  return 1 - Math.pow(1 - clamped, 3);
+}
+
+function getCountUpDurationMs(fromValue: number, toValue: number): number {
+  const delta = Math.abs(toValue - fromValue);
+  if (delta <= 0) {
+    return COUNT_UP_MIN_MS;
+  }
+
+  const scaled = 520 + Math.log10(delta + 1) * 280;
+  return Math.round(Math.max(COUNT_UP_MIN_MS, Math.min(COUNT_UP_MAX_MS, scaled)));
+}
+
+function useCountUpValue(targetValue: number): number {
+  const safeTarget = Number.isFinite(targetValue) ? Math.round(targetValue) : 0;
+  const [displayValue, setDisplayValue] = useState<number>(safeTarget);
+  const previousTargetRef = useRef<number>(safeTarget);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const nextTarget = Number.isFinite(targetValue) ? Math.round(targetValue) : 0;
+    const startValue = previousTargetRef.current;
+
+    if (rafRef.current !== null) {
+      window.cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
+    if (startValue === nextTarget) {
+      setDisplayValue(nextTarget);
+      previousTargetRef.current = nextTarget;
+      return;
+    }
+
+    const durationMs = getCountUpDurationMs(startValue, nextTarget);
+    let startTimestamp = 0;
+
+    const animate = (timestamp: number) => {
+      if (!startTimestamp) {
+        startTimestamp = timestamp;
+      }
+
+      const elapsed = timestamp - startTimestamp;
+      const progress = Math.min(1, elapsed / durationMs);
+      const eased = easeOutCubic(progress);
+      const interpolated = startValue + (nextTarget - startValue) * eased;
+      setDisplayValue(Math.round(interpolated));
+
+      if (progress < 1) {
+        rafRef.current = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      setDisplayValue(nextTarget);
+      previousTargetRef.current = nextTarget;
+      rafRef.current = null;
+    };
+
+    rafRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [targetValue]);
+
+  return displayValue;
+}
+
 export default function RealtimeBankTransferPage() {
   const params = useParams();
   const lang = typeof params?.lang === "string" ? params.lang : "ko";
@@ -180,6 +285,7 @@ export default function RealtimeBankTransferPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [countdownNowMs, setCountdownNowMs] = useState(() => Date.now());
   const [todaySummary, setTodaySummary] = useState<TodaySummary | null>(null);
   const [todaySummaryErrorMessage, setTodaySummaryErrorMessage] = useState<string | null>(null);
 
@@ -496,6 +602,16 @@ export default function RealtimeBankTransferPage() {
   }, []);
 
   useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCountdownNowMs(Date.now());
+    }, COUNTDOWN_TICK_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
     const now = Date.now();
     const activeHighlights = events
       .map((item) => item.highlightUntil)
@@ -622,93 +738,24 @@ export default function RealtimeBankTransferPage() {
   }, [nowMs, sortedEvents]);
 
   const todayTotals = todaySummary || todaySummaryFallback;
-  const totalEventsForRatio = Math.max(1, summary.totalEvents);
-  const totalTodayEventsForRatio = Math.max(1, todayTotals.totalCount);
-
-  const metricCards = useMemo(() => {
-    return [
-      {
-        key: "total",
-        title: "총 이벤트",
-        value: summary.totalEvents.toLocaleString("ko-KR"),
-        sub: "실시간 누적 수신",
-        ratio: 100,
-        tone: "slate",
-      },
-      {
-        key: "deposited",
-        title: "오늘 입금 누적 금액",
-        value: `${formatKrw(todayTotals.depositedAmount)} KRW`,
-        sub: `${todayTotals.depositedCount.toLocaleString("ko-KR")}건 · KST`,
-        ratio: (todayTotals.depositedCount / totalTodayEventsForRatio) * 100,
-        tone: "emerald",
-      },
-      {
-        key: "withdrawn",
-        title: "오늘 출금 누적 금액",
-        value: `${formatKrw(todayTotals.withdrawnAmount)} KRW`,
-        sub: `${todayTotals.withdrawnCount.toLocaleString("ko-KR")}건 · KST`,
-        ratio: (todayTotals.withdrawnCount / totalTodayEventsForRatio) * 100,
-        tone: "rose",
-      },
-      {
-        key: "errors",
-        title: "오류 이벤트",
-        value: summary.errorCount.toLocaleString("ko-KR"),
-        sub: "검증 필요",
-        ratio: (summary.errorCount / totalEventsForRatio) * 100,
-        tone: "amber",
-      },
-    ] as const;
-  }, [summary, todayTotals, totalEventsForRatio, totalTodayEventsForRatio]);
-
-  function getMetricToneClassName(tone: "slate" | "emerald" | "rose" | "amber") {
-    if (tone === "emerald") {
-      return {
-        card: "border-emerald-400/75 bg-gradient-to-br from-emerald-100 to-emerald-50",
-        label: "text-emerald-700",
-        value: "text-emerald-950",
-        meta: "text-emerald-700/90",
-        rail: "bg-emerald-200",
-        bar: "bg-emerald-600",
-      };
-    }
-    if (tone === "rose") {
-      return {
-        card: "border-rose-400/75 bg-gradient-to-br from-rose-100 to-rose-50",
-        label: "text-rose-700",
-        value: "text-rose-950",
-        meta: "text-rose-700/90",
-        rail: "bg-rose-200",
-        bar: "bg-rose-600",
-      };
-    }
-    if (tone === "amber") {
-      return {
-        card: "border-amber-400/75 bg-gradient-to-br from-amber-100 to-amber-50",
-        label: "text-amber-700",
-        value: "text-amber-950",
-        meta: "text-amber-700/90",
-        rail: "bg-amber-200",
-        bar: "bg-amber-500",
-      };
-    }
-    return {
-      card: "border-slate-400/75 bg-gradient-to-br from-slate-100 to-slate-50",
-      label: "text-slate-700",
-      value: "text-slate-900",
-      meta: "text-slate-700/90",
-      rail: "bg-slate-300",
-      bar: "bg-sky-600",
-    };
-  }
+  const animatedDepositedAmount = useCountUpValue(todayTotals.depositedAmount);
+  const animatedWithdrawnAmount = useCountUpValue(todayTotals.withdrawnAmount);
+  const animatedDepositedCount = useCountUpValue(todayTotals.depositedCount);
+  const animatedWithdrawnCount = useCountUpValue(todayTotals.withdrawnCount);
+  const todayEventTotal = Math.max(1, todayTotals.totalCount);
+  const depositedRatio = Math.max(8, Math.min(100, (todayTotals.depositedCount / todayEventTotal) * 100));
+  const withdrawnRatio = Math.max(8, Math.min(100, (todayTotals.withdrawnCount / todayEventTotal) * 100));
+  const todayDateLabelKst = useMemo(() => getKstDateLabel(new Date(countdownNowMs)), [countdownNowMs]);
+  const remainingMsToday = useMemo(() => getRemainingKstMs(countdownNowMs), [countdownNowMs]);
+  const countdownLabel = useMemo(() => formatCountdownHms(remainingMsToday), [remainingMsToday]);
+  const remainingDayRatio = Math.max(0, Math.min(100, (remainingMsToday / ONE_DAY_MS) * 100));
 
   return (
     <main className="w-full max-w-[1800px] space-y-5 pt-20 text-slate-100">
       <RealtimeTopNav lang={lang} current="banktransfer" />
 
       <section className="overflow-hidden rounded-2xl border border-cyan-500/20 bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.22),_rgba(2,6,23,0.96)_52%)] p-6 shadow-[0_20px_70px_-24px_rgba(6,182,212,0.45)]">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-cyan-100">Banktransfer Realtime Dashboard</h1>
             <p className="mt-1 text-sm text-slate-300">
@@ -719,13 +766,85 @@ export default function RealtimeBankTransferPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => void syncFromApi(null)}
-            className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-100 transition hover:bg-cyan-500/20"
-          >
-            재동기화
-          </button>
+          <div className="w-full max-w-[980px] space-y-2">
+            <div className="flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => void syncFromApi(null)}
+                className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-3 py-2 text-sm font-medium text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSyncing}
+              >
+                {isSyncing ? "재동기화 중..." : "재동기화"}
+              </button>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              <article className="relative overflow-hidden rounded-xl border border-violet-300/35 bg-gradient-to-br from-indigo-500/26 via-violet-500/16 to-slate-950/72 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(99,102,241,0.95)]">
+                <div className="pointer-events-none absolute -right-10 -top-8 h-24 w-24 rounded-full bg-violet-300/25 blur-2xl" />
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-violet-100/90">오늘 날짜 (KST)</p>
+                <p className="relative mt-1 text-lg font-semibold leading-tight text-violet-50">{todayDateLabelKst}</p>
+                <div className="relative mt-2 flex items-end justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-violet-100/80">오늘 남은 시간</p>
+                    <p className="mt-1 font-mono text-2xl font-semibold leading-none tabular-nums text-violet-50 animate-pulse">
+                      {countdownLabel}
+                    </p>
+                  </div>
+                  <span className="inline-flex rounded-full border border-violet-300/45 bg-violet-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-violet-50">
+                    COUNTDOWN
+                  </span>
+                </div>
+                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-violet-100/30">
+                  <div
+                    className="h-full rounded-full bg-violet-300 transition-all duration-700"
+                    style={{ width: `${remainingDayRatio}%` }}
+                  />
+                </div>
+              </article>
+
+              <article className="relative overflow-hidden rounded-xl border border-emerald-400/35 bg-gradient-to-br from-emerald-500/24 via-emerald-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(16,185,129,0.95)]">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-emerald-100/85">오늘 입금 (KST)</p>
+                <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-emerald-50">
+                  {formatKrw(animatedDepositedAmount)}
+                  <span className="ml-1 text-sm font-medium text-emerald-200/90">KRW</span>
+                </p>
+                <div className="relative mt-1 flex items-center justify-between text-xs">
+                  <span className="text-emerald-100/90">누적 {animatedDepositedCount.toLocaleString("ko-KR")}건</span>
+                  <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-50">
+                    LIVE
+                  </span>
+                </div>
+                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
+                  <div
+                    className="h-full rounded-full bg-emerald-300 transition-all duration-500"
+                    style={{ width: `${depositedRatio}%` }}
+                  />
+                </div>
+              </article>
+
+              <article className="relative overflow-hidden rounded-xl border border-rose-400/35 bg-gradient-to-br from-rose-500/24 via-rose-500/14 to-slate-950/70 px-3 py-3 shadow-[0_14px_34px_-24px_rgba(244,63,94,0.95)]">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-300/20 blur-2xl" />
+                <p className="relative text-[11px] uppercase tracking-[0.12em] text-rose-100/85">오늘 출금 (KST)</p>
+                <p className="relative mt-1 text-2xl font-semibold leading-tight tabular-nums text-rose-50">
+                  {formatKrw(animatedWithdrawnAmount)}
+                  <span className="ml-1 text-sm font-medium text-rose-200/90">KRW</span>
+                </p>
+                <div className="relative mt-1 flex items-center justify-between text-xs">
+                  <span className="text-rose-100/90">누적 {animatedWithdrawnCount.toLocaleString("ko-KR")}건</span>
+                  <span className="inline-flex rounded-full border border-rose-300/40 bg-rose-400/20 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-rose-50">
+                    LIVE
+                  </span>
+                </div>
+                <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-rose-100/30">
+                  <div
+                    className="h-full rounded-full bg-rose-300 transition-all duration-500"
+                    style={{ width: `${withdrawnRatio}%` }}
+                  />
+                </div>
+              </article>
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -761,31 +880,6 @@ export default function RealtimeBankTransferPage() {
           오늘 누적 집계 조회 실패: {todaySummaryErrorMessage}
         </div>
       )}
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((metric) => {
-          const tone = getMetricToneClassName(metric.tone);
-          const width = Math.max(4, Math.min(100, metric.key === "total" ? 100 : metric.ratio));
-
-          return (
-            <article
-              key={metric.key}
-              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-20px_rgba(8,145,178,0.38)] ${tone.card}`}
-            >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/5 blur-2xl" />
-              <p className={`relative text-xs uppercase tracking-[0.08em] ${tone.label}`}>{metric.title}</p>
-              <p className={`relative mt-2 text-2xl font-semibold leading-tight tabular-nums ${tone.value}`}>{metric.value}</p>
-              <div className="relative mt-2 flex items-center justify-between text-xs">
-                <span className={tone.meta}>{metric.sub}</span>
-                <span className={`${tone.label} font-medium tabular-nums`}>{metric.key === "total" ? "100.0%" : `${metric.ratio.toFixed(1)}%`}</span>
-              </div>
-              <div className={`relative mt-2 h-1.5 overflow-hidden rounded-full ${tone.rail}`}>
-                <div className={`h-full rounded-full ${tone.bar} transition-all duration-500`} style={{ width: `${width}%` }} />
-              </div>
-            </article>
-          );
-        })}
-      </section>
 
       <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
