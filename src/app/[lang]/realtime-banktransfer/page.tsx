@@ -870,6 +870,19 @@ export default function RealtimeBankTransferPage() {
   const remainingMsToday = useMemo(() => getRemainingKstMs(countdownNowMs), [countdownNowMs]);
   const countdownLabel = useMemo(() => formatCountdownHms(remainingMsToday), [remainingMsToday]);
   const remainingDayRatio = Math.max(0, Math.min(100, (remainingMsToday / ONE_DAY_MS) * 100));
+  const todayKstDateKey = useMemo(() => getKstDateKey(new Date(nowMs)), [nowMs]);
+  const todayUnmatchedEvents = useMemo(() => {
+    return sortedUnmatchedEvents.filter((item) => {
+      const eventDateKey = getKstDateKeyFromIso(item.data.transactionDate || item.data.publishedAt);
+      return Boolean(eventDateKey) && eventDateKey === todayKstDateKey;
+    });
+  }, [sortedUnmatchedEvents, todayKstDateKey]);
+  const todayUnmatchedTotalAmount = useMemo(() => {
+    return todayUnmatchedEvents.reduce((sum, item) => {
+      const amount = Number(item.data.amount || 0);
+      return Number.isFinite(amount) ? sum + amount : sum;
+    }, 0);
+  }, [todayUnmatchedEvents]);
 
   return (
     <main className="w-full max-w-[1800px] space-y-5 pt-20 text-slate-100">
@@ -1043,19 +1056,26 @@ export default function RealtimeBankTransferPage() {
           </div>
 
           <div className="max-h-[780px] space-y-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
-            <div className="mb-2 rounded-lg border border-amber-500/35 bg-amber-950/30 p-2">
-              <div className="mb-1 flex items-center justify-between">
-                <p className="font-mono text-[11px] font-semibold text-amber-200">UNMATCHED DEPOSIT LIVE</p>
-                <span className="rounded border border-amber-400/40 bg-amber-500/20 px-1.5 py-0.5 font-mono text-[10px] text-amber-100">
-                  {sortedUnmatchedEvents.length.toLocaleString("ko-KR")} events
-                </span>
+            <div className="mb-3 rounded-xl border border-amber-500/35 bg-amber-950/30 p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-amber-100">오늘 미신청입금 목록 (KST)</p>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded border border-amber-400/40 bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-100">
+                    건수 {todayUnmatchedEvents.length.toLocaleString("ko-KR")}
+                  </span>
+                  <span className="rounded border border-amber-400/40 bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-100">
+                    합계 {formatKrw(todayUnmatchedTotalAmount)} KRW
+                  </span>
+                </div>
               </div>
 
-              {sortedUnmatchedEvents.length === 0 ? (
-                <p className="font-mono text-[11px] text-amber-300/60">[WAITING] 미신청입금 이벤트 대기중</p>
+              {todayUnmatchedEvents.length === 0 ? (
+                <div className="rounded-lg border border-amber-900/80 bg-slate-950/45 px-3 py-3 text-sm text-amber-200/70">
+                  오늘 미신청입금 이벤트가 없습니다.
+                </div>
               ) : (
-                <div className="space-y-1">
-                  {sortedUnmatchedEvents.slice(0, 12).map((item, index) => {
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {todayUnmatchedEvents.slice(0, 12).map((item, index) => {
                     const isHighlighted = item.highlightUntil > Date.now();
                     const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
                     const receiverInfo = getReceiverDisplayInfo({
@@ -1069,26 +1089,39 @@ export default function RealtimeBankTransferPage() {
                       ? maskAccountNumber(receiverInfo.accountNumber)
                       : "-";
                     const receiverBankName = receiverInfo.bankName || "-";
-                    const lineNo = String(sortedUnmatchedEvents.length - index).padStart(4, "0");
+                    const lineNo = String(todayUnmatchedEvents.length - index).padStart(3, "0");
 
                     return (
-                      <div
-                        key={`unmatched-${item.id}`}
-                        className={`rounded border px-2 py-1 font-mono text-[11px] ${
+                      <article
+                        key={`unmatched-card-${item.id}`}
+                        className={`rounded-xl border px-3 py-2 transition-all ${
                           isHighlighted
-                            ? "animate-pulse border-amber-300/55 bg-amber-500/15 text-amber-100"
-                            : "border-amber-900/80 bg-slate-950/45 text-amber-200/90"
+                            ? "border-amber-300/60 bg-amber-500/15 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.28)]"
+                            : "border-amber-900/80 bg-slate-950/45"
                         }`}
                       >
-                        <span className="text-amber-500/80">#{lineNo}</span>{" "}
-                        <span className="text-amber-300/80">{timeInfo.absoluteLabel}</span>{" "}
-                        <span className="rounded bg-amber-500/20 px-1 py-0.5 text-[10px] font-semibold text-amber-100">UNMATCHED</span>{" "}
-                        <span>amount={formatKrw(item.data.amount)}KRW</span>{" "}
-                        <span className="text-amber-100">sender={maskName(item.data.transactionName)}:{maskAccountNumber(item.data.bankAccountNumber)}</span>{" "}
-                        <span className="text-amber-300/80">receiver={receiverBankName}/{receiverAccountHolder}/{receiverAccountNumber}</span>{" "}
-                        <span className="text-amber-200/70">reason={item.data.reason || "-"}</span>{" "}
-                        <span className="text-amber-300/60">({timeInfo.relativeLabel})</span>
-                      </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-[11px] text-amber-400/90">UNMATCHED #{lineNo}</span>
+                          <span className="font-mono text-[11px] text-amber-200/80">{timeInfo.relativeLabel}</span>
+                        </div>
+                        <div className="mt-1 text-lg font-semibold tabular-nums text-amber-50">
+                          {formatKrw(item.data.amount)} KRW
+                        </div>
+                        <div className="mt-1 text-xs text-amber-100">
+                          입금자: {maskName(item.data.transactionName)} / {maskAccountNumber(item.data.bankAccountNumber)}
+                        </div>
+                        <div className="mt-1 text-[11px] text-amber-200/85">
+                          수취: {receiverBankName} {receiverAccountHolder} {receiverAccountNumber}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between">
+                          <span className="font-mono text-[11px] text-amber-300/80">reason={item.data.reason || "-"}</span>
+                          {isHighlighted && (
+                            <span className="animate-pulse rounded border border-amber-300/60 bg-amber-500/25 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+                      </article>
                     );
                   })}
                 </div>
