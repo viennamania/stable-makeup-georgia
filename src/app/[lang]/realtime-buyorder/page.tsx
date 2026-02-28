@@ -779,62 +779,15 @@ export default function RealtimeBuyOrderPage() {
       }
     }
 
-    const pendingCount =
-      (counts.get("ordered") || 0) +
-      (counts.get("accepted") || 0) +
-      (counts.get("paymentRequested") || 0);
-
     return {
       totalKrw,
       totalUsdt,
-      pendingCount,
       confirmedCount: counts.get("paymentConfirmed") || 0,
       confirmedAmountKrw,
       confirmedAmountUsdt,
-      cancelledCount: counts.get("cancelled") || 0,
       latestStatus: sortedEvents[0]?.data.statusTo || "-",
     };
   }, [sortedEvents]);
-
-  const metricCards = useMemo(() => {
-    const total = Math.max(1, sortedEvents.length);
-    const toRatio = (count: number) => Math.round((count / total) * 1000) / 10;
-
-    return [
-      {
-        key: "total",
-        title: "총 이벤트",
-        value: sortedEvents.length,
-        ratio: 100,
-        tone: "slate",
-        subtext: "실시간 누적 수신",
-      },
-      {
-        key: "confirmed",
-        title: "결제완료",
-        value: summary.confirmedCount,
-        ratio: toRatio(summary.confirmedCount),
-        tone: "emerald",
-        subtext: "정상 완료 건수",
-      },
-      {
-        key: "pending",
-        title: "진행중(주문/매칭/요청)",
-        value: summary.pendingCount,
-        ratio: toRatio(summary.pendingCount),
-        tone: "amber",
-        subtext: "처리 대기/진행",
-      },
-      {
-        key: "cancelled",
-        title: "취소",
-        value: summary.cancelledCount,
-        ratio: toRatio(summary.cancelledCount),
-        tone: "rose",
-        subtext: "취소/중단 건수",
-      },
-    ] as const;
-  }, [sortedEvents.length, summary.cancelledCount, summary.confirmedCount, summary.pendingCount]);
 
   const todayTotals = todaySummary || {
     dateKst: getKstDateKey(new Date(countdownNowMs)),
@@ -856,51 +809,6 @@ export default function RealtimeBuyOrderPage() {
   const confirmedUsdtRatio = summary.confirmedAmountUsdt > 0
     ? Math.max(8, Math.min(100, (todayTotals.confirmedAmountUsdt / summary.confirmedAmountUsdt) * 100))
     : 8;
-
-  function getMetricToneClassName(tone: "slate" | "emerald" | "amber" | "rose") {
-    if (tone === "emerald") {
-      return {
-        card: "border-emerald-400/80 bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-50",
-        label: "text-emerald-800",
-        value: "text-emerald-950",
-        meta: "text-emerald-800/90",
-        bar: "bg-emerald-600",
-        rail: "bg-emerald-200/90",
-        dot: "bg-emerald-600",
-      };
-    }
-    if (tone === "amber") {
-      return {
-        card: "border-amber-400/80 bg-gradient-to-br from-amber-100 via-amber-50 to-orange-50",
-        label: "text-amber-800",
-        value: "text-amber-950",
-        meta: "text-amber-800/90",
-        bar: "bg-amber-500",
-        rail: "bg-amber-200/90",
-        dot: "bg-amber-500",
-      };
-    }
-    if (tone === "rose") {
-      return {
-        card: "border-rose-400/80 bg-gradient-to-br from-rose-100 via-rose-50 to-pink-50",
-        label: "text-rose-800",
-        value: "text-rose-950",
-        meta: "text-rose-800/90",
-        bar: "bg-rose-600",
-        rail: "bg-rose-200/90",
-        dot: "bg-rose-600",
-      };
-    }
-    return {
-      card: "border-slate-600/70 bg-slate-900/80",
-      label: "text-slate-200",
-      value: "text-slate-100",
-      meta: "text-slate-400",
-      bar: "bg-cyan-400/90",
-      rail: "bg-slate-700/70",
-      dot: "bg-cyan-300",
-    };
-  }
 
   const jackpotOverlayLayer =
     isHydrated && typeof document !== "undefined"
@@ -1116,49 +1024,6 @@ export default function RealtimeBuyOrderPage() {
           오늘 결제완료 집계 조회 실패: {todaySummaryErrorMessage}
         </div>
       )}
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((metric) => {
-          const tone = getMetricToneClassName(metric.tone);
-
-          return (
-            <article
-              key={metric.key}
-              className={`relative overflow-hidden rounded-2xl border p-4 shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_34px_-20px_rgba(8,145,178,0.38)] ${tone.card}`}
-            >
-              <div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/5 blur-2xl" />
-
-              <div className="relative flex items-start justify-between gap-2">
-                <p className={`text-xs uppercase tracking-[0.08em] ${tone.label}`}>{metric.title}</p>
-                <span className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
-              </div>
-
-              <p className={`relative mt-2 text-3xl font-semibold leading-none tabular-nums ${tone.value}`}>
-                {metric.value.toLocaleString("ko-KR")}
-              </p>
-
-              <div className="relative mt-3 flex items-center justify-between text-xs">
-                <span className={tone.meta}>{metric.subtext}</span>
-                <span className={`${tone.label} font-medium tabular-nums`}>
-                  {metric.key === "total" ? "100.0%" : `${metric.ratio.toFixed(1)}%`}
-                </span>
-              </div>
-
-              <div className={`relative mt-2 h-1.5 overflow-hidden rounded-full ${tone.rail}`}>
-                <div
-                  className={`h-full rounded-full ${tone.bar} transition-all duration-500`}
-                  style={{
-                    width: `${Math.max(
-                      4,
-                      Math.min(100, metric.key === "total" ? 100 : metric.ratio),
-                    )}%`,
-                  }}
-                />
-              </div>
-            </article>
-          );
-        })}
-      </section>
 
       <section className="grid gap-3 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="rounded-2xl border border-slate-700/80 bg-slate-900/75 p-4 shadow-lg shadow-black/20">
