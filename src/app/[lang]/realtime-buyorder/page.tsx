@@ -2006,7 +2006,7 @@ export default function RealtimeBuyOrderPage() {
                   return (
                     <article
                       key={`buyorder-list-${item.orderId || index}`}
-                      className={`grid grid-cols-[84px_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(0,0.78fr)_minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-all duration-500 ${
+                      className={`grid grid-cols-[84px_minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,0.78fr)_minmax(0,1.2fr)_minmax(0,1fr)] items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] transition-all duration-500 ${
                         isHighlighted
                           ? "new-record-row-highlight border-cyan-300/80 bg-cyan-50 shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]"
                           : "border-slate-200 bg-white shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
