@@ -415,6 +415,7 @@ export default function RealtimeBuyOrderPage() {
   const [buyOrderListQueryInput, setBuyOrderListQueryInput] = useState("");
   const [buyOrderListQuery, setBuyOrderListQuery] = useState("");
   const [buyOrderStoreOptions, setBuyOrderStoreOptions] = useState<BuyOrderStoreOption[]>([]);
+  const [isStoreFilterOpen, setIsStoreFilterOpen] = useState(false);
   const [buyOrderListUpdatedAt, setBuyOrderListUpdatedAt] = useState<string | null>(null);
   const [buyOrderListErrorMessage, setBuyOrderListErrorMessage] = useState<string | null>(null);
   const [isBuyOrderListLoading, setIsBuyOrderListLoading] = useState(false);
@@ -425,6 +426,7 @@ export default function RealtimeBuyOrderPage() {
   const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
   const triggeredJackpotEventIdsRef = useRef<string[]>([]);
   const copiedTradeTimerRef = useRef<number | null>(null);
+  const storeFilterDropdownRef = useRef<HTMLDivElement | null>(null);
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -875,6 +877,7 @@ export default function RealtimeBuyOrderPage() {
   const handleBuyOrderListFilterReset = useCallback(() => {
     setBuyOrderListStatusFilter("all");
     setBuyOrderListStoreCodeFilter("all");
+    setIsStoreFilterOpen(false);
     setBuyOrderListQueryInput("");
     setBuyOrderListQuery("");
     setBuyOrderListPage(1);
@@ -1064,6 +1067,35 @@ export default function RealtimeBuyOrderPage() {
   }, []);
 
   useEffect(() => {
+    if (!isStoreFilterOpen) {
+      return;
+    }
+
+    const handleMouseDown = (event: MouseEvent) => {
+      const root = storeFilterDropdownRef.current;
+      if (!root) {
+        return;
+      }
+      if (!root.contains(event.target as Node)) {
+        setIsStoreFilterOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsStoreFilterOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isStoreFilterOpen]);
+
+  useEffect(() => {
     const now = Date.now();
     const activeHighlights = events
       .map((item) => item.highlightUntil)
@@ -1159,6 +1191,12 @@ export default function RealtimeBuyOrderPage() {
   const confirmedUsdtRatio = summary.confirmedAmountUsdt > 0
     ? Math.max(8, Math.min(100, (todayTotals.confirmedAmountUsdt / summary.confirmedAmountUsdt) * 100))
     : 8;
+  const selectedStoreFilterOption = useMemo(() => {
+    if (buyOrderListStoreCodeFilter === "all") {
+      return null;
+    }
+    return buyOrderStoreOptions.find((store) => store.storeCode === buyOrderListStoreCodeFilter) || null;
+  }, [buyOrderListStoreCodeFilter, buyOrderStoreOptions]);
 
   const jackpotOverlayLayer =
     isHydrated && typeof document !== "undefined"
@@ -1437,7 +1475,7 @@ export default function RealtimeBuyOrderPage() {
 
             {pendingBuyOrders.length > 0 && (
               <div className="overflow-x-auto">
-                <div className="min-w-[920px] space-y-1">
+                <div className="min-w-[1220px] space-y-1">
                   {pendingBuyOrders.map((order, index) => {
                     const createdAtInfo = getRelativeTimeInfo(order.createdAt, nowMs);
                     const lineNo = String(index + 1).padStart(3, "0");
@@ -1478,8 +1516,19 @@ export default function RealtimeBuyOrderPage() {
                           {buyerLabel}
                         </div>
 
-                        <div className="w-[72px] shrink-0 text-right font-mono text-[11px] text-amber-900/80">
-                          {createdAtInfo.relativeLabel}
+                        <div className="w-[210px] shrink-0 text-right">
+                          <p className="truncate font-mono text-[10px] text-slate-700" title={order.tradeId || "-"}>
+                            {order.tradeId ? `tid:${order.tradeId}` : "-"}
+                          </p>
+                        </div>
+
+                        <div className="w-[188px] shrink-0 text-right">
+                          <span className={`inline-flex rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
+                            {createdAtInfo.relativeLabel}
+                          </span>
+                          <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                            {createdAtInfo.absoluteLabel}
+                          </p>
                         </div>
                       </article>
                     );
@@ -1520,21 +1569,79 @@ export default function RealtimeBuyOrderPage() {
                   </option>
                 ))}
               </select>
-              <select
-                value={buyOrderListStoreCodeFilter}
-                onChange={(event) => {
-                  setBuyOrderListStoreCodeFilter(event.target.value);
-                  setBuyOrderListPage(1);
-                }}
-                className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-cyan-400"
-              >
-                <option value="all">전체 가맹점</option>
-                {buyOrderStoreOptions.map((store) => (
-                  <option key={store.storeCode} value={store.storeCode}>
-                    {store.storeName} ({store.storeCode})
-                  </option>
-                ))}
-              </select>
+              <div ref={storeFilterDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsStoreFilterOpen((previous) => !previous);
+                  }}
+                  className="flex h-8 w-full items-center justify-between rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-cyan-400"
+                  aria-haspopup="listbox"
+                  aria-expanded={isStoreFilterOpen}
+                >
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span
+                      className={`h-4 w-4 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${selectedStoreFilterOption?.storeLogo ? "bg-white" : "bg-slate-100"}`}
+                      style={selectedStoreFilterOption?.storeLogo ? { backgroundImage: `url(${selectedStoreFilterOption.storeLogo})` } : undefined}
+                    />
+                    <span className="min-w-0 truncate">
+                      {selectedStoreFilterOption?.storeName || selectedStoreFilterOption?.storeCode || "전체 가맹점"}
+                    </span>
+                  </span>
+                  <span className="ml-1 flex shrink-0 items-center gap-1 font-mono text-[10px] text-slate-400">
+                    <span>{selectedStoreFilterOption?.storeCode || "ALL"}</span>
+                    <span className={`text-[9px] text-slate-500 transition ${isStoreFilterOpen ? "rotate-180" : ""}`}>▼</span>
+                  </span>
+                </button>
+
+                {isStoreFilterOpen && (
+                  <div className="absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-md border border-slate-300 bg-white shadow-[0_14px_30px_-20px_rgba(15,23,42,0.45)]">
+                    <div className="max-h-64 overflow-y-auto py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBuyOrderListStoreCodeFilter("all");
+                          setBuyOrderListPage(1);
+                          setIsStoreFilterOpen(false);
+                        }}
+                        className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition ${buyOrderListStoreCodeFilter === "all" ? "bg-cyan-50 text-cyan-800" : "text-slate-700 hover:bg-slate-50"}`}
+                      >
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="h-4 w-4 shrink-0 rounded-full border border-slate-200 bg-slate-100" />
+                          <span className="truncate">전체 가맹점</span>
+                        </span>
+                        <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-400">ALL</span>
+                      </button>
+
+                      {buyOrderStoreOptions.map((store) => {
+                        const isSelected = buyOrderListStoreCodeFilter === store.storeCode;
+                        const storeLabel = store.storeName || store.storeCode;
+                        return (
+                          <button
+                            key={store.storeCode}
+                            type="button"
+                            onClick={() => {
+                              setBuyOrderListStoreCodeFilter(store.storeCode);
+                              setBuyOrderListPage(1);
+                              setIsStoreFilterOpen(false);
+                            }}
+                            className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-xs transition ${isSelected ? "bg-cyan-50 text-cyan-800" : "text-slate-700 hover:bg-slate-50"}`}
+                          >
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              <span
+                                className={`h-4 w-4 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${store.storeLogo ? "bg-white" : "bg-slate-100"}`}
+                                style={store.storeLogo ? { backgroundImage: `url(${store.storeLogo})` } : undefined}
+                              />
+                              <span className="min-w-0 truncate">{storeLabel}</span>
+                            </span>
+                            <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-400">{store.storeCode}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
               <input
                 value={buyOrderListQueryInput}
                 onChange={(event) => {
@@ -1568,7 +1675,7 @@ export default function RealtimeBuyOrderPage() {
 
             {buyOrderListItems.length > 0 && (
               <div className="overflow-x-auto">
-                <div className="min-w-[760px] space-y-1">
+                <div className="min-w-[1040px] space-y-1">
                   {buyOrderListItems.map((item, index) => {
                     const storeLabel = item.storeName || item.storeCode || "-";
                     const buyerLabel = maskName(item.buyerName);
@@ -1579,7 +1686,7 @@ export default function RealtimeBuyOrderPage() {
                     return (
                       <article
                         key={`buyorder-list-${item.orderId || index}`}
-                        className="grid grid-cols-[96px_minmax(0,1.15fr)_170px_110px_210px_80px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
+                        className="grid grid-cols-[96px_minmax(280px,1.8fr)_170px_120px_210px_188px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
                       >
                         <div className="flex min-w-0 items-center gap-1.5">
                           <span className="font-mono text-[10px] text-slate-400">{rowNo}</span>
@@ -1593,7 +1700,9 @@ export default function RealtimeBuyOrderPage() {
                             className={`h-6 w-6 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${item.storeLogo ? "bg-white" : "bg-slate-100"}`}
                             style={item.storeLogo ? { backgroundImage: `url(${item.storeLogo})` } : undefined}
                           />
-                          <span className="truncate text-[12px] font-medium text-slate-900">{storeLabel}</span>
+                          <span className="min-w-0 break-all text-[12px] font-medium text-slate-900" title={storeLabel}>
+                            {storeLabel}
+                          </span>
                         </div>
 
                         <div className="text-right">
@@ -1607,9 +1716,9 @@ export default function RealtimeBuyOrderPage() {
 
                         <div className="truncate text-[12px] font-medium text-slate-900">{buyerLabel}</div>
 
-                        <div className="flex items-center justify-end gap-1">
-                          <p className="min-w-0 truncate font-mono text-[10px] text-slate-600" title={item.tradeId || "-"}>
-                            {item.tradeId || "-"}
+                        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_42px] items-center gap-1">
+                          <p className="truncate font-mono text-[10px] text-slate-700" title={item.tradeId || "-"}>
+                            {item.tradeId ? `tid:${item.tradeId}` : "-"}
                           </p>
                           <button
                             type="button"
@@ -1623,7 +1732,14 @@ export default function RealtimeBuyOrderPage() {
                           </button>
                         </div>
 
-                        <p className="text-right font-mono text-[10px] text-slate-500">{createdAtInfo.relativeLabel}</p>
+                        <div className="text-right">
+                          <span className={`inline-flex rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
+                            {createdAtInfo.relativeLabel}
+                          </span>
+                          <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                            {createdAtInfo.absoluteLabel}
+                          </p>
+                        </div>
                       </article>
                     );
                   })}
