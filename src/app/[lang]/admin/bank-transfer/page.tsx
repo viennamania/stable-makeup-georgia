@@ -61,13 +61,28 @@ const formatDateTime = (value: any) => {
   if (Number.isNaN(date.getTime())) {
     return String(value);
   }
-  return date.toLocaleString('ko-KR');
+  return date.toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
+  });
 };
 
 const getTodayString = () => {
-  const now = new Date();
-  const offsetMs = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const day = parts.find((part) => part.type === 'day')?.value;
+
+  if (!year || !month || !day) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return `${year}-${month}-${day}`;
 };
 
 

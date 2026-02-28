@@ -45,17 +45,45 @@ const formatNumber = (value: any) => {
   return num.toLocaleString("ko-KR", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
+const parseDateValue = (value: any): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const normalized = raw.replace(/\//g, "-");
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+  const hasT = normalized.includes("T");
+  let candidate = normalized;
+
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(normalized)) {
+    candidate = `${normalized.replace(" ", "T")}+09:00`;
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    candidate = `${normalized}T00:00:00+09:00`;
+  } else if (hasT && !hasTimezone) {
+    candidate = `${normalized}+09:00`;
+  }
+
+  const date = new Date(candidate);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 const formatDateTime = (value: any) => {
   if (!value) return "-";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleString("ko-KR");
+  const date = parseDateValue(value);
+  if (!date) return String(value);
+  return date.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+  });
 };
 
 const formatTimeAgo = (value: any) => {
   if (!value) return "-";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
+  const date = parseDateValue(value);
+  if (!date) return String(value);
 
   const diffMs = Date.now() - date.getTime();
   const isFuture = diffMs < 0;
@@ -76,8 +104,8 @@ const formatTimeAgo = (value: any) => {
 
 const timeAgoToneClass = (value: any) => {
   if (!value) return "bg-zinc-100 text-zinc-500";
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "bg-zinc-100 text-zinc-500";
+  const date = parseDateValue(value);
+  if (!date) return "bg-zinc-100 text-zinc-500";
 
   const diffSec = Math.abs((Date.now() - date.getTime()) / 1000);
 

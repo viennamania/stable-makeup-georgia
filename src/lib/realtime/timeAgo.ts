@@ -9,6 +9,7 @@ export type RelativeTimeInfo = {
 };
 
 const ABSOLUTE_TIME_FORMATTER = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
   hour12: false,
   year: "numeric",
   month: "2-digit",

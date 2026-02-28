@@ -48,7 +48,9 @@ const formatDateTime = (value: any) => {
   if (Number.isNaN(date.getTime())) {
     return String(value);
   }
-  return date.toLocaleString('ko-KR');
+  return date.toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
+  });
 };
 
 type BankForm = {
