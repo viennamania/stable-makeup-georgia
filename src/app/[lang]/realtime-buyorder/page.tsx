@@ -1138,28 +1138,50 @@ export default function RealtimeBuyOrderPage() {
       )}
 
       <section className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
-        <div className="overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/75 shadow-lg shadow-black/20">
-          <div className="border-b border-slate-700/80 px-4 py-3">
+        <div className="relative overflow-hidden rounded-3xl border border-amber-400/45 bg-[radial-gradient(circle_at_20%_0%,rgba(251,191,36,0.24),rgba(30,41,59,0.96)_42%),linear-gradient(160deg,rgba(15,23,42,0.98),rgba(2,6,23,0.98))] shadow-[0_20px_60px_-22px_rgba(251,191,36,0.45)]">
+          <div className="pointer-events-none absolute -left-8 top-4 h-20 w-20 rounded-full bg-amber-300/20 blur-2xl" />
+          <div className="pointer-events-none absolute -right-8 bottom-10 h-24 w-24 rounded-full bg-cyan-300/15 blur-2xl" />
+
+          <div className="relative border-b border-amber-300/25 px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-semibold text-slate-100">진행중 구매주문 목록</p>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-amber-200/85">Slot Console</p>
+                <p className="mt-0.5 font-semibold text-amber-50">진행중 구매주문 목록</p>
+              </div>
               <div className="flex items-center gap-1.5">
-                <span className="rounded border border-cyan-400/45 bg-cyan-500/15 px-2 py-0.5 text-[11px] font-medium text-cyan-100">
-                  총 {pendingBuyOrdersTotalCount.toLocaleString("ko-KR")}건
+                <span className="rounded border border-amber-300/45 bg-amber-400/20 px-2 py-0.5 text-[11px] font-semibold text-amber-100">
+                  JACKPOT {pendingBuyOrdersTotalCount.toLocaleString("ko-KR")}
                 </span>
-                <span className="rounded border border-slate-600/70 bg-slate-800/60 px-2 py-0.5 text-[11px] font-medium text-slate-200">
-                  표시 {pendingBuyOrders.length.toLocaleString("ko-KR")}건
+                <span className="rounded border border-cyan-300/40 bg-cyan-400/20 px-2 py-0.5 text-[11px] font-semibold text-cyan-100">
+                  REEL {pendingBuyOrders.length.toLocaleString("ko-KR")}
                 </span>
               </div>
             </div>
-            <p className="mt-1 font-mono text-[11px] text-slate-500">
+            <p className="mt-1 font-mono text-[11px] text-amber-100/70">
               ordered / accepted / paymentRequested · updated {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs).relativeLabel}
             </p>
+
+            <div className="mt-3 rounded-xl border border-amber-300/25 bg-slate-950/55 p-2">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-amber-200/75">Action Dock (버튼 확장 영역)</p>
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {["Slot A", "Slot B", "Slot C", "Slot D"].map((slotLabel) => (
+                  <button
+                    key={slotLabel}
+                    type="button"
+                    disabled
+                    className="rounded-lg border border-amber-300/25 bg-amber-400/10 px-2 py-1 text-[11px] font-semibold text-amber-100/65"
+                  >
+                    {slotLabel}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="max-h-[780px] space-y-2 overflow-y-auto bg-[linear-gradient(180deg,rgba(2,6,23,0.95),rgba(2,6,23,0.92))] p-3">
+          <div className="relative max-h-[780px] space-y-2 overflow-y-auto bg-[repeating-linear-gradient(180deg,rgba(15,23,42,0.92)_0px,rgba(15,23,42,0.92)_34px,rgba(30,41,59,0.9)_34px,rgba(30,41,59,0.9)_68px)] p-3">
             {pendingBuyOrders.length === 0 && (
-              <div className="rounded-lg border border-slate-800/80 bg-slate-950/70 px-3 py-8 text-center font-mono text-xs text-slate-500">
-                [WAITING] 진행중 구매주문이 없습니다.
+              <div className="rounded-xl border border-amber-300/30 bg-slate-950/75 px-3 py-8 text-center">
+                <p className="font-mono text-xs text-amber-100/80">[IDLE] 슬롯에 올라온 진행중 주문이 없습니다.</p>
               </div>
             )}
 
@@ -1172,31 +1194,42 @@ export default function RealtimeBuyOrderPage() {
               return (
                 <article
                   key={`pending-order-${order.orderId || index}`}
-                  className="rounded-xl border border-slate-800/80 bg-slate-950/65 px-3 py-2"
+                  className="rounded-2xl border border-amber-300/35 bg-[linear-gradient(165deg,rgba(15,23,42,0.92),rgba(30,41,59,0.92)_45%,rgba(15,23,42,0.94))] px-3 py-3 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.12),0_12px_24px_-18px_rgba(251,191,36,0.4)]"
                 >
-                  <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-                    <span className="text-slate-600">#{lineNo}</span>
-                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(order.status)}`}>
-                      {getStatusLabel(order.status)}
-                    </span>
-                    <span className={`rounded border px-1.5 py-0.5 font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
-                      {createdAtInfo.relativeLabel}
-                    </span>
-                    <span className="text-slate-500">{formatKstDateTime(order.createdAt)}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                      <span className="rounded border border-amber-300/35 bg-amber-400/15 px-1.5 py-0.5 text-amber-100">REEL-{lineNo}</span>
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                      <span className={`rounded border px-1.5 py-0.5 font-semibold ${getRelativeTimeToneClassName(createdAtInfo.tone)}`}>
+                        {createdAtInfo.relativeLabel}
+                      </span>
+                    </div>
+                    <span className="font-mono text-[11px] text-amber-100/80">{formatKstDateTime(order.createdAt)}</span>
                   </div>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px]">
-                    <span className="text-cyan-300">tid={tradeLabel}</span>
-                    <span className="text-slate-300">
-                      krw=<span className="text-slate-100">{formatKrw(order.amountKrw)}</span>
-                    </span>
-                    <span className="text-cyan-300">
-                      usdt=<span className="text-cyan-100">{formatUsdt(order.amountUsdt)}</span>
-                    </span>
-                    <span className="text-slate-400">
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-2 py-1.5">
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-amber-200/80">KRW POT</p>
+                      <p className="mt-0.5 font-mono text-lg font-semibold leading-none tabular-nums text-amber-50">
+                        {formatKrw(order.amountKrw)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-2 py-1.5">
+                      <p className="text-[10px] uppercase tracking-[0.12em] text-cyan-200/80">USDT POT</p>
+                      <p className="mt-0.5 font-mono text-lg font-semibold leading-none tabular-nums text-cyan-50">
+                        {formatUsdt(order.amountUsdt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 grid gap-1 rounded-lg border border-slate-700/80 bg-slate-950/65 px-2 py-1.5 font-mono text-[11px]">
+                    <p className="text-cyan-300">tid={tradeLabel}</p>
+                    <p className="text-slate-300">
                       buyer={maskName(order.buyerName)}:{maskAccountNumber(order.buyerAccountNumber)}
-                    </span>
-                    <span className="text-slate-400">store={storeLabel}</span>
+                    </p>
+                    <p className="text-slate-400">store={storeLabel}</p>
                   </div>
                 </article>
               );
