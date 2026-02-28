@@ -79,6 +79,14 @@ type BuyOrderStoreOption = {
   storeLogo: string | null;
 };
 
+type SellerWalletBalanceItem = {
+  walletAddress: string;
+  orderCount: number;
+  totalAmountUsdt: number;
+  latestOrderCreatedAt: string | null;
+  currentUsdtBalance: number;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
@@ -88,6 +96,8 @@ const PENDING_BUYORDER_FETCH_LIMIT = 30;
 const BUYORDER_LIST_REFRESH_MS = 12_000;
 const BUYORDER_LIST_PAGE_LIMIT = 12;
 const BUYORDER_STORE_OPTIONS_REFRESH_MS = 60_000;
+const SELLER_WALLET_BALANCE_REFRESH_MS = 12_000;
+const SELLER_WALLET_BALANCE_LIMIT = 12;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
 const COUNTDOWN_TICK_MS = 1_000;
@@ -437,6 +447,9 @@ export default function RealtimeBuyOrderPage() {
   const [buyOrderListUpdatedAt, setBuyOrderListUpdatedAt] = useState<string | null>(null);
   const [buyOrderListErrorMessage, setBuyOrderListErrorMessage] = useState<string | null>(null);
   const [buyOrderListHighlightUntilMap, setBuyOrderListHighlightUntilMap] = useState<Record<string, number>>({});
+  const [sellerWalletBalances, setSellerWalletBalances] = useState<SellerWalletBalanceItem[]>([]);
+  const [sellerWalletBalancesUpdatedAt, setSellerWalletBalancesUpdatedAt] = useState<string | null>(null);
+  const [sellerWalletBalancesErrorMessage, setSellerWalletBalancesErrorMessage] = useState<string | null>(null);
   const [isBuyOrderListLoading, setIsBuyOrderListLoading] = useState(false);
   const [copiedTradeId, setCopiedTradeId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -969,6 +982,43 @@ export default function RealtimeBuyOrderPage() {
     }
   }, []);
 
+  const fetchSellerWalletBalances = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        public: "1",
+        limit: String(SELLER_WALLET_BALANCE_LIMIT),
+      });
+      const response = await fetch(`/api/realtime/buyorder/seller-wallets?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      const wallets = Array.isArray(data?.wallets)
+        ? (data.wallets as Array<Record<string, unknown>>).map((item) => ({
+            walletAddress: String(item?.walletAddress || ""),
+            orderCount: Number(item?.orderCount || 0),
+            totalAmountUsdt: Number(item?.totalAmountUsdt || 0),
+            latestOrderCreatedAt: item?.latestOrderCreatedAt ? String(item.latestOrderCreatedAt) : null,
+            currentUsdtBalance: Number(item?.currentUsdtBalance || 0),
+          }))
+          .filter((item) => item.walletAddress)
+        : [];
+
+      setSellerWalletBalances(wallets);
+      setSellerWalletBalancesUpdatedAt(data?.updatedAt ? String(data.updatedAt) : new Date().toISOString());
+      setSellerWalletBalancesErrorMessage(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "판매자 지갑 잔고 조회 실패";
+      setSellerWalletBalancesErrorMessage(message);
+    }
+  }, []);
+
   const handleBuyOrderListSearchSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -1028,6 +1078,7 @@ export default function RealtimeBuyOrderPage() {
         void fetchPendingBuyOrders();
         void fetchBuyOrderList();
         void fetchBuyOrderStoreOptions();
+        void fetchSellerWalletBalances();
       }
     };
 
@@ -1054,6 +1105,7 @@ export default function RealtimeBuyOrderPage() {
         void fetchPendingBuyOrders();
       }
       void fetchBuyOrderList();
+      void fetchSellerWalletBalances();
     };
 
     realtime.connection.on(onConnectionStateChange);
@@ -1064,7 +1116,7 @@ export default function RealtimeBuyOrderPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, fetchBuyOrderList, fetchBuyOrderStoreOptions, fetchPendingBuyOrders, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
+  }, [clientId, fetchBuyOrderList, fetchBuyOrderStoreOptions, fetchPendingBuyOrders, fetchSellerWalletBalances, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -1123,6 +1175,18 @@ export default function RealtimeBuyOrderPage() {
       window.clearInterval(timer);
     };
   }, [fetchBuyOrderStoreOptions]);
+
+  useEffect(() => {
+    void fetchSellerWalletBalances();
+
+    const timer = window.setInterval(() => {
+      void fetchSellerWalletBalances();
+    }, SELLER_WALLET_BALANCE_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchSellerWalletBalances]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1355,8 +1419,8 @@ export default function RealtimeBuyOrderPage() {
   const confirmedCountRatio = summary.confirmedCount > 0
     ? Math.max(8, Math.min(100, (todayTotals.confirmedCount / summary.confirmedCount) * 100))
     : 8;
-  const confirmedUsdtRatio = summary.confirmedAmountUsdt > 0
-    ? Math.max(8, Math.min(100, (todayTotals.confirmedAmountUsdt / summary.confirmedAmountUsdt) * 100))
+  const confirmedAmountKrwRatio = summary.confirmedAmountKrw > 0
+    ? Math.max(8, Math.min(100, (todayTotals.confirmedAmountKrw / summary.confirmedAmountKrw) * 100))
     : 8;
   const pgFeeRatio = todayTotals.confirmedAmountUsdt > 0
     ? Math.max(8, Math.min(100, (todayTotals.pgFeeAmountUsdt / todayTotals.confirmedAmountUsdt) * 100))
@@ -1501,6 +1565,26 @@ export default function RealtimeBuyOrderPage() {
                 </div>
               </article>
 
+              <article className="relative overflow-hidden rounded-lg border border-sky-400/35 bg-gradient-to-br from-sky-500/20 via-cyan-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(14,165,233,0.75)]">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/20 blur-2xl" />
+                <p className="relative text-[10px] uppercase tracking-[0.1em] text-sky-100/85">오늘 결제완료 거래건수 (KST)</p>
+                <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-sky-50">
+                  {animatedTodayConfirmedCount.toLocaleString("ko-KR")}
+                  <span className="ml-1 text-xs font-medium text-sky-200/90">건</span>
+                </p>
+                <div className="relative mt-1 flex items-center justify-end text-[11px]">
+                  <span className="inline-flex rounded-full border border-sky-300/40 bg-sky-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-sky-50">
+                    LIVE
+                  </span>
+                </div>
+                <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-sky-100/30">
+                  <div
+                    className="h-full rounded-full bg-sky-300 transition-all duration-500"
+                    style={{ width: `${confirmedCountRatio}%` }}
+                  />
+                </div>
+              </article>
+
               <article className="relative overflow-hidden rounded-lg border border-emerald-400/35 bg-gradient-to-br from-emerald-500/20 via-emerald-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(16,185,129,0.75)]">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-emerald-300/20 blur-2xl" />
                 <p className="relative text-[10px] uppercase tracking-[0.1em] text-emerald-100/85">오늘 결제완료 거래금액 (KST)</p>
@@ -1509,7 +1593,7 @@ export default function RealtimeBuyOrderPage() {
                   <span className="ml-1 text-xs font-medium text-emerald-200/90">KRW</span>
                 </p>
                 <div className="relative mt-1 flex items-center justify-between text-[11px]">
-                  <span className="text-emerald-100/90">건수 {animatedTodayConfirmedCount.toLocaleString("ko-KR")}건</span>
+                  <span className="text-emerald-100/90">{formatUsdt(animatedTodayConfirmedAmountUsdt)} USDT</span>
                   <span className="inline-flex rounded-full border border-emerald-300/40 bg-emerald-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-emerald-50">
                     LIVE
                   </span>
@@ -1517,28 +1601,7 @@ export default function RealtimeBuyOrderPage() {
                 <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-emerald-100/30">
                   <div
                     className="h-full rounded-full bg-emerald-300 transition-all duration-500"
-                    style={{ width: `${confirmedCountRatio}%` }}
-                  />
-                </div>
-              </article>
-
-              <article className="relative overflow-hidden rounded-lg border border-sky-400/35 bg-gradient-to-br from-sky-500/20 via-cyan-500/12 to-slate-950/70 px-2.5 py-2.5 shadow-[0_10px_24px_-20px_rgba(14,165,233,0.75)]">
-                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-300/20 blur-2xl" />
-                <p className="relative text-[10px] uppercase tracking-[0.1em] text-sky-100/85">오늘 결제완료 거래수량 (KST)</p>
-                <p className="relative mt-1 text-xl font-semibold leading-tight tabular-nums text-sky-50">
-                  {formatUsdt(animatedTodayConfirmedAmountUsdt)}
-                  <span className="ml-1 text-xs font-medium text-sky-200/90">USDT</span>
-                </p>
-                <div className="relative mt-1 flex items-center justify-between text-[11px]">
-                  <span className="text-sky-100/90">건수 {animatedTodayConfirmedCount.toLocaleString("ko-KR")}건</span>
-                  <span className="inline-flex rounded-full border border-sky-300/40 bg-sky-400/20 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-sky-50">
-                    LIVE
-                  </span>
-                </div>
-                <div className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-sky-100/30">
-                  <div
-                    className="h-full rounded-full bg-sky-300 transition-all duration-500"
-                    style={{ width: `${confirmedUsdtRatio}%` }}
+                    style={{ width: `${confirmedAmountKrwRatio}%` }}
                   />
                 </div>
               </article>
@@ -1581,6 +1644,45 @@ export default function RealtimeBuyOrderPage() {
             Last Status <span className="ml-2 font-semibold text-cyan-200">{getStatusLabel(summary.latestStatus)}</span>
           </div>
         </div>
+
+        <div className="mt-2 rounded-lg border border-slate-700/70 bg-slate-950/55 px-2.5 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold text-cyan-100">판매자 지갑 USDT 잔고 (LIVE)</p>
+            <p className="text-[10px] text-slate-400">
+              updated {getRelativeTimeInfo(sellerWalletBalancesUpdatedAt, nowMs).relativeLabel}
+            </p>
+          </div>
+          {sellerWalletBalances.length === 0 && (
+            <p className="mt-1 rounded border border-slate-800 bg-slate-900/70 px-2 py-1 text-[11px] text-slate-500">
+              seller.walletAddress 데이터가 없습니다.
+            </p>
+          )}
+          {sellerWalletBalances.length > 0 && (
+            <div className="mt-1.5 max-h-36 space-y-1 overflow-y-auto pr-1">
+              {sellerWalletBalances.map((item, index) => {
+                const latestInfo = getRelativeTimeInfo(item.latestOrderCreatedAt, nowMs);
+                return (
+                  <div
+                    key={`seller-wallet-balance-${item.walletAddress}-${index}`}
+                    className="grid grid-cols-[26px_minmax(0,1.3fr)_minmax(0,1fr)_74px_78px] items-center gap-1 rounded border border-slate-800/80 bg-slate-900/75 px-1.5 py-1 text-[10px]"
+                  >
+                    <span className="font-mono text-slate-500">{String(index + 1).padStart(2, "0")}</span>
+                    <span className="truncate font-mono text-cyan-200" title={item.walletAddress}>
+                      {formatShortWalletAddress(item.walletAddress)}
+                    </span>
+                    <span className="truncate text-right font-mono tabular-nums text-emerald-200">
+                      {formatUsdt(item.currentUsdtBalance)} USDT
+                    </span>
+                    <span className="truncate text-right text-slate-300">{item.orderCount.toLocaleString("ko-KR")}건</span>
+                    <span className="truncate text-right text-slate-500" title={latestInfo.absoluteLabel}>
+                      {latestInfo.relativeLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
       {connectionErrorMessage && (
@@ -1610,6 +1712,12 @@ export default function RealtimeBuyOrderPage() {
       {buyOrderListErrorMessage && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
           구매주문 목록 조회 실패: {buyOrderListErrorMessage}
+        </div>
+      )}
+
+      {sellerWalletBalancesErrorMessage && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-950/45 px-3 py-2 text-sm text-amber-200">
+          판매자 지갑 잔고 조회 실패: {sellerWalletBalancesErrorMessage}
         </div>
       )}
 
@@ -1698,7 +1806,7 @@ export default function RealtimeBuyOrderPage() {
 
                       <div className="flex min-w-0 flex-col items-center gap-1 text-center">
                         <span
-                          className={`h-8 w-8 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
+                          className={`h-6 w-6 shrink-0 rounded-full border border-amber-300/75 bg-cover bg-center ${hasStoreLogo ? "bg-white" : "bg-amber-100"}`}
                           style={hasStoreLogo ? { backgroundImage: `url(${order.storeLogo})` } : undefined}
                         />
                         <span className="min-w-0 truncate text-[11px] font-semibold leading-tight text-slate-900" title={storeLabel}>

@@ -2,6 +2,17 @@ import { ObjectId } from "mongodb";
 
 import clientPromise, { dbName } from "@lib/mongodb";
 import type { BuyOrderStatusRealtimeEvent } from "@lib/ably/constants";
+import { createThirdwebClient, getContract } from "thirdweb";
+import { ethereum, polygon, arbitrum, bsc } from "thirdweb/chains";
+import { balanceOf } from "thirdweb/extensions/erc20";
+import {
+  chain as appChain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+  bscContractAddressMKRW,
+} from "@/app/config/contractAddresses";
 
 const COLLECTION_NAME = "buyOrderStatusRealtimeEvents";
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
@@ -55,6 +66,39 @@ function getKstUtcDayRange(referenceDate: Date = new Date()): {
     startUtc,
     endUtc,
   };
+}
+
+function getUsdtContractAddress(): string {
+  if (appChain === "ethereum") {
+    return ethereumContractAddressUSDT;
+  }
+  if (appChain === "polygon") {
+    return polygonContractAddressUSDT;
+  }
+  if (appChain === "arbitrum") {
+    return arbitrumContractAddressUSDT;
+  }
+  if (appChain === "bsc") {
+    return bscContractAddressUSDT;
+  }
+  return bscContractAddressMKRW;
+}
+
+function getThirdwebChain() {
+  if (appChain === "ethereum") {
+    return ethereum;
+  }
+  if (appChain === "polygon") {
+    return polygon;
+  }
+  if (appChain === "arbitrum") {
+    return arbitrum;
+  }
+  return bsc;
+}
+
+function getUsdtDecimals(): number {
+  return appChain === "bsc" ? 18 : 6;
 }
 
 function toCursor(value: ObjectId): string {
@@ -140,6 +184,20 @@ export type RealtimeBuyOrderStoreOption = {
   storeCode: string;
   storeName: string;
   storeLogo: string | null;
+};
+
+export type RealtimeSellerWalletBalanceItem = {
+  walletAddress: string;
+  orderCount: number;
+  totalAmountUsdt: number;
+  latestOrderCreatedAt: string | null;
+  currentUsdtBalance: number;
+};
+
+export type RealtimeSellerWalletBalanceResult = {
+  totalCount: number;
+  wallets: RealtimeSellerWalletBalanceItem[];
+  updatedAt: string;
 };
 
 function toNullableText(value: unknown): string | null {
@@ -616,4 +674,140 @@ export async function getRealtimeBuyOrderStoreOptions({
     stores,
     updatedAt: new Date().toISOString(),
   };
+}
+
+export async function getRealtimeBuyOrderSellerWalletBalances({
+  limit = 12,
+}: {
+  limit?: number;
+} = {}): Promise<RealtimeSellerWalletBalanceResult> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const safeLimit = Math.min(Math.max(Number(limit) || 12, 1), 40);
+
+  const groupedWallets = await collection
+    .aggregate([
+      {
+        $match: {
+          privateSale: { $ne: true },
+          "seller.walletAddress": { $type: "string", $ne: "" },
+        },
+      },
+      {
+        $project: {
+          walletAddress: {
+            $trim: {
+              input: "$seller.walletAddress",
+            },
+          },
+          usdtAmount: "$usdtAmount",
+          createdAt: "$createdAt",
+        },
+      },
+      {
+        $match: {
+          walletAddress: { $type: "string", $ne: "" },
+        },
+      },
+      {
+        $group: {
+          _id: { $toLower: "$walletAddress" },
+          walletAddress: { $first: "$walletAddress" },
+          orderCount: { $sum: 1 },
+          totalAmountUsdt: { $sum: { $toDouble: { $ifNull: ["$usdtAmount", 0] } } },
+          latestOrderCreatedAt: { $max: "$createdAt" },
+        },
+      },
+      {
+        $sort: {
+          latestOrderCreatedAt: -1,
+          orderCount: -1,
+        },
+      },
+      {
+        $limit: safeLimit,
+      },
+    ])
+    .toArray();
+
+  const wallets: RealtimeSellerWalletBalanceItem[] = groupedWallets
+    .map((item: any) => {
+      const walletAddress = toNullableText(item?.walletAddress);
+      if (!walletAddress) {
+        return null;
+      }
+
+      return {
+        walletAddress,
+        orderCount: Number(item?.orderCount || 0),
+        totalAmountUsdt: toSafeNumber(item?.totalAmountUsdt),
+        latestOrderCreatedAt: toIsoString(item?.latestOrderCreatedAt),
+        currentUsdtBalance: 0,
+      } satisfies RealtimeSellerWalletBalanceItem;
+    })
+    .filter((item): item is RealtimeSellerWalletBalanceItem => Boolean(item));
+
+  if (wallets.length === 0) {
+    return {
+      totalCount: 0,
+      wallets: [],
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const thirdwebSecretKey = String(process.env.THIRDWEB_SECRET_KEY || "").trim();
+  const usdtContractAddress = getUsdtContractAddress();
+  if (!thirdwebSecretKey || !usdtContractAddress) {
+    return {
+      totalCount: wallets.length,
+      wallets,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  try {
+    const thirdwebClient = createThirdwebClient({
+      secretKey: thirdwebSecretKey,
+    });
+    const contract = getContract({
+      client: thirdwebClient,
+      chain: getThirdwebChain(),
+      address: usdtContractAddress,
+    });
+    const decimals = getUsdtDecimals();
+
+    const withBalances = await Promise.all(
+      wallets.map(async (item) => {
+        try {
+          const rawBalance = await balanceOf({
+            contract,
+            address: item.walletAddress,
+          });
+          return {
+            ...item,
+            currentUsdtBalance: Number(rawBalance) / 10 ** decimals,
+          };
+        } catch (error) {
+          console.error(`Failed to fetch seller wallet USDT balance (${item.walletAddress}):`, error);
+          return {
+            ...item,
+            currentUsdtBalance: 0,
+          };
+        }
+      }),
+    );
+
+    return {
+      totalCount: withBalances.length,
+      wallets: withBalances,
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("Failed to fetch realtime seller wallet balances:", error);
+    return {
+      totalCount: wallets.length,
+      wallets,
+      updatedAt: new Date().toISOString(),
+    };
+  }
 }
