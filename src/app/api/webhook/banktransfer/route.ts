@@ -66,6 +66,32 @@ function normalizeBankAccountNumber(value: unknown): string {
   return String(value || "").replace(/[\s-]/g, "");
 }
 
+function parseWebhookDateToUtc(value: unknown): Date | null {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return null;
+  }
+
+  const normalized = raw.replace(/\//g, "-");
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+  const hasT = normalized.includes("T");
+
+  let candidate = normalized;
+
+  // "YYYY-MM-DD HH:mm:ss" from webhook payloads (KST)
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(normalized)) {
+    candidate = `${normalized.replace(" ", "T")}+09:00`;
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    candidate = `${normalized}T00:00:00+09:00`;
+  } else if (hasT && !hasTimezone) {
+    // Assume KST when timezone is omitted
+    candidate = `${normalized}+09:00`;
+  }
+
+  const parsed = new Date(candidate);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function pickStoreBankInfoByAccountNumber(storeInfo: any, bankAccountNumber: string): any | null {
   if (!storeInfo) {
     return null;
@@ -259,6 +285,10 @@ export async function POST(request: NextRequest) {
     balance,
     processing_date,
   } = body;
+  const transactionDateUtc = parseWebhookDateToUtc(transaction_date);
+  const transactionDateNormalized = transactionDateUtc
+    ? transactionDateUtc.toISOString()
+    : String(transaction_date || "");
 
   const logBankTransferStoreSkip = async ({
     reasonCode,
@@ -810,7 +840,7 @@ export async function POST(request: NextRequest) {
       amount: Number(amount || 0),
       transactionName: String(transaction_name || ""),
       bankAccountNumber: String(bankAccountNumber || ""),
-      transactionDate: String(transaction_date || ""),
+      transactionDate: transactionDateNormalized,
       processingDate: processing_date ? String(processing_date) : null,
       status,
       store: store || null,
@@ -1001,7 +1031,9 @@ export async function POST(request: NextRequest) {
       bankAccountNumber: bankAccountNumber,
       bankCode: bank_code,
       amount: amount,
-      transactionDate: transaction_date,
+      transactionDate: transactionDateNormalized,
+      transactionDateUtc: transactionDateUtc,
+      transactionDateRaw: toNullableString(transaction_date),
       transactionName: transaction_name,
       balance: balance,
       processingDate: processing_date,

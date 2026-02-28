@@ -160,24 +160,29 @@ export async function getBankTransfers(
 
   if (fromDate || toDate) {
     const dateRangeDate: any = {};
-    const dateRangeString: any = {};
+    const dateRangeIsoString: any = {};
+    const dateRangeKstString: any = {};
 
     if (fromDate) {
       const start = new Date(`${fromDate}T00:00:00.000Z`);
       dateRangeDate.$gte = start;
-      dateRangeString.$gte = start.toISOString();
+      dateRangeIsoString.$gte = start.toISOString();
+      dateRangeKstString.$gte = `${fromDate} 00:00:00`;
     }
 
     if (toDate) {
       const end = new Date(`${toDate}T23:59:59.999Z`);
       dateRangeDate.$lte = end;
-      dateRangeString.$lte = end.toISOString();
+      dateRangeIsoString.$lte = end.toISOString();
+      dateRangeKstString.$lte = `${toDate} 23:59:59`;
     }
 
     filters.push({
       $or: [
+        { transactionDateUtc: dateRangeDate },
         { transactionDate: dateRangeDate },
-        { transactionDate: dateRangeString },
+        { transactionDate: dateRangeIsoString },
+        { transactionDate: dateRangeKstString },
       ],
     });
   }
@@ -222,7 +227,7 @@ export async function getBankTransfers(
 
   const transfers = await collection
     .find(query)
-    .sort({ transactionDate: -1, regDate: -1, _id: -1 })
+    .sort({ transactionDateUtc: -1, transactionDate: -1, regDate: -1, _id: -1 })
     .skip((page - 1) * limit)
     .limit(limit)
     .toArray();

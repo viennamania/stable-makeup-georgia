@@ -13,7 +13,8 @@
 		"build": "pnpm run check:node && next build",
 		"build:clean": "pnpm run clean:next && pnpm run build",
 		"start": "pnpm run check:node && next start",
-		"lint": "next lint"
+		"lint": "next lint",
+		"backfill:banktransfers:webhooklogs": "node scripts/backfill-banktransfers-from-webhooklogs.js"
 	},
 	"dependencies": {
 		"@emotion/react": "^11.11.3",
