@@ -134,6 +134,12 @@ export type RealtimeBuyOrderListResult = {
   updatedAt: string;
 };
 
+export type RealtimeBuyOrderStoreOption = {
+  storeCode: string;
+  storeName: string;
+  storeLogo: string | null;
+};
+
 function toNullableText(value: unknown): string | null {
   const normalized = String(value || "").trim();
   return normalized || null;
@@ -417,11 +423,13 @@ export async function getRealtimeBuyOrderSearchList({
   limit = 10,
   status = "all",
   searchQuery = "",
+  storeCode = "",
 }: {
   page?: number;
   limit?: number;
   status?: string;
   searchQuery?: string;
+  storeCode?: string;
 } = {}): Promise<RealtimeBuyOrderListResult> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection("buyorders");
@@ -430,6 +438,9 @@ export async function getRealtimeBuyOrderSearchList({
   const requestedPage = Math.max(Number(page) || 1, 1);
   const normalizedStatus = String(status || "all").trim();
   const searchText = String(searchQuery || "").trim();
+  const normalizedStoreCode = String(storeCode || "").trim();
+
+  const andConditions: Array<Record<string, unknown>> = [];
 
   const query: Record<string, unknown> = {
     privateSale: { $ne: true },
@@ -439,18 +450,32 @@ export async function getRealtimeBuyOrderSearchList({
     query.status = normalizedStatus;
   }
 
+  if (normalizedStoreCode) {
+    andConditions.push({
+      $or: [
+        { storecode: normalizedStoreCode },
+        { "store.storecode": normalizedStoreCode },
+      ],
+    });
+  }
+
   if (searchText) {
     const pattern = new RegExp(escapeRegex(searchText), "i");
-    query.$or = [
+    andConditions.push({
+      $or: [
       { tradeId: { $regex: pattern } },
-      { storecode: { $regex: pattern } },
       { "store.storeName": { $regex: pattern } },
       { nickname: { $regex: pattern } },
       { "buyer.depositName": { $regex: pattern } },
       { "buyer.bankInfo.accountHolder": { $regex: pattern } },
       { "buyer.bankInfo.accountNumber": { $regex: pattern } },
       { "buyer.depositBankAccountNumber": { $regex: pattern } },
-    ];
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    query.$and = andConditions;
   }
 
   const totalCount = await collection.countDocuments(query);
@@ -503,6 +528,86 @@ export async function getRealtimeBuyOrderSearchList({
     limit: safeLimit,
     totalPages,
     orders,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export async function getRealtimeBuyOrderStoreOptions({
+  limit = 300,
+}: {
+  limit?: number;
+} = {}): Promise<{
+  stores: RealtimeBuyOrderStoreOption[];
+  updatedAt: string;
+}> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const safeLimit = Math.min(Math.max(Number(limit) || 300, 1), 1000);
+
+  const results = await collection
+    .aggregate([
+      {
+        $match: {
+          privateSale: { $ne: true },
+          $or: [
+            { storecode: { $type: "string", $ne: "" } },
+            { "store.storecode": { $type: "string", $ne: "" } },
+          ],
+        },
+      },
+      {
+        $project: {
+          storeCode: {
+            $ifNull: ["$storecode", "$store.storecode"],
+          },
+          storeName: {
+            $ifNull: ["$store.storeName", "$storecode"],
+          },
+          storeLogo: "$store.storeLogo",
+        },
+      },
+      {
+        $match: {
+          storeCode: { $type: "string", $ne: "" },
+        },
+      },
+      {
+        $group: {
+          _id: "$storeCode",
+          storeCode: { $first: "$storeCode" },
+          storeName: { $first: "$storeName" },
+          storeLogo: { $first: "$storeLogo" },
+        },
+      },
+      {
+        $sort: {
+          storeName: 1,
+          storeCode: 1,
+        },
+      },
+      {
+        $limit: safeLimit,
+      },
+    ])
+    .toArray();
+
+  const stores: RealtimeBuyOrderStoreOption[] = results
+    .map((item: any) => {
+      const code = toNullableText(item?.storeCode);
+      if (!code) {
+        return null;
+      }
+
+      return {
+        storeCode: code,
+        storeName: toNullableText(item?.storeName) || code,
+        storeLogo: toNullableText(item?.storeLogo),
+      } satisfies RealtimeBuyOrderStoreOption;
+    })
+    .filter((item): item is RealtimeBuyOrderStoreOption => Boolean(item));
+
+  return {
+    stores,
     updatedAt: new Date().toISOString(),
   };
 }

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getRealtimeBuyOrderSearchList } from "@lib/api/buyOrderStatusRealtimeEvent";
+import { getRealtimeBuyOrderStoreOptions } from "@lib/api/buyOrderStatusRealtimeEvent";
 import { authorizeRealtimeRequest } from "@lib/realtime/rbac";
 
 export const runtime = "nodejs";
@@ -25,37 +25,22 @@ export async function GET(request: NextRequest) {
     role = authResult.role;
   }
 
-  const page = Number(request.nextUrl.searchParams.get("page") || 1);
-  const limit = Number(request.nextUrl.searchParams.get("limit") || 10);
-  const status = String(request.nextUrl.searchParams.get("status") || "all");
-  const q = String(request.nextUrl.searchParams.get("q") || "");
-  const storeCode = String(request.nextUrl.searchParams.get("storeCode") || "");
+  const limit = Number(request.nextUrl.searchParams.get("limit") || 300);
 
   try {
-    const result = await getRealtimeBuyOrderSearchList({
-      page,
-      limit,
-      status,
-      searchQuery: q,
-      storeCode,
-    });
-
+    const result = await getRealtimeBuyOrderStoreOptions({ limit });
     return NextResponse.json({
       status: "success",
       role,
-      totalCount: result.totalCount,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-      orders: result.orders,
+      stores: result.stores,
       updatedAt: result.updatedAt,
     });
   } catch (error) {
-    console.error("Failed to read buyorder search list:", error);
+    console.error("Failed to read buyorder store options:", error);
     return NextResponse.json(
       {
         status: "error",
-        message: "Failed to read buyorder search list",
+        message: "Failed to read buyorder store options",
       },
       { status: 500 },
     );

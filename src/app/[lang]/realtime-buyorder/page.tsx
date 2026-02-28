@@ -71,6 +71,12 @@ type BuyOrderListItem = {
   storeCode: string | null;
 };
 
+type BuyOrderStoreOption = {
+  storeCode: string;
+  storeName: string;
+  storeLogo: string | null;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
@@ -79,6 +85,7 @@ const PENDING_BUYORDER_REFRESH_MS = 10_000;
 const PENDING_BUYORDER_FETCH_LIMIT = 30;
 const BUYORDER_LIST_REFRESH_MS = 12_000;
 const BUYORDER_LIST_PAGE_LIMIT = 12;
+const BUYORDER_STORE_OPTIONS_REFRESH_MS = 60_000;
 const NEW_EVENT_HIGHLIGHT_MS = 3_600;
 const TIME_AGO_TICK_MS = 5_000;
 const COUNTDOWN_TICK_MS = 1_000;
@@ -165,6 +172,25 @@ function getStatusClassName(status: string | null | undefined): string {
       return "border border-slate-500/40 bg-slate-700/45 text-slate-100";
     default:
       return "border border-zinc-500/35 bg-zinc-700/45 text-zinc-200";
+  }
+}
+
+function getStatusClassNameOnLight(status: string | null | undefined): string {
+  switch (status) {
+    case "paymentConfirmed":
+      return "border border-emerald-400 bg-emerald-200 text-emerald-900";
+    case "paymentRequested":
+      return "border border-amber-400 bg-amber-200 text-amber-900";
+    case "accepted":
+      return "border border-sky-400 bg-sky-200 text-sky-900";
+    case "cancelled":
+      return "border border-rose-400 bg-rose-200 text-rose-900";
+    case "ordered":
+      return "border border-slate-400 bg-slate-200 text-slate-900";
+    case "paymentSettled":
+      return "border border-violet-400 bg-violet-200 text-violet-900";
+    default:
+      return "border border-zinc-400 bg-zinc-200 text-zinc-900";
   }
 }
 
@@ -385,16 +411,20 @@ export default function RealtimeBuyOrderPage() {
   const [buyOrderListPage, setBuyOrderListPage] = useState(1);
   const [buyOrderListTotalPages, setBuyOrderListTotalPages] = useState(1);
   const [buyOrderListStatusFilter, setBuyOrderListStatusFilter] = useState<BuyOrderListStatusFilter>("all");
+  const [buyOrderListStoreCodeFilter, setBuyOrderListStoreCodeFilter] = useState("all");
   const [buyOrderListQueryInput, setBuyOrderListQueryInput] = useState("");
   const [buyOrderListQuery, setBuyOrderListQuery] = useState("");
+  const [buyOrderStoreOptions, setBuyOrderStoreOptions] = useState<BuyOrderStoreOption[]>([]);
   const [buyOrderListUpdatedAt, setBuyOrderListUpdatedAt] = useState<string | null>(null);
   const [buyOrderListErrorMessage, setBuyOrderListErrorMessage] = useState<string | null>(null);
   const [isBuyOrderListLoading, setIsBuyOrderListLoading] = useState(false);
+  const [copiedTradeId, setCopiedTradeId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const cursorRef = useRef<string | null>(null);
   const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
   const triggeredJackpotEventIdsRef = useRef<string[]>([]);
+  const copiedTradeTimerRef = useRef<number | null>(null);
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -745,6 +775,10 @@ export default function RealtimeBuyOrderPage() {
         status: buyOrderListStatusFilter,
       });
 
+      if (buyOrderListStoreCodeFilter !== "all") {
+        params.set("storeCode", buyOrderListStoreCodeFilter);
+      }
+
       if (buyOrderListQuery) {
         params.set("q", buyOrderListQuery);
       }
@@ -794,7 +828,39 @@ export default function RealtimeBuyOrderPage() {
     } finally {
       setIsBuyOrderListLoading(false);
     }
-  }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter]);
+  }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter, buyOrderListStoreCodeFilter]);
+
+  const fetchBuyOrderStoreOptions = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        public: "1",
+        limit: "300",
+      });
+      const response = await fetch(`/api/realtime/buyorder/stores?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      const options = Array.isArray(data?.stores)
+        ? (data.stores as Array<Record<string, unknown>>).map((item) => ({
+            storeCode: String(item?.storeCode || ""),
+            storeName: String(item?.storeName || item?.storeCode || ""),
+            storeLogo: item?.storeLogo ? String(item.storeLogo) : null,
+          }))
+          .filter((item) => item.storeCode)
+        : [];
+
+      setBuyOrderStoreOptions(options);
+    } catch (error) {
+      console.error("Failed to fetch buyorder store options:", error);
+    }
+  }, []);
 
   const handleBuyOrderListSearchSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -808,9 +874,31 @@ export default function RealtimeBuyOrderPage() {
 
   const handleBuyOrderListFilterReset = useCallback(() => {
     setBuyOrderListStatusFilter("all");
+    setBuyOrderListStoreCodeFilter("all");
     setBuyOrderListQueryInput("");
     setBuyOrderListQuery("");
     setBuyOrderListPage(1);
+  }, []);
+
+  const handleCopyTradeId = useCallback(async (tradeId: string | null) => {
+    if (!tradeId || !navigator?.clipboard?.writeText) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(tradeId);
+      setCopiedTradeId(tradeId);
+
+      if (copiedTradeTimerRef.current !== null) {
+        window.clearTimeout(copiedTradeTimerRef.current);
+      }
+      copiedTradeTimerRef.current = window.setTimeout(() => {
+        setCopiedTradeId(null);
+        copiedTradeTimerRef.current = null;
+      }, 1300);
+    } catch (error) {
+      console.error("Failed to copy tradeId:", error);
+    }
   }, []);
 
   useEffect(() => {
@@ -831,6 +919,7 @@ export default function RealtimeBuyOrderPage() {
         void fetchTodaySummary();
         void fetchPendingBuyOrders();
         void fetchBuyOrderList();
+        void fetchBuyOrderStoreOptions();
       }
     };
 
@@ -867,7 +956,7 @@ export default function RealtimeBuyOrderPage() {
       realtime.connection.off(onConnectionStateChange);
       realtime.close();
     };
-  }, [clientId, fetchBuyOrderList, fetchPendingBuyOrders, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
+  }, [clientId, fetchBuyOrderList, fetchBuyOrderStoreOptions, fetchPendingBuyOrders, fetchTodaySummary, syncFromApi, upsertRealtimeEvents]);
 
   useEffect(() => {
     void syncFromApi(null);
@@ -910,6 +999,18 @@ export default function RealtimeBuyOrderPage() {
   }, [fetchBuyOrderList]);
 
   useEffect(() => {
+    void fetchBuyOrderStoreOptions();
+
+    const timer = window.setInterval(() => {
+      void fetchBuyOrderStoreOptions();
+    }, BUYORDER_STORE_OPTIONS_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [fetchBuyOrderStoreOptions]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => {
       void fetchBuyOrderList();
     }, BUYORDER_LIST_REFRESH_MS);
@@ -950,6 +1051,15 @@ export default function RealtimeBuyOrderPage() {
         window.clearTimeout(timer);
       }
       timerMap.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTradeTimerRef.current !== null) {
+        window.clearTimeout(copiedTradeTimerRef.current);
+        copiedTradeTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -1343,7 +1453,7 @@ export default function RealtimeBuyOrderPage() {
                         <span className="shrink-0 rounded border border-amber-300/70 bg-amber-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-900">
                           {lineNo}
                         </span>
-                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(order.status)}`}>
+                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(order.status)}`}>
                           {getStatusLabel(order.status)}
                         </span>
 
@@ -1394,7 +1504,7 @@ export default function RealtimeBuyOrderPage() {
 
             <form
               onSubmit={handleBuyOrderListSearchSubmit}
-              className="mt-2 grid gap-1.5 sm:grid-cols-[118px_minmax(0,1fr)_72px_72px]"
+              className="mt-2 grid gap-1.5 sm:grid-cols-[108px_168px_minmax(0,1fr)_72px_72px]"
             >
               <select
                 value={buyOrderListStatusFilter}
@@ -1410,12 +1520,27 @@ export default function RealtimeBuyOrderPage() {
                   </option>
                 ))}
               </select>
+              <select
+                value={buyOrderListStoreCodeFilter}
+                onChange={(event) => {
+                  setBuyOrderListStoreCodeFilter(event.target.value);
+                  setBuyOrderListPage(1);
+                }}
+                className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition focus:border-cyan-400"
+              >
+                <option value="all">전체 가맹점</option>
+                {buyOrderStoreOptions.map((store) => (
+                  <option key={store.storeCode} value={store.storeCode}>
+                    {store.storeName} ({store.storeCode})
+                  </option>
+                ))}
+              </select>
               <input
                 value={buyOrderListQueryInput}
                 onChange={(event) => {
                   setBuyOrderListQueryInput(event.target.value);
                 }}
-                placeholder="거래ID/가맹점/입금자 검색"
+                placeholder="tradeId/입금자 검색"
                 className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
               />
               <button
@@ -1447,18 +1572,18 @@ export default function RealtimeBuyOrderPage() {
                   {buyOrderListItems.map((item, index) => {
                     const storeLabel = item.storeName || item.storeCode || "-";
                     const buyerLabel = maskName(item.buyerName);
-                    const tradeLabel = item.tradeId ? formatShortHash(item.tradeId) : "-";
                     const createdAtInfo = getRelativeTimeInfo(item.createdAt, nowMs);
                     const rowNo = String((buyOrderListPage - 1) * BUYORDER_LIST_PAGE_LIMIT + index + 1).padStart(3, "0");
+                    const copied = Boolean(item.tradeId && copiedTradeId === item.tradeId);
 
                     return (
                       <article
                         key={`buyorder-list-${item.orderId || index}`}
-                        className="grid grid-cols-[96px_minmax(0,1.35fr)_170px_130px_120px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
+                        className="grid grid-cols-[96px_minmax(0,1.15fr)_170px_110px_210px_80px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]"
                       >
                         <div className="flex min-w-0 items-center gap-1.5">
                           <span className="font-mono text-[10px] text-slate-400">{rowNo}</span>
-                          <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassName(item.status)}`}>
+                          <span className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold ${getStatusClassNameOnLight(item.status)}`}>
                             {getStatusLabel(item.status)}
                           </span>
                         </div>
@@ -1482,10 +1607,23 @@ export default function RealtimeBuyOrderPage() {
 
                         <div className="truncate text-[12px] font-medium text-slate-900">{buyerLabel}</div>
 
-                        <div className="text-right font-mono text-[10px] text-slate-500">
-                          <p className="truncate">{tradeLabel}</p>
-                          <p>{createdAtInfo.relativeLabel}</p>
+                        <div className="flex items-center justify-end gap-1">
+                          <p className="min-w-0 truncate font-mono text-[10px] text-slate-600" title={item.tradeId || "-"}>
+                            {item.tradeId || "-"}
+                          </p>
+                          <button
+                            type="button"
+                            disabled={!item.tradeId}
+                            onClick={() => {
+                              void handleCopyTradeId(item.tradeId);
+                            }}
+                            className="shrink-0 rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {copied ? "복사됨" : "복사"}
+                          </button>
                         </div>
+
+                        <p className="text-right font-mono text-[10px] text-slate-500">{createdAtInfo.relativeLabel}</p>
                       </article>
                     );
                   })}
