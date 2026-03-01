@@ -2677,6 +2677,9 @@ export async function getBuyOrders(
     //const toDateValue = toDate ? toDate + 'T23:59:59Z' : new Date().toISOString();
 
     const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
+    const clearanceStatusesForSummary = privateSale
+      ? ['paymentConfirmed', 'paymentRequested']
+      : ['paymentConfirmed'];
 
     
     
@@ -2788,7 +2791,7 @@ export async function getBuyOrders(
           //nickname: { $regex: searchNickname, $options: 'i' },
 
 
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatusesForSummary },
 
           ///privateSale: { $ne: true },
           privateSale: privateSale,
@@ -2956,7 +2959,7 @@ export async function getBuyOrders(
           //nickname: { $regex: searchNickname, $options: 'i' },
 
 
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatusesForSummary },
 
           //settlement: { $exists: true, $ne: null },
 
@@ -3101,7 +3104,7 @@ export async function getBuyOrders(
     const totalReaultGroupBySellerBankAccountNumber = await collection.aggregate([
       {
         $match: {
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatusesForSummary },
           
           //settlement: { $exists: true, $ne: null },
 
@@ -3231,7 +3234,7 @@ export async function getBuyOrders(
     const totalReaultGroupByBuyerBankAccountNumber = await collection.aggregate([
       {
         $match: {
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatusesForSummary },
           
           //settlement: { $exists: true, $ne: null },
 
@@ -8598,6 +8601,7 @@ export async function getCollectOrdersForSeller(
   const client = await clientPromise;
 
   const collection = client.db(dbName).collection('buyorders');
+  const clearanceStatuses = ['paymentConfirmed', 'paymentRequested'];
 
 
   // status is not 'paymentConfirmed'
@@ -8663,7 +8667,7 @@ export async function getCollectOrdersForSeller(
         $match: {
           storecode: storecode,
           privateSale: true,
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatuses },
 
           'buyer.depositName': { $eq: '' },
 
@@ -8694,7 +8698,7 @@ export async function getCollectOrdersForSeller(
     const totalReaultGroupByBuyerBankAccountNumber = await collection.aggregate([
       {
         $match: {
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatuses },
           
           //settlement: { $exists: true, $ne: null },
 
@@ -8720,7 +8724,7 @@ export async function getCollectOrdersForSeller(
     const totalReaultGroupBySellerBankAccountNumber = await collection.aggregate([
       {
         $match: {
-          status: 'paymentConfirmed',
+          status: { $in: clearanceStatuses },
           privateSale: true,
           storecode: { $regex: storecode, $options: 'i' },
           createdAt: { $gte: fromDateValue, $lt: toDateValue },
