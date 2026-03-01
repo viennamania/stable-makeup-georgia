@@ -1,0 +1,612 @@
+{
+  "db": "ultraman",
+  "wallet": "0xe35b76c6dbdfa178d43b8aeef106192ab20162b3",
+  "checkedAtUtc": "2026-03-01T00:39:12.079Z",
+  "matchedCollections": [
+    {
+      "collection": "buyorders",
+      "count": 7,
+      "sample": [
+        {
+          "_id": "695f617eebfd1d881d670a6e",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-08T07:49:18.405Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "916050145",
+          "escrowWallet": {
+            "address": "0x396BD87f2C08F0dE508484c60f404080F36d1A07",
+            "privateKey": "0x8c67d0debaf78eadef5d429cc16afa1e9ad7232a930dff56dee771480c8f8a8f"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "78de6082-ff4e-40c8-8262-e41a95fdfb54",
+          "transactionHash": "0x10722e815ddc3651fbce614c9504afceec2341f18b4bfb731739ba627a6d022a",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3000000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2046.947,
+            "settlementAmountKRW": "2986496",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 9.253,
+            "feeAmountKRW": "13500",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-08T12:18:26.743Z"
+          }
+        },
+        {
+          "_id": "695e3b8a559e6b2ba81f8916",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T10:55:06.742Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "656888564",
+          "escrowWallet": {
+            "address": "0x078f9900bac270be50B03c3e1F4FaD827DA3E06a",
+            "privateKey": "0x9b93311ff32dc02ad0b401171889b1d3838eb8110208cedfe0458c1eaf62881c"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "83e7bc22-a7c5-40b7-99ae-308a8389b7c0",
+          "transactionHash": "0x3d99d50eaa40599eebfb289e678f9dec8a54284d408294c9f603fc3066d80733",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3500000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2388.105,
+            "settlementAmountKRW": "3484245",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 10.795,
+            "feeAmountKRW": "15750",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T11:54:27.522Z"
+          }
+        },
+        {
+          "_id": "695e248eed33dda0fa07de40",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T09:17:02.780Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "324784314",
+          "escrowWallet": {
+            "address": "0x64312c696492695C0950deebC6b3277235293f97",
+            "privateKey": "0x6f271fd28fd771ca2f59c62028929c7d7ab74dfa7a804a1c5632e9489b74b170"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "8ed6d67b-5bf2-4d73-93f0-2fc51e6f8099",
+          "transactionHash": "0x30157b509453544594c546f1f50e893c83ccf362211a96a540771abd1a3bae2f",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3500000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2388.105,
+            "settlementAmountKRW": "3484245",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 10.795,
+            "feeAmountKRW": "15750",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T09:24:09.937Z"
+          }
+        },
+        {
+          "_id": "695e1bf42a68df221587c983",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T08:40:20.225Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "759639357",
+          "escrowWallet": {
+            "address": "0x6062D4666BF36D516B2434b417c850CA6fF12CAB",
+            "privateKey": "0x1145db5165e6cdb6c2dc3e05d4398c0f666421cb6dc4f4aabf6f42ed49e36c62"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "798ab813-fa91-4d4a-8d66-ec186dcff427",
+          "transactionHash": "0x0a309c45e289abc9c0bab55836df29895c941bb2d9e33873fff778eb610895d4",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3500000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2388.105,
+            "settlementAmountKRW": "3484245",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 10.795,
+            "feeAmountKRW": "15750",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T08:50:01.600Z"
+          }
+        },
+        {
+          "_id": "695dee43cfb33e15132d90fc",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T05:25:23.936Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "614214365",
+          "escrowWallet": {
+            "address": "0x45Ac3e12855fa4aD20b2464463cabC54C3824cb1",
+            "privateKey": "0x5104cc2418bceec5ec5da5de5e0b6bb08b8545263afd22d094e76ec6bb7c091e"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "b5ad9808-83d6-4188-adf6-52d28002297b",
+          "transactionHash": "0x440f703039f82f1cf69829dfb6755df97135a19058902bd405d9b59fe87609bf",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3800000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2592.8,
+            "settlementAmountKRW": "3782895",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 11.72,
+            "feeAmountKRW": "17099",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T05:35:45.694Z"
+          }
+        }
+      ]
+    },
+    {
+      "collection": "buyorders_2025",
+      "count": 1,
+      "sample": [
+        {
+          "_id": "6943e5b3e0b0d68b6bde74e8",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2025-12-18T11:29:55.373Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "578543591",
+          "escrowWallet": {
+            "address": "0xfA74445Ac6Cd1494Ef375C2D47307E0F9673d679",
+            "privateKey": "0xc1274ded9c3d66169508a99dbc54c86b675cc2de2f30043d1fe338fa46b60400"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "농협",
+              "accountNumber": "3520105588648",
+              "accountHolder": "임도운"
+            }
+          },
+          "queueId": "55a7056e-303d-481c-851d-f7be29436088",
+          "transactionHash": "0xbd5e658d00c9f35e54434aafdb1d42565a5291af34c72526c572655bb3734a7d",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1500,
+            "paymentAmount": 2900000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 1924.63,
+            "settlementAmountKRW": "2886945",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.3,
+            "feeAmount": 5.8,
+            "feeAmountKRW": "8700",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0.15,
+            "agentFeeAmount": 2.9,
+            "agentFeeAmountKRW": "4350",
+            "status": "paymentSettled",
+            "createdAt": "2025-12-18T15:27:20.186Z"
+          }
+        }
+      ]
+    },
+    {
+      "collection": "buyorders_20260210",
+      "count": 8,
+      "sample": [
+        {
+          "_id": "695f617eebfd1d881d670a6e",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-08T07:49:18.405Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "916050145",
+          "escrowWallet": {
+            "address": "0x396BD87f2C08F0dE508484c60f404080F36d1A07",
+            "privateKey": "0x8c67d0debaf78eadef5d429cc16afa1e9ad7232a930dff56dee771480c8f8a8f"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "78de6082-ff4e-40c8-8262-e41a95fdfb54",
+          "transactionHash": "0x10722e815ddc3651fbce614c9504afceec2341f18b4bfb731739ba627a6d022a",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3000000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2046.947,
+            "settlementAmountKRW": "2986496",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 9.253,
+            "feeAmountKRW": "13500",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-08T12:18:26.743Z"
+          }
+        },
+        {
+          "_id": "695e3b8a559e6b2ba81f8916",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T10:55:06.742Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "656888564",
+          "escrowWallet": {
+            "address": "0x078f9900bac270be50B03c3e1F4FaD827DA3E06a",
+            "privateKey": "0x9b93311ff32dc02ad0b401171889b1d3838eb8110208cedfe0458c1eaf62881c"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "83e7bc22-a7c5-40b7-99ae-308a8389b7c0",
+          "transactionHash": "0x3d99d50eaa40599eebfb289e678f9dec8a54284d408294c9f603fc3066d80733",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3500000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2388.105,
+            "settlementAmountKRW": "3484245",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 10.795,
+            "feeAmountKRW": "15750",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T11:54:27.522Z"
+          }
+        },
+        {
+          "_id": "695e248eed33dda0fa07de40",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T09:17:02.780Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "324784314",
+          "escrowWallet": {
+            "address": "0x64312c696492695C0950deebC6b3277235293f97",
+            "privateKey": "0x6f271fd28fd771ca2f59c62028929c7d7ab74dfa7a804a1c5632e9489b74b170"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "8ed6d67b-5bf2-4d73-93f0-2fc51e6f8099",
+          "transactionHash": "0x30157b509453544594c546f1f50e893c83ccf362211a96a540771abd1a3bae2f",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3500000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2388.105,
+            "settlementAmountKRW": "3484245",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 10.795,
+            "feeAmountKRW": "15750",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T09:24:09.937Z"
+          }
+        },
+        {
+          "_id": "695e1bf42a68df221587c983",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T08:40:20.225Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "759639357",
+          "escrowWallet": {
+            "address": "0x6062D4666BF36D516B2434b417c850CA6fF12CAB",
+            "privateKey": "0x1145db5165e6cdb6c2dc3e05d4398c0f666421cb6dc4f4aabf6f42ed49e36c62"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "798ab813-fa91-4d4a-8d66-ec186dcff427",
+          "transactionHash": "0x0a309c45e289abc9c0bab55836df29895c941bb2d9e33873fff778eb610895d4",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3500000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2388.105,
+            "settlementAmountKRW": "3484245",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 10.795,
+            "feeAmountKRW": "15750",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T08:50:01.600Z"
+          }
+        },
+        {
+          "_id": "695dee43cfb33e15132d90fc",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh",
+          "createdAt": "2026-01-07T05:25:23.936Z",
+          "status": "paymentConfirmed",
+          "buyer": {
+            "depositBankName": "카카오뱅크",
+            "depositBankAccountNumber": "3333268034581",
+            "depositName": "변수아"
+          },
+          "tradeId": "614214365",
+          "escrowWallet": {
+            "address": "0x45Ac3e12855fa4aD20b2464463cabC54C3824cb1",
+            "privateKey": "0x5104cc2418bceec5ec5da5de5e0b6bb08b8545263afd22d094e76ec6bb7c091e"
+          },
+          "seller": {
+            "walletAddress": "0xa9356206D2d5Ea04aE36632C4C75936F9882Bb79",
+            "nickname": "seller",
+            "avatar": "",
+            "mobile": "",
+            "memo": "케이뱅크 100099998888 마스터",
+            "bankInfo": {
+              "bankName": "우리은행",
+              "accountNumber": "01040772911",
+              "accountHolder": "조정흠"
+            }
+          },
+          "queueId": "b5ad9808-83d6-4188-adf6-52d28002297b",
+          "transactionHash": "0x440f703039f82f1cf69829dfb6755df97135a19058902bd405d9b59fe87609bf",
+          "settlement": {
+            "txid": "0x",
+            "krwRate": 1459,
+            "paymentAmount": 3800000,
+            "settlementWalletAddress": "0x2D2e3b4A9a45FA4aEA29cD2816E15dFA91ECd0eB",
+            "settlementAmount": 2592.8,
+            "settlementAmountKRW": "3782895",
+            "feeWalletAddress": "0x3f1e7D26A2704BE994aF84cEbf19BA9683E23666",
+            "feePercent": 0.45,
+            "feeAmount": 11.72,
+            "feeAmountKRW": "17099",
+            "agentFeeWalletAddress": "0xB2E5FCCEaFb0B698F849Be981f39f3dFF8Bf3Fa7",
+            "agentFeePercent": 0,
+            "agentFeeAmount": 0,
+            "agentFeeAmountKRW": "0",
+            "status": "paymentSettled",
+            "createdAt": "2026-01-07T05:35:45.694Z"
+          }
+        }
+      ]
+    },
+    {
+      "collection": "users",
+      "count": 1,
+      "sample": [
+        {
+          "_id": "6943e5b2e0b0d68b6bde74e7",
+          "storecode": "kcdxdthu",
+          "walletAddress": "0xE35B76C6DBDfa178D43B8aeEf106192ab20162b3",
+          "nickname": "sooahh----xxxxxxxxx",
+          "buyOrderStatus": "paymentConfirmed",
+          "latestBuyOrder": {
+            "_id": "695f617eebfd1d881d670a6e",
+            "tradeId": "916050145",
+            "storecode": "kcdxdthu",
+            "storeName": "LUCKY9",
+            "storeLogo": "https://t0gqytzvlsa2lapo.public.blob.vercel-storage.com/svlpIbj-5mHZjyAmdIZ3FSvAadkF8rSLLQJOSj.png",
+            "usdtAmount": 2056.2,
+            "krwAmount": 3000000,
+            "rate": 1459,
+            "createdAt": "2026-01-08T07:49:18.588Z"
+          },
+          "totalPaymentConfirmedCount": 8,
+          "totalPaymentConfirmedKrwAmount": 25500000,
+          "totalPaymentConfirmedUsdtAmount": 17432.71
+        }
+      ]
+    }
+  ],
+  "buyordersSummary": {
+    "total": 7,
+    "statusSummary": {
+      "paymentConfirmed": 7
+    },
+    "paymentConfirmedSumKrw": 22600000,
+    "paymentConfirmedSumUsdt": 15499.379999999997,
+    "firstCreatedAt": "2026-01-05T08:45:24.078Z",
+    "lastCreatedAt": "2026-01-08T07:49:18.405Z"
+  }
+}

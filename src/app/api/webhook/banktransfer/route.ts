@@ -1029,6 +1029,7 @@ export async function POST(request: NextRequest) {
       // check match from buyorders collection
       // when buyerDepositName and krwAmount match
 
+      /*
       try {
         const matchResult = await checkBuyOrderMatchDeposit({
           buyerDepositName: transaction_name,
@@ -1055,6 +1056,7 @@ export async function POST(request: NextRequest) {
           ? `${errorMessage} | ${matchErrorMessage}`
           : matchErrorMessage;
       }
+      */
 
 
     }
