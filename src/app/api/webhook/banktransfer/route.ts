@@ -996,10 +996,10 @@ export async function POST(request: NextRequest) {
 
 
 
-    let match = null;
-    let tradeId = null;
-    let buyerInfo = null;
-    let sellerInfo = null;
+    let match: string | null = null;
+    let tradeId: string | null = null;
+    let buyerInfo: any = null;
+    let sellerInfo: any = null;
 
     if (transaction_type === 'deposited') {
 
