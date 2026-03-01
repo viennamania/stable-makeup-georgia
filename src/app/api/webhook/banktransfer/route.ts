@@ -68,6 +68,23 @@ function normalizeBankAccountNumber(value: unknown): string {
   return String(value || "").replace(/[\s-]/g, "");
 }
 
+function normalizeIncomingMatch(value: unknown): "success" | null {
+  if (value === true) {
+    return "success";
+  }
+
+  if (typeof value === "number" && value === 1) {
+    return "success";
+  }
+
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "true" || normalized === "success" || normalized === "matched" || normalized === "1") {
+    return "success";
+  }
+
+  return null;
+}
+
 function parseWebhookDateToUtc(value: unknown): Date | null {
   const raw = String(value || "").trim();
   if (!raw) {
@@ -1000,17 +1017,8 @@ export async function POST(request: NextRequest) {
 
 
 
-    //let match = null;
-
     // matchResult 'success', null
-
-    let matchReault = null; //
-
-    if (match === 'true') {
-      matchReault = 'success';
-    } else {
-      matchReault = null;
-    }
+    let matchResult: "success" | null = normalizeIncomingMatch(match);
 
     
 
@@ -1114,7 +1122,7 @@ export async function POST(request: NextRequest) {
       processingDate: processing_date,
       
       //match: match,
-      match: matchReault,
+      match: matchResult,
 
       matchedByAdmin: false,
       tradeId: tradeId,
@@ -1135,13 +1143,13 @@ export async function POST(request: NextRequest) {
       storecode: storeInfo?.storecode || null,
       receiver,
       tradeId: tradeId || null,
-      match: match || null,
+      match: matchResult,
       errorMessage: errorMessage,
     });
 
     const isUnmatchedDeposit =
       String(transaction_type || "").toLowerCase() === "deposited" &&
-      String(match || "").toLowerCase() !== "success";
+      String(matchResult || "").toLowerCase() !== "success";
 
     if (isUnmatchedDeposit) {
       await publishUnmatchedEvent({
@@ -1153,7 +1161,7 @@ export async function POST(request: NextRequest) {
         storecode: storeInfo?.storecode || null,
         receiver,
         tradeId: tradeId || null,
-        match: match || null,
+        match: matchResult,
         reason: errorMessage ? "auto_match_check_failed" : "no_matching_buyorder",
         errorMessage: errorMessage,
       });
