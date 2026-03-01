@@ -406,11 +406,14 @@ export async function updateOne(data: any) {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('users');
 
+  const walletAddressRaw = String(data.walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
 
   const existingUser = await collection.findOne<UserProps>(
     {
-      walletAddress: data.walletAddress,
       storecode: data.storecode,
+      walletAddress: walletAddressRegex,
     }
   );
 
@@ -423,7 +426,7 @@ export async function updateOne(data: any) {
     {
       storecode: data.storecode,
       nickname: data.nickname,
-      walletAddress: { $ne: data.walletAddress },
+      walletAddress: { $ne: existingUser.walletAddress },
     }
   );
 
@@ -449,7 +452,7 @@ export async function updateOne(data: any) {
 
   const result = await collection.updateOne(
     {
-      walletAddress: data.walletAddress,
+      walletAddress: existingUser.walletAddress,
       storecode: data.storecode,
     },
     { $set: updatePayload }
@@ -459,7 +462,7 @@ export async function updateOne(data: any) {
     const updated = await collection.findOne<UserProps>(
       {
         storecode: data.storecode,
-        walletAddress: data.walletAddress
+        walletAddress: existingUser.walletAddress
       },
     );
 
