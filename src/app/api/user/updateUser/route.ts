@@ -1,9 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ethers } from "ethers";
+import { verifySignature } from "thirdweb/auth";
+import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 
 import {
   updateOne,
 } from "@lib/api/user";
+import { client } from "@/app/client";
+import { chain as configuredChain } from "@/app/config/contractAddresses";
 
 const UPDATE_USER_SIGNING_PREFIX = "stable-georgia:update-user:v1";
 const UPDATE_USER_SIGNATURE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -35,6 +39,37 @@ const normalizeWalletAddress = (value: unknown): string | null => {
   } catch {
     return null;
   }
+};
+
+const resolveSignatureChains = (storecode: string) => {
+  const chainMap: Record<string, any> = {
+    arbitrum,
+    polygon,
+    ethereum,
+    bsc,
+  };
+
+  const candidates = [
+    String(storecode || "").trim().toLowerCase(),
+    String(configuredChain || "").trim().toLowerCase(),
+    "arbitrum",
+    "polygon",
+    "ethereum",
+    "bsc",
+  ];
+
+  const chains: any[] = [];
+  for (const name of candidates) {
+    const candidate = chainMap[name];
+    if (!candidate) {
+      continue;
+    }
+    if (!chains.some((item) => item.id === candidate.id)) {
+      chains.push(candidate);
+    }
+  }
+
+  return chains;
 };
 
 const buildUpdateUserSigningMessage = ({
@@ -107,14 +142,38 @@ export async function POST(request: NextRequest) {
     signedAtIso,
   });
 
-  let recoveredAddress: string | null = null;
+  let isValidSignature = false;
   try {
-    recoveredAddress = ethers.utils.verifyMessage(signingMessage, signature).toLowerCase();
+    const recoveredAddress = ethers.utils.verifyMessage(signingMessage, signature).toLowerCase();
+    isValidSignature = recoveredAddress === walletAddress;
   } catch {
-    recoveredAddress = null;
+    isValidSignature = false;
   }
 
-  if (!recoveredAddress || recoveredAddress !== walletAddress) {
+  // Fallback for smart-account signatures (EIP-1271 / ERC-6492)
+  if (!isValidSignature) {
+    try {
+      const verificationChains = resolveSignatureChains(storecode);
+
+      for (const verificationChain of verificationChains) {
+        isValidSignature = await verifySignature({
+          message: signingMessage,
+          signature,
+          address: walletAddress,
+          client,
+          chain: verificationChain,
+        });
+
+        if (isValidSignature) {
+          break;
+        }
+      }
+    } catch {
+      isValidSignature = false;
+    }
+  }
+
+  if (!isValidSignature) {
     return NextResponse.json(
       { result: null, error: "Invalid signature" },
       { status: 401 }
