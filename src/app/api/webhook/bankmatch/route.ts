@@ -1,33 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-
-
-// getAllUsersByStorecode
 import {
-  getAllUsersByStorecode,
-} from "@lib/api/user";
-
-
-
-import {
-  OrderProps,
-	acceptBuyOrder,
-  updateBuyOrderByQueueId,
-
-
-  //getOneBuyOrder,
   getOneBuyOrderByTradeId,
-
   buyOrderConfirmPayment,
-
-  buyOrderWebhook,
-
-} from '@lib/api/order';
-
-
-
-import {
-  updateBankTransferMatchAndTradeId,
-} from '@lib/api/bankTransfer';
+} from "@lib/api/order";
+import { insertWebhookLog } from "@lib/api/webhookLog";
 
 
 // webhook
@@ -79,292 +55,217 @@ Response Body
   */
 
 
+function toNullableString(value: unknown): string | null {
+  const normalized = String(value || "").trim();
+  return normalized ? normalized : null;
+}
+
 export async function POST(request: NextRequest) {
-
-
-  // parse header
   const webhookKey = request.headers.get("x-webhook-key");
   const mallId = request.headers.get("x-mall-id");
   const traceId = request.headers.get("x-trace-id");
+  const headersPayload = {
+    "x-webhook-key": webhookKey,
+    "x-mall-id": mallId,
+    "x-trace-id": traceId,
+  };
 
   console.log("payaction webhookKey", webhookKey);
   console.log("payaction mallId", mallId);
-  console.log("payaction traceId", traceId); // payaction traceId 1747808169270x797731416156850300
+  console.log("payaction traceId", traceId);
 
+  let body: any = null;
+  let order_number: any = null;
+  let order_status: any = null;
+  let processing_date: any = null;
 
+  const logAndRespond = async ({
+    responseBody,
+    stage,
+    statusCode = 200,
+    details = {},
+    error = null,
+  }: {
+    responseBody: Record<string, any>;
+    stage: string;
+    statusCode?: number;
+    details?: Record<string, unknown>;
+    error?: any;
+  }) => {
+    try {
+      await insertWebhookLog({
+        event: "bankmatch_webhook",
+        headers: headersPayload,
+        body: {
+          stage,
+          traceId: traceId || null,
+          mallId: mallId || null,
+          orderNumber: toNullableString(order_number),
+          orderStatus: toNullableString(order_status),
+          processingDate: toNullableString(processing_date),
+          responseStatus: toNullableString(responseBody?.status),
+          responseMessage: toNullableString(responseBody?.message),
+          ...details,
+        },
+        error,
+        createdAt: new Date(),
+      });
+    } catch (logError) {
+      console.error("Failed to insert bankmatch webhook log:", logError);
+    }
 
-  const body = await request.json();
+    return NextResponse.json(responseBody, { status: statusCode });
+  };
 
-  console.log("payaction body", body);
-  /*
-  {
-    order_number: '682d72f8a9087272af75142b',
-    order_status: '매칭완료',
-    processing_date: '2025-05-21T15:31:06+09:00'
-  }
-  */
-
-  /*
-   {
-    order_number: '40620819',
-    order_status: '매칭완료',
-    processing_date: '2025-09-15T05:46:42.060+09:00',
-    agent_id: 3,
-    agent_name: '원클릭',
-    account_number: '37591024505107',
-    amount: '3,000,000'
-  }
-  */
-
-
-  if (!body) {
-    return NextResponse.json({
-      status: "error",
-      message: "body is empty",
+  try {
+    body = await request.json();
+  } catch (parseError) {
+    return logAndRespond({
+      responseBody: {
+        status: "error",
+        message: "Invalid JSON body",
+      },
+      statusCode: 400,
+      stage: "parse_request_body",
+      details: {
+        reasonCode: "INVALID_JSON_BODY",
+      },
+      error: parseError,
     });
   }
 
+  console.log("payaction body", body);
 
+  if (!body) {
+    return logAndRespond({
+      responseBody: {
+        status: "error",
+        message: "body is empty",
+      },
+      stage: "validate_body",
+      details: {
+        reasonCode: "EMPTY_BODY",
+      },
+    });
+  }
 
-  const {
+  ({
     order_number,
     order_status,
     processing_date,
-  } = body;
-
- 
-
+  } = body);
 
   console.log("payaction order_number", order_number);
   console.log("payaction order_status", order_status);
   console.log("payaction processing_date", processing_date);
 
-  /*
-
-  payaction order_number 11787973
-  payaction order_status 매칭완료
-  payaction processing_date 2025-09-15T02:47:58.306+09:00
-  */
-
-
-  
-
   if (!order_number) {
-    return NextResponse.json({
-      status: "false",
+    return logAndRespond({
+      responseBody: {
+        status: "false",
+      },
+      stage: "validate_order_number",
+      details: {
+        reasonCode: "MISSING_ORDER_NUMBER",
+      },
     });
   }
 
   if (order_status !== "매칭완료") {
-    return NextResponse.json({
-      status: "false",
+    return logAndRespond({
+      responseBody: {
+        status: "false",
+      },
+      stage: "validate_order_status",
+      details: {
+        reasonCode: "ORDER_STATUS_NOT_MATCHED",
+      },
     });
   }
 
-  /*
-    const result = await buyOrderConfirmPayment({
-      lang: lang,
+  try {
+    const buyOrder = await getOneBuyOrderByTradeId({
+      tradeId: order_number,
+    });
+
+    if (!buyOrder) {
+      console.log("buyOrder is empty");
+      return logAndRespond({
+        responseBody: {
+          status: "error",
+          message: "buyOrder is empty",
+        },
+        stage: "find_buyorder",
+        details: {
+          reasonCode: "BUYORDER_NOT_FOUND",
+          tradeId: toNullableString(order_number),
+        },
+      });
+    }
+
+    if (buyOrder?.status !== "paymentRequested") {
+      console.log("buyOrder status is not paymentRequested");
+      return logAndRespond({
+        responseBody: {
+          status: "false",
+        },
+        stage: "validate_buyorder_status",
+        details: {
+          reasonCode: "BUYORDER_STATUS_NOT_PAYMENT_REQUESTED",
+          buyOrderStatus: toNullableString(buyOrder?.status),
+          tradeId: toNullableString(order_number),
+          buyOrderId: toNullableString(buyOrder?._id),
+        },
+      });
+    }
+
+    const storecode = buyOrder?.storecode;
+    const orderId = buyOrder?._id;
+    const paymentAmount = buyOrder?.krwAmount;
+    const queueId = null;
+    const transactionHash = "0x";
+    const buyerDepositName = buyOrder?.buyer?.depositName || "익명";
+    const buyerNickname = buyOrder?.nickname || "익명";
+
+    const confirmResponse = await buyOrderConfirmPayment({
+      lang: "ko",
       storecode: storecode,
       orderId: orderId,
       paymentAmount: paymentAmount,
-      
       queueId: queueId,
-
-      transactionHash: transactionHashResult,
-
+      transactionHash: transactionHash,
+      autoConfirmPayment: true,
     });
-    */
 
-  /*
-  const resultBuyOrder = await getOneBuyOrder({
-    orderId: order_number,
-    limit: 1,
-    page: 1,  
-  });
-
-  //console.log("getOneBuyOrder result", resultBuyOrder);
-  if (!resultBuyOrder) {
-    return NextResponse.json({
-      status: "error",
-      message: "resultBuyOrder is empty",
+    return logAndRespond({
+      responseBody: {
+        status: "success",
+      },
+      stage: "buyorder_confirm_payment",
+      details: {
+        tradeId: toNullableString(order_number),
+        buyOrderId: toNullableString(orderId),
+        storecode: toNullableString(storecode),
+        paymentAmount: paymentAmount ?? null,
+        buyerDepositName: toNullableString(buyerDepositName),
+        buyerNickname: toNullableString(buyerNickname),
+        confirmStatus: toNullableString((confirmResponse as any)?.status),
+        confirmMessage: toNullableString((confirmResponse as any)?.message),
+      },
     });
-  }
-
-  const buyOrder = resultBuyOrder?.orders[0];
-
-  console.log("buyOrder", buyOrder);
-  if (!buyOrder) {
-    return NextResponse.json({
-      status: "error",
-      message: "buyOrder is empty",
-    });
-  }
-  */
-
-
-  
-  
-  const buyOrder = await getOneBuyOrderByTradeId({
-    tradeId: order_number,
-  });
-
-  if (!buyOrder) {
-    console.log("buyOrder is empty");
-    return NextResponse.json({
-      status: "error",
-      message: "buyOrder is empty",
+  } catch (runtimeError) {
+    console.error("bankmatch webhook failed:", runtimeError);
+    return logAndRespond({
+      responseBody: {
+        status: "error",
+        message: "bankmatch webhook failed",
+      },
+      statusCode: 500,
+      stage: "runtime_error",
+      details: {
+        reasonCode: "BANKMATCH_RUNTIME_ERROR",
+      },
+      error: runtimeError,
     });
   }
-
-  //console.log("buyOrder", buyOrder);
-
-  
-  if (buyOrder?.status !== "paymentRequested") {
-    console.log("buyOrder status is not requestPayment");
-    return NextResponse.json({
-      status: "false",
-    });
-  }
-  
-
-
-  const storecode = buyOrder?.storecode;
-  const orderId = buyOrder?._id;
-  const paymentAmount = buyOrder?.krwAmount;
-  const queueId = null;
-  const transactionHash = "0x";
-
-  const buyerDepositName = buyOrder?.buyer?.depositName || "익명";
-  const buyerNickname = buyOrder?.nickname || "익명";
-
-
-  
-  const response = await buyOrderConfirmPayment({
-    lang: "ko",
-    storecode: storecode,
-    orderId: orderId,
-    paymentAmount: paymentAmount,
-    queueId: queueId,
-    transactionHash: transactionHash,
-
-
-    autoConfirmPayment: true,
-
-
-  });
-
-  //console.log("buyOrderConfirmPayment response", response);
-
-
- 
-  // updateBankTransferMatchAndTradeId
-  /*
-  const result = await updateBankTransferMatchAndTradeId({
-    transactionName: buyerDepositName,
-    amount: paymentAmount,
-    tradeId: order_number,
-    storeInfo: {
-      storecode: buyOrder?.storecode || "",
-      storeName: buyOrder?.store.storeName || "",
-      storeLogo: buyOrder?.store.storeLogo || "",
-    },
-    buyerInfo: {
-      nickname: buyerNickname,
-      depositBankName: buyOrder?.buyer?.depositBankName || "",
-      depositBankAccountNumber: buyOrder?.buyer?.depositBankAccountNumber || "",
-      depositName: buyOrder?.buyer?.depositName || "",
-      walletAddress: buyOrder?.buyer?.walletAddress || "",
-    },
-  });
-  
-  console.log("updateBankTransferMatchAndTradeId result", result);
-  */
-
-
-  
-  
-  
-  
-  
-  /*
-  if (buyOrder.store.storecode === "dtwuzgst") { // 가맹점 이름 매니
-
-
-      // http://3.112.81.28/?userid=test1234&amount=10000
-
-      const userid = buyOrder.nickname; // 매니의 userid는 orderNickname
-      const amount = paymentAmount; // 매니의 amount는 krwAmount
-
-      // https://my-9999.com/api/deposit?userid=test1234&amount=10000
-      const webhookUrl = "http://3.112.81.28"; // 매니의 웹훅 URL
-
-      const fetchUrl = `${webhookUrl}/?userid=${userid}&amount=${amount}`;
-
-      try {
-
-        
-        //const response = await fetch(fetchUrl, {
-        //  method: "GET",
-        //  headers: {
-        //    "Content-Type": "application/json",
-        //  },
-        //});
-
-        // GET 요청
-        const response = await fetch(fetchUrl);
-
-        console.log("fetchUrl", fetchUrl);
-        console.log("response", response);
-
-
-
-        if (!response.ok) {
-          console.error("Failed to send webhook for user:", userid, "with status:", response.status);
-        } else {
-
-
-          
-          //성공: {result: success}, 실패: {result: fail}
-
-
-
-          await buyOrderWebhook({
-            orderId: orderId,
-            webhookData: {
-              createdAt: new Date().toISOString(),
-              url: webhookUrl,
-              userid: userid,
-              amount: amount,
-              
-              //response: response.text(), // response를 JSON으로 파싱하지 못한 경우
-              response: await response.text(), // response를 JSON으로 파싱하지 못한 경우
-
-            }
-          });
-
-
-
-        }
-
-      } catch (error) {
-        console.error("Error sending webhook:", error);
-      }
-
-    }
-
-    */
-
-
-
-
-
-
-
-
-  
-
-  return NextResponse.json({
-    status: "success",
-  });
-  
 }
