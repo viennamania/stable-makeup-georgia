@@ -10,6 +10,7 @@ import { getContract, sendTransaction, waitForReceipt } from "thirdweb";
 import { transfer, balanceOf } from "thirdweb/extensions/erc20";
 
 import { client } from "@/app/client";
+import { postUpdateUserWithSignature } from "@/lib/client/update-user-signed";
 import {
   chain as configuredChain,
   ethereumContractAddressUSDT,
@@ -542,30 +543,25 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
           error?: string;
         };
 
-        if (!createResponse.ok || !createData.result) {
+      if (!createResponse.ok || !createData.result) {
           throw new Error(createData.error || "회원 생성에 실패했습니다. 닉네임 중복 여부를 확인하세요.");
         }
       } else {
-        const updateNicknameResponse = await fetch("/api/user/updateUser", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        const updateNicknameData = await postUpdateUserWithSignature({
+          account: activeAccount,
+          payload: {
             storecode: STORECODE,
             walletAddress,
             nickname,
             mobile,
             email,
-          }),
+          },
         });
 
-        const updateNicknameData = (await updateNicknameResponse.json()) as {
-          result?: unknown;
-        };
-
-        if (!updateNicknameResponse.ok || !updateNicknameData.result) {
-          throw new Error("닉네임 저장에 실패했습니다. 이미 사용 중인 닉네임일 수 있습니다.");
+        if (!updateNicknameData.result) {
+          throw new Error(
+            String(updateNicknameData.error || "닉네임 저장에 실패했습니다. 이미 사용 중인 닉네임일 수 있습니다.")
+          );
         }
       }
 
@@ -599,7 +595,7 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
     } finally {
       setSaving(false);
     }
-  }, [avatar, canSave, connectedEmail, connectedMobile, fetchProfile, nickname, params.lang, walletAddress]);
+  }, [activeAccount, avatar, canSave, connectedEmail, connectedMobile, fetchProfile, nickname, params.lang, walletAddress]);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(120%_120%_at_100%_0%,#dbeafe_0%,#eff6ff_35%,#f8fafc_100%)] px-3 py-4 text-slate-900 sm:px-4 sm:py-6">

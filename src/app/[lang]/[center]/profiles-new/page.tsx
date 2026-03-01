@@ -2,6 +2,8 @@
 'use client';
 import React, { use, useEffect, useState } from 'react';
 
+import { postUpdateUserWithSignature } from "@/lib/client/update-user-signed";
+
 
 
 import { toast } from 'react-hot-toast';
@@ -421,21 +423,17 @@ export default function SettingsPage({ params }: any) {
         if (nicknameEdit) {
 
 
-            const response = await fetch("/api/user/updateUser", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
+            const data = await postUpdateUserWithSignature({
+                account: activeAccount,
+                payload: {
                     walletAddress: address,
                     
                     //nickname: nickname,
                     nickname: editedNickname,
 
-                }),
+                },
+                fallbackStorecode: params.center,
             });
-
-            const data = await response.json();
 
             ///console.log("updateUser data", data);
 
