@@ -29,6 +29,10 @@ import {
   updateBankTransferMatchAndTradeId,
 } from '@lib/api/bankTransfer';
 
+import {
+  insertWebhookLog,
+} from '@lib/api/webhookLog';
+
 
 // webhook
 // header
@@ -80,6 +84,7 @@ Response Body
 
 
 export async function POST(request: NextRequest) {
+  const receivedAt = new Date();
 
 
   // parse header
@@ -87,13 +92,83 @@ export async function POST(request: NextRequest) {
   const mallId = request.headers.get("x-mall-id");
   const traceId = request.headers.get("x-trace-id");
 
+  const headersPayload = {
+    "x-webhook-key": webhookKey,
+    "x-mall-id": mallId,
+    "x-trace-id": traceId,
+  };
+
+  let rawBody = "";
+  let body: any = null;
+
+  const respondWithLog = async ({
+    status,
+    message,
+    stage,
+    error,
+    resultData,
+  }: {
+    status: string;
+    message?: string;
+    stage: string;
+    error?: any;
+    resultData?: Record<string, any>;
+  }) => {
+    const responseBody: Record<string, any> = {
+      status,
+    };
+
+    if (message) {
+      responseBody.message = message;
+    }
+
+    try {
+      await insertWebhookLog({
+        event: "bankmatch_webhook",
+        headers: headersPayload,
+        body: {
+          request: body,
+          requestRaw: rawBody || null,
+          order_number: body?.order_number || null,
+          order_status: body?.order_status || null,
+          processing_date: body?.processing_date || null,
+          traceId,
+          mallId,
+          result: {
+            status,
+            message: message || null,
+            stage,
+            ...resultData,
+          },
+          receivedAt,
+        },
+        error: error || null,
+        createdAt: receivedAt,
+      });
+    } catch (logError) {
+      console.error("Failed to insert bankmatch webhook log:", logError);
+    }
+
+    return NextResponse.json(responseBody);
+  };
+
   console.log("payaction webhookKey", webhookKey);
   console.log("payaction mallId", mallId);
   console.log("payaction traceId", traceId); // payaction traceId 1747808169270x797731416156850300
 
 
 
-  const body = await request.json();
+  try {
+    rawBody = await request.text();
+    body = rawBody ? JSON.parse(rawBody) : null;
+  } catch (parseError) {
+    return await respondWithLog({
+      status: "error",
+      message: "Invalid JSON body",
+      stage: "parse_body",
+      error: parseError,
+    });
+  }
 
   console.log("payaction body", body);
   /*
@@ -118,9 +193,10 @@ export async function POST(request: NextRequest) {
 
 
   if (!body) {
-    return NextResponse.json({
+    return await respondWithLog({
       status: "error",
       message: "body is empty",
+      stage: "validate_body",
     });
   }
 
@@ -150,14 +226,18 @@ export async function POST(request: NextRequest) {
   
 
   if (!order_number) {
-    return NextResponse.json({
+    return await respondWithLog({
       status: "false",
+      message: "order_number is empty",
+      stage: "validate_order_number",
     });
   }
 
   if (order_status !== "매칭완료") {
-    return NextResponse.json({
+    return await respondWithLog({
       status: "false",
+      message: "order_status is not matched",
+      stage: "validate_order_status",
     });
   }
 
@@ -204,56 +284,64 @@ export async function POST(request: NextRequest) {
 
   
   
-  const buyOrder = await getOneBuyOrderByTradeId({
-    tradeId: order_number,
-  });
-
-  if (!buyOrder) {
-    console.log("buyOrder is empty");
-    return NextResponse.json({
-      status: "error",
-      message: "buyOrder is empty",
+  try {
+    const buyOrder = await getOneBuyOrderByTradeId({
+      tradeId: order_number,
     });
-  }
 
-  //console.log("buyOrder", buyOrder);
+    if (!buyOrder) {
+      console.log("buyOrder is empty");
+      return await respondWithLog({
+        status: "error",
+        message: "buyOrder is empty",
+        stage: "find_buy_order_by_trade_id",
+      });
+    }
 
-  
-  if (buyOrder?.status !== "paymentRequested") {
-    console.log("buyOrder status is not requestPayment");
-    return NextResponse.json({
-      status: "false",
+    //console.log("buyOrder", buyOrder);
+
+    
+    if (buyOrder?.status !== "paymentRequested") {
+      console.log("buyOrder status is not requestPayment");
+      return await respondWithLog({
+        status: "false",
+        message: "buyOrder status is not paymentRequested",
+        stage: "validate_buy_order_status",
+        resultData: {
+          buyOrderStatusBefore: buyOrder?.status || null,
+          buyOrderId: buyOrder?._id?.toString?.() || null,
+        },
+      });
+    }
+    
+
+
+    const storecode = buyOrder?.storecode;
+    const orderId = buyOrder?._id;
+    const paymentAmount = buyOrder?.krwAmount;
+    const queueId = null;
+    const transactionHash = "0x";
+
+    const buyerDepositName = buyOrder?.buyer?.depositName || "익명";
+    const buyerNickname = buyOrder?.nickname || "익명";
+
+
+    
+    const response = await buyOrderConfirmPayment({
+      lang: "ko",
+      storecode: storecode,
+      orderId: orderId,
+      paymentAmount: paymentAmount,
+      queueId: queueId,
+      transactionHash: transactionHash,
+
+
+      autoConfirmPayment: true,
+
+
     });
-  }
-  
 
-
-  const storecode = buyOrder?.storecode;
-  const orderId = buyOrder?._id;
-  const paymentAmount = buyOrder?.krwAmount;
-  const queueId = null;
-  const transactionHash = "0x";
-
-  const buyerDepositName = buyOrder?.buyer?.depositName || "익명";
-  const buyerNickname = buyOrder?.nickname || "익명";
-
-
-  
-  const response = await buyOrderConfirmPayment({
-    lang: "ko",
-    storecode: storecode,
-    orderId: orderId,
-    paymentAmount: paymentAmount,
-    queueId: queueId,
-    transactionHash: transactionHash,
-
-
-    autoConfirmPayment: true,
-
-
-  });
-
-  //console.log("buyOrderConfirmPayment response", response);
+    //console.log("buyOrderConfirmPayment response", response);
 
 
  
@@ -363,8 +451,28 @@ export async function POST(request: NextRequest) {
 
   
 
-  return NextResponse.json({
-    status: "success",
-  });
+    return await respondWithLog({
+      status: "success",
+      stage: "confirm_payment",
+      resultData: {
+        buyOrderId: orderId?.toString?.() || null,
+        tradeId: order_number,
+        storecode: storecode || null,
+        paymentAmount: paymentAmount || null,
+        buyerNickname,
+        buyerDepositName,
+        buyOrderStatusBefore: buyOrder?.status || null,
+        buyOrderConfirmPaymentResult: response || null,
+      },
+    });
+  } catch (error) {
+    console.error("Error processing bankmatch webhook:", error);
+    return await respondWithLog({
+      status: "error",
+      message: "Unhandled error while processing bankmatch webhook",
+      stage: "process_webhook",
+      error,
+    });
+  }
   
 }
