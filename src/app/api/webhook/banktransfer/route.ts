@@ -275,6 +275,7 @@ export async function POST(request: NextRequest) {
   }
 
 
+  // match 파라미터 추가하고 'true', 'false'
 
   const {
     transaction_type,
@@ -286,6 +287,8 @@ export async function POST(request: NextRequest) {
     transaction_name,
     balance,
     processing_date,
+    match,
+
   } = body;
   const transactionDateUtc = parseWebhookDateToUtc(transaction_date);
   const transactionDateNormalized = transactionDateUtc
@@ -996,12 +999,30 @@ export async function POST(request: NextRequest) {
 
 
 
-    let match = null;
-    let tradeId = null;
-    let buyerInfo = null;
-    let sellerInfo = null;
+
+    //let match = null;
+
+    // matchResult 'success', null
+
+    let matchReault = null; //
+
+    if (match === 'true') {
+      matchReault = 'success';
+    } else {
+      matchReault = null;
+    }
+
+    
+
+
+    let tradeId: string | null = null;
+    let buyerInfo: any = null;
+    let sellerInfo: any = null;
 
     if (transaction_type === 'deposited') {
+
+
+
 
    
 
@@ -1091,7 +1112,10 @@ export async function POST(request: NextRequest) {
       transactionName: transaction_name,
       balance: balance,
       processingDate: processing_date,
-      match: match,
+      
+      //match: match,
+      match: matchReault,
+
       matchedByAdmin: false,
       tradeId: tradeId,
       storeInfo: storeInfo,
