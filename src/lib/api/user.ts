@@ -793,10 +793,14 @@ export async function getOneByWalletAddress(
 
   // id is number
 
+  const walletAddressRaw = String(walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
   const results = await collection.findOne<UserProps>(
     {
       storecode: storecode,
-      walletAddress: walletAddress
+      walletAddress: walletAddressRegex
     },
   );
 
@@ -808,6 +812,29 @@ export async function getOneByWalletAddress(
 }
 
 
+
+
+
+export async function getOneByWalletAddressAcrossStores(
+  walletAddress: string,
+): Promise<UserProps | null> {
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const walletAddressRaw = String(walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+  const results = await collection.findOne<UserProps>(
+    {
+      walletAddress: walletAddressRegex
+    },
+  );
+
+  return results;
+
+}
 
 
 
@@ -851,10 +878,14 @@ export async function getOneByStorecodeAndWalletAddress(
 
   const collection = client.db(dbName).collection('users');
 
+  const walletAddressRaw = String(walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
   const results = await collection.findOne<UserProps>(
     {
       storecode: storecode,
-      walletAddress: walletAddress
+      walletAddress: walletAddressRegex
     },
     {
       projection: {

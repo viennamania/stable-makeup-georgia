@@ -2,6 +2,7 @@
 'use client';
 import React, { use, useEffect, useState } from 'react';
 
+import { postGetUserByStorecodeAndWalletAddressSigned } from "@/lib/client/get-user-admin-signed";
 
 
 import { toast } from 'react-hot-toast';
@@ -275,23 +276,19 @@ export default function SettingsPage({ params }: any) {
 
     useEffect(() => {
 
-        if (!userStorecode || !userWalletAddress) {
+        if (!userStorecode || !userWalletAddress || !address) {
             return;
         }
 
         setFetchingMemberData(true);
 
-        fetch('/api/user/getUserByStorecodeAndWalletAddress', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                storecode: userStorecode,
-                walletAddress: userWalletAddress,
-            }),
-        }).then((response) => response.json())
-        .then((data) => {
+        postGetUserByStorecodeAndWalletAddressSigned({
+            account: smartAccount,
+            requesterStorecode: 'admin',
+            requesterWalletAddress: address,
+            targetStorecode: userStorecode,
+            targetWalletAddress: userWalletAddress,
+        }).then((data) => {
 
             //console.log('getUserByWalletAddress data', data);
             /*
@@ -316,7 +313,7 @@ export default function SettingsPage({ params }: any) {
             setFetchingMemberData(false);
         });
 
-    } , [userStorecode, userWalletAddress]);
+    } , [userStorecode, userWalletAddress, address, smartAccount]);
 
 
 
@@ -373,21 +370,17 @@ export default function SettingsPage({ params }: any) {
         toast.success('회원정보가 성공적으로 업데이트되었습니다.');
 
         // reload member data
-        if (userStorecode && userWalletAddress) {
+        if (userStorecode && userWalletAddress && address) {
 
             setFetchingMemberData(true);
 
-            fetch('/api/user/getUserByStorecodeAndWalletAddress', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    storecode: userStorecode,
-                    walletAddress: userWalletAddress,
-                }),
-            }).then((response) => response.json())
-            .then((data) => {
+            postGetUserByStorecodeAndWalletAddressSigned({
+                account: smartAccount,
+                requesterStorecode: 'admin',
+                requesterWalletAddress: address,
+                targetStorecode: userStorecode,
+                targetWalletAddress: userWalletAddress,
+            }).then((data) => {
 
                 setMemberData(data.result);
             })
@@ -1043,4 +1036,3 @@ export default function SettingsPage({ params }: any) {
 
     );
 }
-

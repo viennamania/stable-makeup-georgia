@@ -574,7 +574,9 @@ export default function Index({ params }: any) {
 
               setSeller(data.result.seller);
 
-              setIsAdmin(data.result?.role === "admin");
+              const userStorecode = String(data.result?.storecode || "").trim().toLowerCase();
+              const userRole = String(data.result?.role || "").trim().toLowerCase();
+              setIsAdmin(userStorecode === "admin" && userRole === "admin");
 
           } else {
               setUser(null);
@@ -949,12 +951,22 @@ export default function Index({ params }: any) {
   }
 
 
+  if (address && loadingUser) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 p-4">
+        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
+        <p className="text-lg">회원 정보를 확인하고 있습니다.</p>
+        <div className="text-lg text-gray-500">{address}</div>
+      </div>
+    );
+  }
+
   if (address && !loadingUser && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-4">
 
         <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
-        <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
+        <p className="text-lg">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
         <div className="text-lg text-gray-500">{address}</div>
 
 

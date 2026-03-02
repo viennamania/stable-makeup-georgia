@@ -1,53 +1,99 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-	getOneByWalletAddress,
-} from '@lib/api/user';
-
+  getOneByWalletAddress,
+  getOneByWalletAddressAcrossStores,
+} from "@lib/api/user";
 import {
-  createThirdwebClient,
-  getUser
-} from "thirdweb";
+  consumeReadRateLimit,
+  getRequestIp,
+  logUserReadSecurityEvent,
+  normalizeWalletAddress,
+  sanitizeUserForResponse,
+} from "@/lib/server/user-read-security";
+
+type GetUserByWalletAddressRequestBody = {
+  storecode?: unknown;
+  walletAddress?: unknown;
+};
+
+const normalizeString = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
 
 export async function POST(request: NextRequest) {
+  const body = (await request.json()) as GetUserByWalletAddressRequestBody;
 
-  const body = await request.json();
+  const storecode = normalizeString(body.storecode);
+  const walletAddress = normalizeWalletAddress(body.walletAddress);
+  const ip = getRequestIp(request);
 
-  const {
-    storecode,
-    walletAddress
-  } = body;
+  if (!walletAddress) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Missing walletAddress",
+      },
+      { status: 400 }
+    );
+  }
 
-
-  //console.log("walletAddress", walletAddress);
-
-
-
-  const client = createThirdwebClient({
-    secretKey: process.env.THIRDWEB_SECRET_KEY || "",
+  const rate = consumeReadRateLimit({
+    scope: "getUserByWalletAddress",
+    ip,
+    walletAddress,
   });
- 
-  const user = await getUser({
-    client,
-    walletAddress: walletAddress,
-    //walletAddress: "0xF1b051dceb3Aab2f8e35805F134e373b709382aA", // For testing purposes
+
+  if (!rate.allowed) {
+    await logUserReadSecurityEvent({
+      route: "/api/user/getUserByWalletAddress",
+      status: "blocked",
+      reason: "rate_limited",
+      ip,
+      storecode: storecode || undefined,
+      walletAddress,
+      signatureProvided: false,
+      signatureVerified: false,
+      rateLimited: true,
+      extra: {
+        rateLimitMax: rate.max,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Too many requests",
+      },
+      { status: 429 }
+    );
+  }
+
+  const result = storecode
+    ? await getOneByWalletAddress(storecode, walletAddress)
+    : await getOneByWalletAddressAcrossStores(walletAddress);
+
+  const sanitizedResult = sanitizeUserForResponse(result);
+
+  await logUserReadSecurityEvent({
+    route: "/api/user/getUserByWalletAddress",
+    status: "allowed",
+    reason: storecode ? "store_scoped_lookup" : "global_lookup",
+    ip,
+    storecode: storecode || undefined,
+    walletAddress,
+    signatureProvided: false,
+    signatureVerified: false,
+    rateLimited: false,
+    extra: {
+      found: Boolean(result),
+    },
   });
 
-  console.log("user", user);
-
-
-
-  const result = await getOneByWalletAddress(
-    storecode,
-    walletAddress
-  );
-
-
- 
   return NextResponse.json({
-
-    result,
-    
+    result: sanitizedResult,
   });
-  
 }
