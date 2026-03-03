@@ -1,0 +1,162 @@
+[
+  {
+    "bankName": "대구은행",
+    "accountNumber": "508158502744",
+    "accountHolder": "이준엽",
+    "count": 3598,
+    "krwSum": 13458218000,
+    "usdtSum": 9127303.889999999
+  },
+  {
+    "bankName": "농협",
+    "accountNumber": "3560243561679",
+    "accountHolder": "정동현",
+    "count": 2247,
+    "krwSum": 7972986000,
+    "usdtSum": 5393291.2200000165
+  },
+  {
+    "bankName": "대구은행",
+    "accountNumber": "508158492314",
+    "accountHolder": "김영규",
+    "count": 1699,
+    "krwSum": 6533478000,
+    "usdtSum": 4456880.999999999
+  },
+  {
+    "bankName": "농협",
+    "accountNumber": "3528879532639",
+    "accountHolder": "김민우",
+    "count": 1448,
+    "krwSum": 5341000000,
+    "usdtSum": 3632379.410000005
+  },
+  {
+    "bankName": "",
+    "accountNumber": "",
+    "accountHolder": "",
+    "count": 935,
+    "krwSum": 2760740000,
+    "usdtSum": 1840310.4099999978
+  },
+  {
+    "bankName": "전북은행",
+    "accountNumber": "1013016171814",
+    "accountHolder": "이지수",
+    "count": 878,
+    "krwSum": 3305740000,
+    "usdtSum": 2254470.83
+  },
+  {
+    "bankName": "수협",
+    "accountNumber": "202053696796",
+    "accountHolder": "이웅열",
+    "count": 762,
+    "krwSum": 2769830000,
+    "usdtSum": 1876887.37
+  },
+  {
+    "bankName": "국민은행",
+    "accountNumber": "98560200001821",
+    "accountHolder": "김경민",
+    "count": 738,
+    "krwSum": 2510110000,
+    "usdtSum": 1683635.2499999984
+  },
+  {
+    "bankName": "농협",
+    "accountNumber": "3521642887123",
+    "accountHolder": "김재영",
+    "count": 683,
+    "krwSum": 2488220000,
+    "usdtSum": 1701943.1800000006
+  },
+  {
+    "bankName": "새마을금고",
+    "accountNumber": "8010715698760",
+    "accountHolder": "김정구",
+    "count": 642,
+    "krwSum": 2299240000,
+    "usdtSum": 1560641.6199999978
+  },
+  {
+    "bankName": "신한은행",
+    "accountNumber": "07891237777",
+    "accountHolder": "김태규",
+    "count": 360,
+    "krwSum": 1261690000,
+    "usdtSum": 860056.89
+  },
+  {
+    "bankName": "전북은행",
+    "accountNumber": "04558997011",
+    "accountHolder": "조강민",
+    "count": 270,
+    "krwSum": 950200000,
+    "usdtSum": 653950.4200000005
+  },
+  {
+    "bankName": "전북은행",
+    "accountNumber": "02103378912",
+    "accountHolder": "정현무",
+    "count": 269,
+    "krwSum": 1051780000,
+    "usdtSum": 724301.1799999996
+  },
+  {
+    "bankName": "부산은행",
+    "accountNumber": "1122008377807",
+    "accountHolder": "김경민",
+    "count": 202,
+    "krwSum": 550500000,
+    "usdtSum": 365749.7600000003
+  },
+  {
+    "bankName": "국민은행",
+    "accountNumber": "0198969699",
+    "accountHolder": "이병용",
+    "count": 5,
+    "krwSum": 17320000,
+    "usdtSum": 11624.16
+  },
+  {
+    "bankName": "농협은행",
+    "accountNumber": "3521660264663",
+    "accountHolder": "정동현",
+    "count": 4,
+    "krwSum": 14410000,
+    "usdtSum": 9653.800000000001
+  },
+  {
+    "bankName": "농협은행",
+    "accountNumber": "3560243561679",
+    "accountHolder": "정동현",
+    "count": 1,
+    "krwSum": 3990000,
+    "usdtSum": 2668.9
+  },
+  {
+    "bankName": "",
+    "accountNumber": "3560243561679",
+    "accountHolder": "",
+    "count": 1,
+    "krwSum": 3890000,
+    "usdtSum": 2619.53
+  },
+  {
+    "bankName": "농협",
+    "accountNumber": "8010715698760",
+    "accountHolder": "김정구",
+    "count": 1,
+    "krwSum": 3240000,
+    "usdtSum": 2201.09
+  },
+  {
+    "bankName": "전북은행",
+    "accountNumber": "1021023221787",
+    "accountHolder": "조강민",
+    "count": 1,
+    "krwSum": 2350099,
+    "usdtSum": 1592.21
+  }
+]
