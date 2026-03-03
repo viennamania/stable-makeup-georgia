@@ -2231,6 +2231,7 @@ export async function insertBuyOrderForClearance(data: any) {
       _id: result.insertedId,
 
       walletAddress: data.walletAddress,
+      tradeId: tradeId,
       
     };
 
