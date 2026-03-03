@@ -1,8 +1,9 @@
 import { NextRequest } from "next/server";
 
 import { getOneByWalletAddress } from "@lib/api/user";
+import { insertStoreSettingsApiCallLog } from "@/lib/api/storeSettingsApiCallLog";
 import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
-import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
@@ -41,6 +42,9 @@ export const verifyStoreSettingsAdminGuard = async ({
   body: unknown;
 }) => {
   const safeBody = isPlainObject(body) ? body : {};
+  const actionFields = extractActionFields(safeBody);
+  const publicIp = getRequestIp(request);
+
   const requesterWalletAddressRaw =
     safeBody.requesterWalletAddress ?? safeBody.walletAddress ?? null;
   const requesterWalletAddress = normalizeWalletAddress(requesterWalletAddressRaw);
@@ -50,7 +54,7 @@ export const verifyStoreSettingsAdminGuard = async ({
   );
 
   if (hasSignatureFields) {
-    return verifyAdminSignedAction({
+    const signedResult = await verifyAdminSignedAction({
       request,
       route,
       signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
@@ -59,11 +63,40 @@ export const verifyStoreSettingsAdminGuard = async ({
       signatureRaw: safeBody.signature,
       signedAtRaw: safeBody.signedAt,
       nonceRaw: safeBody.nonce,
-      actionFields: extractActionFields(safeBody),
+      actionFields,
     });
+
+    let requesterUser = signedResult.ok ? signedResult.requesterUser : null;
+    if (!requesterUser && requesterWalletAddress) {
+      requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+    }
+
+    await insertStoreSettingsApiCallLog({
+      route,
+      status: signedResult.ok ? "allowed" : "blocked",
+      reason: signedResult.ok ? "admin_signed" : signedResult.error,
+      publicIp: signedResult.ok ? signedResult.ip || publicIp : publicIp,
+      requesterWalletAddress: signedResult.ok
+        ? signedResult.requesterWalletAddress
+        : requesterWalletAddress,
+      requesterUser,
+      requestBody: actionFields,
+    });
+
+    return signedResult;
   }
 
   if (!requesterWalletAddress) {
+    await insertStoreSettingsApiCallLog({
+      route,
+      status: "blocked",
+      reason: "requesterWalletAddress is required",
+      publicIp,
+      requesterWalletAddress: null,
+      requesterUser: null,
+      requestBody: actionFields,
+    });
+
     return {
       ok: false as const,
       status: 401,
@@ -76,12 +109,32 @@ export const verifyStoreSettingsAdminGuard = async ({
   const requesterRole = String(requesterUser?.role || "").trim().toLowerCase();
 
   if (requesterStorecode !== "admin" || requesterRole !== "admin") {
+    await insertStoreSettingsApiCallLog({
+      route,
+      status: "blocked",
+      reason: "Forbidden",
+      publicIp,
+      requesterWalletAddress,
+      requesterUser,
+      requestBody: actionFields,
+    });
+
     return {
       ok: false as const,
       status: 403,
       error: "Forbidden",
     };
   }
+
+  await insertStoreSettingsApiCallLog({
+    route,
+    status: "allowed",
+    reason: "admin_wallet",
+    publicIp,
+    requesterWalletAddress,
+    requesterUser,
+    requestBody: actionFields,
+  });
 
   return {
     ok: true as const,
@@ -90,6 +143,6 @@ export const verifyStoreSettingsAdminGuard = async ({
     requesterUser,
     signedAtIso: "",
     nonce: "",
-    ip: "unknown",
+    ip: publicIp,
   };
 };

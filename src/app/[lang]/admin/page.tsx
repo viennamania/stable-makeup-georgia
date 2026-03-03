@@ -2315,6 +2315,14 @@ export default function Index({ params }: any) {
                   >
                     회원관리
                   </button>
+                  <button
+                    onClick={() => {
+                      router.push('/' + params.lang + '/admin/admin-management');
+                    }}
+                    className="bg-[#1f2937] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#111827]/80"
+                  >
+                    관리자관리
+                  </button>
                 </div>
 
               </div>
@@ -2678,6 +2686,15 @@ export default function Index({ params }: any) {
                       className="w-full bg-slate-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-slate-600"
                     >
                       BankTransfer 호출 로그
+                    </button>
+                    <button
+                      onClick={() => {
+                        const url = `/${params.lang}/admin/store-settings-log`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full bg-zinc-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-zinc-600"
+                    >
+                      Store Settings API 호출 로그
                     </button>
 
                     {/*

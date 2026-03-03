@@ -1089,6 +1089,9 @@ export async function getAllAdmins(
   // order by nickname asc
   // if storecode is empty, return all users
 
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 100;
+  const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+
   const users = await collection
     .find<UserProps>(
       {
@@ -1104,6 +1107,7 @@ export async function getAllAdmins(
           nickname: 1,
           walletAddress: 1,
           storecode: 1,
+          role: 1,
           store: 1,
           buyer: 1,
           userType: 1,
@@ -1111,6 +1115,8 @@ export async function getAllAdmins(
       }
     )
     .sort({ createdAt: -1 })
+    .skip((safePage - 1) * safeLimit)
+    .limit(safeLimit)
     .toArray();
 
   const totalCount = await collection.countDocuments(
