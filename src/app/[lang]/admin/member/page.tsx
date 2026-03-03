@@ -2033,6 +2033,12 @@ export default function Index({ params }: any) {
             </div>
             <button onClick={() => router.push('/' + params.lang + '/admin/buyorder')} className={menuButtonBase}>구매주문관리</button>
             <button onClick={() => router.push('/' + params.lang + '/admin/trade-history')} className={menuButtonBase}>P2P 거래내역</button>
+            <button
+              onClick={() => router.push('/' + params.lang + '/admin/member/privatekey-wallet-balance')}
+              className={menuButtonBase}
+            >
+              프라이빗키 잔고점검
+            </button>
             {version !== 'bangbang' && (
               <button onClick={() => router.push('/' + params.lang + '/admin/escrow-history')} className={menuButtonBase}>청산관리</button>
             )}
