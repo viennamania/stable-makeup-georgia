@@ -391,9 +391,9 @@ export async function insertSellOrder(data: any) {
   const collection = client.db(dbName).collection('orders');
 
  
-  const result = await collection.insertOne(
+	  const result = await collection.insertOne(
 
-    {
+	    {
       lang: data.lang,
       chain: data.chain,
       walletAddress: data.walletAddress,
@@ -2019,10 +2019,14 @@ export async function insertBuyOrderForClearance(data: any) {
   const userCollection = client.db(dbName).collection('users');
 
 
+  const walletAddressRaw = String(data.walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
   const user = await userCollection.findOne<OrderProps>(
     {
       storecode: clearanceStorecode,
-      walletAddress: data.walletAddress
+      walletAddress: walletAddressRegex
     },
   );
 
@@ -2101,10 +2105,10 @@ export async function insertBuyOrderForClearance(data: any) {
 
       tradeId: tradeId,
 
-      transactionHash: '0x',
-      queueId: null,
-    }
-  );
+	      transactionHash: '0x',
+	      queueId: null,
+	    }
+	  );
   */
 
   const sellerWalletAddress = store?.privateSellerWalletAddress || store?.settlementWalletAddress || store?.adminWalletAddress;
@@ -2172,6 +2176,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
       transactionHash: '0x',
       queueId: null,
+      createdBy: data.createdBy || null,
     }
   );
 

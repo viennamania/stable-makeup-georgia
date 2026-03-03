@@ -962,10 +962,16 @@ export default function Index({ params }: any) {
   }
 
   if (address && !loadingUser && !isAdmin) {
+    const hasMemberProfile = Boolean(user);
+    const fallbackActionLabel = hasMemberProfile ? '회원정보 보러 가기' : '회원가입하러 가기';
+    const fallbackActionPath = hasMemberProfile
+      ? '/' + params.lang + '/admin/user/user-settings'
+      : '/' + params.lang + '/admin/user/user-register';
+
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-4">
 
-        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
+        <h1 className="text-2xl font-bold">접근권한이 없습니다.</h1>
         <p className="text-lg">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
         <div className="text-lg text-gray-500">{address}</div>
 
@@ -975,11 +981,11 @@ export default function Index({ params }: any) {
             <div className="flex flex-row items-center justify-center gap-2">
               <button
                 onClick={() => {
-                  router.push('/' + params.lang + '/admin/profile-settings');
+                  router.push(fallbackActionPath);
                 }}
                 className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
               >
-                회원가입하러 가기
+                {fallbackActionLabel}
               </button>
             </div>
 

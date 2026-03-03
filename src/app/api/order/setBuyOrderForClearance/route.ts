@@ -43,6 +43,11 @@ const normalizeString = (value: unknown): string => {
   return value.trim();
 };
 
+const normalizeOptionalString = (value: unknown): string | null => {
+  const normalized = normalizeString(value);
+  return normalized || null;
+};
+
 const normalizePositiveNumber = (value: unknown): number | null => {
   const normalized = Number(value);
   if (!Number.isFinite(normalized) || normalized <= 0) {
@@ -160,6 +165,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const createdBy = {
+    walletAddress: normalizeOptionalString(requesterUser?.walletAddress) || requesterWalletAddress,
+    storecode: normalizeOptionalString(requesterUser?.storecode) || "admin",
+    role: normalizeOptionalString(requesterUser?.role),
+    id: requesterUser?.id ?? null,
+    nickname: normalizeOptionalString(requesterUser?.nickname),
+    mobile: normalizeOptionalString(requesterUser?.mobile),
+    email: normalizeOptionalString(requesterUser?.email),
+    avatar: normalizeOptionalString(requesterUser?.avatar),
+    requestedAt: new Date().toISOString(),
+    signatureVerified: true,
+  };
+
   let user = await checkSellerByWalletAddress("admin", requestedSellerWalletAddress);
   if (!user && requestedSellerWalletAddress !== normalizedSellerWalletAddress) {
     user = await checkSellerByWalletAddress("admin", normalizedSellerWalletAddress);
@@ -192,7 +210,8 @@ export async function POST(request: NextRequest) {
     krwAmount: krwAmount,
     rate: rate,
     privateSale: body.privateSale,
-    buyer: body.buyer
+    buyer: body.buyer,
+    createdBy,
   });
 
   ///console.log("setBuyOrder =====  result", result);
