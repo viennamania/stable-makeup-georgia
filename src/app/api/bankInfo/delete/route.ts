@@ -2,9 +2,33 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ObjectId } from 'mongodb';
 
 import { deleteBankInfo } from '@lib/api/bankInfo';
+import { verifyBankInfoAdminGuard } from "@/lib/server/bank-info-admin-guard";
+
+const ROUTE = "/api/bankInfo/delete";
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
+
+  const authResult = await verifyBankInfoAdminGuard({
+    request,
+    route: ROUTE,
+    body,
+  });
+
+  if (!authResult.ok) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: authResult.error,
+      },
+      { status: authResult.status },
+    );
+  }
 
   const { id } = body || {};
 

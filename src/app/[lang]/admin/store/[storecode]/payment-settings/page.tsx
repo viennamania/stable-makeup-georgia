@@ -31,6 +31,9 @@ import {
 import {
   chain,
 } from "@/app/config/contractAddresses";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+
+const BANK_INFO_ADMIN_SIGNING_PREFIX = "stable-georgia:admin-bank-info:v1";
 
 const wallets = [
   inAppWallet({
@@ -254,17 +257,17 @@ export default function PaymentSettingsPage({ params }: any) {
     setBankInfoLoading(true);
     try {
       const limit = 100;
-      const response = await fetch('/api/bankInfo/getAll', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/getAll',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           bankName: filters.bankName || undefined,
           accountNumber: filters.accountNumber || undefined,
           limit,
           page,
-        }),
+        },
       });
 
       if (!response.ok) {

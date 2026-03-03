@@ -29,6 +29,13 @@ import {
 import {
   chain,
 } from "@/app/config/contractAddresses";
+import {
+  postAdminSignedJson,
+  signAdminActionPayload,
+} from "@/lib/client/admin-signed-action";
+
+const BANK_INFO_ADMIN_SIGNING_PREFIX = "stable-georgia:admin-bank-info:v1";
+const ADMIN_BANK_INFO_UPLOAD_ROUTE = "/api/upload/admin-bankinfo";
 
 const wallets = [
   inAppWallet({
@@ -208,6 +215,12 @@ export default function BankInfoPage() {
     response: Response,
     fallback: string
   ) => {
+    if (response.status === 401) {
+      return '관리자 서명이 필요합니다. 지갑을 다시 연결하고 시도해주세요.';
+    }
+    if (response.status === 403) {
+      return '관리자 권한이 없습니다.';
+    }
     if (response.status === 409) {
       return '이미 등록된 실계좌번호입니다.';
     }
@@ -240,16 +253,16 @@ export default function BankInfoPage() {
     }
     setFetching(true);
     try {
-      const response = await fetch('/api/bankInfo/getAll', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/getAll',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           search: keyword || '',
           limit: 200,
           page: 1,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -293,12 +306,12 @@ export default function BankInfoPage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/bankInfo/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/create',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: payload,
       });
 
       if (!response.ok) {
@@ -501,10 +514,26 @@ export default function BankInfoPage() {
     }
     setUploadingIdCard(true);
     try {
-      const response = await fetch('/api/upload', {
+      const contentType = file.type || 'application/octet-stream';
+      const signed = await signAdminActionPayload({
+        account: activeAccount,
+        route: ADMIN_BANK_INFO_UPLOAD_ROUTE,
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        actionFields: {
+          contentType,
+        },
+      });
+
+      const response = await fetch(ADMIN_BANK_INFO_UPLOAD_ROUTE, {
         method: 'POST',
         headers: {
-          'content-type': file.type || 'application/octet-stream',
+          'content-type': contentType,
+          'x-admin-requester-storecode': signed.requesterStorecode,
+          'x-admin-requester-wallet-address': signed.requesterWalletAddress,
+          'x-admin-signature': signed.signature,
+          'x-admin-signed-at': signed.signedAt,
+          'x-admin-nonce': signed.nonce,
         },
         body: file,
       });
@@ -538,18 +567,18 @@ export default function BankInfoPage() {
     }
     setSavingMemo(true);
     try {
-      const response = await fetch('/api/bankInfo/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/update',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           id,
           bankName: selectedInfo?.bankName || '',
           realAccountNumber: selectedInfo?.realAccountNumber || selectedInfo?.accountNumber || '',
           accountHolder: selectedInfo?.accountHolder || '',
           memo: detailMemo,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -600,18 +629,18 @@ export default function BankInfoPage() {
     }
     setSavingAliases(true);
     try {
-      const response = await fetch('/api/bankInfo/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/update',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           id,
           bankName: selectedInfo?.bankName || '',
           realAccountNumber: selectedInfo?.realAccountNumber || selectedInfo?.accountNumber || '',
           accountHolder: selectedInfo?.accountHolder || '',
           aliasAccountNumber: detailAliases,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -647,18 +676,18 @@ export default function BankInfoPage() {
     }
     setSavingDefault(true);
     try {
-      const response = await fetch('/api/bankInfo/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/update',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           id,
           bankName: selectedDefaultInfo?.bankName || '',
           realAccountNumber: selectedDefaultInfo?.realAccountNumber || selectedDefaultInfo?.accountNumber || '',
           accountHolder: selectedDefaultInfo?.accountHolder || '',
           defaultAccountNumber: selectedDefaultValue,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -698,18 +727,18 @@ export default function BankInfoPage() {
 
     setSavingRealName(true);
     try {
-      const response = await fetch('/api/bankInfo/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/update',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           id,
           bankName: selectedRealNameInfo?.bankName || '',
           realAccountNumber: selectedRealNameInfo?.realAccountNumber || selectedRealNameInfo?.accountNumber || '',
           accountHolder: selectedRealNameInfo?.accountHolder || '',
           ...payload,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -761,15 +790,15 @@ export default function BankInfoPage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/bankInfo/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/update',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           id,
           ...payload,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -796,12 +825,12 @@ export default function BankInfoPage() {
     }
     setDeletingId(id);
     try {
-      const response = await fetch('/api/bankInfo/delete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/bankInfo/delete',
+        signingPrefix: BANK_INFO_ADMIN_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: { id },
       });
 
       if (!response.ok) {
