@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     request,
     route: "/api/store/updateStoreSettlementWalletAddress",
     body,
+    requireSigned: true,
   });
 
   if (!guard.ok) {

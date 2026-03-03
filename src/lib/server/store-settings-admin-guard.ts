@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { getOneByWalletAddress } from "@lib/api/user";
 import { insertStoreSettingsApiCallLog } from "@/lib/api/storeSettingsApiCallLog";
 import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
-import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { getRequestCountry, getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
@@ -36,14 +36,17 @@ export const verifyStoreSettingsAdminGuard = async ({
   request,
   route,
   body,
+  requireSigned = false,
 }: {
   request: NextRequest;
   route: string;
   body: unknown;
+  requireSigned?: boolean;
 }) => {
   const safeBody = isPlainObject(body) ? body : {};
   const actionFields = extractActionFields(safeBody);
   const publicIp = getRequestIp(request);
+  const publicCountry = getRequestCountry(request);
 
   const requesterWalletAddressRaw =
     safeBody.requesterWalletAddress ?? safeBody.walletAddress ?? null;
@@ -52,6 +55,30 @@ export const verifyStoreSettingsAdminGuard = async ({
   const hasSignatureFields = Boolean(
     safeBody.signature && safeBody.signedAt && safeBody.nonce,
   );
+
+  if (requireSigned && !hasSignatureFields) {
+    let requesterUser = null;
+    if (requesterWalletAddress) {
+      requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+    }
+
+    await insertStoreSettingsApiCallLog({
+      route,
+      status: "blocked",
+      reason: "signature_required",
+      publicIp,
+      publicCountry,
+      requesterWalletAddress,
+      requesterUser,
+      requestBody: actionFields,
+    });
+
+    return {
+      ok: false as const,
+      status: 401,
+      error: "Invalid signature",
+    };
+  }
 
   if (hasSignatureFields) {
     const signedResult = await verifyAdminSignedAction({
@@ -76,6 +103,7 @@ export const verifyStoreSettingsAdminGuard = async ({
       status: signedResult.ok ? "allowed" : "blocked",
       reason: signedResult.ok ? "admin_signed" : signedResult.error,
       publicIp: signedResult.ok ? signedResult.ip || publicIp : publicIp,
+      publicCountry,
       requesterWalletAddress: signedResult.ok
         ? signedResult.requesterWalletAddress
         : requesterWalletAddress,
@@ -92,6 +120,7 @@ export const verifyStoreSettingsAdminGuard = async ({
       status: "blocked",
       reason: "requesterWalletAddress is required",
       publicIp,
+      publicCountry,
       requesterWalletAddress: null,
       requesterUser: null,
       requestBody: actionFields,
@@ -114,6 +143,7 @@ export const verifyStoreSettingsAdminGuard = async ({
       status: "blocked",
       reason: "Forbidden",
       publicIp,
+      publicCountry,
       requesterWalletAddress,
       requesterUser,
       requestBody: actionFields,
@@ -131,6 +161,7 @@ export const verifyStoreSettingsAdminGuard = async ({
     status: "allowed",
     reason: "admin_wallet",
     publicIp,
+    publicCountry,
     requesterWalletAddress,
     requesterUser,
     requestBody: actionFields,

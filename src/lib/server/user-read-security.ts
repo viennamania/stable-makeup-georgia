@@ -274,6 +274,28 @@ export const getRequestIp = (request: NextRequest): string => {
   return "unknown";
 };
 
+export const getRequestCountry = (request: NextRequest): string => {
+  const headerCandidates = [
+    request.headers.get("x-vercel-ip-country"),
+    request.headers.get("cf-ipcountry"),
+    request.headers.get("x-country-code"),
+    request.headers.get("x-geo-country"),
+  ];
+
+  for (const candidate of headerCandidates) {
+    const normalized = normalizeString(candidate).toUpperCase();
+    if (!normalized || normalized === "UNKNOWN") {
+      continue;
+    }
+    if (/^[A-Z]{2}$/.test(normalized)) {
+      return normalized;
+    }
+    return normalized;
+  }
+
+  return "unknown";
+};
+
 export const logUserReadSecurityEvent = async (payload: {
   route: string;
   status: string;

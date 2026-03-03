@@ -18,6 +18,7 @@ type StoreSettingsApiCallLog = {
   status?: string;
   reason?: string | null;
   publicIp?: string | null;
+  publicCountry?: string | null;
   requesterWalletAddress?: string | null;
   requesterUser?: {
     nickname?: string | null;
@@ -74,6 +75,26 @@ const formatRelative = (value: unknown) => {
 const normalizeText = (value: unknown) => {
   const text = String(value || "").trim();
   return text || "-";
+};
+
+const regionDisplayNames =
+  typeof Intl !== "undefined" && typeof Intl.DisplayNames === "function"
+    ? new Intl.DisplayNames(["ko-KR"], { type: "region" })
+    : null;
+
+const formatCountry = (value: unknown) => {
+  const code = String(value || "").trim().toUpperCase();
+  if (!code || code === "UNKNOWN") {
+    return "-";
+  }
+  if (!/^[A-Z]{2}$/.test(code)) {
+    return code;
+  }
+  const name = regionDisplayNames?.of(code);
+  if (!name || name === code) {
+    return code;
+  }
+  return `${name} (${code})`;
 };
 
 export default function StoreSettingsLogPage() {
@@ -144,6 +165,7 @@ export default function StoreSettingsLogPage() {
         log.status,
         log.reason,
         log.publicIp,
+        log.publicCountry,
         log.requesterWalletAddress,
         log.requesterUser?.nickname,
         log.requesterUser?.role,
@@ -255,7 +277,7 @@ export default function StoreSettingsLogPage() {
                     <th className="px-3 py-2 text-left">상태</th>
                     <th className="px-3 py-2 text-left">호출자</th>
                     <th className="px-3 py-2 text-left">회원정보</th>
-                    <th className="px-3 py-2 text-left">퍼블릭 IP</th>
+                    <th className="px-3 py-2 text-left">퍼블릭 IP / 국가</th>
                     <th className="px-3 py-2 text-left">요청값</th>
                     <th className="px-3 py-2 text-left">사유</th>
                   </tr>
@@ -295,7 +317,10 @@ export default function StoreSettingsLogPage() {
                         <div>{normalizeText(log.requesterUser?.role)}</div>
                         <div>{normalizeText(log.requesterUser?.storecode)}</div>
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs text-zinc-700">{normalizeText(log.publicIp)}</td>
+                      <td className="px-3 py-2 text-xs text-zinc-700">
+                        <div className="font-mono">{normalizeText(log.publicIp)}</div>
+                        <div className="text-zinc-500">{formatCountry(log.publicCountry)}</div>
+                      </td>
                       <td className="px-3 py-2 text-xs text-zinc-700 max-w-[20rem]">
                         <pre className="whitespace-pre-wrap break-all">
                           {JSON.stringify(log.requestBody || {}, null, 2)}

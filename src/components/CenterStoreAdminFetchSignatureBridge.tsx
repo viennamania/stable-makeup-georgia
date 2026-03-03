@@ -23,11 +23,64 @@ const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/store/getEscrowBalance",
 ]);
 
+const PROTECTED_STORE_SETTINGS_MUTATION_PATHS = new Set([
+  "/api/store/updateStoreSettlementWalletAddress",
+]);
+
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
+
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
     return "";
   }
   return value.trim();
+};
+
+const normalizeActionFieldValue = (value: unknown): string => {
+  if (value == null) {
+    return "";
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeActionFieldValue(item)).join(",");
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "";
+    }
+  }
+  return String(value).trim();
+};
+
+const buildStoreSettingsMutationSigningMessage = ({
+  route,
+  requesterStorecode,
+  requesterWalletAddress,
+  nonce,
+  signedAtIso,
+  actionFields,
+}: {
+  route: string;
+  requesterStorecode: string;
+  requesterWalletAddress: string;
+  nonce: string;
+  signedAtIso: string;
+  actionFields: Record<string, unknown>;
+}) => {
+  const actionLines = Object.entries(actionFields || {})
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}:${normalizeActionFieldValue(value)}`);
+
+  return [
+    STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+    `route:${route}`,
+    `requesterStorecode:${requesterStorecode}`,
+    `requesterWalletAddress:${requesterWalletAddress}`,
+    `nonce:${nonce}`,
+    `signedAt:${signedAtIso}`,
+    ...actionLines,
+  ].join("\n");
 };
 
 const toRequestPath = (input: RequestInfo | URL) => {
@@ -77,7 +130,10 @@ export default function CenterStoreAdminFetchSignatureBridge() {
 
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const path = toRequestPath(input);
-      if (!PROTECTED_CENTER_STORE_ADMIN_PATHS.has(path)) {
+      const isCenterStoreAdminPath = PROTECTED_CENTER_STORE_ADMIN_PATHS.has(path);
+      const isStoreSettingsMutationPath = PROTECTED_STORE_SETTINGS_MUTATION_PATHS.has(path);
+
+      if (!isCenterStoreAdminPath && !isStoreSettingsMutationPath) {
         return originalFetch(input, init);
       }
 
@@ -113,12 +169,11 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         return originalFetch(input, init);
       }
 
-      const storecode = normalizeString(payload.storecode);
-      const requesterStorecode = normalizeString(payload.requesterStorecode);
-      const signingStorecode = storecode || requesterStorecode || "admin";
-      const requesterWalletAddress = normalizeString(
+      const requesterWalletAddressFromPayload = normalizeString(
         payload.requesterWalletAddress ?? payload.walletAddress ?? payload.sellerWalletAddress,
       ).toLowerCase();
+      const requesterWalletAddress = requesterWalletAddressFromPayload
+        || normalizeString(account.address).toLowerCase();
 
       if (!requesterWalletAddress) {
         return originalFetch(input, init);
@@ -127,23 +182,50 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       const signedAt = new Date().toISOString();
       const nonce = createNonce();
       const actionFields = extractCenterStoreAdminActionFields(payload);
-      const signingMessage = buildCenterStoreAdminSigningMessage({
-        route: path,
-        storecode: signingStorecode,
-        requesterWalletAddress,
-        nonce,
-        signedAtIso: signedAt,
-        actionFields,
-      });
+      let signingMessage = "";
+      let signedPayload: Record<string, unknown> = {
+        ...payload,
+        requesterWalletAddress: requesterWalletAddress,
+      };
+
+      if (isCenterStoreAdminPath) {
+        const storecode = normalizeString(payload.storecode);
+        const requesterStorecode = normalizeString(payload.requesterStorecode);
+        const signingStorecode = storecode || requesterStorecode || "admin";
+        signingMessage = buildCenterStoreAdminSigningMessage({
+          route: path,
+          storecode: signingStorecode,
+          requesterWalletAddress,
+          nonce,
+          signedAtIso: signedAt,
+          actionFields,
+        });
+        signedPayload = {
+          ...signedPayload,
+          requesterStorecode: signingStorecode,
+        };
+      } else {
+        const requesterStorecode = normalizeString(payload.requesterStorecode) || "admin";
+        signingMessage = buildStoreSettingsMutationSigningMessage({
+          route: path,
+          requesterStorecode,
+          requesterWalletAddress,
+          nonce,
+          signedAtIso: signedAt,
+          actionFields,
+        });
+        signedPayload = {
+          ...signedPayload,
+          requesterStorecode,
+        };
+      }
 
       const signature = await account.signMessage({
         message: signingMessage,
       });
 
-      const signedPayload: Record<string, unknown> = {
-        ...payload,
-        requesterStorecode: signingStorecode,
-        requesterWalletAddress: requesterWalletAddress,
+      signedPayload = {
+        ...signedPayload,
         signature,
         signedAt,
         nonce,

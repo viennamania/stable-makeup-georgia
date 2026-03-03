@@ -8,6 +8,7 @@ type InsertStoreSettingsApiCallLogInput = {
   status: "allowed" | "blocked";
   reason?: string;
   publicIp?: string | null;
+  publicCountry?: string | null;
   requesterWalletAddress?: string | null;
   requesterUser?: any;
   requestBody?: Record<string, unknown> | null;
@@ -19,6 +20,14 @@ const normalizeString = (value: unknown) => {
     return "";
   }
   return value.trim();
+};
+
+const normalizeCountry = (value: unknown) => {
+  const raw = normalizeString(value).toUpperCase();
+  if (!raw || raw === "UNKNOWN") {
+    return null;
+  }
+  return raw;
 };
 
 const maskAccountNumber = (value: string) => {
@@ -110,6 +119,7 @@ export async function insertStoreSettingsApiCallLog(input: InsertStoreSettingsAp
     status: input.status,
     reason: normalizeString(input.reason) || null,
     publicIp: normalizeString(input.publicIp) || null,
+    publicCountry: normalizeCountry(input.publicCountry),
     requesterWalletAddress: normalizeString(input.requesterWalletAddress)?.toLowerCase() || null,
     requesterUser: sanitizeRequesterUser(input.requesterUser),
     requestBody: sanitizePayload(input.requestBody || {}),
@@ -176,6 +186,7 @@ export async function getStoreSettingsApiCallLogs({
         { route: regex },
         { reason: regex },
         { requesterWalletAddress: regex },
+        { publicCountry: regex },
         { "requesterUser.nickname": regex },
         { "requesterUser.storecode": regex },
         { "requesterUser.role": regex },
