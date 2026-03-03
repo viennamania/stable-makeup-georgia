@@ -1452,7 +1452,7 @@ export default function Index({ params }: any) {
     clearanceingWalletAddress.push(false);
   }
 
-  const clearanceWalletAddress = async (walletAddress: string) => {
+  const clearanceWalletAddress = async (walletAddress: string, storecode: string) => {
     
     if (clearanceingWalletAddress.includes(true)) {
       return;
@@ -1475,6 +1475,7 @@ export default function Index({ params }: any) {
       },
       body: JSON.stringify({
         walletAddress: walletAddress,
+        storecode: storecode,
       }),
     });
 
@@ -3214,8 +3215,7 @@ export default function Index({ params }: any) {
                             {/* function call button clearanceWalletAddress */}
                             <button
                               onClick={() => {
-                                clearanceWalletAddress(item.walletAddress);
-                                toast.success('잔액을 회수했습니다.');
+                                clearanceWalletAddress(item.walletAddress, item.storecode);
                               }}
                               className={`
                                 w-full mb-2
@@ -3436,8 +3436,7 @@ export default function Index({ params }: any) {
 
                       <button
                         onClick={() => {
-                          clearanceWalletAddress(item.walletAddress);
-                          toast.success('잔액을 회수했습니다.');
+                          clearanceWalletAddress(item.walletAddress, item.storecode);
                         }}
                         className="rounded-lg bg-[#3167b4] px-2 py-2 text-xs font-semibold text-white hover:bg-[#3167b4]/80"
                       >

@@ -1,331 +1,266 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getContract, sendAndConfirmTransaction } from "thirdweb";
+import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
+import { balanceOf, transfer } from "thirdweb/extensions/erc20";
+import { privateKeyToAccount, smartWallet } from "thirdweb/wallets";
 
-import { getPayUserByWalletAddress } from "@/lib/api/user";
-
-import { getStoreByStorecode } from "@/lib/api/store";
-
+import { client as thirdwebClient } from "../../../client";
 import {
-    ethereum,
-    polygon,
-    arbitrum,
-    bsc,
-} from "thirdweb/chains";
-
-import {
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
   chain,
   ethereumContractAddressUSDT,
   polygonContractAddressUSDT,
-  arbitrumContractAddressUSDT,
-  bscContractAddressUSDT,
-
-  bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
+import { getStoreByStorecode } from "@/lib/api/store";
+import { getPayUserByWalletAddress } from "@/lib/api/user";
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
+import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
+export const maxDuration = 300;
+export const dynamic = "force-dynamic";
 
+const CLEARANCE_WALLET_ROUTE = "/api/user/clearanceWalletAddress";
 
-/*
-const { privateKeyToAccount, smartWallet } = require("thirdweb/wallets");
-const { polygon, arbitrum } = require("thirdweb/chains");
-const {
-    transfer,
-    balanceOf,
-} = require("thirdweb/extensions/erc20");
-*/
-
-/*
-const {
-    createThirdwebClient,
-    getContract,
-    sendAndConfirmTransaction,
-    sendTransaction,
-    sendBatchTransaction,
-} = require("thirdweb");
- */
-
-import { getContract, sendAndConfirmTransaction, sendTransaction } from "thirdweb";
-
-
-
-import { privateKeyToAccount, smartWallet } from "thirdweb/wallets";
-import {
-  balanceOf,
-  transfer
-} from "thirdweb/extensions/erc20";
-
-
-
-
-// vercel long term
-
-
-
-
-
-import { client as thirdwebClient } from "../../../client";
-
-
-
-
-export const maxDuration = 300; // This function can run for a maximum of 300 seconds
-export const dynamic = 'force-dynamic';
-
+const normalizeString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
 
 export async function POST(request: NextRequest) {
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
 
-  const body = await request.json();
+  const requestedWalletAddress = normalizeString(body.walletAddress);
+  const requestedStorecode = normalizeString(body.storecode);
 
+  if (!requestedWalletAddress || !requestedStorecode) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: "walletAddress and storecode are required",
+      },
+      { status: 400 },
+    );
+  }
 
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: CLEARANCE_WALLET_ROUTE,
+    body,
+    storecodeRaw: requestedStorecode,
+    requesterWalletAddressRaw: body.requesterWalletAddress,
+  });
 
-  const { walletAddress } = body;
+  if (!guard.ok) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: guard.error,
+      },
+      { status: guard.status },
+    );
+  }
 
+  const normalizedRequestedWalletAddress = normalizeWalletAddress(requestedWalletAddress);
+  if (!normalizedRequestedWalletAddress) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Invalid walletAddress",
+      },
+      { status: 400 },
+    );
+  }
 
+  const chainConfig =
+    chain === "ethereum" ? ethereum
+      : chain === "polygon" ? polygon
+        : chain === "arbitrum" ? arbitrum
+          : chain === "bsc" ? bsc
+            : arbitrum;
 
-
-  //const chainId = arbitrum.id;
-
-  const chainId = chain === 'ethereum' ? ethereum.id :
-                  chain === 'polygon' ? polygon.id :
-                  chain === 'arbitrum' ? arbitrum.id :
-                  chain === 'bsc' ? bsc.id : arbitrum.id;
-
-  //const contractAddressPolygon = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-
-  //const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
+  const contractAddressUSDT =
+    chain === "ethereum" ? ethereumContractAddressUSDT
+      : chain === "polygon" ? polygonContractAddressUSDT
+        : chain === "arbitrum" ? arbitrumContractAddressUSDT
+          : chain === "bsc" ? bscContractAddressUSDT
+            : arbitrumContractAddressUSDT;
 
   try {
-
-
-
-    const user = await getPayUserByWalletAddress(walletAddress);
+    let user = await getPayUserByWalletAddress(requestedWalletAddress);
+    if (!user && requestedWalletAddress.toLowerCase() !== normalizedRequestedWalletAddress) {
+      user = await getPayUserByWalletAddress(normalizedRequestedWalletAddress);
+    }
 
     if (!user) {
-
-      console.log("User not found for walletAddress:", walletAddress);
-
-      return NextResponse.json({
-        result: "error",
-        error: "User not found"
-      });
+      return NextResponse.json(
+        {
+          result: null,
+          error: "User not found",
+        },
+        { status: 404 },
+      );
     }
 
-    const storecode = user.storecode;
+    const userStorecode = normalizeString(user.storecode);
+    if (!userStorecode || userStorecode.toLowerCase() !== requestedStorecode.toLowerCase()) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Forbidden",
+        },
+        { status: 403 },
+      );
+    }
 
-    //get sellerWalletAddress from storecode
+    if (!user.walletPrivateKey) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: "walletPrivateKey not found for target user",
+        },
+        { status: 400 },
+      );
+    }
+
     const store = await getStoreByStorecode({
-        storecode: storecode,
-    } );
-
+      storecode: userStorecode,
+    });
 
     if (!store) {
-      console.log("Store not found for storecode:", storecode);
-
-      return NextResponse.json({
-        result: "error",
-        error: "Store not found"
-      });
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Store not found",
+        },
+        { status: 404 },
+      );
     }
 
-    const sellerWalletAddress = store.sellerWalletAddress;
-
-
-    console.log("sellerWalletAddress", sellerWalletAddress);
-
+    const sellerWalletAddress = normalizeString(store.sellerWalletAddress);
     if (!sellerWalletAddress) {
-        console.log("sellerWalletAddress not found for storecode:", storecode);
-        return NextResponse.json({
-            result: "error",
-            error: "Seller wallet address not found"
-        });
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Seller wallet address not found",
+        },
+        { status: 400 },
+      );
     }
-
-
-
-    // private key
-
 
     const personalAccount = privateKeyToAccount({
-        client: thirdwebClient,
-        privateKey: user.walletPrivateKey,
+      client: thirdwebClient,
+      privateKey: user.walletPrivateKey,
     });
-
-    if (!personalAccount) {
-        console.log("personalAccount not found");
-
-        return NextResponse.json({
-            result: "error",
-            error: "Personal account not found"
-        });
-    }
 
     const wallet = smartWallet({
-        
-        //chain: arbitrum,
-        chain: chain === 'ethereum' ? ethereum :
-               chain === 'polygon' ? polygon :
-               chain === 'arbitrum' ? arbitrum :
-               chain === 'bsc' ? bsc : arbitrum,
-
-        ///factoryAddress: "0x655934C0B4bD79f52A2f7e6E60714175D5dd319b", // your own deployed account factory address
-        sponsorGas: true,
+      chain: chainConfig,
+      sponsorGas: true,
     });
-    // Connect the smart wallet
+
     const account = await wallet.connect({
-        client: thirdwebClient,
-        personalAccount: personalAccount,
+      client: thirdwebClient,
+      personalAccount,
     });
-    if (!account) {
-        console.log("account not found");
-        return NextResponse.json({
-            result: "error",
-            error: "Account not found"
-        });
-    }
 
-
-
-    console.log("walletAddress", walletAddress);
-
-
-
-    //get USDT balance of walletAddress
+    const targetWalletAddress = normalizeString(user.walletAddress) || normalizedRequestedWalletAddress;
     const balance = await balanceOf({
-        contract: getContract({
-            client: thirdwebClient,
-
-            //chain: arbitrum,
-            chain: chain === 'ethereum' ? ethereum :
-                   chain === 'polygon' ? polygon :
-                   chain === 'arbitrum' ? arbitrum :
-                   chain === 'bsc' ? bsc : arbitrum,
-
-            //address: contractAddressArbitrum,
-            address: chain === 'ethereum' ? ethereumContractAddressUSDT :
-                     chain === 'polygon' ? polygonContractAddressUSDT :
-                     chain === 'arbitrum' ? arbitrumContractAddressUSDT :
-                     chain === 'bsc' ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
-
-        }),
-        address: walletAddress,
+      contract: getContract({
+        client: thirdwebClient,
+        chain: chainConfig,
+        address: contractAddressUSDT,
+      }),
+      address: targetWalletAddress,
     });
-    if (!balance) {
-        console.log("balance not found");
-        return NextResponse.json({
-            result: "error",
-            error: "Balance not found"
-        });
+
+    const rawBalance = Number(balance);
+    if (!Number.isFinite(rawBalance) || rawBalance <= 0) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Balance not found",
+        },
+        { status: 400 },
+      );
     }
 
-    
-    //const clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
-    // if bsc, 18 decimal
+    let clearanceUSDTBalance = chain === "bsc"
+      ? Number((rawBalance / 10 ** 18).toFixed(6))
+      : rawBalance / 10 ** 6;
 
-    //let clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
-
-    let clearanceUSDTBalance = 0;
-
-    if (chain === 'bsc') {
-        clearanceUSDTBalance = Number((Number(balance) / 10 ** 18).toFixed(6));
-    } else {
-        clearanceUSDTBalance = Number(balance) / 10 ** 6; // USDT has 6 decimals
+    if (!Number.isFinite(clearanceUSDTBalance) || clearanceUSDTBalance <= 0) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Clearance USDT balance is zero or negative",
+        },
+        { status: 400 },
+      );
     }
 
-    console.log("clearanceUSDTBalance", clearanceUSDTBalance);
-
-
-
-    if (clearanceUSDTBalance <= 0) {
-        console.log("clearanceUSDTBalance is zero or negative");
-        return NextResponse.json({
-            result: "error",
-            error: "Clearance USDT balance is zero or negative"
-        });
+    clearanceUSDTBalance = clearanceUSDTBalance - 0.000001;
+    if (!Number.isFinite(clearanceUSDTBalance) || clearanceUSDTBalance <= 0) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Clearance USDT balance is too low after fee adjustment",
+        },
+        { status: 400 },
+      );
     }
 
-
-
-    clearanceUSDTBalance = clearanceUSDTBalance - 0.000001; // to avoid insufficient balance error
-    if (clearanceUSDTBalance < 0) {
-        
-        console.log("clearanceUSDTBalance is too low after fee adjustment");
-        return NextResponse.json({
-            result: "error",
-            error: "Clearance USDT balance is too low after fee adjustment"
-        });
-    }
-
-
-
-
-
-    // transfer USDT to sellerWalletAddress
     const transactionSendToStore = transfer({
-        contract: getContract({
-            client: thirdwebClient,
-            chain: chain === 'ethereum' ? ethereum :
-                   chain === 'polygon' ? polygon :
-                   chain === 'arbitrum' ? arbitrum :
-                   chain === 'bsc' ? bsc : arbitrum,
-
-            address: chain === 'ethereum' ? ethereumContractAddressUSDT :
-                     chain === 'polygon' ? polygonContractAddressUSDT :
-                     chain === 'arbitrum' ? arbitrumContractAddressUSDT :
-                     chain === 'bsc' ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
-
-        }),
-        to: sellerWalletAddress,
-        amount: clearanceUSDTBalance,
+      contract: getContract({
+        client: thirdwebClient,
+        chain: chainConfig,
+        address: contractAddressUSDT,
+      }),
+      to: sellerWalletAddress,
+      amount: clearanceUSDTBalance,
     });
 
-    /*
-    const result = await sendTransaction({
-        account: account,
-        transaction: transactionSendToStore,
-    });
-    */
-    // sendAndConfirmTransaction
     const result = await sendAndConfirmTransaction({
-        account: account,
-        transaction: transactionSendToStore,
+      account,
+      transaction: transactionSendToStore,
     });
 
-
-
-    ////console.log("result", result);
-
-    if (!result) {
-        console.log("transaction failed");
-        return NextResponse.json({
-            result: "error",
-            error: "Transaction failed"
-        });
+    if (!result?.transactionHash) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: "Transaction failed",
+        },
+        { status: 500 },
+      );
     }
 
-
-
-
     return NextResponse.json({
-
-      result: "success",
-      chain: chain,
+      result: true,
+      chain,
       transactionHash: result.transactionHash,
-      clearanceUSDTBalance: clearanceUSDTBalance,
-      storecode: storecode,
-      walletAddress: walletAddress,
-      sellerWalletAddress: sellerWalletAddress
-      
+      clearanceUSDTBalance,
+      storecode: userStorecode,
+      walletAddress: targetWalletAddress,
+      sellerWalletAddress,
     });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("clearanceWalletAddress error:", message);
 
-  } catch (e) {
-
-    console.error("error=", e + "");
-
-    return NextResponse.json({
-      result: "error",
-      error: e + ""
-    });
-
+    return NextResponse.json(
+      {
+        result: null,
+        error: message,
+      },
+      { status: 500 },
+    );
   }
-  
 }

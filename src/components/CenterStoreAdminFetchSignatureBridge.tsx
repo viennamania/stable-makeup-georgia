@@ -21,6 +21,7 @@ const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/order/transferEscrowBalanceToMyWallet",
   "/api/order/transferEscrowBalanceToSeller",
   "/api/store/getEscrowBalance",
+  "/api/user/clearanceWalletAddress",
 ]);
 
 const PROTECTED_STORE_SETTINGS_MUTATION_PATHS = new Set([
@@ -170,7 +171,7 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       }
 
       const requesterWalletAddressFromPayload = normalizeString(
-        payload.requesterWalletAddress ?? payload.walletAddress ?? payload.sellerWalletAddress,
+        payload.requesterWalletAddress,
       ).toLowerCase();
       const requesterWalletAddress = requesterWalletAddressFromPayload
         || normalizeString(account.address).toLowerCase();
