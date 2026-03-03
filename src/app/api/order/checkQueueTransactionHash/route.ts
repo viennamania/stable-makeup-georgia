@@ -6,6 +6,7 @@ import { ethereum, polygon, arbitrum, bsc } from "thirdweb/chains";
 import clientPromise from "@/lib/mongodb";
 import { dbName } from "@/lib/mongodb";
 import { updateBuyOrderByQueueId } from "@lib/api/order";
+import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 import {
   chain as configuredChain,
   ethereumContractAddressUSDT,
@@ -16,6 +17,7 @@ import {
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
+const CHECK_QUEUE_RETRY_SIGNING_PREFIX = "stable-georgia:check-queue-transaction-retry:v1";
 
 type QueueCheckStatus =
   | "updated"
@@ -349,6 +351,35 @@ export async function POST(request: NextRequest) {
         status: 400,
       }
     );
+  }
+
+  if (retryFailed) {
+    const authResult = await verifyAdminSignedAction({
+      request,
+      route: "/api/order/checkQueueTransactionHash",
+      signingPrefix: CHECK_QUEUE_RETRY_SIGNING_PREFIX,
+      requesterStorecodeRaw: body?.requesterStorecode,
+      requesterWalletAddressRaw: body?.requesterWalletAddress,
+      signatureRaw: body?.signature,
+      signedAtRaw: body?.signedAt,
+      nonceRaw: body?.nonce,
+      actionFields: {
+        retryFailed: "true",
+        storecode,
+        orderIds: orderIds.join(","),
+      },
+    });
+
+    if (!authResult.ok) {
+      return NextResponse.json(
+        {
+          error: authResult.error,
+        },
+        {
+          status: authResult.status,
+        }
+      );
+    }
   }
 
   const secretKey = String(process.env.THIRDWEB_SECRET_KEY || "").trim();

@@ -28,11 +28,13 @@ import {
 
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
+import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 import { access } from "fs";
 import { sign } from "crypto";
 
 const WITHDRAW_VAULT_API_DISABLED = true;
 const WITHDRAW_VAULT_API_DISABLED_MESSAGE = "결과를 점검중입니다";
+const WITHDRAW_VAULT_SIGNING_PREFIX = "stable-georgia:withdraw-vault:v1";
 
 export async function POST(request: NextRequest) {
 
@@ -53,12 +55,40 @@ export async function POST(request: NextRequest) {
     amount,
   } = body;
 
-  if (!walletAddress || !toAddress || !amount) {
+  const walletAddressText = String(walletAddress || "").trim();
+  const toAddressText = String(toAddress || "").trim();
+  const amountText = String(amount || "").trim();
+
+  if (!walletAddressText || !toAddressText || !amountText) {
     return NextResponse.json({
       result: null,
       success: false,
       error: "Missing required fields: walletAddress, toAddress, amount",
     }, { status: 400 });
+  }
+
+  const authResult = await verifyAdminSignedAction({
+    request,
+    route: "/api/vault/withdrawVault",
+    signingPrefix: WITHDRAW_VAULT_SIGNING_PREFIX,
+    requesterStorecodeRaw: body?.requesterStorecode,
+    requesterWalletAddressRaw: body?.requesterWalletAddress,
+    signatureRaw: body?.signature,
+    signedAtRaw: body?.signedAt,
+    nonceRaw: body?.nonce,
+    actionFields: {
+      walletAddress: walletAddressText.toLowerCase(),
+      toAddress: toAddressText.toLowerCase(),
+      amount: amountText,
+    },
+  });
+
+  if (!authResult.ok) {
+    return NextResponse.json({
+      result: null,
+      success: false,
+      error: authResult.error,
+    }, { status: authResult.status });
   }
 
   console.log("WithdrawVault Request Body:", body);
@@ -90,12 +120,12 @@ export async function POST(request: NextRequest) {
 
 
   /*
-  let senderEoaAddress = walletAddress as string;
+  let senderEoaAddress = walletAddressText;
 
   try {
     const serverWallets = await Engine.getServerWallets({ client });
     const accounts = serverWallets?.accounts || [];
-    const normalizedRequestedAddress = String(walletAddress).toLowerCase();
+    const normalizedRequestedAddress = String(walletAddressText).toLowerCase();
 
     const matched = accounts.find((account: any) => {
       const eoa = String(account?.address || "").toLowerCase();
@@ -108,7 +138,7 @@ export async function POST(request: NextRequest) {
         result: null,
         success: false,
         error: "Sender wallet is not registered in Thirdweb Vault",
-        message: `Requested sender address (${walletAddress}) is not a vault server wallet EOA.`,
+        message: `Requested sender address (${walletAddressText}) is not a vault server wallet EOA.`,
       }, { status: 400 });
     }
 
@@ -219,12 +249,12 @@ const wallet = Engine.serverWallet({
 // signer address (EOA) for the smart account
 // signerAddress
 
-  let senderEoaAddress = walletAddress as string;
+  let senderEoaAddress = walletAddressText;
 
   try {
     const serverWallets = await Engine.getServerWallets({ client });
     const accounts = serverWallets?.accounts || [];
-    const normalizedRequestedAddress = String(walletAddress).toLowerCase();
+    const normalizedRequestedAddress = String(walletAddressText).toLowerCase();
 
     const matched = accounts.find((account: any) => {
       const eoa = String(account?.address || "").toLowerCase();
@@ -237,7 +267,7 @@ const wallet = Engine.serverWallet({
         result: null,
         success: false,
         error: "Sender wallet is not registered in Thirdweb Vault",
-        message: `Requested sender address (${walletAddress}) is not a vault server wallet EOA.`,
+        message: `Requested sender address (${walletAddressText}) is not a vault server wallet EOA.`,
       }, { status: 400 });
     }
 
@@ -258,7 +288,7 @@ const wallet = Engine.serverWallet({
 const wallet = Engine.serverWallet({
     client,
     vaultAccessToken,
-    address: walletAddress,
+    address: walletAddressText,
     chain: chain === "ethereum" ? ethereum :
             chain === "polygon" ? polygon :
             chain === "arbitrum" ? arbitrum :
@@ -270,7 +300,7 @@ const wallet = Engine.serverWallet({
       signerAddress: senderEoaAddress,
 
 
-      smartAccountAddress: walletAddress,
+      smartAccountAddress: walletAddressText,
 
       entrypointVersion: "0.7",
     },
@@ -329,8 +359,8 @@ const wallet = Engine.serverWallet({
   try {
     const transaction = transfer({
       contract,
-      to: toAddress,
-      amount: amount,
+      to: toAddressText,
+      amount: amountText,
     });
 
 

@@ -1,0 +1,335 @@
+import { NextRequest } from "next/server";
+
+import { getOneByWalletAddress } from "@lib/api/user";
+import clientPromise, { dbName } from "@/lib/mongodb";
+import {
+  consumeReadRateLimit,
+  getRequestIp,
+  logUserReadSecurityEvent,
+  normalizeWalletAddress,
+  parseSignedAtOrNull,
+  verifyWalletSignatureWithFallback,
+} from "@/lib/server/user-read-security";
+
+const ADMIN_ACTION_NONCE_COLLECTION = "adminActionSecurityNonces";
+const DEFAULT_ADMIN_ACTION_NONCE_TTL_MS = 10 * 60 * 1000;
+
+type BuildAdminActionSigningMessageParams = {
+  signingPrefix: string;
+  route: string;
+  requesterStorecode: string;
+  requesterWalletAddress: string;
+  nonce: string;
+  signedAtIso: string;
+  actionFields: Record<string, unknown>;
+};
+
+export type VerifyAdminSignedActionParams = {
+  request: NextRequest;
+  route: string;
+  signingPrefix: string;
+  requesterStorecodeRaw: unknown;
+  requesterWalletAddressRaw: unknown;
+  signatureRaw: unknown;
+  signedAtRaw: unknown;
+  nonceRaw: unknown;
+  actionFields: Record<string, unknown>;
+};
+
+export type VerifyAdminSignedActionResult =
+  | {
+      ok: true;
+      requesterWalletAddress: string;
+      requesterStorecode: string;
+      requesterUser: any;
+      signedAtIso: string;
+      nonce: string;
+      ip: string;
+    }
+  | {
+      ok: false;
+      status: number;
+      error: string;
+    };
+
+const normalizeString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const normalizeActionFieldValue = (value: unknown): string => {
+  if (value == null) {
+    return "";
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeActionFieldValue(item)).join(",");
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "";
+    }
+  }
+  return String(value).trim();
+};
+
+export const buildAdminActionSigningMessage = ({
+  signingPrefix,
+  route,
+  requesterStorecode,
+  requesterWalletAddress,
+  nonce,
+  signedAtIso,
+  actionFields,
+}: BuildAdminActionSigningMessageParams): string => {
+  const actionLines = Object.entries(actionFields || {})
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, value]) => `${key}:${normalizeActionFieldValue(value)}`);
+
+  return [
+    signingPrefix,
+    `route:${route}`,
+    `requesterStorecode:${requesterStorecode}`,
+    `requesterWalletAddress:${requesterWalletAddress}`,
+    `nonce:${nonce}`,
+    `signedAt:${signedAtIso}`,
+    ...actionLines,
+  ].join("\n");
+};
+
+const consumeAdminActionNonce = async ({
+  route,
+  walletAddress,
+  nonce,
+  signedAtIso,
+}: {
+  route: string;
+  walletAddress: string;
+  nonce: string;
+  signedAtIso: string;
+}) => {
+  const dbClient = await clientPromise;
+  const collection = dbClient.db(dbName).collection(ADMIN_ACTION_NONCE_COLLECTION);
+
+  const nonceKey = `${route}:${walletAddress}:${nonce}`;
+  const existing = await collection.findOne(
+    { nonceKey },
+    { projection: { _id: 1 } },
+  );
+
+  if (existing) {
+    return false;
+  }
+
+  const now = Date.now();
+  const ttlFromNow = Number.parseInt(process.env.ADMIN_ACTION_NONCE_TTL_MS || "", 10);
+  const ttlMs =
+    Number.isFinite(ttlFromNow) && ttlFromNow > 0
+      ? ttlFromNow
+      : DEFAULT_ADMIN_ACTION_NONCE_TTL_MS;
+
+  await collection.insertOne({
+    nonceKey,
+    route,
+    walletAddress,
+    nonce,
+    signedAt: signedAtIso,
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + ttlMs).toISOString(),
+  });
+
+  return true;
+};
+
+export const verifyAdminSignedAction = async ({
+  request,
+  route,
+  signingPrefix,
+  requesterStorecodeRaw,
+  requesterWalletAddressRaw,
+  signatureRaw,
+  signedAtRaw,
+  nonceRaw,
+  actionFields,
+}: VerifyAdminSignedActionParams): Promise<VerifyAdminSignedActionResult> => {
+  const requesterStorecode = normalizeString(requesterStorecodeRaw || "admin") || "admin";
+  const requesterWalletAddress = normalizeWalletAddress(requesterWalletAddressRaw);
+  const signature = normalizeString(signatureRaw);
+  const signedAtIso = parseSignedAtOrNull(signedAtRaw);
+  const nonce = normalizeString(nonceRaw);
+  const ip = getRequestIp(request);
+
+  if (!requesterWalletAddress || !signature || !signedAtIso || !nonce) {
+    await logUserReadSecurityEvent({
+      route,
+      status: "blocked",
+      reason: "missing_or_invalid_signature_fields",
+      ip,
+      requesterWalletAddress: requesterWalletAddress || undefined,
+      signatureProvided: Boolean(signature && signedAtIso),
+      signatureVerified: false,
+      rateLimited: false,
+      extra: {
+        requesterStorecode,
+      },
+    });
+
+    return {
+      ok: false,
+      status: 401,
+      error: "Invalid signature",
+    };
+  }
+
+  const rate = consumeReadRateLimit({
+    scope: `admin-action:${route}`,
+    ip,
+    walletAddress: requesterWalletAddress,
+  });
+
+  if (!rate.allowed) {
+    await logUserReadSecurityEvent({
+      route,
+      status: "blocked",
+      reason: "rate_limited",
+      ip,
+      requesterWalletAddress,
+      signatureProvided: true,
+      signatureVerified: false,
+      rateLimited: true,
+      extra: {
+        requesterStorecode,
+      },
+    });
+
+    return {
+      ok: false,
+      status: 429,
+      error: "Too many requests",
+    };
+  }
+
+  const signingMessage = buildAdminActionSigningMessage({
+    signingPrefix,
+    route,
+    requesterStorecode,
+    requesterWalletAddress,
+    nonce,
+    signedAtIso,
+    actionFields,
+  });
+
+  const signatureVerified = await verifyWalletSignatureWithFallback({
+    walletAddress: requesterWalletAddress,
+    signature,
+    message: signingMessage,
+    storecodeHint: requesterStorecode,
+  });
+
+  if (!signatureVerified) {
+    await logUserReadSecurityEvent({
+      route,
+      status: "blocked",
+      reason: "invalid_signature",
+      ip,
+      requesterWalletAddress,
+      signatureProvided: true,
+      signatureVerified: false,
+      rateLimited: false,
+      extra: {
+        requesterStorecode,
+      },
+    });
+
+    return {
+      ok: false,
+      status: 401,
+      error: "Invalid signature",
+    };
+  }
+
+  const requesterUser = await getOneByWalletAddress(requesterStorecode, requesterWalletAddress);
+  const requesterStorecodeLower = String(requesterUser?.storecode || "").trim().toLowerCase();
+  const requesterRoleLower = String(requesterUser?.role || "").trim().toLowerCase();
+  const requesterIsAdmin = requesterStorecodeLower === "admin" && requesterRoleLower === "admin";
+
+  if (!requesterIsAdmin) {
+    await logUserReadSecurityEvent({
+      route,
+      status: "blocked",
+      reason: "forbidden_not_admin",
+      ip,
+      requesterWalletAddress,
+      signatureProvided: true,
+      signatureVerified: true,
+      rateLimited: false,
+      extra: {
+        requesterStorecode: requesterUser?.storecode || requesterStorecode,
+        requesterRole: requesterUser?.role || null,
+      },
+    });
+
+    return {
+      ok: false,
+      status: 403,
+      error: "Forbidden",
+    };
+  }
+
+  const nonceAccepted = await consumeAdminActionNonce({
+    route,
+    walletAddress: requesterWalletAddress,
+    nonce,
+    signedAtIso,
+  });
+
+  if (!nonceAccepted) {
+    await logUserReadSecurityEvent({
+      route,
+      status: "blocked",
+      reason: "replayed_nonce",
+      ip,
+      requesterWalletAddress,
+      signatureProvided: true,
+      signatureVerified: true,
+      rateLimited: false,
+      extra: {
+        requesterStorecode,
+      },
+    });
+
+    return {
+      ok: false,
+      status: 409,
+      error: "Replay detected",
+    };
+  }
+
+  await logUserReadSecurityEvent({
+    route,
+    status: "allowed",
+    reason: "admin_signed",
+    ip,
+    requesterWalletAddress,
+    signatureProvided: true,
+    signatureVerified: true,
+    rateLimited: false,
+    extra: {
+      requesterStorecode,
+      action: signingPrefix,
+    },
+  });
+
+  return {
+    ok: true,
+    requesterWalletAddress,
+    requesterStorecode,
+    requesterUser,
+    signedAtIso,
+    nonce,
+    ip,
+  };
+};
