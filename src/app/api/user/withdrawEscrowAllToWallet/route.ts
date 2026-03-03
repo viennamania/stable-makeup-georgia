@@ -6,6 +6,12 @@ import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 import { ethers } from "ethers";
 
 import { getOneByWalletAddress } from "@lib/api/user";
+import clientPromise, { dbName } from "@/lib/mongodb";
+import {
+  normalizeWalletAddress,
+  parseSignedAtOrNull,
+  verifyWalletSignatureWithFallback,
+} from "@/lib/server/user-read-security";
 import {
   chain as configuredChain,
   ethereumContractAddressUSDT,
@@ -13,6 +19,19 @@ import {
   arbitrumContractAddressUSDT,
   bscContractAddressUSDT,
 } from "@/app/config/contractAddresses";
+
+const ROUTE = "/api/user/withdrawEscrowAllToWallet";
+const WITHDRAW_ESCROW_SIGNING_PREFIX = "stable-georgia:withdraw-escrow-all-to-wallet:v1";
+const USER_ACTION_NONCE_COLLECTION = "userActionSecurityNonces";
+const DEFAULT_USER_ACTION_NONCE_TTL_MS = 10 * 60 * 1000;
+
+type WithdrawEscrowRequestBody = {
+  storecode?: unknown;
+  walletAddress?: unknown;
+  signature?: unknown;
+  signedAt?: unknown;
+  nonce?: unknown;
+};
 
 const activeChain =
   configuredChain === "ethereum"
@@ -34,11 +53,87 @@ const usdtContractAddress =
 
 const usdtDecimals = configuredChain === "bsc" ? 18 : 6;
 
-export async function POST(request: NextRequest) {
-  const body = await request.json();
+const normalizeString = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
 
-  const storecode = String(body?.storecode || "").trim();
-  const walletAddress = String(body?.walletAddress || "").trim();
+const buildWithdrawEscrowSigningMessage = ({
+  storecode,
+  walletAddress,
+  nonce,
+  signedAtIso,
+}: {
+  storecode: string;
+  walletAddress: string;
+  nonce: string;
+  signedAtIso: string;
+}) => {
+  return [
+    WITHDRAW_ESCROW_SIGNING_PREFIX,
+    `route:${ROUTE}`,
+    `storecode:${storecode}`,
+    `walletAddress:${walletAddress}`,
+    `nonce:${nonce}`,
+    `signedAt:${signedAtIso}`,
+  ].join("\n");
+};
+
+const consumeUserActionNonce = async ({
+  route,
+  walletAddress,
+  nonce,
+  signedAtIso,
+}: {
+  route: string;
+  walletAddress: string;
+  nonce: string;
+  signedAtIso: string;
+}) => {
+  const dbClient = await clientPromise;
+  const collection = dbClient.db(dbName).collection(USER_ACTION_NONCE_COLLECTION);
+  const nonceKey = `${route}:${walletAddress}:${nonce}`;
+
+  const existing = await collection.findOne({ nonceKey }, { projection: { _id: 1 } });
+  if (existing) {
+    return false;
+  }
+
+  const now = Date.now();
+  const ttlFromNow = Number.parseInt(process.env.USER_ACTION_NONCE_TTL_MS || "", 10);
+  const ttlMs =
+    Number.isFinite(ttlFromNow) && ttlFromNow > 0
+      ? ttlFromNow
+      : DEFAULT_USER_ACTION_NONCE_TTL_MS;
+
+  await collection.insertOne({
+    nonceKey,
+    route,
+    walletAddress,
+    nonce,
+    signedAt: signedAtIso,
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + ttlMs).toISOString(),
+  });
+
+  return true;
+};
+
+export async function POST(request: NextRequest) {
+  let body: WithdrawEscrowRequestBody = {};
+  try {
+    body = (await request.json()) as WithdrawEscrowRequestBody;
+  } catch {
+    body = {};
+  }
+
+  const storecode = normalizeString(body?.storecode);
+  const walletAddress = normalizeWalletAddress(body?.walletAddress);
+  const signature = normalizeString(body?.signature);
+  const signedAtIso = parseSignedAtOrNull(body?.signedAt);
+  const nonce = normalizeString(body?.nonce);
 
   if (!storecode || !walletAddress) {
     return NextResponse.json(
@@ -46,6 +141,54 @@ export async function POST(request: NextRequest) {
         error: "Missing required fields: storecode, walletAddress",
       },
       { status: 400 },
+    );
+  }
+
+  if (!signature || !signedAtIso || !nonce) {
+    return NextResponse.json(
+      {
+        error: "Invalid signature",
+      },
+      { status: 401 },
+    );
+  }
+
+  const signingMessage = buildWithdrawEscrowSigningMessage({
+    storecode,
+    walletAddress,
+    nonce,
+    signedAtIso,
+  });
+
+  const signatureVerified = await verifyWalletSignatureWithFallback({
+    walletAddress,
+    signature,
+    message: signingMessage,
+    storecodeHint: storecode,
+  });
+
+  if (!signatureVerified) {
+    return NextResponse.json(
+      {
+        error: "Invalid signature",
+      },
+      { status: 401 },
+    );
+  }
+
+  const nonceAccepted = await consumeUserActionNonce({
+    route: ROUTE,
+    walletAddress,
+    nonce,
+    signedAtIso,
+  });
+
+  if (!nonceAccepted) {
+    return NextResponse.json(
+      {
+        error: "Replay detected",
+      },
+      { status: 409 },
     );
   }
 

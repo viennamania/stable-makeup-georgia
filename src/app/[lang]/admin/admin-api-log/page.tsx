@@ -122,6 +122,8 @@ export default function AdminApiLogPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   const fetchLogs = async () => {
     if (!walletAddress || loading) {
@@ -195,9 +197,39 @@ export default function AdminApiLogPage() {
     });
   }, [logs, search]);
 
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+  }, [filteredLogs.length, pageSize]);
+
+  const pagedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [filteredLogs, currentPage, pageSize]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedRange, selectedStatus, selectedRoute, selectedGuardType, search, pageSize]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const routeOptionItems = useMemo(() => {
     return [{ value: "all", count: logs.length }, ...routeStats];
   }, [logs.length, routeStats]);
+
+  const pageNumbers = useMemo(() => {
+    const radius = 2;
+    const start = Math.max(1, currentPage - radius);
+    const end = Math.min(totalPages, currentPage + radius);
+    const numbers: number[] = [];
+    for (let page = start; page <= end; page += 1) {
+      numbers.push(page);
+    }
+    return numbers;
+  }, [currentPage, totalPages]);
 
   return (
     <main className="w-full px-3 sm:px-4 md:px-6 lg:px-10 pb-10">
@@ -236,10 +268,13 @@ export default function AdminApiLogPage() {
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm text-zinc-500">표시</span>
               <span className="text-2xl font-black text-zinc-900">
-                {filteredLogs.length.toLocaleString("ko-KR")}건
+                {pagedLogs.length.toLocaleString("ko-KR")}건
               </span>
               <span className="text-xs text-zinc-400">
-                / 전체 {logs.length.toLocaleString("ko-KR")}건
+                / 검색결과 {filteredLogs.length.toLocaleString("ko-KR")}건 / 전체 {logs.length.toLocaleString("ko-KR")}건
+              </span>
+              <span className="text-xs text-zinc-400">
+                페이지 {currentPage.toLocaleString("ko-KR")} / {totalPages.toLocaleString("ko-KR")}
               </span>
               <span className="text-xs text-zinc-400">
                 {fetchedAt ? `업데이트: ${formatDateTime(fetchedAt)}` : "업데이트 대기중..."}
@@ -293,6 +328,17 @@ export default function AdminApiLogPage() {
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-800"
               />
 
+              <select
+                value={String(pageSize)}
+                onChange={(event) => setPageSize(Number(event.target.value) || 50)}
+                className="w-full lg:w-28 border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-800 bg-white"
+              >
+                <option value="25">25개</option>
+                <option value="50">50개</option>
+                <option value="100">100개</option>
+                <option value="200">200개</option>
+              </select>
+
               <button
                 type="button"
                 onClick={fetchLogs}
@@ -320,14 +366,14 @@ export default function AdminApiLogPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLogs.length === 0 && (
+                  {pagedLogs.length === 0 && (
                     <tr>
                       <td colSpan={10} className="px-3 py-8 text-center text-zinc-500">
                         조회된 로그가 없습니다.
                       </td>
                     </tr>
                   )}
-                  {filteredLogs.map((log) => (
+                  {pagedLogs.map((log) => (
                     <tr key={String(log._id)} className="border-t border-zinc-100 align-top">
                       <td className="px-3 py-2 whitespace-nowrap text-zinc-700">
                         <div>{formatDateTime(log.createdAt)}</div>
@@ -375,6 +421,67 @@ export default function AdminApiLogPage() {
                 </tbody>
               </table>
             </div>
+
+            {filteredLogs.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <div className="text-xs text-zinc-500">
+                  {(filteredLogs.length === 0
+                    ? 0
+                    : (currentPage - 1) * pageSize + 1).toLocaleString("ko-KR")}
+                  -
+                  {Math.min(currentPage * pageSize, filteredLogs.length).toLocaleString("ko-KR")}
+                  / {filteredLogs.length.toLocaleString("ko-KR")}건
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage(1)}
+                    className="px-2.5 py-1.5 rounded-md text-xs font-semibold border border-zinc-300 text-zinc-700 disabled:opacity-40"
+                  >
+                    처음
+                  </button>
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    className="px-2.5 py-1.5 rounded-md text-xs font-semibold border border-zinc-300 text-zinc-700 disabled:opacity-40"
+                  >
+                    이전
+                  </button>
+                  {pageNumbers.map((page) => (
+                    <button
+                      key={`page-${page}`}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-2.5 py-1.5 rounded-md text-xs font-semibold border ${
+                        page === currentPage
+                          ? "bg-zinc-900 text-white border-zinc-900"
+                          : "border-zinc-300 text-zinc-700"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    className="px-2.5 py-1.5 rounded-md text-xs font-semibold border border-zinc-300 text-zinc-700 disabled:opacity-40"
+                  >
+                    다음
+                  </button>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="px-2.5 py-1.5 rounded-md text-xs font-semibold border border-zinc-300 text-zinc-700 disabled:opacity-40"
+                  >
+                    마지막
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               {statusStats.map((item) => (

@@ -11,6 +11,7 @@ import { transfer, balanceOf } from "thirdweb/extensions/erc20";
 
 import { client } from "@/app/client";
 import { postUpdateUserWithSignature } from "@/lib/client/update-user-signed";
+import { postWithdrawEscrowAllToWalletSigned } from "@/lib/client/withdraw-escrow-all-signed";
 import {
   chain as configuredChain,
   ethereumContractAddressUSDT,
@@ -447,18 +448,13 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
 
     setWithdrawingEscrow(true);
     try {
-      const response = await fetch("/api/user/withdrawEscrowAllToWallet", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const data = (await postWithdrawEscrowAllToWalletSigned({
+        account: activeAccount,
+        payload: {
           storecode: STORECODE,
           walletAddress,
-        }),
-      });
-
-      const data = (await response.json()) as {
+        },
+      })) as {
         result?: {
           amountUsdt?: string;
           transactionHash?: string | null;
@@ -466,7 +462,7 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
         error?: string;
       };
 
-      if (!response.ok || !data.result) {
+      if (!data.result) {
         throw new Error(data.error || "에스크로 회수에 실패했습니다.");
       }
 
@@ -485,7 +481,7 @@ export default function PromotionUserRegisterPage({ params }: { params: { lang: 
     } finally {
       setWithdrawingEscrow(false);
     }
-  }, [escrowWalletAddress, fetchEscrowBalance, walletAddress]);
+  }, [activeAccount, escrowWalletAddress, fetchEscrowBalance, walletAddress]);
 
   const saveProfile = useCallback(async () => {
     setTouched(true);
