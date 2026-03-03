@@ -844,6 +844,7 @@ export default function Index({ params }: any) {
           body: JSON.stringify(
             {
               storecode: searchStorecode,
+              walletAddress: address,
             }
         ),
       });
@@ -2005,6 +2006,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

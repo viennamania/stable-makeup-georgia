@@ -9,6 +9,7 @@ import {
 import {
   getOneByWalletAddress
 } from '@lib/api/user';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 
 // Download the helper library from https://www.twilio.com/docs/node/install
@@ -88,6 +89,18 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const { lang, storecode, walletAddress } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/transferEscrowBalanceToMyWallet",
+    body,
+    storecodeRaw: storecode,
+    requesterWalletAddressRaw: walletAddress,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
   console.log("lang", lang);
   console.log("storecode", storecode);

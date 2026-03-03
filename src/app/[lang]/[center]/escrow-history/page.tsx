@@ -943,6 +943,7 @@ export default function Index({ params }: any) {
           body: JSON.stringify(
             {
               storecode: params.center,
+              walletAddress: address,
             }
         ),
       });
@@ -1532,6 +1533,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

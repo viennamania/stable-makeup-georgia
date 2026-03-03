@@ -12,6 +12,7 @@ import {
 import {
   getOneByWalletAddress 
 } from '@lib/api/user';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 import {
   getPayactionKeys,
@@ -36,6 +37,18 @@ export async function POST(request: NextRequest) {
     walletAddress,
     cancelTradeReason,
   } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/cancelTradeBySeller",
+    body,
+    storecodeRaw: storecode,
+    requesterWalletAddressRaw: walletAddress,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
   //console.log("orderId", orderId);
   //console.log("walletAddress", walletAddress);

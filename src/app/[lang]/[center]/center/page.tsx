@@ -1502,6 +1502,7 @@ export default function Index({ params }: any) {
           body: JSON.stringify(
             {
               storecode: params.center,
+              walletAddress: address,
             }
         ),
       });
@@ -3480,6 +3481,5 @@ export default function Index({ params }: any) {
 
 
 };
-
 
 

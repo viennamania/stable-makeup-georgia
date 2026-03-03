@@ -32,6 +32,7 @@ import StabilityConsole from '@/components/StabilityConsole';
 import CenterConsole from '@/components/CenterConsole';
 
 import StoreConsole from '@/components/StoreConsole';
+import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
 
 
 import {
@@ -169,6 +170,8 @@ export default function RootLayout({
     <div className="w-full flex flex-col items-center justify-center bg-gray-100 rounded-lg shadow-md mb-4
       pt-48 xl:pt-24
     ">
+
+      <CenterStoreAdminFetchSignatureBridge />
 
       {/*
       <AutoConnect

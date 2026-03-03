@@ -3217,6 +3217,7 @@ const fetchBuyOrders = async () => {
           body: JSON.stringify(
             {
               storecode: params.center,
+              walletAddress: address,
             }
         ),
       });

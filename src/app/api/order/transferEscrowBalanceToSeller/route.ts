@@ -13,6 +13,7 @@ import { ObjectId } from 'mongodb';
 import {
   getOneByWalletAddress 
 } from '@lib/api/user';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 // Download the helper library from https://www.twilio.com/docs/node/install
 import twilio from "twilio";
@@ -109,6 +110,18 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const { lang, storecode, walletAddress, amount, isSmartAccount } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/transferEscrowBalanceToSeller",
+    body,
+    storecodeRaw: storecode,
+    requesterWalletAddressRaw: walletAddress,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
   console.log("lang", lang);
   console.log("storecode", storecode);

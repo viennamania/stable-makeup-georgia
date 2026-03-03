@@ -32,6 +32,7 @@ import { useRouter }from "next//navigation";
 //import CenterConsole from '@/components/CenterConsole';
 
 import WalletConsole from '@/components/WalletConsole';
+import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
 
 
 import {
@@ -159,6 +160,8 @@ export default function RootLayout({
         <div className="w-full flex flex-col items-center justify-center p-0 bg-gray-100 rounded-lg shadow-md mb-4
           pt-12 
         ">
+
+          <CenterStoreAdminFetchSignatureBridge />
 
           {/* fixed position left and vertically top */}
           <div className="

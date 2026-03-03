@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	getCollectOrdersForUser,
 } from '@lib/api/order';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 
 
@@ -22,6 +23,18 @@ export async function POST(request: NextRequest) {
 
     searchWithdrawDepositName,
   } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/getAllCollectOrdersForUser",
+    body,
+    storecodeRaw: storecode,
+    requesterWalletAddressRaw: walletAddress,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
 
 
