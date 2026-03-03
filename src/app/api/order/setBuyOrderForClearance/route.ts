@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
 import {
 	insertBuyOrderForClearance,
 } from '@lib/api/order';
@@ -15,6 +16,8 @@ import {
 } from "@/app/config/contractAddresses";
 
 import {
+  getRequestCountry,
+  getRequestIp,
   normalizeWalletAddress,
   parseSignedAtOrNull,
   verifyWalletSignatureWithFallback,
@@ -92,6 +95,8 @@ const buildSetBuyOrderForClearanceSigningMessage = ({
 export async function POST(request: NextRequest) {
 
   const body = await request.json() as SetBuyOrderForClearanceRequestBody;
+  const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
 
   const storecode = normalizeString(body.storecode);
   const requestedSellerWalletAddress = normalizeString(body.walletAddress);
@@ -102,6 +107,43 @@ export async function POST(request: NextRequest) {
   const usdtAmount = normalizePositiveNumber(body.usdtAmount);
   const krwAmount = normalizePositiveNumber(body.krwAmount);
   const rate = normalizePositiveNumber(body.rate);
+  const route = "/api/order/setBuyOrderForClearance";
+
+  const writeAdminApiCallLog = async ({
+    status,
+    reason,
+    requesterUser,
+    walletAddress,
+    meta,
+  }: {
+    status: "allowed" | "blocked";
+    reason: string;
+    requesterUser?: any;
+    walletAddress?: string | null;
+    meta?: Record<string, unknown>;
+  }) => {
+    await insertAdminApiCallLog({
+      route,
+      guardType: "admin_signed",
+      status,
+      reason,
+      publicIp: ip,
+      publicCountry: country,
+      requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
+      requesterUser: requesterUser || null,
+      requestBody: {
+        storecode,
+        walletAddress: requestedSellerWalletAddress,
+        usdtAmount: body.usdtAmount ?? null,
+        krwAmount: body.krwAmount ?? null,
+        rate: body.rate ?? null,
+        privateSale: body.privateSale ?? null,
+        sellerBankInfo: body.sellerBankInfo ?? null,
+        buyer: body.buyer ?? null,
+      },
+      meta,
+    });
+  };
 
   if (
     !storecode
@@ -114,6 +156,10 @@ export async function POST(request: NextRequest) {
     || !krwAmount
     || !rate
   ) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "missing_or_invalid_required_fields",
+    });
     return NextResponse.json(
       {
         result: null,
@@ -141,6 +187,10 @@ export async function POST(request: NextRequest) {
   });
 
   if (!signatureVerified) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "invalid_signature",
+    });
     return NextResponse.json(
       {
         result: null,
@@ -156,6 +206,11 @@ export async function POST(request: NextRequest) {
   const requesterIsAdmin = requesterStorecode === "admin" && requesterRole === "admin";
 
   if (!requesterIsAdmin) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "forbidden_not_admin",
+      requesterUser,
+    });
     return NextResponse.json(
       {
         result: null,
@@ -183,6 +238,14 @@ export async function POST(request: NextRequest) {
     user = await checkSellerByWalletAddress("admin", normalizedSellerWalletAddress);
   }
   if (!user) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "seller_not_found",
+      requesterUser,
+      meta: {
+        requestedSellerWalletAddress,
+      },
+    });
     return NextResponse.json({
       result: null,
       error: "Seller with the provided wallet address does not exist",
@@ -217,6 +280,11 @@ export async function POST(request: NextRequest) {
   ///console.log("setBuyOrder =====  result", result);
 
   if (!result) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "insert_buy_order_failed",
+      requesterUser,
+    });
 
     return NextResponse.json({
       result: null,
@@ -229,6 +297,15 @@ export async function POST(request: NextRequest) {
 
 
 
+  await writeAdminApiCallLog({
+    status: "allowed",
+    reason: "buy_order_created",
+    requesterUser,
+    meta: {
+      tradeId: result?.tradeId || null,
+      id: result?._id || null,
+    },
+  });
  
   return NextResponse.json({
 

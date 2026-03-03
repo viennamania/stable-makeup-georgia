@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 
 import { getOneByWalletAddress } from "@lib/api/user";
+import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
 import clientPromise, { dbName } from "@/lib/mongodb";
 import {
   consumeReadRateLimit,
+  getRequestCountry,
   getRequestIp,
   logUserReadSecurityEvent,
   normalizeWalletAddress,
@@ -161,8 +163,44 @@ export const verifyAdminSignedAction = async ({
   const signedAtIso = parseSignedAtOrNull(signedAtRaw);
   const nonce = normalizeString(nonceRaw);
   const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
+
+  const writeAdminApiCallLog = async ({
+    status,
+    reason,
+    requesterUser,
+    walletAddress,
+    meta,
+  }: {
+    status: "allowed" | "blocked";
+    reason: string;
+    requesterUser?: any;
+    walletAddress?: string | null;
+    meta?: Record<string, unknown>;
+  }) => {
+    await insertAdminApiCallLog({
+      route,
+      guardType: "admin_signed",
+      status,
+      reason,
+      publicIp: ip,
+      publicCountry: country,
+      requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
+      requesterUser: requesterUser || null,
+      requestBody: actionFields,
+      meta: {
+        requesterStorecode,
+        signingPrefix,
+        ...meta,
+      },
+    });
+  };
 
   if (!requesterWalletAddress || !signature || !signedAtIso || !nonce) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "missing_or_invalid_signature_fields",
+    });
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
@@ -191,6 +229,10 @@ export const verifyAdminSignedAction = async ({
   });
 
   if (!rate.allowed) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "rate_limited",
+    });
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
@@ -230,6 +272,10 @@ export const verifyAdminSignedAction = async ({
   });
 
   if (!signatureVerified) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "invalid_signature",
+    });
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
@@ -257,6 +303,15 @@ export const verifyAdminSignedAction = async ({
   const requesterIsAdmin = requesterStorecodeLower === "admin" && requesterRoleLower === "admin";
 
   if (!requesterIsAdmin) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "forbidden_not_admin",
+      requesterUser,
+      meta: {
+        requesterStorecode: requesterUser?.storecode || requesterStorecode,
+        requesterRole: requesterUser?.role || null,
+      },
+    });
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
@@ -287,6 +342,11 @@ export const verifyAdminSignedAction = async ({
   });
 
   if (!nonceAccepted) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "replayed_nonce",
+      requesterUser,
+    });
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
@@ -308,6 +368,11 @@ export const verifyAdminSignedAction = async ({
     };
   }
 
+  await writeAdminApiCallLog({
+    status: "allowed",
+    reason: "admin_signed",
+    requesterUser,
+  });
   await logUserReadSecurityEvent({
     route,
     status: "allowed",

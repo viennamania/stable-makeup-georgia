@@ -2696,6 +2696,15 @@ export default function Index({ params }: any) {
                     >
                       Store Settings API 호출 로그
                     </button>
+                    <button
+                      onClick={() => {
+                        const url = `/${params.lang}/admin/admin-api-log`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full bg-cyan-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-cyan-600"
+                    >
+                      Admin 권한 API 호출 로그
+                    </button>
 
                     {/*
                     <button

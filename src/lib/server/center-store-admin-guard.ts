@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 
+import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
 import clientPromise, { dbName } from "@/lib/mongodb";
 import { getStoreByStorecode } from "@lib/api/store";
 import { getOneByWalletAddress } from "@lib/api/user";
@@ -10,6 +11,7 @@ import {
 } from "@/lib/security/center-store-admin-signing";
 import {
   consumeReadRateLimit,
+  getRequestCountry,
   getRequestIp,
   normalizeWalletAddress,
   parseSignedAtOrNull,
@@ -112,6 +114,7 @@ export const verifyCenterStoreAdminGuard = async ({
   requesterWalletAddressRaw,
 }: VerifyCenterStoreAdminGuardParams): Promise<VerifyCenterStoreAdminGuardResult> => {
   const safeBody = isPlainObject(body) ? body : {};
+  const actionFields = extractCenterStoreAdminActionFields(safeBody);
   const storecode = normalizeStorecode(storecodeRaw ?? safeBody.storecode);
   const requesterWalletAddress = normalizeWalletAddress(
     requesterWalletAddressRaw
@@ -122,8 +125,44 @@ export const verifyCenterStoreAdminGuard = async ({
   const signature = normalizeString(safeBody.signature);
   const signedAtIso = parseSignedAtOrNull(safeBody.signedAt);
   const nonce = normalizeString(safeBody.nonce);
+  const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
+
+  const writeAdminApiCallLog = async ({
+    status,
+    reason,
+    requesterUser,
+    walletAddress,
+    meta,
+  }: {
+    status: "allowed" | "blocked";
+    reason: string;
+    requesterUser?: any;
+    walletAddress?: string | null;
+    meta?: Record<string, unknown>;
+  }) => {
+    await insertAdminApiCallLog({
+      route,
+      guardType: "center_store_admin",
+      status,
+      reason,
+      publicIp: ip,
+      publicCountry: country,
+      requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
+      requesterUser: requesterUser || null,
+      requestBody: actionFields,
+      meta: {
+        storecode,
+        ...meta,
+      },
+    });
+  };
 
   if (!storecode) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "storecode_required",
+    });
     return {
       ok: false,
       status: 400,
@@ -132,6 +171,11 @@ export const verifyCenterStoreAdminGuard = async ({
   }
 
   if (!requesterWalletAddress) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "invalid_wallet_address",
+      walletAddress: null,
+    });
     return {
       ok: false,
       status: 401,
@@ -140,6 +184,10 @@ export const verifyCenterStoreAdminGuard = async ({
   }
 
   if (!signature || !signedAtIso || !nonce) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "missing_or_invalid_signature_fields",
+    });
     return {
       ok: false,
       status: 401,
@@ -147,7 +195,6 @@ export const verifyCenterStoreAdminGuard = async ({
     };
   }
 
-  const ip = getRequestIp(request);
   const rate = consumeReadRateLimit({
     scope: `center-store-admin:${route}`,
     ip,
@@ -155,6 +202,10 @@ export const verifyCenterStoreAdminGuard = async ({
   });
 
   if (!rate.allowed) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "rate_limited",
+    });
     return {
       ok: false,
       status: 429,
@@ -162,7 +213,6 @@ export const verifyCenterStoreAdminGuard = async ({
     };
   }
 
-  const actionFields = extractCenterStoreAdminActionFields(safeBody);
   const signingMessage = buildCenterStoreAdminSigningMessage({
     route,
     storecode,
@@ -180,6 +230,10 @@ export const verifyCenterStoreAdminGuard = async ({
   });
 
   if (!signatureVerified) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "invalid_signature",
+    });
     return {
       ok: false,
       status: 401,
@@ -195,6 +249,10 @@ export const verifyCenterStoreAdminGuard = async ({
   });
 
   if (!nonceConsumed) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "invalid_nonce",
+    });
     return {
       ok: false,
       status: 409,
@@ -206,6 +264,14 @@ export const verifyCenterStoreAdminGuard = async ({
   const requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
 
   if (requesterIsAdmin) {
+    await writeAdminApiCallLog({
+      status: "allowed",
+      reason: "global_admin",
+      requesterUser: requesterAdminUser,
+      meta: {
+        matchedBy: "global_admin",
+      },
+    });
     return {
       ok: true,
       requesterWalletAddress,
@@ -218,6 +284,10 @@ export const verifyCenterStoreAdminGuard = async ({
   const storeAdminWalletAddress = normalizeWalletAddress(store?.adminWalletAddress);
 
   if (!storeAdminWalletAddress) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "store_admin_wallet_not_configured",
+    });
     return {
       ok: false,
       status: 403,
@@ -226,6 +296,13 @@ export const verifyCenterStoreAdminGuard = async ({
   }
 
   if (storeAdminWalletAddress !== requesterWalletAddress) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "forbidden_wallet_mismatch",
+      meta: {
+        configuredStoreAdminWalletAddress: storeAdminWalletAddress,
+      },
+    });
     return {
       ok: false,
       status: 403,
@@ -233,6 +310,15 @@ export const verifyCenterStoreAdminGuard = async ({
     };
   }
 
+  const requesterStoreUser = await getOneByWalletAddress(storecode, requesterWalletAddress);
+  await writeAdminApiCallLog({
+    status: "allowed",
+    reason: "store_admin_wallet",
+    requesterUser: requesterStoreUser,
+    meta: {
+      matchedBy: "store_admin_wallet",
+    },
+  });
   return {
     ok: true,
     requesterWalletAddress,
