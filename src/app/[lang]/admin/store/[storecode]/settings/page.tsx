@@ -969,6 +969,7 @@ export default function SettingsPage({ params }: any) {
         body: JSON.stringify(
             {
             storecode: params.storecode,
+            requesterWalletAddress: address,
             adminWalletAddress: selectedAdminWalletAddress,
             }
         ),
@@ -1029,6 +1030,7 @@ export default function SettingsPage({ params }: any) {
         body: JSON.stringify(
             {
             storecode: params.storecode,
+            requesterWalletAddress: address,
             settlementWalletAddress: selectedSettlementWalletAddress,
             }
         ),
@@ -1078,6 +1080,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     privateSellerWalletAddress: selectedPrivateSellerWalletAddress,
                 }
             ),
@@ -1129,6 +1132,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     settlementFeeWalletAddress: selectedSettlementFeeWalletAddress,
                 }
             ),
@@ -1193,6 +1197,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     settlementFeePercent: settlementFeePercent,
                 }
             ),
@@ -1241,6 +1246,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     agentFeeWalletAddress: selectedAgentFeeWalletAddress,
                 }
             ),
@@ -1301,6 +1307,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     agentFeePercent: agentFeePercent,
                 }
             ),
@@ -1347,6 +1354,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     agentFeePercent: 0,
                 }
             ),
@@ -1398,6 +1406,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     sellerWalletAddress: selectedSellerWalletAddress,
                 }
             ),
@@ -1455,6 +1464,7 @@ export default function SettingsPage({ params }: any) {
             body: JSON.stringify(
                 {
                     storecode: params.storecode,
+                    requesterWalletAddress: address,
                     escrowAmountUSDT: escrowAmountUSDT,
                 }
             ),
@@ -1955,6 +1965,7 @@ export default function SettingsPage({ params }: any) {
       },
       body: JSON.stringify({
         storecode: params.storecode,
+        requesterWalletAddress: address,
         viewOnAndOff,
       }),
     });

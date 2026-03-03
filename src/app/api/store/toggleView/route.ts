@@ -3,9 +3,23 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	updateViewOnAndOff,
 } from '@lib/api/store';
+import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+
+  const guard = await verifyStoreSettingsAdminGuard({
+    request,
+    route: "/api/store/toggleView",
+    body,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({
+      success: false,
+      message: guard.error,
+    }, { status: guard.status });
+  }
 
   const { storecode, viewOnAndOff } = body;
 
