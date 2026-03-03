@@ -157,6 +157,52 @@ import {
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
+const SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX = "stable-georgia:set-buy-order-for-clearance:v1";
+
+const normalizeStringValue = (value: unknown): string => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const normalizeWalletAddressForSignature = (value: unknown): string => {
+  return normalizeStringValue(value).toLowerCase();
+};
+
+const formatNumberForSignature = (value: number): string => {
+  return Number.isFinite(value) ? value.toString() : "";
+};
+
+const buildSetBuyOrderForClearanceSigningMessage = ({
+  requesterWalletAddress,
+  storecode,
+  sellerWalletAddress,
+  usdtAmount,
+  krwAmount,
+  rate,
+  signedAtIso,
+}: {
+  requesterWalletAddress: string;
+  storecode: string;
+  sellerWalletAddress: string;
+  usdtAmount: number;
+  krwAmount: number;
+  rate: number;
+  signedAtIso: string;
+}) => {
+  return [
+    SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX,
+    `requesterWalletAddress:${requesterWalletAddress}`,
+    `storecode:${storecode}`,
+    `sellerWalletAddress:${sellerWalletAddress}`,
+    `usdtAmount:${formatNumberForSignature(usdtAmount)}`,
+    `krwAmount:${formatNumberForSignature(krwAmount)}`,
+    `rate:${formatNumberForSignature(rate)}`,
+    `signedAt:${signedAtIso}`,
+  ].join("\n");
+};
+
 
 export default function Index({ params }: any) {
 
@@ -588,6 +634,7 @@ export default function Index({ params }: any) {
 
 
   const [user, setUser] = useState<any>(null);
+  const isAdminUser = String(user?.role || "").trim().toLowerCase() === "admin";
 
 
   const [seller, setSeller] = useState(null) as any;
@@ -1141,6 +1188,16 @@ export default function Index({ params }: any) {
         return;
       }
 
+      if (!address || !activeAccount) {
+        toast.error('지갑 연결이 필요합니다.');
+        return;
+      }
+
+      if (!isAdminUser) {
+        toast.error('관리자 권한(role=admin)에서만 매입신청이 가능합니다.');
+        return;
+      }
+
       if (agreementPlaceOrder === false) {
         toast.error('You must agree to the terms and conditions');
         return;
@@ -1158,7 +1215,50 @@ export default function Index({ params }: any) {
       if (checkInputKrwAmount) {
         orderUsdtAmount = parseFloat(Number(safeKrwAmount / rate).toFixed(2));
       }
-      
+
+      const sellerWalletAddress = normalizeStringValue(store?.privateSaleWalletAddress || store?.sellerWalletAddress);
+      const requesterWalletAddress = normalizeWalletAddressForSignature(address);
+      const sellerWalletAddressForSignature = normalizeWalletAddressForSignature(sellerWalletAddress);
+      const signatureUsdtAmount = Number(orderUsdtAmount);
+      const signatureKrwAmount = Number(safeKrwAmount);
+      const signatureRate = Number(rate);
+
+      if (
+        !storecode
+        || !sellerWalletAddress
+        || !requesterWalletAddress
+        || !sellerWalletAddressForSignature
+        || !Number.isFinite(signatureUsdtAmount) || signatureUsdtAmount <= 0
+        || !Number.isFinite(signatureKrwAmount) || signatureKrwAmount <= 0
+        || !Number.isFinite(signatureRate) || signatureRate <= 0
+      ) {
+        setBuyOrdering(false);
+        toast.error('매입신청 요청 파라미터가 올바르지 않습니다.');
+        return;
+      }
+
+      const signedAt = new Date().toISOString();
+      const signingMessage = buildSetBuyOrderForClearanceSigningMessage({
+        requesterWalletAddress,
+        storecode,
+        sellerWalletAddress: sellerWalletAddressForSignature,
+        usdtAmount: signatureUsdtAmount,
+        krwAmount: signatureKrwAmount,
+        rate: signatureRate,
+        signedAtIso: signedAt,
+      });
+
+      let signature = "";
+      try {
+        signature = await activeAccount.signMessage({
+          message: signingMessage,
+        });
+      } catch (error) {
+        console.error('setBuyOrderForClearance sign error', error);
+        setBuyOrdering(false);
+        toast.error('서명에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
 
       const response = await fetch('/api/order/setBuyOrderForClearance', {
         method: 'POST',
@@ -1171,7 +1271,10 @@ export default function Index({ params }: any) {
 
           ////////////walletAddress: address,
           //walletAddress: store.sellerWalletAddress,
-          walletAddress: store?.privateSaleWalletAddress || store?.sellerWalletAddress,
+          walletAddress: sellerWalletAddress,
+          requesterWalletAddress: requesterWalletAddress,
+          signature: signature,
+          signedAt: signedAt,
 
           
           sellerBankInfo: withdrawalBankInfo,
@@ -2816,10 +2919,12 @@ export default function Index({ params }: any) {
                                 </div>
                               </div>
 
-                              <p className={`mt-2 text-[11px] ${safeKrwAmount > 0 ? 'text-slate-500' : 'text-blue-700'}`}>
-                                {safeKrwAmount > 0
-                                  ? '다음 단계에서 거래조건 동의 후 매입신청을 진행하세요.'
-                                  : '금액 입력 후 거래조건 동의와 매입신청이 가능합니다.'}
+                              <p className={`mt-2 text-[11px] ${!isAdminUser ? 'text-rose-600' : safeKrwAmount > 0 ? 'text-slate-500' : 'text-blue-700'}`}>
+                                {!isAdminUser
+                                  ? '관리자 권한(role=admin) 지갑에서만 매입신청이 가능합니다.'
+                                  : safeKrwAmount > 0
+                                    ? '다음 단계에서 거래조건 동의 후 매입신청을 진행하세요.'
+                                    : '금액 입력 후 거래조건 동의와 매입신청이 가능합니다.'}
                               </p>
                             </div>
 
@@ -2845,7 +2950,7 @@ export default function Index({ params }: any) {
                                 <label className="flex items-start gap-2 text-xs text-slate-600">
                                   <input
                                     onWheel={(e) => e.preventDefault()}
-                                    disabled={!address || safeKrwAmount <= 0 || buyOrdering}
+                                    disabled={!address || !isAdminUser || safeKrwAmount <= 0 || buyOrdering}
                                     type="checkbox"
                                     checked={agreementPlaceOrder}
                                     onChange={(e) => setAgreementPlaceOrder(e.target.checked)}
@@ -2879,10 +2984,10 @@ export default function Index({ params }: any) {
                                   </div>
                                 ) : (
                                     <button
-                                        disabled={safeKrwAmount <= 0 || agreementPlaceOrder === false}
+                                        disabled={!address || !isAdminUser || safeKrwAmount <= 0 || agreementPlaceOrder === false}
                                         className={`
                                           h-full min-h-[56px] w-full rounded-xl px-4 py-3 text-lg font-semibold text-white transition
-                                          ${safeKrwAmount <= 0 || agreementPlaceOrder === false
+                                          ${!address || !isAdminUser || safeKrwAmount <= 0 || agreementPlaceOrder === false
                                             ? 'bg-slate-400'
                                             : 'bg-slate-800 hover:bg-slate-900'
                                           }
