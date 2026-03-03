@@ -42,11 +42,13 @@ export async function POST(request: NextRequest) {
 
   } = body;
 
+  const guardStorecode = body?.requesterStorecode || storecode || "admin";
+
   const guard = await verifyCenterStoreAdminGuard({
     request,
     route: "/api/order/getAllBuyOrders",
     body,
-    storecodeRaw: storecode,
+    storecodeRaw: guardStorecode,
     requesterWalletAddressRaw: walletAddress,
   });
 

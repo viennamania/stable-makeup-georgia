@@ -2415,6 +2415,7 @@ const depositAmountMatches = useMemo(() => {
                 body: JSON.stringify(
                   {
                     storecode: searchStorecode,
+                    requesterStorecode: "admin",
                     limit: Number(limitValue),
                     page: Number(pageValue),
                     walletAddress: address,
@@ -2576,6 +2577,7 @@ const depositAmountMatches = useMemo(() => {
             body: JSON.stringify(
               {
                 storecode: searchStorecode,
+                requesterStorecode: "admin",
                 limit: Number(limitValue),
                 page: Number(pageValue),
                 walletAddress: address,
@@ -2678,6 +2680,7 @@ const depositAmountMatches = useMemo(() => {
           body: JSON.stringify(
             {
               storecode: searchStorecode,
+              requesterStorecode: "admin",
               limit: Number(limitValue),
               page: Number(pageValue),
               walletAddress: address,
@@ -2971,6 +2974,7 @@ const depositAmountMatches = useMemo(() => {
               body: JSON.stringify(
                 {
                   storecode: searchStorecode,
+                  requesterStorecode: "admin",
                   limit: Number(limitValue),
                   page: Number(pageValue),
                   walletAddress: address,
@@ -3095,6 +3099,7 @@ const depositAmountMatches = useMemo(() => {
             body: JSON.stringify(
               {
                 storecode: searchStorecode,
+                requesterStorecode: "admin",
                 limit: Number(limitValue),
                 page: Number(pageValue),
                 walletAddress: address,
@@ -3369,6 +3374,7 @@ const depositAmountMatches = useMemo(() => {
             body: JSON.stringify(
               {
                 storecode: searchStorecode,
+                requesterStorecode: "admin",
                 limit: Number(limitValue),
                 page: Number(pageValue),
                 walletAddress: address,
@@ -3720,6 +3726,7 @@ const depositAmountMatches = useMemo(() => {
           body: JSON.stringify(
             {
               storecode: searchStorecode,
+              requesterStorecode: "admin",
               limit: Number(limitValue),
               page: Number(pageValue),
               walletAddress: address,
@@ -3847,6 +3854,7 @@ const depositAmountMatches = useMemo(() => {
 
             {
               storecode: searchStorecode,
+              requesterStorecode: "admin",
               limit: Number(limitValue),
               page: Number(pageValue),
               walletAddress: address,
@@ -3975,6 +3983,7 @@ const fetchBuyOrders = async () => {
     body: JSON.stringify(
       {
         storecode: searchStorecode,
+        requesterStorecode: "admin",
         limit: Number(limitValue),
         page: Number(pageValue),
         walletAddress: address,
@@ -4127,6 +4136,7 @@ const fetchBuyOrders = async () => {
 
           agentcode: params.agentcode,
           storecode: searchStorecode,
+          requesterStorecode: "admin",
           walletAddress: address,
           searchMyOrders: searchMyOrders,
           searchOrderStatusCancelled: searchOrderStatusCancelled,

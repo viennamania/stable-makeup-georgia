@@ -1123,6 +1123,7 @@ export default function Index({ params, isYear2025 = false }: any) {
               body: JSON.stringify(
                 {
                   storecode: searchStorecode,
+                  requesterStorecode: "admin",
                   limit: Number(limitValue),
                   page: Number(pageValue),
                   walletAddress: address,
@@ -1275,6 +1276,7 @@ export default function Index({ params, isYear2025 = false }: any) {
         body: JSON.stringify(
           {
             storecode: searchStorecode,
+            requesterStorecode: "admin",
             limit: Number(limitValue),
             page: Number(pageValue),
             walletAddress: address,
@@ -1549,6 +1551,7 @@ export default function Index({ params, isYear2025 = false }: any) {
             body: JSON.stringify(
               {
                 storecode: searchStorecode,
+                requesterStorecode: "admin",
                 limit: Number(limitValue),
                 page: Number(pageValue),
                 walletAddress: address,
@@ -1782,6 +1785,7 @@ export default function Index({ params, isYear2025 = false }: any) {
           body: JSON.stringify(
             {
               storecode: searchStorecode,
+              requesterStorecode: "admin",
               limit: Number(limitValue),
               page: Number(pageValue),
               walletAddress: address,
@@ -1920,6 +1924,7 @@ export default function Index({ params, isYear2025 = false }: any) {
       body: JSON.stringify(
         {
           storecode: searchStorecode,
+          requesterStorecode: "admin",
           limit: Number(limitValue),
           page: Number(pageValue),
           walletAddress: address,
@@ -2026,6 +2031,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
             {
               storecode: searchStorecode,
+              requesterStorecode: "admin",
               limit: Number(limitValue),
               page: Number(pageValue),
               walletAddress: address,
@@ -2219,6 +2225,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
         agentcode: params.agentcode,
         storecode: searchStorecode,
+        requesterStorecode: "admin",
         walletAddress: address,
         searchMyOrders: searchMyOrders,
         searchOrderStatusCompleted: true,
@@ -2468,6 +2475,7 @@ export default function Index({ params, isYear2025 = false }: any) {
           body: JSON.stringify(
             {
               storecode: searchStorecode,
+              requesterStorecode: "admin",
               limit: 10000,
               page: 1,
               walletAddress: address,

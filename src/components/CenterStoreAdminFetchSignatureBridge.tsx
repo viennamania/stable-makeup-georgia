@@ -114,11 +114,13 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       }
 
       const storecode = normalizeString(payload.storecode);
+      const requesterStorecode = normalizeString(payload.requesterStorecode);
+      const signingStorecode = storecode || requesterStorecode || "admin";
       const requesterWalletAddress = normalizeString(
         payload.requesterWalletAddress ?? payload.walletAddress ?? payload.sellerWalletAddress,
       ).toLowerCase();
 
-      if (!storecode || !requesterWalletAddress) {
+      if (!requesterWalletAddress) {
         return originalFetch(input, init);
       }
 
@@ -127,7 +129,7 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       const actionFields = extractCenterStoreAdminActionFields(payload);
       const signingMessage = buildCenterStoreAdminSigningMessage({
         route: path,
-        storecode,
+        storecode: signingStorecode,
         requesterWalletAddress,
         nonce,
         signedAtIso: signedAt,
@@ -140,7 +142,7 @@ export default function CenterStoreAdminFetchSignatureBridge() {
 
       const signedPayload: Record<string, unknown> = {
         ...payload,
-        requesterStorecode: normalizeString(payload.requesterStorecode) || storecode,
+        requesterStorecode: signingStorecode,
         requesterWalletAddress: requesterWalletAddress,
         signature,
         signedAt,
