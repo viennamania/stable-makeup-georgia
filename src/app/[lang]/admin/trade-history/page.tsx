@@ -185,6 +185,23 @@ const parseBooleanQuery = (value: string | null, fallback: boolean) => {
   return value === 'true';
 };
 
+const USER_TYPE_FILTER_VALUES = ['all', 'EMPTY', 'AAA', 'BBB', 'CCC', 'DDD'] as const;
+type UserTypeFilterValue = (typeof USER_TYPE_FILTER_VALUES)[number];
+
+const normalizeUserTypeFilterValue = (
+  value: string | null | undefined
+): UserTypeFilterValue => {
+  if (!value) {
+    return 'all';
+  }
+  return USER_TYPE_FILTER_VALUES.includes(value as UserTypeFilterValue)
+    ? (value as UserTypeFilterValue)
+    : 'all';
+};
+
+const toApiUserTypeValue = (value: UserTypeFilterValue): string =>
+  value === 'EMPTY' ? '' : value;
+
 
 
 
@@ -840,13 +857,9 @@ export default function Index({ params, isYear2025 = false }: any) {
     parseBooleanQuery(searchParams.get('manualConfirmPayment'), false)
   );
 
-  // userTypeEmpty, userTypeA, userTypeB, userTypeC, userTypeD, userTypeE
-
-  const [userTypeEmpty, setUserTypeEmpty] = useState(true);
-  const [userTypeA, setUserTypeA] = useState(true);
-  const [userTypeB, setUserTypeB] = useState(true);
-  const [userTypeC, setUserTypeC] = useState(true);
-  const [userTypeD, setUserTypeD] = useState(true);
+  const [searchUserType, setSearchUserType] = useState<UserTypeFilterValue>(
+    normalizeUserTypeFilterValue(searchParams.get('userType'))
+  );
  
 
   const [searchOrderStatusCancelled, setSearchOrderStatusCancelled] = useState(
@@ -873,6 +886,9 @@ export default function Index({ params, isYear2025 = false }: any) {
     setManualConfirmPayment(
       parseBooleanQuery(searchParams.get('manualConfirmPayment'), false)
     );
+    setSearchUserType(
+      normalizeUserTypeFilterValue(searchParams.get('userType'))
+    );
     setSearchOrderStatusCancelled(
       parseBooleanQuery(searchParams.get('searchOrderStatusCancelled'), false)
     );
@@ -892,6 +908,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     depositName = searchDepositName,
     storeBankAccountNumber = searchStoreBankAccountNumber,
     manualConfirm = manualConfirmPayment,
+    userType = searchUserType,
     orderStatusCancelled = searchOrderStatusCancelled,
     orderStatusCompleted = searchOrderStatusCompleted,
     myOrders = searchMyOrders,
@@ -905,6 +922,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     depositName?: string;
     storeBankAccountNumber?: string;
     manualConfirm?: boolean;
+    userType?: UserTypeFilterValue;
     orderStatusCancelled?: boolean;
     orderStatusCompleted?: boolean;
     myOrders?: boolean;
@@ -917,6 +935,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     const normalizedStoreBankAccountNumber = String(
       storeBankAccountNumber || ""
     ).trim();
+    const normalizedUserType = normalizeUserTypeFilterValue(userType);
 
     if (normalizedStorecode) {
       nextParams.set('storecode', normalizedStorecode);
@@ -946,6 +965,9 @@ export default function Index({ params, isYear2025 = false }: any) {
     if (normalizedStoreBankAccountNumber) {
       nextParams.set('storeBankAccountNumber', normalizedStoreBankAccountNumber);
     }
+    if (normalizedUserType !== 'all') {
+      nextParams.set('userType', normalizedUserType);
+    }
 
     return nextParams.toString();
   };
@@ -960,6 +982,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     depositName,
     storeBankAccountNumber,
     manualConfirm,
+    userType,
     orderStatusCancelled,
     orderStatusCompleted,
     myOrders,
@@ -973,6 +996,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     depositName?: string;
     storeBankAccountNumber?: string;
     manualConfirm?: boolean;
+    userType?: UserTypeFilterValue;
     orderStatusCancelled?: boolean;
     orderStatusCompleted?: boolean;
     myOrders?: boolean;
@@ -987,6 +1011,7 @@ export default function Index({ params, isYear2025 = false }: any) {
       depositName,
       storeBankAccountNumber,
       manualConfirm,
+      userType,
       orderStatusCancelled,
       orderStatusCompleted,
       myOrders,
@@ -1237,6 +1262,8 @@ export default function Index({ params, isYear2025 = false }: any) {
                     toDate: searchToDate,
 
                     manualConfirmPayment: manualConfirmPayment,
+
+                    userType: toApiUserTypeValue(searchUserType),
                   }
                 ),
             })
@@ -1396,6 +1423,8 @@ export default function Index({ params, isYear2025 = false }: any) {
               toDate: searchToDate,
 
               manualConfirmPayment: manualConfirmPayment,
+
+              userType: toApiUserTypeValue(searchUserType),
             }
           )
         }).then(async (response) => {
@@ -1685,6 +1714,8 @@ export default function Index({ params, isYear2025 = false }: any) {
                   toDate: searchToDate,
 
                   manualConfirmPayment: manualConfirmPayment,
+
+                  userType: toApiUserTypeValue(searchUserType),
                 }
               ),
             })
@@ -1921,6 +1952,8 @@ export default function Index({ params, isYear2025 = false }: any) {
               toDate: searchToDate,
         
               manualConfirmPayment: manualConfirmPayment,
+        
+              userType: toApiUserTypeValue(searchUserType),
             }
           ),
         })
@@ -2110,6 +2143,8 @@ export default function Index({ params, isYear2025 = false }: any) {
               toDate: searchToDate,
 
               manualConfirmPayment: manualConfirmPayment,
+
+              userType: toApiUserTypeValue(searchUserType),
             }
           ),
         })
@@ -2297,6 +2332,8 @@ export default function Index({ params, isYear2025 = false }: any) {
               toDate: searchToDate,
 
               manualConfirmPayment: manualConfirmPayment,
+
+              userType: toApiUserTypeValue(searchUserType),
             }
 
         ),
@@ -2428,6 +2465,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     searchOrderStatusCompleted,
 
     manualConfirmPayment,
+    searchUserType,
 ]);
 
 
@@ -2469,6 +2507,8 @@ const fetchBuyOrders = async () => {
         toDate: searchToDate,
 
         manualConfirmPayment: manualConfirmPayment,
+
+        userType: toApiUserTypeValue(searchUserType),
       }
 
     ),
@@ -2817,6 +2857,8 @@ const fetchBuyOrders = async () => {
             toDate: searchToDate,
 
             manualConfirmPayment: manualConfirmPayment,
+
+            userType: toApiUserTypeValue(searchUserType),
           }),
       });
 
@@ -3781,71 +3823,35 @@ const fetchBuyOrders = async () => {
 
 
 
-            {/* userTypeEmpty, userTypeA, userTypeB, userTypeC, userTypeD, userTypeE checkboxes */}
-            {/*
-            <div className="grid grid-cols-5 gap-2">
-              <div className="flex flex-col items-center justify-center gap-2">
-                <label htmlFor="userTypeEmptyCheckbox" className="text-sm text-zinc-500">
-                  일반회원
-                </label>
-                <input
-                  type="checkbox"
-                  checked={userTypeEmpty}
-                  onChange={() => setUserTypeEmpty(!userTypeEmpty)}
-                  className="w-4 h-4"
-                  id="userTypeEmptyCheckbox"
-                />
-              </div>
-              <div className="flex flex-col items-center justify-center gap-2">
-                <label htmlFor="userTypeACheckbox" className="text-sm text-zinc-500">
-                  1등급
-                </label>
-                <input
-                  type="checkbox"
-                  checked={userTypeA}
-                  onChange={() => setUserTypeA(!userTypeA)}
-                  className="w-4 h-4"
-                  id="userTypeACheckbox"
-                />
-              </div>
-              <div className="flex flex-col items-center justify-center gap-2">
-                <label htmlFor="userTypeBCheckbox" className="text-sm text-zinc-500">
-                  2등급
-                </label>
-                <input
-                  type="checkbox"
-                  checked={userTypeB}
-                  onChange={() => setUserTypeB(!userTypeB)}
-                  className="w-4 h-4"
-                  id="userTypeBCheckbox"
-                />
-              </div>
-              <div className="flex flex-col items-center justify-center gap-2">
-                <label htmlFor="userTypeCCheckbox" className="text-sm text-zinc-500">
-                  3등급
-                </label>
-                <input
-                  type="checkbox"
-                  checked={userTypeC}
-                  onChange={() => setUserTypeC(!userTypeC)}
-                  className="w-4 h-4"
-                  id="userTypeCCheckbox"
-                />
-              </div>
-              <div className="flex flex-col items-center justify-center gap-2">
-                <label htmlFor="userTypeDCheckbox" className="text-sm text-zinc-500">
-                  4등급
-                </label>
-                <input
-                  type="checkbox"
-                  checked={userTypeD}
-                  onChange={() => setUserTypeD(!userTypeD)}
-                  className="w-4 h-4"
-                  id="userTypeDCheckbox"
-                />
-              </div>
+            <div className="flex flex-row items-center gap-2">
+              <label
+                htmlFor="trade-history-user-type-filter"
+                className="text-sm text-zinc-500"
+              >
+                등급
+              </label>
+              <select
+                id="trade-history-user-type-filter"
+                value={searchUserType}
+                onChange={(e) => {
+                  const nextUserType = normalizeUserTypeFilterValue(e.target.value);
+                  setSearchUserType(nextUserType);
+                  setPageValue(1);
+                  pushTradeHistoryWithFilters({
+                    userType: nextUserType,
+                    page: 1,
+                  });
+                }}
+                className="h-8 rounded-md border border-zinc-300 bg-white px-2 text-sm text-zinc-700"
+              >
+                <option value="all">전체등급</option>
+                <option value="EMPTY">일반회원</option>
+                <option value="AAA">1등급</option>
+                <option value="BBB">2등급</option>
+                <option value="CCC">3등급</option>
+                <option value="DDD">4등급</option>
+              </select>
             </div>
-            */}
 
           </div>
 
