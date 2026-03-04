@@ -21,8 +21,9 @@ const SIGNING_PREFIX = "stable-georgia:admin-member-private-key-wallet-balances:
 const SNAPSHOT_COLLECTION = "adminMemberPrivateKeyWalletBalanceSnapshots";
 const SNAPSHOT_KEY = "default";
 const COOLDOWN_MS = 10 * 60 * 1000;
-const DEFAULT_SCAN_LIMIT = 1200;
+const DEFAULT_SCAN_LIMIT = 10000;
 const DEFAULT_SCAN_CONCURRENCY = 20;
+const MIN_USDT_BALANCE = 0.1;
 
 type WalletCandidateUser = {
   id?: string | number;
@@ -159,12 +160,19 @@ export async function POST(request: NextRequest) {
     .collection(SNAPSHOT_COLLECTION);
   const snapshot = await snapshotCollection.findOne({ key: SNAPSHOT_KEY });
   const now = new Date();
+  const snapshotMinUsdtBalance = Number(snapshot?.queryFilter?.minUsdtBalance || 0);
+  const snapshotScanLimit = Number(snapshot?.counts?.scanLimit || 0);
+  const isSnapshotCompatible =
+    snapshotMinUsdtBalance >= MIN_USDT_BALANCE
+    && snapshotScanLimit === scanLimit;
 
   const existingCooldownUntil = snapshot?.cooldownUntil
     ? new Date(snapshot.cooldownUntil)
     : null;
 
   if (
+    isSnapshotCompatible
+    &&
     existingCooldownUntil
     && Number.isFinite(existingCooldownUntil.getTime())
     && existingCooldownUntil.getTime() > now.getTime()
@@ -291,6 +299,7 @@ export async function POST(request: NextRequest) {
             : arbitrumContractAddressUSDT;
 
   const usdtDecimals = chain === "bsc" ? 18 : 6;
+  const minUsdtRawBalance = BigInt(10) ** BigInt(Math.max(0, usdtDecimals - 1));
   const usdtContract = getContract({
     client: thirdwebClient,
     chain: chainConfig,
@@ -311,8 +320,11 @@ export async function POST(request: NextRequest) {
           contract: usdtContract,
           address: normalizedWalletAddress,
         });
+        if (rawBalance < minUsdtRawBalance) {
+          return null;
+        }
         const usdtBalance = Number(rawBalance) / 10 ** usdtDecimals;
-        if (!Number.isFinite(usdtBalance) || usdtBalance <= 0) {
+        if (!Number.isFinite(usdtBalance)) {
           return null;
         }
 
@@ -375,6 +387,7 @@ export async function POST(request: NextRequest) {
           walletPrivateKeyExists: true,
           walletAddressExists: true,
           buyOrderStatus: "paymentConfirmed",
+          minUsdtBalance: MIN_USDT_BALANCE,
         },
         fetchedAt,
         cooldownUntil,

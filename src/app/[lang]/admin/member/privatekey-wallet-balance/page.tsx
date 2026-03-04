@@ -163,7 +163,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
               프라이빗키 보유 지갑 잔고 점검
             </div>
             <div className="text-xs text-slate-300">
-              조건: walletPrivateKey exists, walletAddress exists, buyOrderStatus=paymentConfirmed
+              조건: walletPrivateKey exists, walletAddress exists, buyOrderStatus=paymentConfirmed, USDT 0.1 이상
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -210,7 +210,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
                   : `쿨다운 남음: ${formatRemaining(cooldownRemainingSeconds)}`}
               </span>
               <span className="px-2 py-1 rounded-md bg-cyan-50 text-cyan-700">
-                양수 잔고 합계: {totalPositiveBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} USDT
+                0.1+ 잔고 합계: {totalPositiveBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} USDT
               </span>
             </div>
 
@@ -225,7 +225,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
                 실제 조회 지갑: {(snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}
               </span>
               <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-800">
-                잔고 0 초과: {(snapshot?.counts?.positiveBalanceCount || 0).toLocaleString("ko-KR")}
+                잔고 0.1 이상: {(snapshot?.counts?.positiveBalanceCount || 0).toLocaleString("ko-KR")}
               </span>
               {snapshot?.counts?.scanLimitApplied && (
                 <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-800">
