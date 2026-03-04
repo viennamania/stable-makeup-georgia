@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { useActiveAccount } from "thirdweb/react";
 
+import { postAdminMemberPrivateKeyWalletCollectSigned } from "@/lib/client/collect-admin-member-privatekey-wallet-balances-signed";
 import { postAdminMemberPrivateKeyWalletBalancesSigned } from "@/lib/client/get-admin-member-privatekey-wallet-balances-signed";
 
 type SnapshotItem = {
@@ -78,6 +79,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
   const walletAddress = activeAccount?.address || "";
 
   const [loading, setLoading] = useState(false);
+  const [collectingAll, setCollectingAll] = useState(false);
   const [snapshot, setSnapshot] = useState<SnapshotResult | null>(null);
   const [nowMs, setNowMs] = useState<number>(Date.now());
 
@@ -106,6 +108,56 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const collectAllBalances = async () => {
+    if (!activeAccount || collectingAll || loading) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "USDT 0.1 이상 잔고를 각 가맹점 sellerWalletAddress로 전체 회수합니다. 계속하시겠습니까?",
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setCollectingAll(true);
+    try {
+      const response = await postAdminMemberPrivateKeyWalletCollectSigned({
+        account: activeAccount,
+        requesterStorecode: "admin",
+        requesterWalletAddress: walletAddress,
+      });
+
+      if (response?.error) {
+        throw new Error(String(response.error));
+      }
+
+      const transferredCount = Number(response?.result?.counts?.transferredCount || 0);
+      const skippedCount = Number(response?.result?.counts?.skippedCount || 0);
+      const totalTransferredUsdt = Number(response?.result?.totalTransferredUsdt || 0);
+
+      if (transferredCount > 0) {
+        toast.success(
+          `회수 완료: ${transferredCount.toLocaleString("ko-KR")}건 / ${totalTransferredUsdt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} USDT`,
+        );
+      } else {
+        toast.success(
+          `회수 대상 없음 (스킵 ${skippedCount.toLocaleString("ko-KR")}건)`,
+        );
+      }
+
+      await fetchSnapshot();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "전체 회수 처리에 실패했습니다.",
+      );
+    } finally {
+      setCollectingAll(false);
     }
   };
 
@@ -177,10 +229,18 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
             <button
               type="button"
               onClick={fetchSnapshot}
-              disabled={!walletAddress || loading || !canReadFresh}
+              disabled={!walletAddress || loading || collectingAll || !canReadFresh}
               className="px-4 py-2 rounded-lg text-sm font-semibold bg-cyan-500 text-zinc-900 hover:bg-cyan-400 disabled:opacity-50"
             >
               {loading ? "조회중..." : "지갑 잔고 읽어오기"}
+            </button>
+            <button
+              type="button"
+              onClick={collectAllBalances}
+              disabled={!walletAddress || loading || collectingAll}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-rose-500 text-white hover:bg-rose-400 disabled:opacity-50"
+            >
+              {collectingAll ? "회수중..." : "전체 회수하기"}
             </button>
           </div>
         </div>
