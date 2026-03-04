@@ -200,6 +200,21 @@ export type RealtimeSellerWalletBalanceResult = {
   updatedAt: string;
 };
 
+export type RealtimeNicknameSellerWalletBalanceItem = {
+  id: number | null;
+  nickname: string;
+  storecode: string | null;
+  walletAddress: string;
+  currentUsdtBalance: number;
+};
+
+export type RealtimeNicknameSellerWalletBalanceResult = {
+  totalCount: number;
+  totalCurrentUsdtBalance: number;
+  wallets: RealtimeNicknameSellerWalletBalanceItem[];
+  updatedAt: string;
+};
+
 function toNullableText(value: unknown): string | null {
   const normalized = String(value || "").trim();
   return normalized || null;
@@ -806,6 +821,163 @@ export async function getRealtimeBuyOrderSellerWalletBalances({
     console.error("Failed to fetch realtime seller wallet balances:", error);
     return {
       totalCount: wallets.length,
+      wallets,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+export async function getRealtimeNicknameSellerWalletBalances({
+  nickname = "seller",
+  excludeStorecode = "",
+  limit = 120,
+}: {
+  nickname?: string;
+  excludeStorecode?: string;
+  limit?: number;
+} = {}): Promise<RealtimeNicknameSellerWalletBalanceResult> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("users");
+
+  const safeNickname = toNullableText(nickname)?.toLowerCase() || "seller";
+  const safeExcludeStorecode = toNullableText(excludeStorecode)?.toLowerCase() || "";
+  const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 400);
+
+  const nicknameRegex = new RegExp(`^${escapeRegex(safeNickname)}$`, "i");
+  const userQuery: Record<string, unknown> = {
+    nickname: nicknameRegex,
+    walletAddress: { $type: "string", $ne: "" },
+  };
+
+  if (safeExcludeStorecode) {
+    const excludeStorecodeRegex = new RegExp(`^${escapeRegex(safeExcludeStorecode)}$`, "i");
+    userQuery.storecode = { $not: excludeStorecodeRegex };
+  }
+
+  const users = await collection
+    .find(
+      userQuery,
+      {
+        projection: {
+          _id: 0,
+          id: 1,
+          nickname: 1,
+          storecode: 1,
+          walletAddress: 1,
+        },
+        sort: {
+          _id: -1,
+        },
+        limit: safeLimit * 4,
+      },
+    )
+    .toArray();
+
+  const walletMap = new Map<string, RealtimeNicknameSellerWalletBalanceItem>();
+
+  for (const user of users) {
+    const walletAddress = toNullableText(user?.walletAddress);
+    if (!walletAddress) {
+      continue;
+    }
+
+    const walletKey = walletAddress.toLowerCase();
+    if (walletMap.has(walletKey)) {
+      continue;
+    }
+
+    walletMap.set(walletKey, {
+      id: typeof user?.id === "number" ? user.id : null,
+      nickname: toNullableText(user?.nickname) || safeNickname,
+      storecode: toNullableText(user?.storecode),
+      walletAddress,
+      currentUsdtBalance: 0,
+    });
+
+    if (walletMap.size >= safeLimit) {
+      break;
+    }
+  }
+
+  const wallets = Array.from(walletMap.values());
+
+  if (wallets.length === 0) {
+    return {
+      totalCount: 0,
+      totalCurrentUsdtBalance: 0,
+      wallets: [],
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const thirdwebSecretKey = String(process.env.THIRDWEB_SECRET_KEY || "").trim();
+  const usdtContractAddress = getUsdtContractAddress();
+  if (!thirdwebSecretKey || !usdtContractAddress) {
+    return {
+      totalCount: wallets.length,
+      totalCurrentUsdtBalance: 0,
+      wallets,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  try {
+    const thirdwebClient = createThirdwebClient({
+      secretKey: thirdwebSecretKey,
+    });
+    const contract = getContract({
+      client: thirdwebClient,
+      chain: getThirdwebChain(),
+      address: usdtContractAddress,
+    });
+    const decimals = getUsdtDecimals();
+
+    const withBalances = await Promise.all(
+      wallets.map(async (item) => {
+        try {
+          const rawBalance = await balanceOf({
+            contract,
+            address: item.walletAddress,
+          });
+          return {
+            ...item,
+            currentUsdtBalance: Number(rawBalance) / 10 ** decimals,
+          };
+        } catch (error) {
+          console.error(
+            `Failed to fetch nickname seller wallet USDT balance (${item.walletAddress}):`,
+            error,
+          );
+          return {
+            ...item,
+            currentUsdtBalance: 0,
+          };
+        }
+      }),
+    );
+
+    withBalances.sort((left, right) => {
+      return (
+        right.currentUsdtBalance - left.currentUsdtBalance ||
+        left.walletAddress.localeCompare(right.walletAddress)
+      );
+    });
+
+    const totalCurrentUsdtBalance = withBalances.reduce((sum, item) => {
+      return sum + toSafeNumber(item.currentUsdtBalance);
+    }, 0);
+
+    return {
+      totalCount: withBalances.length,
+      totalCurrentUsdtBalance,
+      wallets: withBalances,
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("Failed to fetch realtime nickname seller wallet balances:", error);
+    return {
+      totalCount: wallets.length,
+      totalCurrentUsdtBalance: 0,
       wallets,
       updatedAt: new Date().toISOString(),
     };

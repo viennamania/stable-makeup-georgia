@@ -234,6 +234,18 @@ interface BuyOrder {
   userType: string; // added in version 1.2.0, user type (e.g., AAA, BBB, CCC, DDD, EEE)
 }
 
+type SellerWalletBalanceItem = {
+  id?: number | null;
+  nickname?: string;
+  storecode?: string | null;
+  walletAddress: string;
+  currentUsdtBalance?: number;
+};
+
+const SELLER_WALLET_POLLING_MS = 10_000;
+const SELLER_NICKNAME_FILTER = "seller";
+const SELLER_EXCLUDED_STORECODE = "";
+
 
 
 const wallets = [
@@ -4420,41 +4432,65 @@ const fetchBuyOrders = async () => {
 
 
 
-  // /api/user/getAllSellersForBalance
-  const [sellersBalance, setSellersBalance] = useState([] as any[]);
-  const fetchSellersBalance = async () => {
-    const response = await fetch('/api/user/getAllSellersForBalance', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        {
-          limit: 100,
-          page: 1,
-        }
-      )
-    });
+  // user.nickname=seller, storecode!=admin 지갑 잔고
+  const [sellersBalance, setSellersBalance] = useState<SellerWalletBalanceItem[]>([]);
+  const [sellersBalanceTotalUsdt, setSellersBalanceTotalUsdt] = useState(0);
+  const [sellersBalanceUpdatedAt, setSellersBalanceUpdatedAt] = useState("");
+  const [loadingSellersBalance, setLoadingSellersBalance] = useState(false);
+  const animatedSellerWalletTotalUsdt = useAnimatedNumber(sellersBalanceTotalUsdt, { decimalPlaces: 3 });
 
-    const data = await response.json();
-    if (data.result) {
-      setSellersBalance(data.result.users);
+  const fetchSellersBalance = async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
+    if (showLoading) {
+      setLoadingSellersBalance(true);
+    }
 
+    try {
+      const query = new URLSearchParams();
+      query.set("public", "1");
+      query.set("nickname", SELLER_NICKNAME_FILTER);
+      query.set("limit", "200");
+      if (SELLER_EXCLUDED_STORECODE) {
+        query.set("excludeStorecode", SELLER_EXCLUDED_STORECODE);
+      }
+      const response = await fetch(`/api/realtime/buyorder/seller-user-wallets?${query.toString()}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
 
-    } else {
-      console.error('Error fetching sellers balance');
+      if (!response.ok) {
+        console.error('Error fetching sellers balance: non-ok response', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      if (data?.status === 'success') {
+        setSellersBalance(Array.isArray(data.wallets) ? data.wallets : []);
+        setSellersBalanceTotalUsdt(Number(data.totalCurrentUsdtBalance || 0));
+        setSellersBalanceUpdatedAt(String(data.updatedAt || ''));
+      } else {
+        console.error('Error fetching sellers balance', data);
+      }
+    } catch (error) {
+      console.error('Error fetching sellers balance', error);
+    } finally {
+      if (showLoading) {
+        setLoadingSellersBalance(false);
+      }
     }
   };
   useEffect(() => {
     if (!address) {
       setSellersBalance([]);
+      setSellersBalanceTotalUsdt(0);
+      setSellersBalanceUpdatedAt('');
+      setLoadingSellersBalance(false);
       return;
     }
-    fetchSellersBalance();
+    fetchSellersBalance({ showLoading: true });
     // interval to fetch every 10 seconds
     const interval = setInterval(() => {
       fetchSellersBalance();
-    }, 10000);
+    }, SELLER_WALLET_POLLING_MS);
     return () => clearInterval(interval);
   }, [address]);
 
@@ -6047,23 +6083,58 @@ const fetchBuyOrders = async () => {
           </div>
           
 
-          {/* sellersBalance array row */}
-          {sellersBalance.length > 0 && (
-            <div className="w-full flex flex-col sm:flex-row items-center justify-end gap-3 overflow-x-auto pb-1">
-              {sellersBalance.map((seller, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl border border-slate-200 shadow-sm bg-white/90 min-w-[260px]
-                  ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
-                    ? 'ring-1 ring-emerald-200'
-                    : ''}`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Image src="/icon-seller.png" alt="Seller" width={34} height={34} className="w-8 h-8" />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-semibold text-slate-900 truncate">{seller.nickname}</span>
+          {/* nickname=seller 지갑 잔고 카드 (10초 주기) */}
+          <div className="w-full rounded-2xl border border-emerald-200 bg-white px-4 py-3 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Image src="/icon-seller.png" alt="Seller" width={20} height={20} className="w-5 h-5" />
+                <span className="text-sm font-semibold text-zinc-900">
+                  Seller Wallet Monitor
+                </span>
+                <span className="text-[11px] text-zinc-500">
+                  user.nickname=seller · storecode=all(admin 포함) · 10s
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs text-zinc-500">
+                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets`}</span>
+                <span>
+                  {sellersBalanceUpdatedAt
+                    ? new Date(sellersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })
+                    : '--:--:--'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-2 flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2">
+              <span className="text-[11px] font-medium text-emerald-700">TOTAL USDT</span>
+              <div className="flex items-center gap-2">
+                <Image src="/icon-tether.png" alt="USDT" width={20} height={20} className="w-5 h-5" />
+                <span className="text-lg font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                  {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                </span>
+              </div>
+            </div>
+
+            {sellersBalance.length > 0 ? (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+                {sellersBalance.map((seller, index) => (
+                  <div
+                    key={`${seller.walletAddress}-${index}`}
+                    className={`flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 bg-white
+                    ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
+                      ? 'ring-1 ring-emerald-200'
+                      : ''}`}
+                  >
+                    <div className="min-w-0 flex flex-col">
+                      <span className="text-[11px] text-zinc-500 truncate">{seller.storecode || '-'}</span>
                       <button
-                        className="text-[12px] text-slate-500 underline truncate"
+                        className="text-xs text-zinc-700 underline truncate text-left"
                         onClick={() => {
                           navigator.clipboard.writeText(seller.walletAddress);
                           toast.success(Copied_Wallet_Address);
@@ -6073,29 +6144,19 @@ const fetchBuyOrders = async () => {
                         {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                       </button>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 ml-auto">
-                    <Image src="/icon-tether.png" alt="USDT" width={24} height={24} className="w-6 h-6" />
-                    <span className="text-xl font-bold text-[#0f766e] font-mono leading-none">
+                    <span className="text-sm font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
                       {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                        ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.00'}
+                        ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                        : '0.000'}
                     </span>
                   </div>
-
-                  {seller.nickname === 'seller' && (
-                    <button
-                      onClick={() => router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress)}
-                      className="ml-2 shrink-0 rounded-lg bg-[#3167b4] text-white text-xs font-semibold px-3 py-1.5 hover:bg-[#285497] transition"
-                    >
-                      출금하기
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="mt-2 text-xs text-zinc-500">조건에 맞는 지갑이 없습니다.</div>
+            )}
+          </div>
 
           {/* 처리안한주문 먼저보기 (주문 테이블 상단) */}
           <div className="w-full flex items-start justify-start mb-2">
