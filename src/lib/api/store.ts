@@ -404,11 +404,7 @@ export async function updateStoreSellerWalletAddress(
     { storecode: storecode },
     { $set: { sellerWalletAddress: sellerWalletAddress } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
-  }
+  return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
 
@@ -430,11 +426,7 @@ export async function updateStoreSettlementWalletAddress(
     { storecode: storecode },
     { $set: { settlementWalletAddress: settlementWalletAddress } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
-  }
+  return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
 
@@ -455,11 +447,7 @@ export async function updateStorePrivateSellerWalletAddress(
     { storecode: storecode },
     { $set: { privateSellerWalletAddress: privateSellerWalletAddress } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
-  }
+  return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
 
@@ -482,11 +470,7 @@ export async function updateStoreSettlementFeeWalletAddress(
     { storecode: storecode },
     { $set: { settlementFeeWalletAddress: settlementFeeWalletAddress } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
-  }
+  return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
 

@@ -50,6 +50,7 @@ import { balanceOf, transfer } from "thirdweb/extensions/erc20";
 
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -68,6 +69,8 @@ const wallets = [
 const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 
 const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
 
 
@@ -1217,17 +1220,21 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingSellerWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreSellerWalletAddress', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+        if (!smartAccount) {
+            setUpdatingSellerWalletAddress(false);
+            toast.error('지갑을 먼저 연결하세요.');
+            return;
+        }
+
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSellerWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
+                storecode: params.center,
+                sellerWalletAddress: selectedSellerWalletAddress,
             },
-            body: JSON.stringify(
-                {
-                    storecode: params.center,
-                    sellerWalletAddress: selectedSellerWalletAddress,
-                }
-            ),
         });
         if (!response.ok) {
             setUpdatingSellerWalletAddress(false);

@@ -5,16 +5,33 @@ import {
 } from '@lib/api/store';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
+import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 
 export async function POST(request: NextRequest) {
 
-  const body = await request.json();
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
+
+  const storecode = typeof body.storecode === "string" ? body.storecode.trim() : "";
+  const normalizedSettlementFeeWalletAddress = normalizeWalletAddress(body.settlementFeeWalletAddress);
+
+  if (!storecode || !normalizedSettlementFeeWalletAddress) {
+    return NextResponse.json({
+      result: null,
+      error: "storecode and valid settlementFeeWalletAddress are required",
+    }, { status: 400 });
+  }
 
   const guard = await verifyStoreSettingsAdminGuard({
     request,
     route: "/api/store/updateStoreSettlementFeeWalletAddress",
     body,
+    requireSigned: true,
   });
 
   if (!guard.ok) {
@@ -24,29 +41,23 @@ export async function POST(request: NextRequest) {
     }, { status: guard.status });
   }
 
-
-  const {
-    storecode,
-    settlementFeeWalletAddress,
-  } = body;
-
-
-
-  console.log("storecode", storecode);
-  console.log("settlementFeeWalletAddress", settlementFeeWalletAddress);
-
-
-
-
   const result = await updateStoreSettlementFeeWalletAddress({
     storecode,
-    settlementFeeWalletAddress,
+    settlementFeeWalletAddress: normalizedSettlementFeeWalletAddress,
   });
 
- 
+  if (!result) {
+    return NextResponse.json({
+      result: null,
+      error: "Store not found",
+    }, { status: 404 });
+  }
+
   return NextResponse.json({
 
-    result,
+    result: true,
+    storecode,
+    settlementFeeWalletAddress: normalizedSettlementFeeWalletAddress,
     
   });
   

@@ -26,8 +26,7 @@ type SnapshotItem = {
 };
 
 type SnapshotCounts = {
-  usersWithPrivateKeyCount?: number;
-  excludedInProgressBuyerWalletCount?: number;
+  matchedConditionUserCount?: number;
   candidateWalletCount?: number;
   scannedWalletCount?: number;
   skippedByScanLimitCount?: number;
@@ -164,7 +163,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
               프라이빗키 보유 지갑 잔고 점검
             </div>
             <div className="text-xs text-slate-300">
-              현재 거래중(ordered/accepted/paymentRequested) 구매자 지갑 제외
+              조건: walletPrivateKey exists, walletAddress exists, buyOrderStatus=paymentConfirmed
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -217,13 +216,10 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
 
             <div className="flex flex-wrap gap-2 text-xs">
               <span className="px-2 py-1 rounded-full bg-zinc-100 text-zinc-700">
-                프라이빗키 보유 회원: {(snapshot?.counts?.usersWithPrivateKeyCount || 0).toLocaleString("ko-KR")}
+                조건 매칭 회원: {(snapshot?.counts?.matchedConditionUserCount || 0).toLocaleString("ko-KR")}
               </span>
               <span className="px-2 py-1 rounded-full bg-zinc-100 text-zinc-700">
-                거래중 구매자 제외: {(snapshot?.counts?.excludedInProgressBuyerWalletCount || 0).toLocaleString("ko-KR")}
-              </span>
-              <span className="px-2 py-1 rounded-full bg-zinc-100 text-zinc-700">
-                잔고 후보(제외 후): {(snapshot?.counts?.candidateWalletCount || snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}
+                잔고 후보: {(snapshot?.counts?.candidateWalletCount || snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}
               </span>
               <span className="px-2 py-1 rounded-full bg-zinc-100 text-zinc-700">
                 실제 조회 지갑: {(snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}

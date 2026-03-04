@@ -24,12 +24,6 @@ const COOLDOWN_MS = 10 * 60 * 1000;
 const DEFAULT_SCAN_LIMIT = 1200;
 const DEFAULT_SCAN_CONCURRENCY = 20;
 
-const IN_PROGRESS_BUY_ORDER_STATUSES = [
-  "ordered",
-  "accepted",
-  "paymentRequested",
-];
-
 type WalletCandidateUser = {
   id?: string | number;
   _id?: unknown;
@@ -194,7 +188,6 @@ export async function POST(request: NextRequest) {
   }
 
   const usersCollection = dbClient.db(dbName).collection("users");
-  const buyOrdersCollection = dbClient.db(dbName).collection("buyorders");
   const storesCollection = dbClient.db(dbName).collection("stores");
 
   const usersWithPrivateKey = await usersCollection
@@ -202,6 +195,7 @@ export async function POST(request: NextRequest) {
       {
         walletAddress: { $exists: true, $ne: null, $nin: [""] },
         walletPrivateKey: { $exists: true, $ne: null, $nin: [""] },
+        buyOrderStatus: "paymentConfirmed",
       },
       {
         projection: {
@@ -221,34 +215,9 @@ export async function POST(request: NextRequest) {
     )
     .toArray() as WalletCandidateUser[];
 
-  const inProgressBuyerOrders = await buyOrdersCollection
-    .find(
-      {
-        status: { $in: IN_PROGRESS_BUY_ORDER_STATUSES },
-        "buyer.walletAddress": { $exists: true, $ne: null, $nin: [""] },
-      },
-      {
-        projection: {
-          "buyer.walletAddress": 1,
-        },
-      },
-    )
-    .toArray();
-
-  const inProgressBuyerWalletSet = new Set<string>();
-  for (const order of inProgressBuyerOrders) {
-    const normalized = normalizeWalletAddress(order?.buyer?.walletAddress);
-    if (normalized) {
-      inProgressBuyerWalletSet.add(normalized);
-    }
-  }
-
   const candidateUsers = usersWithPrivateKey.filter((user) => {
     const normalizedWalletAddress = normalizeWalletAddress(user.walletAddress);
-    if (!normalizedWalletAddress) {
-      return false;
-    }
-    return !inProgressBuyerWalletSet.has(normalizedWalletAddress);
+    return Boolean(normalizedWalletAddress);
   });
 
   const sortedCandidateUsers = [...candidateUsers].sort((left, right) => {
@@ -385,9 +354,7 @@ export async function POST(request: NextRequest) {
   const fetchedAt = new Date();
   const cooldownUntil = new Date(fetchedAt.getTime() + COOLDOWN_MS);
   const counts = {
-    usersWithPrivateKeyCount: usersWithPrivateKey.length,
-    excludedInProgressBuyerWalletCount:
-      usersWithPrivateKey.length - candidateUsers.length,
+    matchedConditionUserCount: usersWithPrivateKey.length,
     candidateWalletCount: candidateUsers.length,
     scannedWalletCount: scanTargetUsers.length,
     skippedByScanLimitCount,
@@ -404,7 +371,11 @@ export async function POST(request: NextRequest) {
         key: SNAPSHOT_KEY,
         chain,
         token: "USDT",
-        inProgressStatuses: IN_PROGRESS_BUY_ORDER_STATUSES,
+        queryFilter: {
+          walletPrivateKeyExists: true,
+          walletAddressExists: true,
+          buyOrderStatus: "paymentConfirmed",
+        },
         fetchedAt,
         cooldownUntil,
         updatedAt: fetchedAt,
