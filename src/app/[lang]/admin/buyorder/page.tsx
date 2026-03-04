@@ -6096,15 +6096,15 @@ const fetchBuyOrders = async () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
               <div className="flex items-center gap-1.5">
                 <Image src="/icon-seller.png" alt="Seller" width={16} height={16} className="w-4 h-4" />
-                <span className="text-xs font-semibold text-zinc-900">
+                <span className="text-sm font-semibold text-zinc-900">
                   Seller Wallet Monitor
                 </span>
-                <span className="text-[10px] text-zinc-500">
+                <span className="text-xs text-zinc-500">
                   user.nickname=seller · storecode=all(admin 포함) · 10s
                 </span>
               </div>
 
-              <div className="flex items-center gap-2.5 text-[11px] text-zinc-500">
+              <div className="flex items-center gap-2.5 text-sm text-zinc-500">
                 <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>0)`}</span>
                 <span>
                   {sellersBalanceUpdatedAt
@@ -6120,10 +6120,10 @@ const fetchBuyOrders = async () => {
             </div>
 
             <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
-              <span className="text-[10px] font-medium text-emerald-700">TOTAL USDT</span>
+              <span className="text-xs font-medium text-emerald-700">TOTAL USDT</span>
               <div className="flex items-center gap-1.5">
                 <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
-                <span className="text-[15px] font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                <span className="text-xl font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
                   {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 </span>
               </div>
@@ -6141,7 +6141,7 @@ const fetchBuyOrders = async () => {
                   >
                     <div className="flex items-center justify-between gap-1.5">
                       <button
-                        className="min-w-0 max-w-[58%] text-[10px] text-zinc-700 underline truncate text-left font-mono"
+                        className="min-w-0 max-w-[58%] text-xs text-zinc-700 underline truncate text-left font-mono"
                         onClick={() => {
                           navigator.clipboard.writeText(seller.walletAddress);
                           toast.success(Copied_Wallet_Address);
@@ -6150,7 +6150,7 @@ const fetchBuyOrders = async () => {
                       >
                         {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                       </button>
-                      <span className="text-[11px] font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                      <span className="text-sm font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
                         {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
                           ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.00'}
@@ -6165,12 +6165,12 @@ const fetchBuyOrders = async () => {
                           height={10}
                           className="w-2.5 h-2.5 rounded object-cover shrink-0"
                         />
-                        <span className="text-[9px] text-zinc-500 truncate">
+                        <span className="text-xs text-zinc-500 truncate">
                           {seller.storeName || seller.storecode || '-'}
                         </span>
                       </div>
                     ) : (
-                      <div className="mt-0.5 text-[9px] text-zinc-500 truncate">
+                      <div className="mt-0.5 text-xs text-zinc-500 truncate">
                         {seller.storecode || '-'}
                       </div>
                     )}
