@@ -185,7 +185,11 @@ export default function AdminIpSecurityPage() {
       await fetchDashboard();
     } catch (error) {
       console.error(error);
-      toast.error("IP 차단 설정 저장에 실패했습니다.");
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "IP 차단 설정 저장에 실패했습니다.";
+      toast.error(message);
     } finally {
       setSavingBlock(false);
     }

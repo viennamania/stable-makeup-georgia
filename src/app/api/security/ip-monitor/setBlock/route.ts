@@ -26,7 +26,20 @@ export async function POST(request: NextRequest) {
   const ip = normalizeString(body?.ip);
   const enabled = Boolean(body?.enabled);
   const reason = normalizeString(body?.reason);
-  const expiresAt = body?.expiresAt ? new Date(String(body.expiresAt)) : null;
+  const expiresAtRaw = normalizeString(body?.expiresAt);
+  const expiresAt = expiresAtRaw ? new Date(expiresAtRaw) : null;
+  const expiresAtIso =
+    expiresAt && !Number.isNaN(expiresAt.getTime()) ? expiresAt.toISOString() : "";
+
+  const actionFields: Record<string, unknown> = {
+    ip,
+    enabled: enabled ? "true" : "false",
+    reason,
+  };
+
+  if (expiresAtRaw) {
+    actionFields.expiresAt = expiresAtRaw;
+  }
 
   if (!ip) {
     return NextResponse.json(
@@ -47,12 +60,7 @@ export async function POST(request: NextRequest) {
     signatureRaw: body?.signature,
     signedAtRaw: body?.signedAt,
     nonceRaw: body?.nonce,
-    actionFields: {
-      ip,
-      enabled: enabled ? "true" : "false",
-      reason,
-      expiresAt: expiresAt ? expiresAt.toISOString() : "",
-    },
+    actionFields,
   });
 
   if (!auth.ok) {
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest) {
       ip,
       enabled,
       reason,
-      expiresAt,
+      expiresAt: expiresAtIso ? expiresAt : null,
       requesterWalletAddress: auth.requesterWalletAddress,
       requesterUser: auth.requesterUser,
     });
