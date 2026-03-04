@@ -238,6 +238,8 @@ type SellerWalletBalanceItem = {
   id?: number | null;
   nickname?: string;
   storecode?: string | null;
+  storeName?: string | null;
+  storeLogo?: string | null;
   walletAddress: string;
   currentUsdtBalance?: number;
 };
@@ -4464,8 +4466,14 @@ const fetchBuyOrders = async () => {
 
       const data = await response.json();
       if (data?.status === 'success') {
-        setSellersBalance(Array.isArray(data.wallets) ? data.wallets : []);
-        setSellersBalanceTotalUsdt(Number(data.totalCurrentUsdtBalance || 0));
+        const wallets = (Array.isArray(data.wallets) ? data.wallets : []) as SellerWalletBalanceItem[];
+        const walletsWithPositiveBalance = wallets.filter((item) => Number(item?.currentUsdtBalance || 0) > 0);
+        const totalPositiveBalance = walletsWithPositiveBalance.reduce((sum, item) => {
+          return sum + Number(item?.currentUsdtBalance || 0);
+        }, 0);
+
+        setSellersBalance(walletsWithPositiveBalance);
+        setSellersBalanceTotalUsdt(totalPositiveBalance);
         setSellersBalanceUpdatedAt(String(data.updatedAt || ''));
       } else {
         console.error('Error fetching sellers balance', data);
@@ -6084,20 +6092,20 @@ const fetchBuyOrders = async () => {
           
 
           {/* nickname=seller 지갑 잔고 카드 (10초 주기) */}
-          <div className="w-full rounded-2xl border border-emerald-200 bg-white px-4 py-3 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Image src="/icon-seller.png" alt="Seller" width={20} height={20} className="w-5 h-5" />
-                <span className="text-sm font-semibold text-zinc-900">
+          <div className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <Image src="/icon-seller.png" alt="Seller" width={16} height={16} className="w-4 h-4" />
+                <span className="text-xs font-semibold text-zinc-900">
                   Seller Wallet Monitor
                 </span>
-                <span className="text-[11px] text-zinc-500">
+                <span className="text-[10px] text-zinc-500">
                   user.nickname=seller · storecode=all(admin 포함) · 10s
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-zinc-500">
-                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets`}</span>
+              <div className="flex items-center gap-2.5 text-[11px] text-zinc-500">
+                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>0)`}</span>
                 <span>
                   {sellersBalanceUpdatedAt
                     ? new Date(sellersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
@@ -6111,30 +6119,29 @@ const fetchBuyOrders = async () => {
               </div>
             </div>
 
-            <div className="mt-2 flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2">
-              <span className="text-[11px] font-medium text-emerald-700">TOTAL USDT</span>
-              <div className="flex items-center gap-2">
-                <Image src="/icon-tether.png" alt="USDT" width={20} height={20} className="w-5 h-5" />
-                <span className="text-lg font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+            <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
+              <span className="text-[10px] font-medium text-emerald-700">TOTAL USDT</span>
+              <div className="flex items-center gap-1.5">
+                <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
+                <span className="text-[15px] font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
                   {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 </span>
               </div>
             </div>
 
             {sellersBalance.length > 0 ? (
-              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+              <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-44 overflow-y-auto pr-0.5">
                 {sellersBalance.map((seller, index) => (
                   <div
                     key={`${seller.walletAddress}-${index}`}
-                    className={`flex items-center justify-between gap-3 rounded-xl border border-zinc-200 px-3 py-2 bg-white
+                    className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
                     ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
                       ? 'ring-1 ring-emerald-200'
                       : ''}`}
                   >
-                    <div className="min-w-0 flex flex-col">
-                      <span className="text-[11px] text-zinc-500 truncate">{seller.storecode || '-'}</span>
+                    <div className="flex items-center justify-between gap-1.5">
                       <button
-                        className="text-xs text-zinc-700 underline truncate text-left"
+                        className="min-w-0 max-w-[58%] text-[10px] text-zinc-700 underline truncate text-left font-mono"
                         onClick={() => {
                           navigator.clipboard.writeText(seller.walletAddress);
                           toast.success(Copied_Wallet_Address);
@@ -6143,18 +6150,35 @@ const fetchBuyOrders = async () => {
                       >
                         {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                       </button>
+                      <span className="text-[11px] font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                        {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                          ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                          : '0.00'}
+                      </span>
                     </div>
-
-                    <span className="text-sm font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                      {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                        ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        : '0.000'}
-                    </span>
+                    {String(seller.storecode || '').toLowerCase() !== 'admin' ? (
+                      <div className="mt-0.5 flex items-center gap-1 min-w-0">
+                        <Image
+                          src={seller.storeLogo || '/icon-store.png'}
+                          alt={seller.storeName || seller.storecode || 'Store'}
+                          width={10}
+                          height={10}
+                          className="w-2.5 h-2.5 rounded object-cover shrink-0"
+                        />
+                        <span className="text-[9px] text-zinc-500 truncate">
+                          {seller.storeName || seller.storecode || '-'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="mt-0.5 text-[9px] text-zinc-500 truncate">
+                        {seller.storecode || '-'}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="mt-2 text-xs text-zinc-500">조건에 맞는 지갑이 없습니다.</div>
+              <div className="mt-2 text-xs text-zinc-500">잔고가 0보다 큰 지갑이 없습니다.</div>
             )}
           </div>
 

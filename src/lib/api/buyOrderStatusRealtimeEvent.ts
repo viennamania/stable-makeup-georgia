@@ -204,6 +204,8 @@ export type RealtimeNicknameSellerWalletBalanceItem = {
   id: number | null;
   nickname: string;
   storecode: string | null;
+  storeName: string | null;
+  storeLogo: string | null;
   walletAddress: string;
   currentUsdtBalance: number;
 };
@@ -890,6 +892,8 @@ export async function getRealtimeNicknameSellerWalletBalances({
       id: typeof user?.id === "number" ? user.id : null,
       nickname: toNullableText(user?.nickname) || safeNickname,
       storecode: toNullableText(user?.storecode),
+      storeName: null,
+      storeLogo: null,
       walletAddress,
       currentUsdtBalance: 0,
     });
@@ -901,7 +905,61 @@ export async function getRealtimeNicknameSellerWalletBalances({
 
   const wallets = Array.from(walletMap.values());
 
-  if (wallets.length === 0) {
+  const nonAdminStorecodes = Array.from(
+    new Set(
+      wallets
+        .map((item) => toNullableText(item.storecode)?.toLowerCase() || "")
+        .filter((storecode) => Boolean(storecode && storecode !== "admin")),
+    ),
+  );
+
+  const storeMetaByCode = new Map<string, { storeName: string | null; storeLogo: string | null }>();
+  if (nonAdminStorecodes.length > 0) {
+    try {
+      const storeCollection = client.db(dbName).collection("stores");
+      const stores = await storeCollection
+        .find(
+          {
+            storecode: { $in: nonAdminStorecodes },
+          },
+          {
+            projection: {
+              _id: 0,
+              storecode: 1,
+              storeName: 1,
+              storeLogo: 1,
+            },
+          },
+        )
+        .toArray();
+
+      for (const store of stores) {
+        const storecode = toNullableText(store?.storecode)?.toLowerCase();
+        if (!storecode) {
+          continue;
+        }
+
+        storeMetaByCode.set(storecode, {
+          storeName: toNullableText(store?.storeName),
+          storeLogo: toNullableText(store?.storeLogo),
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch store metadata for realtime nickname seller balances:", error);
+    }
+  }
+
+  const walletsWithStoreMeta = wallets.map((item) => {
+    const storecode = toNullableText(item.storecode)?.toLowerCase() || "";
+    const storeMeta = storeMetaByCode.get(storecode);
+    return {
+      ...item,
+      storeName: storeMeta?.storeName || null,
+      storeLogo: storeMeta?.storeLogo || null,
+    };
+  });
+
+  if (walletsWithStoreMeta.length === 0) {
     return {
       totalCount: 0,
       totalCurrentUsdtBalance: 0,
@@ -914,9 +972,9 @@ export async function getRealtimeNicknameSellerWalletBalances({
   const usdtContractAddress = getUsdtContractAddress();
   if (!thirdwebSecretKey || !usdtContractAddress) {
     return {
-      totalCount: wallets.length,
+      totalCount: walletsWithStoreMeta.length,
       totalCurrentUsdtBalance: 0,
-      wallets,
+      wallets: walletsWithStoreMeta,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -933,7 +991,7 @@ export async function getRealtimeNicknameSellerWalletBalances({
     const decimals = getUsdtDecimals();
 
     const withBalances = await Promise.all(
-      wallets.map(async (item) => {
+      walletsWithStoreMeta.map(async (item) => {
         try {
           const rawBalance = await balanceOf({
             contract,
@@ -976,9 +1034,9 @@ export async function getRealtimeNicknameSellerWalletBalances({
   } catch (error) {
     console.error("Failed to fetch realtime nickname seller wallet balances:", error);
     return {
-      totalCount: wallets.length,
+      totalCount: walletsWithStoreMeta.length,
       totalCurrentUsdtBalance: 0,
-      wallets,
+      wallets: walletsWithStoreMeta,
       updatedAt: new Date().toISOString(),
     };
   }
