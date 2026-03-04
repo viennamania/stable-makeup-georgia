@@ -41,3 +41,7 @@ next-env.d.ts
 
 # memo
 .memo
+
+# local analysis / export artifacts
+/tmp/
+tmp-*.json

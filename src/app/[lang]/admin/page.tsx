@@ -2705,6 +2705,15 @@ export default function Index({ params }: any) {
                     >
                       Admin 권한 API 호출 로그
                     </button>
+                    <button
+                      onClick={() => {
+                        const url = `/${params.lang}/admin/ip-security`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full bg-rose-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-rose-600"
+                    >
+                      퍼블릭 IP 보안 모니터링 / 차단 관리
+                    </button>
 
                     {/*
                     <button

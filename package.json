@@ -14,7 +14,9 @@
 		"build:clean": "pnpm run clean:next && pnpm run build",
 		"start": "pnpm run check:node && next start",
 		"lint": "next lint",
-		"backfill:banktransfers:webhooklogs": "node scripts/backfill-banktransfers-from-webhooklogs.js"
+		"backfill:banktransfers:webhooklogs": "node scripts/backfill-banktransfers-from-webhooklogs.js",
+		"transfer:seller-usdt:dry-run": "node scripts/transfer-seller-usdt-to-wallet.mjs",
+		"transfer:seller-usdt:execute": "node scripts/transfer-seller-usdt-to-wallet.mjs --execute"
 	},
 	"dependencies": {
 		"@emotion/react": "^11.11.3",
