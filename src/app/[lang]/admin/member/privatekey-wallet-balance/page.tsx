@@ -28,7 +28,12 @@ type SnapshotItem = {
 type SnapshotCounts = {
   usersWithPrivateKeyCount?: number;
   excludedInProgressBuyerWalletCount?: number;
+  candidateWalletCount?: number;
   scannedWalletCount?: number;
+  skippedByScanLimitCount?: number;
+  scanLimitApplied?: boolean;
+  scanLimit?: number;
+  scanConcurrency?: number;
   positiveBalanceCount?: number;
 };
 
@@ -134,6 +139,11 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
 
   const canReadFresh = cooldownRemainingSeconds <= 0;
   const items = Array.isArray(snapshot?.items) ? snapshot?.items : [];
+  const emptyMessage = loading
+    ? "지갑 잔고를 조회 중입니다..."
+    : !snapshot
+      ? "아직 조회 결과가 없습니다. 상단 버튼으로 조회를 시작해 주세요."
+      : "조회된 잔고 목록이 없습니다.";
   const totalPositiveBalance = items.reduce((acc, item) => {
     const value = Number(item?.usdtBalance || 0);
     if (!Number.isFinite(value)) {
@@ -213,11 +223,19 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
                 거래중 구매자 제외: {(snapshot?.counts?.excludedInProgressBuyerWalletCount || 0).toLocaleString("ko-KR")}
               </span>
               <span className="px-2 py-1 rounded-full bg-zinc-100 text-zinc-700">
-                잔고 조회 대상: {(snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}
+                잔고 후보(제외 후): {(snapshot?.counts?.candidateWalletCount || snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}
+              </span>
+              <span className="px-2 py-1 rounded-full bg-zinc-100 text-zinc-700">
+                실제 조회 지갑: {(snapshot?.counts?.scannedWalletCount || 0).toLocaleString("ko-KR")}
               </span>
               <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-800">
                 잔고 0 초과: {(snapshot?.counts?.positiveBalanceCount || 0).toLocaleString("ko-KR")}
               </span>
+              {snapshot?.counts?.scanLimitApplied && (
+                <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-800">
+                  성능 상한 적용: {(snapshot?.counts?.scanLimit || 0).toLocaleString("ko-KR")}개 (제외 {(snapshot?.counts?.skippedByScanLimitCount || 0).toLocaleString("ko-KR")}개)
+                </span>
+              )}
             </div>
 
             <div className="overflow-x-auto border border-zinc-200 rounded-xl">
@@ -234,7 +252,7 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
                   {items.length === 0 && (
                     <tr>
                       <td colSpan={4} className="px-3 py-8 text-center text-zinc-500">
-                        조회된 잔고 목록이 없습니다.
+                        {emptyMessage}
                       </td>
                     </tr>
                   )}

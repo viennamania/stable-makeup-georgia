@@ -21,6 +21,8 @@ const SIGNING_PREFIX = "stable-georgia:admin-member-private-key-wallet-balances:
 const SNAPSHOT_COLLECTION = "adminMemberPrivateKeyWalletBalanceSnapshots";
 const SNAPSHOT_KEY = "default";
 const COOLDOWN_MS = 10 * 60 * 1000;
+const DEFAULT_SCAN_LIMIT = 1200;
+const DEFAULT_SCAN_CONCURRENCY = 20;
 
 const IN_PROGRESS_BUY_ORDER_STATUSES = [
   "ordered",
@@ -39,6 +41,7 @@ type WalletCandidateUser = {
   storecode?: string;
   walletAddress?: string;
   walletPrivateKey?: string;
+  updatedAt?: unknown;
 };
 
 const normalizeString = (value: unknown): string => {
@@ -57,6 +60,36 @@ const toIsoString = (value: unknown): string | null => {
     return null;
   }
   return date.toISOString();
+};
+
+const parsePositiveInt = (value: unknown, fallback: number): number => {
+  const parsed = Number.parseInt(normalizeString(value), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+};
+
+const toEpochMs = (value: unknown): number => {
+  if (!value) {
+    return 0;
+  }
+  const date = value instanceof Date ? value : new Date(String(value));
+  const epochMs = date.getTime();
+  if (!Number.isFinite(epochMs)) {
+    return 0;
+  }
+  return epochMs;
+};
+
+const getSellerPriority = (user: WalletCandidateUser): number => {
+  const role = normalizeString(user.role).toLowerCase();
+  const userType = normalizeString(user.userType).toLowerCase();
+  const nickname = normalizeString(user.nickname).toLowerCase();
+  if (role === "seller" || userType === "seller" || nickname === "seller") {
+    return 1;
+  }
+  return 0;
 };
 
 const mapWithConcurrency = async <T, R>(
@@ -117,6 +150,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const scanLimit = parsePositiveInt(
+    process.env.ADMIN_PRIVATEKEY_BALANCE_SCAN_LIMIT,
+    DEFAULT_SCAN_LIMIT,
+  );
+  const scanConcurrency = parsePositiveInt(
+    process.env.ADMIN_PRIVATEKEY_BALANCE_CONCURRENCY,
+    DEFAULT_SCAN_CONCURRENCY,
+  );
+
   const dbClient = await clientPromise;
   const snapshotCollection = dbClient
     .db(dbName)
@@ -173,6 +215,7 @@ export async function POST(request: NextRequest) {
           storecode: 1,
           walletAddress: 1,
           walletPrivateKey: 1,
+          updatedAt: 1,
         },
       },
     )
@@ -208,9 +251,29 @@ export async function POST(request: NextRequest) {
     return !inProgressBuyerWalletSet.has(normalizedWalletAddress);
   });
 
+  const sortedCandidateUsers = [...candidateUsers].sort((left, right) => {
+    const leftPriority = getSellerPriority(left);
+    const rightPriority = getSellerPriority(right);
+    if (leftPriority !== rightPriority) {
+      return rightPriority - leftPriority;
+    }
+    const leftUpdatedAt = toEpochMs(left.updatedAt);
+    const rightUpdatedAt = toEpochMs(right.updatedAt);
+    if (leftUpdatedAt === rightUpdatedAt) {
+      return 0;
+    }
+    return rightUpdatedAt - leftUpdatedAt;
+  });
+
+  const scanTargetUsers = sortedCandidateUsers.slice(0, scanLimit);
+  const skippedByScanLimitCount = Math.max(
+    0,
+    sortedCandidateUsers.length - scanTargetUsers.length,
+  );
+
   const storecodes = Array.from(
     new Set(
-      candidateUsers
+      scanTargetUsers
         .map((user) => normalizeString(user.storecode))
         .filter(Boolean),
     ),
@@ -266,8 +329,8 @@ export async function POST(request: NextRequest) {
   });
 
   const scannedBalanceResults = await mapWithConcurrency(
-    candidateUsers,
-    8,
+    scanTargetUsers,
+    scanConcurrency,
     async (user) => {
       const normalizedWalletAddress = normalizeWalletAddress(user.walletAddress);
       if (!normalizedWalletAddress) {
@@ -325,7 +388,12 @@ export async function POST(request: NextRequest) {
     usersWithPrivateKeyCount: usersWithPrivateKey.length,
     excludedInProgressBuyerWalletCount:
       usersWithPrivateKey.length - candidateUsers.length,
-    scannedWalletCount: candidateUsers.length,
+    candidateWalletCount: candidateUsers.length,
+    scannedWalletCount: scanTargetUsers.length,
+    skippedByScanLimitCount,
+    scanLimitApplied: skippedByScanLimitCount > 0,
+    scanLimit,
+    scanConcurrency,
     positiveBalanceCount: items.length,
   };
 
