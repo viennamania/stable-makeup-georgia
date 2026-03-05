@@ -6141,7 +6141,7 @@ const fetchBuyOrders = async () => {
                   >
                     <div className="flex items-center justify-between gap-1.5">
                       <button
-                        className="min-w-0 max-w-[58%] text-xs text-zinc-700 underline truncate text-left font-mono"
+                        className="min-w-0 max-w-[58%] text-sm text-zinc-700 underline truncate text-left font-mono"
                         onClick={() => {
                           navigator.clipboard.writeText(seller.walletAddress);
                           toast.success(Copied_Wallet_Address);
@@ -6150,7 +6150,7 @@ const fetchBuyOrders = async () => {
                       >
                         {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                       </button>
-                      <span className="text-sm font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                      <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
                         {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
                           ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                           : '0.00'}
