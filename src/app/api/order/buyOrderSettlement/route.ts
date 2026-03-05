@@ -4,6 +4,15 @@ import {
   getOneBuyOrder,
   updateBuyOrderSettlement,
 } from '@lib/api/order';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
+
+const normalizeStorecode = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+};
 
 
 
@@ -14,9 +23,21 @@ export async function POST(request: NextRequest) {
 
   const {
     orderId,
+    storecode,
     //transactionHash,
     settlement,
   } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/buyOrderSettlement",
+    body,
+    storecodeRaw: storecode,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
 
   /*
@@ -188,6 +209,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const requestedStorecode = normalizeStorecode(storecode);
+    const buyOrderStorecode = normalizeStorecode(
+      buyOrder.storecode || buyOrder.store?.storecode,
+    );
+
+    if (!buyOrderStorecode || buyOrderStorecode !== requestedStorecode) {
+      console.log("buyOrder storecode mismatch for orderId:", orderId, {
+        requestedStorecode,
+        buyOrderStorecode,
+      });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
 
 
 
@@ -255,7 +289,7 @@ export async function POST(request: NextRequest) {
 
     // updateBuyOrderSettlement
     const result = await updateBuyOrderSettlement({
-      updater: "system", // who updates the settlement, can be "system" or "admin"
+      updater: guard.requesterWalletAddress, // who updates the settlement
       orderId: orderId,
       settlement: settlement,
       ///////////storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder

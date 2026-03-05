@@ -2028,6 +2028,7 @@ const depositAmountMatches = useMemo(() => {
     await confirmPayment(
       targetConfirmIndex,
       targetConfirmOrder._id,
+      targetConfirmOrder.storecode,
       targetConfirmOrder.krwAmount,
       targetConfirmOrder.usdtAmount,
       targetConfirmOrder.walletAddress,
@@ -3247,6 +3248,7 @@ const depositAmountMatches = useMemo(() => {
 
     index: number,
     orderId: string,
+    storecode: string,
     //paymentAmount: number,
     krwAmount: number,
     //paymentAmountUsdt: number,
@@ -3277,9 +3279,6 @@ const depositAmountMatches = useMemo(() => {
       return;
     }
       */
-
-    const storecode = "admin";
-
 
     if (confirmingPayment[index]) {
       return;
@@ -3507,6 +3506,7 @@ const depositAmountMatches = useMemo(() => {
 
     index: number,
     orderId: string,
+    storecode: string,
     //paymentAmount: number,
     krwAmount: number,
     //paymentAmountUsdt: number,
@@ -3581,11 +3581,6 @@ const depositAmountMatches = useMemo(() => {
       return;
     }
   
-
-
-
-    const storecode = "admin";
-
     try {
 
         const transaction = transfer({
@@ -3699,7 +3694,7 @@ const depositAmountMatches = useMemo(() => {
 
   
 
-  const settlementRequest = async (index: number, orderId: string) => {
+  const settlementRequest = async (index: number, orderId: string, storecode: string) => {
     // settlement
 
     if (loadingSettlement[index]) {
@@ -3719,6 +3714,7 @@ const depositAmountMatches = useMemo(() => {
         },
         body: JSON.stringify({
           orderId: orderId,
+          storecode: storecode,
         })
       });
       const data = await response.json();
@@ -8249,6 +8245,7 @@ const fetchBuyOrders = async () => {
                                       confirmPayment(
                                         index,
                                         item._id,
+                                        item.storecode,
                                         //paymentAmounts[index],
                                         //paymentAmountsUsdt[index],
 
@@ -9191,6 +9188,7 @@ const fetchBuyOrders = async () => {
                                               settlementRequest(
                                                 index,
                                                 item._id,
+                                                item.storecode,
                                               );
                                               
 
@@ -9495,6 +9493,7 @@ const fetchBuyOrders = async () => {
                                               settlementRequest(
                                                 index,
                                                 item._id,
+                                                item.storecode,
                                               );
                                               
 

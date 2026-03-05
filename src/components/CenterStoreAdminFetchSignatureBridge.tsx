@@ -11,6 +11,9 @@ import {
 
 const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/order/acceptBuyOrder",
+  "/api/order/buyOrderConfirmPaymentWithEscrow",
+  "/api/order/buyOrderConfirmPaymentWithoutEscrow",
+  "/api/order/buyOrderSettlement",
   "/api/order/cancelTradeBySeller",
   "/api/order/getAllBuyOrders",
   "/api/order/getAllBuyOrdersByStorecodeDaily",
@@ -20,6 +23,7 @@ const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/order/getCountOfPaymentRequested",
   "/api/order/transferEscrowBalanceToMyWallet",
   "/api/order/transferEscrowBalanceToSeller",
+  "/api/order/updateBuyOrderSettlement",
   "/api/store/getEscrowBalance",
   "/api/user/clearanceWalletAddress",
 ]);

@@ -1662,6 +1662,7 @@ export default function Index({ params }: any) {
 
     index: number,
     orderId: string,
+    storecode: string,
     //paymentAmount: number,
     krwAmount: number,
     //paymentAmountUsdt: number,
@@ -1690,9 +1691,6 @@ export default function Index({ params }: any) {
       return;
     }
       */
-
-    const storecode = "admin";
-
 
     if (confirmingPayment[index]) {
       return;
@@ -2064,6 +2062,7 @@ export default function Index({ params }: any) {
 
     index: number,
     orderId: string,
+    storecode: string,
     //paymentAmount: number,
     krwAmount: number,
     //paymentAmountUsdt: number,
@@ -2138,11 +2137,6 @@ export default function Index({ params }: any) {
       return;
     }
   
-
-
-
-    const storecode = "admin";
-
     try {
 
         const transaction = transfer({
@@ -2256,7 +2250,7 @@ export default function Index({ params }: any) {
 
   
 
-  const settlementRequest = async (index: number, orderId: string) => {
+  const settlementRequest = async (index: number, orderId: string, storecode: string) => {
     // settlement
 
     if (loadingSettlement[index]) {
@@ -2276,6 +2270,7 @@ export default function Index({ params }: any) {
         },
         body: JSON.stringify({
           orderId: orderId,
+          storecode: storecode,
         })
       });
       const data = await response.json();
@@ -5311,6 +5306,7 @@ const fetchBuyOrders = async () => {
                                         confirmPayment(
                                           index,
                                           item._id,
+                                          item.storecode,
                                           //paymentAmounts[index],
                                           //paymentAmountsUsdt[index],
 
@@ -5824,6 +5820,7 @@ const fetchBuyOrders = async () => {
                                       confirmPayment(
                                         index,
                                         item._id,
+                                        item.storecode,
                                         //paymentAmounts[index],
                                         //paymentAmountsUsdt[index],
 
@@ -6028,6 +6025,7 @@ const fetchBuyOrders = async () => {
 
                                           index,
                                           item._id,
+                                          item.storecode,
                                           
                                           //paymentAmounts[index],
                                           item.krwAmount,
@@ -6782,6 +6780,7 @@ const fetchBuyOrders = async () => {
                                               settlementRequest(
                                                 index,
                                                 item._id,
+                                                item.storecode,
                                               );
                                               
 
@@ -7087,6 +7086,7 @@ const fetchBuyOrders = async () => {
                                               settlementRequest(
                                                 index,
                                                 item._id,
+                                                item.storecode,
                                               );
                                               
 
@@ -7464,6 +7464,4 @@ const TradeDetail = (
       </div>
     );
   };
-
-
 

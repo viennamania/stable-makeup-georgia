@@ -9,6 +9,7 @@ import {
 
   updateBuyOrderPayactionResult,
 } from '@lib/api/order';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 
 import {
@@ -92,6 +93,14 @@ const contract = getContract({
   //abi: [...],
 });
 
+const normalizeStorecode = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+};
+
 
 
 
@@ -114,6 +123,17 @@ export async function POST(request: NextRequest) {
 
     //isSmartAccount
   } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/buyOrderConfirmPaymentWithoutEscrow",
+    body,
+    storecodeRaw: storecode,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
 
   //console.log("lang", lang);
@@ -159,6 +179,16 @@ export async function POST(request: NextRequest) {
       usdtAmount: usdtAmount,
       buyer: buyer,
     } = order as OrderProps;
+
+    const requestedStorecode = normalizeStorecode(storecode);
+    const buyOrderStorecode = normalizeStorecode(orderStorecode);
+    if (!buyOrderStorecode || buyOrderStorecode !== requestedStorecode) {
+      console.log("buyOrder storecode mismatch for orderId:", orderId, {
+        requestedStorecode,
+        buyOrderStorecode,
+      });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
 
 

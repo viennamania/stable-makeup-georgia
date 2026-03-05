@@ -8,6 +8,7 @@ import {
   //buyOrderWebhook,
 
 } from '@lib/api/order';
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 
 import {
@@ -76,6 +77,14 @@ import {
 
 export const maxDuration = 60; // This function can run for a maximum of 60 seconds
 
+const normalizeStorecode = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+};
+
 
 export async function POST(request: NextRequest) {
 
@@ -92,6 +101,17 @@ export async function POST(request: NextRequest) {
     transactionHash,
     isSmartAccount
   } = body;
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: "/api/order/buyOrderConfirmPaymentWithEscrow",
+    body,
+    storecodeRaw: storecode,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
 
 
   console.log("lang", lang);
@@ -135,6 +155,16 @@ export async function POST(request: NextRequest) {
       usdtAmount: usdtAmount,
       buyer: buyer,
     } = order as OrderProps;
+
+    const requestedStorecode = normalizeStorecode(storecode);
+    const buyOrderStorecode = normalizeStorecode(orderStorecode);
+    if (!buyOrderStorecode || buyOrderStorecode !== requestedStorecode) {
+      console.log("buyOrder storecode mismatch for orderId:", orderId, {
+        requestedStorecode,
+        buyOrderStorecode,
+      });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
 
 
