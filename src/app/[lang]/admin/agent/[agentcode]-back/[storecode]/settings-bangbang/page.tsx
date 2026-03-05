@@ -938,17 +938,20 @@ export default function SettingsPage({ params }: any) {
         return;
         }
         setUpdatingAdminWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreAdminWalletAddress', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-            {
-            storecode: params.storecode,
-            adminWalletAddress: selectedAdminWalletAddress,
-            }
-        ),
+        if (!smartAccount) {
+            setUpdatingAdminWalletAddress(false);
+            toast.error('지갑을 먼저 연결하세요.');
+            return;
+        }
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreAdminWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
+                storecode: params.storecode,
+                adminWalletAddress: selectedAdminWalletAddress,
+            },
         });
         if (!response.ok) {
         setUpdatingAdminWalletAddress(false);

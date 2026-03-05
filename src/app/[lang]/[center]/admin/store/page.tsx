@@ -72,6 +72,7 @@ import useSound from 'use-sound';
 
 
 import { useSearchParams } from 'next/navigation';
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -112,6 +113,8 @@ interface BuyOrder {
 
   storecode: string;
 }
+
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
 
 
@@ -1193,17 +1196,20 @@ export default function Index({ params }: any) {
       return;
     }
     setUpdatingAdminWalletAddress(true);
-    const response = await fetch('/api/store/updateStoreAdminWalletAddress', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
+    if (!activeAccount) {
+      setUpdatingAdminWalletAddress(false);
+      toast.error('지갑을 먼저 연결하세요.');
+      return;
+    }
+    const response = await postAdminSignedJson({
+      account: activeAccount,
+      route: '/api/store/updateStoreAdminWalletAddress',
+      signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+      requesterWalletAddress: address,
+      body: {
+        storecode: params.center,
+        adminWalletAddress: selectedAdminWalletAddress,
       },
-      body: JSON.stringify(
-        {
-          storecode: params.center,
-          adminWalletAddress: selectedAdminWalletAddress,
-        }
-      ),
     });
     if (!response.ok) {
       setUpdatingAdminWalletAddress(false);
@@ -2011,5 +2017,4 @@ const TradeDetail = (
       </div>
     );
   };
-
 

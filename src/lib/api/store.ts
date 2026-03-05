@@ -378,11 +378,7 @@ export async function updateStoreAdminWalletAddress(
     { storecode: storecode },
     { $set: { adminWalletAddress: adminWalletAddress } }
   );
-  if (result) {
-    return true;
-  } else {
-    return false;
-  }
+  return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
 
