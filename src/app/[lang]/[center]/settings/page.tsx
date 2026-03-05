@@ -519,17 +519,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
 
-        const response = await fetch('/api/store/setStoreName', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreName',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 storeName: editedNickname,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -561,17 +561,17 @@ export default function SettingsPage({ params }: any) {
             toast.error("가맹점 설명을 2자 이상 100자 이하로 설정하세요");
             return;
         }
-        const response = await fetch('/api/store/setStoreDescription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreDescription',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 storeDescription: storeDescription,
-            }),
+            },
         });
         const data = await response.json();
 
@@ -613,19 +613,19 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setWritingStoreBankInfo(true);
-        const response = await fetch('/api/store/setStoreBankInfo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreBankInfo',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 bankName: bankName,
                 accountNumber: accountNumber,
                 accountHolder: accountHolder,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -897,17 +897,17 @@ export default function SettingsPage({ params }: any) {
         return;
         }
         setUpdatingSettlementWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreSettlementWalletAddress', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSettlementWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
             {
             storecode: params.center,
             settlementWalletAddress: selectedSettlementWalletAddress,
             }
-        ),
+        ,
         });
         if (!response.ok) {
         setUpdatingSettlementWalletAddress(false);
@@ -943,17 +943,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingSettlementFeeWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreSettlementFeeWalletAddress', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSettlementFeeWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     settlementFeeWalletAddress: selectedSettlementFeeWalletAddress,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingSettlementFeeWalletAddress(false);
@@ -987,17 +987,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingSettlementFeePercent(true);
-        const response = await fetch('/api/store/updateStoreSettlementFeePercent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSettlementFeePercent',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     settlementFeePercent: settlementFeePercent,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingSettlementFeePercent(false);
@@ -1090,16 +1090,16 @@ export default function SettingsPage({ params }: any) {
 
         setUpdatingPaymentUrl(true);
 
-        const response = await fetch('/api/store/updateStorePaymentUrl', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStorePaymentUrl',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 paymentUrl: paymentUrl,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1132,16 +1132,16 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingPaymentCallbackUrl(true);
-        const response = await fetch('/api/store/updateStorePaymentCallbackUrl', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStorePaymentCallbackUrl',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 paymentCallbackUrl: paymentCallbackUrl,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1174,16 +1174,16 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingMaxPaymentAmountKRW(true);
-        const response = await fetch('/api/store/updateMaxPaymentAmountKRW', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateMaxPaymentAmountKRW',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 maxPaymentAmountKRW: maxPaymentAmountKRW,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1216,16 +1216,16 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingAccessToken(true);
-        const response = await fetch('/api/store/updateStoreAccessToken', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreAccessToken',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 accessToken: accessToken,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1265,16 +1265,16 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingAccessToken(true);
-        const response = await fetch('/api/store/updateStoreAccessToken', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreAccessToken',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 accessToken: '',
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1313,16 +1313,16 @@ export default function SettingsPage({ params }: any) {
 
     setIsToggling(true);
 
-    const response = await fetch("/api/store/toggleView", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+    const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/toggleView',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
         storecode: params.center,
         viewOnAndOff,
-        }),
-    });
+        },
+        });
 
     const data = await response.json();
     //console.log("toggleViewOnAndOff", data);

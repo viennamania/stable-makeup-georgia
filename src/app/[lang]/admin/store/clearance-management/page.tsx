@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useActiveAccount } from "thirdweb/react";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 const ClearancePage = dynamic(
   () => import("../[storecode]/clearance/page"),
@@ -30,6 +32,8 @@ interface StoreSummary {
 }
 
 const STORECODE_QUERY_KEY = "storecode";
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX =
+  "stable-georgia:store-settings-mutation:v1";
 
 const getKstToday = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -80,6 +84,8 @@ const compareStoresForSidebar = (a: StoreSummary, b: StoreSummary) => {
 export default function ClearanceManagementPage({ params }: any) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const activeAccount = useActiveAccount();
+  const address = activeAccount?.address;
 
   const searchParamsString = searchParams?.toString() || "";
   const selectedStorecodeFromQuery =
@@ -220,14 +226,14 @@ export default function ClearanceManagementPage({ params }: any) {
       throw new Error("유효한 가맹점 순서 정보가 없습니다.");
     }
 
-    const response = await fetch("/api/store/updateClearanceSortOrders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const response = await postAdminSignedJson({
+      account: activeAccount,
+      route: "/api/store/updateClearanceSortOrders",
+      signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+      requesterWalletAddress: address,
+      body: {
         orders,
-      }),
+      },
     });
 
     let data: any = null;
@@ -240,7 +246,7 @@ export default function ClearanceManagementPage({ params }: any) {
         data?.error || "가맹점 순서 저장에 실패했습니다. 다시 시도해주세요."
       );
     }
-  }, []);
+  }, [activeAccount, address]);
 
   const moveStoreOrder = useCallback(async (storecode: string, offset: -1 | 1) => {
     if (updatingOrderStorecode || searchKeyword.trim()) {
@@ -330,15 +336,15 @@ export default function ClearanceManagementPage({ params }: any) {
     );
 
     try {
-      const response = await fetch("/api/store/toggleFavorite", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/store/toggleFavorite",
+        signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           storecode: store.storecode,
           favoriteOnAndOff: nextFavoriteOnAndOff,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -361,7 +367,7 @@ export default function ClearanceManagementPage({ params }: any) {
     } finally {
       setUpdatingFavoriteStorecode("");
     }
-  }, [updatingFavoriteStorecode]);
+  }, [activeAccount, address, updatingFavoriteStorecode]);
 
   return (
     <main className="min-h-screen overflow-x-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 lg:p-6">

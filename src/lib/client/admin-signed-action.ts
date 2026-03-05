@@ -152,24 +152,43 @@ export const postAdminSignedJson = async ({
   requesterStorecode?: string;
   requesterWalletAddress?: string;
 }) => {
-  const actionFields = sanitizeActionFields(body || {});
-  const signed = await signAdminActionPayload({
-    account,
-    route,
-    signingPrefix,
-    requesterStorecode,
-    requesterWalletAddress,
-    actionFields,
-  });
+  try {
+    const actionFields = sanitizeActionFields(body || {});
+    const signed = await signAdminActionPayload({
+      account,
+      route,
+      signingPrefix,
+      requesterStorecode,
+      requesterWalletAddress,
+      actionFields,
+    });
 
-  return fetch(route, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      ...actionFields,
-      ...signed,
-    }),
-  });
+    return fetch(route, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...actionFields,
+        ...signed,
+      }),
+    });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to sign admin action payload";
+
+    return new Response(
+      JSON.stringify({
+        result: null,
+        success: false,
+        error: errorMessage,
+      }),
+      {
+        status: 401,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
 };

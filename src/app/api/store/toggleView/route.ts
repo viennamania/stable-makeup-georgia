@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     request,
     route: "/api/store/toggleView",
     body,
+  requireSigned: true,
   });
 
   if (!guard.ok) {

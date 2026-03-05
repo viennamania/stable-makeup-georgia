@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     request,
     route: "/api/store/updatePayactionKeys",
     body,
+  requireSigned: true,
   });
 
   if (!guard.ok) {

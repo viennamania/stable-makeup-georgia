@@ -466,17 +466,17 @@ export default function SettingsPage({ params }: any) {
 
         setSettingStoreName(true);
 
-        const response = await fetch('/api/store/setStoreName', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreName',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 storeName: storeName,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -516,17 +516,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setWritingStoreDescription(true);
-        const response = await fetch('/api/store/setStoreDescription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreDescription',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 storeDescription: storeDescription,
-            }),
+            },
         });
         const data = await response.json();
 
@@ -572,19 +572,19 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setWritingStoreBankInfo(true);
-        const response = await fetch('/api/store/setStoreBankInfo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreBankInfo',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 bankName: bankName,
                 accountNumber: accountNumber,
                 accountHolder: accountHolder,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -641,19 +641,19 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setWritingWithdrawalBankInfo(true);
-        const response = await fetch('/api/store/setStoreWithdrawalBankInfo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreWithdrawalBankInfo',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: params.center,
                 walletAddress: address,
                 withdrawalBankName: withdrawalBankName,
                 withdrawalAccountNumber: withdrawalAccountNumber,
                 withdrawalAccountHolder: withdrawalAccountHolder,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -942,17 +942,17 @@ export default function SettingsPage({ params }: any) {
         return;
         }
         setUpdatingSettlementWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreSettlementWalletAddress', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSettlementWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
             {
             storecode: params.center,
             settlementWalletAddress: selectedSettlementWalletAddress,
             }
-        ),
+        ,
         });
         if (!response.ok) {
         setUpdatingSettlementWalletAddress(false);
@@ -992,17 +992,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingSettlementFeeWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreSettlementFeeWalletAddress', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSettlementFeeWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     settlementFeeWalletAddress: selectedSettlementFeeWalletAddress,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingSettlementFeeWalletAddress(false);
@@ -1056,17 +1056,17 @@ export default function SettingsPage({ params }: any) {
         }
 
         setUpdatingSettlementFeePercent(true);
-        const response = await fetch('/api/store/updateStoreSettlementFeePercent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreSettlementFeePercent',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     settlementFeePercent: settlementFeePercent,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingSettlementFeePercent(false);
@@ -1104,17 +1104,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingAgentWFeeWalletAddress(true);
-        const response = await fetch('/api/store/updateStoreAgentFeeWalletAddress', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreAgentFeeWalletAddress',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     agentFeeWalletAddress: selectedAgentFeeWalletAddress,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingAgentWFeeWalletAddress(false);
@@ -1164,17 +1164,17 @@ export default function SettingsPage({ params }: any) {
         }
 
         setUpdatingAgentFeePercent(true);
-        const response = await fetch('/api/store/updateStoreAgentFeePercent', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreAgentFeePercent',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     agentFeePercent: agentFeePercent,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingAgentFeePercent(false);
@@ -1284,17 +1284,17 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setUpdatingEscrowAmountUSDT(true);
-        const response = await fetch('/api/store/updateStoreEscrowAmountUSDT', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateStoreEscrowAmountUSDT',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: 
                 {
                     storecode: params.center,
                     escrowAmountUSDT: escrowAmountUSDT,
                 }
-            ),
+            ,
         });
         if (!response.ok) {
             setUpdatingEscrowAmountUSDT(false);
@@ -1354,16 +1354,16 @@ export default function SettingsPage({ params }: any) {
 
         setUpdatingPayactionKeys(true);
 
-        const response = await fetch('/api/store/updatePayactionKeys', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updatePayactionKeys',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 payactionKey: payactionKey,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1407,16 +1407,16 @@ export default function SettingsPage({ params }: any) {
             payactionShopId: '',
         };
 
-        const response = await fetch('/api/store/updatePayactionKeys', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updatePayactionKeys',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 payactionKey: payactionKey,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1461,16 +1461,16 @@ export default function SettingsPage({ params }: any) {
 
         setUpdatingBackgroundColor(true);
 
-        const response = await fetch('/api/store/updateBackgroundColor', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateBackgroundColor',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 backgroundColor: backgroundColor,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);
@@ -1514,16 +1514,16 @@ export default function SettingsPage({ params }: any) {
         }
         setUpdatingAgentcode(true);
 
-        const response = await fetch('/api/store/updateAgentcode', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/updateAgentcode',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 walletAddress: address,
                 storecode: params.center,
                 agentcode: agentcode,
-            }),
+            },
         });
         const data = await response.json();
         //console.log("data", data);

@@ -3,6 +3,7 @@
 import React, { use, useEffect, useState } from 'react';
 
 import { postUpdateUserWithSignature } from "@/lib/client/update-user-signed";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -72,6 +73,8 @@ const wallets = [
 const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 
 const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX =
+  "stable-georgia:store-settings-mutation:v1";
 
 
 
@@ -898,18 +901,16 @@ export default function SettingsPage({ params }: any) {
         }
 
         setWritingStoreMemo(true);
-        const response = await fetch('/api/store/setStoreMemo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-                {
+        const response = await postAdminSignedJson({
+            account: smartAccount,
+            route: '/api/store/setStoreMemo',
+            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: address,
+            body: {
                 storecode: params.storecode,
                 walletAddress: address,
                 storeMemo: storeMemo,
-                }
-            ),
+            },
         });
         if (!response.ok) {
             setWritingStoreMemo(false);

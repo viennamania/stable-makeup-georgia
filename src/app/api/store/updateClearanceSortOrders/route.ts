@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   updateClearanceSortOrders,
 } from "@lib/api/store";
+import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 
 export async function POST(request: NextRequest) {
   let body: any = null;
@@ -19,6 +20,23 @@ export async function POST(request: NextRequest) {
   }
 
   const { orders } = body;
+
+  const guard = await verifyStoreSettingsAdminGuard({
+    request,
+    route: "/api/store/updateClearanceSortOrders",
+    body,
+    requireSigned: true,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: guard.error,
+      },
+      { status: guard.status }
+    );
+  }
 
   const normalizedOrders = Array.isArray(orders)
     ? orders

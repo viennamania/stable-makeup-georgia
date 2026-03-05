@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     request,
     route: "/api/store/updateAgentcode",
     body,
+  requireSigned: true,
   });
 
   if (!guard.ok) {

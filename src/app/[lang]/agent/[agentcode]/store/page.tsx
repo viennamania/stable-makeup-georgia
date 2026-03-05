@@ -68,6 +68,7 @@ import { add } from "thirdweb/extensions/farcaster/keyGateway";
 
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../../dictionaries";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 //import Chat from "@/components/Chat";
 import { ClassNames } from "@emotion/react";
 
@@ -149,6 +150,8 @@ const wallets = [
 
 const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX =
+  "stable-georgia:store-settings-mutation:v1";
 
 
 
@@ -1036,6 +1039,11 @@ export default function Index({ params }: any) {
       return;
     }
 
+    if (!activeAccount) {
+      toast.error('지갑을 먼저 연결하세요.');
+      return;
+    }
+
     // randomString is lowercase alphabet
 
     let generatedStoreCode = '';
@@ -1051,23 +1059,21 @@ export default function Index({ params }: any) {
 
 
     setInsertingStore(true);
-    const response = await fetch('/api/store/setStore', {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
+    const response = await postAdminSignedJson({
+      account: activeAccount,
+      route: '/api/store/setStore',
+      signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+      requesterWalletAddress: address,
+      body: {
+        agentcode: params.agentcode,
+        storecode: storeCode || generatedStoreCode,
+        storeName: storeName,
+        storeType: storeType,
+        storeUrl: storeUrl,
+        storeDescription: storeDescription,
+        storeLogo: storeLogo,
+        storeBanner: storeBanner,
       },
-      body: JSON.stringify(
-        {
-          agentcode: params.agentcode,
-          storecode: storeCode || generatedStoreCode,
-          storeName: storeName,
-          storeType: storeType,
-          storeUrl: storeUrl,
-          storeDescription: storeDescription,
-          storeLogo: storeLogo,
-          storeBanner: storeBanner,
-        }
-      ),
     });
 
     ///console.log('response', response);
@@ -2380,6 +2386,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

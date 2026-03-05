@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getOneByWalletAddress } from "@lib/api/user";
 import { getStoreSettingsApiCallLogs } from "@/lib/api/storeSettingsApiCallLog";
-import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const STORE_SETTINGS_LOG_READ_SIGNING_PREFIX = "stable-georgia:store-settings-log-read:v1";
 
 const getKstDateRangeByOffset = (offsetDays = 0) => {
   const now = new Date();
@@ -42,36 +42,41 @@ export async function POST(request: NextRequest) {
     body = {};
   }
 
-  const requesterWalletAddress = normalizeWalletAddress(body?.requesterWalletAddress);
-  if (!requesterWalletAddress) {
-    return NextResponse.json(
-      {
-        result: null,
-        error: "requesterWalletAddress is required",
-      },
-      { status: 401 },
-    );
-  }
-
-  const requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
-  const requesterStorecode = String(requesterUser?.storecode || "").trim().toLowerCase();
-  const requesterRole = String(requesterUser?.role || "").trim().toLowerCase();
-
-  if (requesterStorecode !== "admin" || requesterRole !== "admin") {
-    return NextResponse.json(
-      {
-        result: null,
-        error: "Forbidden",
-      },
-      { status: 403 },
-    );
-  }
-
   const range = String(body?.range || "today").trim();
   const route = String(body?.route || "").trim();
   const status = String(body?.status || "").trim();
   const search = String(body?.search || "").trim();
   const limit = Number(body?.limit || 1000);
+
+  const actionFields = {
+    range,
+    route,
+    status,
+    search,
+    limit,
+  };
+
+  const signed = await verifyAdminSignedAction({
+    request,
+    route: "/api/storeSettingsLog/getLogs",
+    signingPrefix: STORE_SETTINGS_LOG_READ_SIGNING_PREFIX,
+    requesterStorecodeRaw: body?.requesterStorecode ?? "admin",
+    requesterWalletAddressRaw: body?.requesterWalletAddress ?? body?.walletAddress,
+    signatureRaw: body?.signature,
+    signedAtRaw: body?.signedAt,
+    nonceRaw: body?.nonce,
+    actionFields,
+  });
+
+  if (!signed.ok) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: signed.error,
+      },
+      { status: signed.status },
+    );
+  }
 
   const { start, end } = resolveRange(range);
 

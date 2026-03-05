@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { toast } from "react-hot-toast";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 type RangeKey = "today" | "yesterday" | "dayBeforeYesterday" | "all";
 type StatusFilter = "all" | "allowed" | "blocked";
@@ -42,6 +43,7 @@ const statusOptions: { key: StatusFilter; label: string }[] = [
   { key: "allowed", label: "허용" },
   { key: "blocked", label: "차단" },
 ];
+const STORE_SETTINGS_LOG_READ_SIGNING_PREFIX = "stable-georgia:store-settings-log-read:v1";
 
 const parseDate = (value: unknown) => {
   if (!value) return null;
@@ -117,17 +119,17 @@ export default function StoreSettingsLogPage() {
     }
     setLoading(true);
     try {
-      const response = await fetch("/api/storeSettingsLog/getLogs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requesterWalletAddress: walletAddress,
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/storeSettingsLog/getLogs",
+        signingPrefix: STORE_SETTINGS_LOG_READ_SIGNING_PREFIX,
+        body: {
           range: selectedRange,
           status: selectedStatus === "all" ? "" : selectedStatus,
           route: selectedRoute === "all" ? "" : selectedRoute,
           search,
           limit: 2000,
-        }),
+        },
       });
 
       const data = await response.json();
