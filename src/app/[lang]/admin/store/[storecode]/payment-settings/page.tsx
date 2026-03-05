@@ -34,6 +34,7 @@ import {
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 const BANK_INFO_ADMIN_SIGNING_PREFIX = "stable-georgia:admin-bank-info:v1";
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
 const wallets = [
   inAppWallet({
@@ -483,21 +484,25 @@ export default function PaymentSettingsPage({ params }: any) {
       toast.error('은행명, 계좌번호, 예금주를 입력하세요.');
       return;
     }
+    if (!activeAccount) {
+      toast.error('지갑을 먼저 연결하세요.');
+      return;
+    }
 
     setSaving((prev) => ({ ...prev, [key]: true }));
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: endpoint,
+        signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           walletAddress: address || '',
           storecode,
           bankName: form.bankName,
           accountNumber: form.accountNumber,
           accountHolder: form.accountHolder,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -524,18 +529,24 @@ export default function PaymentSettingsPage({ params }: any) {
 
   const resetSectionRemote = async (key: string, endpoint: string) => {
     if (saving[key]) return;
+    if (!activeAccount) {
+      toast.error('지갑을 먼저 연결하세요.');
+      return;
+    }
     setSaving((prev) => ({ ...prev, [key]: true }));
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: endpoint,
+        signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
           walletAddress: address || '',
           storecode,
           bankName: '',
           accountNumber: '',
           accountHolder: '',
-        }),
+        },
       });
       if (!response.ok) {
         toast.error('리셋에 실패했습니다.');
