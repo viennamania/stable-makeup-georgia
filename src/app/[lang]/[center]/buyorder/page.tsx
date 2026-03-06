@@ -5799,21 +5799,21 @@ const fetchBuyOrders = async () => {
           {tableView ? (
 
 
-            <div className="w-full max-w-[88rem] mx-auto overflow-x-auto">
+            <div className="w-full max-w-[72rem] mx-auto overflow-x-auto">
 
-              <table className="min-w-[86rem] w-full table-fixed border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
+              <table className="min-w-[68rem] w-full table-fixed border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
 
                 <thead className="bg-neutral-900 text-white text-sm font-semibold">
                   <tr>
 
-                    <th className="p-2 w-[15rem] align-top text-left">
+                    <th className="p-2 w-[12rem] align-top text-left">
                       <div className="flex flex-col items-start justify-center gap-2">
                         <span>P2P 거래번호</span>
                         <span>거래일시</span>
                       </div>
                     </th>
 
-                    <th className="p-2 w-[20rem] align-top text-left">
+                    <th className="p-2 w-[15rem] align-top text-left">
                       <div className="flex flex-col items-start justify-center gap-2">
                         <span>P2P 구매자 아이디</span>
                         <span>USDT지갑</span>
@@ -5821,7 +5821,7 @@ const fetchBuyOrders = async () => {
                       </div>
                     </th>
                     
-                    <th className="p-2 w-[13rem] align-top text-right">
+                    <th className="p-2 w-[10rem] align-top text-right">
                       <div className="flex flex-col items-end justify-center gap-2">
                         <span>구매량(USDT)</span>
                         <span>구매금액(원)</span>
@@ -5833,7 +5833,7 @@ const fetchBuyOrders = async () => {
                     <th className="p-2">{Payment_Amount}</th>
                     */}
 
-                    <th className="p-2 w-[23rem] align-top text-left">
+                    <th className="p-2 w-[18rem] align-top text-left">
                       <div className="flex flex-col items-start justify-center gap-2">
 
                         <span className="text-sm text-zinc-50 font-semibold">
@@ -5873,7 +5873,7 @@ const fetchBuyOrders = async () => {
 
 
 
-                    <th className="p-2 w-[15rem] align-top text-right">
+                    <th className="p-2 w-[12rem] align-top text-right">
                       <div className="flex flex-col items-end justify-center gap-2">
 
                         <div className="flex flex-row items-center justify-end gap-2">
@@ -5922,7 +5922,7 @@ const fetchBuyOrders = async () => {
 
                         <div
                           className="
-                            w-full max-w-[15rem]
+                            w-full max-w-[12rem]
                             flex flex-col sm:flex-row items-start justify-start gap-2
                             bg-zinc-100
                             rounded-lg
@@ -6040,7 +6040,7 @@ const fetchBuyOrders = async () => {
                       
                       <td className="p-2 align-top">
                         <div className="
-                          w-full max-w-[20rem]
+                          w-full max-w-[15rem]
                           flex flex-col items-start justify-start gap-2">
                           {/*
                           <Image
@@ -6247,7 +6247,7 @@ const fetchBuyOrders = async () => {
 
                       <td className="p-2 align-top">
                         <div className="
-                          w-full max-w-[13rem]
+                          w-full max-w-[10rem]
                           flex flex-col gap-2 items-end justify-start">
 
                           <div className="flex flex-row items-center justify-end gap-2">
@@ -6441,7 +6441,7 @@ const fetchBuyOrders = async () => {
                       <td className="p-2 align-top">
 
                         <div className="
-                          w-full max-w-[23rem]
+                          w-full max-w-[18rem]
                           flex flex-col items-start justify-start gap-2">
 
                           {/* status */}
@@ -6800,7 +6800,7 @@ const fetchBuyOrders = async () => {
 
                         {item?.status === 'paymentConfirmed' && (
                           <div className="
-                            w-full max-w-[15rem]
+                            w-full max-w-[12rem]
                             flex flex-col gap-2 items-end justify-center">
                             <div className="flex flex-row gap-2 items-center justify-center">
                               <Image
@@ -6898,7 +6898,7 @@ const fetchBuyOrders = async () => {
                         {item?.status === 'paymentRequested' && (
 
                           <div className="
-                            w-full max-w-[15rem]
+                            w-full max-w-[12rem]
                             flex flex-col gap-2 items-end justify-center">
 
                             <div className="flex flex-row gap-2 items-center justify-center">
