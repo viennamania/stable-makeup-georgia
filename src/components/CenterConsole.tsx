@@ -101,6 +101,7 @@ import {
 } from "@/app/config/contractAddresses";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
 import { toast } from "react-hot-toast";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -112,6 +113,8 @@ const wallets = [
     },
   }),
 ];
+
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
 
 
@@ -376,35 +379,48 @@ const CenterConsole = () => {
       return;
     }
 
+    if (!activeAccount || !address) {
+      toast.error("관리자 지갑 연결이 필요합니다.");
+      return;
+    }
+
     setIsToggling((prev) => [...prev, storecode]);
 
-    const response = await fetch("/api/store/toggleLive", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        storecode,
-        liveOnAndOff,
-      }),
-    });
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/store/toggleLive",
+        signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+        requesterStorecode: "admin",
+        requesterWalletAddress: address,
+        body: {
+          storecode,
+          liveOnAndOff,
+        },
+      });
 
-    const data = await response.json();
-    //console.log("toggleLiveOnAndOff", data);
+      const data = await response.json().catch(() => null);
+      //console.log("toggleLiveOnAndOff", data);
 
-    if (data.success) {
-      
+      if (!response.ok || !data?.success) {
+        toast.error(
+          String(data?.message || "").trim() || "라이브 상태 변경에 실패했습니다.",
+        );
+        return;
+      }
+
       // Update the store's liveOnAndOff status in the local state
-      setStores((prevStores => 
-        prevStores.map(store => 
+      setStores((prevStores =>
+        prevStores.map((store) =>
           store.storecode === storecode ? { ...store, liveOnAndOff } : store
         )
       ));
-
+    } catch (error) {
+      console.error("toggleLiveOnAndOff failed", error);
+      toast.error("라이브 상태 변경 중 오류가 발생했습니다.");
+    } finally {
+      setIsToggling((prev) => prev.filter(code => code !== storecode));
     }
-
-
-    setIsToggling((prev) => prev.filter(code => code !== storecode));
 
   };
 
@@ -615,140 +631,113 @@ const CenterConsole = () => {
 
 
       {address && isAdmin && (
-        <div className="
-        container max-w-screen-2xl mx-auto pl-16 pr-16
-        p-2
-        bg-white bg-opacity-90
-        rounded-lg shadow-lg
-        fixed top-2
-        z-20 flex flex-row items-start justify-start gap-2
-        ">
+        <div className="fixed left-2 right-2 top-[5.25rem] z-20 md:left-[17.5rem] md:top-2">
+          <div className="rounded-2xl border border-zinc-200/80 bg-white/95 p-2 shadow-lg backdrop-blur">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-700"
+                onClick={() => setShowStores(!showStores)}
+              >
+                <Image
+                  src="/icon-store.png"
+                  alt="Store"
+                  width={18}
+                  height={18}
+                  className="h-[18px] w-[18px]"
+                />
+                <span>{showStores ? "Hide Stores" : "Show Stores"}</span>
+              </button>
 
-
-          {/* showStores toggle button */}
-          <button
-            className="
-            w-32
-            flex flex-row items-center justify-center gap-2
-            mb-2 px-4 py-2 bg-black bg-opacity-50 text-white rounded hover:bg-opacity-75"
-            onClick={() => setShowStores(!showStores)}
-          >
-              <Image
-                src={`/icon-store.png`}
-                alt={`Store`}
-                width={25}
-                height={25}
-              />
-
-              <span className="text-sm text-white">
-                {showStores ? 'Hide Stores' : 'Show Stores'}
-              </span>
-          </button>
-
-          {stores.length > 0 && showStores && (
-
-            <div
-              //className="w-full flex flex-row items-center justify-start gap-2 overflow-x-auto
-              //scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
-              //py-2"
-
-              className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 4xl:grid-cols-11 gap-2
-              overflow-x-auto
-              scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
-              py-2
-              "
-            >
-
-              <div className="
-              w-28 h-20
-              flex flex-col items-start justify-between
-              bg-gray-100 p-1 rounded-lg shadow-md mr-4
-              ">
-                <p className="text-xs text-gray-800 font-bold mb-1">Total USDT</p>
-
-                <div className="
-                  w-full flex flex-row items-center justify-end gap-1">
-                  <Image
-                    src={`/icon-tether.png`}
-                    alt={`USDT`}
-                    width={18}  
-                    height={18}
-                  />
-                  <span className="text-lg text-green-600 font-mono">
-                    {totalCurrentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
-                  </span>
-                </div>
-
+              <div className="inline-flex h-11 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3">
+                <span className="text-sm font-semibold text-zinc-700">Total USDT</span>
+                <Image
+                  src="/icon-tether.png"
+                  alt="USDT"
+                  width={16}
+                  height={16}
+                  className="h-4 w-4"
+                />
+                <span className="font-mono text-lg font-semibold text-emerald-600">
+                  {Number(totalCurrentUsdtBalance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                </span>
               </div>
-
-
-              {stores.map((store) => (
-                <div
-                  key={store._id}
-
-                  //className="flex flex-col items-start justify-between
-                  //bg-gray-100 p-1 rounded-lg shadow-md
-                  //w-24 h-20
-                  //"
-                  className={`${store?.liveOnAndOff ? 'bg-green-50' : 'bg-red-50'
-                  } flex flex-col items-start justify-between
-                  p-1 rounded-lg shadow-md
-                  w-24 h-20
-                  `}>
-
-                  <div className="w-full flex flex-row items-center justify-between gap-1">
-                    <Image
-                      src={store.storeLogo || "/icon-store.png"}
-                      alt={store.storeName}
-                      width={18}
-                      height={18}
-                      className="rounded-lg bg-white w-6 h-6"
-                    />
-                    <p className="text-xs text-gray-800 font-bold">
-                      {store.storeName.length > 4 ? store.storeName.substring(0, 4) + '...' : store.storeName || 'Store'}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-row items-center justify-end w-full gap-1">
-                    <Image
-                      src={`/icon-tether.png`}
-                      alt={`USDT`}
-                      width={12}
-                      height={12}
-                    />
-                    <span className="text-sm text-green-600 font-mono">
-                      {store.currentUsdtBalance?.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") || '0'}
-                    </span>
-                  </div>
-
-                  <div className="w-full flex flex-row items-center justify-center">
-                    <button
-                      disabled={isToggling.includes(store.storecode)}
-                      className="w-full flex flex-row items-center justify-center"
-                      title={store?.liveOnAndOff ? 'Live On' : 'Live Off'}
-                      onClick={() => toggleLiveOnAndOff(store.storecode, !store?.liveOnAndOff)}
-                    >
-                      <Image
-                        src={store?.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
-                        alt={store?.liveOnAndOff ? `Live On` : `Live Off`}
-                        width={40}
-                        height={15}
-                        className={`
-                          ${isToggling.includes(store.storecode) ?
-                          'opacity-50 cursor-not-allowed animate-pulse' : ''
-                        }`}
-                      />
-                      
-                    </button>
-                  </div>
-                  
-                </div>
-              ))}
-
             </div>
 
-          )}
+            {showStores && (
+              <div className="mt-2 max-h-[42vh] overflow-y-auto pr-1">
+                {stores.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-center text-sm text-zinc-500">
+                    표시할 가맹점이 없습니다.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 2xl:grid-cols-7">
+                    {stores.map((store) => (
+                      <div
+                        key={store._id}
+                        className={`min-w-0 rounded-xl border p-2 shadow-sm ${
+                          store?.liveOnAndOff
+                            ? "border-emerald-100 bg-emerald-50/70"
+                            : "border-rose-100 bg-rose-50/70"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src={store.storeLogo || "/icon-store.png"}
+                            alt={store.storeName || "Store"}
+                            width={28}
+                            height={28}
+                            className="h-7 w-7 rounded-lg border border-zinc-200 bg-white object-cover"
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate text-[13px] font-semibold text-zinc-800">
+                              {store.storeName || "Store"}
+                            </p>
+                            <p className="truncate text-[11px] text-zinc-500">
+                              {store.storecode || "-"}
+                            </p>
+                          </div>
+                        </div>
 
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-1">
+                            <Image
+                              src="/icon-tether.png"
+                              alt="USDT"
+                              width={12}
+                              height={12}
+                              className="h-3 w-3 shrink-0"
+                            />
+                            <span className="truncate font-mono text-[13px] font-semibold text-emerald-600">
+                              {Number(store.currentUsdtBalance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            </span>
+                          </div>
+
+                          <button
+                            disabled={isToggling.includes(store.storecode)}
+                            className="inline-flex items-center justify-center"
+                            title={store?.liveOnAndOff ? "Live On" : "Live Off"}
+                            onClick={() => toggleLiveOnAndOff(store.storecode, !store?.liveOnAndOff)}
+                          >
+                            <Image
+                              src={store?.liveOnAndOff ? "/icon-on.png" : "/icon-off.png"}
+                              alt={store?.liveOnAndOff ? "Live On" : "Live Off"}
+                              width={52}
+                              height={18}
+                              className={`h-[18px] w-[52px] ${
+                                isToggling.includes(store.storecode)
+                                  ? "cursor-not-allowed animate-pulse opacity-60"
+                                  : ""
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

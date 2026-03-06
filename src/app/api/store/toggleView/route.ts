@@ -22,15 +22,32 @@ export async function POST(request: NextRequest) {
     }, { status: guard.status });
   }
 
-  const { storecode, viewOnAndOff } = body;
+  const requesterStorecode = String((guard as any)?.requesterUser?.storecode || "").trim().toLowerCase();
+  const requesterRole = String((guard as any)?.requesterUser?.role || "").trim().toLowerCase();
+  if (requesterStorecode !== "admin" || requesterRole !== "admin") {
+    return NextResponse.json({
+      success: false,
+      message: "Forbidden",
+    }, { status: 403 });
+  }
 
-  console.log("toggleLiveNotification storecode", storecode);
+  const { storecode, viewOnAndOff } = body;
+  const normalizedStorecode = typeof storecode === "string" ? storecode.trim() : "";
+
+  if (!normalizedStorecode || typeof viewOnAndOff !== "boolean") {
+    return NextResponse.json({
+      success: false,
+      message: "Invalid request body",
+    }, { status: 400 });
+  }
+
+  console.log("toggleLiveNotification storecode", normalizedStorecode);
   console.log("toggleLiveNotification viewOn", viewOnAndOff);
 
   try {
     // Call the function to update the live notification setting
     const updatedStore = await updateViewOnAndOff({
-      storecode,
+      storecode: normalizedStorecode,
       viewOnAndOff,
     });
 
