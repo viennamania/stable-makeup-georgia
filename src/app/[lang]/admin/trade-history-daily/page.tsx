@@ -81,6 +81,7 @@ import { useSearchParams } from 'next/navigation';
 
 
 import { version } from "../../../config/version";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 
 /*
@@ -746,6 +747,12 @@ export default function Index({ params }: any) {
   const [loadingBuyOrders, setLoadingBuyOrders] = useState(false);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+  const [buyOrdersError, setBuyOrdersError] = useState("");
+
+  const resolveStorecodeForDailyHistory = (value: string) => {
+    const normalized = String(value || "").trim();
+    return normalized || "all";
+  };
 
 
 
@@ -759,27 +766,36 @@ export default function Index({ params }: any) {
 
     const fetchBuyOrders = async () => {
       setLoadingBuyOrders(true);
+      setBuyOrdersError("");
 
       try {
-        const response = await fetch('/api/order/getAllBuyOrdersByStorecodeDaily', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
-              storecode: searchStorecode,
-              limit: Number(limit),
-              page: Number(page),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-              searchBuyer: searchBuyer,
-              searchDepositName: searchDepositName,
-              searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-            }
-          ),
+        if (!activeAccount || !address) {
+          setBuyOrders([]);
+          setTotalCount(0);
+          setBuyOrdersError("지갑 연결이 필요합니다.");
+          return;
+        }
+
+        const requestStorecode = resolveStorecodeForDailyHistory(searchStorecode);
+        const requestBody = {
+          storecode: requestStorecode,
+          limit: Number(limit),
+          page: Number(page),
+          walletAddress: address,
+          searchMyOrders: searchMyOrders,
+          fromDate: searchFromDate,
+          toDate: searchToDate,
+          searchBuyer: searchBuyer,
+          searchDepositName: searchDepositName,
+          searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+        };
+
+        const response = await postCenterStoreAdminSignedJson({
+          account: activeAccount,
+          route: "/api/order/getAllBuyOrdersByStorecodeDaily",
+          storecode: requestStorecode,
+          requesterWalletAddress: address,
+          body: requestBody,
           signal: controller.signal,
         });
 
@@ -788,6 +804,11 @@ export default function Index({ params }: any) {
         }
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          const errorMessage =
+            String(errorData?.error || "").trim() ||
+            `일별 통계 조회에 실패했습니다. (${response.status})`;
+          setBuyOrdersError(errorMessage);
           setBuyOrders([]);
           setTotalCount(0);
           return;
@@ -806,6 +827,7 @@ export default function Index({ params }: any) {
       } catch (error: any) {
         if (error?.name !== 'AbortError') {
           console.error('Failed to fetch buy orders by store daily', error);
+          setBuyOrdersError("일별 통계 조회 중 오류가 발생했습니다.");
         }
       } finally {
         if (requestSeq === buyOrdersRequestSeqRef.current) {
@@ -825,6 +847,7 @@ export default function Index({ params }: any) {
     page,
     address,
     searchMyOrders,
+    activeAccount,
 
     searchStorecode,
     searchFromDate,
@@ -846,50 +869,65 @@ const fetchBuyOrders = async () => {
   if (fetchingBuyOrders) {
     return;
   }
-  setFetchingBuyOrders(true);
 
-  const response = await fetch('/api/order/getAllBuyOrdersByStorecodeDaily', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(
-      {
-        storecode: searchStorecode,
-        limit: Number(limitValue),
-        page: Number(pageValue),
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-
-        searchOrderStatusCompleted: true,
-
-        searchBuyer: searchBuyer,
-        searchDepositName: searchDepositName,
-
-        searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-
-      }
-
-    ),
-  });
-
-  if (!response.ok) {
-    setFetchingBuyOrders(false);
-    toast.error('Failed to fetch buy orders');
+  if (!activeAccount || !address) {
+    setBuyOrdersError("지갑 연결이 필요합니다.");
     return;
   }
-  const data = await response.json();
-  //console.log('data', data);
 
-  setBuyOrders(data.result.orders);
-  setTotalCount(data.result.totalCount);
-  setFetchingBuyOrders(false);
+  setFetchingBuyOrders(true);
+  setBuyOrdersError("");
 
-  return data.result.orders;
+  try {
+    const requestStorecode = resolveStorecodeForDailyHistory(searchStorecode);
+    const requestBody = {
+      storecode: requestStorecode,
+      limit: Number(limitValue),
+      page: Number(pageValue),
+      walletAddress: address,
+      searchMyOrders: searchMyOrders,
+      searchOrderStatusCompleted: true,
+      searchBuyer: searchBuyer,
+      searchDepositName: searchDepositName,
+      searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+      fromDate: searchFromDate,
+      toDate: searchToDate,
+    };
+    const response = await postCenterStoreAdminSignedJson({
+      account: activeAccount,
+      route: "/api/order/getAllBuyOrdersByStorecodeDaily",
+      storecode: requestStorecode,
+      requesterWalletAddress: address,
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorMessage =
+        String(errorData?.error || "").trim() ||
+        `일별 통계 조회에 실패했습니다. (${response.status})`;
+      setBuyOrdersError(errorMessage);
+      toast.error(errorMessage);
+      return;
+    }
+    const data = await response.json();
+    //console.log('data', data);
+
+    setBuyOrdersError("");
+    setBuyOrders(data.result.orders);
+    setTotalCount(data.result.totalCount);
+
+    return data.result.orders;
+  } catch (error) {
+    const errorMessage = error instanceof Error
+      ? error.message
+      : "일별 통계 조회 중 오류가 발생했습니다.";
+    setBuyOrdersError(errorMessage);
+    toast.error(errorMessage);
+    return;
+  } finally {
+    setFetchingBuyOrders(false);
+  }
 }
 
 
@@ -2006,6 +2044,11 @@ const fetchBuyOrders = async () => {
           </div>
 
           <div className="mt-4 w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
+            {buyOrdersError && (
+              <div className="border-b border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {buyOrdersError}
+              </div>
+            )}
 
             <table className="w-full min-w-[1280px] table-auto border-collapse">
 
@@ -2117,6 +2160,13 @@ const fetchBuyOrders = async () => {
                     </td>
                   </tr>
                 ))}
+                {!loadingBuyOrders && buyOrders.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-10 text-center text-sm text-zinc-500">
+                      {buyOrdersError ? "조회 조건 또는 권한을 확인해주세요." : "조회된 내역이 없습니다."}
+                    </td>
+                  </tr>
+                )}
               </tbody>
 
               <tfoot className="bg-zinc-50 text-sm text-zinc-700">

@@ -3366,7 +3366,12 @@ export async function getBuyOrdersGroupByStorecodeDaily(
 
 
   const normalizedStorecode = (storecode || "").trim();
+  const isAllStoreScope =
+    normalizedStorecode === "" || normalizedStorecode.toLowerCase() === "all";
   const escapedStorecode = normalizedStorecode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const storecodeMatch = isAllStoreScope
+    ? { $ne: null }
+    : { $regex: `^${escapedStorecode}$`, $options: 'i' };
 
   // order by date descending
   
@@ -3375,9 +3380,7 @@ export async function getBuyOrdersGroupByStorecodeDaily(
       $match: {
         
        // if storecode is not empty, then match storecode
-        storecode: normalizedStorecode
-          ? { $regex: `^${escapedStorecode}$`, $options: 'i' }
-          : { $ne: null },
+        storecode: storecodeMatch,
 
 
         status: 'paymentConfirmed',
@@ -3445,7 +3448,7 @@ export async function getBuyOrdersGroupByStorecodeDaily(
   const escrowPipeline = [
     {
       $match: {
-        storecode: storecode ? { $regex: storecode, $options: 'i' } : { $ne: null },
+        storecode: storecodeMatch,
 
         // withdrawAmount > 0,
         // depositAmount > 0,
@@ -3486,7 +3489,7 @@ export async function getBuyOrdersGroupByStorecodeDaily(
       $match: {
         
        // if storecode is not empty, then match storecode
-        storecode: storecode ? { $regex: String(storecode), $options: 'i' } : { $ne: null },
+        storecode: storecodeMatch,
 
 
         status: 'paymentConfirmed',
