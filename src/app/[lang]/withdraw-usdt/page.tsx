@@ -433,6 +433,7 @@ export default function SendUsdt({ params }: any) {
   const [isVerifingOtp, setIsVerifingOtp] = useState(false);
   const [otpCooldownSec, setOtpCooldownSec] = useState(0);
   const [recipientSuffixConfirm, setRecipientSuffixConfirm] = useState("");
+  const [isWhateListedUser, setIsWhateListedUser] = useState(false);
 
   
 
@@ -743,9 +744,6 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  const [isWhateListedUser, setIsWhateListedUser] = useState(false);
-
-  
   useEffect(() => {
 
     if (!recipient?.walletAddress) {
