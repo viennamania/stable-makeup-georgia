@@ -5799,9 +5799,9 @@ const fetchBuyOrders = async () => {
           {tableView ? (
 
 
-            <div className="w-full overflow-x-auto">
+            <div className="w-full max-w-[88rem] mx-auto overflow-x-auto">
 
-              <table className="min-w-[980px] w-full table-fixed border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
+              <table className="min-w-[86rem] w-full table-fixed border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
 
                 <thead className="bg-neutral-900 text-white text-sm font-semibold">
                   <tr>

@@ -714,19 +714,37 @@ const CenterConsole = () => {
 
                           <button
                             disabled={isToggling.includes(store.storecode)}
-                            className="inline-flex items-center justify-center"
+                            className={`relative inline-flex h-7 w-[70px] shrink-0 items-center rounded-full border px-1 transition ${
+                              store?.liveOnAndOff
+                                ? "border-emerald-300 bg-emerald-100"
+                                : "border-rose-300 bg-rose-100"
+                            } ${
+                              isToggling.includes(store.storecode)
+                                ? "cursor-not-allowed opacity-60"
+                                : "hover:brightness-95"
+                            }`}
                             title={store?.liveOnAndOff ? "Live On" : "Live Off"}
                             onClick={() => toggleLiveOnAndOff(store.storecode, !store?.liveOnAndOff)}
                           >
-                            <Image
-                              src={store?.liveOnAndOff ? "/icon-on.png" : "/icon-off.png"}
-                              alt={store?.liveOnAndOff ? "Live On" : "Live Off"}
-                              width={52}
-                              height={18}
-                              className={`h-[18px] w-[52px] ${
-                                isToggling.includes(store.storecode)
-                                  ? "cursor-not-allowed animate-pulse opacity-60"
-                                  : ""
+                            <span
+                              className={`pointer-events-none absolute left-2 text-[10px] font-bold leading-none ${
+                                store?.liveOnAndOff ? "text-emerald-700" : "text-zinc-400"
+                              }`}
+                            >
+                              ON
+                            </span>
+                            <span
+                              className={`pointer-events-none absolute right-2 text-[10px] font-bold leading-none ${
+                                store?.liveOnAndOff ? "text-zinc-400" : "text-rose-700"
+                              }`}
+                            >
+                              OFF
+                            </span>
+                            <span
+                              className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                                store?.liveOnAndOff ? "translate-x-10" : "translate-x-0"
+                              } ${
+                                isToggling.includes(store.storecode) ? "animate-pulse" : ""
                               }`}
                             />
                           </button>

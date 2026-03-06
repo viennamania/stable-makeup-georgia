@@ -101,6 +101,7 @@ import {
 } from "@/app/config/contractAddresses";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
 import { toast } from "react-hot-toast";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -112,6 +113,8 @@ const wallets = [
     },
   }),
 ];
+
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
 
 
@@ -405,35 +408,46 @@ const StoreConsole = () => {
       return;
     }
 
+    if (!activeAccount || !address) {
+      toast.error("관리자 지갑 연결이 필요합니다.");
+      return;
+    }
+
     setIsToggling((prev) => [...prev, storecode]);
 
-    const response = await fetch("/api/store/toggleLive", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        storecode,
-        liveOnAndOff,
-      }),
-    });
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/store/toggleLive",
+        signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+        requesterStorecode: "admin",
+        requesterWalletAddress: address,
+        body: {
+          storecode,
+          liveOnAndOff,
+        },
+      });
 
-    const data = await response.json();
-    //console.log("toggleLiveOnAndOff", data);
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.success) {
+        toast.error(
+          String(data?.message || "").trim() || "라이브 상태 변경에 실패했습니다.",
+        );
+        return;
+      }
 
-    if (data.success) {
-      
       // Update the store's liveOnAndOff status in the local state
-      setStores((prevStores => 
-        prevStores.map(store => 
+      setStores((prevStores =>
+        prevStores.map((store) =>
           store.storecode === storecode ? { ...store, liveOnAndOff } : store
         )
       ));
-
+    } catch (error) {
+      console.error("toggleLiveOnAndOff failed", error);
+      toast.error("라이브 상태 변경 중 오류가 발생했습니다.");
+    } finally {
+      setIsToggling((prev) => prev.filter(code => code !== storecode));
     }
-
-
-    setIsToggling((prev) => prev.filter(code => code !== storecode));
 
   };
 
@@ -540,21 +554,39 @@ const StoreConsole = () => {
                   <div className="w-full flex flex-row items-center justify-center">
                     <button
                       disabled={isToggling.includes(store.storecode)}
-                      className="w-full flex flex-row items-center justify-center"
+                      className={`relative inline-flex h-7 w-[70px] shrink-0 items-center rounded-full border px-1 transition ${
+                        store?.liveOnAndOff
+                          ? "border-emerald-300 bg-emerald-100"
+                          : "border-rose-300 bg-rose-100"
+                      } ${
+                        isToggling.includes(store.storecode)
+                          ? "cursor-not-allowed opacity-60"
+                          : "hover:brightness-95"
+                      }`}
                       title={store?.liveOnAndOff ? 'Live On' : 'Live Off'}
                       onClick={() => toggleLiveOnAndOff(store.storecode, !store?.liveOnAndOff)}
                     >
-                      <Image
-                        src={store?.liveOnAndOff ? `/icon-on.png` : `/icon-off.png`}
-                        alt={store?.liveOnAndOff ? `Live On` : `Live Off`}
-                        width={40}
-                        height={15}
-                        className={`
-                          ${isToggling.includes(store.storecode) ?
-                          'opacity-50 cursor-not-allowed animate-pulse' : ''
+                      <span
+                        className={`pointer-events-none absolute left-2 text-[10px] font-bold leading-none ${
+                          store?.liveOnAndOff ? "text-emerald-700" : "text-zinc-400"
+                        }`}
+                      >
+                        ON
+                      </span>
+                      <span
+                        className={`pointer-events-none absolute right-2 text-[10px] font-bold leading-none ${
+                          store?.liveOnAndOff ? "text-zinc-400" : "text-rose-700"
+                        }`}
+                      >
+                        OFF
+                      </span>
+                      <span
+                        className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                          store?.liveOnAndOff ? "translate-x-10" : "translate-x-0"
+                        } ${
+                          isToggling.includes(store.storecode) ? "animate-pulse" : ""
                         }`}
                       />
-                      
                     </button>
                   </div>
                   

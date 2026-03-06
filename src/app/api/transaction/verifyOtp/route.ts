@@ -1,44 +1,62 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-	findOne,
-} from '@lib/api/otp';
-
+import { findOne } from '@lib/api/otp';
 
 export async function POST(request: NextRequest) {
-
   const body = await request.json();
 
-  const { lang, chain, walletAddress, otp } = body;
+  const { walletAddress, otp } = body;
+  const targetWalletAddress = String(walletAddress || '').trim();
+  const targetOtp = String(otp || '').trim();
 
-  console.log("lang", lang);
-  console.log("chain", chain);
-  console.log("walletAddress", walletAddress);
-  console.log("otp", otp);
-
+  if (!targetWalletAddress || !targetOtp) {
+    return NextResponse.json(
+      {
+        status: 'error',
+        message: 'walletAddress and otp are required',
+      },
+      { status: 400 },
+    );
+  }
 
   const result = await findOne({
-    walletAddress: walletAddress,
-    otp: otp,
+    walletAddress: targetWalletAddress,
+    otp: targetOtp,
   });
 
-  console.log("result", result);
-
-
-  if (result) {
-
+  if (result.status === 'success') {
     return NextResponse.json({
       status: 'success',
       message: 'OTP verified successfully',
     });
+  }
 
-  } else {
+  if (result.status === 'locked') {
+    return NextResponse.json(
+      {
+        status: 'error',
+        message: `Too many failed attempts. Try again in ${result.retryAfterSec}s`,
+        retryAfterSec: result.retryAfterSec,
+      },
+      { status: 429 },
+    );
+  }
 
-    return NextResponse.json({
+  if (result.status === 'expired') {
+    return NextResponse.json(
+      {
+        status: 'error',
+        message: 'OTP expired. Please request a new OTP.',
+      },
+      { status: 410 },
+    );
+  }
+
+  return NextResponse.json(
+    {
       status: 'error',
       message: 'Invalid OTP',
-    });
-
-  }
-  
+    },
+    { status: 401 },
+  );
 }

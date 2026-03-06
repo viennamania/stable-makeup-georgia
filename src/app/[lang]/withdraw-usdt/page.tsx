@@ -496,7 +496,11 @@ export default function SendUsdt({ params }: any) {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.result) {
-        toast.error("OTP 발송에 실패했습니다.");
+        if (data?.retryAfterSec) {
+          toast.error(`OTP 재요청 대기시간 ${data.retryAfterSec}s`);
+        } else {
+          toast.error(String(data?.message || "OTP 발송에 실패했습니다."));
+        }
         return;
       }
 
