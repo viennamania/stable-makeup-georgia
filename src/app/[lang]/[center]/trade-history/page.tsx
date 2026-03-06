@@ -3793,104 +3793,15 @@ const fetchBuyOrders = async () => {
 
                 </div>
 
-                {/* divider */}
+                {/* 결제 통계 영역 임시 숨김
                 <div className="hidden xl:block w-0.5 h-10 bg-zinc-300"></div>
                 <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
 
                 <div className="xl:w-2/3 w-full
                   flex flex-col sm:flex-row items-start justify-end gap-4">
-                  
-                  <Image
-                    src="/icon-payment.png"
-                    alt="Payment"
-                    width={50}
-                    height={50}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  /> 
-
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-sm">결제수(건)</div>
-                    <div className="text-4xl font-semibold text-zinc-500">
-                      {buyOrderStats.totalSettlementCount?.toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제량(USDT)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {Number(buyOrderStats.totalSettlementAmount
-                          ? buyOrderStats.totalSettlementAmount
-                          : 0
-                        ).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제금액(원)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                        Number(buyOrderStats.totalSettlementAmountKRW)
-                        .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                      
-                    </div>
-                  </div>
-
-
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제 수수료수량(USDT)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-xl font-semibold text-[#409192]"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                      {
-                        (buyOrderStats.totalFeeAmount + buyOrderStats.totalAgentFeeAmount)
-                        .toFixed(3)
-                        .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                      }
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-center">
-                    <div className="text-sm">결제 수수료금액(원)</div>
-                    <div className="flex flex-row items-center gap-1">
-                      <span className="text-xl font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          Number(buyOrderStats.totalFeeAmountKRW + buyOrderStats.totalAgentFeeAmountKRW)
-                          .toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                      </span>
-                      
-                    </div>
-                  </div>
-
+                  ...
                 </div>
+                */}
 
 
                 {/* divider */}
