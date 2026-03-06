@@ -46,6 +46,10 @@ import {
   createWallet,
   inAppWallet,
 } from "thirdweb/wallets";
+import {
+  getUserEmail,
+  getUserPhoneNumber,
+} from "thirdweb/wallets/in-app";
 
 import Image from 'next/image';
 
@@ -434,6 +438,10 @@ export default function SendUsdt({ params }: any) {
   const [otpCooldownSec, setOtpCooldownSec] = useState(0);
   const [recipientSuffixConfirm, setRecipientSuffixConfirm] = useState("");
   const [isWhateListedUser, setIsWhateListedUser] = useState(false);
+  const [inAppEmail, setInAppEmail] = useState("");
+  const [inAppPhoneNumber, setInAppPhoneNumber] = useState("");
+  const [otpChannel, setOtpChannel] = useState<'email' | 'sms' | null>(null);
+  const [otpTargetMasked, setOtpTargetMasked] = useState("");
 
   
 
@@ -441,6 +449,74 @@ export default function SendUsdt({ params }: any) {
   const [sending, setSending] = useState(false);
   const [confirmExternalRecipient, setConfirmExternalRecipient] = useState(false);
   const isValidEvmAddress = (value: string) => /^0x[a-fA-F0-9]{40}$/.test(value.trim());
+  const maskEmail = (value: string) => {
+    const email = String(value || "").trim();
+    const [localPartRaw, domainRaw] = email.split("@");
+    const localPart = localPartRaw || "";
+    const domain = domainRaw || "";
+    if (!localPart || !domain) {
+      return "";
+    }
+    return `${localPart.slice(0, 2)}${"*".repeat(Math.max(localPart.length - 2, 2))}@${domain}`;
+  };
+  const maskPhone = (value: string) => {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    if (raw.length <= 6) {
+      return `${raw.slice(0, 2)}****`;
+    }
+    return `${raw.slice(0, 4)}****${raw.slice(-2)}`;
+  };
+  const smsFallbackMobile = String((user as any)?.mobile || "").trim();
+  const preferredOtpChannel: 'email' | 'sms' | null = inAppEmail
+    ? "email"
+    : (inAppPhoneNumber || smsFallbackMobile)
+      ? "sms"
+      : null;
+  const preferredOtpTargetMasked = preferredOtpChannel === "email"
+    ? maskEmail(inAppEmail)
+    : preferredOtpChannel === "sms"
+      ? maskPhone(inAppPhoneNumber || smsFallbackMobile)
+      : "";
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!address) {
+      setInAppEmail("");
+      setInAppPhoneNumber("");
+      return;
+    }
+
+    getUserEmail({ client })
+      .then((email) => {
+        if (!cancelled) {
+          setInAppEmail(String(email || "").trim());
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setInAppEmail("");
+        }
+      });
+
+    getUserPhoneNumber({ client })
+      .then((phoneNumber) => {
+        if (!cancelled) {
+          setInAppPhoneNumber(String(phoneNumber || "").trim());
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setInAppPhoneNumber("");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
 
   useEffect(() => {
     setConfirmExternalRecipient(false);
@@ -448,6 +524,8 @@ export default function SendUsdt({ params }: any) {
     setIsSendedOtp(false);
     setOtp("");
     setRecipientSuffixConfirm("");
+    setOtpChannel(null);
+    setOtpTargetMasked("");
   }, [recipient?.walletAddress, isWhateListedUser, amount]);
 
   useEffect(() => {
@@ -467,15 +545,17 @@ export default function SendUsdt({ params }: any) {
 
     const senderWalletAddress = String(address || "").trim();
     const recipientWalletAddress = String(recipient?.walletAddress || "").trim();
-    const senderMobile = String((user as any)?.mobile || "").trim();
+    const senderEmail = String(inAppEmail || (user as any)?.email || "").trim();
+    const senderMobile = String(inAppPhoneNumber || (user as any)?.mobile || "").trim();
+    const resolvedChannel: 'email' | 'sms' | null = senderEmail ? "email" : senderMobile ? "sms" : null;
 
     if (!senderWalletAddress || !recipientWalletAddress || Number(amount) <= 0) {
       toast.error("수신 지갑주소와 출금 금액을 먼저 입력해주세요.");
       return;
     }
 
-    if (!senderMobile) {
-      toast.error("OTP를 받을 휴대폰 번호가 등록되어 있지 않습니다.");
+    if (!resolvedChannel) {
+      toast.error("OTP를 받을 이메일 또는 휴대폰 번호가 등록되어 있지 않습니다.");
       return;
     }
 
@@ -490,6 +570,8 @@ export default function SendUsdt({ params }: any) {
           lang: params.lang,
           chain: params.center || chain,
           walletAddress: senderWalletAddress,
+          channel: resolvedChannel,
+          email: senderEmail || undefined,
           mobile: senderMobile,
         }),
       });
@@ -507,7 +589,11 @@ export default function SendUsdt({ params }: any) {
       setVerifiedOtp(false);
       setIsSendedOtp(true);
       setOtpCooldownSec(180);
-      toast.success("OTP를 발송했습니다.");
+      const sentChannel = data?.result?.channel === "email" ? "email" : "sms";
+      const sentTargetMasked = String(data?.result?.targetMasked || "");
+      setOtpChannel(sentChannel);
+      setOtpTargetMasked(sentTargetMasked);
+      toast.success(sentChannel === "email" ? "OTP를 이메일로 발송했습니다." : "OTP를 문자로 발송했습니다.");
     } catch (error) {
       console.error("sendOtp failed", error);
       toast.error("OTP 발송 중 오류가 발생했습니다.");
@@ -687,6 +773,8 @@ export default function SendUsdt({ params }: any) {
           setVerifiedOtp(false);
           setConfirmExternalRecipient(false);
           setRecipientSuffixConfirm("");
+          setOtpChannel(null);
+          setOtpTargetMasked("");
 
           // refresh balance
 
@@ -1006,6 +1094,13 @@ export default function SendUsdt({ params }: any) {
 
           <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold text-slate-700">2차 인증 (OTP)</p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              {preferredOtpChannel === "email" && preferredOtpTargetMasked
+                ? `연결된 이메일 인증: ${preferredOtpTargetMasked}`
+                : preferredOtpChannel === "sms" && preferredOtpTargetMasked
+                  ? `연결된 휴대폰 인증: ${preferredOtpTargetMasked}`
+                  : "연결된 이메일/휴대폰 정보가 필요합니다."}
+            </p>
             <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
               <button
                 type="button"
@@ -1044,7 +1139,11 @@ export default function SendUsdt({ params }: any) {
             {verifiedOtp ? (
               <p className="mt-2 text-xs font-semibold text-emerald-700">OTP 인증 완료</p>
             ) : (
-              <p className="mt-2 text-xs text-slate-500">출금을 위해 OTP 인증이 필요합니다.</p>
+              <p className="mt-2 text-xs text-slate-500">
+                {isSendedOtp && otpTargetMasked
+                  ? `${otpChannel === "email" ? "이메일" : "문자"} ${otpTargetMasked}로 코드를 발송했습니다.`
+                  : "출금을 위해 OTP 인증이 필요합니다."}
+              </p>
             )}
           </div>
 
