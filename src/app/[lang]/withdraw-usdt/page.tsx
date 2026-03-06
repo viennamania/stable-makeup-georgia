@@ -421,9 +421,7 @@ export default function SendUsdt({ params }: any) {
 
   const [otp, setOtp] = useState('');
 
-  //////const [verifiedOtp, setVerifiedOtp] = useState(false);
-
-  const [verifiedOtp, setVerifiedOtp] = useState(true);
+  const [verifiedOtp, setVerifiedOtp] = useState(false);
 
 
   const [isSendedOtp, setIsSendedOtp] = useState(false);
@@ -433,19 +431,166 @@ export default function SendUsdt({ params }: any) {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const [isVerifingOtp, setIsVerifingOtp] = useState(false);
+  const [otpCooldownSec, setOtpCooldownSec] = useState(0);
+  const [recipientSuffixConfirm, setRecipientSuffixConfirm] = useState("");
 
   
 
 
   const [sending, setSending] = useState(false);
+  const [confirmExternalRecipient, setConfirmExternalRecipient] = useState(false);
+  const isValidEvmAddress = (value: string) => /^0x[a-fA-F0-9]{40}$/.test(value.trim());
+
+  useEffect(() => {
+    setConfirmExternalRecipient(false);
+    setVerifiedOtp(false);
+    setIsSendedOtp(false);
+    setOtp("");
+    setRecipientSuffixConfirm("");
+  }, [recipient?.walletAddress, isWhateListedUser, amount]);
+
+  useEffect(() => {
+    if (otpCooldownSec <= 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      setOtpCooldownSec((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [otpCooldownSec]);
+
+  const sendOtp = async () => {
+    if (isSendingOtp || otpCooldownSec > 0) {
+      return;
+    }
+
+    const senderWalletAddress = String(address || "").trim();
+    const recipientWalletAddress = String(recipient?.walletAddress || "").trim();
+    const senderMobile = String((user as any)?.mobile || "").trim();
+
+    if (!senderWalletAddress || !recipientWalletAddress || Number(amount) <= 0) {
+      toast.error("수신 지갑주소와 출금 금액을 먼저 입력해주세요.");
+      return;
+    }
+
+    if (!senderMobile) {
+      toast.error("OTP를 받을 휴대폰 번호가 등록되어 있지 않습니다.");
+      return;
+    }
+
+    setIsSendingOtp(true);
+    try {
+      const response = await fetch('/api/transaction/setOtp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lang: params.lang,
+          chain: params.center || chain,
+          walletAddress: senderWalletAddress,
+          mobile: senderMobile,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.result) {
+        toast.error("OTP 발송에 실패했습니다.");
+        return;
+      }
+
+      setVerifiedOtp(false);
+      setIsSendedOtp(true);
+      setOtpCooldownSec(180);
+      toast.success("OTP를 발송했습니다.");
+    } catch (error) {
+      console.error("sendOtp failed", error);
+      toast.error("OTP 발송 중 오류가 발생했습니다.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const verifyOtp = async () => {
+    if (isVerifingOtp) {
+      return;
+    }
+
+    const senderWalletAddress = String(address || "").trim();
+    if (!senderWalletAddress || !otp) {
+      toast.error("OTP 코드를 입력해주세요.");
+      return;
+    }
+
+    setIsVerifingOtp(true);
+    try {
+      const response = await fetch('/api/transaction/verifyOtp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          lang: params.lang,
+          chain: params.center || chain,
+          walletAddress: senderWalletAddress,
+          otp,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || data?.status !== "success") {
+        setVerifiedOtp(false);
+        toast.error(String(data?.message || "OTP 인증에 실패했습니다."));
+        return;
+      }
+
+      setVerifiedOtp(true);
+      toast.success("OTP 인증이 완료되었습니다.");
+    } catch (error) {
+      console.error("verifyOtp failed", error);
+      setVerifiedOtp(false);
+      toast.error("OTP 인증 중 오류가 발생했습니다.");
+    } finally {
+      setIsVerifingOtp(false);
+    }
+  };
+
   const sendUsdt = async () => {
     if (sending) {
       return;
     }
 
+    const recipientWalletAddress = String(recipient?.walletAddress || "").trim();
+    const senderWalletAddress = String(address || "").trim();
 
-    if (!recipient.walletAddress) {
+
+    if (!recipientWalletAddress) {
       toast.error('Please enter a valid address');
+      return;
+    }
+
+    if (!isValidEvmAddress(recipientWalletAddress)) {
+      toast.error("유효한 외부 지갑주소(0x...)를 입력해주세요.");
+      return;
+    }
+
+    if (senderWalletAddress && recipientWalletAddress.toLowerCase() === senderWalletAddress.toLowerCase()) {
+      toast.error("내 지갑주소로는 출금할 수 없습니다.");
+      return;
+    }
+
+    if (!isWhateListedUser && !confirmExternalRecipient) {
+      toast.error("외부 지갑주소 위험 안내를 확인해주세요.");
+      return;
+    }
+
+    if (!verifiedOtp) {
+      toast.error("OTP 인증이 완료되어야 출금할 수 있습니다.");
+      return;
+    }
+
+    if (needsRecipientSuffixConfirm && !recipientSuffixMatched) {
+      toast.error("수신 지갑주소 끝 6자리를 정확히 입력해주세요.");
       return;
     }
 
@@ -474,7 +619,7 @@ export default function SendUsdt({ params }: any) {
 
             contract: contract,
 
-            to: recipient.walletAddress,
+            to: recipientWalletAddress,
             amount: amount,
         });
         
@@ -523,7 +668,7 @@ export default function SendUsdt({ params }: any) {
               chain: params.center,
               walletAddress: address,
               amount: amount,
-              toWalletAddress: recipient.walletAddress,
+              toWalletAddress: recipientWalletAddress,
             }),
           });
 
@@ -532,6 +677,11 @@ export default function SendUsdt({ params }: any) {
           toast.success(USDT_sent_successfully);
 
           setAmount(0); // reset amount
+          setOtp("");
+          setIsSendedOtp(false);
+          setVerifiedOtp(false);
+          setConfirmExternalRecipient(false);
+          setRecipientSuffixConfirm("");
 
           // refresh balance
 
@@ -644,495 +794,283 @@ export default function SendUsdt({ params }: any) {
 
 
 
+  const hasAddress = Boolean(address);
+  const hasRecipient = Boolean(String(recipient?.walletAddress || "").trim());
+  const hasAmount = Number(amount) > 0;
+  const needsExternalConfirmation = hasRecipient && !isWhateListedUser;
+  const externalHighAmountThreshold = 100;
+  const needsRecipientSuffixConfirm =
+    needsExternalConfirmation && Number(amount || 0) >= externalHighAmountThreshold;
+  const recipientSuffixExpected = String(recipient?.walletAddress || "").trim().slice(-6);
+  const recipientSuffixMatched =
+    !needsRecipientSuffixConfirm
+    || recipientSuffixConfirm.trim().toLowerCase() === recipientSuffixExpected.toLowerCase();
+  const canSend =
+    hasAddress
+    && hasRecipient
+    && hasAmount
+    && !sending
+    && verifiedOtp
+    && (!needsExternalConfirmation || confirmExternalRecipient)
+    && recipientSuffixMatched;
+
   return (
-
-    <main className="p-4 min-h-[100vh] flex items-start justify-center container max-w-screen-sm mx-auto">
-
-      <div className="py-0 w-full ">
-
-  
-        {params.center && (
-            <div className="w-full flex flex-row items-center justify-center gap-2 bg-black/10 p-2 rounded-lg mb-4">
-                <span className="text-sm text-zinc-500">
-                {params.center}
-                </span>
-            </div>
-        )}
-
-        <div className="w-full flex flex-col gap-2 items-center justify-start text-zinc-500 text-lg"
-        >
-            {/* go back button */}
-            <div className="w-full flex justify-start items-center gap-2">
-                <button
-                    onClick={() => window.history.back()}
-                    className="flex items-center justify-center bg-gray-200 rounded-full p-2">
-                    <Image
-                        src="/icon-back.png"
-                        alt="Back"
-                        width={20}
-                        height={20}
-                        className="rounded-full"
-                    />
-                </button>
-                {/* title */}
-                <span className="text-sm text-gray-500 font-semibold">
-                    돌아가기
-                </span>
-            </div>
-
-            
-            {/*
-            {!address && (
-            */}
-
-
-
-                <ConnectButton
-                  client={client}
-                  wallets={wallets}
-                  showAllWallets={false}
-                  chain={chain === "ethereum" ? ethereum :
-                          chain === "polygon" ? polygon :
-                          chain === "arbitrum" ? arbitrum :
-                          chain === "bsc" ? bsc : arbitrum}
-
-                  theme={"light"}
-
-                  // button color is dark skyblue convert (49, 103, 180) to hex
-                  connectButton={{
-                      style: {
-                          backgroundColor: "#3167b4", // dark skyblue
-                          color: "#f3f4f6", // gray-300
-                          padding: "2px 10px",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          width: "60x",
-                          height: "38px",
-                      },
-                      label: "원클릭 로그인",
-                  }}
-
-                  connectModal={{
-                      size: "wide", 
-                      //size: "compact",
-                      titleIcon: "https://www.stable.makeup/logo.png",                           
-                      showThirdwebBranding: false,
-                  }}
-
-                  locale={"ko_KR"}
-                  //locale={"en_US"}
-                />
-
-            {/*
-            )}
-            */}
-
-
-
-
-
-            {address && (
-                <div className="w-full flex flex-col items-end justify-center gap-2">
-
-                    <div className="flex flex-row items-center justify-center gap-2">
-
-                        <button
-                            className="text-lg text-zinc-600 underline"
-                            onClick={() => {
-                                navigator.clipboard.writeText(address);
-                                toast.success(Copied_Wallet_Address);
-                            } }
-                        >
-                            {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                        </button>
-                        
-                        <Image
-                            src="/icon-shield.png"
-                            alt="Wallet"
-                            width={100}
-                            height={100}
-                            className="w-6 h-6"
-                        />
-
-                    </div>
-
-                    <div className="flex flex-row items-center justify-end  gap-2">
-                        <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                            {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                        </span>
-                        {' '}
-                        <span className="text-sm">USDT</span>
-                    </div>
-
-                </div>
-            )}
-
+    <main className="min-h-[100vh] bg-slate-100 px-4 py-6">
+      <div className="mx-auto w-full max-w-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            onClick={() => window.history.back()}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+          >
+            <Image src="/icon-back.png" alt="Back" width={16} height={16} className="h-4 w-4 rounded-full" />
+            돌아가기
+          </button>
+          <div className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+            {params.center || chain}
+          </div>
         </div>
 
-        
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Image src="/logo-tether.svg" alt="USDT" width={20} height={20} className="h-5 w-5" />
+            <h1 className="text-lg font-semibold text-slate-900">{Withdraw_USDT || "USDT 출금하기"}</h1>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            연결된 내 지갑에서 외부 지갑주소로 USDT를 전송합니다.
+          </p>
 
-
-        <div className="flex flex-col items-start justify-center space-y-4">
-
-            <div className='flex flex-row items-center space-x-4'>
-
-              <div className='flex flex-row items-center space-x-2'>
-                <Image
-                  src="/logo-tether.svg"
-                  alt="USDT"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
-                />
-              </div>
-
-              <div className="text-xl font-semibold">
-                {Withdraw_USDT}
-              </div>
-
+          {!hasAddress && (
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <ConnectButton
+                client={client}
+                wallets={wallets}
+                showAllWallets={false}
+                chain={chain === "ethereum" ? ethereum :
+                  chain === "polygon" ? polygon :
+                  chain === "arbitrum" ? arbitrum :
+                  chain === "bsc" ? bsc : arbitrum}
+                theme={"light"}
+                connectButton={{
+                  style: {
+                    backgroundColor: "#0f172a",
+                    color: "#f8fafc",
+                    padding: "2px 12px",
+                    borderRadius: "10px",
+                    fontSize: "14px",
+                    height: "38px",
+                  },
+                  label: "지갑 연결",
+                }}
+                connectModal={{
+                  size: "wide",
+                  titleIcon: "https://www.stable.makeup/logo.png",
+                  showThirdwebBranding: false,
+                }}
+                locale={"ko_KR"}
+              />
+              <p className="mt-2 text-xs text-slate-500">{Please_connect_your_wallet_first || "먼저 지갑을 연결해주세요."}</p>
             </div>
+          )}
 
-
-
-
-            <div className='w-full  flex flex-col gap-5 border border-gray-300 p-4 rounded-lg'>
-
-
-
-              <div className="text-lg">{Enter_the_amount_and_recipient_address}</div>
-
-
-              <div className='mb-5 flex flex-col gap-5 items-start justify-between'>
-
-                <input
-                  disabled={sending}
-                  type="number"
-                  //placeholder="Enter amount"
-                  className=" w-64 p-2 border border-gray-300 rounded text-black text-5xl font-semibold "
-                  
-                  value={amount}
-
-                  onChange={(e) => (
-
-                    // check if the value is a number
-
-
-                    // check if start 0, if so remove it
-
-                    //e.target.value = e.target.value.replace(/^0+/, ''),
-
-
-
-                    // check balance
-
-                    setAmount(e.target.value as any)
-
-                  )}
-                />
-           
-
-            
-            
-                {!wantToReceiveWalletAddress ? (
-                  <>
-                  <div className='w-full flex flex-row gap-5 items-center justify-between'>
-                    <select
-                      disabled={sending}
-
-                      className="
-                        
-                        w-56 p-2 border border-gray-300 rounded text-black text-2xl font-semibold "
-                        
-                      value={
-                        recipient?.nickname
-                      }
-
-
-                      onChange={(e) => {
-
-                        const selectedUser = users.find((user) => user.nickname === e.target.value) as any;
-
-                        console.log("selectedUser", selectedUser);
-
-                        setRecipient(selectedUser);
-
-                      } } 
-
-                    >
-                      <option value="">{Select_a_user}</option>
-                      
-
-                      {users.map((user) => (
-                        <option key={user.id} value={user.nickname}>{user.nickname}</option>
-                      ))}
-                    </select>
-
-                    {/* select user profile image */}
-
-                    <div className=" w-full flex flex-row gap-2 items-center justify-center">
-                      <Image
-                        src={recipient?.avatar || '/profile-default.png'}
-                        alt="profile"
-                        width={38}
-                        height={38}
-                        className="rounded-full"
-                        style={{
-                          objectFit: 'cover',
-                          width: '38px',
-                          height: '38px',
-                        }}
-                      />
-
-                      {recipient?.walletAddress && (
-                        <Image
-                          src="/verified.png"
-                          alt="check"
-                          width={28}
-                          height={28}
-                        />
-                      )}
-
-                    </div>
-
-                    
-
-
-                  </div>
-              
-
-                    {/* input wallet address */}
-                    
-                    <input
-                      disabled={true}
-                      type="text"
-                      placeholder={User_wallet_address}
-                      className=" w-80  xl:w-full p-2 border border-gray-300 rounded text-white text-xs xl:text-lg font-semibold"
-                      value={recipient?.walletAddress}
-                      onChange={(e) => {
-      
-                        
-                        
-                          getUserByWalletAddress(e.target.value)
-
-                          .then((data) => {
-
-                            //console.log("data", data);
-
-                            const checkUser = data;
-
-                            if (checkUser) {
-                              setRecipient(checkUser as any);
-                            } else {
-                              
-                              setRecipient({
-                                ...recipient,
-                                walletAddress: e.target.value,
-                              });
-                              
-                            }
-
-                          });
-
-                      } }
-                    />
-
-
-          
-
-
-                </>
-
-                ) : (
-
-                  <div className='flex flex-col gap-5 items-center justify-between'>
-                    <input
-                      disabled={sending}
-                      type="text"
-                      placeholder={User_wallet_address}
-                      className=" w-80 xl:w-96 p-2 border border-gray-300 rounded text-white bg-black text-sm xl:text-sm font-semibold"
-                      value={recipient.walletAddress}
-                      onChange={(e) => setRecipient({
-                        ...recipient,
-                        walletAddress: e.target.value,
-                      })}
-                    />
-
-                    {isWhateListedUser ? (
-                      <div className="flex flex-row gap-2 items-center justify-center">
-
-
-                        <Image
-                          src={recipient.avatar || '/profile-default.png'}
-                          alt="profile"
-                          width={30}
-                          height={30}
-                          className="rounded-full"
-                          style={{
-                            objectFit: 'cover',
-                            width: '38px',
-                            height: '38px',
-                          }}
-                        />
-                        <div className="text-white">{recipient?.nickname}</div>
-                        <Image
-                          src="/verified.png"
-                          alt="check"
-                          width={30}
-                          height={30}
-                        />
-                        
-                      </div>
-                    ) : (
-                      <>
-
-                      {recipient?.walletAddress && (
-                        <div className='flex flex-row gap-2 items-center justify-center'>
-                          {/* dot icon */}
-                          <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-
-                          <div className="text-red-500">
-                            {This_address_is_not_white_listed}<br />
-                            {If_you_are_sure_please_click_the_send_button}
-                          </div>
-                        </div>
-
-                      )}
-
-                      </>
-                    )}
-
-
-
-                  </div>
-
-                )} 
-
+          {hasAddress && (
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs text-slate-500">출금 지갑</p>
+                <button
+                  className="mt-1 text-sm font-semibold text-slate-800 underline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(address || "");
+                    toast.success(Copied_Wallet_Address || "지갑주소가 복사되었습니다.");
+                  }}
+                >
+                  {address?.substring(0, 8)}...{address?.substring((address?.length || 0) - 6)}
+                </button>
+                <p className="mt-1 text-xs text-slate-500">{user?.nickname || Anonymous || "Anonymous"}</p>
               </div>
 
-              {/* otp verification */}
-              {/*
-              {verifiedOtp ? (
-                <div className="w-full flex flex-row gap-2 items-center justify-center">
-                  <Image
-                    src="/verified.png"
-                    alt="check"
-                    width={30}
-                    height={30}
-                  />
-                  <div className="text-white">OTP verified</div>
-                </div>
-              ) : (
-             
-        
-                <div className="w-full flex flex-row gap-2 items-start">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-right">
+                <p className="text-xs text-emerald-700">출금 가능 잔고</p>
+                <p className="mt-1 font-mono text-2xl font-semibold text-emerald-700">
+                  {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                </p>
+                <p className="text-xs font-semibold text-emerald-700">USDT</p>
+              </div>
+            </div>
+          )}
+        </section>
 
-                  <button
-                    disabled={!address || !recipient?.walletAddress || !amount || isSendingOtp}
-                    onClick={sendOtp}
-                    className={`
-                      
-                      ${isSendedOtp && 'hidden'}
+        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-slate-900">{Enter_the_amount_and_recipient_address || "금액과 수신 지갑주소를 입력하세요."}</h2>
 
-                      w-32 p-2 rounded-lg text-sm font-semibold
+          <div className="mt-4">
+            <label className="text-xs font-semibold text-slate-500">출금 금액 (USDT)</label>
+            <div className="mt-2 flex items-center rounded-xl border border-slate-300 bg-slate-50 px-3">
+              <input
+                disabled={sending}
+                type="number"
+                min="0"
+                step="0.001"
+                className="w-full bg-transparent py-3 text-2xl font-semibold text-slate-900 outline-none"
+                value={amount}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  setAmount(Number.isFinite(next) ? next : 0);
+                }}
+              />
+              <span className="text-sm font-semibold text-slate-500">USDT</span>
+            </div>
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {[0.25, 0.5, 0.75, 1].map((ratio) => (
+                <button
+                  key={ratio}
+                  type="button"
+                  disabled={!hasAddress || sending}
+                  onClick={() => setAmount(Number((Number(balance || 0) * ratio).toFixed(3)))}
+                  className="rounded-lg border border-slate-300 bg-white py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {Math.round(ratio * 100)}%
+                </button>
+              ))}
+            </div>
+          </div>
 
-                        ${
-                        !address || !recipient?.walletAddress || !amount || isSendingOtp
-                        ?'bg-gray-300 text-gray-400'
-                        : 'bg-green-500 text-white'
-                        }
-                      
-                      `}
-                  >
-                      Send OTP
-                  </button>
+          <div className="mt-4">
+            <label className="text-xs font-semibold text-slate-500">{User_wallet_address || "수신 지갑주소"}</label>
+            <input
+              disabled={sending}
+              type="text"
+              placeholder={Enter_Wallet_Address || "0x..."}
+              className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-900 outline-none focus:border-slate-500"
+              value={recipient.walletAddress}
+              onChange={(e) => setRecipient({
+                ...recipient,
+                walletAddress: e.target.value,
+              })}
+            />
+          </div>
 
-                  <div className={`flex flex-row gap-2 items-center justify-center ${!isSendedOtp && 'hidden'}`}>
-                    <input
-                      type="text"
-                      placeholder="Enter OTP"
-                      className=" w-40 p-2 border border-gray-300 rounded text-black text-sm font-semibold"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                    />
+          {isWhateListedUser ? (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <Image
+                src={recipient.avatar || "/profile-default.png"}
+                alt="profile"
+                width={28}
+                height={28}
+                className="h-7 w-7 rounded-full object-cover"
+              />
+              <span className="text-sm font-semibold text-emerald-700">{recipient?.nickname || "등록 사용자"}</span>
+              <Image src="/verified.png" alt="verified" width={18} height={18} className="h-[18px] w-[18px]" />
+            </div>
+          ) : (
+            hasRecipient && (
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                <p className="font-semibold">{This_address_is_not_white_listed || "등록된 사용자 지갑이 아닙니다."}</p>
+                <p className="mt-1 text-xs">{If_you_are_sure_please_click_the_send_button || "주소를 다시 확인한 뒤 전송하세요."}</p>
+              </div>
+            )
+          )}
 
-                    <button
-                      disabled={!otp || isVerifingOtp}
-                      onClick={verifyOtp}
-                      className={`w-32 p-2 rounded-lg text-sm font-semibold
+          {needsExternalConfirmation && (
+            <label className="mt-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+              <input
+                type="checkbox"
+                checked={confirmExternalRecipient}
+                onChange={(e) => setConfirmExternalRecipient(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-rose-600"
+              />
+              <span>외부 지갑주소를 직접 검증했으며, 오전송 시 복구가 불가능함을 확인했습니다.</span>
+            </label>
+          )}
 
-                          ${
-                          !otp || isVerifingOtp
-                          ?'bg-gray-300 text-gray-400'
-                          : 'bg-green-500 text-white'
-                          }
-                        
-                        `}
-                    >
-                        Verify OTP
-                    </button>
-                  </div>
+          {needsRecipientSuffixConfirm && (
+            <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
+              <p className="text-xs font-semibold text-rose-800">
+                고액 외부 출금 보호: 수신 지갑주소 끝 6자리를 입력하세요.
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="rounded-md bg-white px-2 py-1 font-mono text-xs text-rose-700">
+                  ...{recipientSuffixExpected}
+                </span>
+                <input
+                  type="text"
+                  value={recipientSuffixConfirm}
+                  onChange={(e) => setRecipientSuffixConfirm(e.target.value)}
+                  placeholder="끝 6자리 입력"
+                  className="w-full rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                />
+              </div>
+            </div>
+          )}
 
-                </div>
-
-              )}
-                */}
-
-              
-
-
-
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold text-slate-700">2차 인증 (OTP)</p>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
               <button
-                disabled={!address || !recipient?.walletAddress || !amount || sending || !verifiedOtp}
-                onClick={sendUsdt}
-                className={`mt-10 w-full p-2 rounded-lg text-xl font-semibold
-
-                    ${
-                    !address || !recipient?.walletAddress || !amount || sending || !verifiedOtp
-                    ?'bg-gray-300 text-gray-400'
-                    : 'bg-green-500 text-white'
-                    }
-                   
-                   `}
+                type="button"
+                disabled={!hasAddress || !hasRecipient || !hasAmount || sending || isSendingOtp || otpCooldownSec > 0}
+                onClick={sendOtp}
+                className={`rounded-lg px-3 py-2 text-xs font-semibold ${
+                  !hasAddress || !hasRecipient || !hasAmount || sending || isSendingOtp || otpCooldownSec > 0
+                    ? "cursor-not-allowed bg-slate-200 text-slate-400"
+                    : "bg-slate-700 text-white hover:bg-slate-600"
+                }`}
               >
-                  {Send_USDT}
+                {isSendingOtp ? "OTP 발송중..." : otpCooldownSec > 0 ? `재발송 ${otpCooldownSec}s` : "OTP 발송"}
               </button>
 
-              <div className="w-full flex flex-row gap-2 text-xl font-semibold">
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="OTP 코드 입력"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+              />
 
-                {/* sending rotate animation with white color*/}
-                {sending && (
-                  <div className="
-                    w-6 h-6
-                    border-2 border-zinc-800
-                    rounded-full
-                    animate-spin
-                  ">
-                    <Image
-                      src="/loading.png"
-                      alt="loading"
-                      width={24}
-                      height={24}
-                    />
-                  </div>
-                )}
-                <div className="text-zinc-800">
-                  {sending ? Sending : ''}
-                </div>
-
-              </div>
-
+              <button
+                type="button"
+                disabled={!otp || isVerifingOtp || sending}
+                onClick={verifyOtp}
+                className={`rounded-lg px-3 py-2 text-xs font-semibold ${
+                  !otp || isVerifingOtp || sending
+                    ? "cursor-not-allowed bg-slate-200 text-slate-400"
+                    : "bg-emerald-600 text-white hover:bg-emerald-500"
+                }`}
+              >
+                {isVerifingOtp ? "인증중..." : "OTP 인증"}
+              </button>
             </div>
+            {verifiedOtp ? (
+              <p className="mt-2 text-xs font-semibold text-emerald-700">OTP 인증 완료</p>
+            ) : (
+              <p className="mt-2 text-xs text-slate-500">출금을 위해 OTP 인증이 필요합니다.</p>
+            )}
+          </div>
 
+          <button
+            disabled={!canSend}
+            onClick={sendUsdt}
+            className={`mt-5 w-full rounded-xl py-3 text-base font-semibold transition-colors ${
+              canSend
+                ? "bg-slate-900 text-white hover:bg-slate-700"
+                : "cursor-not-allowed bg-slate-200 text-slate-400"
+            }`}
+          >
+            {sending ? (Sending || "전송중...") : (Send_USDT || "USDT 전송")}
+          </button>
 
+          {sending && (
+            <div className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-slate-600">
+              <Image src="/loading.png" alt="loading" width={18} height={18} className="h-[18px] w-[18px] animate-spin" />
+              {Sending || "전송중..."}
+            </div>
+          )}
+        </section>
 
-        </div>
-
-       </div>
-
+        <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+          보안 안내: 전송 주소를 2회 이상 확인하고, 큰 금액은 소액 테스트 전송 후 진행하세요.
+        </p>
+      </div>
     </main>
-
   );
 
 }
