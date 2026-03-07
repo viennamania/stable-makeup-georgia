@@ -103,13 +103,29 @@ const normalizeStatus = (value: unknown): HmacApiKeyStatus | null => {
   return null;
 };
 
+const buildMissingMasterKeyMessage = () => {
+  const vercelEnv = normalizeString(process.env.VERCEL_ENV) || "local";
+  const nodeEnv = normalizeString(process.env.NODE_ENV) || "unknown";
+  const hasPrimaryKey = Boolean(normalizeString(process.env.HMAC_API_KEY_MASTER_KEY));
+  const hasFallbackKey = Boolean(
+    normalizeString(process.env.BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY),
+  );
+
+  return [
+    "Missing HMAC master key.",
+    "Required: HMAC_API_KEY_MASTER_KEY (or BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY).",
+    `envScope={VERCEL_ENV:${vercelEnv},NODE_ENV:${nodeEnv}}`,
+    `keysPresent={HMAC_API_KEY_MASTER_KEY:${hasPrimaryKey},BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY:${hasFallbackKey}}`,
+  ].join(" ");
+};
+
 const getMasterKey = (): Buffer => {
   const raw =
     normalizeString(process.env.HMAC_API_KEY_MASTER_KEY)
     || normalizeString(process.env.BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY);
 
   if (!raw) {
-    throw new Error("Missing HMAC_API_KEY_MASTER_KEY");
+    throw new Error(buildMissingMasterKeyMessage());
   }
 
   return createHash("sha256").update(raw).digest();
@@ -488,4 +504,3 @@ export const markHmacApiKeyUsed = async ({ keyIdRaw }: { keyIdRaw: unknown }) =>
 
   return result.matchedCount > 0;
 };
-
