@@ -24,7 +24,10 @@ const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/order/transferEscrowBalanceToMyWallet",
   "/api/order/transferEscrowBalanceToSeller",
   "/api/order/updateBuyOrderSettlement",
+  "/api/store/getAllStores",
+  "/api/store/getOneStore",
   "/api/store/getEscrowBalance",
+  "/api/user/getAllBuyers",
   "/api/user/clearanceWalletAddress",
 ]);
 
@@ -32,7 +35,12 @@ const PROTECTED_STORE_SETTINGS_MUTATION_PATHS = new Set([
   "/api/store/updateStoreSettlementWalletAddress",
 ]);
 
+const SELF_READ_USER_PATHS = new Set([
+  "/api/user/getUser",
+]);
+
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
+const SELF_READ_SIGNING_PREFIX = "stable-georgia:get-user:self:v1";
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -88,6 +96,23 @@ const buildStoreSettingsMutationSigningMessage = ({
   ].join("\n");
 };
 
+const buildSelfReadSigningMessage = ({
+  storecode,
+  walletAddress,
+  signedAtIso,
+}: {
+  storecode: string;
+  walletAddress: string;
+  signedAtIso: string;
+}) => {
+  return [
+    SELF_READ_SIGNING_PREFIX,
+    `storecode:${storecode}`,
+    `walletAddress:${walletAddress}`,
+    `signedAt:${signedAtIso}`,
+  ].join("\n");
+};
+
 const toRequestPath = (input: RequestInfo | URL) => {
   try {
     if (typeof input === "string") {
@@ -137,8 +162,9 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       const path = toRequestPath(input);
       const isCenterStoreAdminPath = PROTECTED_CENTER_STORE_ADMIN_PATHS.has(path);
       const isStoreSettingsMutationPath = PROTECTED_STORE_SETTINGS_MUTATION_PATHS.has(path);
+      const isSelfReadPath = SELF_READ_USER_PATHS.has(path);
 
-      if (!isCenterStoreAdminPath && !isStoreSettingsMutationPath) {
+      if (!isCenterStoreAdminPath && !isStoreSettingsMutationPath && !isSelfReadPath) {
         return originalFetch(input, init);
       }
 
@@ -164,7 +190,9 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         return originalFetch(input, init);
       }
 
-      const alreadySigned = Boolean(payload.signature && payload.signedAt && payload.nonce);
+      const alreadySigned = isSelfReadPath
+        ? Boolean(payload.signature && payload.signedAt)
+        : Boolean(payload.signature && payload.signedAt && payload.nonce);
       if (alreadySigned) {
         return originalFetch(input, init);
       }
@@ -185,7 +213,7 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       }
 
       const signedAt = new Date().toISOString();
-      const nonce = createNonce();
+      const nonce = isSelfReadPath ? "" : createNonce();
       const actionFields = extractCenterStoreAdminActionFields(payload);
       let signingMessage = "";
       let signedPayload: Record<string, unknown> = {
@@ -193,7 +221,25 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         requesterWalletAddress: requesterWalletAddress,
       };
 
-      if (isCenterStoreAdminPath) {
+      if (isSelfReadPath) {
+        const storecode = normalizeString(payload.storecode);
+        const targetWalletAddress =
+          normalizeString(payload.walletAddress).toLowerCase() || requesterWalletAddress;
+        if (!storecode || !targetWalletAddress) {
+          return originalFetch(input, init);
+        }
+        signingMessage = buildSelfReadSigningMessage({
+          storecode,
+          walletAddress: targetWalletAddress,
+          signedAtIso: signedAt,
+        });
+        signedPayload = {
+          ...payload,
+          storecode,
+          walletAddress: targetWalletAddress,
+          requesterWalletAddress: targetWalletAddress,
+        };
+      } else if (isCenterStoreAdminPath) {
         const storecode = normalizeString(payload.storecode);
         const requesterStorecode = normalizeString(payload.requesterStorecode);
         const signingStorecode = storecode || requesterStorecode || "admin";
@@ -233,8 +279,13 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         ...signedPayload,
         signature,
         signedAt,
-        nonce,
       };
+      if (!isSelfReadPath) {
+        signedPayload = {
+          ...signedPayload,
+          nonce,
+        };
+      }
 
       const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined));
       if (!headers.has("Content-Type")) {

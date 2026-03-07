@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   const signature = normalizeString(body.signature);
   const signedAtIso = parseSignedAtOrNull(body.signedAt);
   const signatureProvided = Boolean(signature && signedAtIso);
-  const requireSignature = process.env.USER_READ_REQUIRE_SIGNATURE === "true";
+  const requireSignature = process.env.USER_READ_REQUIRE_SIGNATURE !== "false";
   const ip = getRequestIp(request);
 
   if (!storecode || !targetWalletAddress) {

@@ -1251,7 +1251,6 @@ export async function getAllBuyers(
         userType: 1,
         liveOnAndOff: 1,
 
-        storeInfo: { accessToken: 1 },
       }
     },
     {

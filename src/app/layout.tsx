@@ -32,6 +32,7 @@ import { usePathname } from "next/navigation";
 import StabilityConsole from '@/components/StabilityConsole';
 
 import CenterConsole from '@/components/CenterConsole';
+import CenterStoreAdminFetchSignatureBridge from "@/components/CenterStoreAdminFetchSignatureBridge";
 
 
 import {
@@ -171,6 +172,7 @@ export default function RootLayout({
         <ThirdwebProvider>
 
           <Toaster />
+          <CenterStoreAdminFetchSignatureBridge />
 
           {/* chain image */}
 

@@ -84,6 +84,7 @@ import { useSearchParams } from 'next/navigation';
 import { paymentUrl } from "../../../config/payment";
 
 import { version } from "../../../config/version";
+import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 
 
 
@@ -525,7 +526,7 @@ export default function Index({ params }: any) {
 
     }
 
-  } , [address]);
+  } , [activeAccount, address, params.center]);
   
 
 
@@ -685,21 +686,14 @@ export default function Index({ params }: any) {
 
 
 
-              fetch('/api/user/getUser', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  storecode: params.center,
-                  walletAddress: address,
-                }),
+              postGetUserSelfSigned({
+                account: activeAccount,
+                storecode: params.center,
+                walletAddress: address,
               })
-              .then(response => response.json())
-              .then(data => {
-                  //console.log('data', data);
-                  setUser(data.result);
-              })
+              .then((data) => {
+                setUser(data?.result || null);
+              });
 
           });
 
@@ -721,7 +715,7 @@ export default function Index({ params }: any) {
 
     }
 
-  } , [address]);
+  } , [activeAccount, address, params.center]);
 
 
 
@@ -736,40 +730,29 @@ export default function Index({ params }: any) {
 
     setLoadingUser(true);
 
-    fetch('/api/user/getUser', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            storecode: params.center,
-            walletAddress: address,
-        }),
+    postGetUserSelfSigned({
+      account: activeAccount,
+      storecode: params.center,
+      walletAddress: address,
     })
-    .then(response => response.json())
-    .then(data => {
-        
-        /////console.log('data.result', data.result);
-
-
-        setUser(data.result);
-
-        setEscrowWalletAddress(data.result.escrowWalletAddress);
-
-        setIsAdmin(data.result?.role === "admin");
-
-    })
-    .catch((error) => {
+      .then((data) => {
+        const result = data?.result || null;
+        setUser(result);
+        setEscrowWalletAddress(result?.escrowWalletAddress || '');
+        setIsAdmin(result?.role === "admin");
+      })
+      .catch((error) => {
         console.error('Error:', JSON.stringify(error));
         setUser(null);
         setEscrowWalletAddress('');
         setIsAdmin(false);
-    });
+      })
+      .finally(() => {
+        setLoadingUser(false);
+      });
 
-    setLoadingUser(false);
 
-
-  } , [address, params.center]);
+  } , [activeAccount, address, params.center]);
 
 
 
