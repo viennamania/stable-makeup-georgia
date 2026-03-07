@@ -259,10 +259,6 @@ export async function POST(request: NextRequest) {
   const requestedStorecode = normalizeStorecode(storecode);
   const requesterStorecode = normalizeStorecode(body?.requesterStorecode);
 
-  if (requestedStorecode && requesterStorecode && requestedStorecode !== requesterStorecode) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const guardStorecode = requesterStorecode || requestedStorecode || "admin";
 
   const guard = await verifyCenterStoreAdminGuard({
@@ -275,6 +271,17 @@ export async function POST(request: NextRequest) {
 
   if (!guard.ok) {
     return NextResponse.json({ error: guard.error }, { status: guard.status });
+  }
+
+  const requesterScopeStorecode = requesterStorecode || guardStorecode;
+  const requestedDiffersFromRequesterScope = Boolean(
+    requestedStorecode
+      && requesterScopeStorecode
+      && requestedStorecode.toLowerCase() !== requesterScopeStorecode.toLowerCase(),
+  );
+
+  if (!guard.requesterIsAdmin && requestedDiffersFromRequesterScope) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const effectiveStorecode = guard.requesterIsAdmin
