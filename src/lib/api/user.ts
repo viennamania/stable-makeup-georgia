@@ -1791,33 +1791,51 @@ export async function getAllUsersByStorecodeAndVerified(
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('users');
+  const queryMaxTimeMs = Math.max(
+    Number.parseInt(process.env.GET_ALL_USERS_BY_STORECODE_QUERY_MAX_TIME_MS || "", 10) || 8000,
+    1000,
+  );
 
   // walletAddress is not empty and not null
   // order by nickname asc
   // if storecode is empty, return all users
-  const users = await collection
-    .find<UserProps>(
-      {
-        storecode: { $regex: storecode, $options: 'i' },
-        walletAddress: { $exists: true, $ne: null },
-        verified: true,
-      },
-      {
-        limit: limit,
-        skip: (page - 1) * limit,
-      },
-    )
-    .sort({ nickname: 1 })
-    .toArray();
+  const safeStorecode = String(storecode || "").trim();
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 60;
+  const safePage = Number.isFinite(page) && page > 0 ? Math.trunc(page) : 1;
 
+  if (!safeStorecode) {
+    return {
+      totalCount: 0,
+      totalResult: 0,
+      users: [],
+    };
+  }
 
-  const totalCount = await collection.countDocuments(
-    {
-      storecode: { $regex: storecode, $options: 'i' },
-      walletAddress: { $exists: true, $ne: null },
-      verified: true,
-    }
+  const storecodeCandidates = Array.from(
+    new Set([safeStorecode, safeStorecode.toLowerCase()].filter(Boolean)),
   );
+  const userQuery = {
+    storecode: storecodeCandidates.length === 1
+      ? storecodeCandidates[0]
+      : { $in: storecodeCandidates },
+    walletAddress: { $type: "string", $ne: "" },
+    verified: true,
+  };
+
+  const [users, totalCount] = await Promise.all([
+    collection
+      .find<UserProps>(
+        userQuery,
+        {
+          limit: safeLimit,
+          skip: (safePage - 1) * safeLimit,
+          maxTimeMS: queryMaxTimeMs,
+        },
+      )
+      .sort({ nickname: 1, _id: -1 })
+      .toArray(),
+    collection.countDocuments(userQuery, { maxTimeMS: queryMaxTimeMs }),
+  ]);
   return {
     totalCount,
     totalResult: totalCount,
