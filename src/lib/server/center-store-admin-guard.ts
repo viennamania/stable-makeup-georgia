@@ -63,6 +63,14 @@ const CENTER_STORE_ADMIN_NONCE_COLLECTION = "centerStoreAdminActionNonces";
 const DEFAULT_CENTER_STORE_ADMIN_NONCE_TTL_MS = 10 * 60 * 1000;
 const CENTER_STORE_ADMIN_NONCE_UNIQ_INDEX = "uniq_centerStoreAdminActionNonceKey";
 const CENTER_STORE_ADMIN_NONCE_TTL_INDEX = "ttl_centerStoreAdminActionNonceExpiresAt";
+const CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_COUNT = Math.max(
+  Number.parseInt(process.env.CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_COUNT || "", 10) || 2,
+  1,
+);
+const CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_DELAY_MS = Math.max(
+  Number.parseInt(process.env.CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_DELAY_MS || "", 10) || 150,
+  50,
+);
 const CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS = Math.max(
   Number(process.env.CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS || 60000),
   1000,
@@ -71,6 +79,96 @@ const CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS = Math.max(
 const globalCenterStoreAdminSecurity = globalThis as typeof globalThis & {
   __centerStoreAdminNonceIndexesReady?: boolean;
   __centerStoreAdminGuardLastErrorLoggedAt?: number;
+  __centerStoreAdminGuardLastLogWriteErrorLoggedAt?: number;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isTransientMongoError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const anyError = error as any;
+  const labels = anyError?.errorLabelSet instanceof Set
+    ? Array.from(anyError.errorLabelSet)
+    : [];
+  const labelSet = new Set(labels.map((label) => String(label)));
+  const name = String(anyError?.name || "");
+  const message = String(anyError?.message || "");
+  const code = String(anyError?.code || anyError?.cause?.code || "");
+  const causeName = String(anyError?.cause?.name || "");
+
+  if (labelSet.has("ResetPool") || labelSet.has("PoolRequestedRetry") || labelSet.has("PoolRequstedRetry")) {
+    return true;
+  }
+
+  if (
+    name === "MongoPoolClearedError" ||
+    name === "MongoNetworkError" ||
+    causeName === "MongoNetworkError"
+  ) {
+    return true;
+  }
+
+  if (code === "ECONNRESET") {
+    return true;
+  }
+
+  return message.includes("Connection pool") || message.includes("TLS connection");
+};
+
+const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> => {
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_COUNT) {
+    attempt += 1;
+
+    try {
+      return await work();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientMongoError(error) || attempt >= CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_COUNT) {
+        throw error;
+      }
+
+      await sleep(CENTER_STORE_ADMIN_GUARD_TRANSIENT_RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Unknown center-store-admin guard failure");
+};
+
+const logCenterStoreAdminGuardErrorThrottled = (message: string, error?: unknown) => {
+  const now = Date.now();
+  const lastLoggedAt = globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastErrorLoggedAt || 0;
+  if (now - lastLoggedAt < CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS) {
+    return;
+  }
+
+  globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastErrorLoggedAt = now;
+  if (typeof error === "undefined") {
+    console.error(message);
+    return;
+  }
+
+  console.error(message, error);
+};
+
+const logCenterStoreAdminLogWriteErrorThrottled = (error: unknown) => {
+  const now = Date.now();
+  const lastLoggedAt = globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastLogWriteErrorLoggedAt || 0;
+  if (now - lastLoggedAt < CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS) {
+    return;
+  }
+
+  globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastLogWriteErrorLoggedAt = now;
+  if (isTransientMongoError(error)) {
+    console.error("center-store-admin log write skipped due to transient mongo connectivity");
+  } else {
+    console.error("center-store-admin log write failed:", error);
+  }
 };
 
 const ensureCenterStoreAdminNonceIndexes = async () => {
@@ -78,7 +176,7 @@ const ensureCenterStoreAdminNonceIndexes = async () => {
     return;
   }
 
-  const dbClient = await clientPromise;
+  const dbClient = await withTransientMongoRetry(() => clientPromise);
   const collection = dbClient.db(dbName).collection(CENTER_STORE_ADMIN_NONCE_COLLECTION);
 
   await collection.createIndex(
@@ -104,9 +202,9 @@ const consumeCenterStoreAdminNonce = async ({
   nonce: string;
   signedAtIso: string;
 }) => {
-  const dbClient = await clientPromise;
+  const dbClient = await withTransientMongoRetry(() => clientPromise);
   const collection = dbClient.db(dbName).collection(CENTER_STORE_ADMIN_NONCE_COLLECTION);
-  await ensureCenterStoreAdminNonceIndexes();
+  await withTransientMongoRetry(() => ensureCenterStoreAdminNonceIndexes());
 
   const nonceKey = `${route}:${walletAddress}:${nonce}`;
 
@@ -182,25 +280,29 @@ export const verifyCenterStoreAdminGuard = async ({
       walletAddress?: string | null;
       meta?: Record<string, unknown>;
     }) => {
-      await insertAdminApiCallLog({
-        route,
-        guardType: "center_store_admin",
-        status,
-        reason,
-        publicIp: ip,
-        publicCountry: country,
-        requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
-        requesterUser: requesterUser || null,
-        requestBody: actionFields,
-        meta: {
-          storecode,
-          ...meta,
-        },
-      });
+      try {
+        await insertAdminApiCallLog({
+          route,
+          guardType: "center_store_admin",
+          status,
+          reason,
+          publicIp: ip,
+          publicCountry: country,
+          requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
+          requesterUser: requesterUser || null,
+          requestBody: actionFields,
+          meta: {
+            storecode,
+            ...meta,
+          },
+        });
+      } catch (error) {
+        logCenterStoreAdminLogWriteErrorThrottled(error);
+      }
     };
 
     if (!storecode) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "storecode_required",
       });
@@ -212,7 +314,7 @@ export const verifyCenterStoreAdminGuard = async ({
     }
 
     if (!requesterWalletAddress) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "invalid_wallet_address",
         walletAddress: null,
@@ -225,7 +327,7 @@ export const verifyCenterStoreAdminGuard = async ({
     }
 
     if (!signature || !signedAtIso || !nonce) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "missing_or_invalid_signature_fields",
       });
@@ -243,7 +345,7 @@ export const verifyCenterStoreAdminGuard = async ({
     });
 
     if (!rate.allowed) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "rate_limited",
       });
@@ -271,7 +373,7 @@ export const verifyCenterStoreAdminGuard = async ({
     });
 
     if (!signatureVerified) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "invalid_signature",
       });
@@ -282,15 +384,17 @@ export const verifyCenterStoreAdminGuard = async ({
       };
     }
 
-    const nonceConsumed = await consumeCenterStoreAdminNonce({
-      route,
-      walletAddress: requesterWalletAddress,
-      nonce,
-      signedAtIso,
-    });
+    const nonceConsumed = await withTransientMongoRetry(() =>
+      consumeCenterStoreAdminNonce({
+        route,
+        walletAddress: requesterWalletAddress,
+        nonce,
+        signedAtIso,
+      }),
+    );
 
     if (!nonceConsumed) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "invalid_nonce",
       });
@@ -301,11 +405,13 @@ export const verifyCenterStoreAdminGuard = async ({
       };
     }
 
-    const requesterAdminUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+    const requesterAdminUser = await withTransientMongoRetry(() =>
+      getOneByWalletAddress("admin", requesterWalletAddress),
+    );
     const requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
 
     if (requesterIsAdmin) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "allowed",
         reason: "global_admin",
         requesterUser: requesterAdminUser,
@@ -321,11 +427,11 @@ export const verifyCenterStoreAdminGuard = async ({
       };
     }
 
-    const store = await getStoreByStorecode({ storecode });
+    const store = await withTransientMongoRetry(() => getStoreByStorecode({ storecode }));
     const storeAdminWalletAddress = normalizeWalletAddress(store?.adminWalletAddress);
 
     if (!storeAdminWalletAddress) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "store_admin_wallet_not_configured",
       });
@@ -337,7 +443,7 @@ export const verifyCenterStoreAdminGuard = async ({
     }
 
     if (storeAdminWalletAddress !== requesterWalletAddress) {
-      await writeAdminApiCallLog({
+      void writeAdminApiCallLog({
         status: "blocked",
         reason: "forbidden_wallet_mismatch",
         meta: {
@@ -351,11 +457,9 @@ export const verifyCenterStoreAdminGuard = async ({
       };
     }
 
-    const requesterStoreUser = await getOneByWalletAddress(storecode, requesterWalletAddress);
-    await writeAdminApiCallLog({
+    void writeAdminApiCallLog({
       status: "allowed",
       reason: "store_admin_wallet",
-      requesterUser: requesterStoreUser,
       meta: {
         matchedBy: "store_admin_wallet",
       },
@@ -367,11 +471,12 @@ export const verifyCenterStoreAdminGuard = async ({
       matchedBy: "store_admin_wallet",
     };
   } catch (error) {
-    const now = Date.now();
-    const lastLoggedAt = globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastErrorLoggedAt || 0;
-    if (now - lastLoggedAt >= CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS) {
-      globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastErrorLoggedAt = now;
-      console.error("center-store-admin guard failed:", error);
+    if (isTransientMongoError(error)) {
+      logCenterStoreAdminGuardErrorThrottled(
+        "center-store-admin guard transient mongo connectivity issue",
+      );
+    } else {
+      logCenterStoreAdminGuardErrorThrottled("center-store-admin guard failed:", error);
     }
 
     return {
