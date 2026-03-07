@@ -160,6 +160,92 @@ function toNormalizedHash(value: unknown): string | null {
   return raw;
 }
 
+const BUYORDER_READ_INDEX_STORE_PRIVATE_STATUS_CREATED =
+  "idx_buyorders_store_private_status_created";
+const BUYORDER_READ_INDEX_PRIVATE_STATUS_CREATED =
+  "idx_buyorders_private_status_created";
+const BUYORDER_READ_INDEX_STORE_PRIVATE_STATUS_AUDIO =
+  "idx_buyorders_store_private_status_audio";
+const BUYORDER_READ_INDEX_PAYMENT_REQUESTED =
+  "idx_buyorders_payment_requested";
+
+const globalBuyOrderReadState = globalThis as typeof globalThis & {
+  __buyOrderReadIndexesReady?: boolean;
+  __buyOrderReadCache?: Map<string, { expiresAt: number; value: any }>;
+};
+
+const BUYORDER_READ_CACHE_TTL_MS = Number.parseInt(
+  process.env.BUYORDER_READ_CACHE_TTL_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.BUYORDER_READ_CACHE_TTL_MS || "", 10)
+  : 5000;
+
+const getBuyOrderReadCache = () => {
+  if (!globalBuyOrderReadState.__buyOrderReadCache) {
+    globalBuyOrderReadState.__buyOrderReadCache = new Map();
+  }
+  return globalBuyOrderReadState.__buyOrderReadCache;
+};
+
+const getBuyOrderCachedValue = (key: string) => {
+  const cache = getBuyOrderReadCache();
+  const cached = cache.get(key);
+  if (!cached) {
+    return undefined;
+  }
+  if (cached.expiresAt <= Date.now()) {
+    cache.delete(key);
+    return undefined;
+  }
+  return cached.value;
+};
+
+const setBuyOrderCachedValue = (key: string, value: any) => {
+  const cache = getBuyOrderReadCache();
+  cache.set(key, {
+    value,
+    expiresAt: Date.now() + BUYORDER_READ_CACHE_TTL_MS,
+  });
+};
+
+const ensureBuyOrderReadIndexes = async (collection: any) => {
+  if (globalBuyOrderReadState.__buyOrderReadIndexesReady) {
+    return;
+  }
+
+  globalBuyOrderReadState.__buyOrderReadIndexesReady = true;
+
+  try {
+    await Promise.all([
+      collection.createIndex(
+        { storecode: 1, privateSale: 1, status: 1, createdAt: -1 },
+        { name: BUYORDER_READ_INDEX_STORE_PRIVATE_STATUS_CREATED },
+      ),
+      collection.createIndex(
+        { privateSale: 1, status: 1, createdAt: -1 },
+        { name: BUYORDER_READ_INDEX_PRIVATE_STATUS_CREATED },
+      ),
+      collection.createIndex(
+        { storecode: 1, privateSale: 1, status: 1, audioOn: 1 },
+        { name: BUYORDER_READ_INDEX_STORE_PRIVATE_STATUS_AUDIO },
+      ),
+      collection.createIndex(
+        {
+          storecode: 1,
+          privateSale: 1,
+          status: 1,
+          "buyer.depositName": 1,
+          createdAt: -1,
+        },
+        { name: BUYORDER_READ_INDEX_PAYMENT_REQUESTED },
+      ),
+    ]);
+  } catch (error) {
+    console.error("buyorders read index ensure failed:", error);
+  }
+};
+
 async function fetchBuyOrderRealtimeSnapshot(
   collection: any,
   query: Record<string, any>,
@@ -9387,56 +9473,53 @@ export async function getTotalNumberOfBuyOrders(
 }> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  // get total number of buy orders
-  const totalCount = await collection.countDocuments(
-    {
-      storecode: {
-        $regex: storecode || '', // if storecode is empty, it will match all
-        
-        $options: 'i',
-      },
-      privateSale: { $ne: true },
-      //status: 'paymentConfirmed',
-      status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-    }
-  );
+  await ensureBuyOrderReadIndexes(collection);
 
-
-  // project only necessary fields
-  // tradieId, store,
-  const results = await collection.find<OrderProps>(
-    {
-      storecode: {
-        $regex: storecode || '', // if storecode is empty, it will match all
-        $options: 'i',
-      },
-      privateSale: { $ne: true },
-      status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-    },
-    { projection: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } }
-  )
-    .sort({ createdAt: -1 })
-    .toArray();
-
-
-  // count of audioOn is true
-  const audioOnCount = await collection.countDocuments(
-    {
-      storecode: {
-        $regex: storecode || '', // if storecode is empty, it will match all
-        $options: 'i',
-      },
-      privateSale: { $ne: true },
-      status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-      audioOn: true,
-    }
-  );
-
-  return {
-    totalCount: totalCount,
-    orders: results,
-    audioOnCount: audioOnCount,
+  const safeStorecode = String(storecode || "").trim();
+  const cacheKey = `totalBuyOrders:${safeStorecode || "__all__"}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
   }
+
+  const matchQuery: Record<string, unknown> = {
+    privateSale: { $ne: true },
+    status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
+  };
+
+  if (safeStorecode) {
+    matchQuery.storecode = safeStorecode;
+  }
+
+  const [facetResult = {}] = await collection.aggregate([
+    { $match: matchQuery },
+    {
+      $facet: {
+        totalCountMeta: [{ $count: "value" }],
+        audioOnCountMeta: [
+          { $match: { audioOn: true } },
+          { $count: "value" },
+        ],
+        orders: [
+          { $sort: { createdAt: -1 } },
+          { $project: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } },
+        ],
+      },
+    },
+  ]).toArray();
+
+  const totalCount = Number(facetResult?.totalCountMeta?.[0]?.value || 0);
+  const audioOnCount = Number(facetResult?.audioOnCountMeta?.[0]?.value || 0);
+  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+
+  const result = {
+    totalCount,
+    orders,
+    audioOnCount,
+  };
+
+  setBuyOrderCachedValue(cacheKey, result);
+  return result;
 }
 
 
@@ -10000,41 +10083,47 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  await ensureBuyOrderReadIndexes(collection);
 
-
-  // get all of the paymentRequested orders
-  // project tradeId
-  const paymentRequestedOrders = await collection.find(
-    {
-      privateSale: true,
-      storecode: storecode,
-      'buyer.depositName': { $eq: '' },
-      status: 'paymentRequested',
-    },
-  ).toArray();
-
-  ////console.log('getPaymentRequestedCount paymentRequestedOrders: ' + JSON.stringify(paymentRequestedOrders));
-
-  // get count of paymentRequested orders
-  const count = await collection.countDocuments(
-    {
-      privateSale: true,
-      storecode: storecode,
-      
-      
-      //'seller.walletAddress': walletAddress,
-
-      'buyer.depositName': { $eq: '' },
-
-
-      status: 'paymentRequested',
-    }
-  );
-
-  return {
-    totalCount: count,
-    orders: paymentRequestedOrders,
+  const safeStorecode = String(storecode || "").trim();
+  const cacheKey = `paymentRequested:${safeStorecode || "__all__"}:${String(walletAddress || "").trim().toLowerCase()}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
   }
+
+  const matchQuery: Record<string, unknown> = {
+    privateSale: true,
+    'buyer.depositName': { $eq: '' },
+    status: 'paymentRequested',
+  };
+
+  if (safeStorecode) {
+    matchQuery.storecode = safeStorecode;
+  }
+
+  const [facetResult = {}] = await collection.aggregate([
+    { $match: matchQuery },
+    {
+      $facet: {
+        countMeta: [{ $count: "value" }],
+        orders: [
+          { $sort: { createdAt: -1 } },
+        ],
+      },
+    },
+  ]).toArray();
+
+  const totalCount = Number(facetResult?.countMeta?.[0]?.value || 0);
+  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+
+  const result = {
+    totalCount,
+    orders,
+  };
+
+  setBuyOrderCachedValue(cacheKey, result);
+  return result;
 }
 
 
