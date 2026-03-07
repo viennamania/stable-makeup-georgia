@@ -8589,17 +8589,37 @@ export async function updateBuyOrderSettlement(
     ////////////storecode: string;
   }
 ): Promise<boolean> {
+  if (!ObjectId.isValid(orderId)) {
+    return false;
+  }
+
+  const orderObjectId = new ObjectId(orderId);
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
   const previousOrder = await fetchBuyOrderRealtimeSnapshot(
     collection,
-    { _id: new ObjectId(orderId) },
+    { _id: orderObjectId },
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
 
   // update buyorder
   const result = await collection.updateOne(
-    { _id: new ObjectId(orderId) },
+    {
+      _id: orderObjectId,
+      status: "paymentConfirmed",
+      storecode: { $ne: "admin" },
+      transactionHash: {
+        $type: "string",
+        $nin: ["", "0x"],
+      },
+      transactionHashFail: { $ne: true },
+      $or: [
+        { settlement: { $exists: false } },
+        { settlement: null },
+        { "settlement.settlementAmount": { $exists: false } },
+        { "settlement.settlementAmount": null },
+      ],
+    },
     { $set: {
       settlement: settlement,
       settlementUpdatedAt: new Date().toISOString(),
@@ -8612,7 +8632,7 @@ export async function updateBuyOrderSettlement(
 
     // get storecode from buyorder
     const buyOrder = await collection.findOne<any>(
-      { _id: new ObjectId(orderId) },
+      { _id: orderObjectId },
       { projection: { storecode: 1 } }
     );
     if (!buyOrder || !buyOrder.storecode) {
@@ -8787,7 +8807,7 @@ export async function updateBuyOrderSettlement(
     try {
       const updatedOrder = await fetchBuyOrderRealtimeSnapshot(
         collection,
-        { _id: new ObjectId(orderId) },
+        { _id: orderObjectId },
       );
 
       if (updatedOrder) {

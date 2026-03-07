@@ -5,6 +5,13 @@ import {
 } from '@lib/api/order';
 import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
+const normalizeStorecode = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
 
 
 export async function POST(request: NextRequest) {
@@ -42,19 +49,30 @@ export async function POST(request: NextRequest) {
 
   } = body;
 
-  const guardStorecode = body?.requesterStorecode || storecode || "admin";
+  const requestedStorecode = normalizeStorecode(storecode);
+  const requesterStorecode = normalizeStorecode(body?.requesterStorecode);
+
+  if (requestedStorecode && requesterStorecode && requestedStorecode !== requesterStorecode) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const guardStorecode = requesterStorecode || requestedStorecode || "admin";
 
   const guard = await verifyCenterStoreAdminGuard({
     request,
     route: "/api/order/getAllBuyOrders",
     body,
     storecodeRaw: guardStorecode,
-    requesterWalletAddressRaw: walletAddress,
+    requesterWalletAddressRaw: body?.requesterWalletAddress || walletAddress,
   });
 
   if (!guard.ok) {
     return NextResponse.json({ error: guard.error }, { status: guard.status });
   }
+
+  const effectiveStorecode = guard.requesterIsAdmin
+    ? requestedStorecode
+    : guardStorecode;
 
   const isSearchDepositCompleted =
     searchDepositCompleted === true || searchDepositCompleted === "true";
@@ -93,7 +111,7 @@ export async function POST(request: NextRequest) {
     limit: limit || 100,
     page: page || 1,
     agentcode: agentcode || "",
-    storecode: storecode || "",
+    storecode: effectiveStorecode,
     walletAddress:  walletAddress || "",
     searchMyOrders:  searchMyOrders || false,
     searchOrderStatusCancelled,

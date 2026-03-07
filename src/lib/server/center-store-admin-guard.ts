@@ -61,6 +61,32 @@ const isGlobalAdminUser = (user: any) => {
 
 const CENTER_STORE_ADMIN_NONCE_COLLECTION = "centerStoreAdminActionNonces";
 const DEFAULT_CENTER_STORE_ADMIN_NONCE_TTL_MS = 10 * 60 * 1000;
+const CENTER_STORE_ADMIN_NONCE_UNIQ_INDEX = "uniq_centerStoreAdminActionNonceKey";
+const CENTER_STORE_ADMIN_NONCE_TTL_INDEX = "ttl_centerStoreAdminActionNonceExpiresAt";
+
+const globalCenterStoreAdminSecurity = globalThis as typeof globalThis & {
+  __centerStoreAdminNonceIndexesReady?: boolean;
+};
+
+const ensureCenterStoreAdminNonceIndexes = async () => {
+  if (globalCenterStoreAdminSecurity.__centerStoreAdminNonceIndexesReady) {
+    return;
+  }
+
+  const dbClient = await clientPromise;
+  const collection = dbClient.db(dbName).collection(CENTER_STORE_ADMIN_NONCE_COLLECTION);
+
+  await collection.createIndex(
+    { nonceKey: 1 },
+    { unique: true, name: CENTER_STORE_ADMIN_NONCE_UNIQ_INDEX }
+  );
+  await collection.createIndex(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, name: CENTER_STORE_ADMIN_NONCE_TTL_INDEX }
+  );
+
+  globalCenterStoreAdminSecurity.__centerStoreAdminNonceIndexesReady = true;
+};
 
 const consumeCenterStoreAdminNonce = async ({
   route,
@@ -75,13 +101,9 @@ const consumeCenterStoreAdminNonce = async ({
 }) => {
   const dbClient = await clientPromise;
   const collection = dbClient.db(dbName).collection(CENTER_STORE_ADMIN_NONCE_COLLECTION);
+  await ensureCenterStoreAdminNonceIndexes();
 
   const nonceKey = `${route}:${walletAddress}:${nonce}`;
-  const existing = await collection.findOne({ nonceKey }, { projection: { _id: 1 } });
-
-  if (existing) {
-    return false;
-  }
 
   const now = Date.now();
   const ttlFromNow = Number.parseInt(
@@ -93,17 +115,30 @@ const consumeCenterStoreAdminNonce = async ({
       ? ttlFromNow
       : DEFAULT_CENTER_STORE_ADMIN_NONCE_TTL_MS;
 
-  await collection.insertOne({
-    nonceKey,
-    route,
-    walletAddress,
-    nonce,
-    signedAt: signedAtIso,
-    createdAt: new Date(now).toISOString(),
-    expiresAt: new Date(now + ttlMs).toISOString(),
-  });
+  try {
+    const result = await collection.updateOne(
+      { nonceKey },
+      {
+        $setOnInsert: {
+          nonceKey,
+          route,
+          walletAddress,
+          nonce,
+          signedAt: signedAtIso,
+          createdAt: new Date(now),
+          expiresAt: new Date(now + ttlMs),
+        },
+      },
+      { upsert: true }
+    );
 
-  return true;
+    return Boolean(result.upsertedCount);
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      return false;
+    }
+    throw error;
+  }
 };
 
 export const verifyCenterStoreAdminGuard = async ({

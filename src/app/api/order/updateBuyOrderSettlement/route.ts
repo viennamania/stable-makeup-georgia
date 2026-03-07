@@ -11,7 +11,19 @@ const normalizeStorecode = (value: unknown) => {
     return "";
   }
 
+  return value.trim().toLowerCase();
+};
+
+const normalizeTransactionHash = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
   return value.trim();
+};
+
+const isValidTransactionHash = (value: string) => {
+  return /^0x[a-fA-F0-9]{64}$/.test(value);
 };
 
 
@@ -22,12 +34,15 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const {
-    updater, // who updates the settlement
     orderId,
     transactionHash,
     storecode,
     //settlement,
   } = body;
+
+  if (typeof orderId !== "string" || !orderId.trim()) {
+    return NextResponse.json({ error: "orderId is required" }, { status: 400 });
+  }
 
   const guard = await verifyCenterStoreAdminGuard({
     request,
@@ -223,14 +238,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (buyOrder.status !== "paymentConfirmed") {
+      return NextResponse.json({ error: "BuyOrder is not settlement-ready" }, { status: 409 });
+    }
 
+    if (buyOrderStorecode === "admin") {
+      return NextResponse.json({ error: "Admin store orders cannot be settled manually" }, { status: 403 });
+    }
 
+    if (buyOrder.transactionHashFail === true) {
+      return NextResponse.json({ error: "BuyOrder transaction marked as failed" }, { status: 409 });
+    }
 
-    
-    let txid = "0x";
+    if (buyOrder?.settlement?.settlementAmount !== undefined && buyOrder?.settlement?.settlementAmount !== null) {
+      return NextResponse.json({ error: "BuyOrder already settled" }, { status: 409 });
+    }
 
-    if (transactionHash) {
-      txid = transactionHash; // Use the provided transaction hash
+    let txid = normalizeTransactionHash(transactionHash);
+    if (!txid) {
+      txid = normalizeTransactionHash(buyOrder.transactionHash);
+    }
+    if (!isValidTransactionHash(txid)) {
+      return NextResponse.json({ error: "Invalid transactionHash" }, { status: 400 });
     }
 
     const krwRate = buyOrder.rate;
@@ -307,7 +336,7 @@ export async function POST(request: NextRequest) {
 
     // updateBuyOrderSettlement
     const result = await updateBuyOrderSettlement({
-      updater: updater || guard.requesterWalletAddress, // who updates the settlement
+      updater: guard.requesterWalletAddress, // who updates the settlement
       orderId: orderId,
       settlement: settlement,
       /////////////storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder
