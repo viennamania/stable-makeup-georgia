@@ -23,9 +23,12 @@ export const dynamic = "force-dynamic";
 
 const ROUTE = "/api/admin/member/collectPrivateKeyWalletBalances";
 const SIGNING_PREFIX = "stable-georgia:admin-member-private-key-wallet-collect:v1";
-const DEFAULT_SCAN_LIMIT = 10000;
+const DEFAULT_SCAN_LIMIT = 3000;
 const DEFAULT_SCAN_CONCURRENCY = 20;
 const DEFAULT_TRANSFER_CONCURRENCY = 3;
+const DEFAULT_TRANSFER_TARGET_LIMIT = 30;
+const DEFAULT_RPC_TIMEOUT_MS = 20_000;
+const DEFAULT_TX_CONFIRM_TIMEOUT_MS = 45_000;
 const MIN_USDT_BALANCE = 0.1;
 const SNAPSHOT_COLLECTION = "adminMemberPrivateKeyWalletBalanceSnapshots";
 const SNAPSHOT_KEY = "default";
@@ -140,6 +143,28 @@ const mapWithConcurrency = async <T, R>(
   return results;
 };
 
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  const safeTimeoutMs = Math.max(1_000, timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), safeTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+};
+
 const toReasonCounts = (items: SkipDetail[]) => {
   const counts: Record<string, number> = {};
   for (const item of items) {
@@ -190,6 +215,18 @@ export async function POST(request: NextRequest) {
   const transferConcurrency = parsePositiveInt(
     process.env.ADMIN_PRIVATEKEY_TRANSFER_CONCURRENCY,
     DEFAULT_TRANSFER_CONCURRENCY,
+  );
+  const transferTargetLimit = parsePositiveInt(
+    process.env.ADMIN_PRIVATEKEY_TRANSFER_TARGET_LIMIT,
+    DEFAULT_TRANSFER_TARGET_LIMIT,
+  );
+  const rpcTimeoutMs = parsePositiveInt(
+    process.env.ADMIN_PRIVATEKEY_RPC_TIMEOUT_MS,
+    DEFAULT_RPC_TIMEOUT_MS,
+  );
+  const txConfirmTimeoutMs = parsePositiveInt(
+    process.env.ADMIN_PRIVATEKEY_TX_CONFIRM_TIMEOUT_MS,
+    DEFAULT_TX_CONFIRM_TIMEOUT_MS,
   );
 
   const dbClient = await clientPromise;
@@ -347,10 +384,14 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const rawBalance = await balanceOf({
-          contract: usdtContract,
-          address: walletAddress,
-        });
+        const rawBalance = await withTimeout(
+          balanceOf({
+            contract: usdtContract,
+            address: walletAddress,
+          }),
+          rpcTimeoutMs,
+          "balance read timeout",
+        );
         const rawBalanceBigInt = BigInt(rawBalance as any);
 
         if (rawBalanceBigInt < minUsdtRawBalance) {
@@ -394,13 +435,18 @@ export async function POST(request: NextRequest) {
   const transferTargets = scanResults
     .map((item) => item.target)
     .filter((item): item is TransferTarget => Boolean(item));
+  const transferTargetsToProcess = transferTargets.slice(0, transferTargetLimit);
+  const remainingTransferTargetCount = Math.max(
+    0,
+    transferTargets.length - transferTargetsToProcess.length,
+  );
 
   const scanSkipped = scanResults
     .map((item) => item.skipped)
     .filter((item): item is SkipDetail => Boolean(item));
 
   const transferResults = await mapWithConcurrency(
-    transferTargets,
+    transferTargetsToProcess,
     transferConcurrency,
     async (target) => {
       try {
@@ -441,10 +487,14 @@ export async function POST(request: NextRequest) {
           amount: amountUsdt,
         });
 
-        const receipt = await sendAndConfirmTransaction({
-          transaction,
-          account,
-        });
+        const receipt = await withTimeout(
+          sendAndConfirmTransaction({
+            transaction,
+            account,
+          }),
+          txConfirmTimeoutMs,
+          "transaction confirm timeout",
+        );
 
         const transactionHash = normalizeString(receipt?.transactionHash);
         if (!transactionHash) {
@@ -539,7 +589,13 @@ export async function POST(request: NextRequest) {
         scanLimit,
         scanConcurrency,
         eligibleTransferCount: transferTargets.length,
+        queuedTransferCount: transferTargetsToProcess.length,
+        remainingTransferTargetCount,
+        transferTargetLimit,
+        transferTargetLimitApplied: remainingTransferTargetCount > 0,
         transferConcurrency,
+        rpcTimeoutMs,
+        txConfirmTimeoutMs,
         transferredCount: transfers.length,
         skippedCount: skipped.length,
       },

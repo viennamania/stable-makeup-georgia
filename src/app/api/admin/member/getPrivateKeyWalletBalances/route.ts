@@ -21,8 +21,9 @@ const SIGNING_PREFIX = "stable-georgia:admin-member-private-key-wallet-balances:
 const SNAPSHOT_COLLECTION = "adminMemberPrivateKeyWalletBalanceSnapshots";
 const SNAPSHOT_KEY = "default";
 const COOLDOWN_MS = 10 * 60 * 1000;
-const DEFAULT_SCAN_LIMIT = 10000;
+const DEFAULT_SCAN_LIMIT = 3000;
 const DEFAULT_SCAN_CONCURRENCY = 20;
+const DEFAULT_RPC_TIMEOUT_MS = 20_000;
 const MIN_USDT_BALANCE = 0.1;
 
 type WalletCandidateUser = {
@@ -115,6 +116,28 @@ const mapWithConcurrency = async <T, R>(
   return results;
 };
 
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  const safeTimeoutMs = Math.max(1_000, timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), safeTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+};
+
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try {
@@ -152,6 +175,10 @@ export async function POST(request: NextRequest) {
   const scanConcurrency = parsePositiveInt(
     process.env.ADMIN_PRIVATEKEY_BALANCE_CONCURRENCY,
     DEFAULT_SCAN_CONCURRENCY,
+  );
+  const rpcTimeoutMs = parsePositiveInt(
+    process.env.ADMIN_PRIVATEKEY_RPC_TIMEOUT_MS,
+    DEFAULT_RPC_TIMEOUT_MS,
   );
 
   const dbClient = await clientPromise;
@@ -316,10 +343,14 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const rawBalance = await balanceOf({
-          contract: usdtContract,
-          address: normalizedWalletAddress,
-        });
+        const rawBalance = await withTimeout(
+          balanceOf({
+            contract: usdtContract,
+            address: normalizedWalletAddress,
+          }),
+          rpcTimeoutMs,
+          "balance read timeout",
+        );
         if (rawBalance < minUsdtRawBalance) {
           return null;
         }
@@ -373,6 +404,7 @@ export async function POST(request: NextRequest) {
     scanLimitApplied: skippedByScanLimitCount > 0,
     scanLimit,
     scanConcurrency,
+    rpcTimeoutMs,
     positiveBalanceCount: items.length,
   };
 

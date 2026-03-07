@@ -138,14 +138,21 @@ export default function AdminMemberPrivateKeyWalletBalancePage({
       const transferredCount = Number(response?.result?.counts?.transferredCount || 0);
       const skippedCount = Number(response?.result?.counts?.skippedCount || 0);
       const totalTransferredUsdt = Number(response?.result?.totalTransferredUsdt || 0);
+      const remainingTransferTargetCount = Number(
+        response?.result?.counts?.remainingTransferTargetCount || 0,
+      );
 
       if (transferredCount > 0) {
         toast.success(
-          `회수 완료: ${transferredCount.toLocaleString("ko-KR")}건 / ${totalTransferredUsdt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} USDT`,
+          remainingTransferTargetCount > 0
+            ? `회수 완료: ${transferredCount.toLocaleString("ko-KR")}건 / ${totalTransferredUsdt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} USDT (남은 대상 ${remainingTransferTargetCount.toLocaleString("ko-KR")}건, 다시 실행 필요)`
+            : `회수 완료: ${transferredCount.toLocaleString("ko-KR")}건 / ${totalTransferredUsdt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })} USDT`,
         );
       } else {
         toast.success(
-          `회수 대상 없음 (스킵 ${skippedCount.toLocaleString("ko-KR")}건)`,
+          remainingTransferTargetCount > 0
+            ? `이번 호출 처리 없음 (스킵 ${skippedCount.toLocaleString("ko-KR")}건, 남은 대상 ${remainingTransferTargetCount.toLocaleString("ko-KR")}건)`
+            : `회수 대상 없음 (스킵 ${skippedCount.toLocaleString("ko-KR")}건)`,
         );
       }
 

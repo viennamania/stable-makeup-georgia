@@ -22,12 +22,44 @@ export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 const CLEARANCE_WALLET_ROUTE = "/api/user/clearanceWalletAddress";
+const DEFAULT_RPC_TIMEOUT_MS = 20_000;
+const DEFAULT_TX_CONFIRM_TIMEOUT_MS = 60_000;
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
     return "";
   }
   return value.trim();
+};
+
+const parsePositiveInt = (value: unknown, fallback: number): number => {
+  const parsed = Number.parseInt(normalizeString(value), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+};
+
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  const safeTimeoutMs = Math.max(1_000, timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), safeTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
 };
 
 export async function POST(request: NextRequest) {
@@ -40,6 +72,14 @@ export async function POST(request: NextRequest) {
 
   const requestedWalletAddress = normalizeString(body.walletAddress);
   const requestedStorecode = normalizeString(body.storecode);
+  const rpcTimeoutMs = parsePositiveInt(
+    process.env.CLEARANCE_RPC_TIMEOUT_MS ?? process.env.ADMIN_PRIVATEKEY_RPC_TIMEOUT_MS,
+    DEFAULT_RPC_TIMEOUT_MS,
+  );
+  const txConfirmTimeoutMs = parsePositiveInt(
+    process.env.CLEARANCE_TX_CONFIRM_TIMEOUT_MS ?? process.env.ADMIN_PRIVATEKEY_TX_CONFIRM_TIMEOUT_MS,
+    DEFAULT_TX_CONFIRM_TIMEOUT_MS,
+  );
 
   if (!requestedWalletAddress || !requestedStorecode) {
     return NextResponse.json(
@@ -172,14 +212,18 @@ export async function POST(request: NextRequest) {
     });
 
     const targetWalletAddress = normalizeString(user.walletAddress) || normalizedRequestedWalletAddress;
-    const balance = await balanceOf({
-      contract: getContract({
-        client: thirdwebClient,
-        chain: chainConfig,
-        address: contractAddressUSDT,
+    const balance = await withTimeout(
+      balanceOf({
+        contract: getContract({
+          client: thirdwebClient,
+          chain: chainConfig,
+          address: contractAddressUSDT,
+        }),
+        address: targetWalletAddress,
       }),
-      address: targetWalletAddress,
-    });
+      rpcTimeoutMs,
+      "balance read timeout",
+    );
 
     const rawBalance = Number(balance);
     if (!Number.isFinite(rawBalance) || rawBalance <= 0) {
@@ -227,10 +271,14 @@ export async function POST(request: NextRequest) {
       amount: clearanceUSDTBalance,
     });
 
-    const result = await sendAndConfirmTransaction({
-      account,
-      transaction: transactionSendToStore,
-    });
+    const result = await withTimeout(
+      sendAndConfirmTransaction({
+        account,
+        transaction: transactionSendToStore,
+      }),
+      txConfirmTimeoutMs,
+      "transaction confirm timeout",
+    );
 
     if (!result?.transactionHash) {
       return NextResponse.json(
