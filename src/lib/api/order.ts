@@ -152,6 +152,54 @@ function escapeRegex(value: string): string {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function normalizeSearchText(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+}
+
+function toContainsRegexFilter(value: unknown):
+  | {
+      $regex: string;
+      $options: "i";
+    }
+  | undefined {
+  const safe = normalizeSearchText(value);
+  if (!safe) {
+    return undefined;
+  }
+  return {
+    $regex: escapeRegex(safe),
+    $options: "i",
+  };
+}
+
+function appendExactFilter(target: Record<string, any>, field: string, value: unknown) {
+  const safe = normalizeSearchText(value);
+  if (!safe) {
+    return;
+  }
+  target[field] = safe;
+}
+
+function appendContainsFilter(target: Record<string, any>, field: string, value: unknown) {
+  const regexFilter = toContainsRegexFilter(value);
+  if (!regexFilter) {
+    return;
+  }
+  target[field] = regexFilter;
+}
+
+const toDoubleExpr = (path: string) => ({
+  $convert: {
+    input: `$${path}`,
+    to: "double",
+    onError: 0,
+    onNull: 0,
+  },
+});
+
 function toNormalizedHash(value: unknown): string | null {
   const raw = String(value || "").trim();
   if (!raw || raw === "0x") {
@@ -168,6 +216,10 @@ const BUYORDER_READ_INDEX_STORE_PRIVATE_STATUS_AUDIO =
   "idx_buyorders_store_private_status_audio";
 const BUYORDER_READ_INDEX_PAYMENT_REQUESTED =
   "idx_buyorders_payment_requested";
+const BUYORDER_READ_INDEX_STATUS_PRIVATE_AGENT_STORE_CREATED =
+  "idx_buyorders_status_private_agent_store_created";
+const BUYORDER_READ_INDEX_PRIVATE_STATUS_AGENT_CREATED =
+  "idx_buyorders_private_status_agent_created";
 
 const globalBuyOrderReadState = globalThis as typeof globalThis & {
   __buyOrderReadIndexesReady?: boolean;
@@ -239,6 +291,25 @@ const ensureBuyOrderReadIndexes = async (collection: any) => {
           createdAt: -1,
         },
         { name: BUYORDER_READ_INDEX_PAYMENT_REQUESTED },
+      ),
+      collection.createIndex(
+        {
+          status: 1,
+          privateSale: 1,
+          agentcode: 1,
+          storecode: 1,
+          createdAt: -1,
+        },
+        { name: BUYORDER_READ_INDEX_STATUS_PRIVATE_AGENT_STORE_CREATED },
+      ),
+      collection.createIndex(
+        {
+          privateSale: 1,
+          status: 1,
+          agentcode: 1,
+          createdAt: -1,
+        },
+        { name: BUYORDER_READ_INDEX_PRIVATE_STATUS_AGENT_CREATED },
       ),
     ]);
   } catch (error) {
@@ -6654,497 +6725,110 @@ export async function getAllTradesByAdmin(
   }
 
 ): Promise<any> {
+  const fromDateValue = fromDate
+    ? new Date(fromDate + 'T00:00:00+09:00').toISOString()
+    : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate
+    ? new Date(toDate + 'T23:59:59+09:00').toISOString()
+    : new Date().toISOString();
 
-  //const fromDateValue = fromDate ? fromDate + 'T00:00:00.000Z' : new Date(0).toISOString();
+  const safeLimit = Math.max(1, Number(limit || 0) || 1);
+  const safePage = Math.max(1, Number(page || 0) || 1);
+  const skip = (safePage - 1) * safeLimit;
 
-  const fromDateValue = fromDate ? new Date(fromDate + 'T00:00:00+09:00').toISOString() : '1970-01-01T00:00:00Z';
-
-  //const toDateValue = toDate ? toDate + 'T23:59:59.999Z' : new Date().toISOString();
-  const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
-
-
-  //console.log('getAllTradesByAdmin fromDateValue: ' + fromDateValue);
-  //console.log('getAllTradesByAdmin toDateValue: ' + toDateValue);
-  
-
-  //console.log('privateSale: ' + privateSale);
-
-
-
-  //console.log('getAllTradesByAdmin startDate: ' + startDate);
-  //console.log('getAllTradesByAdmin endDate: ' + endDate);
-
-  /*
-  if (!startDate) {
-    startDate = new Date(0).toISOString();
-  }
-  if (!endDate) {
-    endDate = new Date().toISOString();
-  }
-  */
-
-
-  /*
-  console.log('getAllTradesByAdmin startDate: ' + startDate);
-  console.log('getAllTradesByAdmin endDate: ' + endDate);
-  console.log('getAllTradesByAdmin searchNickname: ' + searchNickname);
-  console.log('getAllTradesByAdmin walletAddress: ' + walletAddress);
-
-  console.log('getAllTradesByAdmin storecode: ' + storecode);
-  console.log('getAllTradesByAdmin searchOrderStatusCompleted: ' + searchOrderStatusCompleted);
-  console.log('getAllTradesByAdmin searchBuyer: ' + searchBuyer);
-  console.log('getAllTradesByAdmin searchDepositName: ' + searchDepositName);
-  */
-
-  ///console.log('getAllTradesByAdmin agentcode: ' + agentcode);
-
+  const safeAgentcode = normalizeSearchText(agentcode);
+  const safeStorecode = normalizeSearchText(storecode);
+  const safeSearchBuyer = normalizeSearchText(searchBuyer);
+  const safeSearchDepositName = normalizeSearchText(searchDepositName);
+  const safeSearchStoreBankAccountNumber = normalizeSearchText(searchStoreBankAccountNumber);
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-
-
-
-
-
-  const results = await collection.find<OrderProps>(
-
-    //{ walletAddress: walletAddress, status: status },
-
-    {
-      ///'seller.walletAddress': walletAddress,
-
-      //nickname: { $regex: searchNickname, $options: 'i' },
-
-
-      status: 'paymentConfirmed',
-
-      //privateSale: { $ne: true },
-      privateSale: privateSale,
-
-
-      agentcode: { $regex: agentcode, $options: 'i' },
-      //storecode: storecode,
-      storecode: { $regex: storecode, $options: 'i' },
-
-      nickname: { $regex: searchBuyer, $options: 'i' },
-
-      'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-      'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-      //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-
-      createdAt: { $gte: fromDateValue, $lt: toDateValue },
-
-
-    },
-
-  )
-  .sort({ paymentConfirmedAt: -1 })
-  .limit(limit).skip((page - 1) * limit).toArray();
-
-
-  
-  /*
-  // get total count of orders
-  const totalCount = await collection.countDocuments(
-    {
-      
-      ////'seller.walletAddress': walletAddress,
-
-      // search include searchNickname
-      //nickname: { $regex: searchNickname, $options: 'i' },
-
-      status: 'paymentConfirmed',
-
-      //privateSale: { $ne: true },
-      privateSale: privateSale,
-
-      agentcode: { $regex: agentcode, $options: 'i' },
-      //storecode: storecode,
-      storecode: { $regex: storecode, $options: 'i' },
-
-      nickname: { $regex: searchBuyer, $options: 'i' },
-      'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-      'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-
-      //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-      createdAt: { $gte: fromDateValue, $lt: toDateValue },
-
- 
-    }
-  );
-  */
-
-
-
-  //console.log('getAllTradesByAdmin totalCount: ' + totalCount);
-
-  // sum of krwAmount
-  // TypeError: Cannot read properties of undefined (reading 'totalKrwAmount')
-
-  /*
-  const totalResult = await collection.aggregate([
-    {
-      $match: {
-        
-        //'seller.walletAddress': walletAddress,
-
-        //nickname: { $regex: searchNickname, $options: 'i' },
-
-
-        status: 'paymentConfirmed',
-
-        ///privateSale: { $ne: true },
-        privateSale: privateSale,
-
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        
-
-        totalCount: { $sum: 1 },
-        totalKrwAmount: { $sum: '$krwAmount' },
-        totalUsdtAmount: { $sum: '$usdtAmount' },
-
-        totalSettlementCount: { $sum: 1 },
-        totalSettlementAmount: { $sum: { $toDouble: '$settlement.settlementAmount' } },
-        totalSettlementAmountKRW: { $sum: { $toDouble: '$settlement.settlementAmountKRW' } },
-
-        totalFeeAmount: { $sum: { $toDouble: '$settlement.feeAmount' } },
-        totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
-
-        totalAgentFeeAmount: { $sum: { $toDouble: '$settlement.agentFeeAmount' } },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
-
-      }
-    }
-  ]).toArray();
-  */
-
-  /////console.log('getAllTradesByAdmin totalKrwAmount: ' + JSON.stringify(totalKrwAmount));
-
-
-  /*
-  // totalUsdtAmount
-  const totalUsdtAmount = await collection.aggregate([
-    {
-      $match: {
-        //'seller.walletAddress': walletAddress,
-
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-
-        //privateSale: { $ne: true },
-        privateSale: privateSale,
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalUsdtAmount: { $sum: '$usdtAmount' },
-      }
-    }
-  ]).toArray();
-  */
-
-
-
-
-
-  /*
-  // totalSettlementCount
-  const totalSettlementCount = await collection.aggregate([
-    {
-      $match: {
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-        // settlement is not null
-        settlement: { $exists: true, $ne: null },
-
-
-
-        //privateSale: { $ne: true },
-        privateSale: privateSale,
-
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalSettlementCount: { $sum: 1 },
-      }
-    }
-  ]).toArray();
-  */
-
-
-  /*
-  // totalSettlementAmount
-  // settlement.settlementAmount
-  const totalSettlementAmount = await collection.aggregate([
-    {
-      $match: {
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-        settlement: { $exists: true, $ne: null },
-
-        ///privateSale: { $ne: true },
-        privateSale: privateSale,
-
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalSettlementAmount: { $sum: '$settlement.settlementAmount' },
-      }
-    }
-  ]).toArray();
-  */
-
-  /*
-  // totalSettlementAmountKRW
-  const totalSettlementAmountKRW = await collection.aggregate([
-    {
-      $match: {
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-        settlement: { $exists: true, $ne: null },
-
-        //privateSale: { $ne: true },
-        privateSale: privateSale,
-
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    // $settlement.settlementAmountKRW is string
-
-    {
-      $group: {
-        _id: null,
-        ///totalSettlementAmountKRW: { $sum: '$settlement.settlementAmountKRW' },
-        totalSettlementAmountKRW: { $sum: { $toDouble: '$settlement.settlementAmountKRW' } },
-      }
-    }
-  ]).toArray();
-  */
-  
-
-  /*
-  // total feeAmount
-  const totalFeeAmount = await collection.aggregate([
-    {
-      $match: {
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-        settlement: { $exists: true, $ne: null },
-
-        
-        //privateSale: { $ne: true },
-        privateSale: privateSale,
-
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalFeeAmount: { $sum: '$settlement.feeAmount' },
-      }
-    }
-  ]).toArray();
-  */
-
-  /*
-  // total feeAmountKRW
-  const totalFeeAmountKRW = await collection.aggregate([
-    {
-      $match: {
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-        settlement: { $exists: true, $ne: null },
-
-        //privateSale: { $ne: true },
-        privateSale: privateSale,
-        
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        ///totalFeeAmountKRW: { $sum: '$settlement.feeAmountKRW' },
-        totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
-      }
-    }
-  ]).toArray();
-  */
-
-
-
-  /*
-  // total agentFeeAmount, agentFeeAmountKRW
-  const totalResult = await collection.aggregate([
-    {
-      $match: {
-        //nickname: { $regex: searchNickname, $options: 'i' },
-        status: 'paymentConfirmed',
-        settlement: { $exists: true, $ne: null },
-        //privateSale: { $ne: true },
-        privateSale: privateSale,
-        agentcode: { $regex: agentcode, $options: 'i' },
-        //storecode: storecode,
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalAgentFeeAmount: { $sum: '$settlement.agentFeeAmount' },
-        totalAgentFeeAmountKRW: { $sum: { $toDouble: '$settlement.agentFeeAmountKRW' } },
-      }
-    }
-  ]).toArray();
-  */
-
-
-
-
-
-
-  //console.log('getAllTradesByAdmin totalCount: ' + totalCount);
-  //console.log('getAllTradesByAdmin totalSettlementCount: ' + totalSettlementCount[0]?.totalSettlementCount);
-
-
-  /*
-  return {
-    totalCount: totalCount,
-    totalKrwAmount: totalKrwAmount ? totalKrwAmount[0]?.totalKrwAmount : 0,
-    totalUsdtAmount: totalUsdtAmount ? totalUsdtAmount[0]?.totalUsdtAmount : 0,
-    totalSettlementCount: totalSettlementCount ? totalSettlementCount[0]?.totalSettlementCount : 0,
-    totalSettlementAmount: totalSettlementAmount ? totalSettlementAmount[0]?.totalSettlementAmount : 0,
-    totalSettlementAmountKRW: totalSettlementAmountKRW ? totalSettlementAmountKRW[0]?.totalSettlementAmountKRW : 0,
-    totalFeeAmount: totalFeeAmount ? totalFeeAmount[0]?.totalFeeAmount : 0,
-    totalFeeAmountKRW: totalFeeAmountKRW ? totalFeeAmountKRW[0]?.totalFeeAmountKRW : 0,
-
-    totalAgentFeeAmount: totalResult ? totalResult[0]?.totalAgentFeeAmount : 0,
-    totalAgentFeeAmountKRW: totalResult ? totalResult[0]?.totalAgentFeeAmountKRW : 0,
-
-    orders: results,
-  };
-  */
-  return {
-    //totalCount: totalResult ? totalResult[0]?.totalCount : 0,
-    //totalKrwAmount: totalResult ? totalResult[0]?.totalKrwAmount : 0,
-    //totalUsdtAmount: totalResult ? totalResult[0]?.totalUsdtAmount : 0,
-    //totalSettlementCount: totalResult ? totalResult[0]?.totalSettlementCount : 0,
-    //totalSettlementAmount: totalResult ? totalResult[0]?.totalSettlementAmount : 0,
-    //totalSettlementAmountKRW: totalResult ? totalResult[0]?.totalSettlementAmountKRW : 0,
-    
-    //totalFeeAmount: totalResult ? totalResult[0]?.totalFeeAmount : 0,
-    //totalFeeAmountKRW: totalResult ? totalResult[0]?.totalFeeAmountKRW : 0,
-    //totalAgentFeeAmount: totalResult ? totalResult[0]?.totalAgentFeeAmount : 0,
-    //totalAgentFeeAmountKRW: totalResult ? totalResult[0]?.totalAgentFeeAmountKRW : 0,
-
-    orders: results,
+  await ensureBuyOrderReadIndexes(collection);
+
+  const cacheKey = `getAllTradesByAdmin:${JSON.stringify({
+    limit: safeLimit,
+    page: safePage,
+    privateSale: Boolean(privateSale),
+    agentcode: safeAgentcode,
+    storecode: safeStorecode,
+    searchBuyer: safeSearchBuyer,
+    searchDepositName: safeSearchDepositName,
+    searchStoreBankAccountNumber: safeSearchStoreBankAccountNumber,
+    fromDate: fromDateValue,
+    toDate: toDateValue,
+  })}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const matchQuery: Record<string, any> = {
+    status: 'paymentConfirmed',
+    privateSale: Boolean(privateSale),
+    createdAt: { $gte: fromDateValue, $lt: toDateValue },
   };
 
+  appendExactFilter(matchQuery, 'agentcode', safeAgentcode);
+  appendExactFilter(matchQuery, 'storecode', safeStorecode);
+  appendContainsFilter(matchQuery, 'nickname', safeSearchBuyer);
+  appendContainsFilter(matchQuery, 'buyer.depositName', safeSearchDepositName);
+  appendContainsFilter(matchQuery, 'store.bankInfo.accountNumber', safeSearchStoreBankAccountNumber);
+
+  const [facetResult = {}] = await collection.aggregate([
+    { $match: matchQuery },
+    {
+      $facet: {
+        orders: [
+          { $sort: { paymentConfirmedAt: -1, createdAt: -1 } },
+          { $skip: skip },
+          { $limit: safeLimit },
+        ],
+        summary: [
+          {
+            $group: {
+              _id: null,
+              totalCount: { $sum: 1 },
+              totalKrwAmount: { $sum: { $ifNull: ['$krwAmount', 0] } },
+              totalUsdtAmount: { $sum: { $ifNull: ['$usdtAmount', 0] } },
+              totalSettlementCount: {
+                $sum: {
+                  $cond: [{ $ne: ['$settlement', null] }, 1, 0],
+                },
+              },
+              totalSettlementAmount: { $sum: toDoubleExpr('settlement.settlementAmount') },
+              totalSettlementAmountKRW: { $sum: toDoubleExpr('settlement.settlementAmountKRW') },
+              totalFeeAmount: { $sum: toDoubleExpr('settlement.feeAmount') },
+              totalFeeAmountKRW: { $sum: toDoubleExpr('settlement.feeAmountKRW') },
+              totalAgentFeeAmount: { $sum: toDoubleExpr('settlement.agentFeeAmount') },
+              totalAgentFeeAmountKRW: { $sum: toDoubleExpr('settlement.agentFeeAmountKRW') },
+            },
+          },
+        ],
+      },
+    },
+  ]).toArray();
+
+  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+  const summary = facetResult?.summary?.[0] || {};
+
+  const result = {
+    totalCount: Number(summary?.totalCount || 0),
+    totalKrwAmount: Number(summary?.totalKrwAmount || 0),
+    totalUsdtAmount: Number(summary?.totalUsdtAmount || 0),
+    totalSettlementCount: Number(summary?.totalSettlementCount || 0),
+    totalSettlementAmount: Number(summary?.totalSettlementAmount || 0),
+    totalSettlementAmountKRW: Number(summary?.totalSettlementAmountKRW || 0),
+    totalFeeAmount: Number(summary?.totalFeeAmount || 0),
+    totalFeeAmountKRW: Number(summary?.totalFeeAmountKRW || 0),
+    totalAgentFeeAmount: Number(summary?.totalAgentFeeAmount || 0),
+    totalAgentFeeAmountKRW: Number(summary?.totalAgentFeeAmountKRW || 0),
+    orders,
+    trades: orders,
+  };
+
+  setBuyOrderCachedValue(cacheKey, result);
+  return result;
 }
 
 
@@ -7203,381 +6887,117 @@ export async function getAllTradesByAdmin(
   }
 
 ): Promise<any> {
+  const fromDateValue = fromDate
+    ? new Date(fromDate + 'T00:00:00+09:00').toISOString()
+    : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate
+    ? new Date(toDate + 'T23:59:59+09:00').toISOString()
+    : new Date().toISOString();
 
-  //const fromDateValue = fromDate ? fromDate + 'T00:00:00.000Z' : new Date(0).toISOString();
-  const fromDateValue = fromDate ? new Date(fromDate + 'T00:00:00+09:00').toISOString() : '1970-01-01T00:00:00Z';
+  const safeLimit = Math.max(1, Number(limit || 0) || 1);
+  const safePage = Math.max(1, Number(page || 0) || 1);
+  const skip = (safePage - 1) * safeLimit;
 
+  const safeAgentcode = normalizeSearchText(agentcode);
+  const safeStorecode = normalizeSearchText(storecode);
+  const safeSearchBuyer = normalizeSearchText(searchBuyer);
+  const safeSearchDepositName = normalizeSearchText(searchDepositName);
+  const safeSearchStoreBankAccountNumber = normalizeSearchText(searchStoreBankAccountNumber);
 
-  //const toDateValue = toDate ? toDate + 'T23:59:59.999Z' : new Date().toISOString();
-  const toDateValue = toDate ? new Date(toDate + 'T23:59:59+09:00').toISOString() : new Date().toISOString();
-
-
-  /*
-  console.log('getAllClearancesByAdmin startDate: ' + startDate);
-  console.log('getAllClearancesByAdmin endDate: ' + endDate);
-  console.log('getAllClearancesByAdmin searchNickname: ' + searchNickname);
-  console.log('getAllClearancesByAdmin walletAddress: ' + walletAddress);
-  console.log('getAllClearancesByAdmin storecode: ' + storecode);
-  console.log('getAllClearancesByAdmin searchOrderStatusCompleted: ' + searchOrderStatusCompleted);
-  console.log('getAllClearancesByAdmin searchBuyer: ' + searchBuyer);
-  console.log('getAllClearancesByAdmin searchDepositName: ' + searchDepositName);
-  console.log('getAllClearancesByAdmin searchStoreBankAccountNumber: ' + searchStoreBankAccountNumber);
-  */
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
+  await ensureBuyOrderReadIndexes(collection);
 
+  const cacheKey = `getAllClearancesByAdmin:${JSON.stringify({
+    limit: safeLimit,
+    page: safePage,
+    agentcode: safeAgentcode,
+    storecode: safeStorecode,
+    searchBuyer: safeSearchBuyer,
+    searchDepositName: safeSearchDepositName,
+    searchStoreBankAccountNumber: safeSearchStoreBankAccountNumber,
+    fromDate: fromDateValue,
+    toDate: toDateValue,
+  })}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
 
-  const results = await collection.find<OrderProps>(
-    {
-      // 'seller.walletAddress': walletAddress,
-      //status: 'paymentConfirmed', or 'paymentRequested'
-
-      status : { $in: ['paymentConfirmed', 'paymentRequested'] },
-
-      privateSale: true, // only private sale orders
-      agentcode: { $regex: agentcode, $options: 'i' },
-      storecode: { $regex: storecode, $options: 'i' },
-      nickname: { $regex: searchBuyer, $options: 'i' },
-      
-      
-
-      //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-      ...(searchDepositName && searchDepositName.trim() !== '' ? {
-        $or: [
-          { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-          { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-        ],
-      } : {}),
-
-
-
-      'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-      //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-      createdAt: { $gte: fromDateValue, $lt: toDateValue },
-    },
-  )
-    .sort({ createdAt: -1 })
-    // .sort({ paymentConfirmedAt: -1 })
-    .limit(limit).skip((page - 1) * limit).toArray();
-
-
-
-
-
-
-
-  // get total count of orders
-  const totalCount = await collection.countDocuments(
-    {
-      // 'seller.walletAddress': walletAddress,
-      //status: 'paymentConfirmed',
-      status : { $in: ['paymentConfirmed', 'paymentRequested'] },
-
-
-      privateSale: true, // only private sale orders
-      agentcode: { $regex: agentcode, $options: 'i' },
-      storecode: { $regex: storecode, $options: 'i' },
-      nickname: { $regex: searchBuyer, $options: 'i' },
-      
-      
-      
-      //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-      ...(searchDepositName && searchDepositName.trim() !== '' ? {
-        $or: [
-          { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-          { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-        ],
-      } : {}),
-
-
-      'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-      //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-      createdAt: { $gte: fromDateValue, $lt: toDateValue },
-    }
-  );
-
-
-
-
-
-  //console.log('getAllClearancesByAdmin totalCount: ' + totalCount);
-  // sum of krwAmount
-  const totalKrwAmount = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
- 
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalKrwAmount: { $sum: '$krwAmount' },
-      }
-    }
-  ]).toArray();
-
-
-  // sum of usdtAmount
-  const totalUsdtAmount = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        
-        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
-
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalUsdtAmount: { $sum: '$usdtAmount' },
-      }
-    }
-  ]).toArray();
-
-
-  // totalSettlementCount
-  const totalSettlementCount = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        ///'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
-
-
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        settlement: { $exists: true, $ne: null },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalSettlementCount: { $sum: 1 },
-      }
-    }
-  ]).toArray();
-
-
-  // totalSettlementAmount
-  const totalSettlementAmount = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
-
-
-
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        settlement: { $exists: true, $ne: null },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalSettlementAmount: { $sum: '$settlement.settlementAmount' },
-      }
-    }
-  ]).toArray();
-
-
-  // totalSettlementAmountKRW
-  const totalSettlementAmountKRW = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
-
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        settlement: { $exists: true, $ne: null },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    // $settlement.settlementAmountKRW is string
-    {
-      $group: {
-        _id: null,
-        //totalSettlementAmountKRW: { $sum: '$settlement.settlementAmountKRW' },
-        totalSettlementAmountKRW: { $sum: { $toDouble: '$settlement.settlementAmountKRW' } },
-      }
-    }
-  ]).toArray();
-
-
-  // total feeAmount
-  const totalFeeAmount = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
-
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        settlement: { $exists: true, $ne: null },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalFeeAmount: { $sum: '$settlement.feeAmount' },
-      }
-    }
-  ]).toArray();
-
-
-  // total feeAmountKRW
-  const totalFeeAmountKRW = await collection.aggregate([
-    {
-      $match: {
-        // 'seller.walletAddress': walletAddress,
-        status: 'paymentConfirmed',
-        privateSale: true, // only private sale orders
-        agentcode: { $regex: agentcode, $options: 'i' },
-        storecode: { $regex: storecode, $options: 'i' },
-        nickname: { $regex: searchBuyer, $options: 'i' },
-        
-        
-        //'buyer.depositName': { $regex: searchDepositName, $options: 'i' },
-        ...(searchDepositName && searchDepositName.trim() !== '' ? {
-          $or: [
-            { 'store.bankInfo.accountHolder': { $regex: searchDepositName, $options: 'i' } },
-            { 'buyer.depositName': { $regex: searchDepositName, $options: 'i' } },
-          ],
-        } : {}),
-
-
-        'store.bankInfo.accountNumber': { $regex: searchStoreBankAccountNumber, $options: 'i' },
-        settlement: { $exists: true, $ne: null },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        //totalFeeAmountKRW: { $sum: '$settlement.feeAmountKRW' },
-        totalFeeAmountKRW: { $sum: { $toDouble: '$settlement.feeAmountKRW' } },
-      }
-    }
-  ]).toArray();
-  //console.log('getAllClearancesByAdmin totalCount: ' + totalCount);
-  //console.log('getAllClearancesByAdmin totalSettlementCount: ' + totalSettlementCount[0]?.totalSettlementCount);
-  return {
-    totalCount: totalCount,
-    totalKrwAmount: totalKrwAmount ? totalKrwAmount[0]?.totalKrwAmount : 0,
-    totalUsdtAmount: totalUsdtAmount ? totalUsdtAmount[0]?.totalUsdtAmount : 0,
-    totalSettlementCount: totalSettlementCount ? totalSettlementCount[0]?.totalSettlementCount : 0,
-    totalSettlementAmount: totalSettlementAmount ? totalSettlementAmount[0]?.totalSettlementAmount : 0,
-    totalSettlementAmountKRW: totalSettlementAmountKRW ? totalSettlementAmountKRW[0]?.totalSettlementAmountKRW : 0,
-    totalFeeAmount: totalFeeAmount ? totalFeeAmount[0]?.totalFeeAmount : 0,
-    totalFeeAmountKRW: totalFeeAmountKRW ? totalFeeAmountKRW[0]?.totalFeeAmountKRW : 0,
-    orders: results,
+  const matchQuery: Record<string, any> = {
+    status: { $in: ['paymentConfirmed', 'paymentRequested'] },
+    privateSale: true,
+    createdAt: { $gte: fromDateValue, $lt: toDateValue },
   };
+
+  appendExactFilter(matchQuery, 'agentcode', safeAgentcode);
+  appendExactFilter(matchQuery, 'storecode', safeStorecode);
+  appendContainsFilter(matchQuery, 'nickname', safeSearchBuyer);
+  appendContainsFilter(matchQuery, 'store.bankInfo.accountNumber', safeSearchStoreBankAccountNumber);
+
+  if (safeSearchDepositName) {
+    const depositNameFilter = toContainsRegexFilter(safeSearchDepositName);
+    if (depositNameFilter) {
+      matchQuery.$or = [
+        { 'store.bankInfo.accountHolder': depositNameFilter },
+        { 'buyer.depositName': depositNameFilter },
+      ];
+    }
+  }
+
+  const [facetResult = {}] = await collection.aggregate([
+    { $match: matchQuery },
+    {
+      $facet: {
+        orders: [
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: safeLimit },
+        ],
+        totalCountMeta: [
+          { $count: 'value' },
+        ],
+        paymentConfirmedSummary: [
+          { $match: { status: 'paymentConfirmed' } },
+          {
+            $group: {
+              _id: null,
+              totalKrwAmount: { $sum: { $ifNull: ['$krwAmount', 0] } },
+              totalUsdtAmount: { $sum: { $ifNull: ['$usdtAmount', 0] } },
+              totalSettlementCount: {
+                $sum: {
+                  $cond: [{ $ne: ['$settlement', null] }, 1, 0],
+                },
+              },
+              totalSettlementAmount: { $sum: toDoubleExpr('settlement.settlementAmount') },
+              totalSettlementAmountKRW: { $sum: toDoubleExpr('settlement.settlementAmountKRW') },
+              totalFeeAmount: { $sum: toDoubleExpr('settlement.feeAmount') },
+              totalFeeAmountKRW: { $sum: toDoubleExpr('settlement.feeAmountKRW') },
+            },
+          },
+        ],
+      },
+    },
+  ]).toArray();
+
+  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+  const totalCount = Number(facetResult?.totalCountMeta?.[0]?.value || 0);
+  const summary = facetResult?.paymentConfirmedSummary?.[0] || {};
+
+  const result = {
+    totalCount,
+    totalKrwAmount: Number(summary?.totalKrwAmount || 0),
+    totalUsdtAmount: Number(summary?.totalUsdtAmount || 0),
+    totalSettlementCount: Number(summary?.totalSettlementCount || 0),
+    totalSettlementAmount: Number(summary?.totalSettlementAmount || 0),
+    totalSettlementAmountKRW: Number(summary?.totalSettlementAmountKRW || 0),
+    totalFeeAmount: Number(summary?.totalFeeAmount || 0),
+    totalFeeAmountKRW: Number(summary?.totalFeeAmountKRW || 0),
+    orders,
+  };
+
+  setBuyOrderCachedValue(cacheKey, result);
+  return result;
 }
 
 
@@ -8304,130 +7724,75 @@ export async function getAllBuyOrdersByAdmin(
   }
 
 ): Promise<any> {
+  const safeLimit = Math.max(1, Number(limit || 0) || 1);
+  const safePage = Math.max(1, Number(page || 0) || 1);
+  const skip = (safePage - 1) * safeLimit;
 
-  //console.log('getAllBuyOrdersByAdmin startDate: ' + startDate);
-  //console.log('getAllBuyOrdersByAdmin endDate: ' + endDate);
+  const safeAgentcode = normalizeSearchText(agentcode);
+  const safeSearchNickname = normalizeSearchText(searchNickname);
+  const safeWalletAddress = normalizeSearchText(walletAddress);
 
-  if (!startDate) {
-    startDate = new Date(0).toISOString();
-  }
-  if (!endDate) {
-    endDate = new Date().toISOString();
-  }
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  const results = await collection.find<OrderProps>(
-    {
+  await ensureBuyOrderReadIndexes(collection);
 
-      privateSale: { $ne: true },
+  const cacheKey = `getAllBuyOrdersByAdmin:${JSON.stringify({
+    limit: safeLimit,
+    page: safePage,
+    agentcode: safeAgentcode,
+    searchNickname: safeSearchNickname,
+    walletAddress: safeWalletAddress,
+  })}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
 
-
-      //status: 'ordered',
-      //status: 'accepted',
-      //status: { $in: ['ordered', 'accepted'] },
-      status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-      //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-      //walletAddress: walletAddress,
-      //nickname: { $regex: searchNickname, $options: 'i' },
-
-
-      agentcode: { $regex: agentcode, $options: 'i' },
-
-      // storecode is exist
-      storecode: {
-        $ne: null,
-      },
-
-
-    },
-  )
-    .sort({ createdAt: -1 })
-    .limit(limit).skip((page - 1) * limit).toArray();
-
-  // get total count of orders
-  const totalCount = await collection.countDocuments(
-    {
-
-      privateSale: { $ne: true },
-
-      //status: 'ordered',
-      //status: 'accepted',
-      status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-      //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-      //walletAddress: walletAddress,
-      //nickname: { $regex: searchNickname, $options: 'i' },
-
-      agentcode: { $regex: agentcode, $options: 'i' },
-      // storecode is not null
-      storecode: { $ne: null },
-    }
-  );
-  //console.log('getAllBuyOrdersByAdmin totalCount: ' + totalCount);
-  // sum of krwAmount
-  // TypeError: Cannot read properties of undefined (reading 'totalKrwAmount')
-  const totalKrwAmount = await collection.aggregate([
-    {
-      $match: {
-
-        privateSale: { $ne: true },
-
-
-        //status: 'ordered',
-        //status: 'accepted',
-        status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-        //walletAddress: walletAddress,
-        //nickname: { $regex: searchNickname, $options: 'i' },
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-
-        // storecode is not null
-        storecode: { $ne: null },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalKrwAmount: { $sum: '$krwAmount' },
-      }
-    }
-  ]).toArray();
-  // totalUsdtAmount
-  const totalUsdtAmount = await collection.aggregate([
-    {
-      $match: {
-
-        privateSale: { $ne: true },
-
-        
-        //status: 'ordered',
-        //status: 'accepted',
-        status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
-        //paymentConfirmedAt: { $gte: startDate, $lt: endDate },
-        //walletAddress: walletAddress,
-        //nickname: { $regex: searchNickname, $options: 'i' },
-
-        agentcode: { $regex: agentcode, $options: 'i' },
-
-        // storecode is not null
-        storecode: { $ne: null },
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalUsdtAmount: { $sum: '$usdtAmount' },
-      }
-    }
-  ]).toArray();
-
-
-  return {
-    totalCount: totalCount,
-    totalKrwAmount: totalKrwAmount ? totalKrwAmount[0]?.totalKrwAmount : 0,
-    totalUsdtAmount: totalUsdtAmount ? totalUsdtAmount[0]?.totalUsdtAmount : 0,
-    orders: results,
+  const matchQuery: Record<string, any> = {
+    privateSale: { $ne: true },
+    status: { $in: ['ordered', 'accepted', 'paymentRequested'] },
+    storecode: { $ne: null },
   };
+
+  appendExactFilter(matchQuery, 'agentcode', safeAgentcode);
+  appendContainsFilter(matchQuery, 'nickname', safeSearchNickname);
+  appendContainsFilter(matchQuery, 'walletAddress', safeWalletAddress);
+
+  const [facetResult = {}] = await collection.aggregate([
+    { $match: matchQuery },
+    {
+      $facet: {
+        orders: [
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: safeLimit },
+        ],
+        summary: [
+          {
+            $group: {
+              _id: null,
+              totalCount: { $sum: 1 },
+              totalKrwAmount: { $sum: { $ifNull: ['$krwAmount', 0] } },
+              totalUsdtAmount: { $sum: { $ifNull: ['$usdtAmount', 0] } },
+            },
+          },
+        ],
+      },
+    },
+  ]).toArray();
+
+  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+  const summary = facetResult?.summary?.[0] || {};
+
+  const result = {
+    totalCount: Number(summary?.totalCount || 0),
+    totalKrwAmount: Number(summary?.totalKrwAmount || 0),
+    totalUsdtAmount: Number(summary?.totalUsdtAmount || 0),
+    orders,
+  };
+
+  setBuyOrderCachedValue(cacheKey, result);
+  return result;
 }
 
 // getAllBuyOrdersByAdmin
