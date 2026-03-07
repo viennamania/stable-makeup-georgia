@@ -14,9 +14,20 @@ const normalizeWalletAddress = (value: unknown): string => {
   return normalizeString(value).toLowerCase();
 };
 
+const AUTH_FIELD_KEYS = new Set([
+  "requesterStorecode",
+  "requesterWalletAddress",
+  "signature",
+  "signedAt",
+  "nonce",
+]);
+
 const sanitizeActionFields = (value: Record<string, unknown>) => {
   const next: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value || {})) {
+    if (AUTH_FIELD_KEYS.has(key)) {
+      continue;
+    }
     if (item === undefined) {
       continue;
     }
@@ -52,10 +63,22 @@ export const postCenterStoreAdminSignedJson = async ({
       throw new Error("Wallet account not connected");
     }
 
-    const actionFields = sanitizeActionFields(body || {});
-    const normalizedStorecode = normalizeString(storecode ?? actionFields.storecode);
+    const rawBody = body || {};
+    const actionFields = sanitizeActionFields(rawBody);
+    const hasStorecodeField = Object.prototype.hasOwnProperty.call(actionFields, "storecode");
+    const normalizedBodyStorecode = normalizeString(actionFields.storecode);
+    const normalizedStorecode = normalizeString(
+      storecode
+      ?? (rawBody as Record<string, unknown>).requesterStorecode
+      ?? normalizedBodyStorecode,
+    );
     const normalizedWalletAddress =
-      normalizeWalletAddress(requesterWalletAddress ?? actionFields.walletAddress) ||
+      normalizeWalletAddress(
+        requesterWalletAddress
+        ?? (rawBody as Record<string, unknown>).requesterWalletAddress
+        ?? (rawBody as Record<string, unknown>).walletAddress
+        ?? actionFields.walletAddress,
+      ) ||
       normalizeWalletAddress(account.address);
 
     if (!normalizedStorecode) {
@@ -66,11 +89,16 @@ export const postCenterStoreAdminSignedJson = async ({
       throw new Error("walletAddress is required");
     }
 
-    const normalizedBody = {
+    const normalizedBody: Record<string, unknown> = {
       ...actionFields,
-      storecode: normalizedStorecode,
-      walletAddress: normalizedWalletAddress,
+      walletAddress: normalizeWalletAddress(actionFields.walletAddress) || normalizedWalletAddress,
     };
+
+    if (hasStorecodeField) {
+      normalizedBody.storecode = normalizeString(actionFields.storecode);
+    } else {
+      normalizedBody.storecode = normalizedStorecode;
+    }
 
     const signedAt = new Date().toISOString();
     const nonce = createNonce();
@@ -96,6 +124,8 @@ export const postCenterStoreAdminSignedJson = async ({
       signal,
       body: JSON.stringify({
         ...normalizedBody,
+        requesterStorecode: normalizedStorecode,
+        requesterWalletAddress: normalizedWalletAddress,
         signature,
         signedAt,
         nonce,

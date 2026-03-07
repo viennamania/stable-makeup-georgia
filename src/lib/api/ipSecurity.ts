@@ -44,6 +44,10 @@ const ERROR_LOG_THROTTLE_MS = Math.max(
   Number(process.env.IP_SECURITY_ERROR_LOG_THROTTLE_MS || 60000),
   1000,
 );
+const BLOCKED_IP_RULE_QUERY_MAX_TIME_MS = Math.max(
+  Number(process.env.IP_SECURITY_BLOCKED_IP_QUERY_MAX_TIME_MS || 1000),
+  100,
+);
 
 const errorLogState: Record<string, number> = {};
 
@@ -226,6 +230,14 @@ export const getBlockedIpRule = async (ipRaw: unknown) => {
       ip,
       enabled: true,
       $or: [{ expiresAt: null }, { expiresAt: { $exists: false } }, { expiresAt: { $gt: now } }],
+    }, {
+      maxTimeMS: BLOCKED_IP_RULE_QUERY_MAX_TIME_MS,
+      projection: {
+        ip: 1,
+        reason: 1,
+        blockedAt: 1,
+        expiresAt: 1,
+      },
     });
 
     return rule;

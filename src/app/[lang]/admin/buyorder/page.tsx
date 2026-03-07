@@ -94,6 +94,8 @@ import {
 
 
 import { useAnimatedNumber } from "@/components/useAnimatedNumber";
+import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 // status → pulse utility
 const statusPulseClass = (status: string | undefined) => {
@@ -885,48 +887,74 @@ export default function Index({ params }: any) {
 
   const [user, setUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [userLoadError, setUserLoadError] = useState("");
   
   useEffect(() => {
+    let cancelled = false;
 
-    if (!address) {
+    const fetchUser = async () => {
+      if (!address) {
+        if (!cancelled) {
+          setUser(null);
+          setEscrowWalletAddress("");
+          setIsAdmin(false);
+          setUserLoadError("");
+          setLoadingUser(false);
+        }
+        return;
+      }
 
-      setUser(null);
-      return;
-    }
+      setLoadingUser(true);
+      setUserLoadError("");
 
-    setLoadingUser(true);
+      try {
+        const data = await postGetUserSelfSigned({
+          account: activeAccount,
+          storecode: "admin",
+          walletAddress: address,
+        });
 
-    fetch('/api/user/getUser', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            storecode: "admin",
-            walletAddress: address,
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        
-        //console.log('data.result', data.result);
+        if (cancelled) {
+          return;
+        }
 
+        const result = data?.result || null;
+        const errorMessage = String(data?.error || "").trim();
+        if (!result) {
+          setUser(null);
+          setEscrowWalletAddress("");
+          setIsAdmin(false);
+          setUserLoadError(errorMessage || "회원 정보를 불러오지 못했습니다.");
+          return;
+        }
 
-        setUser(data.result);
+        setUser(result);
+        setEscrowWalletAddress(String(result?.escrowWalletAddress || ""));
+        setIsAdmin(String(result?.role || "").toLowerCase() === "admin");
+        setUserLoadError("");
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+        console.error("Failed to load admin user:", error);
+        setUser(null);
+        setEscrowWalletAddress("");
+        setIsAdmin(false);
+        setUserLoadError("회원 정보를 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        if (!cancelled) {
+          setLoadingUser(false);
+        }
+      }
+    };
 
-        setEscrowWalletAddress(data.result.escrowWalletAddress);
+    void fetchUser();
 
-        setIsAdmin(data.result?.role === "admin");
+    return () => {
+      cancelled = true;
+    };
 
-    })
-    .catch((error) => {
-        console.error('Error:', JSON.stringify(error));
-    });
-
-
-    setLoadingUser(false);
-
-  } , [address]);
+  } , [address, activeAccount]);
 
 
 
@@ -1294,6 +1322,92 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const animatedTotalSettlementCount = useAnimatedNumber(buyOrderStats.totalSettlementCount);
   const animatedTotalSettlementAmount = useAnimatedNumber(buyOrderStats.totalSettlementAmount, { decimalPlaces: 3 });
   const animatedTotalSettlementAmountKRW = useAnimatedNumber(buyOrderStats.totalSettlementAmountKRW);
+
+  const applyBuyOrderResult = useCallback((result: any) => {
+    if (!result || typeof result !== "object") {
+      return;
+    }
+
+    applyBuyOrders(Array.isArray(result.orders) ? result.orders : []);
+    setBuyOrderStats({
+      totalCount: Number(result.totalCount || 0),
+      totalKrwAmount: Number(result.totalKrwAmount || 0),
+      totalUsdtAmount: Number(result.totalUsdtAmount || 0),
+      totalSettlementCount: Number(result.totalSettlementCount || 0),
+      totalSettlementAmount: Number(result.totalSettlementAmount || 0),
+      totalSettlementAmountKRW: Number(result.totalSettlementAmountKRW || 0),
+      totalFeeAmount: Number(result.totalFeeAmount || 0),
+      totalFeeAmountKRW: Number(result.totalFeeAmountKRW || 0),
+      totalAgentFeeAmount: Number(result.totalAgentFeeAmount || 0),
+      totalAgentFeeAmountKRW: Number(result.totalAgentFeeAmountKRW || 0),
+      totalByUserType: Array.isArray(result.totalByUserType) ? result.totalByUserType : [],
+      totalBySellerBankAccountNumber: Array.isArray(result.totalBySellerBankAccountNumber)
+        ? result.totalBySellerBankAccountNumber
+        : [],
+      totalBySellerAliesBankAccountNumber: Array.isArray(result.totalBySellerAliesBankAccountNumber)
+        ? result.totalBySellerAliesBankAccountNumber
+        : [],
+    });
+  }, [applyBuyOrders]);
+
+  const requestAdminBuyOrders = useCallback(async () => {
+    if (!activeAccount || !address) {
+      throw new Error("Wallet account not connected");
+    }
+
+    return postCenterStoreAdminSignedJson({
+      account: activeAccount,
+      route: "/api/order/getAllBuyOrders",
+      storecode: "admin",
+      requesterWalletAddress: address,
+      body: {
+        storecode: searchStorecode,
+        requesterStorecode: "admin",
+        limit: Number(limitValue),
+        page: Number(pageValue),
+        walletAddress: address,
+        searchMyOrders: searchMyOrders,
+        searchOrderStatusCancelled: searchOrderStatusCancelled,
+        searchOrderStatusCompleted: searchOrderStatusCompleted,
+        searchStoreName: searchStoreName,
+        fromDate: searchFromDate,
+        toDate: searchToDate,
+      },
+    });
+  }, [
+    activeAccount,
+    address,
+    searchStorecode,
+    limitValue,
+    pageValue,
+    searchMyOrders,
+    searchOrderStatusCancelled,
+    searchOrderStatusCompleted,
+    searchStoreName,
+    searchFromDate,
+    searchToDate,
+  ]);
+
+  const reloadBuyOrders = useCallback(async () => {
+    try {
+      const response = await requestAdminBuyOrders();
+      const data = await response.json().catch(() => ({} as any));
+
+      if (!response.ok) {
+        console.error("Failed to fetch admin buy orders:", response.status, data?.error);
+        return null;
+      }
+
+      if (data?.result) {
+        applyBuyOrderResult(data.result);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch admin buy orders:", error);
+      return null;
+    }
+  }, [requestAdminBuyOrders, applyBuyOrderResult]);
 
 
 
@@ -2375,12 +2489,12 @@ const depositAmountMatches = useMemo(() => {
         );
 
 
-        fetch('/api/order/acceptBuyOrder', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        postCenterStoreAdminSignedJson({
+            account: activeAccount,
+            route: '/api/order/acceptBuyOrder',
+            storecode: "admin",
+            requesterWalletAddress: address,
+            body: {
                 lang: params.lang,
                 storecode: "admin",
                 orderId: orderId,
@@ -2396,14 +2510,10 @@ const depositAmountMatches = useMemo(() => {
                 sellerMobile: smsNumber,
                 */
 
-
-
                 seller: user?.seller,
-
                 tradeId: tradeId,
                 buyerWalletAddress: walletAddress,
-
-            }),
+            },
         })
         .then(response => response.json())
         .then(data => {
@@ -2419,61 +2529,7 @@ const depositAmountMatches = useMemo(() => {
 
 
 
-            fetch('/api/order/getAllBuyOrders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(
-                  {
-                    storecode: searchStorecode,
-                    requesterStorecode: "admin",
-                    limit: Number(limitValue),
-                    page: Number(pageValue),
-                    walletAddress: address,
-                    searchMyOrders: searchMyOrders,
-                    searchOrderStatusCancelled: searchOrderStatusCancelled,
-                    searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                    searchStoreName: searchStoreName,
-
-                    fromDate: searchFromDate,
-                    toDate: searchToDate,
-
-                  }
-                ),
-            })
-            .then(response => response.json())
-            .then(data => {
-                ///console.log('data', data);
-                applyBuyOrders(data.result.orders);
-
-                //setTotalCount(data.result.totalCount);
-
-                setBuyOrderStats({
-                  totalCount: data.result.totalCount,
-                  totalKrwAmount: data.result.totalKrwAmount,
-                  totalUsdtAmount: data.result.totalUsdtAmount,
-                  totalSettlementCount: data.result.totalSettlementCount,
-                  totalSettlementAmount: data.result.totalSettlementAmount,
-                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                  totalFeeAmount: data.result.totalFeeAmount,
-                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                  totalByUserType: data.result.totalByUserType,
-                  
-                  //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                  //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-                  
-                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-                  totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-                });
-
-                
-
-            })
+            void reloadBuyOrders();
 
 
 
@@ -2581,59 +2637,7 @@ const depositAmountMatches = useMemo(() => {
 
           ////playSong();
 
-          await fetch('/api/order/getAllBuyOrders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-              {
-                storecode: searchStorecode,
-                requesterStorecode: "admin",
-                limit: Number(limitValue),
-                page: Number(pageValue),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-                searchOrderStatusCancelled: searchOrderStatusCancelled,
-                searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                searchStoreName: searchStoreName,
-
-                fromDate: searchFromDate,
-                toDate: searchToDate,
-              }
-            )
-          }).then(async (response) => {
-            const data = await response.json();
-            //console.log('data', data);
-            if (data.result) {
-              applyBuyOrders(data.result.orders);
-
-              ////setTotalCount(data.result.totalCount);
-
-              setBuyOrderStats({
-                totalCount: data.result.totalCount,
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-            totalByUserType: data.result.totalByUserType,
-            
-            //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-            //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-            
-            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-            totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-          });
-
-            }
-          });
+          await reloadBuyOrders();
 
         } else {
           toast.error('거래취소에 실패했습니다.');
@@ -2652,17 +2656,17 @@ const depositAmountMatches = useMemo(() => {
 
     } else {
 
-      const response = await fetch('/api/order/cancelTradeBySeller', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const response = await postCenterStoreAdminSignedJson({
+        account: activeAccount,
+        route: '/api/order/cancelTradeBySeller',
+        storecode: "admin",
+        requesterWalletAddress: address,
+        body: {
           orderId: orderId,
           storecode: "admin",
           walletAddress: address,
           cancelTradeReason: cancelTradeReason[index],
-        })
+        },
       });
 
       if (!response.ok) {
@@ -2684,60 +2688,7 @@ const depositAmountMatches = useMemo(() => {
         //playSong();
 
 
-        await fetch('/api/order/getAllBuyOrders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(
-            {
-              storecode: searchStorecode,
-              requesterStorecode: "admin",
-              limit: Number(limitValue),
-              page: Number(pageValue),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-              searchOrderStatusCancelled: searchOrderStatusCancelled,
-              searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-              searchStoreName: searchStoreName,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-            }
-          )
-        }).then(async (response) => {
-          const data = await response.json();
-          //console.log('data', data);
-          if (data.result) {
-            applyBuyOrders(data.result.orders);
-
-            //setTotalCount(data.result.totalCount);
-
-            setBuyOrderStats({
-              totalCount: data.result.totalCount,
-              totalKrwAmount: data.result.totalKrwAmount,
-              totalUsdtAmount: data.result.totalUsdtAmount,
-              totalSettlementCount: data.result.totalSettlementCount,
-              totalSettlementAmount: data.result.totalSettlementAmount,
-              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-              totalFeeAmount: data.result.totalFeeAmount,
-              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-              totalByUserType: data.result.totalByUserType,
-              
-              //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-              //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-              
-              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-            });
-
-
-          }
-        });
+        await reloadBuyOrders();
 
       } else {
         toast.error('거래취소에 실패했습니다.');
@@ -2978,60 +2929,7 @@ const depositAmountMatches = useMemo(() => {
             
 
             
-            await fetch('/api/order/getAllBuyOrders', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(
-                {
-                  storecode: searchStorecode,
-                  requesterStorecode: "admin",
-                  limit: Number(limitValue),
-                  page: Number(pageValue),
-                  walletAddress: address,
-                  searchMyOrders: searchMyOrders,
-                  searchOrderStatusCancelled: searchOrderStatusCancelled,
-                  searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                  searchStoreName: searchStoreName,
-
-
-                  fromDate: searchFromDate,
-                  toDate: searchToDate,
-                }
-              )
-            }).then(async (response) => {
-              const data = await response.json();
-              //console.log('data', data);
-              if (data.result) {
-                applyBuyOrders(data.result.orders);
-    
-                //setTotalCount(data.result.totalCount);
-
-                setBuyOrderStats({
-                  totalCount: data.result.totalCount,
-                  totalKrwAmount: data.result.totalKrwAmount,
-                  totalUsdtAmount: data.result.totalUsdtAmount,
-                  totalSettlementCount: data.result.totalSettlementCount,
-                  totalSettlementAmount: data.result.totalSettlementAmount,
-                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                  totalFeeAmount: data.result.totalFeeAmount,
-                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-              totalByUserType: data.result.totalByUserType,
-              
-              //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-              //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-              
-              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-            });
-
-              }
-            });
+            await reloadBuyOrders();
           
 
           } else {
@@ -3103,59 +3001,7 @@ const depositAmountMatches = useMemo(() => {
 
           //playSong();
           
-          await fetch('/api/order/getAllBuyOrders', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-              {
-                storecode: searchStorecode,
-                requesterStorecode: "admin",
-                limit: Number(limitValue),
-                page: Number(pageValue),
-                walletAddress: address,
-                searchMyOrders: searchMyOrders,
-                searchOrderStatusCancelled: searchOrderStatusCancelled,
-                searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-                searchStoreName: searchStoreName,
-
-                fromDate: searchFromDate,
-                toDate: searchToDate,
-              }
-            )
-          }).then(async (response) => {
-            const data = await response.json();
-            //console.log('data', data);
-            if (data.result) {
-              applyBuyOrders(data.result.orders);
-  
-              //setTotalCount(data.result.totalCount);
-
-              setBuyOrderStats({
-                totalCount: data.result.totalCount,
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                totalByUserType: data.result.totalByUserType,
-                
-                //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-                //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-                
-                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-                totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-              });
-
-            }
-          });
+        await reloadBuyOrders();
 
 
         } else {
@@ -3322,12 +3168,12 @@ const depositAmountMatches = useMemo(() => {
 
           if (paymentMethod === 'mkrw') {
 
-            const response = await fetch('/api/order/buyOrderConfirmPaymentWithEscrow', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
+            const response = await postCenterStoreAdminSignedJson({
+              account: activeAccount,
+              route: '/api/order/buyOrderConfirmPaymentWithEscrow',
+              storecode: storecode,
+              requesterWalletAddress: address,
+              body: {
                 lang: params.lang,
                 storecode: storecode,
                 orderId: orderId,
@@ -3338,7 +3184,7 @@ const depositAmountMatches = useMemo(() => {
                 bankTransferAmount: selectedDepositAmount,
                 ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
                 isSmartAccount: false,
-              })
+              },
             });
 
             const data = await response.json();
@@ -3347,12 +3193,12 @@ const depositAmountMatches = useMemo(() => {
 
           } else {
 
-            const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
+            const response = await postCenterStoreAdminSignedJson({
+              account: activeAccount,
+              route: '/api/order/buyOrderConfirmPaymentWithoutEscrow',
+              storecode: storecode,
+              requesterWalletAddress: address,
+              body: {
                 lang: params.lang,
                 storecode: storecode,
                 orderId: orderId,
@@ -3363,7 +3209,7 @@ const depositAmountMatches = useMemo(() => {
                 bankTransferAmount: selectedDepositAmount,
                 ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
                 isSmartAccount: false,
-              })
+              },
             });
 
             const data = await response.json();
@@ -3598,12 +3444,12 @@ const depositAmountMatches = useMemo(() => {
 
         if (transactionHash) {
 
-          const response = await fetch('/api/order/buyOrderConfirmPaymentWithoutEscrow', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
+          const response = await postCenterStoreAdminSignedJson({
+            account: activeAccount,
+            route: '/api/order/buyOrderConfirmPaymentWithoutEscrow',
+            storecode: storecode,
+            requesterWalletAddress: address,
+            body: {
               lang: params.lang,
               storecode: storecode,
               orderId: orderId,
@@ -3611,7 +3457,7 @@ const depositAmountMatches = useMemo(() => {
               transactionHash: transactionHash,
               ///isSmartAccount: activeWallet === inAppConnectWallet ? false : true,
               isSmartAccount: false,
-            })
+            },
           });
 
           const data = await response.json();
@@ -3704,15 +3550,15 @@ const depositAmountMatches = useMemo(() => {
 
     // api call to settlement
     try {
-      const response = await fetch('/api/order/updateBuyOrderSettlement', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const response = await postCenterStoreAdminSignedJson({
+        account: activeAccount,
+        route: '/api/order/updateBuyOrderSettlement',
+        storecode: storecode,
+        requesterWalletAddress: address,
+        body: {
           orderId: orderId,
           storecode: storecode,
-        })
+        },
       });
       const data = await response.json();
 
@@ -3725,58 +3571,7 @@ const depositAmountMatches = useMemo(() => {
         //playSong();
 
         // fetch Buy Orders
-        await fetch('/api/order/getAllBuyOrders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            {
-              storecode: searchStorecode,
-              requesterStorecode: "admin",
-              limit: Number(limitValue),
-              page: Number(pageValue),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-              searchOrderStatusCancelled: searchOrderStatusCancelled,
-              searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-              searchStoreName: searchStoreName,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-            }
-          ),
-        })
-        .then(response => response.json())
-        .then(data => {
-            ///console.log('data', data);
-            applyBuyOrders(data.result.orders);
-
-            //setTotalCount(data.result.totalCount);
-
-            setBuyOrderStats({
-              totalCount: data.result.totalCount,
-              totalKrwAmount: data.result.totalKrwAmount,
-              totalUsdtAmount: data.result.totalUsdtAmount,
-              totalSettlementCount: data.result.totalSettlementCount,
-              totalSettlementAmount: data.result.totalSettlementAmount,
-              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-              totalFeeAmount: data.result.totalFeeAmount,
-              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-              totalByUserType: data.result.totalByUserType,
-              
-              //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-              //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-              
-              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-              totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-            });
-
-        })
+        await reloadBuyOrders();
 
       } else {
         toast.error('Settlement has been failed');
@@ -3817,6 +3612,10 @@ const depositAmountMatches = useMemo(() => {
       //console.log("address=", address);
       //console.log("searchMyOrders=", searchMyOrders);
 
+      if (!activeAccount || !address) {
+        return;
+      }
+
 
       //console.log('acceptingBuyOrder', acceptingBuyOrder);
       //console.log('escrowing', escrowing);
@@ -3852,65 +3651,7 @@ const depositAmountMatches = useMemo(() => {
 
       
 
-      const response = await fetch('/api/order/getAllBuyOrders', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-
-            {
-              storecode: searchStorecode,
-              requesterStorecode: "admin",
-              limit: Number(limitValue),
-              page: Number(pageValue),
-              walletAddress: address,
-              searchMyOrders: searchMyOrders,
-              searchOrderStatusCancelled: searchOrderStatusCancelled,
-              searchOrderStatusCompleted: searchOrderStatusCompleted,
-
-              searchStoreName: searchStoreName,
-
-              fromDate: searchFromDate,
-              toDate: searchToDate,
-            }
-
-        ),
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-
-
-      const data = await response.json();
-
-
-      applyBuyOrders(data.result.orders);
-
-      //setTotalCount(data.result.totalCount);
-
-      setBuyOrderStats({
-        totalCount: data.result.totalCount,
-        totalKrwAmount: data.result.totalKrwAmount,
-        totalUsdtAmount: data.result.totalUsdtAmount,
-        totalSettlementCount: data.result.totalSettlementCount,
-        totalSettlementAmount: data.result.totalSettlementAmount,
-        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-        totalFeeAmount: data.result.totalFeeAmount,
-        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-            totalByUserType: data.result.totalByUserType,
-            
-            //totalByBuyerDepositName: data.result.totalByBuyerDepositName,
-            //totalReaultGroupByBuyerDepositNameCount: data.result.totalReaultGroupByBuyerDepositNameCount,
-            
-            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber,
-            totalBySellerAliesBankAccountNumber: data.result.totalBySellerAliesBankAccountNumber || [],
-          });
+      await reloadBuyOrders();
 
 
     }
@@ -3934,6 +3675,7 @@ const depositAmountMatches = useMemo(() => {
 
   } , [
 
+    activeAccount,
     address,
     searchMyOrders,
     agreementForTrade,
@@ -3964,6 +3706,7 @@ const depositAmountMatches = useMemo(() => {
 
 
     sendingTransaction,
+    reloadBuyOrders,
 
     //isProcessingSendTransaction,
     isProcessingSendTransaction.current
@@ -3980,44 +3723,24 @@ const fetchBuyOrders = async () => {
   if (fetchingBuyOrders) {
     return;
   }
-  setFetchingBuyOrders(true);
 
-  const response = await fetch('/api/order/getAllBuyOrders', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(
-      {
-        storecode: searchStorecode,
-        requesterStorecode: "admin",
-        limit: Number(limitValue),
-        page: Number(pageValue),
-        walletAddress: address,
-        searchMyOrders: searchMyOrders,
-
-        searchStoreName: searchStoreName,
-
-        fromDate: searchFromDate,
-        toDate: searchToDate,
-      }
-
-    ),
-  });
-
-  if (!response.ok) {
-    setFetchingBuyOrders(false);
-    toast.error('Failed to fetch buy orders');
+  if (!activeAccount || !address) {
     return;
   }
-  const data = await response.json();
-  //console.log('data', data);
 
-  applyBuyOrders(data.result.orders);
-  //setTotalCount(data.result.totalCount);
-  setFetchingBuyOrders(false);
+  setFetchingBuyOrders(true);
 
-  return data.result.orders;
+  try {
+    const data = await reloadBuyOrders();
+    if (!data?.result) {
+      toast.error('Failed to fetch buy orders');
+      return;
+    }
+
+    return data.result.orders;
+  } finally {
+    setFetchingBuyOrders(false);
+  }
 }
 
 
@@ -4571,8 +4294,12 @@ const fetchBuyOrders = async () => {
     return (
       <div className="flex flex-col items-center justify-center">
 
-        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
-        <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
+        <h1 className="text-2xl font-bold">
+          {userLoadError ? "회원 정보를 불러오지 못했습니다." : "접근 권한이 없습니다."}
+        </h1>
+        <p className="text-lg">
+          {userLoadError || "이 페이지에 접근할 권한이 없습니다."}
+        </p>
         <div className="text-lg text-gray-500">{address}</div>
 
 

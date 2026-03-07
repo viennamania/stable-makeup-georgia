@@ -13,12 +13,29 @@ const IP_RULE_LOOKUP_TIMEOUT_MS = Math.max(
   Number(process.env.IP_SECURITY_LOOKUP_TIMEOUT_MS || 1200),
   100,
 );
+const IP_RULE_BLOCKED_CACHE_TTL_MS = Math.max(
+  Number(process.env.IP_SECURITY_BLOCKED_CACHE_TTL_MS || 5000),
+  500,
+);
+const IP_RULE_ALLOWED_CACHE_TTL_MS = Math.max(
+  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 2000),
+  200,
+);
+const IP_RULE_LOOKUP_FAILURE_COOLDOWN_MS = Math.max(
+  Number(process.env.IP_SECURITY_LOOKUP_FAILURE_COOLDOWN_MS || 3000),
+  250,
+);
 const IP_SECURITY_ROUTE_ERROR_LOG_THROTTLE_MS = Math.max(
   Number(process.env.IP_SECURITY_ROUTE_ERROR_LOG_THROTTLE_MS || 60000),
   1000,
 );
 
 let lastIpSecurityRouteErrorLoggedAt = 0;
+const globalIpSecurityCheckRouteState = globalThis as typeof globalThis & {
+  __ipSecurityBlockedRuleCache?: Map<string, { expiresAt: number; rule: any | null }>;
+  __ipSecurityBlockedRuleLookupInFlight?: Map<string, Promise<any>>;
+  __ipSecurityLookupFailureCooldownUntil?: number;
+};
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -70,6 +87,60 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T
   }
 };
 
+const getBlockedRuleCache = () => {
+  if (!globalIpSecurityCheckRouteState.__ipSecurityBlockedRuleCache) {
+    globalIpSecurityCheckRouteState.__ipSecurityBlockedRuleCache = new Map();
+  }
+  return globalIpSecurityCheckRouteState.__ipSecurityBlockedRuleCache;
+};
+
+const getLookupInFlight = () => {
+  if (!globalIpSecurityCheckRouteState.__ipSecurityBlockedRuleLookupInFlight) {
+    globalIpSecurityCheckRouteState.__ipSecurityBlockedRuleLookupInFlight = new Map();
+  }
+  return globalIpSecurityCheckRouteState.__ipSecurityBlockedRuleLookupInFlight;
+};
+
+const getCachedBlockedRule = (ip: string): { hasValue: boolean; rule: any | null } => {
+  const cache = getBlockedRuleCache();
+  const cached = cache.get(ip);
+  if (!cached) {
+    return { hasValue: false, rule: null };
+  }
+  if (cached.expiresAt <= Date.now()) {
+    cache.delete(ip);
+    return { hasValue: false, rule: null };
+  }
+  return { hasValue: true, rule: cached.rule };
+};
+
+const setCachedBlockedRule = (ip: string, rule: any | null, ttlMs: number) => {
+  const cache = getBlockedRuleCache();
+  cache.set(ip, {
+    rule,
+    expiresAt: Date.now() + Math.max(100, ttlMs),
+  });
+};
+
+const lookupBlockedRuleDeduped = async (ip: string) => {
+  const inFlight = getLookupInFlight();
+  const pending = inFlight.get(ip);
+  if (pending) {
+    return pending;
+  }
+
+  const job = getBlockedIpRule(ip).finally(() => {
+    inFlight.delete(ip);
+  });
+  inFlight.set(ip, job);
+  return job;
+};
+
+const isLookupTimeoutError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return message.startsWith("timeout_after_");
+};
+
 const logIpSecurityRouteErrorThrottled = (message: string, error?: unknown) => {
   const now = Date.now();
   if (now - lastIpSecurityRouteErrorLoggedAt < IP_SECURITY_ROUTE_ERROR_LOG_THROTTLE_MS) {
@@ -115,10 +186,39 @@ export async function POST(request: NextRequest) {
   }
 
   let blockedRule: any = null;
-  try {
-    blockedRule = await withTimeout(getBlockedIpRule(ip), IP_RULE_LOOKUP_TIMEOUT_MS);
-  } catch (error) {
-    logIpSecurityRouteErrorThrottled("IP blocked-rule lookup timeout/failure:", error);
+  const cachedRule = getCachedBlockedRule(ip);
+
+  if (cachedRule.hasValue) {
+    blockedRule = cachedRule.rule;
+  } else {
+    const now = Date.now();
+    const cooldownUntil = globalIpSecurityCheckRouteState.__ipSecurityLookupFailureCooldownUntil || 0;
+    const lookupDisabledByCooldown = cooldownUntil > now;
+
+    if (!lookupDisabledByCooldown) {
+      try {
+        blockedRule = await withTimeout(
+          lookupBlockedRuleDeduped(ip),
+          IP_RULE_LOOKUP_TIMEOUT_MS,
+        );
+
+        setCachedBlockedRule(
+          ip,
+          blockedRule,
+          blockedRule ? IP_RULE_BLOCKED_CACHE_TTL_MS : IP_RULE_ALLOWED_CACHE_TTL_MS,
+        );
+      } catch (error) {
+        globalIpSecurityCheckRouteState.__ipSecurityLookupFailureCooldownUntil =
+          Date.now() + IP_RULE_LOOKUP_FAILURE_COOLDOWN_MS;
+        setCachedBlockedRule(ip, null, Math.min(IP_RULE_ALLOWED_CACHE_TTL_MS, 1000));
+
+        if (isLookupTimeoutError(error)) {
+          logIpSecurityRouteErrorThrottled("IP blocked-rule lookup timed out; fail-open mode enabled briefly");
+        } else {
+          logIpSecurityRouteErrorThrottled("IP blocked-rule lookup timeout/failure:", error);
+        }
+      }
+    }
   }
 
   const blocked = Boolean(blockedRule);

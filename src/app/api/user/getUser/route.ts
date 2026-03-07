@@ -29,6 +29,123 @@ const normalizeString = (value: unknown): string => {
   return value.trim();
 };
 
+const globalGetUserRouteCacheState = globalThis as typeof globalThis & {
+  __getUserRouteCache?: Map<string, { expiresAt: number; value: any }>;
+};
+
+const GET_USER_ROUTE_CACHE_TTL_MS = Number.parseInt(
+  process.env.GET_USER_ROUTE_CACHE_TTL_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.GET_USER_ROUTE_CACHE_TTL_MS || "", 10)
+  : 10000;
+const GET_USER_ROUTE_TIMEOUT_MS = Number.parseInt(
+  process.env.GET_USER_ROUTE_TIMEOUT_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.GET_USER_ROUTE_TIMEOUT_MS || "", 10)
+  : 10000;
+const GET_USER_TRANSIENT_RETRY_COUNT = Math.max(
+  Number.parseInt(process.env.GET_USER_TRANSIENT_RETRY_COUNT || "", 10) || 2,
+  1,
+);
+const GET_USER_TRANSIENT_RETRY_DELAY_MS = Math.max(
+  Number.parseInt(process.env.GET_USER_TRANSIENT_RETRY_DELAY_MS || "", 10) || 150,
+  50,
+);
+
+const getRouteCache = () => {
+  if (!globalGetUserRouteCacheState.__getUserRouteCache) {
+    globalGetUserRouteCacheState.__getUserRouteCache = new Map();
+  }
+  return globalGetUserRouteCacheState.__getUserRouteCache;
+};
+
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  const safeTimeoutMs = Math.max(1000, timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), safeTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
+};
+
+const isTransientMongoError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const anyError = error as any;
+  const labels = anyError?.errorLabelSet instanceof Set
+    ? Array.from(anyError.errorLabelSet)
+    : [];
+  const labelSet = new Set(labels.map((label) => String(label)));
+  const name = String(anyError?.name || "");
+  const message = String(anyError?.message || "");
+  const code = String(anyError?.code || anyError?.cause?.code || "");
+  const causeName = String(anyError?.cause?.name || "");
+
+  if (labelSet.has("ResetPool") || labelSet.has("PoolRequestedRetry") || labelSet.has("PoolRequstedRetry")) {
+    return true;
+  }
+
+  if (
+    name === "MongoPoolClearedError"
+    || name === "MongoNetworkError"
+    || name === "MongoServerSelectionError"
+    || causeName === "MongoNetworkError"
+  ) {
+    return true;
+  }
+
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
+    return true;
+  }
+
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("ReplicaSetNoPrimary")
+    || message.includes("Server selection timed out")
+    || message.includes("Client network socket disconnected")
+  );
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> => {
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < GET_USER_TRANSIENT_RETRY_COUNT) {
+    attempt += 1;
+    try {
+      return await work();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientMongoError(error) || attempt >= GET_USER_TRANSIENT_RETRY_COUNT) {
+        throw error;
+      }
+      await sleep(GET_USER_TRANSIENT_RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Unknown getUser failure");
+};
+
 export async function POST(request: NextRequest) {
   const body = (await request.json()) as GetUserRequestBody;
 
@@ -122,27 +239,84 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = await getOneByWalletAddress(storecode, targetWalletAddress);
-  const sanitizedResult = sanitizeUserForResponse(result);
+  const cacheKey = `${storecode}:${targetWalletAddress}`;
+  const routeCache = getRouteCache();
+  const cachedEntry = routeCache.get(cacheKey);
+  if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
+    return NextResponse.json({
+      result: cachedEntry.value,
+      cached: true,
+    });
+  }
 
-  await logUserReadSecurityEvent({
-    route: "/api/user/getUser",
-    status: "allowed",
-    reason: signatureVerified ? "signed" : "unsigned",
-    ip,
-    storecode,
-    walletAddress: targetWalletAddress,
-    requesterWalletAddress: requesterWalletAddress || undefined,
-    signatureProvided,
-    signatureVerified,
-    rateLimited: false,
-    extra: {
-      found: Boolean(result),
-      requireSignature,
-    },
-  });
+  try {
+    const result = await withTransientMongoRetry(() =>
+      withTimeout(
+        getOneByWalletAddress(storecode, targetWalletAddress),
+        GET_USER_ROUTE_TIMEOUT_MS,
+        "getUser timeout",
+      ),
+    );
+    const sanitizedResult = sanitizeUserForResponse(result);
 
-  return NextResponse.json({
-    result: sanitizedResult,
-  });
+    routeCache.set(cacheKey, {
+      value: sanitizedResult,
+      expiresAt: Date.now() + GET_USER_ROUTE_CACHE_TTL_MS,
+    });
+
+    await logUserReadSecurityEvent({
+      route: "/api/user/getUser",
+      status: "allowed",
+      reason: signatureVerified ? "signed" : "unsigned",
+      ip,
+      storecode,
+      walletAddress: targetWalletAddress,
+      requesterWalletAddress: requesterWalletAddress || undefined,
+      signatureProvided,
+      signatureVerified,
+      rateLimited: false,
+      extra: {
+        found: Boolean(result),
+        requireSignature,
+      },
+    });
+
+    return NextResponse.json({
+      result: sanitizedResult,
+      cached: false,
+    });
+  } catch (error) {
+    if (cachedEntry) {
+      return NextResponse.json({
+        result: cachedEntry.value,
+        cached: true,
+        stale: true,
+        error: "stale cache served due to timeout",
+      });
+    }
+
+    await logUserReadSecurityEvent({
+      route: "/api/user/getUser",
+      status: "blocked",
+      reason: "temporary_db_connectivity_issue",
+      ip,
+      storecode,
+      walletAddress: targetWalletAddress,
+      requesterWalletAddress: requesterWalletAddress || undefined,
+      signatureProvided,
+      signatureVerified,
+      rateLimited: false,
+      extra: {
+        message: error instanceof Error ? error.message : "unknown_error",
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: error instanceof Error ? error.message : "Failed to read user",
+      },
+      { status: isTransientMongoError(error) ? 503 : 504 },
+    );
+  }
 }

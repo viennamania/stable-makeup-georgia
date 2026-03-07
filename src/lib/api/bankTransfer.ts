@@ -12,6 +12,10 @@ function escapeRegex(value: string): string {
 }
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const BANK_TRANSFER_QUERY_MAX_TIME_MS = Math.max(
+  Number.parseInt(process.env.BANK_TRANSFER_QUERY_MAX_TIME_MS || "", 10) || 10000,
+  1000,
+);
 
 function parseKstDateToUtcBoundary(value: string, endOfDay: boolean): Date | null {
   const normalized = String(value || '').trim();
@@ -345,48 +349,45 @@ export async function getBankTransfers(
 
   const query = filters.length ? { $and: filters } : {};
 
-  const totalCount = await collection.countDocuments(query);
-
-  const totalAmountResult = await collection
-    .aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: null,
-          totalAmount: {
-            $sum: {
-              $convert: {
-                input: "$amount",
-                to: "double",
-                onError: 0,
-                onNull: 0,
-              },
-            },
-          },
-        },
-      },
-    ])
-    .toArray();
-
-  const totalAmount = totalAmountResult?.[0]?.totalAmount || 0;
-
   const manualFilters = [...filters, { matchedByAdmin: true }];
   const autoFilters = [...filters, { $or: [{ matchedByAdmin: { $exists: false } }, { matchedByAdmin: { $ne: true } }] }];
 
   const manualQuery = manualFilters.length ? { $and: manualFilters } : {};
   const autoQuery = autoFilters.length ? { $and: autoFilters } : {};
 
-  const [totalManualCount, totalAutoCount] = await Promise.all([
-    collection.countDocuments(manualQuery),
-    collection.countDocuments(autoQuery),
+  const [totalCount, totalAmountResult, totalManualCount, totalAutoCount, transfers] = await Promise.all([
+    collection.countDocuments(query, { maxTimeMS: BANK_TRANSFER_QUERY_MAX_TIME_MS }),
+    collection
+      .aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: null,
+            totalAmount: {
+              $sum: {
+                $convert: {
+                  input: "$amount",
+                  to: "double",
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            },
+          },
+        },
+      ], { maxTimeMS: BANK_TRANSFER_QUERY_MAX_TIME_MS })
+      .toArray(),
+    collection.countDocuments(manualQuery, { maxTimeMS: BANK_TRANSFER_QUERY_MAX_TIME_MS }),
+    collection.countDocuments(autoQuery, { maxTimeMS: BANK_TRANSFER_QUERY_MAX_TIME_MS }),
+    collection
+      .find(query, { maxTimeMS: BANK_TRANSFER_QUERY_MAX_TIME_MS })
+      .sort({ transactionDateUtc: -1, _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray(),
   ]);
 
-  const transfers = await collection
-    .find(query)
-    .sort({ transactionDateUtc: -1, _id: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .toArray();
+  const totalAmount = totalAmountResult?.[0]?.totalAmount || 0;
 
   return {
     totalCount,
