@@ -106,6 +106,11 @@ const normalizeStatus = (value: unknown): HmacApiKeyStatus | null => {
 const buildMissingMasterKeyMessage = () => {
   const vercelEnv = normalizeString(process.env.VERCEL_ENV) || "local";
   const nodeEnv = normalizeString(process.env.NODE_ENV) || "unknown";
+  const vercelProjectId = normalizeString(process.env.VERCEL_PROJECT_ID) || "unknown";
+  const vercelUrl = normalizeString(process.env.VERCEL_URL) || "unknown";
+  const vercelGitCommitSha =
+    normalizeString(process.env.VERCEL_GIT_COMMIT_SHA) || "unknown";
+  const vercelRegion = normalizeString(process.env.VERCEL_REGION) || "unknown";
   const hasPrimaryKey = Boolean(normalizeString(process.env.HMAC_API_KEY_MASTER_KEY));
   const hasFallbackKey = Boolean(
     normalizeString(process.env.BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY),
@@ -115,6 +120,7 @@ const buildMissingMasterKeyMessage = () => {
     "Missing HMAC master key.",
     "Required: HMAC_API_KEY_MASTER_KEY (or BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY).",
     `envScope={VERCEL_ENV:${vercelEnv},NODE_ENV:${nodeEnv}}`,
+    `deployMeta={VERCEL_PROJECT_ID:${vercelProjectId},VERCEL_URL:${vercelUrl},VERCEL_GIT_COMMIT_SHA:${vercelGitCommitSha},VERCEL_REGION:${vercelRegion}}`,
     `keysPresent={HMAC_API_KEY_MASTER_KEY:${hasPrimaryKey},BUY_ORDER_SETTLEMENT_HMAC_MASTER_KEY:${hasFallbackKey}}`,
   ].join(" ");
 };
