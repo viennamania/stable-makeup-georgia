@@ -58,6 +58,71 @@ const withTimeout = async <T>(
   }
 };
 
+const isTransientMongoError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const anyError = error as any;
+  const labels = anyError?.errorLabelSet instanceof Set
+    ? Array.from(anyError.errorLabelSet)
+    : [];
+  const labelSet = new Set(labels.map((label) => String(label)));
+  const name = String(anyError?.name || "");
+  const message = String(anyError?.message || "");
+  const code = String(anyError?.code || anyError?.cause?.code || "");
+  const causeName = String(anyError?.cause?.name || "");
+
+  if (labelSet.has("ResetPool") || labelSet.has("PoolRequestedRetry") || labelSet.has("PoolRequstedRetry")) {
+    return true;
+  }
+
+  if (
+    name === "MongoPoolClearedError" ||
+    name === "MongoNetworkError" ||
+    causeName === "MongoNetworkError"
+  ) {
+    return true;
+  }
+
+  if (code === "ECONNRESET") {
+    return true;
+  }
+
+  return message.includes("Connection pool") || message.includes("TLS connection");
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const ESCROW_BALANCE_TRANSIENT_RETRY_COUNT = Math.max(
+  Number.parseInt(process.env.ESCROW_BALANCE_TRANSIENT_RETRY_COUNT || "", 10) || 2,
+  1,
+);
+const ESCROW_BALANCE_TRANSIENT_RETRY_DELAY_MS = Math.max(
+  Number.parseInt(process.env.ESCROW_BALANCE_TRANSIENT_RETRY_DELAY_MS || "", 10) || 200,
+  50,
+);
+
+const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> => {
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < ESCROW_BALANCE_TRANSIENT_RETRY_COUNT) {
+    attempt += 1;
+    try {
+      return await work();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientMongoError(error) || attempt >= ESCROW_BALANCE_TRANSIENT_RETRY_COUNT) {
+        throw error;
+      }
+      await sleep(ESCROW_BALANCE_TRANSIENT_RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Unknown getEscrowBalance failure");
+};
+
 
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
@@ -100,12 +165,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTimeout(
-      getEscrowBalanceByStorecode({
-        storecode: safeStorecode,
-      }),
-      ESCROW_BALANCE_ROUTE_TIMEOUT_MS,
-      "getEscrowBalance timeout",
+    const result = await withTransientMongoRetry(() =>
+      withTimeout(
+        getEscrowBalanceByStorecode({
+          storecode: safeStorecode,
+        }),
+        ESCROW_BALANCE_ROUTE_TIMEOUT_MS,
+        "getEscrowBalance timeout",
+      ),
     );
 
     routeCache.set(cacheKey, {
@@ -135,7 +202,7 @@ export async function POST(request: NextRequest) {
         },
         error: error instanceof Error ? error.message : "Failed to read escrow balance",
       },
-      { status: 504 },
+      { status: isTransientMongoError(error) ? 503 : 504 },
     );
   }
   
