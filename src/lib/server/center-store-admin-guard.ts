@@ -75,11 +75,19 @@ const CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS = Math.max(
   Number(process.env.CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS || 60000),
   1000,
 );
+const ENABLE_CENTER_STORE_ADMIN_RUNTIME_INDEX_CREATION =
+  String(process.env.ENABLE_CENTER_STORE_ADMIN_RUNTIME_INDEX_CREATION || "").toLowerCase() ===
+  "true";
+const ENABLE_CENTER_STORE_ADMIN_NONCE_MEMORY_FALLBACK =
+  String(process.env.ENABLE_CENTER_STORE_ADMIN_NONCE_MEMORY_FALLBACK || "true").toLowerCase() !==
+  "false";
 
 const globalCenterStoreAdminSecurity = globalThis as typeof globalThis & {
   __centerStoreAdminNonceIndexesReady?: boolean;
+  __centerStoreAdminNonceMemoryCache?: Map<string, number>;
   __centerStoreAdminGuardLastErrorLoggedAt?: number;
   __centerStoreAdminGuardLastLogWriteErrorLoggedAt?: number;
+  __centerStoreAdminGuardLastNonceFallbackLoggedAt?: number;
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -171,8 +179,56 @@ const logCenterStoreAdminLogWriteErrorThrottled = (error: unknown) => {
   }
 };
 
+const getCenterStoreAdminNonceMemoryCache = () => {
+  if (!globalCenterStoreAdminSecurity.__centerStoreAdminNonceMemoryCache) {
+    globalCenterStoreAdminSecurity.__centerStoreAdminNonceMemoryCache = new Map();
+  }
+  return globalCenterStoreAdminSecurity.__centerStoreAdminNonceMemoryCache;
+};
+
+const logCenterStoreAdminNonceFallbackThrottled = () => {
+  const now = Date.now();
+  const lastLoggedAt = globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastNonceFallbackLoggedAt || 0;
+  if (now - lastLoggedAt < CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS) {
+    return;
+  }
+
+  globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastNonceFallbackLoggedAt = now;
+  console.error("center-store-admin nonce fallback: using in-memory nonce cache due to mongo connectivity");
+};
+
+const consumeCenterStoreAdminNonceInMemory = ({
+  nonceKey,
+  ttlMs,
+}: {
+  nonceKey: string;
+  ttlMs: number;
+}) => {
+  const cache = getCenterStoreAdminNonceMemoryCache();
+  const now = Date.now();
+
+  for (const [key, expiresAt] of cache.entries()) {
+    if (expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+
+  const existingExpiry = cache.get(nonceKey);
+  if (existingExpiry && existingExpiry > now) {
+    return false;
+  }
+
+  cache.set(nonceKey, now + ttlMs);
+  return true;
+};
+
 const ensureCenterStoreAdminNonceIndexes = async () => {
   if (globalCenterStoreAdminSecurity.__centerStoreAdminNonceIndexesReady) {
+    return;
+  }
+
+  if (!ENABLE_CENTER_STORE_ADMIN_RUNTIME_INDEX_CREATION) {
+    globalCenterStoreAdminSecurity.__centerStoreAdminNonceIndexesReady = true;
     return;
   }
 
@@ -202,12 +258,7 @@ const consumeCenterStoreAdminNonce = async ({
   nonce: string;
   signedAtIso: string;
 }) => {
-  const dbClient = await withTransientMongoRetry(() => clientPromise);
-  const collection = dbClient.db(dbName).collection(CENTER_STORE_ADMIN_NONCE_COLLECTION);
-  await withTransientMongoRetry(() => ensureCenterStoreAdminNonceIndexes());
-
   const nonceKey = `${route}:${walletAddress}:${nonce}`;
-
   const now = Date.now();
   const ttlFromNow = Number.parseInt(
     process.env.CENTER_STORE_ADMIN_NONCE_TTL_MS || "",
@@ -219,6 +270,10 @@ const consumeCenterStoreAdminNonce = async ({
       : DEFAULT_CENTER_STORE_ADMIN_NONCE_TTL_MS;
 
   try {
+    const dbClient = await withTransientMongoRetry(() => clientPromise);
+    const collection = dbClient.db(dbName).collection(CENTER_STORE_ADMIN_NONCE_COLLECTION);
+    await withTransientMongoRetry(() => ensureCenterStoreAdminNonceIndexes());
+
     const result = await collection.updateOne(
       { nonceKey },
       {
@@ -240,6 +295,12 @@ const consumeCenterStoreAdminNonce = async ({
     if (error?.code === 11000) {
       return false;
     }
+
+    if (ENABLE_CENTER_STORE_ADMIN_NONCE_MEMORY_FALLBACK && isTransientMongoError(error)) {
+      logCenterStoreAdminNonceFallbackThrottled();
+      return consumeCenterStoreAdminNonceInMemory({ nonceKey, ttlMs });
+    }
+
     throw error;
   }
 };

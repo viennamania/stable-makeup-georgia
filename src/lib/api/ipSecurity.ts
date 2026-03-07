@@ -48,6 +48,8 @@ const BLOCKED_IP_RULE_QUERY_MAX_TIME_MS = Math.max(
   Number(process.env.IP_SECURITY_BLOCKED_IP_QUERY_MAX_TIME_MS || 1000),
   100,
 );
+const ENABLE_IP_SECURITY_RUNTIME_INDEX_CREATION =
+  String(process.env.ENABLE_IP_SECURITY_RUNTIME_INDEX_CREATION || "").toLowerCase() === "true";
 
 const errorLogState: Record<string, number> = {};
 
@@ -130,6 +132,11 @@ const logErrorThrottled = (key: string, message: string, error: unknown) => {
 
 const ensureIndexes = async (): Promise<boolean> => {
   if (indexEnsured) {
+    return true;
+  }
+
+  if (!ENABLE_IP_SECURITY_RUNTIME_INDEX_CREATION) {
+    indexEnsured = true;
     return true;
   }
 

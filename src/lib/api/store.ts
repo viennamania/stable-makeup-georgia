@@ -21,6 +21,8 @@ const STORE_BY_CODE_CACHE_TTL_MS = Number.parseInt(
 ) > 0
   ? Number.parseInt(process.env.STORE_BY_CODE_CACHE_TTL_MS || "", 10)
   : 15000;
+const ENABLE_STORE_RUNTIME_INDEX_CREATION =
+  String(process.env.ENABLE_STORE_RUNTIME_INDEX_CREATION || "").toLowerCase() === "true";
 
 const getStoreByCodeCache = () => {
   if (!globalStoreReadState.__storeByCodeCache) {
@@ -63,6 +65,11 @@ const setCachedStoreByCode = (storecode: string, value: any) => {
 
 const ensureStoreReadIndexes = async (collection: any) => {
   if (globalStoreReadState.__storeReadIndexesReady) {
+    return;
+  }
+
+  if (!ENABLE_STORE_RUNTIME_INDEX_CREATION) {
+    globalStoreReadState.__storeReadIndexesReady = true;
     return;
   }
 

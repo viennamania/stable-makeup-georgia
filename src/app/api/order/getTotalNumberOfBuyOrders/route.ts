@@ -4,6 +4,9 @@ import {
 	getTotalNumberOfBuyOrders,
 } from '@lib/api/order';
 
+export const runtime = "nodejs";
+export const preferredRegion = "icn1";
+
 const globalTotalBuyOrdersRouteCache = globalThis as typeof globalThis & {
   __totalBuyOrdersRouteCache?: Map<string, { expiresAt: number; value: any }>;
 };

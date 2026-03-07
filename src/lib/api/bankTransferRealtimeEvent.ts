@@ -4,6 +4,9 @@ import clientPromise, { dbName } from "@lib/mongodb";
 import type { BankTransferDashboardEvent } from "@lib/ably/constants";
 
 const COLLECTION_NAME = "bankTransferRealtimeEvents";
+const ENABLE_BANK_TRANSFER_REALTIME_RUNTIME_INDEX_CREATION =
+  String(process.env.ENABLE_BANK_TRANSFER_REALTIME_RUNTIME_INDEX_CREATION || "").toLowerCase() ===
+  "true";
 
 type BankTransferRealtimeEventDocument = {
   _id: ObjectId;
@@ -16,6 +19,10 @@ type BankTransferRealtimeEventDocument = {
 let ensureIndexesPromise: Promise<void> | null = null;
 
 async function ensureIndexes() {
+  if (!ENABLE_BANK_TRANSFER_REALTIME_RUNTIME_INDEX_CREATION) {
+    return;
+  }
+
   if (!ensureIndexesPromise) {
     ensureIndexesPromise = (async () => {
       const client = await clientPromise;

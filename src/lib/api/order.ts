@@ -244,6 +244,8 @@ const BUYORDER_QUERY_MAX_TIME_MS = Number.parseInt(
 ) > 0
   ? Number.parseInt(process.env.BUYORDER_QUERY_MAX_TIME_MS || "", 10)
   : 12000;
+const ENABLE_BUYORDER_RUNTIME_INDEX_CREATION =
+  String(process.env.ENABLE_BUYORDER_RUNTIME_INDEX_CREATION || "").toLowerCase() === "true";
 
 const getBuyOrderReadCache = () => {
   if (!globalBuyOrderReadState.__buyOrderReadCache) {
@@ -275,6 +277,11 @@ const setBuyOrderCachedValue = (key: string, value: any) => {
 
 const ensureBuyOrderReadIndexes = async (collection: any) => {
   if (globalBuyOrderReadState.__buyOrderReadIndexesReady) {
+    return;
+  }
+
+  if (!ENABLE_BUYORDER_RUNTIME_INDEX_CREATION) {
+    globalBuyOrderReadState.__buyOrderReadIndexesReady = true;
     return;
   }
 

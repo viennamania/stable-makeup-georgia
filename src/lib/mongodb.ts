@@ -7,15 +7,31 @@ if (!uri) {
 }
 
 const mongoIpFamily = Number(process.env.MONGODB_IP_FAMILY || 4) === 6 ? 6 : 4;
+const mongoReadPreferenceRaw = String(
+  process.env.MONGODB_READ_PREFERENCE || "secondaryPreferred",
+).trim();
+const mongoReadPreferenceAllowed = new Set([
+  "primary",
+  "primaryPreferred",
+  "secondary",
+  "secondaryPreferred",
+  "nearest",
+]);
+const mongoReadPreference = mongoReadPreferenceAllowed.has(mongoReadPreferenceRaw)
+  ? (mongoReadPreferenceRaw as NonNullable<MongoClientOptions["readPreference"]>)
+  : "secondaryPreferred";
 
 const options: MongoClientOptions = {
   // Keep selection timeout short so request paths fail fast on transient Atlas networking issues.
   serverSelectionTimeoutMS: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
   connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 10000),
   socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 20000),
-  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 20),
+  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 5),
   minPoolSize: 0,
+  maxConnecting: Number(process.env.MONGODB_MAX_CONNECTING || 2),
+  waitQueueTimeoutMS: Number(process.env.MONGODB_WAIT_QUEUE_TIMEOUT_MS || 5000),
   family: mongoIpFamily,
+  readPreference: mongoReadPreference,
   retryReads: true,
 };
 

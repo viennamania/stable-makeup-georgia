@@ -16,6 +16,9 @@ import {
 
 const COLLECTION_NAME = "buyOrderStatusRealtimeEvents";
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const ENABLE_BUYORDER_REALTIME_RUNTIME_INDEX_CREATION =
+  String(process.env.ENABLE_BUYORDER_REALTIME_RUNTIME_INDEX_CREATION || "").toLowerCase() ===
+  "true";
 
 type BuyOrderStatusRealtimeEventDocument = {
   _id: ObjectId;
@@ -28,6 +31,10 @@ type BuyOrderStatusRealtimeEventDocument = {
 let ensureIndexesPromise: Promise<void> | null = null;
 
 async function ensureIndexes() {
+  if (!ENABLE_BUYORDER_REALTIME_RUNTIME_INDEX_CREATION) {
+    return;
+  }
+
   if (!ensureIndexesPromise) {
     ensureIndexesPromise = (async () => {
       const client = await clientPromise;

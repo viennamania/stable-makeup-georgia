@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getBankTransfers } from '@lib/api/bankTransfer';
 
+export const runtime = "nodejs";
+export const preferredRegion = "icn1";
+
 const globalBankTransferGetAllRouteCache = globalThis as typeof globalThis & {
   __bankTransferGetAllRouteCache?: Map<string, { expiresAt: number; value: any }>;
 };

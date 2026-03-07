@@ -5,6 +5,9 @@ import {
 } from '@lib/api/store';
 import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
+export const runtime = "nodejs";
+export const preferredRegion = "icn1";
+
 const globalGetOneStoreRouteCache = globalThis as typeof globalThis & {
   __getOneStoreRouteCache?: Map<string, { expiresAt: number; value: any }>;
 };

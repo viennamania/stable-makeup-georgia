@@ -5,6 +5,7 @@ import { getBuyOrderStatusRealtimeEvents } from "@lib/api/buyOrderStatusRealtime
 import { authorizeRealtimeRequest } from "@lib/realtime/rbac";
 
 export const runtime = "nodejs";
+export const preferredRegion = "icn1";
 
 const REALTIME_BUYORDER_EVENTS_RETRY_COUNT = Math.max(
   Number.parseInt(process.env.REALTIME_BUYORDER_EVENTS_RETRY_COUNT || "", 10) || 2,

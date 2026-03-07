@@ -8,6 +8,7 @@ import {
 import { getRequestCountry } from "@/lib/server/user-read-security";
 
 export const runtime = "nodejs";
+export const preferredRegion = "icn1";
 
 const IP_RULE_LOOKUP_TIMEOUT_MS = Math.max(
   Number(process.env.IP_SECURITY_LOOKUP_TIMEOUT_MS || 1200),
