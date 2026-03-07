@@ -2714,6 +2714,15 @@ export default function Index({ params }: any) {
                     >
                       퍼블릭 IP 보안 모니터링 / 차단 관리
                     </button>
+                    <button
+                      onClick={() => {
+                        const url = `/${params.lang}/admin/security/hmac-keys`;
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full bg-emerald-700 text-sm text-white px-4 py-2 rounded-lg hover:bg-emerald-600"
+                    >
+                      HMAC API 키 관리
+                    </button>
 
                     {/*
                     <button

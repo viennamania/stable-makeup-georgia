@@ -5,13 +5,17 @@ import {
   updateBuyOrderSettlement,
 } from '@lib/api/order';
 import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
+import {
+  hasBuyOrderSettlementHmacHeaders,
+  verifyBuyOrderSettlementHmacGuard,
+} from "@/lib/server/buy-order-settlement-hmac-guard";
 
 const normalizeStorecode = (value: unknown) => {
   if (typeof value !== "string") {
     return "";
   }
 
-  return value.trim();
+  return value.trim().toLowerCase();
 };
 
 
@@ -19,7 +23,15 @@ const normalizeStorecode = (value: unknown) => {
 export async function POST(request: NextRequest) {
 
 
-  const body = await request.json();
+  const route = "/api/order/buyOrderSettlement";
+  const rawBody = await request.text();
+  let body: Record<string, any> = {};
+
+  try {
+    body = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
   const {
     orderId,
@@ -28,15 +40,36 @@ export async function POST(request: NextRequest) {
     settlement,
   } = body;
 
-  const guard = await verifyCenterStoreAdminGuard({
-    request,
-    route: "/api/order/buyOrderSettlement",
-    body,
-    storecodeRaw: storecode,
-  });
+  let settlementUpdater = "";
+  const useHmacGuard = hasBuyOrderSettlementHmacHeaders(request);
 
-  if (!guard.ok) {
-    return NextResponse.json({ error: guard.error }, { status: guard.status });
+  if (useHmacGuard) {
+    const hmacGuard = await verifyBuyOrderSettlementHmacGuard({
+      request,
+      route,
+      body,
+      rawBody,
+      storecodeRaw: storecode,
+    });
+
+    if (!hmacGuard.ok) {
+      return NextResponse.json({ error: hmacGuard.error }, { status: hmacGuard.status });
+    }
+
+    settlementUpdater = `hmac:${hmacGuard.apiKey}`;
+  } else {
+    const guard = await verifyCenterStoreAdminGuard({
+      request,
+      route,
+      body,
+      storecodeRaw: storecode,
+    });
+
+    if (!guard.ok) {
+      return NextResponse.json({ error: guard.error }, { status: guard.status });
+    }
+
+    settlementUpdater = guard.requesterWalletAddress;
   }
 
 
@@ -289,7 +322,7 @@ export async function POST(request: NextRequest) {
 
     // updateBuyOrderSettlement
     const result = await updateBuyOrderSettlement({
-      updater: guard.requesterWalletAddress, // who updates the settlement
+      updater: settlementUpdater, // who updates the settlement
       orderId: orderId,
       settlement: settlement,
       ///////////storecode: buyOrder.store.storecode, // Assuming storecode is available in the buyOrder

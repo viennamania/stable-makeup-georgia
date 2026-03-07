@@ -4,7 +4,7 @@ export const ADMIN_API_CALL_LOG_COLLECTION = "adminApiCallLogs";
 
 type InsertAdminApiCallLogInput = {
   route: string;
-  guardType: "admin_signed" | "center_store_admin";
+  guardType: "admin_signed" | "center_store_admin" | "hmac_api_key";
   status: "allowed" | "blocked";
   reason?: string | null;
   publicIp?: string | null;
