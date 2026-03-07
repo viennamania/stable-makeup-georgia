@@ -15,6 +15,12 @@ import {
 
 const ADMIN_ACTION_NONCE_COLLECTION = "adminActionSecurityNonces";
 const DEFAULT_ADMIN_ACTION_NONCE_TTL_MS = 10 * 60 * 1000;
+const ADMIN_ACTION_NONCE_UNIQ_INDEX = "uniq_admin_action_nonce_key";
+const ADMIN_ACTION_NONCE_TTL_INDEX = "ttl_admin_action_nonce_expires_at";
+
+const globalAdminActionSecurity = globalThis as typeof globalThis & {
+  __adminActionNonceIndexesReady?: boolean;
+};
 
 type BuildAdminActionSigningMessageParams = {
   signingPrefix: string;
@@ -78,6 +84,26 @@ const normalizeActionFieldValue = (value: unknown): string => {
   return String(value).trim();
 };
 
+const ensureAdminActionNonceIndexes = async () => {
+  if (globalAdminActionSecurity.__adminActionNonceIndexesReady) {
+    return;
+  }
+
+  const dbClient = await clientPromise;
+  const collection = dbClient.db(dbName).collection(ADMIN_ACTION_NONCE_COLLECTION);
+
+  await collection.createIndex(
+    { nonceKey: 1 },
+    { unique: true, name: ADMIN_ACTION_NONCE_UNIQ_INDEX }
+  );
+  await collection.createIndex(
+    { expiresAt: 1 },
+    { expireAfterSeconds: 0, name: ADMIN_ACTION_NONCE_TTL_INDEX }
+  );
+
+  globalAdminActionSecurity.__adminActionNonceIndexesReady = true;
+};
+
 export const buildAdminActionSigningMessage = ({
   signingPrefix,
   route,
@@ -115,16 +141,9 @@ const consumeAdminActionNonce = async ({
 }) => {
   const dbClient = await clientPromise;
   const collection = dbClient.db(dbName).collection(ADMIN_ACTION_NONCE_COLLECTION);
+  await ensureAdminActionNonceIndexes();
 
   const nonceKey = `${route}:${walletAddress}:${nonce}`;
-  const existing = await collection.findOne(
-    { nonceKey },
-    { projection: { _id: 1 } },
-  );
-
-  if (existing) {
-    return false;
-  }
 
   const now = Date.now();
   const ttlFromNow = Number.parseInt(process.env.ADMIN_ACTION_NONCE_TTL_MS || "", 10);
@@ -133,17 +152,30 @@ const consumeAdminActionNonce = async ({
       ? ttlFromNow
       : DEFAULT_ADMIN_ACTION_NONCE_TTL_MS;
 
-  await collection.insertOne({
-    nonceKey,
-    route,
-    walletAddress,
-    nonce,
-    signedAt: signedAtIso,
-    createdAt: new Date(now).toISOString(),
-    expiresAt: new Date(now + ttlMs).toISOString(),
-  });
+  try {
+    const result = await collection.updateOne(
+      { nonceKey },
+      {
+        $setOnInsert: {
+          nonceKey,
+          route,
+          walletAddress,
+          nonce,
+          signedAt: signedAtIso,
+          createdAt: new Date(now),
+          expiresAt: new Date(now + ttlMs),
+        },
+      },
+      { upsert: true }
+    );
 
-  return true;
+    return Boolean(result.upsertedCount);
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      return false;
+    }
+    throw error;
+  }
 };
 
 export const verifyAdminSignedAction = async ({

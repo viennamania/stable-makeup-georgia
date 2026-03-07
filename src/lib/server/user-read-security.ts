@@ -21,6 +21,30 @@ const SENSITIVE_USER_KEYS = new Set([
   "emailVerified",
 ]);
 
+const ALLOWED_STORE_KEYS = new Set([
+  "_id",
+  "storecode",
+  "storeName",
+  "storeType",
+  "storeUrl",
+  "storeDescription",
+  "storeLogo",
+  "storeBanner",
+  "backgroundColor",
+  "agentcode",
+  "createdAt",
+  "updatedAt",
+  "totalBuyerCount",
+  "totalKrwAmount",
+  "totalPaymentConfirmedCount",
+  "totalUsdtAmount",
+  "totalKrwAmountClearance",
+  "totalPaymentConfirmedClearanceCount",
+  "totalUsdtAmountClearance",
+  "settlementFeePercent",
+  "agentFeePercent",
+]);
+
 type RateLimitEntry = {
   count: number;
   resetAt: number;
@@ -189,9 +213,9 @@ export const verifyWalletSignatureWithFallback = async ({
   return false;
 };
 
-export const sanitizeUserForResponse = (value: any): any => {
+const sanitizeValue = (value: any, parentKey: string | null): any => {
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeUserForResponse(item));
+    return value.map((item) => sanitizeValue(item, parentKey));
   }
 
   if (!value || typeof value !== "object") {
@@ -203,10 +227,20 @@ export const sanitizeUserForResponse = (value: any): any => {
     if (SENSITIVE_USER_KEYS.has(key)) {
       continue;
     }
-    sanitized[key] = sanitizeUserForResponse(itemValue);
+    if (parentKey === "store" && !ALLOWED_STORE_KEYS.has(key)) {
+      continue;
+    }
+    if (key === "store" && (!itemValue || typeof itemValue !== "object")) {
+      continue;
+    }
+    sanitized[key] = sanitizeValue(itemValue, key);
   }
 
   return sanitized;
+};
+
+export const sanitizeUserForResponse = (value: any): any => {
+  return sanitizeValue(value, null);
 };
 
 export const consumeReadRateLimit = ({

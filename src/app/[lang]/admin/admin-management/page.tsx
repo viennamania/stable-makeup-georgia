@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
+import { useActiveAccount } from "thirdweb/react";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 type AdminUser = {
   _id?: string;
@@ -48,25 +50,31 @@ const formatRelative = (value: unknown) => {
 export default function AdminManagementPage() {
   const router = useRouter();
   const params = useParams<{ lang: string }>();
+  const activeAccount = useActiveAccount();
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
 
+  const GET_ALL_ADMINS_SIGNING_PREFIX = "stable-georgia:get-all-admins:v1";
+
   const fetchAdmins = async () => {
     if (loading) return;
+    if (!activeAccount) {
+      setAdmins([]);
+      return;
+    }
     setLoading(true);
 
     try {
-      const response = await fetch("/api/user/getAllAdmins", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/user/getAllAdmins",
+        signingPrefix: GET_ALL_ADMINS_SIGNING_PREFIX,
+        body: {
           limit: 1000,
           page: 1,
-        }),
+        },
       });
 
       const data = await response.json();
@@ -85,11 +93,12 @@ export default function AdminManagementPage() {
   };
 
   useEffect(() => {
+    if (!activeAccount) return;
     fetchAdmins();
     const timer = setInterval(fetchAdmins, 20_000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeAccount]);
 
   const filteredAdmins = useMemo(() => {
     const query = search.trim().toLowerCase();

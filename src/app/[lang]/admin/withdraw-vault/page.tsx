@@ -68,6 +68,7 @@ import {
   arbitrumContractAddressUSDT,
   bscContractAddressUSDT,
 } from "@/app/config/contractAddresses";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -87,6 +88,11 @@ const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on
 
 
 const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
+
+const GET_USER_BY_WALLET_ADDRESS_ADMIN_SIGNING_PREFIX =
+  "stable-georgia:get-user-by-wallet:admin:v1";
+const GET_ALL_ADMINS_SIGNING_PREFIX = "stable-georgia:get-all-admins:v1";
+const WITHDRAW_VAULT_SIGNING_PREFIX = "stable-georgia:withdraw-vault:v1";
 
 
 
@@ -263,19 +269,18 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  const [user, setUser] = useState(
-    {
-      _id: '',
-      id: 0,
-      email: '',
-      nickname: '',
-      avatar: '',
-      mobile: '',
-      walletAddress: '',
-      createdAt: '',
-      settlementAmountOfFee: '',
-    }
-  );
+  const emptyUser = {
+    _id: '',
+    id: 0,
+    email: '',
+    nickname: '',
+    avatar: '',
+    mobile: '',
+    walletAddress: '',
+    createdAt: '',
+    settlementAmountOfFee: '',
+  };
+  const [user, setUser] = useState(emptyUser);
   const [loadingUser, setLoadingUser] = useState(true);
 
   // if role is admin
@@ -287,38 +292,32 @@ export default function SendUsdt({ params }: any) {
 
     const getUser = async () => {
       setLoadingUser(true);
+      try {
+        const response = await postAdminSignedJson({
+          account: activeAccount,
+          route: "/api/user/getUserByWalletAddress",
+          signingPrefix: GET_USER_BY_WALLET_ADDRESS_ADMIN_SIGNING_PREFIX,
+          body: {
+            storecode: "admin",
+            walletAddress: address,
+          },
+        });
 
-      const response = await fetch('/api/user/getUserByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: 'admin',
-          walletAddress: address,
-        }),
-      });
-
-      const data = await response.json();
-
-      //console.log("getUserByWalletAddress", data);
-
-
-      setUser(data.result);
-
-      if (data.result && data.result?.role === 'admin') {
-        setIsAdmin(true);
-      } else {
+        const data = await response.json();
+        setUser(data?.result || emptyUser);
+        setIsAdmin(Boolean(data?.result?.role === "admin" && data?.result?.storecode === "admin"));
+      } catch (error) {
+        setUser(emptyUser);
         setIsAdmin(false);
+      } finally {
+        setLoadingUser(false);
       }
-
-      setLoadingUser(false);
 
     };
 
     address && getUser();
 
-  }, [address]);
+  }, [address, activeAccount]);
 
 
 
@@ -424,28 +423,27 @@ export default function SendUsdt({ params }: any) {
 
     const getUserInfo = async () => {
 
-      const response = await fetch('/api/user/getUserByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          storecode: 'admin',
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/user/getUserByWalletAddress",
+        signingPrefix: GET_USER_BY_WALLET_ADDRESS_ADMIN_SIGNING_PREFIX,
+        body: {
+          storecode: "admin",
           walletAddress: walletAddress,
-        }),
+        },
       });
 
       const data = await response.json();
 
       //console.log("getUserInfo", data);
 
-      setUserInfo(data.result);
+      setUserInfo(data?.result || null);
 
     };
 
-    if (walletAddress) getUserInfo();
+    if (walletAddress && activeAccount) getUserInfo();
 
-  } , [walletAddress]);
+  } , [walletAddress, activeAccount]);
 
 
 
@@ -477,14 +475,14 @@ export default function SendUsdt({ params }: any) {
 
     const getUsers = async () => {
 
-      const response = await fetch('/api/user/getAllAdmins', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/user/getAllAdmins",
+        signingPrefix: GET_ALL_ADMINS_SIGNING_PREFIX,
+        body: {
+          limit: 1000,
+          page: 1,
         },
-        body: JSON.stringify({
-          storecode: 'admin',
-        }),
       });
 
       const data = await response.json();
@@ -495,16 +493,16 @@ export default function SendUsdt({ params }: any) {
       ///setUsers(data.result.users);
       // set users except the current user
 
-      setUsers(data.result.users.filter((user: any) => user.walletAddress === address));
+      setUsers((data?.result?.users || []).filter((user: any) => user.walletAddress === address));
  
-      setTotalCountOfUsers(data.result.totalCount);
+      setTotalCountOfUsers(data?.result?.totalCount || 0);
 
     };
 
     getUsers();
 
 
-  }, [address]);
+  }, [address, activeAccount]);
 
 
 
@@ -556,16 +554,21 @@ export default function SendUsdt({ params }: any) {
     setSending(true);
 
     try {
-      const response = await fetch('/api/vault/withdrawVault', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      if (!activeAccount) {
+        toast.error('관리자 지갑 연결이 필요합니다.');
+        setSending(false);
+        return;
+      }
+
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/vault/withdrawVault",
+        signingPrefix: WITHDRAW_VAULT_SIGNING_PREFIX,
+        body: {
           walletAddress: walletAddress,
           toAddress: recipient.walletAddress,
-          amount: amount,
-        }),
+          amount: String(amount),
+        },
       });
 
       const data = await response.json();

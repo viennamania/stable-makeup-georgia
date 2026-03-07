@@ -327,7 +327,6 @@ export default function SendUsdt({ params }: any) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          storecode: 'admin',
           walletAddress: address,
         }),
       });
