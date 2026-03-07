@@ -4042,23 +4042,23 @@ export default function Index({ params }: any) {
             */}
 
             {/* buyOrderStats.totalBySellerBankAccountNumber */}
-            <div className="w-full min-w-0 flex flex-col items-start justify-start gap-2
+            <div className="w-full min-w-0 flex flex-col sm:flex-row items-start justify-start gap-3
               bg-white
               p-3 rounded-2xl border border-zinc-200 shadow-sm
             ">
 
-              <div className="text-sm font-semibold leading-tight">
-                판매자<br />통장별<br />청산통계
+              <div className="w-full sm:w-[150px] text-sm font-semibold leading-tight text-zinc-800">
+                판매자 통장별 청산통계
               </div>
 
-              <div className="grid w-full grid-cols-1 gap-2">
+              <div className="flex w-full flex-wrap items-start gap-2">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="min-w-0 flex flex-col gap-1.5 items-stretch
+                  <div key={index} className="w-fit min-w-[172px] max-w-[240px] flex flex-col gap-1.5 items-start
                     border border-zinc-200 rounded-lg p-2.5
                     bg-zinc-50 shadow-sm
                   ">
 
-                    <div className="flex w-full min-w-0 flex-row items-center gap-1">
+                    <div className="flex max-w-full min-w-0 flex-row items-center gap-1">
                       <Image
                         src="/icon-bank.png"
                         alt="Bank"
@@ -4068,7 +4068,7 @@ export default function Index({ params }: any) {
                       />
                       {/* copy account number button */}
                       <button
-                        className="min-w-0 flex-1 truncate text-left text-sm font-semibold underline text-blue-600"
+                        className="min-w-0 max-w-[190px] truncate text-left text-sm font-semibold underline text-blue-600"
                         onClick={() => {
                           const accountNumber = item._id || '기타은행';
                           navigator.clipboard.writeText(accountNumber)
@@ -4085,12 +4085,12 @@ export default function Index({ params }: any) {
                       </button>
                     </div>
 
-                    <div className="w-full min-w-0 flex flex-col items-start gap-1">
+                    <div className="min-w-0 flex flex-col items-start gap-1">
                       <div className="inline-flex w-fit items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
                         {item.totalCount?.toLocaleString() || '0'}건
                       </div>
 
-                      <div className="flex w-full min-w-0 flex-row items-center gap-1">
+                      <div className="flex min-w-0 flex-row items-center gap-1">
                         <Image
                           src="/icon-tether.png"
                           alt="Tether"
@@ -4105,7 +4105,7 @@ export default function Index({ params }: any) {
                             : '0.000'}
                         </span>
                       </div>
-                      <span className="block w-full min-w-0 truncate whitespace-nowrap pl-6 text-sm font-semibold text-yellow-600"
+                      <span className="block min-w-0 max-w-[190px] truncate whitespace-nowrap pl-6 text-sm font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
                         {item.totalKrwAmount?.toLocaleString() || '0'}
                       </span>
