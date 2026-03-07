@@ -3,6 +3,7 @@
 import React, { use, useEffect, useState } from 'react';
 
 import { postGetUserByStorecodeAndWalletAddressSigned } from "@/lib/client/get-user-admin-signed";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 
 import { toast } from 'react-hot-toast';
@@ -351,21 +352,29 @@ export default function SettingsPage({ params }: any) {
   
     try {
   
-        const response = await fetch('/api/user/updateUserBankInfo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        const response = await postCenterStoreAdminSignedJson({
+            account: smartAccount,
+            route: '/api/user/updateUserBankInfo',
+            storecode: userStorecode,
+            requesterWalletAddress: address,
+            body: {
                 storecode: userStorecode,
                 walletAddress: userWalletAddress,
                 depositBankName: bankName,
                 depositBankAccountNumber: accountNumber,
                 depositName: accountHolder,
-            }),
+            },
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => null);
+        if (!response.ok || !data?.result) {
+            const errorMessage =
+                typeof data?.error === 'string' && data.error
+                    ? data.error
+                    : '회원정보 업데이트에 실패했습니다. 다시 시도해주세요.';
+            toast.error(errorMessage);
+            return;
+        }
 
         toast.success('회원정보가 성공적으로 업데이트되었습니다.');
 
@@ -393,9 +402,9 @@ export default function SettingsPage({ params }: any) {
         } catch (e) {
 
             toast.error('회원정보 업데이트에 실패했습니다. 다시 시도해주세요.');
+        } finally {
+            setApplying(false);
         }
-
-        setApplying(false);
 
     }
 
@@ -417,6 +426,11 @@ export default function SettingsPage({ params }: any) {
             return;
         }
 
+        if (!address) {
+            toast.error('지갑 연결이 필요합니다.');
+            return;
+        }
+
         const userType = newType === 'normal' ? '' : ['AAA', 'BBB', 'CCC', 'DDD'].includes(newType) ? newType : null;
 
         if (userType === null) {
@@ -428,34 +442,42 @@ export default function SettingsPage({ params }: any) {
 
         try {
 
-            const response = await fetch('/api/user/updateUserType', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            const response = await postCenterStoreAdminSignedJson({
+                account: smartAccount,
+                route: '/api/user/updateUserType',
+                storecode: userStorecode,
+                requesterWalletAddress: address,
+                body: {
                     storecode: userStorecode,
                     walletAddress: userWalletAddress,
                     userType: userType,
-                }),
+                },
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data?.result) {
+                const errorMessage =
+                    typeof data?.error === 'string' && data.error
+                        ? data.error
+                        : '회원 등급 업데이트에 실패했습니다. 다시 시도해주세요.';
+                toast.error(errorMessage);
+                return;
+            }
 
             toast.success('회원 등급이 성공적으로 업데이트되었습니다.');
 
             setMemberData({
                 ...memberData,
-                userType: newType,
+                userType: userType,
             });
 
             setUpdateUserType('');
 
         } catch (e) {
             toast.error('회원 등급 업데이트에 실패했습니다. 다시 시도해주세요.');
+        } finally {
+            setChangingUserType(false);
         }
-
-        setChangingUserType(false);
 
     }
 
