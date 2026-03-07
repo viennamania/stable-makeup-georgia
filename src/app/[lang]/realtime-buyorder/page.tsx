@@ -463,6 +463,7 @@ export default function RealtimeBuyOrderPage() {
   const pendingBuyOrderHighlightInitializedRef = useRef(false);
   const buyOrderListSeenIdsRef = useRef<Set<string>>(new Set());
   const buyOrderListHighlightInitializedRef = useRef(false);
+  const buyOrderListFetchInFlightRef = useRef(false);
 
   const clientId = useMemo(() => {
     return `buyorder-dashboard-${Math.random().toString(36).slice(2, 10)}`;
@@ -846,6 +847,11 @@ export default function RealtimeBuyOrderPage() {
   }, []);
 
   const fetchBuyOrderList = useCallback(async () => {
+    if (buyOrderListFetchInFlightRef.current) {
+      return;
+    }
+
+    buyOrderListFetchInFlightRef.current = true;
     setIsBuyOrderListLoading(true);
     try {
       const params = new URLSearchParams({
@@ -946,6 +952,7 @@ export default function RealtimeBuyOrderPage() {
       const message = error instanceof Error ? error.message : "구매주문 목록 조회 실패";
       setBuyOrderListErrorMessage(message);
     } finally {
+      buyOrderListFetchInFlightRef.current = false;
       setIsBuyOrderListLoading(false);
     }
   }, [buyOrderListPage, buyOrderListQuery, buyOrderListStatusFilter, buyOrderListStoreCodeFilter]);

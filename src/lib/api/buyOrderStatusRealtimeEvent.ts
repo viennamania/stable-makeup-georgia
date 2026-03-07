@@ -19,6 +19,18 @@ const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const ENABLE_BUYORDER_REALTIME_RUNTIME_INDEX_CREATION =
   String(process.env.ENABLE_BUYORDER_REALTIME_RUNTIME_INDEX_CREATION || "").toLowerCase() ===
   "true";
+const REALTIME_BUYORDER_LIST_MAX_TIME_MS = Math.max(
+  Number.parseInt(process.env.REALTIME_BUYORDER_LIST_MAX_TIME_MS || "", 10) || 4500,
+  500,
+);
+const REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_COUNT = Math.max(
+  Number.parseInt(process.env.REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_COUNT || "", 10) || 2,
+  1,
+);
+const REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_DELAY_MS = Math.max(
+  Number.parseInt(process.env.REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_DELAY_MS || "", 10) || 120,
+  50,
+);
 
 type BuyOrderStatusRealtimeEventDocument = {
   _id: ObjectId;
@@ -258,6 +270,74 @@ function toSafeNumber(value: unknown): number {
 
 function escapeRegex(value: string): string {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isTransientMongoError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const anyError = error as any;
+  const labels = anyError?.errorLabelSet instanceof Set
+    ? Array.from(anyError.errorLabelSet)
+    : [];
+  const labelSet = new Set(labels.map((label) => String(label)));
+  const name = String(anyError?.name || "");
+  const message = String(anyError?.message || "");
+  const code = String(anyError?.code || anyError?.cause?.code || "");
+  const causeName = String(anyError?.cause?.name || "");
+
+  if (
+    labelSet.has("ResetPool")
+    || labelSet.has("PoolRequestedRetry")
+    || labelSet.has("PoolRequstedRetry")
+  ) {
+    return true;
+  }
+
+  if (
+    name === "MongoPoolClearedError"
+    || name === "MongoNetworkError"
+    || name === "MongoServerSelectionError"
+    || name === "MongoWaitQueueTimeoutError"
+    || causeName === "MongoNetworkError"
+  ) {
+    return true;
+  }
+
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
+    return true;
+  }
+
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function withTransientMongoRetry<T>(work: () => Promise<T>): Promise<T> {
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_COUNT) {
+    attempt += 1;
+    try {
+      return await work();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientMongoError(error) || attempt >= REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_COUNT) {
+        throw error;
+      }
+      await sleep(REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Unknown realtime buyorder list failure");
 }
 
 function getPendingBuyerName(order: any): string | null {
@@ -566,29 +646,43 @@ export async function getRealtimeBuyOrderSearchList({
     query.$and = andConditions;
   }
 
-  const totalCount = await collection.countDocuments(query);
+  const { totalCount, docs } = await withTransientMongoRetry(async () => {
+    const nextTotalCount = await collection.countDocuments(
+      query,
+      { maxTimeMS: REALTIME_BUYORDER_LIST_MAX_TIME_MS },
+    );
+    const totalPages = Math.max(1, Math.ceil(nextTotalCount / safeLimit));
+    const safePage = Math.min(requestedPage, totalPages);
+
+    const nextDocs = await collection
+      .find(query, {
+        projection: {
+          _id: 1,
+          tradeId: 1,
+          status: 1,
+          createdAt: 1,
+          krwAmount: 1,
+          usdtAmount: 1,
+          nickname: 1,
+          buyer: 1,
+          storecode: 1,
+          store: 1,
+        },
+      })
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .maxTimeMS(REALTIME_BUYORDER_LIST_MAX_TIME_MS)
+      .toArray();
+
+    return {
+      totalCount: nextTotalCount,
+      docs: nextDocs,
+    };
+  });
+
   const totalPages = Math.max(1, Math.ceil(totalCount / safeLimit));
   const safePage = Math.min(requestedPage, totalPages);
-
-  const docs = await collection
-    .find(query, {
-      projection: {
-        _id: 1,
-        tradeId: 1,
-        status: 1,
-        createdAt: 1,
-        krwAmount: 1,
-        usdtAmount: 1,
-        nickname: 1,
-        buyer: 1,
-        storecode: 1,
-        store: 1,
-      },
-    })
-    .sort({ createdAt: -1, _id: -1 })
-    .skip((safePage - 1) * safeLimit)
-    .limit(safeLimit)
-    .toArray();
 
   const orders: RealtimeBuyOrderListItem[] = docs.map((doc: any) => {
     const normalizedDocStatus = BUYORDER_LIST_STATUSES.includes(doc?.status)
