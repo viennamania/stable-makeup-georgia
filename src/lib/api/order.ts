@@ -238,6 +238,12 @@ const ESCROW_BALANCE_QUERY_MAX_TIME_MS = Number.parseInt(
 ) > 0
   ? Number.parseInt(process.env.ESCROW_BALANCE_QUERY_MAX_TIME_MS || "", 10)
   : 12000;
+const BUYORDER_QUERY_MAX_TIME_MS = Number.parseInt(
+  process.env.BUYORDER_QUERY_MAX_TIME_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.BUYORDER_QUERY_MAX_TIME_MS || "", 10)
+  : 12000;
 
 const getBuyOrderReadCache = () => {
   if (!globalBuyOrderReadState.__buyOrderReadCache) {
@@ -2697,6 +2703,7 @@ export async function getBuyOrders(
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection(collectionName);
+  void ensureBuyOrderReadIndexes(collection);
   const searchDepositCompletedQuery = searchDepositCompleted
     ? { 'buyer.depositCompleted': true }
     : {};
@@ -2710,7 +2717,7 @@ export async function getBuyOrders(
 
   if (searchMyOrders) {
 
-    const results = await collection.find<OrderProps>(
+    const resultsPromise = collection.find<OrderProps>(
 
       //{ walletAddress: walletAddress, status: { $ne: 'paymentConfirmed' } },
       {
@@ -2765,6 +2772,9 @@ export async function getBuyOrders(
 
         
       },
+      {
+        maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+      },
       
       //{ projection: { _id: 0, emailVerified: 0 } }
 
@@ -2774,7 +2784,7 @@ export async function getBuyOrders(
     .limit(limit).skip((page - 1) * limit).toArray();
 
 
-    const totalCount = await collection.countDocuments(
+    const totalCountPromise = collection.countDocuments(
       {
 
         ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
@@ -2823,9 +2833,16 @@ export async function getBuyOrders(
         //  $lte: new Date(toDate ? toDate + 'T23:59:59Z' : new Date().toISOString()),
         //}
 
-      }
+      },
+      {
+        maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+      },
     );
 
+    const [results, totalCount] = await Promise.all([
+      resultsPromise,
+      totalCountPromise,
+    ]);
 
 
     return {
@@ -2856,7 +2873,7 @@ export async function getBuyOrders(
     //console.log('getBuyOrders toDateValue: ' + toDateValue);
 
 
-    const results = await collection.find<OrderProps>(
+    const resultsPromise = collection.find<OrderProps>(
       {
         ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
@@ -2940,6 +2957,9 @@ export async function getBuyOrders(
         }
 
       },
+      {
+        maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+      },
       
       //{ projection: { _id: 0, emailVerified: 0 } }
   
@@ -2951,7 +2971,7 @@ export async function getBuyOrders(
 
     
     
-    const totalResult = await collection.aggregate([
+    const totalResultPromise = collection.aggregate([
       {
         $match: {
 
@@ -3029,13 +3049,15 @@ export async function getBuyOrders(
 
       }
 
-    ]).toArray();
+    ], {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }).toArray();
 
 
 
 
 
-    const totalResultSettlement = await collection.aggregate([
+    const totalResultSettlementPromise = collection.aggregate([
       {
         $match: {
 
@@ -3113,13 +3135,15 @@ export async function getBuyOrders(
 
       }
 
-    ]).toArray();
+    ], {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }).toArray();
 
 
 
     // totalResult for usdtAmout, krwAmount sum and count of each userType (group by userType)
 
-    const totalReaultGroupByUserType = await collection.aggregate([
+    const totalReaultGroupByUserTypePromise = collection.aggregate([
       {
         $match: {
 
@@ -3185,7 +3209,9 @@ export async function getBuyOrders(
 
       }
 
-    ]).toArray();
+    ], {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }).toArray();
 
 
     /*
@@ -3270,7 +3296,7 @@ export async function getBuyOrders(
     */
     // join $seller.bankInfo.accountNumber with bankusers collection to get bank account info
 
-    const totalReaultGroupBySellerBankAccountNumber = await collection.aggregate([
+    const totalReaultGroupBySellerBankAccountNumberPromise = collection.aggregate([
       {
         $match: {
           status: { $in: clearanceStatusesForSummary },
@@ -3335,7 +3361,9 @@ export async function getBuyOrders(
 
       // sort by totalUsdtAmount desc
       { $sort: { totalUsdtAmount: -1 } }
-    ]).toArray();
+    ], {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }).toArray();
 
 
 
@@ -3400,7 +3428,7 @@ export async function getBuyOrders(
 
     // totalReaultGroup by buyer.bankInfo.accountNumber
     
-    const totalReaultGroupByBuyerBankAccountNumber = await collection.aggregate([
+    const totalReaultGroupByBuyerBankAccountNumberPromise = collection.aggregate([
       {
         $match: {
           status: { $in: clearanceStatusesForSummary },
@@ -3445,10 +3473,24 @@ export async function getBuyOrders(
 
       // sort by totalUsdtAmount desc
       { $sort: { totalUsdtAmount: -1 } }
-    ]).toArray();
-    
-
-
+    ], {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }).toArray();
+    const [
+      results,
+      totalResult,
+      totalResultSettlement,
+      totalReaultGroupByUserType,
+      totalReaultGroupBySellerBankAccountNumber,
+      totalReaultGroupByBuyerBankAccountNumber,
+    ] = await Promise.all([
+      resultsPromise,
+      totalResultPromise,
+      totalResultSettlementPromise,
+      totalReaultGroupByUserTypePromise,
+      totalReaultGroupBySellerBankAccountNumberPromise,
+      totalReaultGroupByBuyerBankAccountNumberPromise,
+    ]);
 
     return {
       totalCount: totalResult.length > 0 ? totalResult[0].totalCount : 0,
