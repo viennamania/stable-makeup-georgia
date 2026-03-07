@@ -9,15 +9,21 @@ import {
 
 const INTERNAL_CHECK_PATH = "/api/security/internal/check-ip";
 const BLOCKED_PAGE_PATH = "/ip-blocked";
-const IP_SECURITY_CHECK_TIMEOUT_MS = Number(process.env.IP_SECURITY_CHECK_TIMEOUT_MS || 1800);
+const IP_SECURITY_CHECK_TIMEOUT_MS = Number(process.env.IP_SECURITY_CHECK_TIMEOUT_MS || 900);
 const IP_SECURITY_MIDDLEWARE_ALLOWED_CACHE_TTL_MS = Math.max(
-  Number(process.env.IP_SECURITY_MIDDLEWARE_ALLOWED_CACHE_TTL_MS || 60000),
+  Number(process.env.IP_SECURITY_MIDDLEWARE_ALLOWED_CACHE_TTL_MS || 300000),
   250,
 );
 const IP_SECURITY_MIDDLEWARE_BLOCKED_CACHE_TTL_MS = Math.max(
   Number(process.env.IP_SECURITY_MIDDLEWARE_BLOCKED_CACHE_TTL_MS || 5000),
   500,
 );
+const IP_SECURITY_MIDDLEWARE_CACHE_MAX_ENTRIES = Math.max(
+  Number(process.env.IP_SECURITY_MIDDLEWARE_CACHE_MAX_ENTRIES || 15000),
+  200,
+);
+const IP_SECURITY_SKIP_REALTIME_APIS =
+  String(process.env.IP_SECURITY_SKIP_REALTIME_APIS || "true").toLowerCase() !== "false";
 const IP_SECURITY_ERROR_LOG_THROTTLE_MS = Math.max(
   Number(process.env.IP_SECURITY_ERROR_LOG_THROTTLE_MS || 60000),
   1000,
@@ -106,6 +112,24 @@ const getIpSecurityMiddlewareCache = () => {
   return globalIpSecurityMiddlewareState.__ipSecurityMiddlewareCheckCache;
 };
 
+const pruneIpSecurityMiddlewareCache = () => {
+  const cache = getIpSecurityMiddlewareCache();
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+
+  while (cache.size > IP_SECURITY_MIDDLEWARE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
+};
+
 const getCachedIpSecurityCheckResult = (ip: string) => {
   const cache = getIpSecurityMiddlewareCache();
   const cached = cache.get(ip);
@@ -144,6 +168,10 @@ const setCachedIpSecurityCheckResult = ({
 
 const shouldBypass = (pathname: string) => {
   if (!pathname) {
+    return true;
+  }
+
+  if (IP_SECURITY_SKIP_REALTIME_APIS && pathname.startsWith("/api/realtime/")) {
     return true;
   }
 
@@ -259,6 +287,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isApiRequest = pathname.startsWith("/api/");
+  pruneIpSecurityMiddlewareCache();
   const cachedCheckResult = getCachedIpSecurityCheckResult(ip);
 
   const pathLang = detectPathLang(pathname);

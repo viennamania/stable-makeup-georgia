@@ -2714,6 +2714,10 @@ export async function getBuyOrders(
   const searchDepositCompletedQuery = searchDepositCompleted
     ? { 'buyer.depositCompleted': true }
     : {};
+  const normalizedStorecode = String(storecode || "").trim();
+  const storecodeQuery = normalizedStorecode
+    ? { storecode: normalizedStorecode }
+    : { storecode: { $ne: null } };
 
 
   // status is not 'paymentConfirmed'
@@ -2731,7 +2735,7 @@ export async function getBuyOrders(
         ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
-        storecode: storecode || { $ne: null },
+        ...storecodeQuery,
         walletAddress: walletAddress,
         
         status: (searchOrderStatusCancelled && searchOrderStatusCompleted ? { $in: ['cancelled', 'paymentConfirmed'] }
@@ -2796,7 +2800,7 @@ export async function getBuyOrders(
 
         ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
-        storecode: storecode || { $ne: null },
+        ...storecodeQuery,
         
         walletAddress: walletAddress,
 
@@ -2805,7 +2809,7 @@ export async function getBuyOrders(
           : (searchOrderStatusCompleted ? 'paymentConfirmed'
           : { $ne: 'nothing' }))),
 
-        pirvateSale: { $ne: true },
+        privateSale: { $ne: true },
 
         ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
 
@@ -2873,9 +2877,6 @@ export async function getBuyOrders(
     const clearanceStatusesForSummary = privateSale
       ? ['paymentConfirmed', 'paymentRequested']
       : ['paymentConfirmed'];
-
-    
-    
     //console.log('getBuyOrders fromDateValue: ' + fromDateValue);
     //console.log('getBuyOrders toDateValue: ' + toDateValue);
 
@@ -2885,7 +2886,7 @@ export async function getBuyOrders(
         ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
-        storecode: storecode || { $ne: null },
+        ...storecodeQuery,
 
         // search status is searchOrderStatusCancelled
         // search status is searchOrderStatusCompleted
@@ -2998,8 +2999,7 @@ export async function getBuyOrders(
 
 
 
-          //storecode: storecode,
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
 
           nickname: { $regex: searchBuyer, $options: 'i' },
 
@@ -3084,8 +3084,7 @@ export async function getBuyOrders(
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
-          //storecode: storecode,
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
 
           nickname: { $regex: searchBuyer, $options: 'i' },
 
@@ -3171,8 +3170,7 @@ export async function getBuyOrders(
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
 
 
-          //storecode: storecode,
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
 
           nickname: { $regex: searchBuyer, $options: 'i' },
 
@@ -3229,7 +3227,7 @@ export async function getBuyOrders(
           //settlement: { $exists: true, $ne: null },
           privateSale: privateSale,
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
           nickname: { $regex: searchBuyer, $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
@@ -3262,7 +3260,7 @@ export async function getBuyOrders(
           //settlement: { $exists: true, $ne: null },
           privateSale: privateSale,
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
           nickname: { $regex: searchBuyer, $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
@@ -3312,7 +3310,7 @@ export async function getBuyOrders(
 
           privateSale: privateSale,
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
           nickname: { $regex: searchBuyer, $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
@@ -3386,7 +3384,7 @@ export async function getBuyOrders(
 
           privateSale: privateSale,
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
           nickname: { $regex: searchBuyer, $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),
@@ -3444,7 +3442,7 @@ export async function getBuyOrders(
 
           privateSale: privateSale,
           ...(agentcode ? { agentcode: { $regex: String(agentcode), $options: 'i' } } : {}),
-          storecode: { $regex: storecode, $options: 'i' },
+          ...storecodeQuery,
           nickname: { $regex: String(searchBuyer), $options: 'i' },
           ...(searchTradeId ? { tradeId: { $regex: String(searchTradeId), $options: 'i' } } : {}),
           ...(searchDepositName ? { $or: [{ "buyer.depositName": { $regex: String(searchDepositName), $options: 'i' } }, { 'seller.bankInfo.accountHolder': { $regex: String(searchDepositName), $options: 'i' } }] } : {}),

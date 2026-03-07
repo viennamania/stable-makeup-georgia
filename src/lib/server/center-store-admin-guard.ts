@@ -81,10 +81,39 @@ const ENABLE_CENTER_STORE_ADMIN_RUNTIME_INDEX_CREATION =
 const ENABLE_CENTER_STORE_ADMIN_NONCE_MEMORY_FALLBACK =
   String(process.env.ENABLE_CENTER_STORE_ADMIN_NONCE_MEMORY_FALLBACK || "true").toLowerCase() !==
   "false";
+const CENTER_STORE_ADMIN_REQUESTER_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.CENTER_STORE_ADMIN_REQUESTER_CACHE_TTL_MS || "", 10) || 15000,
+  1000,
+);
+const CENTER_STORE_ADMIN_STORE_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.CENTER_STORE_ADMIN_STORE_CACHE_TTL_MS || "", 10) || 15000,
+  1000,
+);
+const CENTER_STORE_ADMIN_REQUESTER_CACHE_MAX_ENTRIES = Math.max(
+  Number.parseInt(process.env.CENTER_STORE_ADMIN_REQUESTER_CACHE_MAX_ENTRIES || "", 10) || 2000,
+  100,
+);
+const CENTER_STORE_ADMIN_STORE_CACHE_MAX_ENTRIES = Math.max(
+  Number.parseInt(process.env.CENTER_STORE_ADMIN_STORE_CACHE_MAX_ENTRIES || "", 10) || 1000,
+  100,
+);
+
+type CachedRequesterEntry = {
+  expiresAt: number;
+  requesterUser: any;
+  requesterIsAdmin: boolean;
+};
+
+type CachedStoreAdminWalletEntry = {
+  expiresAt: number;
+  storeAdminWalletAddress: string | null;
+};
 
 const globalCenterStoreAdminSecurity = globalThis as typeof globalThis & {
   __centerStoreAdminNonceIndexesReady?: boolean;
   __centerStoreAdminNonceMemoryCache?: Map<string, number>;
+  __centerStoreAdminRequesterCache?: Map<string, CachedRequesterEntry>;
+  __centerStoreAdminStoreAdminWalletCache?: Map<string, CachedStoreAdminWalletEntry>;
   __centerStoreAdminGuardLastErrorLoggedAt?: number;
   __centerStoreAdminGuardLastLogWriteErrorLoggedAt?: number;
   __centerStoreAdminGuardLastNonceFallbackLoggedAt?: number;
@@ -192,6 +221,40 @@ const getCenterStoreAdminNonceMemoryCache = () => {
     globalCenterStoreAdminSecurity.__centerStoreAdminNonceMemoryCache = new Map();
   }
   return globalCenterStoreAdminSecurity.__centerStoreAdminNonceMemoryCache;
+};
+
+const getCenterStoreAdminRequesterCache = () => {
+  if (!globalCenterStoreAdminSecurity.__centerStoreAdminRequesterCache) {
+    globalCenterStoreAdminSecurity.__centerStoreAdminRequesterCache = new Map();
+  }
+  return globalCenterStoreAdminSecurity.__centerStoreAdminRequesterCache;
+};
+
+const getCenterStoreAdminStoreWalletCache = () => {
+  if (!globalCenterStoreAdminSecurity.__centerStoreAdminStoreAdminWalletCache) {
+    globalCenterStoreAdminSecurity.__centerStoreAdminStoreAdminWalletCache = new Map();
+  }
+  return globalCenterStoreAdminSecurity.__centerStoreAdminStoreAdminWalletCache;
+};
+
+const pruneCenterStoreAdminCache = <T extends { expiresAt: number }>(
+  cache: Map<string, T>,
+  maxEntries: number,
+) => {
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+
+  while (cache.size > maxEntries) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
 };
 
 const logCenterStoreAdminNonceFallbackThrottled = () => {
@@ -474,10 +537,31 @@ export const verifyCenterStoreAdminGuard = async ({
       };
     }
 
-    const requesterAdminUser = await withTransientMongoRetry(() =>
-      getOneByWalletAddress("admin", requesterWalletAddress),
+    const now = Date.now();
+    const requesterCache = getCenterStoreAdminRequesterCache();
+    pruneCenterStoreAdminCache(
+      requesterCache,
+      CENTER_STORE_ADMIN_REQUESTER_CACHE_MAX_ENTRIES,
     );
-    const requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
+
+    let requesterAdminUser: any = null;
+    let requesterIsAdmin = false;
+    const requesterCacheKey = requesterWalletAddress;
+    const cachedRequester = requesterCache.get(requesterCacheKey);
+    if (cachedRequester && cachedRequester.expiresAt > now) {
+      requesterAdminUser = cachedRequester.requesterUser;
+      requesterIsAdmin = cachedRequester.requesterIsAdmin;
+    } else {
+      requesterAdminUser = await withTransientMongoRetry(() =>
+        getOneByWalletAddress("admin", requesterWalletAddress),
+      );
+      requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
+      requesterCache.set(requesterCacheKey, {
+        requesterUser: requesterAdminUser || null,
+        requesterIsAdmin,
+        expiresAt: now + CENTER_STORE_ADMIN_REQUESTER_CACHE_TTL_MS,
+      });
+    }
 
     if (requesterIsAdmin) {
       void writeAdminApiCallLog({
@@ -496,8 +580,26 @@ export const verifyCenterStoreAdminGuard = async ({
       };
     }
 
-    const store = await withTransientMongoRetry(() => getStoreByStorecode({ storecode }));
-    const storeAdminWalletAddress = normalizeWalletAddress(store?.adminWalletAddress);
+    const storeAdminWalletCache = getCenterStoreAdminStoreWalletCache();
+    pruneCenterStoreAdminCache(
+      storeAdminWalletCache,
+      CENTER_STORE_ADMIN_STORE_CACHE_MAX_ENTRIES,
+    );
+
+    const storeCacheKey = storecode.toLowerCase();
+    const cachedStoreAdminWallet = storeAdminWalletCache.get(storeCacheKey);
+    let storeAdminWalletAddress: string | null = null;
+
+    if (cachedStoreAdminWallet && cachedStoreAdminWallet.expiresAt > now) {
+      storeAdminWalletAddress = cachedStoreAdminWallet.storeAdminWalletAddress;
+    } else {
+      const store = await withTransientMongoRetry(() => getStoreByStorecode({ storecode }));
+      storeAdminWalletAddress = normalizeWalletAddress(store?.adminWalletAddress);
+      storeAdminWalletCache.set(storeCacheKey, {
+        storeAdminWalletAddress: storeAdminWalletAddress || null,
+        expiresAt: now + CENTER_STORE_ADMIN_STORE_CACHE_TTL_MS,
+      });
+    }
 
     if (!storeAdminWalletAddress) {
       void writeAdminApiCallLog({

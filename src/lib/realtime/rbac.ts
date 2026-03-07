@@ -7,6 +7,11 @@ export type RealtimeRole = "admin" | "viewer";
 type RoleTokenMap = Record<string, string[]>;
 
 const DEFAULT_ROLE = "viewer";
+const globalRealtimeRbacState = globalThis as typeof globalThis & {
+  __realtimeRbacCachedRawJson?: string;
+  __realtimeRbacCachedRawCsv?: string;
+  __realtimeRbacCachedMap?: RoleTokenMap;
+};
 
 function parseJsonRules(raw: string): RoleTokenMap {
   try {
@@ -59,16 +64,30 @@ function parseCsvRules(raw: string): RoleTokenMap {
 
 function getRoleTokenMap(): RoleTokenMap {
   const rawJson = process.env.REALTIME_RBAC_RULES_JSON?.trim() || "";
-  if (rawJson) {
-    return parseJsonRules(rawJson);
-  }
-
   const rawCsv = process.env.REALTIME_RBAC_TOKENS?.trim() || "";
-  if (rawCsv) {
-    return parseCsvRules(rawCsv);
+  const cachedMap = globalRealtimeRbacState.__realtimeRbacCachedMap;
+  const cachedRawJson = globalRealtimeRbacState.__realtimeRbacCachedRawJson || "";
+  const cachedRawCsv = globalRealtimeRbacState.__realtimeRbacCachedRawCsv || "";
+
+  if (cachedMap && rawJson === cachedRawJson && rawCsv === cachedRawCsv) {
+    return cachedMap;
   }
 
-  return {};
+  let nextMap: RoleTokenMap;
+
+  if (rawJson) {
+    nextMap = parseJsonRules(rawJson);
+  } else if (rawCsv) {
+    nextMap = parseCsvRules(rawCsv);
+  } else {
+    nextMap = {};
+  }
+
+  globalRealtimeRbacState.__realtimeRbacCachedRawJson = rawJson;
+  globalRealtimeRbacState.__realtimeRbacCachedRawCsv = rawCsv;
+  globalRealtimeRbacState.__realtimeRbacCachedMap = nextMap;
+
+  return nextMap;
 }
 
 function safeTokenEquals(left: string, right: string): boolean {

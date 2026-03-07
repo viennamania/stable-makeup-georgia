@@ -19,7 +19,11 @@ const IP_RULE_BLOCKED_CACHE_TTL_MS = Math.max(
   500,
 );
 const IP_RULE_ALLOWED_CACHE_TTL_MS = Math.max(
-  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 60000),
+  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 300000),
+  200,
+);
+const IP_RULE_CACHE_MAX_ENTRIES = Math.max(
+  Number(process.env.IP_SECURITY_CACHE_MAX_ENTRIES || 20000),
   200,
 );
 const IP_SECURITY_ACCESS_LOG_ENABLED =
@@ -110,11 +114,25 @@ const getLookupInFlight = () => {
 
 const getCachedBlockedRule = (ip: string): { hasValue: boolean; rule: any | null } => {
   const cache = getBlockedRuleCache();
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+  while (cache.size > IP_RULE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
+
   const cached = cache.get(ip);
   if (!cached) {
     return { hasValue: false, rule: null };
   }
-  if (cached.expiresAt <= Date.now()) {
+  if (cached.expiresAt <= now) {
     cache.delete(ip);
     return { hasValue: false, rule: null };
   }

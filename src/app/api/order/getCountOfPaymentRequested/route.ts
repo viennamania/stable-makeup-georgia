@@ -19,6 +19,10 @@ const PAYMENT_REQUESTED_ROUTE_CACHE_TTL_MS = Number.parseInt(
 ) > 0
   ? Number.parseInt(process.env.PAYMENT_REQUESTED_ROUTE_CACHE_TTL_MS || "", 10)
   : 5000;
+const PAYMENT_REQUESTED_ROUTE_CACHE_MAX_ENTRIES = Math.max(
+  Number.parseInt(process.env.PAYMENT_REQUESTED_ROUTE_CACHE_MAX_ENTRIES || "", 10) || 500,
+  100,
+);
 const PAYMENT_REQUESTED_ROUTE_TIMEOUT_MS = Number.parseInt(
   process.env.PAYMENT_REQUESTED_ROUTE_TIMEOUT_MS || "",
   10,
@@ -50,6 +54,23 @@ const getInFlightMap = () => {
     globalPaymentRequestedRouteCache.__paymentRequestedRouteInFlight = new Map();
   }
   return globalPaymentRequestedRouteCache.__paymentRequestedRouteInFlight;
+};
+
+const pruneRouteCache = (cache: Map<string, { expiresAt: number; value: any }>) => {
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+
+  while (cache.size > PAYMENT_REQUESTED_ROUTE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
 };
 
 const normalizeString = (value: unknown) => {
@@ -201,6 +222,7 @@ export async function POST(request: NextRequest) {
 
   const cacheKey = `${safeStorecode || "__all__"}:${safeWalletAddress || "__anonymous__"}:${ordersLimit}`;
   const routeCache = getRouteCache();
+  pruneRouteCache(routeCache);
   const cachedEntry = routeCache.get(cacheKey);
   if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
     return NextResponse.json({

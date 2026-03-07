@@ -15,6 +15,10 @@ const SELLER_USER_WALLETS_ROUTE_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.SELLER_USER_WALLETS_ROUTE_CACHE_TTL_MS || "", 10) || 8000,
   1000,
 );
+const SELLER_USER_WALLETS_ROUTE_CACHE_MAX_ENTRIES = Math.max(
+  Number.parseInt(process.env.SELLER_USER_WALLETS_ROUTE_CACHE_MAX_ENTRIES || "", 10) || 500,
+  50,
+);
 const SELLER_USER_WALLETS_ROUTE_DEFAULT_LIMIT = Math.max(
   Number.parseInt(process.env.SELLER_USER_WALLETS_ROUTE_DEFAULT_LIMIT || "", 10) || 120,
   1,
@@ -55,6 +59,23 @@ const getInFlightMap = () => {
     globalSellerUserWalletsRouteState.__sellerUserWalletsRouteInFlight = new Map();
   }
   return globalSellerUserWalletsRouteState.__sellerUserWalletsRouteInFlight;
+};
+
+const pruneRouteCache = (cache: Map<string, { expiresAt: number; value: any }>) => {
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+
+  while (cache.size > SELLER_USER_WALLETS_ROUTE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
 };
 
 const isTransientMongoError = (error: unknown): boolean => {
@@ -154,6 +175,7 @@ export async function GET(request: NextRequest) {
     limit,
   });
   const routeCache = getRouteCache();
+  pruneRouteCache(routeCache);
   const cachedEntry = routeCache.get(cacheKey);
   const hasFreshCache = Boolean(cachedEntry && cachedEntry.expiresAt > Date.now());
 

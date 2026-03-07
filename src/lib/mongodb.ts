@@ -25,12 +25,13 @@ const options: MongoClientOptions = {
   // Keep selection timeout short so request paths fail fast on transient Atlas networking issues.
   serverSelectionTimeoutMS: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
   connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 10000),
-  socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 20000),
+  socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 15000),
   // Vercel serverless workers multiply pools per route and instance, so keep defaults conservative.
-  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 2),
+  // `2` was too restrictive for concurrent read-heavy endpoints; use a moderate default.
+  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 4),
   minPoolSize: 0,
-  maxConnecting: Number(process.env.MONGODB_MAX_CONNECTING || 1),
-  waitQueueTimeoutMS: Number(process.env.MONGODB_WAIT_QUEUE_TIMEOUT_MS || 5000),
+  maxConnecting: Number(process.env.MONGODB_MAX_CONNECTING || 2),
+  waitQueueTimeoutMS: Number(process.env.MONGODB_WAIT_QUEUE_TIMEOUT_MS || 3000),
   maxIdleTimeMS: Number(process.env.MONGODB_MAX_IDLE_TIME_MS || 10000),
   family: mongoIpFamily,
   readPreference: mongoReadPreference,

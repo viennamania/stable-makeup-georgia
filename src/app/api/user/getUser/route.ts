@@ -30,7 +30,15 @@ const normalizeString = (value: unknown): string => {
 };
 
 const globalGetUserRouteCacheState = globalThis as typeof globalThis & {
-  __getUserRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __getUserRouteCache?: Map<
+    string,
+    {
+      freshUntil: number;
+      staleUntil: number;
+      value: any;
+    }
+  >;
+  __getUserRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const GET_USER_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -39,6 +47,16 @@ const GET_USER_ROUTE_CACHE_TTL_MS = Number.parseInt(
 ) > 0
   ? Number.parseInt(process.env.GET_USER_ROUTE_CACHE_TTL_MS || "", 10)
   : 10000;
+const GET_USER_ROUTE_STALE_CACHE_TTL_MS = Number.parseInt(
+  process.env.GET_USER_ROUTE_STALE_CACHE_TTL_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.GET_USER_ROUTE_STALE_CACHE_TTL_MS || "", 10)
+  : 300000;
+const GET_USER_ROUTE_CACHE_MAX_ENTRIES = Math.max(
+  Number.parseInt(process.env.GET_USER_ROUTE_CACHE_MAX_ENTRIES || "", 10) || 5000,
+  200,
+);
 const GET_USER_ROUTE_TIMEOUT_MS = Number.parseInt(
   process.env.GET_USER_ROUTE_TIMEOUT_MS || "",
   10,
@@ -59,6 +77,32 @@ const getRouteCache = () => {
     globalGetUserRouteCacheState.__getUserRouteCache = new Map();
   }
   return globalGetUserRouteCacheState.__getUserRouteCache;
+};
+
+const getInFlightMap = () => {
+  if (!globalGetUserRouteCacheState.__getUserRouteInFlight) {
+    globalGetUserRouteCacheState.__getUserRouteInFlight = new Map();
+  }
+  return globalGetUserRouteCacheState.__getUserRouteInFlight;
+};
+
+const pruneRouteCache = (
+  cache: Map<string, { freshUntil: number; staleUntil: number; value: any }>,
+) => {
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.staleUntil <= now) {
+      cache.delete(key);
+    }
+  }
+
+  while (cache.size > GET_USER_ROUTE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
 };
 
 const withTimeout = async <T>(
@@ -106,6 +150,7 @@ const isTransientMongoError = (error: unknown): boolean => {
     name === "MongoPoolClearedError"
     || name === "MongoNetworkError"
     || name === "MongoServerSelectionError"
+    || name === "MongoWaitQueueTimeoutError"
     || causeName === "MongoNetworkError"
   ) {
     return true;
@@ -120,8 +165,18 @@ const isTransientMongoError = (error: unknown): boolean => {
     || message.includes("TLS connection")
     || message.includes("ReplicaSetNoPrimary")
     || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
     || message.includes("Client network socket disconnected")
   );
+};
+
+const isRetryableGetUserError = (error: unknown): boolean => {
+  if (isTransientMongoError(error)) {
+    return true;
+  }
+
+  const message = error instanceof Error ? error.message : String(error || "");
+  return message.includes("getUser timeout");
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -136,7 +191,7 @@ const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> =>
       return await work();
     } catch (error) {
       lastError = error;
-      if (!isTransientMongoError(error) || attempt >= GET_USER_TRANSIENT_RETRY_COUNT) {
+      if (!isRetryableGetUserError(error) || attempt >= GET_USER_TRANSIENT_RETRY_COUNT) {
         throw error;
       }
       await sleep(GET_USER_TRANSIENT_RETRY_DELAY_MS * attempt);
@@ -241,8 +296,11 @@ export async function POST(request: NextRequest) {
 
   const cacheKey = `${storecode}:${targetWalletAddress}`;
   const routeCache = getRouteCache();
+  const inFlight = getInFlightMap();
+  pruneRouteCache(routeCache);
   const cachedEntry = routeCache.get(cacheKey);
-  if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
+  const now = Date.now();
+  if (cachedEntry && cachedEntry.freshUntil > now) {
     return NextResponse.json({
       result: cachedEntry.value,
       cached: true,
@@ -250,18 +308,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
+    const existingJob = inFlight.get(cacheKey);
+    const job = existingJob || withTransientMongoRetry(() =>
       withTimeout(
         getOneByWalletAddress(storecode, targetWalletAddress),
         GET_USER_ROUTE_TIMEOUT_MS,
         "getUser timeout",
       ),
     );
+    if (!existingJob) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
     const sanitizedResult = sanitizeUserForResponse(result);
 
     routeCache.set(cacheKey, {
       value: sanitizedResult,
-      expiresAt: Date.now() + GET_USER_ROUTE_CACHE_TTL_MS,
+      freshUntil: Date.now() + GET_USER_ROUTE_CACHE_TTL_MS,
+      staleUntil: Date.now() + GET_USER_ROUTE_STALE_CACHE_TTL_MS,
     });
 
     void logUserReadSecurityEvent({
@@ -286,7 +351,7 @@ export async function POST(request: NextRequest) {
       cached: false,
     });
   } catch (error) {
-    if (cachedEntry) {
+    if (cachedEntry && cachedEntry.staleUntil > Date.now()) {
       return NextResponse.json({
         result: cachedEntry.value,
         cached: true,
@@ -318,5 +383,7 @@ export async function POST(request: NextRequest) {
       },
       { status: isTransientMongoError(error) ? 503 : 504 },
     );
+  } finally {
+    inFlight.delete(cacheKey);
   }
 }

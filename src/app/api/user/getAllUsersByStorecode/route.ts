@@ -28,6 +28,10 @@ const GET_ALL_USERS_BY_STORECODE_ROUTE_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.GET_ALL_USERS_BY_STORECODE_ROUTE_CACHE_TTL_MS || "", 10) || 8000,
   1000,
 );
+const GET_ALL_USERS_BY_STORECODE_ROUTE_CACHE_MAX_ENTRIES = Math.max(
+  Number.parseInt(process.env.GET_ALL_USERS_BY_STORECODE_ROUTE_CACHE_MAX_ENTRIES || "", 10) || 600,
+  50,
+);
 const GET_ALL_USERS_BY_STORECODE_DEFAULT_LIMIT = Math.max(
   Number.parseInt(process.env.GET_ALL_USERS_BY_STORECODE_DEFAULT_LIMIT || "", 10) || 60,
   1,
@@ -72,6 +76,23 @@ const getInFlightMap = () => {
     globalGetAllUsersByStorecodeRouteState.__getAllUsersByStorecodeRouteInFlight = new Map();
   }
   return globalGetAllUsersByStorecodeRouteState.__getAllUsersByStorecodeRouteInFlight;
+};
+
+const pruneRouteCache = (cache: Map<string, { expiresAt: number; value: any }>) => {
+  const now = Date.now();
+  for (const [key, value] of cache.entries()) {
+    if (value.expiresAt <= now) {
+      cache.delete(key);
+    }
+  }
+
+  while (cache.size > GET_ALL_USERS_BY_STORECODE_ROUTE_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (!oldestKey) {
+      break;
+    }
+    cache.delete(oldestKey);
+  }
 };
 
 const isTransientMongoError = (error: unknown): boolean => {
@@ -195,6 +216,7 @@ export async function POST(request: NextRequest) {
     page,
   });
   const routeCache = getRouteCache();
+  pruneRouteCache(routeCache);
   const cachedEntry = routeCache.get(cacheKey);
   const hasFreshCache = Boolean(cachedEntry && cachedEntry.expiresAt > Date.now());
 

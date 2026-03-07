@@ -31,6 +31,10 @@ const REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_DELAY_MS = Math.max(
   Number.parseInt(process.env.REALTIME_BUYORDER_LIST_TRANSIENT_RETRY_DELAY_MS || "", 10) || 120,
   50,
 );
+const REALTIME_BUYORDER_QUERY_MAX_TIME_MS = Math.max(
+  Number.parseInt(process.env.REALTIME_BUYORDER_QUERY_MAX_TIME_MS || "", 10) || 4500,
+  500,
+);
 
 type BuyOrderStatusRealtimeEventDocument = {
   _id: ObjectId;
@@ -155,6 +159,24 @@ const BUYORDER_LIST_STATUSES: RealtimeBuyOrderListStatus[] = [
   "cancelled",
   "paymentSettled",
 ];
+
+const REALTIME_BUYORDER_LIST_PROJECTION = {
+  _id: 1,
+  tradeId: 1,
+  status: 1,
+  createdAt: 1,
+  krwAmount: 1,
+  usdtAmount: 1,
+  nickname: 1,
+  storecode: 1,
+  "buyer.depositName": 1,
+  "buyer.depositBankAccountNumber": 1,
+  "buyer.bankInfo.accountHolder": 1,
+  "buyer.bankInfo.accountNumber": 1,
+  "store.storeLogo": 1,
+  "store.storeName": 1,
+  "store.storecode": 1,
+} as const;
 
 export type RealtimePendingBuyOrderItem = {
   orderId: string;
@@ -453,12 +475,14 @@ export async function getBuyOrderStatusRealtimeEvents({
   if (hasSinceCursor) {
     docs = await collection
       .find(query)
+      .maxTimeMS(REALTIME_BUYORDER_QUERY_MAX_TIME_MS)
       .sort({ _id: 1 })
       .limit(safeLimit)
       .toArray();
   } else {
     const latestDocs = await collection
       .find(query)
+      .maxTimeMS(REALTIME_BUYORDER_QUERY_MAX_TIME_MS)
       .sort({ _id: -1 })
       .limit(safeLimit)
       .toArray();
@@ -511,7 +535,9 @@ export async function getBuyOrderTodaySummary(): Promise<BuyOrderTodaySummary> {
           pgFeeAmountKrw: { $sum: { $toDouble: { $ifNull: ["$settlement.feeAmountKRW", 0] } } },
         },
       },
-    ])
+    ], {
+      maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+    })
     .toArray();
 
   const summary = summaryResult[0] || {};
@@ -542,24 +568,16 @@ export async function getRealtimePendingBuyOrders({
   };
 
   const [totalCount, docs] = await Promise.all([
-    collection.countDocuments(query),
+    collection.countDocuments(query, {
+      maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+    }),
     collection
       .find(query, {
-        projection: {
-          _id: 1,
-          tradeId: 1,
-          status: 1,
-          createdAt: 1,
-          krwAmount: 1,
-          usdtAmount: 1,
-          nickname: 1,
-          buyer: 1,
-          storecode: 1,
-          store: 1,
-        },
+        projection: REALTIME_BUYORDER_LIST_PROJECTION,
       })
       .sort({ createdAt: -1, _id: -1 })
       .limit(safeLimit)
+      .maxTimeMS(REALTIME_BUYORDER_QUERY_MAX_TIME_MS)
       .toArray(),
   ]);
 
@@ -619,12 +637,7 @@ export async function getRealtimeBuyOrderSearchList({
   }
 
   if (normalizedStoreCode) {
-    andConditions.push({
-      $or: [
-        { storecode: normalizedStoreCode },
-        { "store.storecode": normalizedStoreCode },
-      ],
-    });
+    query.storecode = normalizedStoreCode;
   }
 
   if (searchText) {
@@ -647,27 +660,36 @@ export async function getRealtimeBuyOrderSearchList({
   }
 
   const { totalCount, docs } = await withTransientMongoRetry(async () => {
-    const nextTotalCount = await collection.countDocuments(
-      query,
-      { maxTimeMS: REALTIME_BUYORDER_LIST_MAX_TIME_MS },
-    );
+    const baseSkip = (requestedPage - 1) * safeLimit;
+    const [nextTotalCount, firstDocs] = await Promise.all([
+      collection.countDocuments(
+        query,
+        { maxTimeMS: REALTIME_BUYORDER_LIST_MAX_TIME_MS },
+      ),
+      collection
+        .find(query, {
+          projection: REALTIME_BUYORDER_LIST_PROJECTION,
+        })
+        .sort({ createdAt: -1, _id: -1 })
+        .skip(baseSkip)
+        .limit(safeLimit)
+        .maxTimeMS(REALTIME_BUYORDER_LIST_MAX_TIME_MS)
+        .toArray(),
+    ]);
+
     const totalPages = Math.max(1, Math.ceil(nextTotalCount / safeLimit));
     const safePage = Math.min(requestedPage, totalPages);
 
+    if (safePage === requestedPage) {
+      return {
+        totalCount: nextTotalCount,
+        docs: firstDocs,
+      };
+    }
+
     const nextDocs = await collection
       .find(query, {
-        projection: {
-          _id: 1,
-          tradeId: 1,
-          status: 1,
-          createdAt: 1,
-          krwAmount: 1,
-          usdtAmount: 1,
-          nickname: 1,
-          buyer: 1,
-          storecode: 1,
-          store: 1,
-        },
+        projection: REALTIME_BUYORDER_LIST_PROJECTION,
       })
       .sort({ createdAt: -1, _id: -1 })
       .skip((safePage - 1) * safeLimit)
@@ -770,7 +792,9 @@ export async function getRealtimeBuyOrderStoreOptions({
       {
         $limit: safeLimit,
       },
-    ])
+    ], {
+      maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+    })
     .toArray();
 
   const stores: RealtimeBuyOrderStoreOption[] = results
@@ -845,7 +869,9 @@ export async function getRealtimeBuyOrderSellerWalletBalances({
       {
         $limit: safeLimit,
       },
-    ])
+    ], {
+      maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+    })
     .toArray();
 
   const wallets: RealtimeSellerWalletBalanceItem[] = groupedWallets
@@ -972,6 +998,7 @@ export async function getRealtimeNicknameSellerWalletBalances({
           _id: -1,
         },
         limit: safeLimit * 4,
+        maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
       },
     )
     .toArray();
@@ -1030,6 +1057,7 @@ export async function getRealtimeNicknameSellerWalletBalances({
               storeName: 1,
               storeLogo: 1,
             },
+            maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
           },
         )
         .toArray();
