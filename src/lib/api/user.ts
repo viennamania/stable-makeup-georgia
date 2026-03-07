@@ -703,11 +703,14 @@ export async function updateBuyer({
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('users');
+  const walletAddressRaw = String(walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
 
   return await collection.updateOne(
     {
       storecode: storecode,
-      walletAddress: walletAddress
+      walletAddress: walletAddressRegex
     },
     {
       $set: {
@@ -733,11 +736,14 @@ export async function updateUserType({
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('users');
+  const walletAddressRaw = String(walletAddress || '').trim();
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
 
   return await collection.updateOne(
     {
       storecode: storecode,
-      walletAddress: walletAddress
+      walletAddress: walletAddressRegex
     },
     {
       $set: {
