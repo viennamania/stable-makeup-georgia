@@ -232,6 +232,12 @@ const BUYORDER_READ_CACHE_TTL_MS = Number.parseInt(
 ) > 0
   ? Number.parseInt(process.env.BUYORDER_READ_CACHE_TTL_MS || "", 10)
   : 5000;
+const ESCROW_BALANCE_QUERY_MAX_TIME_MS = Number.parseInt(
+  process.env.ESCROW_BALANCE_QUERY_MAX_TIME_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.ESCROW_BALANCE_QUERY_MAX_TIME_MS || "", 10)
+  : 12000;
 
 const getBuyOrderReadCache = () => {
   if (!globalBuyOrderReadState.__buyOrderReadCache) {
@@ -8848,20 +8854,27 @@ export async function updateBuyOrderSettlement(
 export async function getTotalNumberOfBuyOrders(
   {
     storecode,
+    ordersLimit,
   }: {
     storecode: string;
+    ordersLimit?: number;
   }
 ): Promise<{
   totalCount: number;
   orders: any[];
-  audioOnCount: number
+  audioOnCount: number;
+  ordersLimit: number;
 }> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  await ensureBuyOrderReadIndexes(collection);
+  void ensureBuyOrderReadIndexes(collection);
 
   const safeStorecode = String(storecode || "").trim();
-  const cacheKey = `totalBuyOrders:${safeStorecode || "__all__"}`;
+  const parsedOrdersLimit = Number(ordersLimit);
+  const safeOrdersLimit = Number.isFinite(parsedOrdersLimit)
+    ? Math.min(300, Math.max(1, Math.trunc(parsedOrdersLimit)))
+    : 100;
+  const cacheKey = `totalBuyOrders:${safeStorecode || "__all__"}:${safeOrdersLimit}`;
   const cached = getBuyOrderCachedValue(cacheKey);
   if (cached !== undefined) {
     return cached;
@@ -8876,31 +8889,38 @@ export async function getTotalNumberOfBuyOrders(
     matchQuery.storecode = safeStorecode;
   }
 
-  const [facetResult = {}] = await collection.aggregate([
-    { $match: matchQuery },
-    {
-      $facet: {
-        totalCountMeta: [{ $count: "value" }],
-        audioOnCountMeta: [
-          { $match: { audioOn: true } },
-          { $count: "value" },
-        ],
-        orders: [
-          { $sort: { createdAt: -1 } },
-          { $project: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } },
-        ],
+  const [totalCount, audioOnCount, orders] = await Promise.all([
+    collection.countDocuments(matchQuery, { maxTimeMS: 12000 }),
+    collection.countDocuments(
+      {
+        ...matchQuery,
+        audioOn: true,
       },
-    },
-  ]).toArray();
-
-  const totalCount = Number(facetResult?.totalCountMeta?.[0]?.value || 0);
-  const audioOnCount = Number(facetResult?.audioOnCountMeta?.[0]?.value || 0);
-  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+      { maxTimeMS: 12000 },
+    ),
+    collection
+      .find<any>(
+        matchQuery,
+        {
+          projection: {
+            tradeId: 1,
+            store: 1,
+            buyer: 1,
+            createdAt: 1,
+          },
+          maxTimeMS: 12000,
+        },
+      )
+      .sort({ createdAt: -1 })
+      .limit(safeOrdersLimit)
+      .toArray(),
+  ]);
 
   const result = {
-    totalCount,
-    orders,
-    audioOnCount,
+    totalCount: Number(totalCount || 0),
+    orders: Array.isArray(orders) ? orders : [],
+    audioOnCount: Number(audioOnCount || 0),
+    ordersLimit: safeOrdersLimit,
   };
 
   setBuyOrderCachedValue(cacheKey, result);
@@ -9305,18 +9325,39 @@ export async function getEscrowBalanceByStorecode(
     storecode: string;
   }
 ): Promise<any> {
+  const safeStorecode = String(storecode || "").trim();
+  const cacheKey = `escrowBalance:${safeStorecode || "__all__"}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  if (!safeStorecode) {
+    const emptyResult = {
+      escrowBalance: 0,
+      todayMinusedEscrowAmount: 0,
+    };
+    setBuyOrderCachedValue(cacheKey, emptyResult);
+    return emptyResult;
+  }
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection('stores');
   const store = await collection.findOne<any>(
-    { storecode: storecode },
-    { projection: { escrowAmountUSDT: 1 } }
+    { storecode: safeStorecode },
+    {
+      projection: { escrowAmountUSDT: 1 },
+      maxTimeMS: ESCROW_BALANCE_QUERY_MAX_TIME_MS,
+    }
   );
 
   if (!store) {
-    //console.log('store not found for storecode: ' + storecode);
-    return {
+    const result = {
       escrowBalance: 0,
+      todayMinusedEscrowAmount: 0,
     };
+    setBuyOrderCachedValue(cacheKey, result);
+    return result;
   }
 
 
@@ -9331,20 +9372,28 @@ export async function getEscrowBalanceByStorecode(
 
 
 
-  const latestEscrow = await escrowCollection.find<any>(
-    { storecode: storecode, withdrawAmount: { $gt: 0 } },
-  ).sort({ date: -1 }).limit(1).toArray();
+  const latestEscrow = await escrowCollection.findOne<any>(
+    {
+      storecode: safeStorecode,
+      withdrawAmount: { $gt: 0 },
+    },
+    {
+      projection: { date: 1 },
+      sort: { date: -1 },
+      maxTimeMS: ESCROW_BALANCE_QUERY_MAX_TIME_MS,
+    },
+  );
 
   //console.log('getEscrowBalanceByStorecode latestEscrow: ' + JSON.stringify(latestEscrow));
   //  [{"_id":"6888e772edb063fa5cfe9ead","storecode":"dtwuzgst","date":"2025-07-29","withdrawAmount":113.42,"beforeBalance":1579.7389999999996,"afterBalance":1466.3189999999995}]
 
 
-  if (latestEscrow.length === 0) {
+  if (!latestEscrow) {
 
     const totalSettlement = await buyordersCollection.aggregate([
       {
         $match: {
-          storecode: storecode,
+          storecode: safeStorecode,
           settlement: { $exists: true },
         },
       },
@@ -9355,14 +9404,18 @@ export async function getEscrowBalanceByStorecode(
           totalAgentFeeAmount: { $sum: { $ifNull: ['$$ROOT.settlement.agentFeeAmount', 0] } },
         },
       },
-    ]).toArray();
+    ], {
+      maxTimeMS: ESCROW_BALANCE_QUERY_MAX_TIME_MS,
+    }).toArray();
 
     if (totalSettlement.length === 0) {
 
-      return {
+      const result = {
         escrowBalance: store.escrowAmountUSDT || 0,
         todayMinusedEscrowAmount: 0,
       };
+      setBuyOrderCachedValue(cacheKey, result);
+      return result;
 
     } else {
 
@@ -9374,10 +9427,12 @@ export async function getEscrowBalanceByStorecode(
       // calculate escrow balance
       const escrowBalance = (store.escrowAmountUSDT || 0) - todayMinusedEscrowAmount;
 
-      return {
+      const result = {
         escrowBalance: escrowBalance,
         todayMinusedEscrowAmount: todayMinusedEscrowAmount,
       };
+      setBuyOrderCachedValue(cacheKey, result);
+      return result;
 
     }
 
@@ -9396,7 +9451,17 @@ export async function getEscrowBalanceByStorecode(
 
     //const latestEscrowDate = new Date(latestEscrow[0].date + 'T00:00:00+09:00').toISOString();
 
-    const latestEscrowDate = new Date(latestEscrow[0].date + 'T00:00:00+09:00').toISOString();
+    const latestEscrowDateBase = new Date(String(latestEscrow.date || "") + 'T00:00:00+09:00');
+    if (!Number.isFinite(latestEscrowDateBase.getTime())) {
+      const result = {
+        escrowBalance: store.escrowAmountUSDT || 0,
+        todayMinusedEscrowAmount: 0,
+      };
+      setBuyOrderCachedValue(cacheKey, result);
+      return result;
+    }
+
+    const latestEscrowDate = latestEscrowDateBase.toISOString();
     // plus one day to get the end of the day
     const latestEscrowDatePlusOne = 
       new Date(new Date(latestEscrowDate).getTime() + 24 * 60 * 60 * 1000).toISOString();
@@ -9408,7 +9473,7 @@ export async function getEscrowBalanceByStorecode(
     const totalSettlement = await buyordersCollection.aggregate([
       {
         $match: {
-          storecode: storecode,
+          storecode: safeStorecode,
           'settlement.createdAt': { $gt: latestEscrowDatePlusOne },
           settlement: { $exists: true },
         },
@@ -9422,17 +9487,21 @@ export async function getEscrowBalanceByStorecode(
 
         },
       },
-    ]).toArray();
+    ], {
+      maxTimeMS: ESCROW_BALANCE_QUERY_MAX_TIME_MS,
+    }).toArray();
 
     //console.log('getEscrowBalanceByStorecode totalSettlement: ' + JSON.stringify(totalSettlement));
 
 
     if (totalSettlement.length === 0) {
 
-      return {
+      const result = {
         escrowBalance: store.escrowAmountUSDT || 0,
         todayMinusedEscrowAmount: 0,
       };
+      setBuyOrderCachedValue(cacheKey, result);
+      return result;
 
     } else {
 
@@ -9445,10 +9514,12 @@ export async function getEscrowBalanceByStorecode(
       // calculate escrow balance
       const escrowBalance = (store.escrowAmountUSDT || 0) - todayMinusedEscrowAmount;
 
-      return {
+      const result = {
         escrowBalance: escrowBalance,
         todayMinusedEscrowAmount: todayMinusedEscrowAmount,
       };
+      setBuyOrderCachedValue(cacheKey, result);
+      return result;
 
     }
 
@@ -9461,17 +9532,25 @@ export async function getEscrowBalanceByStorecode(
 
 
 // getPaymentRequestedCount
-export async function getPaymentRequestedCount(storecode: string, walletAddress: string) {
+export async function getPaymentRequestedCount(
+  storecode: string,
+  walletAddress: string,
+  ordersLimit?: number,
+) {
 
   //console.log('getPaymentRequestedCount storecode: ' + storecode);
   //console.log('getPaymentRequestedCount walletAddress: ' + walletAddress);
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  await ensureBuyOrderReadIndexes(collection);
+  void ensureBuyOrderReadIndexes(collection);
 
   const safeStorecode = String(storecode || "").trim();
-  const cacheKey = `paymentRequested:${safeStorecode || "__all__"}:${String(walletAddress || "").trim().toLowerCase()}`;
+  const parsedOrdersLimit = Number(ordersLimit);
+  const safeOrdersLimit = Number.isFinite(parsedOrdersLimit)
+    ? Math.min(300, Math.max(1, Math.trunc(parsedOrdersLimit)))
+    : 100;
+  const cacheKey = `paymentRequested:${safeStorecode || "__all__"}:${String(walletAddress || "").trim().toLowerCase()}:${safeOrdersLimit}`;
   const cached = getBuyOrderCachedValue(cacheKey);
   if (cached !== undefined) {
     return cached;
@@ -9487,24 +9566,31 @@ export async function getPaymentRequestedCount(storecode: string, walletAddress:
     matchQuery.storecode = safeStorecode;
   }
 
-  const [facetResult = {}] = await collection.aggregate([
-    { $match: matchQuery },
-    {
-      $facet: {
-        countMeta: [{ $count: "value" }],
-        orders: [
-          { $sort: { createdAt: -1 } },
-        ],
-      },
-    },
-  ]).toArray();
-
-  const totalCount = Number(facetResult?.countMeta?.[0]?.value || 0);
-  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+  const [totalCount, orders] = await Promise.all([
+    collection.countDocuments(matchQuery, { maxTimeMS: 12000 }),
+    collection
+      .find<any>(
+        matchQuery,
+        {
+          projection: {
+            _id: 1,
+            tradeId: 1,
+            store: 1,
+            seller: 1,
+            createdAt: 1,
+          },
+          maxTimeMS: 12000,
+        },
+      )
+      .sort({ createdAt: -1 })
+      .limit(safeOrdersLimit)
+      .toArray(),
+  ]);
 
   const result = {
-    totalCount,
-    orders,
+    totalCount: Number(totalCount || 0),
+    orders: Array.isArray(orders) ? orders : [],
+    ordersLimit: safeOrdersLimit,
   };
 
   setBuyOrderCachedValue(cacheKey, result);
