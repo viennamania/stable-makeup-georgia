@@ -71,9 +71,6 @@ import useSound from 'use-sound';
 
 import { useSearchParams } from 'next/navigation';
 
-import { getAllUsersForSettlementOfStore } from "@/lib/api/user";
-
-
 import { paymentUrl } from "../../../config/payment";
 import { version } from "../../../config/version";
 

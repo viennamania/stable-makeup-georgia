@@ -9,6 +9,11 @@ import { getRequestCountry } from "@/lib/server/user-read-security";
 
 export const runtime = "nodejs";
 
+const IP_RULE_LOOKUP_TIMEOUT_MS = Math.max(
+  Number(process.env.IP_SECURITY_LOOKUP_TIMEOUT_MS || 1200),
+  100,
+);
+
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
     return "";
@@ -37,6 +42,25 @@ const parseBody = async (request: NextRequest) => {
     return await request.json();
   } catch {
     return {};
+  }
+};
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`timeout_after_${timeoutMs}ms`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 };
 
@@ -69,12 +93,18 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const blockedRule = await getBlockedIpRule(ip);
+  let blockedRule: any = null;
+  try {
+    blockedRule = await withTimeout(getBlockedIpRule(ip), IP_RULE_LOOKUP_TIMEOUT_MS);
+  } catch (error) {
+    console.error("IP blocked-rule lookup timeout/failure:", error);
+  }
+
   const blocked = Boolean(blockedRule);
   const blockReason = blocked ? normalizeString(blockedRule?.reason) : null;
 
   if (isApi || blocked) {
-    await insertApiAccessLog({
+    void insertApiAccessLog({
       ip,
       method,
       pathname,

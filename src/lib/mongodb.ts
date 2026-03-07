@@ -1,41 +1,63 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, type MongoClientOptions } from "mongodb";
 
-const uri = process.env.MONGODB_URI as string; // your mongodb connection string
+const uri = process.env.MONGODB_URI;
 
-const options = {};
+if (!uri) {
+  throw new Error("Missing MONGODB_URI environment variable");
+}
+
+const options: MongoClientOptions = {
+  // Keep selection timeout short so request paths fail fast on transient Atlas networking issues.
+  serverSelectionTimeoutMS: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
+  connectTimeoutMS: Number(process.env.MONGODB_CONNECT_TIMEOUT_MS || 10000),
+  socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 20000),
+  maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 20),
+  minPoolSize: 0,
+};
 
 declare global {
-  var _mongoClientPromise: Promise<MongoClient>;
+  var _mongoClient: MongoClient | undefined;
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-class Singleton {
-  private static _instance: Singleton;
-  private client: MongoClient;
-  private clientPromise: Promise<MongoClient>;
-  private constructor() {
-    this.client = new MongoClient(uri, options);
-    this.clientPromise = this.client.connect();
-    if (process.env.NODE_ENV === 'development') {
-      // In development mode, use a global variable so that the value
-      // is preserved across module reloads caused by HMR (Hot Module Replacement).
-      global._mongoClientPromise = this.clientPromise;
+const createClientPromise = async (): Promise<MongoClient> => {
+  const client = global._mongoClient ?? new MongoClient(uri, options);
+  global._mongoClient = client;
+
+  try {
+    await client.connect();
+    return client;
+  } catch (error) {
+    // Reset cached handles so next await can retry connection.
+    global._mongoClientPromise = undefined;
+    global._mongoClient = undefined;
+
+    try {
+      await client.close();
+    } catch {
+      // Ignore close errors after failed connect.
     }
+
+    throw error;
+  }
+};
+
+const getClientPromise = () => {
+  if (!global._mongoClientPromise) {
+    global._mongoClientPromise = createClientPromise();
   }
 
-  public static get instance() {
-    if (!this._instance) {
-      this._instance = new Singleton();
-    }
-    return this._instance.clientPromise;
-  }
-}
-const clientPromise = Singleton.instance;
+  return global._mongoClientPromise;
+};
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
+const clientPromise = new Proxy(Promise.resolve({} as MongoClient), {
+  get(_target, prop, receiver) {
+    const promise = getClientPromise() as any;
+    const value = Reflect.get(promise, prop, receiver);
+    return typeof value === "function" ? value.bind(promise) : value;
+  },
+}) as Promise<MongoClient>;
+
 export default clientPromise;
 
-
-
-
-export const dbName = process.env.MONGODB_DB_NAME || 'georgia';
+export const dbName = process.env.MONGODB_DB_NAME || "georgia";
