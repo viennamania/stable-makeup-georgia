@@ -9,6 +9,7 @@ export const preferredRegion = "icn1";
 
 const globalTotalBuyOrdersRouteCache = globalThis as typeof globalThis & {
   __totalBuyOrdersRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __totalBuyOrdersRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const TOTAL_BUY_ORDERS_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -41,6 +42,13 @@ const getRouteCache = () => {
     globalTotalBuyOrdersRouteCache.__totalBuyOrdersRouteCache = new Map();
   }
   return globalTotalBuyOrdersRouteCache.__totalBuyOrdersRouteCache;
+};
+
+const getInFlightMap = () => {
+  if (!globalTotalBuyOrdersRouteCache.__totalBuyOrdersRouteInFlight) {
+    globalTotalBuyOrdersRouteCache.__totalBuyOrdersRouteInFlight = new Map();
+  }
+  return globalTotalBuyOrdersRouteCache.__totalBuyOrdersRouteInFlight;
 };
 
 const normalizeString = (value: unknown) => {
@@ -105,16 +113,24 @@ const isTransientMongoError = (error: unknown): boolean => {
   if (
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
+    name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
   }
 
-  if (code === "ECONNRESET") {
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
     return true;
   }
 
-  return message.includes("Connection pool") || message.includes("TLS connection");
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -178,16 +194,28 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
-      withTimeout(
-        getTotalNumberOfBuyOrders({
-          storecode: safeStorecode,
-          ordersLimit,
-        }),
-        TOTAL_BUY_ORDERS_ROUTE_TIMEOUT_MS,
-        "getTotalNumberOfBuyOrders timeout",
-      ),
-    );
+    const inFlight = getInFlightMap();
+    const pending = inFlight.get(cacheKey);
+    const job = pending
+      ? pending
+      : withTransientMongoRetry(() =>
+          withTimeout(
+            getTotalNumberOfBuyOrders({
+              storecode: safeStorecode,
+              ordersLimit,
+            }),
+            TOTAL_BUY_ORDERS_ROUTE_TIMEOUT_MS,
+            "getTotalNumberOfBuyOrders timeout",
+          ),
+        ).finally(() => {
+          inFlight.delete(cacheKey);
+        });
+
+    if (!pending) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
 
     routeCache.set(cacheKey, {
       value: result,

@@ -11,6 +11,7 @@ export const preferredRegion = "icn1";
 
 const globalGetAllBuyOrdersRouteCache = globalThis as typeof globalThis & {
   __getAllBuyOrdersRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __getAllBuyOrdersRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const GET_ALL_BUY_ORDERS_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -121,16 +122,24 @@ const isTransientMongoError = (error: unknown): boolean => {
   if (
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
+    name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
   }
 
-  if (code === "ECONNRESET") {
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
     return true;
   }
 
-  return message.includes("Connection pool") || message.includes("TLS connection");
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -171,6 +180,13 @@ const getRouteCache = () => {
     globalGetAllBuyOrdersRouteCache.__getAllBuyOrdersRouteCache = new Map();
   }
   return globalGetAllBuyOrdersRouteCache.__getAllBuyOrdersRouteCache;
+};
+
+const getInFlightMap = () => {
+  if (!globalGetAllBuyOrdersRouteCache.__getAllBuyOrdersRouteInFlight) {
+    globalGetAllBuyOrdersRouteCache.__getAllBuyOrdersRouteInFlight = new Map();
+  }
+  return globalGetAllBuyOrdersRouteCache.__getAllBuyOrdersRouteInFlight;
 };
 
 const createCacheKey = (input: Record<string, unknown>) => {
@@ -317,34 +333,46 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
-      withTimeout(
-        getBuyOrders({
-          limit: safeLimit,
-          page: safePage,
-          agentcode: normalizeString(agentcode),
-          storecode: effectiveStorecode,
-          walletAddress: normalizeString(walletAddress),
-          searchMyOrders: safeSearchMyOrders,
-          searchOrderStatusCancelled: safeSearchOrderStatusCancelled,
-          searchOrderStatusCompleted: safeSearchOrderStatusCompleted,
-          searchStoreName: normalizeString(searchStoreName),
-          privateSale: safePrivateSale,
-          searchTradeId: normalizeString(searchTradeId),
-          searchBuyer: normalizeString(searchBuyer),
-          searchDepositName: normalizeString(searchDepositName),
-          searchStoreBankAccountNumber: normalizeString(searchStoreBankAccountNumber),
-          searchBuyerBankAccountNumber: normalizeString(searchBuyerBankAccountNumber),
-          searchDepositCompleted: isSearchDepositCompleted,
-          fromDate: normalizeString(body.fromDate),
-          toDate: normalizeString(body.toDate),
-          manualConfirmPayment: safeManualConfirmPayment,
-          userType: userType === undefined ? "all" : normalizeString(userType) || "all",
-        }),
-        GET_ALL_BUY_ORDERS_ROUTE_TIMEOUT_MS,
-        "getAllBuyOrders timeout",
-      ),
-    );
+    const inFlight = getInFlightMap();
+    const pending = inFlight.get(cacheKey);
+    const job = pending
+      ? pending
+      : withTransientMongoRetry(() =>
+          withTimeout(
+            getBuyOrders({
+              limit: safeLimit,
+              page: safePage,
+              agentcode: normalizeString(agentcode),
+              storecode: effectiveStorecode,
+              walletAddress: normalizeString(walletAddress),
+              searchMyOrders: safeSearchMyOrders,
+              searchOrderStatusCancelled: safeSearchOrderStatusCancelled,
+              searchOrderStatusCompleted: safeSearchOrderStatusCompleted,
+              searchStoreName: normalizeString(searchStoreName),
+              privateSale: safePrivateSale,
+              searchTradeId: normalizeString(searchTradeId),
+              searchBuyer: normalizeString(searchBuyer),
+              searchDepositName: normalizeString(searchDepositName),
+              searchStoreBankAccountNumber: normalizeString(searchStoreBankAccountNumber),
+              searchBuyerBankAccountNumber: normalizeString(searchBuyerBankAccountNumber),
+              searchDepositCompleted: isSearchDepositCompleted,
+              fromDate: normalizeString(body.fromDate),
+              toDate: normalizeString(body.toDate),
+              manualConfirmPayment: safeManualConfirmPayment,
+              userType: userType === undefined ? "all" : normalizeString(userType) || "all",
+            }),
+            GET_ALL_BUY_ORDERS_ROUTE_TIMEOUT_MS,
+            "getAllBuyOrders timeout",
+          ),
+        ).finally(() => {
+          inFlight.delete(cacheKey);
+        });
+
+    if (!pending) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
 
     routeCache.set(cacheKey, {
       value: result,

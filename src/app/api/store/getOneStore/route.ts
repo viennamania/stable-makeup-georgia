@@ -10,6 +10,7 @@ export const preferredRegion = "icn1";
 
 const globalGetOneStoreRouteCache = globalThis as typeof globalThis & {
   __getOneStoreRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __getOneStoreRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const GET_ONE_STORE_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -64,6 +65,13 @@ const getRouteCache = () => {
   return globalGetOneStoreRouteCache.__getOneStoreRouteCache;
 };
 
+const getInFlightMap = () => {
+  if (!globalGetOneStoreRouteCache.__getOneStoreRouteInFlight) {
+    globalGetOneStoreRouteCache.__getOneStoreRouteInFlight = new Map();
+  }
+  return globalGetOneStoreRouteCache.__getOneStoreRouteInFlight;
+};
+
 const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -109,6 +117,7 @@ const isTransientMongoError = (error: unknown): boolean => {
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
     name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
@@ -123,6 +132,7 @@ const isTransientMongoError = (error: unknown): boolean => {
     || message.includes("TLS connection")
     || message.includes("ReplicaSetNoPrimary")
     || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
     || message.includes("Client network socket disconnected")
   );
 };
@@ -227,15 +237,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
-      withTimeout(
-        getStoreByStorecode({
-          storecode: safeStorecode,
-        }),
-        GET_ONE_STORE_ROUTE_TIMEOUT_MS,
-        "getOneStore timeout",
-      ),
-    );
+    const inFlight = getInFlightMap();
+    const pending = inFlight.get(cacheKey);
+    const job = pending
+      ? pending
+      : withTransientMongoRetry(() =>
+          withTimeout(
+            getStoreByStorecode({
+              storecode: safeStorecode,
+            }),
+            GET_ONE_STORE_ROUTE_TIMEOUT_MS,
+            "getOneStore timeout",
+          ),
+        ).finally(() => {
+          inFlight.delete(cacheKey);
+        });
+
+    if (!pending) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
 
     routeCache.set(cacheKey, {
       value: result,

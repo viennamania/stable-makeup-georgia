@@ -794,21 +794,29 @@ export async function getOneByWalletAddress(
   // id is number
 
   const walletAddressRaw = String(walletAddress || '').trim();
-  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+  if (!walletAddressRaw) {
+    return null;
+  }
 
-  const results = await collection.findOne<UserProps>(
-    {
-      storecode: storecode,
-      walletAddress: walletAddressRegex
-    },
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
   );
 
+  const results = await collection.findOne<UserProps>({
+    storecode: storecode,
+    walletAddress: { $in: walletAddressCandidates },
+  });
 
-  //console.log('getOneByWalletAddress results: ' + results);
+  if (results) {
+    return results;
+  }
 
-  return results;
-
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+  return await collection.findOne<UserProps>({
+    storecode: storecode,
+    walletAddress: walletAddressRegex,
+  });
 }
 
 
@@ -823,16 +831,28 @@ export async function getOneByWalletAddressAcrossStores(
   const collection = client.db(dbName).collection('users');
 
   const walletAddressRaw = String(walletAddress || '').trim();
+  if (!walletAddressRaw) {
+    return null;
+  }
+
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+
+  const results = await collection.findOne<UserProps>({
+    walletAddress: { $in: walletAddressCandidates },
+  });
+
+  if (results) {
+    return results;
+  }
+
   const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
 
-  const results = await collection.findOne<UserProps>(
-    {
-      walletAddress: walletAddressRegex
-    },
-  );
-
-  return results;
+  return await collection.findOne<UserProps>({
+    walletAddress: walletAddressRegex,
+  });
 
 }
 
@@ -879,33 +899,50 @@ export async function getOneByStorecodeAndWalletAddress(
   const collection = client.db(dbName).collection('users');
 
   const walletAddressRaw = String(walletAddress || '').trim();
-  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+  if (!walletAddressRaw) {
+    return null;
+  }
+
+  const projection = {
+    nickname: 1,
+    email: 1,
+    walletAddress: 1,
+    buyer: 1,
+    createdAt: 1,
+    updatedAt: 1,
+    userType: 1,
+
+    // liveOnAndOff
+    // if liveOnAndOff is not exist, set it to true
+    liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+  };
+
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
 
   const results = await collection.findOne<UserProps>(
     {
       storecode: storecode,
-      walletAddress: walletAddressRegex
+      walletAddress: { $in: walletAddressCandidates },
     },
-    {
-      projection: {
-        nickname: 1,
-        email: 1,
-        walletAddress: 1,
-        buyer: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        userType: 1,
-
-        // liveOnAndOff
-        // if liveOnAndOff is not exist, set it to true
-        liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
-
-      }
-    }
+    { projection },
   );
 
-  return results;
+  if (results) {
+    return results;
+  }
+
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+  return await collection.findOne<UserProps>(
+    {
+      storecode: storecode,
+      walletAddress: walletAddressRegex,
+    },
+    { projection },
+  );
 
 }
 

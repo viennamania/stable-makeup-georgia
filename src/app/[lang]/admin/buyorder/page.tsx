@@ -243,9 +243,20 @@ type SellerWalletBalanceItem = {
   currentUsdtBalance?: number;
 };
 
-const SELLER_WALLET_POLLING_MS = 10_000;
+const ADMIN_BUYORDERS_POLLING_MS = 8_000;
+const ADMIN_BUYORDER_SUMMARY_POLLING_MS = 12_000;
+const ADMIN_UNMATCHED_TRANSFER_POLLING_MS = 15_000;
+const ADMIN_ESCROW_BALANCE_POLLING_MS = 15_000;
+const SELLER_WALLET_POLLING_MS = 15_000;
 const SELLER_NICKNAME_FILTER = "seller";
 const SELLER_EXCLUDED_STORECODE = "";
+
+const isDocumentHidden = () => {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return Boolean(document.hidden);
+};
 
 
 
@@ -864,8 +875,11 @@ export default function Index({ params }: any) {
     getEscrowBalance();
 
     const interval = setInterval(() => {
+      if (isDocumentHidden()) {
+        return;
+      }
       getEscrowBalance();
-    } , 5000);
+    } , ADMIN_ESCROW_BALANCE_POLLING_MS);
 
     return () => clearInterval(interval);
 
@@ -2247,7 +2261,12 @@ const depositAmountMatches = useMemo(() => {
 
   useEffect(() => {
     fetchUnmatchedTransfers();
-    const interval = setInterval(fetchUnmatchedTransfers, 10000);
+    const interval = setInterval(() => {
+      if (isDocumentHidden()) {
+        return;
+      }
+      fetchUnmatchedTransfers();
+    }, ADMIN_UNMATCHED_TRANSFER_POLLING_MS);
     return () => clearInterval(interval);
   }, [searchFromDate, searchToDate, searchStorecode]);
 
@@ -3662,11 +3681,11 @@ const depositAmountMatches = useMemo(() => {
     
     
     const interval = setInterval(() => {
-
+      if (isDocumentHidden()) {
+        return;
+      }
       fetchBuyOrders();
-
-
-    }, 3000);
+    }, ADMIN_BUYORDERS_POLLING_MS);
 
 
     return () => clearInterval(interval);
@@ -4019,8 +4038,11 @@ const fetchBuyOrders = async () => {
     fetchTotalBuyOrders();
 
     const interval = setInterval(() => {
+      if (isDocumentHidden()) {
+        return;
+      }
       fetchTotalBuyOrders();
-    }, 5000);
+    }, ADMIN_BUYORDER_SUMMARY_POLLING_MS);
     return () => clearInterval(interval);
 
   }, [address]);
@@ -4082,8 +4104,11 @@ const fetchBuyOrders = async () => {
     fetchTotalClearanceOrders();
 
     const interval = setInterval(() => {
+      if (isDocumentHidden()) {
+        return;
+      }
       fetchTotalClearanceOrders();
-    }, 5000);
+    }, ADMIN_BUYORDER_SUMMARY_POLLING_MS);
     return () => clearInterval(interval);
 
   }, [address]);
@@ -4213,6 +4238,9 @@ const fetchBuyOrders = async () => {
     fetchSellersBalance({ showLoading: true });
     // interval to fetch every 10 seconds
     const interval = setInterval(() => {
+      if (isDocumentHidden()) {
+        return;
+      }
       fetchSellersBalance();
     }, SELLER_WALLET_POLLING_MS);
     return () => clearInterval(interval);

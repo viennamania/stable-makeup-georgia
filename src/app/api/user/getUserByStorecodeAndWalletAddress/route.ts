@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!rate.allowed) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUserByStorecodeAndWalletAddress",
       status: "blocked",
       reason: "rate_limited",
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!signature || !signedAtIso) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUserByStorecodeAndWalletAddress",
       status: "blocked",
       reason: "missing_signature",
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!signatureVerified) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUserByStorecodeAndWalletAddress",
       status: "blocked",
       reason: "invalid_signature",
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
   const isAdmin = requesterStorecodeLower === "admin" && requesterRoleLower === "admin";
 
   if (!isAdmin) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUserByStorecodeAndWalletAddress",
       status: "blocked",
       reason: "forbidden_not_admin",
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
   const result = await getOneByStorecodeAndWalletAddress(targetStorecode, targetWalletAddress);
   const sanitizedResult = sanitizeUserForResponse(result);
 
-  await logUserReadSecurityEvent({
+  void logUserReadSecurityEvent({
     route: "/api/user/getUserByStorecodeAndWalletAddress",
     status: "allowed",
     reason: "admin_signed",

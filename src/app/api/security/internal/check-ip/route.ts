@@ -19,7 +19,7 @@ const IP_RULE_BLOCKED_CACHE_TTL_MS = Math.max(
   500,
 );
 const IP_RULE_ALLOWED_CACHE_TTL_MS = Math.max(
-  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 5000),
+  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 15000),
   200,
 );
 const IP_SECURITY_ACCESS_LOG_ENABLED =

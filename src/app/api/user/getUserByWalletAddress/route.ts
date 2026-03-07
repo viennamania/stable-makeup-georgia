@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!rate.allowed) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUserByWalletAddress",
       status: "blocked",
       reason: "rate_limited",
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
 
   const sanitizedResult = sanitizeUserForResponse(result);
 
-  await logUserReadSecurityEvent({
+  void logUserReadSecurityEvent({
     route: "/api/user/getUserByWalletAddress",
     status: "allowed",
     reason: storecode ? "store_scoped_lookup" : "global_lookup",

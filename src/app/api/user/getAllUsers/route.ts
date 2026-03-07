@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!rate.allowed) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getAllUsers",
       status: "blocked",
       reason: "rate_limited",
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
   const sanitizedResult = sanitizeUserForResponse(result);
 
-  await logUserReadSecurityEvent({
+  void logUserReadSecurityEvent({
     route: "/api/user/getAllUsers",
     status: "allowed",
     reason: "list_read",

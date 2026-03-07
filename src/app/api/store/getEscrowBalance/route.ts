@@ -10,6 +10,7 @@ export const preferredRegion = "icn1";
 
 const globalEscrowBalanceRouteCacheState = globalThis as typeof globalThis & {
   __escrowBalanceRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __escrowBalanceRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const ESCROW_BALANCE_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -37,6 +38,13 @@ const getRouteCache = () => {
     globalEscrowBalanceRouteCacheState.__escrowBalanceRouteCache = new Map();
   }
   return globalEscrowBalanceRouteCacheState.__escrowBalanceRouteCache;
+};
+
+const getInFlightMap = () => {
+  if (!globalEscrowBalanceRouteCacheState.__escrowBalanceRouteInFlight) {
+    globalEscrowBalanceRouteCacheState.__escrowBalanceRouteInFlight = new Map();
+  }
+  return globalEscrowBalanceRouteCacheState.__escrowBalanceRouteInFlight;
 };
 
 const withTimeout = async <T>(
@@ -83,16 +91,24 @@ const isTransientMongoError = (error: unknown): boolean => {
   if (
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
+    name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
   }
 
-  if (code === "ECONNRESET") {
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
     return true;
   }
 
-  return message.includes("Connection pool") || message.includes("TLS connection");
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -168,15 +184,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
-      withTimeout(
-        getEscrowBalanceByStorecode({
-          storecode: safeStorecode,
-        }),
-        ESCROW_BALANCE_ROUTE_TIMEOUT_MS,
-        "getEscrowBalance timeout",
-      ),
-    );
+    const inFlight = getInFlightMap();
+    const pending = inFlight.get(cacheKey);
+    const job = pending
+      ? pending
+      : withTransientMongoRetry(() =>
+          withTimeout(
+            getEscrowBalanceByStorecode({
+              storecode: safeStorecode,
+            }),
+            ESCROW_BALANCE_ROUTE_TIMEOUT_MS,
+            "getEscrowBalance timeout",
+          ),
+        ).finally(() => {
+          inFlight.delete(cacheKey);
+        });
+
+    if (!pending) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
 
     routeCache.set(cacheKey, {
       value: result,

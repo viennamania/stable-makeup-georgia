@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!rate.allowed) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUser",
       status: "blocked",
       reason: "rate_limited",
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (requireSignature && !signatureVerified) {
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUser",
       status: "blocked",
       reason: "missing_or_invalid_signature",
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
       expiresAt: Date.now() + GET_USER_ROUTE_CACHE_TTL_MS,
     });
 
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUser",
       status: "allowed",
       reason: signatureVerified ? "signed" : "unsigned",
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await logUserReadSecurityEvent({
+    void logUserReadSecurityEvent({
       route: "/api/user/getUser",
       status: "blocked",
       reason: "temporary_db_connectivity_issue",

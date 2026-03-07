@@ -10,6 +10,7 @@ export const preferredRegion = "icn1";
 
 const globalPaymentRequestedRouteCache = globalThis as typeof globalThis & {
   __paymentRequestedRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __paymentRequestedRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const PAYMENT_REQUESTED_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -42,6 +43,13 @@ const getRouteCache = () => {
     globalPaymentRequestedRouteCache.__paymentRequestedRouteCache = new Map();
   }
   return globalPaymentRequestedRouteCache.__paymentRequestedRouteCache;
+};
+
+const getInFlightMap = () => {
+  if (!globalPaymentRequestedRouteCache.__paymentRequestedRouteInFlight) {
+    globalPaymentRequestedRouteCache.__paymentRequestedRouteInFlight = new Map();
+  }
+  return globalPaymentRequestedRouteCache.__paymentRequestedRouteInFlight;
 };
 
 const normalizeString = (value: unknown) => {
@@ -106,16 +114,24 @@ const isTransientMongoError = (error: unknown): boolean => {
   if (
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
+    name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
   }
 
-  if (code === "ECONNRESET") {
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
     return true;
   }
 
-  return message.includes("Connection pool") || message.includes("TLS connection");
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -194,13 +210,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
-      withTimeout(
-        getPaymentRequestedCount(safeStorecode, safeWalletAddress, ordersLimit),
-        PAYMENT_REQUESTED_ROUTE_TIMEOUT_MS,
-        "getCountOfPaymentRequested timeout",
-      ),
-    );
+    const inFlight = getInFlightMap();
+    const pending = inFlight.get(cacheKey);
+    const job = pending
+      ? pending
+      : withTransientMongoRetry(() =>
+          withTimeout(
+            getPaymentRequestedCount(safeStorecode, safeWalletAddress, ordersLimit),
+            PAYMENT_REQUESTED_ROUTE_TIMEOUT_MS,
+            "getCountOfPaymentRequested timeout",
+          ),
+        ).finally(() => {
+          inFlight.delete(cacheKey);
+        });
+
+    if (!pending) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
     routeCache.set(cacheKey, {
       value: result,
       expiresAt: Date.now() + PAYMENT_REQUESTED_ROUTE_CACHE_TTL_MS,

@@ -7,6 +7,7 @@ export const preferredRegion = "icn1";
 
 const globalBankTransferGetAllRouteCache = globalThis as typeof globalThis & {
   __bankTransferGetAllRouteCache?: Map<string, { expiresAt: number; value: any }>;
+  __bankTransferGetAllRouteInFlight?: Map<string, Promise<any>>;
 };
 
 const BANK_TRANSFER_GET_ALL_ROUTE_CACHE_TTL_MS = Number.parseInt(
@@ -67,6 +68,13 @@ const getRouteCache = () => {
   return globalBankTransferGetAllRouteCache.__bankTransferGetAllRouteCache;
 };
 
+const getInFlightMap = () => {
+  if (!globalBankTransferGetAllRouteCache.__bankTransferGetAllRouteInFlight) {
+    globalBankTransferGetAllRouteCache.__bankTransferGetAllRouteInFlight = new Map();
+  }
+  return globalBankTransferGetAllRouteCache.__bankTransferGetAllRouteInFlight;
+};
+
 const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -112,6 +120,7 @@ const isTransientMongoError = (error: unknown): boolean => {
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
     name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
@@ -126,6 +135,7 @@ const isTransientMongoError = (error: unknown): boolean => {
     || message.includes("TLS connection")
     || message.includes("ReplicaSetNoPrimary")
     || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
     || message.includes("Client network socket disconnected")
   );
 };
@@ -198,13 +208,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withTransientMongoRetry(() =>
-      withTimeout(
-        getBankTransfers(query),
-        BANK_TRANSFER_GET_ALL_ROUTE_TIMEOUT_MS,
-        "bankTransfer getAll timeout",
-      ),
-    );
+    const inFlight = getInFlightMap();
+    const pending = inFlight.get(cacheKey);
+    const job = pending
+      ? pending
+      : withTransientMongoRetry(() =>
+          withTimeout(
+            getBankTransfers(query),
+            BANK_TRANSFER_GET_ALL_ROUTE_TIMEOUT_MS,
+            "bankTransfer getAll timeout",
+          ),
+        ).finally(() => {
+          inFlight.delete(cacheKey);
+        });
+
+    if (!pending) {
+      inFlight.set(cacheKey, job);
+    }
+
+    const result = await job;
 
     routeCache.set(cacheKey, {
       value: result,

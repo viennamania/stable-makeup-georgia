@@ -44,16 +44,24 @@ const isTransientMongoError = (error: unknown): boolean => {
   if (
     name === "MongoPoolClearedError" ||
     name === "MongoNetworkError" ||
+    name === "MongoServerSelectionError" ||
+    name === "MongoWaitQueueTimeoutError" ||
     causeName === "MongoNetworkError"
   ) {
     return true;
   }
 
-  if (code === "ECONNRESET") {
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
     return true;
   }
 
-  return message.includes("Connection pool") || message.includes("TLS connection");
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
