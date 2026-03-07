@@ -2,519 +2,519 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
   getAllBuyOrdersForRequestPayment,
-	buyOrderRequestPayment,
-  cancelTradeBySeller,
-
+  buyOrderRequestPayment,
   updateBuyOrderPayactionResult,
-} from '@lib/api/order';
-
+} from "@lib/api/order";
 import {
   getStoreByStorecode,
-} from '@lib/api/store';
+} from "@lib/api/store";
 
-import {
-  getOneByWalletAddress,
-} from '@lib/api/user';
+export const runtime = "nodejs";
+export const preferredRegion = "icn1";
 
+const globalBuyOrderRequestPaymentTaskState = globalThis as typeof globalThis & {
+  __buyOrderRequestPaymentTaskInFlight?: Promise<any>;
+  __buyOrderRequestPaymentTaskLastResult?: { expiresAt: number; value: any };
+};
 
+const BUYORDER_REQUEST_PAYMENT_TASK_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_CACHE_TTL_MS || "", 10) || 10000,
+  1000,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_MAX_ORDERS_PER_RUN = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_MAX_ORDERS_PER_RUN || "", 10) || 25,
+  1,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_MAX_RUN_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_MAX_RUN_MS || "", 10) || 18000,
+  3000,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS || "", 10) || 12000,
+  1000,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS || "", 10) || 10000,
+  1000,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_COUNT = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_COUNT || "", 10) || 2,
+  1,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_DELAY_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_DELAY_MS || "", 10) || 150,
+  50,
+);
 
-export async function POST(request: NextRequest) {
+const normalizeString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
 
-// GET
-////export async function GET(request: NextRequest) {
+const stringifyValue = (value: unknown) => {
+  if (value === null || typeof value === "undefined") {
+    return "";
+  }
+  return String(value).trim();
+};
 
+const normalizeBoolean = (value: unknown): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return value === 1;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1" || normalized === "yes";
+  }
+  return false;
+};
 
-  let reaultArray = [];
+const getCachedTaskResult = () => {
+  const cached = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskLastResult;
+  if (!cached) {
+    return null;
+  }
+  if (cached.expiresAt <= Date.now()) {
+    globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskLastResult = undefined;
+    return null;
+  }
+  return cached.value;
+};
 
+const setCachedTaskResult = (value: any) => {
+  globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskLastResult = {
+    value,
+    expiresAt: Date.now() + BUYORDER_REQUEST_PAYMENT_TASK_CACHE_TTL_MS,
+  };
+};
 
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  const safeTimeoutMs = Math.max(1000, timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | null = null;
 
-  const buyordersResult = await getAllBuyOrdersForRequestPayment({
-    limit: 100,
-    page: 1,
-  });
-
-
-  const buyOrders = buyordersResult?.orders || [];
-
-  
-  
-  //console.log("buyOrders", buyOrders);
-  console.log("buyOrders length", buyOrders.length);
-  console.log("buyOrders totalCount", buyordersResult?.totalCount);
-
-
-
-
-  for (const buyOrder of buyOrders) {
-
-
-    const storecode = buyOrder?.storecode;
-
-
-
-    //console.log("storecode", storecode);
-
-    if (!storecode) {
-      console.log("error");
-      console.log("storecode is null");
-      console.log("buyOrder", buyOrder);
-
-      // delete order
-      //await collectionOrders.deleteOne({ _id: order._id });
-
-
-      //console.log("order deleted");
-      
-      continue;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), safeTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
     }
-
-
-    const store = await getStoreByStorecode({
-      storecode: storecode,
-    });
-
-    if (!store) {
-      console.log("error");
-      console.log("store is null");
-      console.log("storecode", storecode);
-
-      // delete order
-      //await collectionOrders.deleteOne({ _id: order._id });
-
-      //console.log("order deleted");
-      
-      continue;
-    }
-
-
-    /*
-    const user = await getOneByWalletAddress({
-      walletAddress: buyOrder?.walletAddress,
-    });
-    if (!user) {
-      console.log("error");
-      console.log("user is null");
-      continue;
-    }
-
-    //// user 정보를 가져와서 확인한다.
-    */
-
-
-    //console.log("buyOrder", buyOrder);
-
-
-
-    const transactionHash = "0x";
-    let bankInfo = {
-      bankName: store?.bankName,
-      accountNumber: store?.accountNumber,
-      accountHolder: store?.accountHolder,
-      amount: buyOrder.krwAmount,
-    };
-
-
-
-
-    const orderId = buyOrder?._id;
-
-    const privateSale = buyOrder?.privateSale;
-
-  
-
-    
-    if (privateSale) {
-      console.log("privateSale is true");
-      //console.log("buyOrder", buyOrder);
-
-
-
-      // privateSale인 경우, bankInfo를 store 정보로 설정한다.
-
-
-      const bankInfo = {
-        bankName: store?.withdrawalBankInfo?.bankName,
-        accountNumber: store?.withdrawalBankInfo?.accountNumber,
-        accountHolder: store?.withdrawalBankInfo?.accountHolder,
-        amount: buyOrder.krwAmount,
-      };
-
-
-      /*
-      {
-        _id: new ObjectId('6833ee1eb0c4bf8cec9297f8'),
-        lang: null,
-        agentcode: 'dttdqguo',
-        agent: {
-          _id: new ObjectId('6830a9656938313502aa26fe'),
-          agentcode: 'dttdqguo',
-          agentName: '애플망고',
-          agentType: 'test',
-          agentUrl: 'https://test.com',
-          agentDescription: '테스트입니다.',
-          agentLogo: 'https://vzrcy5vcsuuocnf3.public.blob.vercel-storage.com/iK9vg4m-tQ1U5qPHkmoG3iPyendGrLbLz4jflx.png',
-          agentBanner: 'https://cryptoss.beauty/logo.png',
-          createdAt: '2025-05-23T16:59:17.883Z',
-          adminWalletAddress: '0x880c0E9B2C388a4365c9ba145Cf3355D889731E1',
-          agentFeeWalletAddress: '0x80bBe3A61124339780E90e8eB2BF58F26e189312',
-          totalStoreCount: 9
-        },
-        storecode: 'suroggyc',
-        store: {
-          _id: new ObjectId('682406e0fb6221a9967a61ce'),
-          storecode: 'suroggyc',
-          storeName: '캘리포니아',
-          storeType: 'test',
-          storeUrl: 'https://test.com',
-          storeDescription: '캘리포니아 만세ㅎㅎ',
-          storeLogo: 'https://vzrcy5vcsuuocnf3.public.blob.vercel-storage.com/H095G0M-lXxdoEjtKCw3KNFvpJXPHV52MmY9vG.jpeg',
-          totalBuyerCount: 77,
-          sellerWalletAddress: '0x98773aF65AE660Be4751ddd09C4350906e9D88F3',
-          adminWalletAddress: '0x880c0E9B2C388a4365c9ba145Cf3355D889731E1',
-          settlementWalletAddress: '0x880c0E9B2C388a4365c9ba145Cf3355D889731E1',
-          settlementFeeWalletAddress: '0x0d4cA31bD8E5ec8c1D8e0C1126D8f8d16683EB97',
-          settlementFeePercent: 0.4,
-          bankInfo: {
-            bankName: '농협은행',
-            accountNumber: '3561092781123',
-            accountHolder: '신호동'
-          },
-          agentcode: 'dttdqguo',
-          agentFeePercent: 0.1
-        },
-        */
-
-
-      // continue;
-    
-      const result = await buyOrderRequestPayment({
-        orderId: orderId,
-        transactionHash: transactionHash,
-
-        bankInfo: bankInfo,
-      });
-      
-
-      console.log("result", result);
-
-
-      reaultArray.push(buyOrder.tradeId);
-
-      continue;
-
-    }
-
-
-
-    
-    
-    const payactionApiKey = store?.payactionKey?.payactionApiKey;
-    const payactionWebhookKey = store?.payactionKey?.payactionWebhookKey;
-    const payactionShopId = store?.payactionKey?.payactionShopId;
-
-    if (payactionApiKey && payactionShopId) {
-
-      
-
-
-      const order_number = buyOrder.tradeId;
-      const order_amount = buyOrder.krwAmount;
-      const order_date = new Date().toISOString();
-      const billing_name = buyOrder.buyer.depositName;
-      const orderer_name = buyOrder.buyer.depositName;
-      
-  
-      // if buyOrder?.mobile is +82, remove +82
-      let mobile = buyOrder?.mobile || "";
-      if (mobile.startsWith("+82")) {
-        mobile = "0" + mobile.substring(3);
-      } else if (mobile.startsWith("82")) {
-        mobile = "0" + mobile.substring(2);
-      }
-
-
-      console.log("mobile", mobile);
-
-      const orderer_email = buyOrder.buyer?.email;
-      const trade_usage = "지출증빙용";
-      const identity_number = '';
-
-      
-      const payactionUrl = "https://api.payaction.app/order";
-      const payactionBody = {
-        order_number: order_number,
-        order_amount: order_amount,
-        order_date: order_date,
-        billing_name: billing_name,
-        orderer_name: orderer_name,
-        orderer_phone_number: mobile,
-        orderer_email: orderer_email,
-        trade_usage: trade_usage,
-        identity_number: identity_number,
-      };
-
-
-
-      const payactionHeaders: Record<string, string> = {
-        "Content-Type": "application/json",
-        "x-api-key": payactionApiKey,
-        
-        "x-mall-id": payactionShopId,
-
-      };
-      const payactionOptions = {
-        method: "POST",
-        headers: payactionHeaders,
-        body: JSON.stringify(payactionBody),
-      };
-
-      try {
-
-        const payactionResponse = await fetch(payactionUrl, payactionOptions);
-
-
-        if (!payactionResponse.ok) {
-          console.error("Payaction API response error", payactionResponse.status, payactionResponse.statusText);
-          
-          continue;
-        }
-
-        const payactionResult = await payactionResponse.json();
-
-        console.log("payactionResult", payactionResult);
-
-
-
-        if (!payactionResult || typeof payactionResult !== "object") {
-          console.error("Payaction API response is not valid JSON", payactionResult);
-          continue;
-        }
-
-        if (payactionResult.status !== "success") {
-          console.error("Payaction API error", payactionResult);
-
-
-          // updateBuyOrderPayactionResult
-          await updateBuyOrderPayactionResult({
-            orderId: buyOrder._id,
-            api: "/api/order/buyOrderRequestPaymentTask",
-            payactionResult: payactionResult,
-          });
-
-          continue;
-        }
-        
-
-        // updateBuyOrderPayactionResult
-        await updateBuyOrderPayactionResult({
-          orderId: buyOrder._id,
-          api: "/api/order/buyOrderRequestPaymentTask",
-          payactionResult: payactionResult,
-        });
-    
-    
-
-        if (payactionResponse.status !== 200) {
-          
-          console.error("Payaction API error", payactionResult);
-
-
-          console.log("order_number", order_number);
-          console.log("order_amount", order_amount);
-          console.log("order_date", order_date);
-          console.log("billing_name", billing_name);
-          console.log("orderer_name", orderer_name);
-          console.log("orderer_phone_number", mobile);
-          console.log("orderer_email", orderer_email);
-          console.log("trade_usage", trade_usage);
-          console.log("identity_number", identity_number);
-
-          continue;
-        }
-
-
-        
-        //{ status: 'error', response: { message: '누락된 필드가 존재합니다.' } }
-        
-
-        
-        //{ status: 'success', response: {} }
-        
-
-
-        if (payactionResult.status !== "success") {
-
-          console.error("Payaction API error", payactionResult);
-
-
-          console.log("order_number", order_number);
-          console.log("order_amount", order_amount);
-          console.log("order_date", order_date);
-          console.log("billing_name", billing_name);
-          console.log("orderer_name", orderer_name);
-          console.log("orderer_phone_number", mobile);
-          console.log("orderer_email", orderer_email);
-          console.log("trade_usage", trade_usage);
-          console.log("identity_number", identity_number);
-
-
-          // {
-          //    status: 'NOT_RUN',
-          //    message: "The condition for the workflow order-v2 is not met. Workflow won't run"
-          //}
-
-          // { status: 'error', response: { message: '이미 해당 주문번호의 주문이 존재합니다.' } }
-
-
-          //throw new Error("Payaction API error");
-          continue;
-        }
-
-        
-      
-      } catch (error) {
-        console.error("Error calling Payaction API", error);
-        //throw new Error("Error calling Payaction API");
-        continue;
-      }
-
-
-    } else {
-
-
-
-
-      /*
-      post
-      https://dash.bank-oc.com/api/order
-
-      body
-      {
-          "order_number": "ORDER20250914002",
-          "order_amount": 50000,
-          "order_date": "2025-09-14 19:19:30+09:00",
-          "billing_name": "이경래",
-          "orderer_name": "이경래",
-          "orderer_phone_number": "010-1234-5678",
-          "orderer_email": "kimjiyun@example.com",
-          "trade_usage": "소득공제용",
-          "identity_number": "010-1234-5678",
-          "auto_confirm": 0
-      }
-      */
-
-      const payactionUrl = "https://dash.bank-oc.com/api/order";
-      const payactionBody = {
-        order_number: buyOrder.tradeId,
-        order_amount: buyOrder.krwAmount,
-        order_date: new Date().toISOString(),
-        billing_name: buyOrder.buyer.depositName,
-        orderer_name: buyOrder.buyer.depositName,
-        orderer_phone_number: buyOrder.mobile,
-        orderer_email: buyOrder?.email || 'abc@gmail.com',
-        trade_usage: "지출증빙용",
-        identity_number: buyOrder.mobile,
-        auto_confirm: 0,
-      };
-
-
-      const payactionHeaders: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      const payactionOptions = {
-        method: "POST",
-        headers: payactionHeaders,
-        body: JSON.stringify(payactionBody),
-      };
-
-      try {
-        const payactionResponse = await fetch(payactionUrl, payactionOptions);
-
-        const payactionResult = await payactionResponse.json();
-        console.log("buyOrderRequestPayment payactionResult", payactionResult);
-        /*
-        { status: 'success', response: {} }
-        */
-
-        // updateBuyOrderPayactionResult
-        await updateBuyOrderPayactionResult({
-          orderId: orderId,
-          api: "/api/order/buyOrderRequestPayment",
-          payactionResult: payactionResult,
-        });
-
-
-
-        if (payactionResponse.status !== 200) {
-          console.error("Payaction API error", payactionResult);
-          ////throw new Error("Payaction API error");
-        }
-
-
-        if (payactionResult.status !== "success") {
-          console.error("Payaction API error", payactionResult);
-          ////throw new Error("Payaction API error");
-        }
-
-        
-      
-      } catch (error) {
-        // Error calling Payaction API
-        console.error("Error calling Payaction API", error);
-        
-        /*
-        return NextResponse.json({
-          error: "Error calling Payaction API",
-          details: error instanceof Error ? error.message : "Unknown error",
-        }, { status: 500 });
-        */
-
-      }
-
-
-
-
-    }
-
-
-
-
-
-    /*
-    const transactionHash = "0x";
-    const bankInfo = {
-      bankName: "신한은행",
-      accountNumber: "123-456-789012",
-      accountHolder: "홍길동",
-      amount: 10000,
-    };
-    */
-
-    
-    const result = await buyOrderRequestPayment({
-      orderId: orderId,
-      transactionHash: transactionHash,
-
-      /////////////bankInfo: bankInfo,
-
-    });
-    
-
-    /////console.log("result", result);
-
-
-    reaultArray.push(buyOrder.tradeId);
-
-
+  }
+};
+
+const isTransientMongoError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false;
   }
 
+  const anyError = error as any;
+  const labels = anyError?.errorLabelSet instanceof Set
+    ? Array.from(anyError.errorLabelSet)
+    : [];
+  const labelSet = new Set(labels.map((label) => String(label)));
+  const name = String(anyError?.name || "");
+  const message = String(anyError?.message || "");
+  const code = String(anyError?.code || anyError?.cause?.code || "");
+  const causeName = String(anyError?.cause?.name || "");
 
+  if (labelSet.has("ResetPool") || labelSet.has("PoolRequestedRetry") || labelSet.has("PoolRequstedRetry")) {
+    return true;
+  }
 
- 
-  return NextResponse.json({
+  if (
+    name === "MongoPoolClearedError"
+    || name === "MongoNetworkError"
+    || name === "MongoServerSelectionError"
+    || name === "MongoWaitQueueTimeoutError"
+    || causeName === "MongoNetworkError"
+  ) {
+    return true;
+  }
 
-    result: reaultArray,
-    
+  if (code === "ECONNRESET" || code === "ETIMEDOUT") {
+    return true;
+  }
+
+  return (
+    message.includes("Connection pool")
+    || message.includes("TLS connection")
+    || message.includes("Server selection timed out")
+    || message.includes("Timed out while checking out a connection from connection pool")
+    || message.includes("Client network socket disconnected")
+  );
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> => {
+  let attempt = 0;
+  let lastError: unknown;
+
+  while (attempt < BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_COUNT) {
+    attempt += 1;
+    try {
+      return await work();
+    } catch (error) {
+      lastError = error;
+      if (!isTransientMongoError(error) || attempt >= BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_COUNT) {
+        throw error;
+      }
+      await sleep(BUYORDER_REQUEST_PAYMENT_TASK_TRANSIENT_RETRY_DELAY_MS * attempt);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Unknown buyOrderRequestPaymentTask failure");
+};
+
+const fetchJsonWithTimeout = async (
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs));
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+
+    let json: any = null;
+    try {
+      json = await response.json();
+    } catch {
+      json = null;
+    }
+
+    return {
+      ok: response.ok,
+      status: response.status,
+      json,
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+const requestPayaction = async ({
+  buyOrder,
+  store,
+  orderId,
+}: {
+  buyOrder: any;
+  store: any;
+  orderId: string;
+}) => {
+  const payactionApiKey = normalizeString(store?.payactionKey?.payactionApiKey);
+  const payactionShopId = normalizeString(store?.payactionKey?.payactionShopId);
+
+  if (payactionApiKey && payactionShopId) {
+    const orderNumber = stringifyValue(buyOrder?.tradeId);
+    const orderAmount = Number(buyOrder?.krwAmount || 0);
+    const orderDate = new Date().toISOString();
+    const billingName = normalizeString(buyOrder?.buyer?.depositName);
+    const ordererName = billingName;
+
+    let mobile = normalizeString(buyOrder?.mobile);
+    if (mobile.startsWith("+82")) {
+      mobile = `0${mobile.substring(3)}`;
+    } else if (mobile.startsWith("82")) {
+      mobile = `0${mobile.substring(2)}`;
+    }
+
+    const payactionResponse = await fetchJsonWithTimeout(
+      "https://api.payaction.app/order",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": payactionApiKey,
+          "x-mall-id": payactionShopId,
+        },
+        body: JSON.stringify({
+          order_number: orderNumber,
+          order_amount: orderAmount,
+          order_date: orderDate,
+          billing_name: billingName,
+          orderer_name: ordererName,
+          orderer_phone_number: mobile,
+          orderer_email: buyOrder?.buyer?.email,
+          trade_usage: "지출증빙용",
+          identity_number: "",
+        }),
+      },
+      BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS,
+    );
+
+    if (payactionResponse.json && typeof payactionResponse.json === "object") {
+      await withTransientMongoRetry(() =>
+        updateBuyOrderPayactionResult({
+          orderId,
+          api: "/api/order/buyOrderRequestPaymentTask",
+          payactionResult: payactionResponse.json,
+        }),
+      );
+    }
+
+    const payactionSuccess = Boolean(
+      payactionResponse.ok
+      && payactionResponse.status === 200
+      && payactionResponse.json
+      && payactionResponse.json.status === "success",
+    );
+
+    if (!payactionSuccess) {
+      console.error("Payaction API error", payactionResponse.status, payactionResponse.json);
+      return false;
+    }
+
+    return true;
+  }
+
+  const fallbackResponse = await fetchJsonWithTimeout(
+    "https://dash.bank-oc.com/api/order",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        order_number: stringifyValue(buyOrder?.tradeId),
+        order_amount: buyOrder?.krwAmount,
+        order_date: new Date().toISOString(),
+        billing_name: buyOrder?.buyer?.depositName,
+        orderer_name: buyOrder?.buyer?.depositName,
+        orderer_phone_number: buyOrder?.mobile,
+        orderer_email: buyOrder?.email || "abc@gmail.com",
+        trade_usage: "지출증빙용",
+        identity_number: buyOrder?.mobile,
+        auto_confirm: 0,
+      }),
+    },
+    BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS,
+  );
+
+  if (fallbackResponse.json && typeof fallbackResponse.json === "object") {
+    await withTransientMongoRetry(() =>
+      updateBuyOrderPayactionResult({
+        orderId,
+        api: "/api/order/buyOrderRequestPayment",
+        payactionResult: fallbackResponse.json,
+      }),
+    );
+  }
+
+  if (!fallbackResponse.ok || fallbackResponse.json?.status !== "success") {
+    console.error("Fallback Payaction API warning", fallbackResponse.status, fallbackResponse.json);
+  }
+
+  // Preserve legacy behavior: fallback branch still continues buyOrderRequestPayment.
+  return true;
+};
+
+const runTask = async () => {
+  const startedAt = Date.now();
+  const processedTradeIds: string[] = [];
+  const skippedTradeIds: string[] = [];
+  const storeCache = new Map<string, any | null>();
+
+  const buyordersResult = await withTransientMongoRetry(() =>
+    withTimeout(
+      getAllBuyOrdersForRequestPayment({
+        limit: BUYORDER_REQUEST_PAYMENT_TASK_MAX_ORDERS_PER_RUN,
+        page: 1,
+      }),
+      BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
+      "buyOrderRequestPaymentTask queue read timeout",
+    ),
+  );
+  const buyOrders = Array.isArray(buyordersResult?.orders) ? buyordersResult.orders : [];
+
+  for (const buyOrder of buyOrders) {
+    if (Date.now() - startedAt >= BUYORDER_REQUEST_PAYMENT_TASK_MAX_RUN_MS) {
+      console.error("buyOrderRequestPaymentTask reached max run window; stop early");
+      break;
+    }
+
+    const tradeId = stringifyValue(buyOrder?.tradeId);
+    const storecode = normalizeString(buyOrder?.storecode);
+    const orderId = stringifyValue(buyOrder?._id);
+
+    if (!storecode || !orderId) {
+      if (tradeId) {
+        skippedTradeIds.push(tradeId);
+      }
+      continue;
+    }
+
+    let store: any | null | undefined = storeCache.get(storecode);
+    if (typeof store === "undefined") {
+      store = await withTransientMongoRetry(() =>
+        withTimeout(
+          getStoreByStorecode({ storecode }),
+          BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
+          "buyOrderRequestPaymentTask store lookup timeout",
+        ),
+      );
+      storeCache.set(storecode, store || null);
+    }
+
+    if (!store) {
+      if (tradeId) {
+        skippedTradeIds.push(tradeId);
+      }
+      continue;
+    }
+
+    const transactionHash = "0x";
+    const isPrivateSale = normalizeBoolean(buyOrder?.privateSale);
+
+    if (isPrivateSale) {
+      await withTransientMongoRetry(() =>
+        withTimeout(
+          buyOrderRequestPayment({
+            orderId,
+            transactionHash,
+            bankInfo: {
+              bankName: store?.withdrawalBankInfo?.bankName,
+              accountNumber: store?.withdrawalBankInfo?.accountNumber,
+              accountHolder: store?.withdrawalBankInfo?.accountHolder,
+              amount: buyOrder?.krwAmount,
+            },
+          }),
+          BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
+          "buyOrderRequestPaymentTask privateSale requestPayment timeout",
+        ),
+      );
+
+      if (tradeId) {
+        processedTradeIds.push(tradeId);
+      }
+      continue;
+    }
+
+    const payactionReady = await requestPayaction({
+      buyOrder,
+      store,
+      orderId,
+    });
+    if (!payactionReady) {
+      if (tradeId) {
+        skippedTradeIds.push(tradeId);
+      }
+      continue;
+    }
+
+    await withTransientMongoRetry(() =>
+      withTimeout(
+        buyOrderRequestPayment({
+          orderId,
+          transactionHash,
+        }),
+        BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
+        "buyOrderRequestPaymentTask requestPayment timeout",
+      ),
+    );
+
+    if (tradeId) {
+      processedTradeIds.push(tradeId);
+    }
+  }
+
+  const result = {
+    processedTradeIds,
+    skippedTradeIds,
+    processedCount: processedTradeIds.length,
+    skippedCount: skippedTradeIds.length,
+    queueTotalCount: Number(buyordersResult?.totalCount || 0),
+    fetchedOrders: buyOrders.length,
+    elapsedMs: Date.now() - startedAt,
+  };
+
+  setCachedTaskResult(result);
+  return result;
+};
+
+export async function POST(request: NextRequest) {
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
+
+  const forceRun = normalizeBoolean(body.force);
+  const cached = getCachedTaskResult();
+  if (!forceRun && cached) {
+    return NextResponse.json({
+      result: Array.isArray(cached?.processedTradeIds) ? cached.processedTradeIds : [],
+      meta: cached,
+      cached: true,
+    });
+  }
+
+  const inFlight = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskInFlight;
+  if (!forceRun && inFlight) {
+    const result = await inFlight;
+    return NextResponse.json({
+      result: Array.isArray(result?.processedTradeIds) ? result.processedTradeIds : [],
+      meta: result,
+      inFlight: true,
+    });
+  }
+
+  const job = runTask().finally(() => {
+    globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskInFlight = undefined;
   });
-  
+  globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskInFlight = job;
+
+  try {
+    const result = await job;
+    return NextResponse.json({
+      result: Array.isArray(result?.processedTradeIds) ? result.processedTradeIds : [],
+      meta: result,
+      cached: false,
+    });
+  } catch (error) {
+    const fallback = getCachedTaskResult();
+    if (fallback) {
+      return NextResponse.json({
+        result: Array.isArray(fallback?.processedTradeIds) ? fallback.processedTradeIds : [],
+        meta: fallback,
+        cached: true,
+        stale: true,
+        error: "stale cache served due to timeout",
+      });
+    }
+
+    return NextResponse.json(
+      {
+        result: [],
+        meta: {
+          processedTradeIds: [],
+          skippedTradeIds: [],
+          processedCount: 0,
+          skippedCount: 0,
+          queueTotalCount: 0,
+          fetchedOrders: 0,
+          elapsedMs: 0,
+        },
+        error: error instanceof Error ? error.message : "Failed to run buyOrderRequestPaymentTask",
+      },
+      { status: isTransientMongoError(error) ? 503 : 500 },
+    );
+  }
 }

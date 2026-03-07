@@ -23,6 +23,10 @@ const STORE_BY_CODE_CACHE_TTL_MS = Number.parseInt(
   : 15000;
 const ENABLE_STORE_RUNTIME_INDEX_CREATION =
   String(process.env.ENABLE_STORE_RUNTIME_INDEX_CREATION || "").toLowerCase() === "true";
+const STORE_BALANCE_INQUIRY_QUERY_MAX_TIME_MS = Math.max(
+  Number.parseInt(process.env.STORE_BALANCE_INQUIRY_QUERY_MAX_TIME_MS || "", 10) || 12000,
+  1000,
+);
 
 const getStoreByCodeCache = () => {
   if (!globalStoreReadState.__storeByCodeCache) {
@@ -1555,44 +1559,37 @@ export async function getAllStoresForBalanceInquiry(
 
   
 
-  const totalCount = await collection.countDocuments(query);
-
-  //console.log('getAllStores totalCount', totalCount);
-
-
   try {
-    const stores = await collection.aggregate([
-      { $match: query },
-      {
-        
-        $project: {
-          createdAt: 1,
-          storecode: 1,
-          storeName: 1,
-          storeLogo: 1,
-          backgroundColor: 1,
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 200);
+    const safePage = Math.max(1, Number(page) || 1);
 
-          totalUsdtAmount: 1,
-
-          settlementWalletAddress: 1,
-
-          //liveOnAndOff: 1,
-          // if liveOnAndOff is not exist, set it to true
-          liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
-
-          viewOnAndOff: { $ifNull: ['$viewOnAndOff', true]  },
-       
+    const [totalCount, stores] = await Promise.all([
+      collection.countDocuments(query, {
+        maxTimeMS: STORE_BALANCE_INQUIRY_QUERY_MAX_TIME_MS,
+      }),
+      collection.aggregate([
+        { $match: query },
+        {
+          $project: {
+            createdAt: 1,
+            storecode: 1,
+            storeName: 1,
+            storeLogo: 1,
+            backgroundColor: 1,
+            totalUsdtAmount: 1,
+            settlementWalletAddress: 1,
+            // if liveOnAndOff is not exist, set it to true
+            liveOnAndOff: { $ifNull: ['$liveOnAndOff', true] },
+            viewOnAndOff: { $ifNull: ['$viewOnAndOff', true] },
+          },
         },
-      },
-      
-      //{ $sort: { createdAt: -1 } }, // Sort by createdAt in descending order
-      // sort by totalUsdtAmount in descending order
-      { $sort: { totalUsdtAmount: -1, createdAt: -1 } }, // Sort by totalUsdtAmount in descending order and then by createdAt in descending order
-
-
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-    ]).toArray();
+        { $sort: { totalUsdtAmount: -1, createdAt: -1 } },
+        { $skip: (safePage - 1) * safeLimit },
+        { $limit: safeLimit },
+      ], {
+        maxTimeMS: STORE_BALANCE_INQUIRY_QUERY_MAX_TIME_MS,
+      }).toArray(),
+    ]);
 
 
 

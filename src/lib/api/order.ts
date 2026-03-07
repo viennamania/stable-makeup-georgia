@@ -8520,39 +8520,35 @@ export async function getAllBuyOrdersForRequestPayment(
 
   const collection = client.db(dbName).collection('buyorders');
 
-  const results = await collection.find<OrderProps>(
-    {
-
-
-      //payactionResult.status is not 'error'
-
-      "payactionResult.status": { $ne: 'error' },  // ==================> 중요한부분
-
-
-
-      // storecode is exist
-      //storecode: { exists: true, $ne: null },
-      //"buyer.depositName": { exists: true, $ne: null },
-
-      storecode: { $ne: null },
-      // "buyer.depositName" is exist
-      "buyer.depositName": { $ne: null },
-
-
-      status: 'accepted',
-    }
-  ).sort({ createdAt: -1 })
-    .limit(limit).skip((page - 1) * limit).toArray();
-
-
-  // get total count of orders
-  const totalCount = await collection.countDocuments(
-    {
-      storecode: { $ne: null },
-      "buyer.depositName": { $ne: null },
-      status: 'accepted',
-    }
+  const BUYORDER_REQUEST_PAYMENT_QUERY_MAX_TIME_MS = Math.max(
+    Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_QUERY_MAX_TIME_MS || "", 10) || 12000,
+    1000,
   );
+  const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 200);
+  const safePage = Math.max(1, Number(page) || 1);
+
+  const query = {
+    "payactionResult.status": { $ne: 'error' }, // ==================> 중요한부분
+    storecode: { $ne: null },
+    "buyer.depositName": { $ne: null },
+    status: 'accepted',
+  };
+
+  const [results, totalCount] = await Promise.all([
+    collection.find<OrderProps>(
+      query,
+      {
+        maxTimeMS: BUYORDER_REQUEST_PAYMENT_QUERY_MAX_TIME_MS,
+      },
+    )
+      .sort({ createdAt: -1 })
+      .limit(safeLimit)
+      .skip((safePage - 1) * safeLimit)
+      .toArray(),
+    collection.countDocuments(query, {
+      maxTimeMS: BUYORDER_REQUEST_PAYMENT_QUERY_MAX_TIME_MS,
+    }),
+  ]);
 
 
   return {
@@ -8983,34 +8979,41 @@ export async function getTotalNumberOfBuyOrders(
 export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: number, orders: any[] }> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('buyorders');
-  // get total number of buy orders
-  const totalCount = await collection.countDocuments(
-    {
-      privateSale: true,
-      //status: 'paymentConfirmed',
-      status: { $in: ['paymentConfirmed'] },
-      
-      'buyer.depositCompleted': false, // buyer has not completed deposit
-      //'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
-
-    }
+  const CLEARANCE_ORDERS_DEFAULT_LIMIT = Math.max(
+    Number.parseInt(process.env.CLEARANCE_ORDERS_DEFAULT_LIMIT || "", 10) || 100,
+    1,
+  );
+  const CLEARANCE_ORDERS_QUERY_MAX_TIME_MS = Math.max(
+    Number.parseInt(process.env.CLEARANCE_ORDERS_QUERY_MAX_TIME_MS || "", 10) || 12000,
+    1000,
   );
 
-  ///console.log('getTotalNumberOfClearanceOrders totalCount: ' + totalCount);
+  const matchQuery = {
+    privateSale: true,
+    status: { $in: ['paymentConfirmed'] },
+    'buyer.depositCompleted': false, // buyer has not completed deposit
+  };
 
-  const results = await collection.find<any>(
-    {
-      privateSale: true,
-      status: { $in: ['paymentConfirmed'] },
-      
-      'buyer.depositCompleted': false, // buyer has not completed deposit
-      //'buyer.depositCompleted': { $ne: true }, // buyer has not completed deposit
+  const safeOrdersLimit = Math.min(
+    Math.max(1, CLEARANCE_ORDERS_DEFAULT_LIMIT),
+    300,
+  );
 
-    },
-    { projection: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 } }
-  )
-    .sort({ createdAt: -1 })
-    .toArray();
+  const [totalCount, results] = await Promise.all([
+    collection.countDocuments(matchQuery, {
+      maxTimeMS: CLEARANCE_ORDERS_QUERY_MAX_TIME_MS,
+    }),
+    collection.find<any>(
+      matchQuery,
+      {
+        projection: { tradeId: 1, store: 1, buyer: 1, createdAt: 1 },
+        maxTimeMS: CLEARANCE_ORDERS_QUERY_MAX_TIME_MS,
+      },
+    )
+      .sort({ createdAt: -1 })
+      .limit(safeOrdersLimit)
+      .toArray(),
+  ]);
 
 
 
