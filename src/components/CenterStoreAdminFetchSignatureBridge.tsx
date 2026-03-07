@@ -29,6 +29,8 @@ const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/store/getEscrowBalance",
   "/api/user/getAllBuyers",
   "/api/user/clearanceWalletAddress",
+  "/api/user/updateUserBankInfo",
+  "/api/user/updateUserType",
 ]);
 
 const PROTECTED_STORE_SETTINGS_MUTATION_PATHS = new Set([
