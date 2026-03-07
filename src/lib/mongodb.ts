@@ -6,6 +6,8 @@ if (!uri) {
   throw new Error("Missing MONGODB_URI environment variable");
 }
 
+const mongoIpFamily = Number(process.env.MONGODB_IP_FAMILY || 4) === 6 ? 6 : 4;
+
 const options: MongoClientOptions = {
   // Keep selection timeout short so request paths fail fast on transient Atlas networking issues.
   serverSelectionTimeoutMS: Number(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || 5000),
@@ -13,6 +15,8 @@ const options: MongoClientOptions = {
   socketTimeoutMS: Number(process.env.MONGODB_SOCKET_TIMEOUT_MS || 20000),
   maxPoolSize: Number(process.env.MONGODB_MAX_POOL_SIZE || 20),
   minPoolSize: 0,
+  family: mongoIpFamily,
+  retryReads: true,
 };
 
 declare global {

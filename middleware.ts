@@ -10,6 +10,12 @@ import {
 const INTERNAL_CHECK_PATH = "/api/security/internal/check-ip";
 const BLOCKED_PAGE_PATH = "/ip-blocked";
 const IP_SECURITY_CHECK_TIMEOUT_MS = Number(process.env.IP_SECURITY_CHECK_TIMEOUT_MS || 1800);
+const IP_SECURITY_ERROR_LOG_THROTTLE_MS = Math.max(
+  Number(process.env.IP_SECURITY_ERROR_LOG_THROTTLE_MS || 60000),
+  1000,
+);
+
+let lastIpSecurityMiddlewareErrorLoggedAt = 0;
 
 const PUBLIC_FILE_REGEX = /\.[^/]+$/;
 
@@ -165,6 +171,21 @@ const fetchWithTimeout = async (
   }
 };
 
+const logIpSecurityMiddlewareErrorThrottled = (message: string, error?: unknown) => {
+  const now = Date.now();
+  if (now - lastIpSecurityMiddlewareErrorLoggedAt < IP_SECURITY_ERROR_LOG_THROTTLE_MS) {
+    return;
+  }
+
+  lastIpSecurityMiddlewareErrorLoggedAt = now;
+  if (typeof error === "undefined") {
+    console.error(message);
+    return;
+  }
+
+  console.error(message, error);
+};
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -231,11 +252,11 @@ export async function middleware(request: NextRequest) {
     }
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      console.error(
+      logIpSecurityMiddlewareErrorThrottled(
         `IP security middleware check timed out after ${IP_SECURITY_CHECK_TIMEOUT_MS}ms`,
       );
     } else {
-      console.error("IP security middleware check failed:", error);
+      logIpSecurityMiddlewareErrorThrottled("IP security middleware check failed:", error);
     }
   }
 

@@ -28,6 +28,24 @@ type SetBlockedIpInput = {
 };
 
 let indexEnsured = false;
+let indexEnsureInFlight: Promise<boolean> | null = null;
+let indexEnsureFailureCount = 0;
+let nextIndexEnsureRetryAt = 0;
+
+const INDEX_RETRY_BASE_MS = Math.max(
+  Number(process.env.IP_SECURITY_INDEX_RETRY_BASE_MS || 2000),
+  500,
+);
+const INDEX_RETRY_MAX_MS = Math.max(
+  Number(process.env.IP_SECURITY_INDEX_RETRY_MAX_MS || 60000),
+  INDEX_RETRY_BASE_MS,
+);
+const ERROR_LOG_THROTTLE_MS = Math.max(
+  Number(process.env.IP_SECURITY_ERROR_LOG_THROTTLE_MS || 60000),
+  1000,
+);
+
+const errorLogState: Record<string, number> = {};
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -95,24 +113,63 @@ const sanitizeRequesterUser = (user: any) => {
   };
 };
 
-const ensureIndexes = async () => {
-  if (indexEnsured) {
+const logErrorThrottled = (key: string, message: string, error: unknown) => {
+  const now = Date.now();
+  const lastLoggedAt = errorLogState[key] || 0;
+  if (now - lastLoggedAt < ERROR_LOG_THROTTLE_MS) {
     return;
   }
 
-  const client = await clientPromise;
-  const db = client.db(dbName);
+  errorLogState[key] = now;
+  console.error(message, error);
+};
 
-  await Promise.all([
-    db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ createdAt: -1 }),
-    db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ ip: 1, createdAt: -1 }),
-    db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ pathname: 1, createdAt: -1 }),
-    db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ blocked: 1, createdAt: -1 }),
-    db.collection(BLOCKED_PUBLIC_IP_COLLECTION).createIndex({ ip: 1 }, { unique: true }),
-    db.collection(BLOCKED_PUBLIC_IP_COLLECTION).createIndex({ enabled: 1, updatedAt: -1 }),
-  ]);
+const ensureIndexes = async (): Promise<boolean> => {
+  if (indexEnsured) {
+    return true;
+  }
 
-  indexEnsured = true;
+  if (indexEnsureInFlight) {
+    return indexEnsureInFlight;
+  }
+
+  if (nextIndexEnsureRetryAt > Date.now()) {
+    return false;
+  }
+
+  indexEnsureInFlight = (async () => {
+    try {
+      const client = await clientPromise;
+      const db = client.db(dbName);
+
+      await Promise.all([
+        db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ createdAt: -1 }),
+        db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ ip: 1, createdAt: -1 }),
+        db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ pathname: 1, createdAt: -1 }),
+        db.collection(API_ACCESS_LOG_COLLECTION).createIndex({ blocked: 1, createdAt: -1 }),
+        db.collection(BLOCKED_PUBLIC_IP_COLLECTION).createIndex({ ip: 1 }, { unique: true }),
+        db.collection(BLOCKED_PUBLIC_IP_COLLECTION).createIndex({ enabled: 1, updatedAt: -1 }),
+      ]);
+
+      indexEnsured = true;
+      indexEnsureFailureCount = 0;
+      nextIndexEnsureRetryAt = 0;
+      return true;
+    } catch (error) {
+      indexEnsureFailureCount += 1;
+      const backoffMs = Math.min(
+        INDEX_RETRY_BASE_MS * 2 ** Math.max(indexEnsureFailureCount - 1, 0),
+        INDEX_RETRY_MAX_MS,
+      );
+      nextIndexEnsureRetryAt = Date.now() + backoffMs;
+      logErrorThrottled("ensureIndexes", "Failed to ensure ip security indexes:", error);
+      return false;
+    } finally {
+      indexEnsureInFlight = null;
+    }
+  })();
+
+  return indexEnsureInFlight;
 };
 
 export const insertApiAccessLog = async (input: ApiAccessLogInput) => {
@@ -122,7 +179,11 @@ export const insertApiAccessLog = async (input: ApiAccessLogInput) => {
   }
 
   try {
-    await ensureIndexes();
+    const indexesReady = await ensureIndexes();
+    if (!indexesReady) {
+      return null;
+    }
+
     const client = await clientPromise;
     const collection = client.db(dbName).collection(API_ACCESS_LOG_COLLECTION);
 
@@ -145,7 +206,7 @@ export const insertApiAccessLog = async (input: ApiAccessLogInput) => {
     await collection.insertOne(payload);
     return payload;
   } catch (error) {
-    console.error("Failed to insert api access log:", error);
+    logErrorThrottled("insertApiAccessLog", "Failed to insert api access log:", error);
     return null;
   }
 };
@@ -157,7 +218,6 @@ export const getBlockedIpRule = async (ipRaw: unknown) => {
   }
 
   try {
-    await ensureIndexes();
     const client = await clientPromise;
     const collection = client.db(dbName).collection(BLOCKED_PUBLIC_IP_COLLECTION);
     const now = new Date();
@@ -170,7 +230,7 @@ export const getBlockedIpRule = async (ipRaw: unknown) => {
 
     return rule;
   } catch (error) {
-    console.error("Failed to check blocked ip rule:", error);
+    logErrorThrottled("getBlockedIpRule", "Failed to check blocked ip rule:", error);
     return null;
   }
 };
@@ -181,7 +241,11 @@ export const setBlockedIpRule = async (input: SetBlockedIpInput) => {
     throw new Error("invalid_ip");
   }
 
-  await ensureIndexes();
+  const indexesReady = await ensureIndexes();
+  if (!indexesReady) {
+    throw new Error("ip_security_indexes_unavailable");
+  }
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection(BLOCKED_PUBLIC_IP_COLLECTION);
   const now = new Date();
@@ -282,7 +346,11 @@ export const getIpSecurityDashboard = async ({
   page?: number;
   limit?: number;
 }) => {
-  await ensureIndexes();
+  const indexesReady = await ensureIndexes();
+  if (!indexesReady) {
+    throw new Error("ip_security_indexes_unavailable");
+  }
+
   const client = await clientPromise;
   const db = client.db(dbName);
   const logsCollection = db.collection(API_ACCESS_LOG_COLLECTION);

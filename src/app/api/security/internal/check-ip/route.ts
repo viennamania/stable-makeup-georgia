@@ -13,6 +13,12 @@ const IP_RULE_LOOKUP_TIMEOUT_MS = Math.max(
   Number(process.env.IP_SECURITY_LOOKUP_TIMEOUT_MS || 1200),
   100,
 );
+const IP_SECURITY_ROUTE_ERROR_LOG_THROTTLE_MS = Math.max(
+  Number(process.env.IP_SECURITY_ROUTE_ERROR_LOG_THROTTLE_MS || 60000),
+  1000,
+);
+
+let lastIpSecurityRouteErrorLoggedAt = 0;
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -64,6 +70,21 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T
   }
 };
 
+const logIpSecurityRouteErrorThrottled = (message: string, error?: unknown) => {
+  const now = Date.now();
+  if (now - lastIpSecurityRouteErrorLoggedAt < IP_SECURITY_ROUTE_ERROR_LOG_THROTTLE_MS) {
+    return;
+  }
+
+  lastIpSecurityRouteErrorLoggedAt = now;
+  if (typeof error === "undefined") {
+    console.error(message);
+    return;
+  }
+
+  console.error(message, error);
+};
+
 export async function POST(request: NextRequest) {
   if (!isAuthorizedInternalRequest(request)) {
     return NextResponse.json(
@@ -97,7 +118,7 @@ export async function POST(request: NextRequest) {
   try {
     blockedRule = await withTimeout(getBlockedIpRule(ip), IP_RULE_LOOKUP_TIMEOUT_MS);
   } catch (error) {
-    console.error("IP blocked-rule lookup timeout/failure:", error);
+    logIpSecurityRouteErrorThrottled("IP blocked-rule lookup timeout/failure:", error);
   }
 
   const blocked = Boolean(blockedRule);
