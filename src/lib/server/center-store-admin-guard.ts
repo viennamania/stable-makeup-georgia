@@ -63,9 +63,14 @@ const CENTER_STORE_ADMIN_NONCE_COLLECTION = "centerStoreAdminActionNonces";
 const DEFAULT_CENTER_STORE_ADMIN_NONCE_TTL_MS = 10 * 60 * 1000;
 const CENTER_STORE_ADMIN_NONCE_UNIQ_INDEX = "uniq_centerStoreAdminActionNonceKey";
 const CENTER_STORE_ADMIN_NONCE_TTL_INDEX = "ttl_centerStoreAdminActionNonceExpiresAt";
+const CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS = Math.max(
+  Number(process.env.CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS || 60000),
+  1000,
+);
 
 const globalCenterStoreAdminSecurity = globalThis as typeof globalThis & {
   __centerStoreAdminNonceIndexesReady?: boolean;
+  __centerStoreAdminGuardLastErrorLoggedAt?: number;
 };
 
 const ensureCenterStoreAdminNonceIndexes = async () => {
@@ -148,216 +153,231 @@ export const verifyCenterStoreAdminGuard = async ({
   storecodeRaw,
   requesterWalletAddressRaw,
 }: VerifyCenterStoreAdminGuardParams): Promise<VerifyCenterStoreAdminGuardResult> => {
-  const safeBody = isPlainObject(body) ? body : {};
-  const actionFields = extractCenterStoreAdminActionFields(safeBody);
-  const storecode = normalizeStorecode(storecodeRaw ?? safeBody.storecode);
-  const requesterWalletAddress = normalizeWalletAddress(
-    requesterWalletAddressRaw
-      ?? safeBody.requesterWalletAddress
-      ?? safeBody.walletAddress
-      ?? safeBody.sellerWalletAddress,
-  );
-  const signature = normalizeString(safeBody.signature);
-  const signedAtIso = parseSignedAtOrNull(safeBody.signedAt);
-  const nonce = normalizeString(safeBody.nonce);
-  const ip = getRequestIp(request);
-  const country = getRequestCountry(request);
+  try {
+    const safeBody = isPlainObject(body) ? body : {};
+    const actionFields = extractCenterStoreAdminActionFields(safeBody);
+    const storecode = normalizeStorecode(storecodeRaw ?? safeBody.storecode);
+    const requesterWalletAddress = normalizeWalletAddress(
+      requesterWalletAddressRaw
+        ?? safeBody.requesterWalletAddress
+        ?? safeBody.walletAddress
+        ?? safeBody.sellerWalletAddress,
+    );
+    const signature = normalizeString(safeBody.signature);
+    const signedAtIso = parseSignedAtOrNull(safeBody.signedAt);
+    const nonce = normalizeString(safeBody.nonce);
+    const ip = getRequestIp(request);
+    const country = getRequestCountry(request);
 
-  const writeAdminApiCallLog = async ({
-    status,
-    reason,
-    requesterUser,
-    walletAddress,
-    meta,
-  }: {
-    status: "allowed" | "blocked";
-    reason: string;
-    requesterUser?: any;
-    walletAddress?: string | null;
-    meta?: Record<string, unknown>;
-  }) => {
-    await insertAdminApiCallLog({
-      route,
-      guardType: "center_store_admin",
+    const writeAdminApiCallLog = async ({
       status,
       reason,
-      publicIp: ip,
-      publicCountry: country,
-      requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
-      requesterUser: requesterUser || null,
-      requestBody: actionFields,
-      meta: {
-        storecode,
-        ...meta,
-      },
-    });
-  };
-
-  if (!storecode) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "storecode_required",
-    });
-    return {
-      ok: false,
-      status: 400,
-      error: "storecode is required",
+      requesterUser,
+      walletAddress,
+      meta,
+    }: {
+      status: "allowed" | "blocked";
+      reason: string;
+      requesterUser?: any;
+      walletAddress?: string | null;
+      meta?: Record<string, unknown>;
+    }) => {
+      await insertAdminApiCallLog({
+        route,
+        guardType: "center_store_admin",
+        status,
+        reason,
+        publicIp: ip,
+        publicCountry: country,
+        requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
+        requesterUser: requesterUser || null,
+        requestBody: actionFields,
+        meta: {
+          storecode,
+          ...meta,
+        },
+      });
     };
-  }
 
-  if (!requesterWalletAddress) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "invalid_wallet_address",
-      walletAddress: null,
+    if (!storecode) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "storecode_required",
+      });
+      return {
+        ok: false,
+        status: 400,
+        error: "storecode is required",
+      };
+    }
+
+    if (!requesterWalletAddress) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "invalid_wallet_address",
+        walletAddress: null,
+      });
+      return {
+        ok: false,
+        status: 401,
+        error: "Invalid signature",
+      };
+    }
+
+    if (!signature || !signedAtIso || !nonce) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "missing_or_invalid_signature_fields",
+      });
+      return {
+        ok: false,
+        status: 401,
+        error: "Invalid signature",
+      };
+    }
+
+    const rate = consumeReadRateLimit({
+      scope: `center-store-admin:${route}`,
+      ip,
+      walletAddress: requesterWalletAddress,
     });
-    return {
-      ok: false,
-      status: 401,
-      error: "Invalid signature",
-    };
-  }
 
-  if (!signature || !signedAtIso || !nonce) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "missing_or_invalid_signature_fields",
+    if (!rate.allowed) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "rate_limited",
+      });
+      return {
+        ok: false,
+        status: 429,
+        error: "Too many requests",
+      };
+    }
+
+    const signingMessage = buildCenterStoreAdminSigningMessage({
+      route,
+      storecode,
+      requesterWalletAddress,
+      nonce,
+      signedAtIso,
+      actionFields,
     });
-    return {
-      ok: false,
-      status: 401,
-      error: "Invalid signature",
-    };
-  }
 
-  const rate = consumeReadRateLimit({
-    scope: `center-store-admin:${route}`,
-    ip,
-    walletAddress: requesterWalletAddress,
-  });
-
-  if (!rate.allowed) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "rate_limited",
+    const signatureVerified = await verifyWalletSignatureWithFallback({
+      walletAddress: requesterWalletAddress,
+      signature,
+      message: signingMessage,
+      storecodeHint: storecode,
     });
-    return {
-      ok: false,
-      status: 429,
-      error: "Too many requests",
-    };
-  }
 
-  const signingMessage = buildCenterStoreAdminSigningMessage({
-    route,
-    storecode,
-    requesterWalletAddress,
-    nonce,
-    signedAtIso,
-    actionFields,
-  });
+    if (!signatureVerified) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "invalid_signature",
+      });
+      return {
+        ok: false,
+        status: 401,
+        error: "Invalid signature",
+      };
+    }
 
-  const signatureVerified = await verifyWalletSignatureWithFallback({
-    walletAddress: requesterWalletAddress,
-    signature,
-    message: signingMessage,
-    storecodeHint: storecode,
-  });
-
-  if (!signatureVerified) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "invalid_signature",
+    const nonceConsumed = await consumeCenterStoreAdminNonce({
+      route,
+      walletAddress: requesterWalletAddress,
+      nonce,
+      signedAtIso,
     });
-    return {
-      ok: false,
-      status: 401,
-      error: "Invalid signature",
-    };
-  }
 
-  const nonceConsumed = await consumeCenterStoreAdminNonce({
-    route,
-    walletAddress: requesterWalletAddress,
-    nonce,
-    signedAtIso,
-  });
+    if (!nonceConsumed) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "invalid_nonce",
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: "Invalid nonce",
+      };
+    }
 
-  if (!nonceConsumed) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "invalid_nonce",
-    });
-    return {
-      ok: false,
-      status: 409,
-      error: "Invalid nonce",
-    };
-  }
+    const requesterAdminUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+    const requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
 
-  const requesterAdminUser = await getOneByWalletAddress("admin", requesterWalletAddress);
-  const requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
+    if (requesterIsAdmin) {
+      await writeAdminApiCallLog({
+        status: "allowed",
+        reason: "global_admin",
+        requesterUser: requesterAdminUser,
+        meta: {
+          matchedBy: "global_admin",
+        },
+      });
+      return {
+        ok: true,
+        requesterWalletAddress,
+        requesterIsAdmin: true,
+        matchedBy: "global_admin",
+      };
+    }
 
-  if (requesterIsAdmin) {
+    const store = await getStoreByStorecode({ storecode });
+    const storeAdminWalletAddress = normalizeWalletAddress(store?.adminWalletAddress);
+
+    if (!storeAdminWalletAddress) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "store_admin_wallet_not_configured",
+      });
+      return {
+        ok: false,
+        status: 403,
+        error: "Forbidden",
+      };
+    }
+
+    if (storeAdminWalletAddress !== requesterWalletAddress) {
+      await writeAdminApiCallLog({
+        status: "blocked",
+        reason: "forbidden_wallet_mismatch",
+        meta: {
+          configuredStoreAdminWalletAddress: storeAdminWalletAddress,
+        },
+      });
+      return {
+        ok: false,
+        status: 403,
+        error: "Forbidden",
+      };
+    }
+
+    const requesterStoreUser = await getOneByWalletAddress(storecode, requesterWalletAddress);
     await writeAdminApiCallLog({
       status: "allowed",
-      reason: "global_admin",
-      requesterUser: requesterAdminUser,
+      reason: "store_admin_wallet",
+      requesterUser: requesterStoreUser,
       meta: {
-        matchedBy: "global_admin",
+        matchedBy: "store_admin_wallet",
       },
     });
     return {
       ok: true,
       requesterWalletAddress,
-      requesterIsAdmin: true,
-      matchedBy: "global_admin",
-    };
-  }
-
-  const store = await getStoreByStorecode({ storecode });
-  const storeAdminWalletAddress = normalizeWalletAddress(store?.adminWalletAddress);
-
-  if (!storeAdminWalletAddress) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "store_admin_wallet_not_configured",
-    });
-    return {
-      ok: false,
-      status: 403,
-      error: "Forbidden",
-    };
-  }
-
-  if (storeAdminWalletAddress !== requesterWalletAddress) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "forbidden_wallet_mismatch",
-      meta: {
-        configuredStoreAdminWalletAddress: storeAdminWalletAddress,
-      },
-    });
-    return {
-      ok: false,
-      status: 403,
-      error: "Forbidden",
-    };
-  }
-
-  const requesterStoreUser = await getOneByWalletAddress(storecode, requesterWalletAddress);
-  await writeAdminApiCallLog({
-    status: "allowed",
-    reason: "store_admin_wallet",
-    requesterUser: requesterStoreUser,
-    meta: {
+      requesterIsAdmin: false,
       matchedBy: "store_admin_wallet",
-    },
-  });
-  return {
-    ok: true,
-    requesterWalletAddress,
-    requesterIsAdmin: false,
-    matchedBy: "store_admin_wallet",
-  };
+    };
+  } catch (error) {
+    const now = Date.now();
+    const lastLoggedAt = globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastErrorLoggedAt || 0;
+    if (now - lastLoggedAt >= CENTER_STORE_ADMIN_GUARD_ERROR_LOG_THROTTLE_MS) {
+      globalCenterStoreAdminSecurity.__centerStoreAdminGuardLastErrorLoggedAt = now;
+      console.error("center-store-admin guard failed:", error);
+    }
+
+    return {
+      ok: false,
+      status: 503,
+      error: "Temporary database connectivity issue. Please retry.",
+    };
+  }
 };
