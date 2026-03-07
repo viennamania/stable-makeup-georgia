@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback, useRef } from "react";
 
 
 
@@ -55,6 +55,7 @@ import {
   useRouter,
   useSearchParams,
 }from "next//navigation";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 
 
@@ -1849,57 +1850,80 @@ export default function Index({ params }: any) {
     // get store by storecode
     const [fetchingStore, setFetchingStore] = useState(false);
     const [store, setStore] = useState<any>(null);
+    const fetchingStoreRef = useRef(false);
     
-    const fetchStore = async () => {
-        if (fetchingStore) {
-        return;
+    const fetchStore = useCallback(async () => {
+        if (fetchingStoreRef.current || !normalizedStorecode) {
+          return;
         }
+
+        fetchingStoreRef.current = true;
         setFetchingStore(true);
-        const response = await fetch('/api/store/getOneStore', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-            {
-            storecode: normalizedStorecode,
-            }
-        ),
-        });
-        if (!response.ok) {
-        setFetchingStore(false);
-        return;
+
+        try {
+          let response: Response | null = null;
+
+          if (activeAccount && address) {
+            response = await postCenterStoreAdminSignedJson({
+              account: activeAccount,
+              route: '/api/store/getOneStore',
+              storecode: normalizedStorecode,
+              requesterWalletAddress: address,
+              body: {
+                storecode: normalizedStorecode,
+              },
+            });
+          }
+
+          if (!response || !response.ok) {
+            response = await fetch('/api/store/getOneStore', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                storecode: normalizedStorecode,
+              }),
+            });
+          }
+
+          if (!response.ok) {
+            return;
+          }
+
+          const data = await response.json();
+          const nextStore = data?.result || null;
+
+          setStore(nextStore);
+
+          setBuyerBankInfo({
+            depositName: "",
+            bankName: nextStore?.bankInfo?.bankName || "",
+            accountNumber: nextStore?.bankInfo?.accountNumber || "",
+            accountHolder: nextStore?.bankInfo?.accountHolder || "",
+          });
+
+          setWithdrawalBankInfo({
+            bankName: nextStore?.withdrawalBankInfo?.bankName || "",
+            accountNumber: nextStore?.withdrawalBankInfo?.accountNumber || "",
+            accountHolder: nextStore?.withdrawalBankInfo?.accountHolder || "",
+          });
+
+          return nextStore;
+        } catch (error) {
+          console.error("Error fetching store data:", error);
+          return;
+        } finally {
+          fetchingStoreRef.current = false;
+          setFetchingStore(false);
         }
-        const data = await response.json();
-        
-        //console.log('getOneStore data', data);
-
-        setStore(data.result);
-
-        setBuyerBankInfo({
-          depositName: "",
-          bankName: data.result.bankInfo?.bankName || "",
-          accountNumber: data.result.bankInfo?.accountNumber || "",
-          accountHolder: data.result.bankInfo?.accountHolder || "",
-        });
-
-        setWithdrawalBankInfo({
-          bankName: data.result.withdrawalBankInfo?.bankName || "",
-          accountNumber: data.result.withdrawalBankInfo?.accountNumber || "",
-          accountHolder: data.result.withdrawalBankInfo?.accountHolder || "",
-        });
-
-
-        setFetchingStore(false);
-
-        return data.result;
-    }
+    }, [normalizedStorecode, activeAccount, address]);
 
     useEffect(() => {
 
         fetchStore();
 
-    } , [normalizedStorecode]);
+    } , [fetchStore]);
 
 
 
