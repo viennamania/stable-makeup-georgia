@@ -1351,7 +1351,7 @@ export default function Index({ params }: any) {
     
     const interval = setInterval(() => {
       fetchTotalSummary();
-    } , 10000);
+    } , 20000);
     return () => clearInterval(interval);
   } , [address, params.agentcode]);
 
@@ -3474,5 +3474,4 @@ const TradeDetail = (
     );
   };
   */}
-
 

@@ -5,6 +5,93 @@ import { dbName } from '../mongodb';
 import { paymentUrl } from '@/app/config/payment';
 import { access } from 'fs';
 
+const STORE_READ_INDEX_STORECODE = "idx_stores_storecode";
+const STORE_READ_INDEX_TOTAL_USDT_CREATED = "idx_stores_total_usdt_created_at";
+const STORE_READ_INDEX_AGENTCODE = "idx_stores_agentcode";
+const STORE_READ_INDEX_CREATED_AT = "idx_stores_created_at";
+
+const globalStoreReadState = globalThis as typeof globalThis & {
+  __storeReadIndexesReady?: boolean;
+  __storeByCodeCache?: Map<string, { expiresAt: number; value: any }>;
+};
+
+const STORE_BY_CODE_CACHE_TTL_MS = Number.parseInt(
+  process.env.STORE_BY_CODE_CACHE_TTL_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.STORE_BY_CODE_CACHE_TTL_MS || "", 10)
+  : 15000;
+
+const getStoreByCodeCache = () => {
+  if (!globalStoreReadState.__storeByCodeCache) {
+    globalStoreReadState.__storeByCodeCache = new Map<
+      string,
+      { expiresAt: number; value: any }
+    >();
+  }
+  return globalStoreReadState.__storeByCodeCache;
+};
+
+const getCachedStoreByCode = (storecode: string) => {
+  const cache = getStoreByCodeCache();
+  const key = String(storecode || "").trim().toLowerCase();
+  if (!key) {
+    return undefined;
+  }
+  const cached = cache.get(key);
+  if (!cached) {
+    return undefined;
+  }
+  if (cached.expiresAt <= Date.now()) {
+    cache.delete(key);
+    return undefined;
+  }
+  return cached.value;
+};
+
+const setCachedStoreByCode = (storecode: string, value: any) => {
+  const cache = getStoreByCodeCache();
+  const key = String(storecode || "").trim().toLowerCase();
+  if (!key) {
+    return;
+  }
+  cache.set(key, {
+    value,
+    expiresAt: Date.now() + STORE_BY_CODE_CACHE_TTL_MS,
+  });
+};
+
+const ensureStoreReadIndexes = async (collection: any) => {
+  if (globalStoreReadState.__storeReadIndexesReady) {
+    return;
+  }
+
+  globalStoreReadState.__storeReadIndexesReady = true;
+
+  try {
+    await Promise.all([
+      collection.createIndex(
+        { storecode: 1 },
+        { name: STORE_READ_INDEX_STORECODE },
+      ),
+      collection.createIndex(
+        { totalUsdtAmount: -1, createdAt: -1 },
+        { name: STORE_READ_INDEX_TOTAL_USDT_CREATED },
+      ),
+      collection.createIndex(
+        { agentcode: 1 },
+        { name: STORE_READ_INDEX_AGENTCODE },
+      ),
+      collection.createIndex(
+        { createdAt: -1 },
+        { name: STORE_READ_INDEX_CREATED_AT },
+      ),
+    ]);
+  } catch (error) {
+    console.error("stores read index ensure failed:", error);
+  }
+};
+
 
 
 
@@ -114,14 +201,25 @@ export async function getStoreByStorecode(
 
   //console.log('getStoreByStorecode storecode: ' + storecode);
 
+  const safeStorecode = String(storecode || "").trim();
+  if (!safeStorecode) {
+    return null;
+  }
+
+  const cachedStore = getCachedStoreByCode(safeStorecode);
+  if (cachedStore !== undefined) {
+    return cachedStore;
+  }
+
   const client = await clientPromise;
   const collection = client.db(dbName).collection('stores');
+  await ensureStoreReadIndexes(collection);
 
 
   // join with agents collection
 
   const resultArray = await collection.aggregate([
-    { $match: { storecode: storecode } },
+    { $match: { storecode: safeStorecode } },
     {
       $lookup: {
         from: 'agents',
@@ -230,8 +328,10 @@ export async function getStoreByStorecode(
   //console.log('getStoreByStorecode result: ' + JSON.stringify(result));
 
   if (result) {
+    setCachedStoreByCode(safeStorecode, result);
     return result;
   } else {
+    setCachedStoreByCode(safeStorecode, null);
     return null;
   }
 
@@ -1139,6 +1239,7 @@ export async function getAllStores(
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('stores');
+  await ensureStoreReadIndexes(collection);
 
   const query: any = {};
 
@@ -1432,6 +1533,7 @@ export async function getAllStoresForBalanceInquiry(
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('stores');
+  await ensureStoreReadIndexes(collection);
 
   const query: any = {};
 

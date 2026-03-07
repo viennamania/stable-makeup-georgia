@@ -2502,7 +2502,7 @@ const fetchBuyOrders = async () => {
       const interval = setInterval(() => {
         fetchData();
       }
-      , 5000);
+      , 15000);
       return () => clearInterval(interval);
   
     } , [params.center, address]);

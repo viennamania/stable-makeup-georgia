@@ -48,6 +48,18 @@ export async function POST(request: NextRequest) {
   const allowedStorecodes = parseStringList(body?.allowedStorecodes);
   const allowedRoutesInput = parseStringList(body?.allowedRoutes);
   const allowedRoutes = allowedRoutesInput.length > 0 ? allowedRoutesInput : [DEFAULT_ALLOWED_ROUTE];
+  const actionFields: Record<string, unknown> = {
+    allowedStorecodes: allowedStorecodes.join(","),
+    allowedRoutes: allowedRoutes.join(","),
+  };
+
+  if (body?.keyId !== undefined) {
+    actionFields.keyId = keyId;
+  }
+
+  if (body?.description !== undefined) {
+    actionFields.description = description;
+  }
 
   const auth = await verifyAdminSignedAction({
     request,
@@ -58,12 +70,7 @@ export async function POST(request: NextRequest) {
     signatureRaw: body?.signature,
     signedAtRaw: body?.signedAt,
     nonceRaw: body?.nonce,
-    actionFields: {
-      keyId,
-      description,
-      allowedStorecodes: allowedStorecodes.join(","),
-      allowedRoutes: allowedRoutes.join(","),
-    },
+    actionFields,
   });
 
   if (!auth.ok) {

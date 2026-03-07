@@ -17,6 +17,31 @@ import {
   getAllClearancesByAdmin,
 } from '@lib/api/order';
 
+const globalTotalSummaryCache = globalThis as typeof globalThis & {
+  __totalSummaryCache?: Map<string, { expiresAt: number; value: any }>;
+};
+
+const TOTAL_SUMMARY_CACHE_TTL_MS = Number.parseInt(
+  process.env.TOTAL_SUMMARY_CACHE_TTL_MS || "",
+  10,
+) > 0
+  ? Number.parseInt(process.env.TOTAL_SUMMARY_CACHE_TTL_MS || "", 10)
+  : 10000;
+
+const normalizeString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const getSummaryCache = () => {
+  if (!globalTotalSummaryCache.__totalSummaryCache) {
+    globalTotalSummaryCache.__totalSummaryCache = new Map();
+  }
+  return globalTotalSummaryCache.__totalSummaryCache;
+};
+
 /*
 {
     totalNumberOfStores: 0,
@@ -43,14 +68,30 @@ export async function POST(request: NextRequest) {
     //searchStore = "",
   } = body;
 
+  const safeAgentcode = normalizeString(agentcode);
+  const safeStorecode = normalizeString(storecode);
+  const safeSearch = normalizeString(search);
+  const cacheKey = JSON.stringify({
+    agentcode: safeAgentcode,
+    storecode: safeStorecode,
+    search: safeSearch,
+  });
+  const summaryCache = getSummaryCache();
+  const cachedSummary = summaryCache.get(cacheKey);
+  if (cachedSummary && cachedSummary.expiresAt > Date.now()) {
+    return NextResponse.json({
+      result: cachedSummary.value,
+    });
+  }
+
 
   //console.log("getTotalSummary body", body);
 
 
 
   const stores = await getAllStores({
-    agentcode,
-    search: search,
+    agentcode: safeAgentcode,
+    search: safeSearch,
     limit: 5,
     page: 1,
   });
@@ -71,9 +112,9 @@ export async function POST(request: NextRequest) {
 
 
   const buyers = await getAllBuyers({
-    agentcode: agentcode,
-    storecode: storecode,
-    search: search,
+    agentcode: safeAgentcode,
+    storecode: safeStorecode,
+    search: safeSearch,
     depositName: "",
     limit: 5,
     page: 1,
@@ -100,7 +141,7 @@ export async function POST(request: NextRequest) {
     //startDate: "",
     //endDate: "",
 
-    agentcode: agentcode,
+    agentcode: safeAgentcode,
     searchNickname: "",
     walletAddress: "",
     storecode: "",
@@ -190,7 +231,7 @@ export async function POST(request: NextRequest) {
     page: 1,
     startDate: "",
     endDate: "",
-    agentcode: agentcode,
+    agentcode: safeAgentcode,
     searchNickname: "",
     walletAddress: "",
   });
@@ -217,7 +258,7 @@ export async function POST(request: NextRequest) {
     agentcode: "",
     searchNickname: "",
     walletAddress: "",
-    storecode,
+    storecode: safeStorecode,
     searchOrderStatusCompleted: false,
     searchBuyer: "",
     searchDepositName: "",
@@ -257,6 +298,11 @@ export async function POST(request: NextRequest) {
 
     latestSellOrders,
   };
+
+  summaryCache.set(cacheKey, {
+    value: result,
+    expiresAt: Date.now() + TOTAL_SUMMARY_CACHE_TTL_MS,
+  });
 
 
   ///console.log("getTotalSummary result", result);
