@@ -19,8 +19,14 @@ const IP_RULE_BLOCKED_CACHE_TTL_MS = Math.max(
   500,
 );
 const IP_RULE_ALLOWED_CACHE_TTL_MS = Math.max(
-  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 2000),
+  Number(process.env.IP_SECURITY_ALLOWED_CACHE_TTL_MS || 5000),
   200,
+);
+const IP_SECURITY_ACCESS_LOG_ENABLED =
+  String(process.env.IP_SECURITY_ACCESS_LOG_ENABLED || "false").toLowerCase() === "true";
+const IP_SECURITY_ACCESS_LOG_SAMPLE_RATE = Math.min(
+  Math.max(Number(process.env.IP_SECURITY_ACCESS_LOG_SAMPLE_RATE || 0.1), 0),
+  1,
 );
 const IP_RULE_LOOKUP_FAILURE_COOLDOWN_MS = Math.max(
   Number(process.env.IP_SECURITY_LOOKUP_FAILURE_COOLDOWN_MS || 3000),
@@ -157,6 +163,22 @@ const logIpSecurityRouteErrorThrottled = (message: string, error?: unknown) => {
   console.error(message, error);
 };
 
+const shouldWriteApiAccessLog = (isApi: boolean, blocked: boolean) => {
+  if (blocked) {
+    return true;
+  }
+
+  if (!isApi || !IP_SECURITY_ACCESS_LOG_ENABLED) {
+    return false;
+  }
+
+  if (IP_SECURITY_ACCESS_LOG_SAMPLE_RATE >= 1) {
+    return true;
+  }
+
+  return Math.random() < IP_SECURITY_ACCESS_LOG_SAMPLE_RATE;
+};
+
 export async function POST(request: NextRequest) {
   if (!isAuthorizedInternalRequest(request)) {
     return NextResponse.json(
@@ -225,7 +247,7 @@ export async function POST(request: NextRequest) {
   const blocked = Boolean(blockedRule);
   const blockReason = blocked ? normalizeString(blockedRule?.reason) : null;
 
-  if (isApi || blocked) {
+  if (shouldWriteApiAccessLog(isApi, blocked)) {
     void insertApiAccessLog({
       ip,
       method,

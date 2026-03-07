@@ -10,12 +10,24 @@ import {
 const INTERNAL_CHECK_PATH = "/api/security/internal/check-ip";
 const BLOCKED_PAGE_PATH = "/ip-blocked";
 const IP_SECURITY_CHECK_TIMEOUT_MS = Number(process.env.IP_SECURITY_CHECK_TIMEOUT_MS || 1800);
+const IP_SECURITY_MIDDLEWARE_ALLOWED_CACHE_TTL_MS = Math.max(
+  Number(process.env.IP_SECURITY_MIDDLEWARE_ALLOWED_CACHE_TTL_MS || 3000),
+  250,
+);
+const IP_SECURITY_MIDDLEWARE_BLOCKED_CACHE_TTL_MS = Math.max(
+  Number(process.env.IP_SECURITY_MIDDLEWARE_BLOCKED_CACHE_TTL_MS || 5000),
+  500,
+);
 const IP_SECURITY_ERROR_LOG_THROTTLE_MS = Math.max(
   Number(process.env.IP_SECURITY_ERROR_LOG_THROTTLE_MS || 60000),
   1000,
 );
 
 let lastIpSecurityMiddlewareErrorLoggedAt = 0;
+
+const globalIpSecurityMiddlewareState = globalThis as typeof globalThis & {
+  __ipSecurityMiddlewareCheckCache?: Map<string, { blocked: boolean; reason: string | null; expiresAt: number }>;
+};
 
 const PUBLIC_FILE_REGEX = /\.[^/]+$/;
 
@@ -85,6 +97,49 @@ const getInternalSecurityKey = () => {
     normalizeString(process.env.IP_SECURITY_INTERNAL_KEY) ||
     normalizeString(process.env.THIRDWEB_SECRET_KEY)
   );
+};
+
+const getIpSecurityMiddlewareCache = () => {
+  if (!globalIpSecurityMiddlewareState.__ipSecurityMiddlewareCheckCache) {
+    globalIpSecurityMiddlewareState.__ipSecurityMiddlewareCheckCache = new Map();
+  }
+  return globalIpSecurityMiddlewareState.__ipSecurityMiddlewareCheckCache;
+};
+
+const getCachedIpSecurityCheckResult = (ip: string) => {
+  const cache = getIpSecurityMiddlewareCache();
+  const cached = cache.get(ip);
+  if (!cached) {
+    return null;
+  }
+
+  if (cached.expiresAt <= Date.now()) {
+    cache.delete(ip);
+    return null;
+  }
+
+  return cached;
+};
+
+const setCachedIpSecurityCheckResult = ({
+  ip,
+  blocked,
+  reason,
+}: {
+  ip: string;
+  blocked: boolean;
+  reason: string | null;
+}) => {
+  const cache = getIpSecurityMiddlewareCache();
+  const ttlMs = blocked
+    ? IP_SECURITY_MIDDLEWARE_BLOCKED_CACHE_TTL_MS
+    : IP_SECURITY_MIDDLEWARE_ALLOWED_CACHE_TTL_MS;
+
+  cache.set(ip, {
+    blocked,
+    reason,
+    expiresAt: Date.now() + ttlMs,
+  });
 };
 
 const shouldBypass = (pathname: string) => {
@@ -204,6 +259,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isApiRequest = pathname.startsWith("/api/");
+  const cachedCheckResult = getCachedIpSecurityCheckResult(ip);
 
   const pathLang = detectPathLang(pathname);
   const noticeLang =
@@ -212,6 +268,23 @@ export async function middleware(request: NextRequest) {
       request.headers.get("accept-language"),
       "en",
     );
+
+  if (cachedCheckResult) {
+    if (!cachedCheckResult.blocked) {
+      return NextResponse.next();
+    }
+
+    if (isApiRequest) {
+      return NextResponse.json(buildApiBlockedPayload({ lang: noticeLang, ip }), {
+        status: 451,
+      });
+    }
+
+    const redirectUrl = new URL(BLOCKED_PAGE_PATH, request.url);
+    redirectUrl.searchParams.set("lang", noticeLang);
+    redirectUrl.searchParams.set("ip", ip);
+    return NextResponse.redirect(redirectUrl);
+  }
 
   try {
     const checkUrl = new URL(INTERNAL_CHECK_PATH, request.url);
@@ -237,8 +310,11 @@ export async function middleware(request: NextRequest) {
     const checkResult = checkResponse.ok
       ? await checkResponse.json()
       : { blocked: false };
+    const blocked = Boolean(checkResult?.blocked);
+    const blockReason = normalizeString(checkResult?.reason) || null;
+    setCachedIpSecurityCheckResult({ ip, blocked, reason: blockReason });
 
-    if (Boolean(checkResult?.blocked)) {
+    if (blocked) {
       if (isApiRequest) {
         return NextResponse.json(buildApiBlockedPayload({ lang: noticeLang, ip }), {
           status: 451,
