@@ -175,6 +175,11 @@ const shouldBypass = (pathname: string) => {
     return true;
   }
 
+  // Cron endpoints are authenticated separately and should not depend on IP-security DB lookups.
+  if (pathname.startsWith("/api/cron/")) {
+    return true;
+  }
+
   if (pathname.startsWith("/_next/")) {
     return true;
   }
