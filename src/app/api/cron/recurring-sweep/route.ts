@@ -187,7 +187,7 @@ const verifyCronAuth = (request: NextRequest): { ok: boolean; status: number; er
     return {
       ok: false,
       status: 500,
-      error: "CRON_SECRET is not configured",
+      error: "CRON_SECRET is not configured in deployment environment",
     };
   }
 
@@ -336,6 +336,9 @@ const releaseLock = async ({
 export async function GET(request: NextRequest) {
   const authResult = verifyCronAuth(request);
   if (!authResult.ok) {
+    if (authResult.status >= 500) {
+      console.error(`[${ROUTE}] auth config error: ${authResult.error}`);
+    }
     return NextResponse.json(
       {
         ok: false,
@@ -414,6 +417,7 @@ export async function GET(request: NextRequest) {
   const thirdwebSecretKey = normalizeString(process.env.THIRDWEB_SECRET_KEY);
   const vaultAccessToken = normalizeString(process.env.THIRDWEB_VAULT_ACCESS_TOKEN);
   if (!thirdwebSecretKey) {
+    console.error(`[${ROUTE}] THIRDWEB_SECRET_KEY is not configured in deployment environment`);
     return NextResponse.json(
       {
         ok: false,
@@ -1078,6 +1082,7 @@ export async function GET(request: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
+    console.error(`[${ROUTE}] run failed`, error);
     const failedSummary = {
       route: ROUTE,
       runId,
