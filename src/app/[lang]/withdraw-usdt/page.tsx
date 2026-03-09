@@ -381,7 +381,19 @@ export default function SendUsdt({ params }: any) {
         }
 
         const nextUsers = Array.isArray(data?.result?.users)
-          ? data.result.users.filter((item: any) => String(item?.walletAddress || "").toLowerCase() !== String(address || "").toLowerCase())
+          ? data.result.users
+            .filter((item: any) => String(item?.walletAddress || "").toLowerCase() !== String(address || "").toLowerCase())
+            .sort((a: any, b: any) => {
+              const aIsAdmin = isAdminStorecode(a?.storecode || "");
+              const bIsAdmin = isAdminStorecode(b?.storecode || "");
+              if (aIsAdmin !== bIsAdmin) {
+                return aIsAdmin ? -1 : 1;
+              }
+
+              const aName = String(a?.store?.storeName || a?.nickname || "").trim();
+              const bName = String(b?.store?.storeName || b?.nickname || "").trim();
+              return aName.localeCompare(bName, "ko");
+            })
           : [];
 
         setServerWalletUsers(nextUsers);
@@ -462,7 +474,11 @@ export default function SendUsdt({ params }: any) {
 
   const [sending, setSending] = useState(false);
   const [confirmExternalRecipient, setConfirmExternalRecipient] = useState(false);
+  const [sendModalStep, setSendModalStep] = useState<"closed" | "confirm" | "sending" | "success" | "error">("closed");
+  const [sendModalMessage, setSendModalMessage] = useState("");
+  const [sendModalTxHash, setSendModalTxHash] = useState("");
   const isValidEvmAddress = (value: string) => /^0x[a-fA-F0-9]{40}$/.test(value.trim());
+  const isAdminStorecode = (value: string) => String(value || "").trim().toLowerCase() === "admin";
   const maskEmail = (value: string) => {
     const email = String(value || "").trim();
     const [localPartRaw, domainRaw] = email.split("@");
@@ -660,47 +676,75 @@ export default function SendUsdt({ params }: any) {
     }
   };
 
+  const getSendValidationError = () => {
+    const recipientWalletAddress = String(recipient?.walletAddress || "").trim();
+    const senderWalletAddress = String(address || "").trim();
+
+    if (!recipientWalletAddress) {
+      return '받는 사람 서버월렛을 선택해주세요.';
+    }
+
+    if (!isValidEvmAddress(recipientWalletAddress)) {
+      return "선택된 받는 사람 지갑주소가 올바르지 않습니다.";
+    }
+
+    if (senderWalletAddress && recipientWalletAddress.toLowerCase() === senderWalletAddress.toLowerCase()) {
+      return "내 지갑주소로는 출금할 수 없습니다.";
+    }
+
+    if (needsRecipientSuffixConfirm && !recipientSuffixMatched) {
+      return "수신 지갑주소 끝 6자리를 정확히 입력해주세요.";
+    }
+
+    if (!amount) {
+      return 'Please enter a valid amount';
+    }
+
+    if (Number(amount) > balance) {
+      return 'Insufficient balance';
+    }
+
+    return null;
+  };
+
+  const closeSendModal = () => {
+    if (sendModalStep === "sending") {
+      return;
+    }
+
+    setSendModalStep("closed");
+    setSendModalMessage("");
+    setSendModalTxHash("");
+  };
+
+  const openSendConfirmModal = () => {
+    const validationError = getSendValidationError();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setSendModalMessage("");
+    setSendModalTxHash("");
+    setSendModalStep("confirm");
+  };
+
   const sendUsdt = async () => {
     if (sending) {
       return;
     }
 
+    const validationError = getSendValidationError();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     const recipientWalletAddress = String(recipient?.walletAddress || "").trim();
-    const senderWalletAddress = String(address || "").trim();
 
-
-    if (!recipientWalletAddress) {
-      toast.error('받는 사람 서버월렛을 선택해주세요.');
-      return;
-    }
-
-    if (!isValidEvmAddress(recipientWalletAddress)) {
-      toast.error("선택된 받는 사람 지갑주소가 올바르지 않습니다.");
-      return;
-    }
-
-    if (senderWalletAddress && recipientWalletAddress.toLowerCase() === senderWalletAddress.toLowerCase()) {
-      toast.error("내 지갑주소로는 출금할 수 없습니다.");
-      return;
-    }
-
-    if (needsRecipientSuffixConfirm && !recipientSuffixMatched) {
-      toast.error("수신 지갑주소 끝 6자리를 정확히 입력해주세요.");
-      return;
-    }
-
-    if (!amount) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-
-    //console.log('amount', amount, "balance", balance);
-
-    if (Number(amount) > balance) {
-      toast.error('Insufficient balance');
-      return;
-    }
-
+    setSendModalMessage("");
+    setSendModalTxHash("");
+    setSendModalStep("sending");
     setSending(true);
 
     try {
@@ -749,27 +793,32 @@ export default function SendUsdt({ params }: any) {
           account: activeAccount as any,
         });
 
-        
         if (transactionHash) {
+          setSendModalTxHash(transactionHash);
+          let hasPostTransferWarning = false;
 
+          try {
+            const transferLogResponse = await fetch('/api/transaction/setTransfer', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                lang: params.lang,
+                chain: params.center,
+                walletAddress: address,
+                amount: amount,
+                toWalletAddress: recipientWalletAddress,
+              }),
+            });
 
-          await fetch('/api/transaction/setTransfer', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              lang: params.lang,
-              chain: params.center,
-              walletAddress: address,
-              amount: amount,
-              toWalletAddress: recipientWalletAddress,
-            }),
-          });
-
-
-
-          toast.success(USDT_sent_successfully);
+            if (!transferLogResponse.ok) {
+              hasPostTransferWarning = true;
+            }
+          } catch (error) {
+            console.error("Failed to persist transfer history", error);
+            hasPostTransferWarning = true;
+          }
 
           setAmount(0); // reset amount
           setOtp("");
@@ -780,34 +829,46 @@ export default function SendUsdt({ params }: any) {
           setOtpChannel(null);
           setOtpTargetMasked("");
 
-          // refresh balance
+          try {
+            const result = await balanceOf({
+              contract,
+              address: address || "",
+            });
 
-          // get the balance
-
-          const result = await balanceOf({
-            contract,
-            address: address || "",
-          });
-
-          if (chain === "bsc") {
-            setBalance( Number(result) / 10 ** 18 );
-          } else {
-            setBalance( Number(result) / 10 ** 6 );
+            if (chain === "bsc") {
+              setBalance( Number(result) / 10 ** 18 );
+            } else {
+              setBalance( Number(result) / 10 ** 6 );
+            }
+          } catch (error) {
+            console.error("Failed to refresh balance after transfer", error);
+            hasPostTransferWarning = true;
           }
 
+          setSendModalMessage(
+            hasPostTransferWarning
+              ? `${USDT_sent_successfully || "USDT 전송이 완료되었습니다."} 일부 후처리는 확인이 필요합니다.`
+              : (USDT_sent_successfully || "USDT 전송이 완료되었습니다."),
+          );
+          setSendModalStep("success");
 
         } else {
-
-          toast.error(Failed_to_send_USDT);
-
+          setSendModalMessage(Failed_to_send_USDT || "USDT 전송에 실패했습니다.");
+          setSendModalStep("error");
         }
       
 
     } catch (error) {
-      toast.error(Failed_to_send_USDT);
+      console.error("sendUsdt failed", error);
+      setSendModalMessage(
+        error instanceof Error && error.message
+          ? error.message
+          : (Failed_to_send_USDT || "USDT 전송에 실패했습니다."),
+      );
+      setSendModalStep("error");
+    } finally {
+      setSending(false);
     }
-
-    setSending(false);
   };
 
 
@@ -838,6 +899,14 @@ export default function SendUsdt({ params }: any) {
     && !sending
     && (!needsExternalConfirmation || confirmExternalRecipient)
     && recipientSuffixMatched;
+  const isSendModalOpen = sendModalStep !== "closed";
+  const selectedRecipientName = recipient?.store?.storeName || recipient?.nickname || "가맹점 서버월렛";
+  const selectedRecipientMeta = isAdminStorecode(recipient?.storecode || "")
+    ? "본사 관리 지갑"
+    : (recipient?.storecode || "");
+  const selectedRecipientMetaLine = [selectedRecipientMeta, recipient?.nickname || ""]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <main className="min-h-[100vh] bg-slate-100 px-4 py-6">
@@ -976,8 +1045,21 @@ export default function SendUsdt({ params }: any) {
           </div>
 
           {hasRecipient && (
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-              <p className="text-xs font-semibold text-emerald-700">선택된 받는 사람</p>
+            <div className={`mt-3 rounded-xl border p-3 ${
+              isAdminStorecode(recipient?.storecode || "")
+                ? "border-amber-300 bg-amber-50"
+                : "border-emerald-200 bg-emerald-50"
+            }`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className={`text-xs font-semibold ${
+                  isAdminStorecode(recipient?.storecode || "") ? "text-amber-800" : "text-emerald-700"
+                }`}>선택된 받는 사람</p>
+                {isAdminStorecode(recipient?.storecode || "") && (
+                  <span className="rounded-full bg-amber-500 px-2 py-1 text-[11px] font-semibold text-white">
+                    ADMIN
+                  </span>
+                )}
+              </div>
               <div className="mt-2 flex items-center gap-3">
                 <Image
                   src={recipient?.store?.storeLogo || recipient.avatar || "/icon-store.png"}
@@ -987,14 +1069,20 @@ export default function SendUsdt({ params }: any) {
                   className="h-10 w-10 rounded-xl object-cover"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-emerald-900">
+                  <p className={`truncate text-sm font-semibold ${
+                    isAdminStorecode(recipient?.storecode || "") ? "text-amber-900" : "text-emerald-900"
+                  }`}>
                     {recipient?.store?.storeName || recipient?.nickname || "가맹점 서버월렛"}
                   </p>
-                  <p className="truncate text-xs text-emerald-700">
+                  <p className={`truncate text-xs ${
+                    isAdminStorecode(recipient?.storecode || "") ? "text-amber-700" : "text-emerald-700"
+                  }`}>
                     {recipient?.nickname ? `${recipient.nickname} · ` : ""}
                     {recipient?.storecode || ""}
                   </p>
-                  <p className="truncate font-mono text-xs text-emerald-700">
+                  <p className={`truncate font-mono text-xs ${
+                    isAdminStorecode(recipient?.storecode || "") ? "text-amber-700" : "text-emerald-700"
+                  }`}>
                     {recipient.walletAddress}
                   </p>
                 </div>
@@ -1013,6 +1101,7 @@ export default function SendUsdt({ params }: any) {
                 const isSelected =
                   String(serverWalletUser?.walletAddress || "").toLowerCase()
                   === String(recipient?.walletAddress || "").toLowerCase();
+                const isAdminRecipient = isAdminStorecode(serverWalletUser?.storecode || "");
 
                 return (
                   <button
@@ -1025,8 +1114,12 @@ export default function SendUsdt({ params }: any) {
                     }}
                     className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
                       isSelected
-                        ? "border-emerald-400 bg-emerald-50"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                        ? isAdminRecipient
+                          ? "border-amber-400 bg-amber-50"
+                          : "border-emerald-400 bg-emerald-50"
+                        : isAdminRecipient
+                          ? "border-amber-200 bg-amber-50/60 hover:border-amber-300 hover:bg-amber-50"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
                     <Image
@@ -1037,21 +1130,38 @@ export default function SendUsdt({ params }: any) {
                       className="h-11 w-11 rounded-xl object-cover"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-900">
-                        {serverWalletUser?.store?.storeName || serverWalletUser?.nickname || "가맹점 서버월렛"}
-                      </p>
-                      <p className="truncate text-xs text-slate-500">
-                        {serverWalletUser?.storecode || ""}
+                      <div className="flex items-center gap-2">
+                        <p className={`truncate text-sm font-semibold ${
+                          isAdminRecipient ? "text-amber-900" : "text-slate-900"
+                        }`}>
+                          {serverWalletUser?.store?.storeName || serverWalletUser?.nickname || "가맹점 서버월렛"}
+                        </p>
+                        {isAdminRecipient && (
+                          <span className="shrink-0 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                            ADMIN
+                          </span>
+                        )}
+                      </div>
+                      <p className={`truncate text-xs ${
+                        isAdminRecipient ? "text-amber-700" : "text-slate-500"
+                      }`}>
+                        {isAdminRecipient ? "본사 관리 지갑" : serverWalletUser?.storecode || ""}
                         {serverWalletUser?.nickname ? ` · ${serverWalletUser.nickname}` : ""}
                       </p>
-                      <p className="truncate font-mono text-xs text-slate-500">
+                      <p className={`truncate font-mono text-xs ${
+                        isAdminRecipient ? "text-amber-700" : "text-slate-500"
+                      }`}>
                         {serverWalletUser?.walletAddress}
                       </p>
                     </div>
                     <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
                       isSelected
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-100 text-slate-600"
+                        ? isAdminRecipient
+                          ? "bg-amber-600 text-white"
+                          : "bg-emerald-600 text-white"
+                        : isAdminRecipient
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-slate-100 text-slate-600"
                     }`}>
                       {isSelected ? "선택됨" : "선택"}
                     </span>
@@ -1074,7 +1184,7 @@ export default function SendUsdt({ params }: any) {
 
           <button
             disabled={!canSend}
-            onClick={sendUsdt}
+            onClick={openSendConfirmModal}
             className={`mt-5 w-full rounded-xl py-3 text-base font-semibold transition-colors ${
               canSend
                 ? "bg-slate-900 text-white hover:bg-slate-700"
@@ -1083,19 +1193,166 @@ export default function SendUsdt({ params }: any) {
           >
             {sending ? (Sending || "전송중...") : (Send_USDT || "USDT 전송")}
           </button>
-
-          {sending && (
-            <div className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-slate-600">
-              <Image src="/loading.png" alt="loading" width={18} height={18} className="h-[18px] w-[18px] animate-spin" />
-              {Sending || "전송중..."}
-            </div>
-          )}
         </section>
 
         <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
           보안 안내: 전송 주소를 2회 이상 확인하고, 큰 금액은 소액 테스트 전송 후 진행하세요.
         </p>
       </div>
+
+      {isSendModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-lg font-semibold text-slate-900">
+                  {sendModalStep === "confirm"
+                    ? "USDT 전송 확인"
+                    : sendModalStep === "sending"
+                      ? "USDT 전송중"
+                      : sendModalStep === "success"
+                        ? "USDT 전송 완료"
+                        : "USDT 전송 실패"}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {sendModalStep === "confirm"
+                    ? "받는 사람과 금액을 한 번 더 확인해주세요."
+                    : sendModalStep === "sending"
+                      ? "지갑 서명 및 네트워크 처리를 기다리는 중입니다."
+                      : sendModalStep === "success"
+                        ? "전송 결과를 확인했습니다."
+                        : "전송 결과를 확인해주세요."}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={sendModalStep === "sending"}
+                onClick={closeSendModal}
+                className={`rounded-lg px-2 py-1 text-sm font-semibold ${
+                  sendModalStep === "sending"
+                    ? "cursor-not-allowed text-slate-300"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                }`}
+              >
+                닫기
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center gap-3">
+                <Image
+                  src={recipient?.store?.storeLogo || recipient?.avatar || "/icon-store.png"}
+                  alt={selectedRecipientName}
+                  width={44}
+                  height={44}
+                  className="h-11 w-11 rounded-xl object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {selectedRecipientName}
+                    </p>
+                    {isAdminStorecode(recipient?.storecode || "") && (
+                      <span className="shrink-0 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        ADMIN
+                      </span>
+                    )}
+                  </div>
+                  <p className="truncate text-xs text-slate-500">
+                    {selectedRecipientMetaLine || "-"}
+                  </p>
+                  <p className="truncate font-mono text-xs text-slate-500">
+                    {recipient?.walletAddress}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-white px-3 py-2">
+                  <p className="text-[11px] font-semibold text-slate-500">보낼 금액</p>
+                  <p className="mt-1 text-base font-semibold text-slate-900">
+                    {Number(amount || 0).toFixed(3)} USDT
+                  </p>
+                </div>
+                <div className="rounded-lg bg-white px-3 py-2">
+                  <p className="text-[11px] font-semibold text-slate-500">내 지갑</p>
+                  <p className="mt-1 font-mono text-sm font-semibold text-slate-900">
+                    {address?.substring(0, 8)}...{address?.substring((address?.length || 0) - 6)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {sendModalStep === "sending" && (
+              <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-semibold text-sky-700">
+                <Image src="/loading.png" alt="loading" width={18} height={18} className="h-[18px] w-[18px] animate-spin" />
+                {Sending || "전송중..."}
+              </div>
+            )}
+
+            {(sendModalStep === "success" || sendModalStep === "error") && (
+              <div className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+                sendModalStep === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-rose-200 bg-rose-50 text-rose-800"
+              }`}>
+                <p className="font-semibold">{sendModalMessage || (sendModalStep === "success" ? "전송 완료" : "전송 실패")}</p>
+                {sendModalTxHash && (
+                  <div className="mt-2">
+                    <p className="text-[11px] font-semibold">Transaction Hash</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="min-w-0 flex-1 truncate font-mono text-xs">
+                        {sendModalTxHash}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(sendModalTxHash);
+                          toast.success("트랜잭션 해시를 복사했습니다.");
+                        }}
+                        className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                      >
+                        복사
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mt-5 flex gap-2">
+              {sendModalStep === "confirm" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={closeSendModal}
+                    className="flex-1 rounded-xl border border-slate-300 bg-white py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={sendUsdt}
+                    className="flex-1 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                  >
+                    전송하기
+                  </button>
+                </>
+              )}
+
+              {(sendModalStep === "success" || sendModalStep === "error") && (
+                <button
+                  type="button"
+                  onClick={closeSendModal}
+                  className="w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                >
+                  확인
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 
