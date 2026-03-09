@@ -67,6 +67,7 @@ export interface OrderProps {
   status: string,
 
   walletAddress: string,
+  signerAddress?: string,
 
   tradeId: string,
 
@@ -4561,6 +4562,7 @@ export async function acceptBuyOrder(data: any) {
 
 
   const sellerMobile = user?.mobile || '';
+  const sellerSignerAddress = String(user?.signerAddress || data.signerAddress || '').trim();
 
 
   let updatedBankInfo = bankInfo;
@@ -4615,6 +4617,29 @@ export async function acceptBuyOrder(data: any) {
   // check condition and update status to accepted
   // *********************************************
 
+  const sellerUpdate: Record<string, any> = {
+    walletAddress: data.sellerWalletAddress,
+
+    /*
+    nickname: data.sellerNickname,
+    avatar: data.sellerAvatar,
+    mobile: data.sellerMobile,
+    */
+
+    nickname: sellerNickname,
+    avatar: sellerAvatar,
+    mobile: sellerMobile,
+
+    memo: sellerMemo,
+
+    //bankInfo: bankInfo,
+    bankInfo: updatedBankInfo,
+  };
+
+  if (sellerSignerAddress) {
+    sellerUpdate.signerAddress = sellerSignerAddress;
+  }
+
   const result = await buyorderCollection.findOneAndUpdate(
     { _id: new ObjectId(data.orderId + ''), status: 'ordered' },
     { $set: {
@@ -4622,26 +4647,7 @@ export async function acceptBuyOrder(data: any) {
       acceptedAt: new Date().toISOString(),
       ///tradeId: tradeId,
       
-      seller: {
-        walletAddress: data.sellerWalletAddress,
-        signerAddress: data.signerAddress,
-
-        /*
-        nickname: data.sellerNickname,
-        avatar: data.sellerAvatar,
-        mobile: data.sellerMobile,
-        */
-
-        nickname: sellerNickname,
-        avatar: sellerAvatar,
-        mobile: sellerMobile,
-
-        memo: sellerMemo,
-
-        //bankInfo: bankInfo,
-        bankInfo: updatedBankInfo,
-
-      },
+      seller: sellerUpdate,
 
     } }
   );
