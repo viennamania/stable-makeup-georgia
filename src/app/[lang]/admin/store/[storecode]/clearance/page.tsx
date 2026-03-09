@@ -667,6 +667,9 @@ export default function Index({ params }: any) {
 
     const [totalCount, setTotalCount] = useState(0);
     const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+    const [buyOrdersReadMessage, setBuyOrdersReadMessage] = useState("");
+    const [hasPrivilegedStoreRead, setHasPrivilegedStoreRead] = useState(false);
+    const [storeReadMessage, setStoreReadMessage] = useState("");
 
     const getKstToday = () => {
       const today = new Date();
@@ -993,60 +996,99 @@ export default function Index({ params }: any) {
       }
     };
 
-    const fetchBuyOrders = async () => {
+    const fetchBuyOrders = useCallback(async () => {
 
-      if (!storecode) {
+      if (!normalizedStorecode) {
+        return;
+      }
+
+      if (!activeAccount || !address) {
+        setBuyOrders([]);
+        setTotalCount(0);
+        setTotalClearanceCount(0);
+        setTotalClearanceAmount(0);
+        setTotalClearanceAmountKRW(0);
+        setBuyOrdersReadMessage("관리자 지갑 연결 후 청산내역을 조회할 수 있습니다.");
+        setHasFetchedBuyOrdersOnce(false);
+        setLoadingFetchBuyOrders(false);
         return;
       }
 
       setLoadingFetchBuyOrders(true);
+      setBuyOrdersReadMessage("");
 
       try {
-        // api call
-        //const response = await fetch('/api/order/getAllBuyOrders', {
-        const response = await fetch('/api/order/getAllCollectOrdersForSeller', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
+        const response = await postCenterStoreAdminSignedJson({
+          account: activeAccount,
+          route: '/api/order/getAllCollectOrdersForSeller',
+          storecode: normalizedStorecode,
+          requesterWalletAddress: address,
+          body: {
             lang: params.lang,
-            storecode: storecode,
+            storecode: normalizedStorecode,
             limit: Number(limitValue),
             page: Number(pageValue),
-            walletAddress: address || "",
-            searchMyOrders: address ? searchMyOrders : false,
+            walletAddress: address,
+            searchMyOrders,
             privateSale: true,
             fromDate: searchFromDate,
             toDate: searchToDate,
-          })
+          },
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => null);
 
-        if (data.result) {
-          setBuyOrders(data.result.orders);
-          setTotalCount(data.result.totalCount);
-
-          setTotalClearanceCount(data.result.totalClearanceCount);
-          setTotalClearanceAmount(data.result.totalClearanceAmount);
-          setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
+        if (!response.ok || !data?.result) {
+          setBuyOrders([]);
+          setTotalCount(0);
+          setTotalClearanceCount(0);
+          setTotalClearanceAmount(0);
+          setTotalClearanceAmountKRW(0);
+          setHasFetchedBuyOrdersOnce(false);
+          setBuyOrdersReadMessage(
+            data?.error
+              || "청산내역을 불러오지 못했습니다. 관리자 지갑 권한을 확인해 주세요."
+          );
+          return;
         }
+
+        setBuyOrders(data.result.orders || []);
+        setTotalCount(data.result.totalCount || 0);
+        setTotalClearanceCount(data.result.totalClearanceCount || 0);
+        setTotalClearanceAmount(data.result.totalClearanceAmount || 0);
+        setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW || 0);
+        setHasFetchedBuyOrdersOnce(true);
       } catch (error) {
         console.error('fetchBuyOrders error', error);
+        setBuyOrders([]);
+        setTotalCount(0);
+        setTotalClearanceCount(0);
+        setTotalClearanceAmount(0);
+        setTotalClearanceAmountKRW(0);
+        setHasFetchedBuyOrdersOnce(false);
+        setBuyOrdersReadMessage('청산내역을 불러오는 중 오류가 발생했습니다.');
       } finally {
         setLoadingFetchBuyOrders(false);
-        setHasFetchedBuyOrdersOnce(true);
       }
 
-    };
+    }, [
+      normalizedStorecode,
+      activeAccount,
+      address,
+      params.lang,
+      limitValue,
+      pageValue,
+      searchMyOrders,
+      searchFromDate,
+      searchToDate,
+    ]);
 
 
 
 
     useEffect(() => {
 
-        if (!storecode) {
+        if (!normalizedStorecode) {
           return;
         }
         
@@ -1064,7 +1106,7 @@ export default function Index({ params }: any) {
         return () => clearInterval(interval);
 
 
-    }, [address, searchMyOrders, params.lang, storecode, limitValue, pageValue, searchFromDate, searchToDate]);
+    }, [fetchBuyOrders, normalizedStorecode]);
 
 
 
@@ -1259,40 +1301,7 @@ export default function Index({ params }: any) {
         setAgreementPlaceOrder(false);
      
 
-        //await fetch('/api/order/getAllBuyOrders', {
-        await fetch('/api/order/getAllCollectOrdersForSeller', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            lang: params.lang,
-            limit: Number(limitValue),
-            page: Number(pageValue),
-            storecode: storecode,
-            //storecode: "admin",
-
-            walletAddress: address,
-            searchMyOrders: searchMyOrders,
-
-            privateSale: true,
-            fromDate: searchFromDate,
-            toDate: searchToDate
-
-          })
-        }).then(async (response) => {
-          const data = await response.json();
-          //console.log('data', data);
-          if (data.result) {
-            setBuyOrders(data.result.orders);
-            setTotalCount(data.result.totalCount);
-
-            setTotalClearanceCount(data.result.totalClearanceCount);
-            setTotalClearanceAmount(data.result.totalClearanceAmount);
-            setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
-
-          }
-        });
+        await fetchBuyOrders();
 
 
       } else {
@@ -1792,9 +1801,13 @@ export default function Index({ params }: any) {
 
         fetchingStoreRef.current = true;
         setFetchingStore(true);
+        setStoreReadMessage("");
+        setHasPrivilegedStoreRead(false);
 
         try {
           let response: Response | null = null;
+          let usedPrivilegedStoreRead = false;
+          let nextStoreReadMessage = "";
 
           if (activeAccount && address) {
             response = await postCenterStoreAdminSignedJson({
@@ -1806,6 +1819,14 @@ export default function Index({ params }: any) {
                 storecode: normalizedStorecode,
               },
             });
+
+            if (response.ok) {
+              usedPrivilegedStoreRead = true;
+            } else {
+              nextStoreReadMessage = "가맹점 민감정보를 불러오지 못했습니다. 관리자 지갑 권한을 확인해 주세요.";
+            }
+          } else {
+            nextStoreReadMessage = "관리자 지갑 연결 후 구매자 계좌 정보를 확인할 수 있습니다.";
           }
 
           if (!response || !response.ok) {
@@ -1821,6 +1842,19 @@ export default function Index({ params }: any) {
           }
 
           if (!response.ok) {
+            setStore(null);
+            setBuyerBankInfo({
+              depositName: "",
+              bankName: "",
+              accountNumber: "",
+              accountHolder: "",
+            });
+            setWithdrawalBankInfo({
+              bankName: "",
+              accountNumber: "",
+              accountHolder: "",
+            });
+            setStoreReadMessage(nextStoreReadMessage || "가맹점 정보를 불러오지 못했습니다.");
             return;
           }
 
@@ -1828,6 +1862,8 @@ export default function Index({ params }: any) {
           const nextStore = data?.result || null;
 
           setStore(nextStore);
+          setHasPrivilegedStoreRead(usedPrivilegedStoreRead);
+          setStoreReadMessage(usedPrivilegedStoreRead ? "" : nextStoreReadMessage);
 
           setBuyerBankInfo({
             depositName: "",
@@ -1845,6 +1881,23 @@ export default function Index({ params }: any) {
           return nextStore;
         } catch (error) {
           console.error("Error fetching store data:", error);
+          setStore(null);
+          setBuyerBankInfo({
+            depositName: "",
+            bankName: "",
+            accountNumber: "",
+            accountHolder: "",
+          });
+          setWithdrawalBankInfo({
+            bankName: "",
+            accountNumber: "",
+            accountHolder: "",
+          });
+          setStoreReadMessage(
+            activeAccount && address
+              ? "가맹점 민감정보를 불러오는 중 오류가 발생했습니다."
+              : "관리자 지갑 연결 후 구매자 계좌 정보를 확인할 수 있습니다."
+          );
           return;
         } finally {
           fetchingStoreRef.current = false;
@@ -2265,7 +2318,9 @@ export default function Index({ params }: any) {
                       })}
                       {buyerBankOptions.length === 0 && (
                         <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-500">
-                          등록된 구매자 계좌 정보가 없습니다.
+                          {!hasPrivilegedStoreRead && storeReadMessage
+                            ? storeReadMessage
+                            : '등록된 구매자 계좌 정보가 없습니다.'}
                         </div>
                       )}
 
@@ -3281,7 +3336,13 @@ export default function Index({ params }: any) {
 
                 </div>
 
-                {hasFetchedBuyOrdersOnce && buyOrders.length === 0 && (
+                {buyOrdersReadMessage && (
+                  <div className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+                    {buyOrdersReadMessage}
+                  </div>
+                )}
+
+                {hasFetchedBuyOrdersOnce && buyOrders.length === 0 && !buyOrdersReadMessage && (
                   <div className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
                     오늘 날짜 기준으로 조회된 청산내역이 없습니다. 날짜를 변경하거나 전체 조회를 선택해 주세요.
                   </div>
