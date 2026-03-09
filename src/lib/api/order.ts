@@ -227,6 +227,10 @@ const BUYORDER_READ_INDEX_STATUS_PRIVATE_AGENT_STORE_CREATED =
   "idx_buyorders_status_private_agent_store_created";
 const BUYORDER_READ_INDEX_PRIVATE_STATUS_AGENT_CREATED =
   "idx_buyorders_private_status_agent_created";
+const BUYORDER_READ_INDEX_STORE_WALLET_STATUS_CREATED =
+  "idx_buyorders_store_wallet_status_created";
+// Duplicate-order prevention should only block actionable, in-flight orders.
+const BLOCKING_BUYORDER_STATUSES = ["ordered", "accepted", "paymentRequested"] as const;
 
 const globalBuyOrderReadState = globalThis as typeof globalThis & {
   __buyOrderReadIndexesReady?: boolean;
@@ -281,6 +285,9 @@ const setBuyOrderCachedValue = (key: string, value: any) => {
     expiresAt: Date.now() + BUYORDER_READ_CACHE_TTL_MS,
   });
 };
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const ensureBuyOrderReadIndexes = async (collection: any) => {
   if (globalBuyOrderReadState.__buyOrderReadIndexesReady) {
@@ -337,11 +344,67 @@ const ensureBuyOrderReadIndexes = async (collection: any) => {
         },
         { name: BUYORDER_READ_INDEX_PRIVATE_STATUS_AGENT_CREATED },
       ),
+      collection.createIndex(
+        {
+          storecode: 1,
+          walletAddress: 1,
+          status: 1,
+          createdAt: -1,
+        },
+        { name: BUYORDER_READ_INDEX_STORE_WALLET_STATUS_CREATED },
+      ),
     ]);
   } catch (error) {
     console.error("buyorders read index ensure failed:", error);
   }
 };
+
+export async function getBlockingBuyOrderByStorecodeAndWalletAddress(
+  {
+    storecode,
+    walletAddress,
+  }: {
+    storecode: string;
+    walletAddress: string;
+  }
+): Promise<any | null> {
+  const normalizedStorecode = String(storecode || "").trim();
+  const normalizedWalletAddress = normalizeWalletAddress(walletAddress);
+
+  if (!normalizedStorecode || !normalizedWalletAddress) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  await ensureBuyOrderReadIndexes(collection);
+
+  const walletAddressRegex = new RegExp(
+    `^${escapeRegExp(normalizedWalletAddress)}$`,
+    "i",
+  );
+
+  return collection.findOne(
+    {
+      storecode: normalizedStorecode,
+      walletAddress: walletAddressRegex,
+      status: { $in: [...BLOCKING_BUYORDER_STATUSES] },
+    },
+    {
+      sort: { createdAt: -1 },
+      projection: {
+        _id: 1,
+        tradeId: 1,
+        status: 1,
+        storecode: 1,
+        walletAddress: 1,
+        createdAt: 1,
+        acceptedAt: 1,
+        paymentRequestedAt: 1,
+      },
+    },
+  );
+}
 
 async function fetchBuyOrderRealtimeSnapshot(
   collection: any,

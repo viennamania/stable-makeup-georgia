@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { chain } from "@/app/config/contractAddresses";
 import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
-import { insertBuyOrderForClearance } from "@lib/api/order";
+import {
+  getBlockingBuyOrderByStorecodeAndWalletAddress,
+  insertBuyOrderForClearance,
+} from "@lib/api/order";
 import { getStoreByStorecode } from "@lib/api/store";
 import { getOneByWalletAddress } from "@lib/api/user";
 import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
@@ -220,6 +223,33 @@ export async function POST(request: NextRequest) {
         error: "privateSale must be true",
       },
       { status: 400 },
+    );
+  }
+
+  const existingBuyOrder = await getBlockingBuyOrderByStorecodeAndWalletAddress({
+    storecode,
+    walletAddress: normalizedClearanceWalletAddress,
+  });
+
+  if (existingBuyOrder) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "existing_active_buy_order",
+      meta: {
+        storecode,
+        existingOrderId: existingBuyOrder?._id ? String(existingBuyOrder._id) : null,
+        existingTradeId: existingBuyOrder?.tradeId || null,
+        existingStatus: existingBuyOrder?.status || null,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Existing active buy order already exists for this member",
+        existingOrder: existingBuyOrder,
+      },
+      { status: 409 },
     );
   }
 

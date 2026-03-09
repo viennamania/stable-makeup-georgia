@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import {
 	insertBuyOrderForUser,
+  getBlockingBuyOrderByStorecodeAndWalletAddress,
 } from '@lib/api/order';
 
 import {
@@ -51,6 +52,19 @@ export async function POST(request: NextRequest) {
     sellerInfo = {
       walletAddress: privateSellerWalletAddress,
     };
+  }
+
+  const existingBuyOrder = await getBlockingBuyOrderByStorecodeAndWalletAddress({
+    storecode,
+    walletAddress,
+  });
+
+  if (existingBuyOrder) {
+    return NextResponse.json({
+      result: null,
+      error: "Existing active buy order already exists for this member",
+      existingOrder: existingBuyOrder,
+    }, { status: 409 });
   }
 
 
