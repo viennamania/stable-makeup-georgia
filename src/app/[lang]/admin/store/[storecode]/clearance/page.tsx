@@ -55,6 +55,7 @@ import {
   useRouter,
   useSearchParams,
 }from "next//navigation";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 
@@ -169,39 +170,6 @@ const normalizeStringValue = (value: unknown): string => {
 
 const normalizeWalletAddressForSignature = (value: unknown): string => {
   return normalizeStringValue(value).toLowerCase();
-};
-
-const formatNumberForSignature = (value: number): string => {
-  return Number.isFinite(value) ? value.toString() : "";
-};
-
-const buildSetBuyOrderForClearanceSigningMessage = ({
-  requesterWalletAddress,
-  storecode,
-  sellerWalletAddress,
-  usdtAmount,
-  krwAmount,
-  rate,
-  signedAtIso,
-}: {
-  requesterWalletAddress: string;
-  storecode: string;
-  sellerWalletAddress: string;
-  usdtAmount: number;
-  krwAmount: number;
-  rate: number;
-  signedAtIso: string;
-}) => {
-  return [
-    SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX,
-    `requesterWalletAddress:${requesterWalletAddress}`,
-    `storecode:${storecode}`,
-    `sellerWalletAddress:${sellerWalletAddress}`,
-    `usdtAmount:${formatNumberForSignature(usdtAmount)}`,
-    `krwAmount:${formatNumberForSignature(krwAmount)}`,
-    `rate:${formatNumberForSignature(rate)}`,
-    `signedAt:${signedAtIso}`,
-  ].join("\n");
 };
 
 
@@ -1217,18 +1185,18 @@ export default function Index({ params }: any) {
         orderUsdtAmount = parseFloat(Number(safeKrwAmount / rate).toFixed(2));
       }
 
-      const sellerWalletAddress = normalizeStringValue(store?.privateSaleWalletAddress || store?.sellerWalletAddress);
+      const clearanceWalletAddress = normalizeStringValue(store?.privateSaleWalletAddress || store?.sellerWalletAddress);
       const requesterWalletAddress = normalizeWalletAddressForSignature(address);
-      const sellerWalletAddressForSignature = normalizeWalletAddressForSignature(sellerWalletAddress);
+      const clearanceWalletAddressForSignature = normalizeWalletAddressForSignature(clearanceWalletAddress);
       const signatureUsdtAmount = Number(orderUsdtAmount);
       const signatureKrwAmount = Number(safeKrwAmount);
       const signatureRate = Number(rate);
 
       if (
-        !storecode
-        || !sellerWalletAddress
+        !normalizedStorecode
+        || !clearanceWalletAddress
         || !requesterWalletAddress
-        || !sellerWalletAddressForSignature
+        || !clearanceWalletAddressForSignature
         || !Number.isFinite(signatureUsdtAmount) || signatureUsdtAmount <= 0
         || !Number.isFinite(signatureKrwAmount) || signatureKrwAmount <= 0
         || !Number.isFinite(signatureRate) || signatureRate <= 0
@@ -1238,67 +1206,32 @@ export default function Index({ params }: any) {
         return;
       }
 
-      const signedAt = new Date().toISOString();
-      const signingMessage = buildSetBuyOrderForClearanceSigningMessage({
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/order/setBuyOrderForClearance',
+        signingPrefix: SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX,
+        requesterStorecode: 'admin',
         requesterWalletAddress,
-        storecode,
-        sellerWalletAddress: sellerWalletAddressForSignature,
-        usdtAmount: signatureUsdtAmount,
-        krwAmount: signatureKrwAmount,
-        rate: signatureRate,
-        signedAtIso: signedAt,
-      });
-
-      let signature = "";
-      try {
-        signature = await activeAccount.signMessage({
-          message: signingMessage,
-        });
-      } catch (error) {
-        console.error('setBuyOrderForClearance sign error', error);
-        setBuyOrdering(false);
-        toast.error('서명에 실패했습니다. 다시 시도해주세요.');
-        return;
-      }
-
-      const response = await fetch('/api/order/setBuyOrderForClearance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lang: params.lang,
-          storecode: storecode,
-
-          ////////////walletAddress: address,
-          //walletAddress: store.sellerWalletAddress,
-          walletAddress: sellerWalletAddress,
-          requesterWalletAddress: requesterWalletAddress,
-          signature: signature,
-          signedAt: signedAt,
-
-          
-          sellerBankInfo: withdrawalBankInfo,
-
-
-          usdtAmount: orderUsdtAmount,
-          krwAmount: safeKrwAmount,
-          rate: rate,
+        body: {
+          storecode: normalizedStorecode,
+          walletAddress: clearanceWalletAddressForSignature,
+          sellerBankInfo: {
+            bankName: withdrawalBankInfo.bankName,
+            accountNumber: withdrawalBankInfo.accountNumber,
+            accountHolder: withdrawalBankInfo.accountHolder,
+          },
+          usdtAmount: signatureUsdtAmount,
+          krwAmount: signatureKrwAmount,
+          rate: signatureRate,
           privateSale: true,
           buyer: {
-            depositName: "",
-
-            //bankName: buyerBankInfo.bankName,
-            //accountNumber: buyerBankInfo.accountNumber,
-            //accountHolder: buyerBankInfo.accountHolder,
             bankInfo: {
               bankName: buyerBankInfo.bankName,
               accountNumber: buyerBankInfo.accountNumber,
               accountHolder: buyerBankInfo.accountHolder,
             },
-          }
-        })
-
+          },
+        },
       });
 
       ////console.log('buyOrder response', response);

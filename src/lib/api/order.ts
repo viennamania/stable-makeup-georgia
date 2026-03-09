@@ -16,6 +16,13 @@ import {
 import {
   saveBuyOrderStatusRealtimeEvent,
 } from "@lib/api/buyOrderStatusRealtimeEvent";
+import {
+  getConfiguredClearanceSettlementWalletAddress,
+  isConfiguredClearanceRequesterWallet,
+  resolveConfiguredClearanceBuyer,
+  resolveConfiguredClearanceSellerBankInfo,
+} from "@/lib/server/clearance-order-security";
+import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 
 
@@ -2133,10 +2140,6 @@ export async function insertBuyOrderForClearance(data: any) {
   const nickname = data.nickname || '';
 
 
-  let sellerBankInfo = data.sellerBankInfo || null;
-
-
-
   const client = await clientPromise;
 
 
@@ -2154,12 +2157,22 @@ export async function insertBuyOrderForClearance(data: any) {
         storeLogo: 1,
         totalBuyerCount: 1,
         sellerWalletAddress: 1,
+        privateSaleWalletAddress: 1,
+        privateSellerWalletAddress: 1,
         adminWalletAddress: 1,
         settlementWalletAddress: 1,
         settlementFeeWalletAddress: 1,
         settlementFeePercent: 1,
         bankInfo: 1,
+        bankInfoAAA: 1,
+        bankInfoBBB: 1,
+        bankInfoCCC: 1,
+        bankInfoDDD: 1,
+        bankInfoEEE: 1,
         withdrawalBankInfo: 1,
+        withdrawalBankInfoAAA: 1,
+        withdrawalBankInfoBBB: 1,
+        withdrawalBankInfoCCC: 1,
         agentFeePercent: 1,
 
         totalSettlementAmount: 1,
@@ -2174,19 +2187,28 @@ export async function insertBuyOrderForClearance(data: any) {
     return null;
   }
 
-
-
-  if (!sellerBankInfo) {
-    // use store withdrawalBankInfo
-    sellerBankInfo = store.withdrawalBankInfo || null;
+  const normalizedRequesterWalletAddress = normalizeWalletAddress(data.walletAddress);
+  if (!normalizedRequesterWalletAddress) {
+    console.log('insertBuyOrderForClearance walletAddress is not valid: ' + data.walletAddress);
+    return null;
   }
 
+  if (!isConfiguredClearanceRequesterWallet(store, normalizedRequesterWalletAddress)) {
+    console.log('insertBuyOrderForClearance walletAddress is not allowed for store: ' + normalizedRequesterWalletAddress);
+    return null;
+  }
+
+  const sellerBankInfo = resolveConfiguredClearanceSellerBankInfo(store, data.sellerBankInfo);
   if (!sellerBankInfo) {
     console.log('insertBuyOrderForClearance sellerBankInfo is null');
     return null;
   }
 
-
+  const buyer = resolveConfiguredClearanceBuyer(store, data.buyer);
+  if (!buyer) {
+    console.log('insertBuyOrderForClearance buyer bankInfo is null');
+    return null;
+  }
 
   // check clearance user exists
   // clearance user's storecode is 'admin'
@@ -2195,7 +2217,7 @@ export async function insertBuyOrderForClearance(data: any) {
   const userCollection = client.db(dbName).collection('users');
 
 
-  const walletAddressRaw = String(data.walletAddress || '').trim();
+  const walletAddressRaw = String(normalizedRequesterWalletAddress || '').trim();
   const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
 
@@ -2287,13 +2309,19 @@ export async function insertBuyOrderForClearance(data: any) {
 	  );
   */
 
-  const sellerWalletAddress = store?.privateSellerWalletAddress || store?.settlementWalletAddress || store?.adminWalletAddress;
+  const sellerWalletAddress = getConfiguredClearanceSettlementWalletAddress(store);
+  if (!sellerWalletAddress) {
+    console.log('insertBuyOrderForClearance sellerWalletAddress is null');
+    return null;
+  }
 
   // get seller info from user collection by sellerWalletAddress
+  const escapedSellerWalletAddress = sellerWalletAddress.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const sellerWalletAddressRegex = new RegExp(`^${escapedSellerWalletAddress}$`, 'i');
   const sellerUser = await userCollection.findOne<OrderProps>(
     {
       storecode: data.storecode,
-      walletAddress: sellerWalletAddress,
+      walletAddress: sellerWalletAddressRegex,
     },
   );
   const sellerNickname = sellerUser?.nickname || '';
@@ -2313,7 +2341,7 @@ export async function insertBuyOrderForClearance(data: any) {
       agent: agent,
       storecode: data.storecode,
       store: store,
-      walletAddress: data.walletAddress,
+      walletAddress: normalizedRequesterWalletAddress,
       nickname: nickname,
       mobile: mobile,
       avatar: avatar,
@@ -2329,9 +2357,9 @@ export async function insertBuyOrderForClearance(data: any) {
       acceptedAt: new Date().toISOString(),
       paymentRequestedAt: new Date().toISOString(),
 
-      privateSale: data.privateSale,
+      privateSale: true,
       
-      buyer: data.buyer,
+      buyer: buyer,
 
 
       seller: {
@@ -2378,8 +2406,8 @@ export async function insertBuyOrderForClearance(data: any) {
    // update user collection buyOrderStatus to "accepted"
     await userCollection.updateOne(
       {
-        walletAddress: data.walletAddress,
-        storecode: data.storecode,
+        walletAddress: walletAddressRegex,
+        storecode: clearanceStorecode,
       },
       { $set: { buyOrderStatus: 'paymentRequested' } }
     );
@@ -2406,7 +2434,7 @@ export async function insertBuyOrderForClearance(data: any) {
 
       _id: result.insertedId,
 
-      walletAddress: data.walletAddress,
+      walletAddress: normalizedRequesterWalletAddress,
       tradeId: tradeId,
       
     };

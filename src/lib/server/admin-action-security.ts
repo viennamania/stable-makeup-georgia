@@ -42,6 +42,7 @@ export type VerifyAdminSignedActionParams = {
   signedAtRaw: unknown;
   nonceRaw: unknown;
   actionFields: Record<string, unknown>;
+  requestLogActionFields?: Record<string, unknown>;
 };
 
 export type VerifyAdminSignedActionResult =
@@ -188,6 +189,7 @@ export const verifyAdminSignedAction = async ({
   signedAtRaw,
   nonceRaw,
   actionFields,
+  requestLogActionFields,
 }: VerifyAdminSignedActionParams): Promise<VerifyAdminSignedActionResult> => {
   const requesterStorecode = normalizeString(requesterStorecodeRaw || "admin") || "admin";
   const requesterWalletAddress = normalizeWalletAddress(requesterWalletAddressRaw);
@@ -219,7 +221,7 @@ export const verifyAdminSignedAction = async ({
       publicCountry: country,
       requesterWalletAddress: walletAddress ?? requesterWalletAddress ?? null,
       requesterUser: requesterUser || null,
-      requestBody: actionFields,
+      requestBody: requestLogActionFields || actionFields,
       meta: {
         requesterStorecode,
         signingPrefix,
