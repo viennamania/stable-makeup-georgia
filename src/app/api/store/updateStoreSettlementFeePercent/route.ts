@@ -28,14 +28,23 @@ export async function POST(request: NextRequest) {
 
   const {
     storecode,
-    settlementFeePercent,
   } = body;
 
+  const settlementFeePercent = Number(body?.settlementFeePercent);
 
+  if (!Number.isFinite(settlementFeePercent)) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementFeePercent must be a valid number",
+    }, { status: 400 });
+  }
 
-
-
-
+  if (settlementFeePercent < 0.01 || settlementFeePercent > 5.00) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementFeePercent must be between 0.01 and 5.00",
+    }, { status: 400 });
+  }
 
   const result = await updateStoreSettlementFeePercent({
     storecode,
