@@ -458,77 +458,6 @@ export async function GET(request: NextRequest) {
     const stateCollection = dbClient.db(dbName).collection<any>(STATE_COLLECTION);
     const runCollection = dbClient.db(dbName).collection<any>(RUN_COLLECTION);
 
-    const usersWithPrivateKey = await usersCollection
-      .find(
-        {
-          walletAddress: { $exists: true, $type: "string", $nin: ["", destination] },
-          walletPrivateKey: { $exists: true, $type: "string", $nin: [""] },
-        } as any,
-        {
-          projection: {
-            id: 1,
-            storecode: 1,
-            nickname: 1,
-            role: 1,
-            userType: 1,
-            updatedAt: 1,
-            walletAddress: 1,
-            walletPrivateKey: 1,
-          },
-        },
-      )
-      .toArray();
-
-    const dedupPrivateUserMap = new Map<string, CandidateUser>();
-    for (const user of usersWithPrivateKey) {
-      const walletAddress = normalizeWalletAddress(user.walletAddress);
-      const walletPrivateKey = normalizeString(user.walletPrivateKey);
-      if (!walletAddress || !walletPrivateKey || walletAddress === destination) {
-        continue;
-      }
-
-      const key = walletAddress.toLowerCase();
-      const current = dedupPrivateUserMap.get(key);
-      if (!current) {
-        dedupPrivateUserMap.set(key, user);
-        continue;
-      }
-
-      const currentPriority = getSellerPriority(current);
-      const nextPriority = getSellerPriority(user);
-      if (nextPriority > currentPriority) {
-        dedupPrivateUserMap.set(key, user);
-        continue;
-      }
-      if (nextPriority < currentPriority) {
-        continue;
-      }
-
-      const currentUpdatedAt = toEpochMs(current.updatedAt);
-      const nextUpdatedAt = toEpochMs(user.updatedAt);
-      if (nextUpdatedAt >= currentUpdatedAt) {
-        dedupPrivateUserMap.set(key, user);
-      }
-    }
-
-    const dedupPrivateMap = new Map<string, Candidate>();
-    for (const [key, user] of dedupPrivateUserMap.entries()) {
-      const walletAddress = normalizeWalletAddress(user.walletAddress);
-      const walletPrivateKey = normalizeString(user.walletPrivateKey);
-      if (!walletAddress || !walletPrivateKey || walletAddress === destination) {
-        continue;
-      }
-      dedupPrivateMap.set(key, {
-        walletAddress,
-        mode: "private-key",
-        id: user.id ?? null,
-        storecode: normalizeString(user.storecode) || null,
-        nickname: normalizeString(user.nickname) || null,
-        walletPrivateKey,
-        serverInfo: null,
-      });
-    }
-
     const thirdwebClient = createThirdwebClient({
       secretKey: thirdwebSecretKey,
     });
@@ -603,9 +532,6 @@ export async function GET(request: NextRequest) {
         : [];
 
     const candidateMap = new Map<string, Candidate>();
-    for (const [key, candidate] of dedupPrivateMap.entries()) {
-      candidateMap.set(key, candidate);
-    }
     for (const user of usersOnServerWallets) {
       const walletAddress = normalizeWalletAddress(user.walletAddress);
       if (!walletAddress || walletAddress === destination) {
@@ -1026,8 +952,8 @@ export async function GET(request: NextRequest) {
       dryRun,
       candidates: {
         totalControllable: totalCandidates,
-        privateKey: dedupPrivateMap.size,
-        serverWalletOnly: Math.max(0, totalCandidates - dedupPrivateMap.size),
+        privateKey: 0,
+        serverWalletOnly: totalCandidates,
       },
       scan: {
         startIndex,
