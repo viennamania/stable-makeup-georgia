@@ -1820,18 +1820,21 @@ export async function getAllUsersByStorecode(
 
 
 // get all users by storecode and verified
-export async function getAllUsersByStorecodeAndVerified(
+export async function getAllUsersByStorecodeFiltered(
   {
     storecode,
     limit,
     page,
+    verifiedOnly = true,
+    requireSignerAddress = false,
   }: {
     storecode: string;
     limit: number;
     page: number;
+    verifiedOnly?: boolean;
+    requireSignerAddress?: boolean;
   }
 ): Promise<ResultProps> {
-
   const client = await clientPromise;
   const collection = client.db(dbName).collection('users');
   const queryMaxTimeMs = Math.max(
@@ -1862,7 +1865,8 @@ export async function getAllUsersByStorecodeAndVerified(
       ? storecodeCandidates[0]
       : { $in: storecodeCandidates },
     walletAddress: { $type: "string", $ne: "" },
-    verified: true,
+    ...(verifiedOnly ? { verified: true } : {}),
+    ...(requireSignerAddress ? { signerAddress: { $type: "string", $ne: "" } } : {}),
   };
 
   const [users, totalCount] = await Promise.all([
@@ -1884,6 +1888,71 @@ export async function getAllUsersByStorecodeAndVerified(
     totalResult: totalCount,
     users,
   };
+}
+
+// get all users by storecode and verified
+export async function getAllUsersByStorecodeAndVerified(
+  {
+    storecode,
+    limit,
+    page,
+  }: {
+    storecode: string;
+    limit: number;
+    page: number;
+  }
+): Promise<ResultProps> {
+  return await getAllUsersByStorecodeFiltered({
+    storecode,
+    limit,
+    page,
+    verifiedOnly: true,
+  });
+}
+
+export async function getOneServerWalletByStorecodeAndWalletAddress(
+  storecode: string,
+  walletAddress: string,
+): Promise<UserProps | null> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const safeStorecode = String(storecode || "").trim();
+  const walletAddressRaw = String(walletAddress || '').trim();
+  if (!safeStorecode || !walletAddressRaw) {
+    return null;
+  }
+
+  const storecodeCandidates = Array.from(
+    new Set([safeStorecode, safeStorecode.toLowerCase()].filter(Boolean)),
+  );
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+
+  const baseQuery = {
+    storecode: storecodeCandidates.length === 1
+      ? storecodeCandidates[0]
+      : { $in: storecodeCandidates },
+    signerAddress: { $type: "string", $ne: "" },
+  };
+
+  const found = await collection.findOne<UserProps>({
+    ...baseQuery,
+    walletAddress: { $in: walletAddressCandidates },
+  });
+
+  if (found) {
+    return found;
+  }
+
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+  return await collection.findOne<UserProps>({
+    ...baseQuery,
+    walletAddress: walletAddressRegex,
+  });
 }
 
 

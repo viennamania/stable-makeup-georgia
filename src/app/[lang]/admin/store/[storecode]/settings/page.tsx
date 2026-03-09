@@ -954,6 +954,72 @@ export default function SettingsPage({ params }: any) {
 
 
 
+    // fetch all settlement wallet candidates for store
+    // 가맹점 자동결제용 서버월렛 검색
+    const [fetchingSettlementWalletUsers, setFetchingSettlementWalletUsers] = useState(false);
+    const [settlementWalletUsers, setSettlementWalletUsers] = useState([] as any[]);
+
+    useEffect(() => {
+        if (!params.storecode || !smartAccount || !address) {
+            setSettlementWalletUsers([]);
+            return;
+        }
+        let active = true;
+
+        const fetchSettlementWalletUsers = async () => {
+            try {
+                setFetchingSettlementWalletUsers(true);
+                const response = await postAdminSignedJson({
+                    account: smartAccount,
+                    route: '/api/user/getAllUsersByStorecode',
+                    signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+                    requesterWalletAddress: address,
+                    body: {
+                        storecode: params.storecode,
+                        limit: 100,
+                        page: 1,
+                        verifiedOnly: false,
+                        requireSignerAddress: true,
+                    },
+                });
+                if (!active) {
+                    return;
+                }
+                if (!response.ok) {
+                    setSettlementWalletUsers([]);
+                    toast.error('자동결제용 서버월렛 목록 조회에 실패했습니다.');
+                    return;
+                }
+                const data = await response.json();
+                if (!active) {
+                    return;
+                }
+                setSettlementWalletUsers(data?.result?.users || []);
+            } catch (error) {
+                if (!active) {
+                    return;
+                }
+                setSettlementWalletUsers([]);
+                toast.error('자동결제용 서버월렛 목록 조회에 실패했습니다.');
+            } finally {
+                if (active) {
+                    setFetchingSettlementWalletUsers(false);
+                }
+            }
+        };
+
+        fetchSettlementWalletUsers();
+
+        return () => {
+            active = false;
+        };
+    } , [params.storecode, smartAccount, address]);
+
+
+
+
+
+
 
     // update adminWalletAddress of store
     // 가맹점 관리자 변경
@@ -2807,7 +2873,7 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 )}
 
-                                {fetchingAllStoreSellers && (
+                                {fetchingSettlementWalletUsers && (
                                 <Image
                                     src="/loading.png"
                                     alt="Loading"
@@ -2817,7 +2883,7 @@ export default function SettingsPage({ params }: any) {
                                 />
                                 )}
 
-                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                {!fetchingSettlementWalletUsers && settlementWalletUsers && settlementWalletUsers.length > 0 ? (
                                 
                                 <div className="w-full flex flex-row items-center justify-center gap-2">
                                     {/* select list of all users */}
@@ -2830,7 +2896,7 @@ export default function SettingsPage({ params }: any) {
                                     disabled={updatingSettlementWalletAddress}
                                     >
                                     <option value="">가맹점 자동결제용 USDT지갑 변경</option>
-                                    {allStoreSellers.map((user) => (
+                                    {settlementWalletUsers.map((user) => (
                                         <option key={user._id} value={user.walletAddress}>
                                         {user.nickname}
                                         {' '}
@@ -2869,9 +2935,9 @@ export default function SettingsPage({ params }: any) {
                                     className="w-5 h-5"
                                     />
                                     <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 회원이 없습니다.
+                                    {store && store.storeName}의 자동결제용 서버월렛 회원이 없습니다.
                                     <br />
-                                    가맹점 홈페이지에서 회원가입 후 가맹점 자동결제용 USDT지갑을 설정하세요.
+                                    가맹점 홈페이지에서 회원가입 후 thirdweb server wallet 이 생성된 지갑을 설정하세요.
                                     </span>
                                 </div>
                                 )}

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  getAllUsersByStorecodeAndVerified,
+  getAllUsersByStorecodeFiltered,
 } from "@lib/api/user";
 import {
   consumeReadRateLimit,
@@ -9,6 +9,7 @@ import {
   logUserReadSecurityEvent,
   sanitizeUserForResponse,
 } from "@/lib/server/user-read-security";
+import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 
 export const runtime = "nodejs";
 export const preferredRegion = "icn1";
@@ -17,6 +18,8 @@ type GetAllUsersByStorecodeRequestBody = {
   storecode?: unknown;
   limit?: unknown;
   page?: unknown;
+  verifiedOnly?: unknown;
+  requireSignerAddress?: unknown;
 };
 
 const globalGetAllUsersByStorecodeRouteState = globalThis as typeof globalThis & {
@@ -62,6 +65,24 @@ const normalizeNumber = (value: unknown, fallback: number): number => {
     return fallback;
   }
   return Math.floor(parsed);
+};
+
+const normalizeBoolean = (value: unknown, fallback: boolean): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") {
+      return true;
+    }
+    if (normalized === "false") {
+      return false;
+    }
+  }
+
+  return fallback;
 };
 
 const getRouteCache = () => {
@@ -170,7 +191,10 @@ export async function POST(request: NextRequest) {
     normalizeNumber(body.limit, GET_ALL_USERS_BY_STORECODE_DEFAULT_LIMIT),
   );
   const page = normalizeNumber(body.page, 1);
+  const verifiedOnly = normalizeBoolean(body.verifiedOnly, true);
+  const requireSignerAddress = normalizeBoolean(body.requireSignerAddress, false);
   const ip = getRequestIp(request);
+  const requiresAdminGuard = !verifiedOnly || requireSignerAddress;
 
   if (!storecode) {
     return NextResponse.json(
@@ -210,10 +234,31 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (requiresAdminGuard) {
+    const guard = await verifyStoreSettingsAdminGuard({
+      request,
+      route: "/api/user/getAllUsersByStorecode",
+      body,
+      requireSigned: true,
+    });
+
+    if (!guard.ok) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: guard.error,
+        },
+        { status: guard.status },
+      );
+    }
+  }
+
   const cacheKey = JSON.stringify({
     storecode: storecode.toLowerCase(),
     limit,
     page,
+    verifiedOnly,
+    requireSignerAddress,
   });
   const routeCache = getRouteCache();
   pruneRouteCache(routeCache);
@@ -233,10 +278,12 @@ export async function POST(request: NextRequest) {
     const job = pending
       ? pending
       : withTransientMongoRetry(() =>
-          getAllUsersByStorecodeAndVerified({
+          getAllUsersByStorecodeFiltered({
             storecode,
             limit,
             page,
+            verifiedOnly,
+            requireSignerAddress,
           }),
         ).finally(() => {
           inFlight.delete(cacheKey);
@@ -266,6 +313,8 @@ export async function POST(request: NextRequest) {
       extra: {
         limit,
         page,
+        verifiedOnly,
+        requireSignerAddress,
         totalResult: result?.totalResult || 0,
       },
     });

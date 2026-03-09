@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	updateStoreSettlementWalletAddress,
 } from '@lib/api/store';
+import {
+  getOneServerWalletByStorecodeAndWalletAddress,
+} from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
@@ -39,6 +42,18 @@ export async function POST(request: NextRequest) {
       result: null,
       error: guard.error,
     }, { status: guard.status });
+  }
+
+  const serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
+    storecode,
+    normalizedSettlementWalletAddress,
+  );
+
+  if (!serverWalletUser) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementWalletAddress must belong to a server wallet user in the same store",
+    }, { status: 400 });
   }
 
 
