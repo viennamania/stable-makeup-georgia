@@ -83,6 +83,7 @@ import { useSearchParams } from 'next/navigation';
 // import config/payment.ts
 import { paymentUrl } from "@/app/config/payment";
 import { version } from "../../../config/version";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -146,12 +147,12 @@ interface BuyOrder {
 
 /*
 const wallets = [
-  inAppWallet({
-    auth: {
-      options: ["email", "google"],
-    },
-  }),
-];
+	    inAppWallet({
+	      auth: {
+	        options: ["email", "google"],
+	      },
+	    }),
+	  ];
 */
 const wallets = [
     inAppWallet({
@@ -160,6 +161,11 @@ const wallets = [
       },
     }),
   ];
+
+const CANCEL_PAYMENT_REQUESTED_BUYORDER_ROUTE =
+  "/api/admin/member/cancelPaymentRequestedBuyOrder";
+const CANCEL_PAYMENT_REQUESTED_BUYORDER_SIGNING_PREFIX =
+  "stable-georgia:admin-member-cancel-payment-requested-buy-order:v1";
   
 
 
@@ -669,10 +675,20 @@ export default function Index({ params }: any) {
 
 
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isStatusChangeModalOpen, setStatusChangeModalOpen] = useState(false);
+  const [statusChangeTarget, setStatusChangeTarget] = useState<any>(null);
+  const [updatingBuyOrderStatus, setUpdatingBuyOrderStatus] = useState(false);
 
   const closeModal = () => setModalOpen(false);
   const openModal = () => setModalOpen(true);
   const closeAddModal = () => setAddModalOpen(false);
+  const closeStatusChangeModal = () => {
+    if (updatingBuyOrderStatus) {
+      return;
+    }
+    setStatusChangeModalOpen(false);
+    setStatusChangeTarget(null);
+  };
   const handleKeyboardState = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (e.getModifierState) {
       setCapsLockOn(!!e.getModifierState("CapsLock"));
@@ -1060,6 +1076,78 @@ export default function Index({ params }: any) {
       return '거래취소';
     }
     return '';
+  };
+
+  const openStatusChangeModal = (item: any) => {
+    setStatusChangeTarget(item);
+    setStatusChangeModalOpen(true);
+  };
+
+  const cancelPaymentRequestedBuyOrder = async () => {
+    if (updatingBuyOrderStatus) {
+      return;
+    }
+
+    if (!activeAccount) {
+      toast.error('관리자 지갑을 먼저 연결해주세요.');
+      return;
+    }
+
+    const targetStorecode = String(statusChangeTarget?.storecode || '').trim();
+    const targetWalletAddress = String(statusChangeTarget?.walletAddress || '').trim().toLowerCase();
+
+    if (!targetStorecode || !targetWalletAddress) {
+      toast.error('대상 회원 정보가 올바르지 않습니다.');
+      return;
+    }
+
+    setUpdatingBuyOrderStatus(true);
+
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: CANCEL_PAYMENT_REQUESTED_BUYORDER_ROUTE,
+        signingPrefix: CANCEL_PAYMENT_REQUESTED_BUYORDER_SIGNING_PREFIX,
+        requesterStorecode: 'admin',
+        requesterWalletAddress: activeAccount.address,
+        body: {
+          storecode: targetStorecode,
+          walletAddress: targetWalletAddress,
+          cancelTradeReason: '관리자 회원페이지 상태변경',
+        },
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload?.result?.success) {
+        throw new Error(payload?.error || '주문상태 변경에 실패했습니다.');
+      }
+
+      setAllBuyer((prev) =>
+        prev.map((item) => {
+          const itemStorecode = String(item?.storecode || '').trim();
+          const itemWalletAddress = String(item?.walletAddress || '').trim().toLowerCase();
+          if (itemStorecode !== targetStorecode || itemWalletAddress !== targetWalletAddress) {
+            return item;
+          }
+          return {
+            ...item,
+            buyOrderStatus: 'cancelled',
+          };
+        })
+      );
+
+      toast.success('주문상태를 거래취소로 변경했습니다.');
+      setStatusChangeModalOpen(false);
+      setStatusChangeTarget(null);
+      await fetchAllBuyer();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : '주문상태 변경에 실패했습니다.';
+      toast.error(message);
+    } finally {
+      setUpdatingBuyOrderStatus(false);
+    }
   };
 
   const downloadBuyerExcel = async () => {
@@ -2647,6 +2735,20 @@ export default function Index({ params }: any) {
                                 }
 
                               </span>
+
+                              {item?.buyOrderStatus === 'paymentRequested' && (
+                                <button
+                                  disabled={!isAdmin || updatingBuyOrderStatus}
+                                  onClick={() => openStatusChangeModal(item)}
+                                  className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition ${
+                                    !isAdmin || updatingBuyOrderStatus
+                                      ? 'cursor-not-allowed bg-slate-300'
+                                      : 'bg-rose-500 hover:bg-rose-600'
+                                  }`}
+                                >
+                                  상태변경하기
+                                </button>
+                              )}
                             </div>
                           </td>
 
@@ -2840,6 +2942,70 @@ export default function Index({ params }: any) {
                 closeModal={closeModal}
                 selectedItem={selectedItem}
             />
+        </ModalUser>
+
+        <ModalUser isOpen={isStatusChangeModalOpen} onClose={closeStatusChangeModal}>
+          <div className="w-full bg-white rounded-2xl p-6 flex flex-col gap-4 shadow-2xl border border-slate-100">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col">
+                <div className="text-[22px] font-bold text-slate-900">주문상태 변경</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  현재 결제요청 상태의 주문을 거래취소로 변경합니다.
+                </div>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-rose-50 px-3 py-1 text-[11px] font-bold text-rose-600 border border-rose-200">
+                admin only
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">회원</span>
+                <span className="font-semibold text-slate-900">{statusChangeTarget?.nickname || '-'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">가맹점</span>
+                <span className="font-semibold text-slate-900">{statusChangeTarget?.storecode || '-'}</span>
+              </div>
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-slate-500">지갑주소</span>
+                <span className="max-w-[280px] break-all text-right font-mono text-[12px] text-slate-900">
+                  {statusChangeTarget?.walletAddress || '-'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">현재상태</span>
+                <span className="font-semibold text-rose-500">
+                  {getBuyOrderStatusLabel(statusChangeTarget?.buyOrderStatus || '') || '-'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">변경상태</span>
+                <span className="font-semibold text-slate-900">거래취소 cancelled</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={closeStatusChangeModal}
+                disabled={updatingBuyOrderStatus}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                닫기
+              </button>
+              <button
+                disabled={updatingBuyOrderStatus || statusChangeTarget?.buyOrderStatus !== 'paymentRequested'}
+                onClick={cancelPaymentRequestedBuyOrder}
+                className={`px-5 py-2 text-sm font-semibold text-white rounded-xl shadow-md ${
+                  updatingBuyOrderStatus || statusChangeTarget?.buyOrderStatus !== 'paymentRequested'
+                    ? 'cursor-not-allowed bg-slate-300'
+                    : 'bg-gradient-to-r from-rose-500 to-red-600 hover:shadow-lg'
+                }`}
+              >
+                {updatingBuyOrderStatus ? '변경 중...' : 'cancelled 로 변경'}
+              </button>
+            </div>
+          </div>
         </ModalUser>
 
         <ModalUser isOpen={isAddModalOpen} onClose={closeAddModal}>
