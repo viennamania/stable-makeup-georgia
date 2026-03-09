@@ -344,57 +344,69 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  // get list of user wallets from api
-  const [users, setUsers] = useState([
-    {
-      _id: '',
-      id: 0,
-      email: '',
-      avatar: '',
-      nickname: '',
-      mobile: '',
-      walletAddress: '',
-      createdAt: '',
-      settlementAmountOfFee: '',
-    }
-  ]);
-
-  const [totalCountOfUsers, setTotalCountOfUsers] = useState(0);
+  const [serverWalletUsers, setServerWalletUsers] = useState<any[]>([]);
+  const [totalCountOfServerWalletUsers, setTotalCountOfServerWalletUsers] = useState(0);
+  const [serverWalletKeyword, setServerWalletKeyword] = useState("");
+  const [loadingServerWalletUsers, setLoadingServerWalletUsers] = useState(false);
 
   useEffect(() => {
+    if (!address) {
+      setServerWalletUsers([]);
+      setTotalCountOfServerWalletUsers(0);
+      return;
+    }
 
-    if (!address) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setLoadingServerWalletUsers(true);
 
-    const getUsers = async () => {
+      try {
+        const response = await fetch('/api/user/getAllServerWalletUsers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            keyword: serverWalletKeyword,
+            limit: 20,
+            page: 1,
+          }),
+        });
 
-      const response = await fetch('/api/user/getAllUsers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}),
-      });
+        const data = await response.json().catch(() => null);
+        if (cancelled) {
+          return;
+        }
 
-      const data = await response.json();
+        const nextUsers = Array.isArray(data?.result?.users)
+          ? data.result.users.filter((item: any) => String(item?.walletAddress || "").toLowerCase() !== String(address || "").toLowerCase())
+          : [];
 
-      //console.log("getUsers", data);
+        setServerWalletUsers(nextUsers);
+        setTotalCountOfServerWalletUsers(Number(data?.result?.totalCount || 0));
+      } catch (error: any) {
+        if (cancelled || error?.name === "AbortError") {
+          return;
+        }
 
+        console.error("Failed to load server wallet users", error);
+        setServerWalletUsers([]);
+        setTotalCountOfServerWalletUsers(0);
+      } finally {
+        if (!cancelled) {
+          setLoadingServerWalletUsers(false);
+        }
+      }
+    }, 250);
 
-      ///setUsers(data.result.users);
-      // set users except the current user
-
-      setUsers(data.result.users.filter((user: any) => user.walletAddress !== address));
-
-
-
-      setTotalCountOfUsers(data.result.totalCount);
-
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(timer);
     };
-
-    getUsers();
-
-
-  }, [address]);
+  }, [address, serverWalletKeyword]);
 
 
 
@@ -409,8 +421,11 @@ export default function SendUsdt({ params }: any) {
     avatar: '',
     mobile: '',
     walletAddress: '',
+    signerAddress: '',
+    storecode: '',
     createdAt: '',
     settlementAmountOfFee: '',
+    store: null as any,
   });
 
 
@@ -655,27 +670,17 @@ export default function SendUsdt({ params }: any) {
 
 
     if (!recipientWalletAddress) {
-      toast.error('Please enter a valid address');
+      toast.error('받는 사람 서버월렛을 선택해주세요.');
       return;
     }
 
     if (!isValidEvmAddress(recipientWalletAddress)) {
-      toast.error("유효한 외부 지갑주소(0x...)를 입력해주세요.");
+      toast.error("선택된 받는 사람 지갑주소가 올바르지 않습니다.");
       return;
     }
 
     if (senderWalletAddress && recipientWalletAddress.toLowerCase() === senderWalletAddress.toLowerCase()) {
       toast.error("내 지갑주소로는 출금할 수 없습니다.");
-      return;
-    }
-
-    if (!isWhateListedUser && !confirmExternalRecipient) {
-      toast.error("외부 지갑주소 위험 안내를 확인해주세요.");
-      return;
-    }
-
-    if (!verifiedOtp) {
-      toast.error("OTP 인증이 완료되어야 출금할 수 있습니다.");
       return;
     }
 
@@ -807,76 +812,8 @@ export default function SendUsdt({ params }: any) {
 
 
 
-  // get user by wallet address
-  const getUserByWalletAddress = async (walletAddress: string) => {
-
-    const response = await fetch('/api/user/getUserByWalletAddress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        walletAddress: walletAddress,
-      }),
-    });
-
-    const data = await response.json();
-
-    //console.log("getUserByWalletAddress", data);
-
-    return data.result;
-
-  };
-  
-  ///const [wantToReceiveWalletAddress, setWantToReceiveWalletAddress] = useState(false);
-
-
-  const [wantToReceiveWalletAddress, setWantToReceiveWalletAddress] = useState(true);
-
-
-
   useEffect(() => {
-
-    if (!recipient?.walletAddress) {
-      return;
-    }
-
-    // check recipient.walletAddress is in the user list
-    getUserByWalletAddress(recipient?.walletAddress)
-    .then((data) => {
-        
-        //console.log("data============", data);
-  
-        const checkUser = data
-
-        if (checkUser) {
-          setIsWhateListedUser(true);
-
-          setRecipient(checkUser as any);
-
-        } else {
-          setIsWhateListedUser(false);
-
-          setRecipient({
-
-
-            _id: '',
-            id: 0,
-            email: '',
-            nickname: '',
-            avatar: '',
-            mobile: '',
-            walletAddress: recipient?.walletAddress,
-            createdAt: '',
-            settlementAmountOfFee: '',
-
-          });
-
-
-        }
-
-    });
-
+    setIsWhateListedUser(Boolean(String(recipient?.walletAddress || "").trim()));
   } , [recipient?.walletAddress]);
   
 
@@ -899,7 +836,6 @@ export default function SendUsdt({ params }: any) {
     && hasRecipient
     && hasAmount
     && !sending
-    && verifiedOtp
     && (!needsExternalConfirmation || confirmExternalRecipient)
     && recipientSuffixMatched;
 
@@ -1024,126 +960,116 @@ export default function SendUsdt({ params }: any) {
           </div>
 
           <div className="mt-4">
-            <label className="text-xs font-semibold text-slate-500">{User_wallet_address || "수신 지갑주소"}</label>
+            <label className="text-xs font-semibold text-slate-500">{Select_a_user || "받는 사람 선택"}</label>
             <input
               disabled={sending}
               type="text"
-              placeholder={Enter_Wallet_Address || "0x..."}
+              placeholder="가맹점명 / 지갑주소 검색"
               className="mt-2 w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-900 outline-none focus:border-slate-500"
-              value={recipient.walletAddress}
-              onChange={(e) => setRecipient({
-                ...recipient,
-                walletAddress: e.target.value,
-              })}
+              value={serverWalletKeyword}
+              onChange={(e) => setServerWalletKeyword(e.target.value)}
             />
+            <p className="mt-2 text-xs text-slate-500">
+              users 컬렉션의 server wallet 회원만 표시합니다.
+              {totalCountOfServerWalletUsers > 0 ? ` 검색 결과 ${totalCountOfServerWalletUsers}명` : ""}
+            </p>
           </div>
 
-          {isWhateListedUser ? (
-            <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-              <Image
-                src={recipient.avatar || "/profile-default.png"}
-                alt="profile"
-                width={28}
-                height={28}
-                className="h-7 w-7 rounded-full object-cover"
-              />
-              <span className="text-sm font-semibold text-emerald-700">{recipient?.nickname || "등록 사용자"}</span>
-              <Image src="/verified.png" alt="verified" width={18} height={18} className="h-[18px] w-[18px]" />
-            </div>
-          ) : (
-            hasRecipient && (
-              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                <p className="font-semibold">{This_address_is_not_white_listed || "등록된 사용자 지갑이 아닙니다."}</p>
-                <p className="mt-1 text-xs">{If_you_are_sure_please_click_the_send_button || "주소를 다시 확인한 뒤 전송하세요."}</p>
-              </div>
-            )
-          )}
-
-          {needsExternalConfirmation && (
-            <label className="mt-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-              <input
-                type="checkbox"
-                checked={confirmExternalRecipient}
-                onChange={(e) => setConfirmExternalRecipient(e.target.checked)}
-                className="mt-1 h-4 w-4 accent-rose-600"
-              />
-              <span>외부 지갑주소를 직접 검증했으며, 오전송 시 복구가 불가능함을 확인했습니다.</span>
-            </label>
-          )}
-
-          {needsRecipientSuffixConfirm && (
-            <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 p-3">
-              <p className="text-xs font-semibold text-rose-800">
-                고액 외부 출금 보호: 수신 지갑주소 끝 6자리를 입력하세요.
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="rounded-md bg-white px-2 py-1 font-mono text-xs text-rose-700">
-                  ...{recipientSuffixExpected}
-                </span>
-                <input
-                  type="text"
-                  value={recipientSuffixConfirm}
-                  onChange={(e) => setRecipientSuffixConfirm(e.target.value)}
-                  placeholder="끝 6자리 입력"
-                  className="w-full rounded-lg border border-rose-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+          {hasRecipient && (
+            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-semibold text-emerald-700">선택된 받는 사람</p>
+              <div className="mt-2 flex items-center gap-3">
+                <Image
+                  src={recipient?.store?.storeLogo || recipient.avatar || "/icon-store.png"}
+                  alt={recipient?.store?.storeName || recipient?.nickname || "store"}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-xl object-cover"
                 />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-emerald-900">
+                    {recipient?.store?.storeName || recipient?.nickname || "가맹점 서버월렛"}
+                  </p>
+                  <p className="truncate text-xs text-emerald-700">
+                    {recipient?.nickname ? `${recipient.nickname} · ` : ""}
+                    {recipient?.storecode || ""}
+                  </p>
+                  <p className="truncate font-mono text-xs text-emerald-700">
+                    {recipient.walletAddress}
+                  </p>
+                </div>
+                <Image src="/verified.png" alt="selected" width={18} height={18} className="h-[18px] w-[18px]" />
               </div>
             </div>
           )}
+
+          <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+            {loadingServerWalletUsers ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
+                server wallet 목록을 불러오는 중입니다.
+              </div>
+            ) : serverWalletUsers.length > 0 ? (
+              serverWalletUsers.map((serverWalletUser: any) => {
+                const isSelected =
+                  String(serverWalletUser?.walletAddress || "").toLowerCase()
+                  === String(recipient?.walletAddress || "").toLowerCase();
+
+                return (
+                  <button
+                    key={serverWalletUser?._id || serverWalletUser?.walletAddress}
+                    type="button"
+                    disabled={sending}
+                    onClick={() => {
+                      setRecipient(serverWalletUser as any);
+                      setIsWhateListedUser(true);
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
+                      isSelected
+                        ? "border-emerald-400 bg-emerald-50"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Image
+                      src={serverWalletUser?.store?.storeLogo || serverWalletUser?.avatar || "/icon-store.png"}
+                      alt={serverWalletUser?.store?.storeName || serverWalletUser?.nickname || "store"}
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 rounded-xl object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {serverWalletUser?.store?.storeName || serverWalletUser?.nickname || "가맹점 서버월렛"}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">
+                        {serverWalletUser?.storecode || ""}
+                        {serverWalletUser?.nickname ? ` · ${serverWalletUser.nickname}` : ""}
+                      </p>
+                      <p className="truncate font-mono text-xs text-slate-500">
+                        {serverWalletUser?.walletAddress}
+                      </p>
+                    </div>
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                      isSelected
+                        ? "bg-emerald-600 text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}>
+                      {isSelected ? "선택됨" : "선택"}
+                    </span>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">
+                검색 조건에 맞는 가맹점 server wallet 회원이 없습니다.
+              </div>
+            )}
+          </div>
 
           <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold text-slate-700">2차 인증 (OTP)</p>
+            <p className="text-xs font-semibold text-slate-700">2차 인증</p>
             <p className="mt-1 text-[11px] text-slate-500">
-              {preferredOtpChannel === "email" && preferredOtpTargetMasked
-                ? `연결된 이메일 인증: ${preferredOtpTargetMasked}`
-                : preferredOtpChannel === "sms" && preferredOtpTargetMasked
-                  ? `연결된 휴대폰 인증: ${preferredOtpTargetMasked}`
-                  : "연결된 이메일/휴대폰 정보가 필요합니다."}
+              당분간 이 페이지에서는 2차 인증을 처리하지 않습니다. 선택한 server wallet 대상으로 바로 출금됩니다.
             </p>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <button
-                type="button"
-                disabled={!hasAddress || !hasRecipient || !hasAmount || sending || isSendingOtp || otpCooldownSec > 0}
-                onClick={sendOtp}
-                className={`rounded-lg px-3 py-2 text-xs font-semibold ${
-                  !hasAddress || !hasRecipient || !hasAmount || sending || isSendingOtp || otpCooldownSec > 0
-                    ? "cursor-not-allowed bg-slate-200 text-slate-400"
-                    : "bg-slate-700 text-white hover:bg-slate-600"
-                }`}
-              >
-                {isSendingOtp ? "OTP 발송중..." : otpCooldownSec > 0 ? `재발송 ${otpCooldownSec}s` : "OTP 발송"}
-              </button>
-
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="OTP 코드 입력"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
-              />
-
-              <button
-                type="button"
-                disabled={!otp || isVerifingOtp || sending}
-                onClick={verifyOtp}
-                className={`rounded-lg px-3 py-2 text-xs font-semibold ${
-                  !otp || isVerifingOtp || sending
-                    ? "cursor-not-allowed bg-slate-200 text-slate-400"
-                    : "bg-emerald-600 text-white hover:bg-emerald-500"
-                }`}
-              >
-                {isVerifingOtp ? "인증중..." : "OTP 인증"}
-              </button>
-            </div>
-            {verifiedOtp ? (
-              <p className="mt-2 text-xs font-semibold text-emerald-700">OTP 인증 완료</p>
-            ) : (
-              <p className="mt-2 text-xs text-slate-500">
-                {isSendedOtp && otpTargetMasked
-                  ? `${otpChannel === "email" ? "이메일" : "문자"} ${otpTargetMasked}로 코드를 발송했습니다.`
-                  : "출금을 위해 OTP 인증이 필요합니다."}
-              </p>
-            )}
           </div>
 
           <button

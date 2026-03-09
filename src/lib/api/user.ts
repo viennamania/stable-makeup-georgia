@@ -76,6 +76,10 @@ export interface ResultProps {
   users: UserProps[];
 }
 
+const escapeRegexText = (value: string) => {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
 
 
 
@@ -1113,6 +1117,134 @@ export async function getAllUsers(
   };
 
   
+}
+
+
+export async function getAllServerWalletUsersWithStoreInfo(
+  {
+    keyword,
+    limit,
+    page,
+  }: {
+    keyword?: string;
+    limit: number;
+    page: number;
+  }
+): Promise<{
+  totalCount: number;
+  totalResult: number;
+  users: any[];
+}> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const safeKeyword = String(keyword || "").trim();
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 20;
+  const safePage = Number.isFinite(page) && page > 0 ? Math.trunc(page) : 1;
+  const safeSkip = (safePage - 1) * safeLimit;
+  const keywordRegex = safeKeyword
+    ? new RegExp(escapeRegexText(safeKeyword), 'i')
+    : null;
+
+  const pipeline: any[] = [
+    {
+      $match: {
+        walletAddress: { $type: 'string', $ne: '' },
+        signerAddress: { $type: 'string', $ne: '' },
+        storecode: { $type: 'string', $ne: '' },
+        verified: true,
+      },
+    },
+    {
+      $lookup: {
+        from: 'stores',
+        let: { userStorecode: '$storecode' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: [
+                  { $toLower: '$storecode' },
+                  { $toLower: '$$userStorecode' },
+                ],
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              storecode: 1,
+              storeName: 1,
+              storeLogo: 1,
+            },
+          },
+        ],
+        as: 'store',
+      },
+    },
+    {
+      $unwind: '$store',
+    },
+  ];
+
+  if (keywordRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { nickname: keywordRegex },
+          { walletAddress: keywordRegex },
+          { storecode: keywordRegex },
+          { 'store.storeName': keywordRegex },
+        ],
+      },
+    });
+  }
+
+  pipeline.push(
+    {
+      $sort: {
+        'store.storeName': 1,
+        nickname: 1,
+        _id: -1,
+      },
+    },
+    {
+      $facet: {
+        users: [
+          { $skip: safeSkip },
+          { $limit: safeLimit },
+          {
+            $project: {
+              _id: 1,
+              id: 1,
+              email: 1,
+              avatar: 1,
+              nickname: 1,
+              mobile: 1,
+              walletAddress: 1,
+              signerAddress: 1,
+              storecode: 1,
+              createdAt: 1,
+              store: 1,
+            },
+          },
+        ],
+        meta: [
+          { $count: 'totalCount' },
+        ],
+      },
+    },
+  );
+
+  const [result] = await collection.aggregate(pipeline).toArray();
+  const users = Array.isArray(result?.users) ? result.users : [];
+  const totalCount = Number(result?.meta?.[0]?.totalCount || 0);
+
+  return {
+    totalCount,
+    totalResult: totalCount,
+    users,
+  };
 }
 
 
