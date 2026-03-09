@@ -1086,8 +1086,67 @@ export default function SettingsPage({ params }: any) {
 
     // update settlementWalletAddress of store
     // 가맹점 결제지갑 변경
+    const [creatingSettlementWalletAddress, setCreatingSettlementWalletAddress] = useState(false);
     const [updatingSettlementWalletAddress, setUpdatingSettlementWalletAddress] = useState(false);
     const [selectedSettlementWalletAddress, setSelectedSettlementWalletAddress] = useState('');
+    const createSettlementWalletAddress = async () => {
+        if (creatingSettlementWalletAddress) {
+            return;
+        }
+        if (!smartAccount || !address) {
+            toast.error('지갑을 먼저 연결하세요.');
+            return;
+        }
+        setCreatingSettlementWalletAddress(true);
+        try {
+            const response = await postAdminSignedJson({
+                account: smartAccount,
+                route: '/api/store/createStoreSettlementServerWallet',
+                signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+                requesterWalletAddress: address,
+                body: {
+                    storecode: params.storecode,
+                },
+            });
+
+            let data: any = null;
+            try {
+                data = await response.json();
+            } catch (error) {
+                data = null;
+            }
+
+            if (!response.ok || !data?.result?.settlementWalletAddress) {
+                toast.error(data?.error || '자동결제용 USDT지갑 생성에 실패했습니다.');
+                return;
+            }
+
+            const createdWalletAddress = data.result.settlementWalletAddress;
+            const createdUser = data.result.user;
+
+            setStore({
+                ...store,
+                settlementWalletAddress: createdWalletAddress,
+            });
+            setSelectedSettlementWalletAddress(createdWalletAddress);
+            if (createdUser?.walletAddress) {
+                setSettlementWalletUsers((prev) => {
+                    const filtered = prev.filter(
+                        (item) => item?.walletAddress !== createdUser.walletAddress
+                    );
+                    return [...filtered, createdUser];
+                });
+            }
+
+            toast.success(
+                data.result.engineWalletCreated
+                    ? '가맹점 자동결제용 USDT지갑이 생성되었습니다.'
+                    : '기존 자동결제용 USDT지갑이 연결되었습니다.'
+            );
+        } finally {
+            setCreatingSettlementWalletAddress(false);
+        }
+    };
     const updateSettlementWalletAddress = async () => {
         if (updatingAdminWalletAddress) {
         return;
@@ -2897,7 +2956,7 @@ export default function SettingsPage({ params }: any) {
                                     >
                                     <option value="">가맹점 자동결제용 USDT지갑 변경</option>
                                     {settlementWalletUsers.map((user) => (
-                                        <option key={user._id} value={user.walletAddress}>
+                                        <option key={user._id || user.walletAddress} value={user.walletAddress}>
                                         {user.nickname}
                                         {' '}
                                         ({user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)})
@@ -2926,19 +2985,33 @@ export default function SettingsPage({ params }: any) {
                                     </button>
                                 </div>
                                 ) : (
-                                <div className="flex flex-row items-center justify-center gap-2">
-                                    <Image
-                                    src="/icon-warning.png"
-                                    alt="Warning"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
-                                    />
-                                    <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 자동결제용 서버월렛 회원이 없습니다.
-                                    <br />
-                                    가맹점 홈페이지에서 회원가입 후 thirdweb server wallet 이 생성된 지갑을 설정하세요.
-                                    </span>
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                    <div className="flex flex-row items-center justify-center gap-2">
+                                        <Image
+                                        src="/icon-warning.png"
+                                        alt="Warning"
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5"
+                                        />
+                                        <span className="text-sm text-red-500">
+                                        {store && store.storeName}의 자동결제용 서버월렛 회원이 없습니다.
+                                        <br />
+                                        아래 버튼으로 thirdweb server wallet(ERC4337 Smart Account)을 생성하고 바로 연결하세요.
+                                        </span>
+                                    </div>
+                                    <button
+                                        disabled={!address || !smartAccount || creatingSettlementWalletAddress}
+                                        className={`bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg
+                                            ${!address || !smartAccount || creatingSettlementWalletAddress ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        onClick={() => {
+                                            confirm(
+                                                `${store?.storeName || params.storecode} 가맹점의 자동결제용 USDT지갑을 새로 생성하시겠습니까?`
+                                            ) && createSettlementWalletAddress();
+                                        }}
+                                    >
+                                        {creatingSettlementWalletAddress ? '생성 중...' : '자동결제용 USDT지갑 생성하기'}
+                                    </button>
                                 </div>
                                 )}
                             </div>

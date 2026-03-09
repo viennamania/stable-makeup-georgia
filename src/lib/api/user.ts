@@ -1955,6 +1955,107 @@ export async function getOneServerWalletByStorecodeAndWalletAddress(
   });
 }
 
+export async function upsertStoreServerWalletUser(
+  {
+    storecode,
+    walletAddress,
+    signerAddress,
+    nicknameBase,
+  }: {
+    storecode: string;
+    walletAddress: string;
+    signerAddress: string;
+    nicknameBase?: string;
+  }
+): Promise<UserProps | null> {
+  const safeStorecode = String(storecode || "").trim();
+  const safeWalletAddress = String(walletAddress || "").trim();
+  const safeSignerAddress = String(signerAddress || "").trim();
+
+  if (!safeStorecode || !safeWalletAddress || !safeSignerAddress) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+  const storeCollection = client.db(dbName).collection('stores');
+  const store = await storeCollection.findOne(
+    { storecode: safeStorecode }
+  );
+
+  if (!store) {
+    return null;
+  }
+
+  const nowIso = new Date().toISOString();
+  const requestedNicknameBase = String(nicknameBase || "").trim();
+  const baseNickname = requestedNicknameBase || `${safeStorecode} 자동결제`;
+
+  const buildUniqueNickname = async () => {
+    let nickname = baseNickname;
+    let suffix = 2;
+    while (await collection.findOne({ storecode: safeStorecode, nickname })) {
+      nickname = `${baseNickname} ${suffix}`;
+      suffix += 1;
+    }
+    return nickname;
+  };
+
+  const existingUser = await getOneByWalletAddress(safeStorecode, safeWalletAddress);
+  if (existingUser) {
+    const existingNickname = String(existingUser.nickname || "").trim();
+    const escapedWalletAddress = safeWalletAddress.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+    await collection.updateOne(
+      {
+        storecode: safeStorecode,
+        walletAddress: walletAddressRegex,
+      },
+      {
+        $set: {
+          walletAddress: safeWalletAddress,
+          signerAddress: safeSignerAddress,
+          verified: true,
+          updatedAt: nowIso,
+          store,
+          ...(existingNickname ? {} : { nickname: await buildUniqueNickname() }),
+        },
+      }
+    );
+
+    return await getOneByWalletAddress(safeStorecode, safeWalletAddress);
+  }
+
+  const nickname = await buildUniqueNickname();
+  const id = Math.floor(Math.random() * 9000000) + 1000000;
+
+  const insertResult = await collection.insertOne(
+    {
+      id,
+      email: "",
+      nickname,
+      mobile: "",
+      storecode: safeStorecode,
+      store,
+      walletAddress: safeWalletAddress,
+      signerAddress: safeSignerAddress,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      settlementAmountOfFee: "0",
+      verified: true,
+      userType: "server-wallet",
+      liveOnAndOff: true,
+    } as any
+  );
+
+  if (!insertResult?.acknowledged) {
+    return null;
+  }
+
+  return await getOneByWalletAddress(safeStorecode, safeWalletAddress);
+}
+
 
 
 
