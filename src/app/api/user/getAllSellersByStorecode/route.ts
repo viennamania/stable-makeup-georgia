@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     role,
     limit,
     page,
+    excludeSignerAddress,
   } = body;
 
 
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     role: role,
     limit: limit || 100,
     page: page || 1,
+    excludeSignerAddress: Boolean(excludeSignerAddress),
   });
 
  

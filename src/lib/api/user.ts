@@ -1678,11 +1678,13 @@ export async function getAllSellersByStorecode(
     role,
     limit,
     page,
+    excludeSignerAddress = false,
   }: {
     storecode: string;
     role: string;
     limit: number;
     page: number;
+    excludeSignerAddress?: boolean;
   }
 ): Promise<ResultProps> {
 
@@ -1706,6 +1708,13 @@ export async function getAllSellersByStorecode(
           storecode: storecode,
           walletAddress: { $exists: true, $ne: null },
           verified: true,
+          ...(excludeSignerAddress ? {
+            $or: [
+              { signerAddress: { $exists: false } },
+              { signerAddress: null },
+              { signerAddress: "" },
+            ],
+          } : {}),
         },
         {
           limit: limit,
@@ -1720,6 +1729,13 @@ export async function getAllSellersByStorecode(
         storecode: storecode,
         walletAddress: { $exists: true, $ne: null },
         verified: true,
+        ...(excludeSignerAddress ? {
+          $or: [
+            { signerAddress: { $exists: false } },
+            { signerAddress: null },
+            { signerAddress: "" },
+          ],
+        } : {}),
       }
 
     );
@@ -1742,6 +1758,13 @@ export async function getAllSellersByStorecode(
 
           role: { $regex: String(role || ''), $options: 'i' },
           verified: true,
+          ...(excludeSignerAddress ? {
+            $or: [
+              { signerAddress: { $exists: false } },
+              { signerAddress: null },
+              { signerAddress: "" },
+            ],
+          } : {}),
         },
         {
           limit: limit,
@@ -1762,6 +1785,13 @@ export async function getAllSellersByStorecode(
         walletAddress: { $exists: true, $ne: null },
 
         verified: true,
+        ...(excludeSignerAddress ? {
+          $or: [
+            { signerAddress: { $exists: false } },
+            { signerAddress: null },
+            { signerAddress: "" },
+          ],
+        } : {}),
         
       }
     );
@@ -1776,6 +1806,57 @@ export async function getAllSellersByStorecode(
   }
 
 
+}
+
+export async function getOneVerifiedNonServerWalletByStorecodeAndWalletAddress(
+  storecode: string,
+  walletAddress: string,
+): Promise<UserProps | null> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const safeStorecode = String(storecode || "").trim();
+  const walletAddressRaw = String(walletAddress || '').trim();
+  if (!safeStorecode || !walletAddressRaw) {
+    return null;
+  }
+
+  const storecodeCandidates = Array.from(
+    new Set([safeStorecode, safeStorecode.toLowerCase()].filter(Boolean)),
+  );
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+
+  const baseQuery = {
+    storecode: storecodeCandidates.length === 1
+      ? storecodeCandidates[0]
+      : { $in: storecodeCandidates },
+    verified: true,
+    walletAddress: { $type: "string", $ne: "" },
+    $or: [
+      { signerAddress: { $exists: false } },
+      { signerAddress: null },
+      { signerAddress: "" },
+    ],
+  };
+
+  const found = await collection.findOne<UserProps>({
+    ...baseQuery,
+    walletAddress: { $in: walletAddressCandidates },
+  });
+
+  if (found) {
+    return found;
+  }
+
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+  return await collection.findOne<UserProps>({
+    ...baseQuery,
+    walletAddress: walletAddressRegex,
+  });
 }
 
 

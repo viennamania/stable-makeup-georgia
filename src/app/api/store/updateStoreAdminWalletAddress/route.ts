@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	updateStoreAdminWalletAddress,
 } from '@lib/api/store';
+import {
+  getOneVerifiedNonServerWalletByStorecodeAndWalletAddress,
+} from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
@@ -93,6 +96,18 @@ export async function POST(request: NextRequest) {
       result: null,
       error: guard.error,
     }, { status: guard.status });
+  }
+
+  const adminWalletUser = await getOneVerifiedNonServerWalletByStorecodeAndWalletAddress(
+    storecode,
+    normalizedAdminWalletAddress,
+  );
+
+  if (!adminWalletUser) {
+    return NextResponse.json({
+      result: null,
+      error: "adminWalletAddress must belong to a verified non-server-wallet user in the store",
+    }, { status: 400 });
   }
 
 

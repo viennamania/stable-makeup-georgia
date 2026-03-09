@@ -909,6 +909,8 @@ export default function SettingsPage({ params }: any) {
     // 가맹점 판매자 검색
     const [fetchingAllStoreSellers, setFetchingAllStoreSellers] = useState(false);
     const [allStoreSellers, setAllStoreSellers] = useState([] as any[]);
+    const [fetchingAdminWalletCandidates, setFetchingAdminWalletCandidates] = useState(false);
+    const [adminWalletCandidates, setAdminWalletCandidates] = useState([] as any[]);
     const fetchAllStoreSellers = async () => {
         if (fetchingAllStoreSellers) {
             return;
@@ -941,12 +943,45 @@ export default function SettingsPage({ params }: any) {
         return data.result.users;
     }
 
+    const fetchAdminWalletCandidates = async () => {
+        if (fetchingAdminWalletCandidates) {
+            return;
+        }
+        setFetchingAdminWalletCandidates(true);
+        const response = await fetch('/api/user/getAllSellersByStorecode', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                {
+                    storecode: params.storecode,
+                    limit: 100,
+                    page: 1,
+                    role: "",
+                    excludeSignerAddress: true,
+                }
+            ),
+        });
+        if (!response.ok) {
+            setFetchingAdminWalletCandidates(false);
+            toast.error('회원 검색에 실패했습니다.');
+            return;
+        }
+        const data = await response.json();
+        setAdminWalletCandidates(data.result.users);
+        setFetchingAdminWalletCandidates(false);
+        return data.result.users;
+    }
+
     useEffect(() => {
         if (!params.storecode) {
             setAllStoreSellers([]);
+            setAdminWalletCandidates([]);
             return;
         }
         fetchAllStoreSellers();
+        fetchAdminWalletCandidates();
     } , [params.storecode]);
 
 
@@ -2817,7 +2852,7 @@ export default function SettingsPage({ params }: any) {
                                 />
                                 )}
 
-                                {!fetchingAllStoreSellers && allStoreSellers && allStoreSellers.length > 0 ? (
+                                {!fetchingAdminWalletCandidates && adminWalletCandidates && adminWalletCandidates.length > 0 ? (
                                 
                                     <div className="w-full flex flex-row items-center justify-center gap-2">
                                         <select
@@ -2829,7 +2864,7 @@ export default function SettingsPage({ params }: any) {
                                         disabled={updatingAdminWalletAddress}
                                         >
                                         <option value="">가맹점 관리자용 지갑주소 변경</option>
-                                        {allStoreSellers.map((user) => (
+                                        {adminWalletCandidates.map((user) => (
                                             <option key={user._id} value={user.walletAddress}>
                                             {user.nickname}
                                             {' '}
