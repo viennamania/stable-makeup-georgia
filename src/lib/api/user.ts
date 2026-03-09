@@ -1955,6 +1955,46 @@ export async function getOneServerWalletByStorecodeAndWalletAddress(
   });
 }
 
+export async function getOneVerifiedAdminWalletUserByWalletAddress(
+  walletAddress: string,
+): Promise<UserProps | null> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const walletAddressRaw = String(walletAddress || '').trim();
+  if (!walletAddressRaw) {
+    return null;
+  }
+
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+
+  const baseQuery = {
+    storecode: { $in: ['admin', 'ADMIN'] },
+    role: { $regex: '^admin$', $options: 'i' },
+    verified: true,
+    walletAddress: { $type: "string", $ne: "" },
+  };
+
+  const found = await collection.findOne<UserProps>({
+    ...baseQuery,
+    walletAddress: { $in: walletAddressCandidates },
+  });
+
+  if (found) {
+    return found;
+  }
+
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+  return await collection.findOne<UserProps>({
+    ...baseQuery,
+    walletAddress: walletAddressRegex,
+  });
+}
+
 export async function upsertStoreServerWalletUser(
   {
     storecode,

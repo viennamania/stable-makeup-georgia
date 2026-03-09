@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	updateStoreSettlementFeeWalletAddress,
 } from '@lib/api/store';
+import {
+  getOneVerifiedAdminWalletUserByWalletAddress,
+} from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
@@ -39,6 +42,17 @@ export async function POST(request: NextRequest) {
       result: null,
       error: guard.error,
     }, { status: guard.status });
+  }
+
+  const adminWalletUser = await getOneVerifiedAdminWalletUserByWalletAddress(
+    normalizedSettlementFeeWalletAddress,
+  );
+
+  if (!adminWalletUser) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementFeeWalletAddress must belong to a verified admin wallet",
+    }, { status: 400 });
   }
 
   const result = await updateStoreSettlementFeeWalletAddress({
