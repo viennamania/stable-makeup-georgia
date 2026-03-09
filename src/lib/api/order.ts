@@ -2391,7 +2391,23 @@ export async function insertBuyOrderForClearance(data: any) {
   const sellerNickname = sellerUser?.nickname || '';
   const sellerAvatar = sellerUser?.avatar || '';
   const sellerMobile = sellerUser?.mobile || '';
+  const sellerSignerAddress = String(sellerUser?.signerAddress || '').trim();
   const sellerMemo = ""
+
+  const sellerData: Record<string, any> = {
+    walletAddress: sellerWalletAddress,
+
+    nickname: sellerNickname,
+    avatar: sellerAvatar,
+    mobile: sellerMobile,
+
+    memo: sellerMemo,
+    bankInfo: sellerBankInfo,
+  };
+
+  if (sellerSignerAddress) {
+    sellerData.signerAddress = sellerSignerAddress;
+  }
 
 
 
@@ -2422,21 +2438,11 @@ export async function insertBuyOrderForClearance(data: any) {
       paymentRequestedAt: new Date().toISOString(),
 
       privateSale: true,
-      
+
       buyer: buyer,
 
 
-      seller: {
-        walletAddress: sellerWalletAddress,
-
-        nickname: sellerNickname,
-        avatar: sellerAvatar,
-        mobile: sellerMobile,
-
-        memo: sellerMemo,
-        bankInfo: sellerBankInfo,
-
-      },
+      seller: sellerData,
       sellerMemo: sellerMemo,
 
 
