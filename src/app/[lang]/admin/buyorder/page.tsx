@@ -324,7 +324,7 @@ const ADMIN_UNMATCHED_TRANSFER_POLLING_MS = 15_000;
 const ADMIN_ESCROW_BALANCE_POLLING_MS = 15_000;
 const SELLER_WALLET_POLLING_MS = 15_000;
 const BUYER_WALLET_POLLING_MS = 15_000;
-const SELLER_EXCLUDED_STORECODE = "admin";
+const SELLER_EXCLUDED_STORECODE = "";
 const SELLER_WALLET_MIN_USDT_BALANCE = 0.1;
 
 const isDocumentHidden = () => {
@@ -6179,24 +6179,18 @@ const fetchBuyOrders = async () => {
                                 : '0.00'}
                             </span>
                           </div>
-                          {String(seller.storecode || '').toLowerCase() !== 'admin' ? (
-                            <div className="mt-0.5 flex items-center gap-1 min-w-0">
-                              <Image
-                                src={seller.storeLogo || '/icon-store.png'}
-                                alt={seller.storeName || seller.storecode || 'Store'}
-                                width={10}
-                                height={10}
-                                className="w-2.5 h-2.5 rounded object-cover shrink-0"
-                              />
-                              <span className="text-xs text-zinc-500 truncate">
-                                {seller.storeName || seller.storecode || '-'}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="mt-0.5 text-xs text-zinc-500 truncate">
-                              {seller.storecode || '-'}
-                            </div>
-                          )}
+                          <div className="mt-0.5 flex items-center gap-1 min-w-0">
+                            <Image
+                              src={seller.storeLogo || '/icon-store.png'}
+                              alt={seller.storeName || seller.storecode || 'Store'}
+                              width={10}
+                              height={10}
+                              className="w-2.5 h-2.5 rounded object-cover shrink-0"
+                            />
+                            <span className="text-xs text-zinc-500 truncate">
+                              {seller.storeName || seller.storecode || '-'}
+                            </span>
+                          </div>
                         </div>
                       );
                     })}
