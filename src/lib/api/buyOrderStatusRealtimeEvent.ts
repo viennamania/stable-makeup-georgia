@@ -248,6 +248,7 @@ export type RealtimeNicknameSellerWalletBalanceItem = {
   storeName: string | null;
   storeLogo: string | null;
   walletAddress: string;
+  signerAddress: string | null;
   currentUsdtBalance: number;
 };
 
@@ -993,6 +994,7 @@ export async function getRealtimeNicknameSellerWalletBalances({
           nickname: 1,
           storecode: 1,
           walletAddress: 1,
+          signerAddress: 1,
         },
         sort: {
           _id: -1,
@@ -1022,6 +1024,7 @@ export async function getRealtimeNicknameSellerWalletBalances({
       storecode: toNullableText(user?.storecode),
       storeName: null,
       storeLogo: null,
+      signerAddress: toNullableText(user?.signerAddress),
       walletAddress,
       currentUsdtBalance: 0,
     });

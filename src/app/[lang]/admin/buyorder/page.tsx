@@ -153,8 +153,8 @@ const isSmartAccountEscrowWallet = (
 
 const isSmartAccountSellerWallet = (
   seller?: {
-    walletAddress?: string;
-    signerAddress?: string;
+    walletAddress?: string | null;
+    signerAddress?: string | null;
   } | null,
 ) => {
   if (!seller) {
@@ -304,6 +304,7 @@ type SellerWalletBalanceItem = {
   storeName?: string | null;
   storeLogo?: string | null;
   walletAddress: string;
+  signerAddress?: string | null;
   currentUsdtBalance?: number;
 };
 
@@ -6036,51 +6037,62 @@ const fetchBuyOrders = async () => {
 
             {sellersBalance.length > 0 ? (
               <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-44 overflow-y-auto pr-0.5">
-                {sellersBalance.map((seller, index) => (
-                  <div
-                    key={`${seller.walletAddress}-${index}`}
-                    className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
+                {sellersBalance.map((seller, index) => {
+                  const smartSellerWallet = isSmartAccountSellerWallet(seller);
+
+                  return (
+                    <div
+                      key={`${seller.walletAddress}-${index}`}
+                      className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
                     ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
                       ? 'ring-1 ring-emerald-200'
                       : ''}`}
-                  >
-                    <div className="flex items-center justify-between gap-1.5">
-                      <button
-                        className="min-w-0 max-w-[58%] text-sm text-zinc-700 underline truncate text-left font-mono"
-                        onClick={() => {
-                          navigator.clipboard.writeText(seller.walletAddress);
-                          toast.success(Copied_Wallet_Address);
-                        }}
-                        title={seller.walletAddress}
-                      >
-                        {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
-                      </button>
-                      <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                        {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                          ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : '0.00'}
-                      </span>
-                    </div>
-                    {String(seller.storecode || '').toLowerCase() !== 'admin' ? (
-                      <div className="mt-0.5 flex items-center gap-1 min-w-0">
-                        <Image
-                          src={seller.storeLogo || '/icon-store.png'}
-                          alt={seller.storeName || seller.storecode || 'Store'}
-                          width={10}
-                          height={10}
-                          className="w-2.5 h-2.5 rounded object-cover shrink-0"
-                        />
-                        <span className="text-xs text-zinc-500 truncate">
-                          {seller.storeName || seller.storecode || '-'}
+                    >
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="min-w-0 max-w-[58%]">
+                          <button
+                            className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
+                            onClick={() => {
+                              navigator.clipboard.writeText(seller.walletAddress);
+                              toast.success(Copied_Wallet_Address);
+                            }}
+                            title={seller.walletAddress}
+                          >
+                            {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                          </button>
+                          {smartSellerWallet ? (
+                            <span className="mt-0.5 inline-flex rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
+                              스마트 지갑
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                          {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                            ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            : '0.00'}
                         </span>
                       </div>
-                    ) : (
-                      <div className="mt-0.5 text-xs text-zinc-500 truncate">
-                        {seller.storecode || '-'}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {String(seller.storecode || '').toLowerCase() !== 'admin' ? (
+                        <div className="mt-0.5 flex items-center gap-1 min-w-0">
+                          <Image
+                            src={seller.storeLogo || '/icon-store.png'}
+                            alt={seller.storeName || seller.storecode || 'Store'}
+                            width={10}
+                            height={10}
+                            className="w-2.5 h-2.5 rounded object-cover shrink-0"
+                          />
+                          <span className="text-xs text-zinc-500 truncate">
+                            {seller.storeName || seller.storecode || '-'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-0.5 text-xs text-zinc-500 truncate">
+                          {seller.storecode || '-'}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="mt-2 text-xs text-zinc-500">잔고가 0보다 큰 지갑이 없습니다.</div>
