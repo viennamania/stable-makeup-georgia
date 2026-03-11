@@ -13,59 +13,6 @@ import {
   getOneByWalletAddress 
 } from '@lib/api/user';
 
-import {
-  getPayactionKeys,
-} from '@lib/api/store';
-
-
-import {
-  createThirdwebClient,
-  eth_getTransactionByHash,
-  getContract,
-  sendAndConfirmTransaction,
-  
-  sendTransaction,
-  sendBatchTransaction,
-  eth_maxPriorityFeePerGas,
-
-
-} from "thirdweb";
-
-//import { polygonAmoy } from "thirdweb/chains";
-import {
-  ethereum,
-  polygon,
-  arbitrum,
-  bsc,
- } from "thirdweb/chains";
-
-import {
-  privateKeyToAccount,
-  smartWallet,
-  getWalletBalance,
-  
- } from "thirdweb/wallets";
-
-
-import {
-  mintTo,
-  totalSupply,
-  transfer,
-  
-  getBalance,
-
-  balanceOf,
-
-} from "thirdweb/extensions/erc20";
-
-
-// NEXT_PUBLIC_CHAIN
-const chain = process.env.NEXT_PUBLIC_CHAIN || "arbitrum";
-
-import {
-  bscContractAddressMKRW,
-} from "../../../config/contractAddresses";
-
 
 
 export const maxDuration = 60; // This function can run for a maximum of 60 seconds
@@ -238,103 +185,11 @@ export async function POST(request: NextRequest) {
       });
     }
     */
-
-
-
-
-
-   // transfer escrowWallet.address, escrowWallet.privateKey, escrowWallet.balance
-    // mkrw contract
-
-
-
-    const escrowWalletPrivateKey = buyOrder.escrowWallet.privateKey;
-
-    if (!escrowWalletPrivateKey) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const client = createThirdwebClient({
-      secretKey: process.env.THIRDWEB_SECRET_KEY || "",
-    });
-
-    if (!client) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const personalAccount = privateKeyToAccount({
-      client,
-      privateKey: escrowWalletPrivateKey,
-    });
-  
-    if (!personalAccount) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const wallet = smartWallet({
-      chain: chain === "bsc" ? bsc : chain === "arbitrum" ? arbitrum : polygon,
-      sponsorGas: true,
-    });
-
-    // Connect the smart wallet
-    const account = await wallet.connect({
-      client: client,
-      personalAccount: personalAccount,
-    });
-
-    if (!account) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-
-
-
-    const contract = getContract({
-      client,
-      chain: chain === "bsc" ? bsc : chain === "arbitrum" ? arbitrum : polygon,
-      address: bscContractAddressMKRW, // MKRW on BSC
-    });
-
-    const transaction = transfer({
-      contract,
-      to: buyOrder.walletAddress,
-      amount: buyOrder.escrowWallet.balance,
-    });
-
-
-    const transferResult = await sendTransaction({
-      account: account,
-      transaction: transaction,
-    });
-
-    const escrowTransactionHash = transferResult.transactionHash;
-
-
-    console.log("escrowTransactionHash", escrowTransactionHash);
-
-
-
-
-
     const result = await cancelTradeBySeller({
       storecode: storecode,
       orderId: orderId,
       walletAddress: walletAddress,
       cancelTradeReason: cancelTradeReason,
-
-      escrowTransactionHash: escrowTransactionHash,
     });
 
 

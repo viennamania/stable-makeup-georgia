@@ -10,70 +10,10 @@ import {
 } from '@lib/api/order';
 import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
-
-import {
-  getOneByWalletAddress 
-} from '@lib/api/user';
-
 // Download the helper library from https://www.twilio.com/docs/node/install
 import twilio from "twilio";
 import { webhook } from "twilio/lib/webhooks/webhooks";
 import { create } from "domain";
-
-
-
-
-import {
-  createThirdwebClient,
-  eth_getTransactionByHash,
-  getContract,
-  sendAndConfirmTransaction,
-  
-  sendTransaction,
-  sendBatchTransaction,
-  eth_maxPriorityFeePerGas,
-
-
-} from "thirdweb";
-
-//import { polygonAmoy } from "thirdweb/chains";
-import {
-  ethereum,
-  polygon,
-  arbitrum,
-  bsc,
- } from "thirdweb/chains";
-
-import {
-  privateKeyToAccount,
-  smartWallet,
-  getWalletBalance,
-  
- } from "thirdweb/wallets";
-
-
-import {
-  mintTo,
-  totalSupply,
-  transfer,
-  
-  getBalance,
-
-  balanceOf,
-
-} from "thirdweb/extensions/erc20";
-
-
-
-
-// NEXT_PUBLIC_CHAIN
-const chain = process.env.NEXT_PUBLIC_CHAIN || "arbitrum";
-
-import {
-  bscContractAddressMKRW,
-} from "../../../config/contractAddresses";
-
-
 
 export const maxDuration = 60; // This function can run for a maximum of 60 seconds
 
@@ -148,12 +88,7 @@ export async function POST(request: NextRequest) {
     
 
     const {
-      nickname: orderNickname,
       storecode: orderStorecode,
-      seller: seller,
-      walletAddress: walletAddress,
-      usdtAmount: usdtAmount,
-      buyer: buyer,
     } = order as OrderProps;
 
     const requestedStorecode = normalizeStorecode(storecode);
@@ -165,128 +100,13 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-
-
-    const sellerWalletAddress = seller.walletAddress;
-
-    if (!sellerWalletAddress) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-    const user = await getOneByWalletAddress(
-      storecode,
-      sellerWalletAddress
-    );
-
-    ///console.log("user", user);
-
-    if (!user) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-
-
-
-
-
-    const escrowWalletPrivateKey = order.escrowWallet.privateKey;
-
-    if (!escrowWalletPrivateKey) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const client = createThirdwebClient({
-      secretKey: process.env.THIRDWEB_SECRET_KEY || "",
-    });
-
-    if (!client) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const personalAccount = privateKeyToAccount({
-      client,
-      privateKey: escrowWalletPrivateKey,
-    });
-  
-    if (!personalAccount) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    const wallet = smartWallet({
-      chain: chain === "bsc" ? bsc : chain === "arbitrum" ? arbitrum : polygon,
-      sponsorGas: true,
-    });
-
-    // Connect the smart wallet
-    const account = await wallet.connect({
-      client: client,
-      personalAccount: personalAccount,
-    });
-
-    if (!account) {
-      return NextResponse.json({
-        result: null,
-      });
-    }
-
-
-    //const escrowWalletAddress = account.address;
-
-
-
-    const contract = getContract({
-      client,
-      chain: chain === "bsc" ? bsc : chain === "arbitrum" ? arbitrum : polygon,
-      address: bscContractAddressMKRW, // MKRW on BSC
-    });
-
-    const transaction = transfer({
-      contract,
-      to: sellerWalletAddress,
-      amount: paymentAmount,
-    });
-
-
-    const transferReault = await sendTransaction({
-      account: account,
-      transaction: transaction,
-    });
-
-    const escrowTransactionHash = transferReault.transactionHash;
-
-
-    console.log("escrowTransactionHash", escrowTransactionHash);
-
-
-    const queueId = null;
-
     const result = await buyOrderConfirmPayment({
       lang: lang,
       storecode: storecode,
       orderId: orderId,
       paymentAmount: paymentAmount,
-      
-      queueId: queueId,
 
       transactionHash: transactionHash,
-
-      escrowTransactionHash: escrowTransactionHash,
-
     });
   
   

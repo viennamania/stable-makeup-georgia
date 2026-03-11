@@ -4849,70 +4849,39 @@ export async function buyOrderConfirmPayment(data: any) {
 
 
   let result = null;
+  const updateFields: Record<string, unknown> = {
+    status: 'paymentConfirmed',
+    paymentConfirmedAt: new Date().toISOString(),
+    paymentAmount: paymentAmount,
+    transactionHash: data.transactionHash,
+    sellerWalletAddressBalance: data.sellerWalletAddressBalance,
+  };
+
+  if (data.queueId != null) {
+    updateFields.queueId = data.queueId;
+  }
+
+  if (autoConfirmPayment) {
+    updateFields.autoConfirmPayment = autoConfirmPayment;
+  }
+
+  if (data.escrowTransactionHash) {
+    updateFields.escrowTransactionHash = data.escrowTransactionHash;
+    updateFields.escrowTransactionConfirmedAt = new Date().toISOString();
+  }
 
 
   // when order status is 'paymentRequested', then update to 'paymentConfirmed'
 
 
   try {
-
-    if (autoConfirmPayment) {
-
-
-
-      result = await collection.updateOne(
-        
-        {
-          _id: new ObjectId(data.orderId+''),
-          status: 'paymentRequested',
-        },
-
-
-        { $set: {
-          status: 'paymentConfirmed',
-          paymentConfirmedAt: new Date().toISOString(),
-
-          paymentAmount: paymentAmount,
-          queueId: data.queueId,
-          transactionHash: data.transactionHash,
-          
-          autoConfirmPayment: autoConfirmPayment,
-
-          escrowTransactionHash: data.escrowTransactionHash,
-          escrowTransactionConfirmedAt: new Date().toISOString(),
-
-          sellerWalletAddressBalance: data.sellerWalletAddressBalance,
-
-        } }
-      );
-
-    } else {
-
-      result = await collection.updateOne(
-
-        {
-          _id: new ObjectId(data.orderId+''),
-          status: 'paymentRequested',
-        },
-
-
-        { $set: {
-          status: 'paymentConfirmed',
-          paymentConfirmedAt: new Date().toISOString(),
-
-          paymentAmount: paymentAmount,
-          queueId: data.queueId,
-          transactionHash: data.transactionHash,
-
-          escrowTransactionHash: data.escrowTransactionHash,
-          escrowTransactionConfirmedAt: new Date().toISOString(),
-
-          sellerWalletAddressBalance: data.sellerWalletAddressBalance,
-
-        } }
-      );
-
-    }
+    result = await collection.updateOne(
+      {
+        _id: new ObjectId(data.orderId+''),
+        status: 'paymentRequested',
+      },
+      { $set: updateFields }
+    );
 
   } catch (error) {
     console.error('Error confirming payment:', error);
@@ -5714,6 +5683,16 @@ export async function cancelTradeBySeller(
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
   const previousEscrowTransactionHash = toNormalizedHash(previousOrder?.escrowTransactionHash);
+  const updateFields: Record<string, unknown> = {
+    status: 'cancelled',
+    cancelledAt: new Date().toISOString(),
+    cancelTradeReason: cancelTradeReason,
+  };
+
+  if (escrowTransactionHash) {
+    updateFields.escrowTransactionHash = escrowTransactionHash;
+    updateFields.escrowTransactionCancelledAt = new Date().toISOString();
+  }
 
   // check status is 'accepted' or 'paymentRequested'
 
@@ -5727,16 +5706,7 @@ export async function cancelTradeBySeller(
       status: { $in: ['accepted', 'paymentRequested'] },
 
     },
-    { $set: {
-      
-      status: 'cancelled',
-
-      cancelledAt: new Date().toISOString(),
-      cancelTradeReason: cancelTradeReason,
-
-      escrowTransactionHash: escrowTransactionHash || '', // optional, if exists, then update escrowTransactionHash
-      escrowTransactionCancelledAt: new Date().toISOString(),
-    } }
+    { $set: updateFields }
   );
 
   if (result.modifiedCount > 0) {

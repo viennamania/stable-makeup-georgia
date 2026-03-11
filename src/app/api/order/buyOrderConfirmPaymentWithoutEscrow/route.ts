@@ -31,7 +31,7 @@ import {
   getContract,
 } from "thirdweb";
 
-import { balanceOf, transfer } from "thirdweb/extensions/erc20";
+import { balanceOf } from "thirdweb/extensions/erc20";
  
 
 import {
@@ -47,8 +47,6 @@ import {
   polygonContractAddressUSDT,
   arbitrumContractAddressUSDT,
   bscContractAddressUSDT,
-
-  bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
 
