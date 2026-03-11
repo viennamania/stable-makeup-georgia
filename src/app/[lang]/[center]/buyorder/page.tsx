@@ -103,6 +103,22 @@ import {
 
 import { useAnimatedNumber } from "@/components/useAnimatedNumber";
 
+const SMART_ESCROW_WALLET_MODE = "thirdweb-server-wallet";
+
+const isSmartAccountEscrowWallet = (
+  escrowWallet?: BuyOrder["escrowWallet"] | null,
+) => {
+  if (!escrowWallet) {
+    return false;
+  }
+
+  const mode = String(escrowWallet.mode || escrowWallet.type || "").trim().toLowerCase();
+  const smartAccountAddress = String(escrowWallet.smartAccountAddress || "").trim();
+  const signerAddress = String(escrowWallet.signerAddress || "").trim();
+
+  return mode === SMART_ESCROW_WALLET_MODE || (!!smartAccountAddress && !!signerAddress);
+};
+
 
 interface BuyOrder {
   _id: string;
@@ -161,6 +177,12 @@ interface BuyOrder {
     address: string;
     balance: number;
     transactionHash: string;
+    mode?: string;
+    type?: string;
+    smartAccountAddress?: string;
+    signerAddress?: string;
+    label?: string;
+    privateKey?: string;
   };
 
   userType: string;
@@ -5908,7 +5930,10 @@ const fetchBuyOrders = async () => {
                 {/* if my trading, then tr has differenc color */}
                 <tbody>
 
-                  {buyOrders.map((item, index) => (
+                  {buyOrders.map((item, index) => {
+                    const hasSmartAccountEscrowBadge = isSmartAccountEscrowWallet(item?.escrowWallet);
+
+                    return (
 
                     
                     <tr key={index} className={`
@@ -5922,6 +5947,7 @@ const fetchBuyOrders = async () => {
 
                         <div
                           className="
+                            relative overflow-hidden
                             w-full max-w-[12rem]
                             flex flex-col sm:flex-row items-start justify-start gap-2
                             bg-zinc-100
@@ -5941,6 +5967,11 @@ const fetchBuyOrders = async () => {
                             toast.success("거래번호가 복사되었습니다.");
                           }}
                         >
+                          {hasSmartAccountEscrowBadge && (
+                            <div className="pointer-events-none absolute -right-9 top-3 z-10 w-28 rotate-45 border-y border-emerald-200/80 bg-gradient-to-r from-emerald-700 via-emerald-600 to-lime-500 py-1 text-center text-[9px] font-black tracking-[0.28em] text-white shadow-sm">
+                              SMART
+                            </div>
+                          )}
 
 
 
@@ -7047,7 +7078,8 @@ const fetchBuyOrders = async () => {
 
                     </tr>
 
-                  ))}
+                    );
+                  })}
 
                 </tbody>
 
