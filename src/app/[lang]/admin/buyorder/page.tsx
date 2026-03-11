@@ -171,6 +171,18 @@ const isSmartAccountSellerWallet = (
   return !walletAddress || signerAddress !== walletAddress;
 };
 
+const getBuyOrderCreatedRequestIp = (
+  createdByRequest?: {
+    publicIp?: string | null;
+  } | null,
+) => {
+  const publicIp = String(createdByRequest?.publicIp || "").trim();
+  if (!publicIp || publicIp.toLowerCase() === "unknown") {
+    return "";
+  }
+  return publicIp;
+};
+
 const RevealText: React.FC<{ value: any; className?: string; children: React.ReactNode }> = ({
   value,
   className = '',
@@ -257,6 +269,16 @@ interface BuyOrder {
 
 
   paymentMethod: string;
+  createdByApi?: string | null;
+  createdByRequest?: {
+    route?: string | null;
+    method?: string | null;
+    publicIp?: string | null;
+    publicCountry?: string | null;
+    clientId?: string | null;
+    userId?: string | null;
+    requestedAt?: string | null;
+  } | null;
 
   escrowWallet: {
     address: string;
@@ -6206,6 +6228,7 @@ const fetchBuyOrders = async () => {
 
                 {buyOrders.map((item, index) => {
                   const hasSmartAccountEscrowBadge = isSmartAccountEscrowWallet(item?.escrowWallet);
+                  const createdRequestIp = getBuyOrderCreatedRequestIp(item?.createdByRequest);
 
                   return (
 
@@ -6275,6 +6298,11 @@ const fetchBuyOrders = async () => {
                                 item?.agent.agentName
                               }
                             </span>
+                            {createdRequestIp && (
+                              <span className="text-[11px] text-zinc-600 font-mono">
+                                {createdRequestIp}
+                              </span>
+                            )}
                           </div>
                         </div>
 

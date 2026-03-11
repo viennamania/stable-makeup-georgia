@@ -6,10 +6,18 @@ import {
 } from '@lib/api/order';
 import { chain } from "@/app/config/contractAddresses";
 import { createBuyOrderEscrowWallet } from "@/lib/server/buy-order-escrow-wallet";
+import {
+  getRequestCountry,
+  getRequestIp,
+} from "@/lib/server/user-read-security";
+
+const ROUTE = "/api/order/setBuyOrder";
 
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
+  const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
 
   const {
     storecode,
@@ -76,6 +84,14 @@ export async function POST(request: NextRequest) {
 
     returnUrl: returnUrl,
     orderNumber: orderNumber,
+    createdByApi: ROUTE,
+    createdByRequest: {
+      route: ROUTE,
+      method: request.method,
+      publicIp: ip,
+      publicCountry: country,
+      requestedAt: new Date().toISOString(),
+    },
   });
 
   ///console.log("setBuyOrder =====  result", result);

@@ -100,6 +100,9 @@ export interface OrderProps {
 
   returnUrl: string,
   orderNumber: string,
+
+  createdByApi?: string | null,
+  createdByRequest?: any,
 }
 
 export interface ResultProps {
@@ -2101,6 +2104,8 @@ export async function insertBuyOrder(data: any) {
 
       returnUrl: data.returnUrl || '', // optional, can be empty
       orderNumber: data.orderNumber || '', // optional, can be empty
+      createdByApi: data.createdByApi || null,
+      createdByRequest: data.createdByRequest || null,
     }
   );
 

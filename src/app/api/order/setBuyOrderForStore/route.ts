@@ -9,6 +9,11 @@ import {
 import {
   chain,
 } from "@/app/config/contractAddresses";
+import { createBuyOrderEscrowWallet } from "@/lib/server/buy-order-escrow-wallet";
+import {
+  getRequestCountry,
+  getRequestIp,
+} from "@/lib/server/user-read-security";
 
 
 // getOne from clients by clientid
@@ -46,13 +51,17 @@ curl -X GET "http://localhost:3000/api/order/setBuyOrderForStore?clientid=150b53
 
 */
 
-async function handleSetBuyOrder(payload: Record<string, any>) {
+const ROUTE = "/api/order/setBuyOrderForStore";
+
+async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequest) {
 
   const clientid = payload.clientid || payload.clientId;
   const storecode = payload.storecode || payload.storeCode;
   const userid = payload.userid || payload.userId || payload.nickname;
   const amount = payload.amount ?? payload.krwAmount;
   const returnUrl = payload.returnUrl;
+  const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
 
   ///console.log("setBuyOrder =====  body", payload);
 
@@ -155,6 +164,18 @@ async function handleSetBuyOrder(payload: Record<string, any>) {
 
   const usdtAmount = Number((krwAmount / rate).toFixed(2));
 
+  let escrowWallet;
+  try {
+    escrowWallet = await createBuyOrderEscrowWallet({
+      storecode,
+    });
+  } catch (error) {
+    return NextResponse.json({
+      result: null,
+      error: error instanceof Error ? error.message : "Failed to create buy order escrow wallet",
+    }, { status: 500 });
+  }
+
 
 
   //   if (!data.storecode || !data.walletAddress || !data.usdtAmount || !data.krwAmount || !data.rate) {
@@ -175,8 +196,19 @@ async function handleSetBuyOrder(payload: Record<string, any>) {
     privateSale: privateSale,
     buyer: buyer,
     paymentMethod: paymentMethod,
+    escrowWallet,
     returnUrl: returnUrl,
     orderNumber: orderNumber,
+    createdByApi: ROUTE,
+    createdByRequest: {
+      route: ROUTE,
+      method: request.method,
+      publicIp: ip,
+      publicCountry: country,
+      clientId: String(clientid || "").trim() || null,
+      userId: String(userid || "").trim() || null,
+      requestedAt: new Date().toISOString(),
+    },
   });
 
   /////console.log("setBuyOrder =====  result", result);
@@ -206,7 +238,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    return handleSetBuyOrder(body);
+    return handleSetBuyOrder(body, request);
   } catch (error) {
     return NextResponse.json({
       result: null,
@@ -218,5 +250,5 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const payload = Object.fromEntries(request.nextUrl.searchParams.entries());
-  return handleSetBuyOrder(payload);
+  return handleSetBuyOrder(payload, request);
 }
