@@ -1068,6 +1068,26 @@ const [searchStorecode, setSearchStorecode] = useState("");
 useEffect(() => {
   setSearchStorecode(searchParamsStorecode || "");
 }, [searchParamsStorecode]);
+const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false);
+const storeDropdownRef = useRef<HTMLDivElement | null>(null);
+
+useEffect(() => {
+  if (!isStoreDropdownOpen) {
+    return;
+  }
+
+  const handlePointerDown = (event: MouseEvent) => {
+    if (!storeDropdownRef.current) {
+      return;
+    }
+    if (!storeDropdownRef.current.contains(event.target as Node)) {
+      setIsStoreDropdownOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handlePointerDown);
+  return () => document.removeEventListener("mousedown", handlePointerDown);
+}, [isStoreDropdownOpen]);
 
 const [prioritizePending, setPrioritizePending] = useState(true);
 
@@ -4015,6 +4035,10 @@ const fetchBuyOrders = async () => {
   const [fetchingAllStores, setFetchingAllStores] = useState(false);
   const [allStores, setAllStores] = useState([] as any[]);
   const [storeTotalCount, setStoreTotalCount] = useState(0);
+  const selectedSearchStore = useMemo(() => {
+    return allStores.find((item) => item.storecode === searchStorecode) || null;
+  }, [allStores, searchStorecode]);
+
   const fetchAllStores = async () => {
     if (fetchingAllStores) {
       return;
@@ -5090,7 +5114,7 @@ const fetchBuyOrders = async () => {
                 ) : (
                   <div className="flex flex-row items-center gap-2">
 
-                    
+
                     <Image
                       src="/icon-store.png"
                       alt="Store"
@@ -5100,36 +5124,105 @@ const fetchBuyOrders = async () => {
                     />
 
                     <span className="
-                      w-32
+                      w-20
                       text-sm font-semibold">
                       가맹점 선택
                     </span>
 
-
-                    <select
-                      value={searchStorecode}
-                      
-                      // storecode parameter is passed to fetchBuyOrders
-                      onChange={(e) => {
-                        setSearchStorecode(e.target.value);
-                        router.push('/' + params.lang + '/admin/buyorder?storecode=' + e.target.value);
-                      }}
-
-
-
-                      className="w-full p-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                    <div
+                      ref={storeDropdownRef}
+                      className="relative w-[220px] sm:w-[210px]"
                     >
-                      <option value="">전체</option>
-                      {allStores && allStores.map((item, index) => (
-                        <option key={index} value={item.storecode}
-                          className="flex flex-row items-center justify-start gap-2"
-                        >
-                          
-                          {item.storeName}{' '}({item.storecode})
+                      <button
+                        type="button"
+                        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-left shadow-sm transition hover:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#3167b4]"
+                        onClick={() => setIsStoreDropdownOpen((prev) => !prev)}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Image
+                              src={selectedSearchStore?.storeLogo || "/icon-store.png"}
+                              alt={selectedSearchStore?.storeName || "전체 가맹점"}
+                              width={24}
+                              height={24}
+                              className="h-6 w-6 rounded-md border border-zinc-200 bg-white object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold text-zinc-800">
+                                {selectedSearchStore?.storeName || "전체"}
+                              </div>
+                              <div className="truncate text-[11px] text-zinc-500">
+                                {selectedSearchStore?.storecode || `${storeTotalCount || allStores.length || 0}개 가맹점`}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="shrink-0 text-xs text-zinc-500">
+                            {isStoreDropdownOpen ? "▲" : "▼"}
+                          </span>
+                        </div>
+                      </button>
 
-                        </option>
-                      ))}
-                    </select>
+                      {isStoreDropdownOpen && (
+                        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2 border-b border-zinc-100 px-3 py-2 text-left transition hover:bg-zinc-50"
+                            onClick={() => {
+                              setIsStoreDropdownOpen(false);
+                              setSearchStorecode("");
+                              router.push(`/${params.lang}/admin/buyorder`);
+                            }}
+                          >
+                            <Image
+                              src="/icon-store.png"
+                              alt="전체"
+                              width={24}
+                              height={24}
+                              className="h-6 w-6 rounded-md border border-zinc-200 bg-white object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold text-zinc-800">전체</div>
+                              <div className="truncate text-[11px] text-zinc-500">
+                                {storeTotalCount || allStores.length || 0}개 가맹점
+                              </div>
+                            </div>
+                          </button>
+
+                          <div className="max-h-72 overflow-y-auto py-1">
+                            {allStores && allStores.map((item, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                className={`flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-zinc-50 ${
+                                  item.storecode === searchStorecode ? "bg-blue-50" : ""
+                                }`}
+                                onClick={() => {
+                                  setIsStoreDropdownOpen(false);
+                                  setSearchStorecode(item.storecode);
+                                  router.push(`/${params.lang}/admin/buyorder?storecode=${item.storecode}`);
+                                }}
+                              >
+                                <Image
+                                  src={item.storeLogo || "/icon-store.png"}
+                                  alt={item.storeName || item.storecode || "Store"}
+                                  width={24}
+                                  height={24}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white object-cover"
+                                />
+                                <div className="min-w-0">
+                                  <div className="truncate text-sm font-semibold text-zinc-800">
+                                    {item.storeName || "-"}
+                                  </div>
+                                  <div className="truncate text-[11px] text-zinc-500">
+                                    {item.storecode || "-"}
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
 
                   </div>
