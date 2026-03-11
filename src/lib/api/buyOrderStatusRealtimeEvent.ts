@@ -991,30 +991,32 @@ export async function getRealtimeNicknameSellerWalletBalances({
   const safeExcludeStorecode = toNullableText(excludeStorecode)?.toLowerCase() || "";
   const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 400);
 
-  const storeQuery: Record<string, unknown> = {
-    liveOnAndOff: true,
-    sellerWalletAddress: { $type: "string", $ne: "" },
+  const userQuery: Record<string, unknown> = {
+    nickname: new RegExp(`^${escapeRegex(safeNickname)}$`, "i"),
+    walletAddress: { $type: "string", $ne: "" },
   };
 
   if (safeExcludeStorecode) {
     const excludeStorecodeRegex = new RegExp(`^${escapeRegex(safeExcludeStorecode)}$`, "i");
-    storeQuery.storecode = { $not: excludeStorecodeRegex };
+    userQuery.storecode = { $not: excludeStorecodeRegex };
   }
 
-  const stores = await storeCollection
+  const users = await userCollection
     .find(
-      storeQuery,
+      userQuery,
       {
         projection: {
           _id: 0,
+          id: 1,
+          nickname: 1,
           storecode: 1,
-          storeName: 1,
-          storeLogo: 1,
-          sellerWalletAddress: 1,
+          walletAddress: 1,
+          signerAddress: 1,
+          updatedAt: 1,
         },
         sort: {
-          storeName: 1,
-          storecode: 1,
+          updatedAt: -1,
+          _id: -1,
         },
         limit: safeLimit * 4,
         maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
@@ -1023,9 +1025,10 @@ export async function getRealtimeNicknameSellerWalletBalances({
     .toArray();
 
   const walletMap = new Map<string, RealtimeNicknameSellerWalletBalanceItem>();
+  const storecodeSet = new Set<string>();
 
-  for (const store of stores) {
-    const walletAddress = toNullableText(store?.sellerWalletAddress);
+  for (const user of users) {
+    const walletAddress = toNullableText(user?.walletAddress);
     if (!walletAddress) {
       continue;
     }
@@ -1036,93 +1039,72 @@ export async function getRealtimeNicknameSellerWalletBalances({
     }
 
     walletMap.set(walletKey, {
-      id: null,
-      nickname: safeNickname,
-      storecode: toNullableText(store?.storecode),
-      storeName: toNullableText(store?.storeName),
-      storeLogo: toNullableText(store?.storeLogo),
+      id: typeof user?.id === "number" ? user.id : null,
+      nickname: toNullableText(user?.nickname)?.toLowerCase() || safeNickname,
+      storecode: toNullableText(user?.storecode),
+      storeName: null,
+      storeLogo: null,
       walletAddress,
-      signerAddress: null,
+      signerAddress: toNullableText(user?.signerAddress),
       currentUsdtBalance: 0,
     });
+
+    const storecode = toNullableText(user?.storecode)?.toLowerCase();
+    if (storecode) {
+      storecodeSet.add(storecode);
+    }
 
     if (walletMap.size >= safeLimit) {
       break;
     }
   }
 
-  const signerAddressByStoreWallet = new Map<string, string | null>();
-  const signerAddressByWallet = new Map<string, string | null>();
-  const walletQueryConditions = Array.from(walletMap.values()).map((item) => {
-    const condition: Record<string, unknown> = {
-      walletAddress: new RegExp(`^${escapeRegex(item.walletAddress)}$`, "i"),
-    };
-    if (item.storecode) {
-      condition.storecode = new RegExp(`^${escapeRegex(item.storecode)}$`, "i");
-    }
-    return condition;
-  });
+  const storeByCode = new Map<string, { storeName: string | null; storeLogo: string | null }>();
+  const storeQueryConditions = Array.from(storecodeSet).map((storecode) => ({
+    storecode: new RegExp(`^${escapeRegex(storecode)}$`, "i"),
+  }));
 
-  if (walletQueryConditions.length > 0) {
-    const users = await userCollection
+  if (storeQueryConditions.length > 0) {
+    const stores = await storeCollection
       .find(
         {
-          $or: walletQueryConditions,
+          $or: storeQueryConditions,
         },
         {
           projection: {
             _id: 0,
             storecode: 1,
-            walletAddress: 1,
-            signerAddress: 1,
-            updatedAt: 1,
+            storeName: 1,
+            storeLogo: 1,
           },
           sort: {
-            updatedAt: -1,
-            _id: -1,
+            storeName: 1,
+            storecode: 1,
           },
           maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
         },
       )
       .toArray();
 
-    for (const user of users) {
-      const storecode = toNullableText(user?.storecode)?.toLowerCase() || "";
-      const walletAddress = toNullableText(user?.walletAddress);
-      if (!walletAddress) {
+    for (const store of stores) {
+      const storecode = toNullableText(store?.storecode)?.toLowerCase();
+      if (!storecode || storeByCode.has(storecode)) {
         continue;
       }
-
-      const signerAddress = toNullableText(user?.signerAddress);
-      const walletKey = walletAddress.toLowerCase();
-      const storeWalletKey = `${storecode}:${walletKey}`;
-
-      if (
-        !signerAddressByStoreWallet.has(storeWalletKey)
-        || (!signerAddressByStoreWallet.get(storeWalletKey) && signerAddress)
-      ) {
-        signerAddressByStoreWallet.set(storeWalletKey, signerAddress);
-      }
-
-      if (
-        !signerAddressByWallet.has(walletKey)
-        || (!signerAddressByWallet.get(walletKey) && signerAddress)
-      ) {
-        signerAddressByWallet.set(walletKey, signerAddress);
-      }
+      storeByCode.set(storecode, {
+        storeName: toNullableText(store?.storeName),
+        storeLogo: toNullableText(store?.storeLogo),
+      });
     }
   }
 
   const wallets = Array.from(walletMap.values()).map((item) => {
-    const walletKey = item.walletAddress.toLowerCase();
-    const storeWalletKey = `${String(item.storecode || "").toLowerCase()}:${walletKey}`;
+    const storeInfo = storeByCode.get(String(item.storecode || "").toLowerCase());
 
     return {
       ...item,
-      signerAddress:
-        signerAddressByStoreWallet.get(storeWalletKey)
-        ?? signerAddressByWallet.get(walletKey)
-        ?? null,
+      storeName: storeInfo?.storeName ?? item.storeName ?? null,
+      storeLogo: storeInfo?.storeLogo ?? item.storeLogo ?? null,
     };
   });
 

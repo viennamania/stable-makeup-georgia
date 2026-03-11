@@ -324,7 +324,7 @@ const ADMIN_UNMATCHED_TRANSFER_POLLING_MS = 15_000;
 const ADMIN_ESCROW_BALANCE_POLLING_MS = 15_000;
 const SELLER_WALLET_POLLING_MS = 15_000;
 const BUYER_WALLET_POLLING_MS = 15_000;
-const SELLER_EXCLUDED_STORECODE = "";
+const SELLER_EXCLUDED_STORECODE = "admin";
 
 const isDocumentHidden = () => {
   if (typeof document === "undefined") {
@@ -4274,7 +4274,7 @@ const fetchBuyOrders = async () => {
 
 
 
-  // user.nickname=seller, storecode!=admin 지갑 잔고
+  // user.nickname=seller 지갑 잔고
   const [sellersBalance, setSellersBalance] = useState<SellerWalletBalanceItem[]>([]);
   const [sellersBalanceTotalUsdt, setSellersBalanceTotalUsdt] = useState(0);
   const [sellersBalanceUpdatedAt, setSellersBalanceUpdatedAt] = useState("");
@@ -4313,13 +4313,8 @@ const fetchBuyOrders = async () => {
       const data = await response.json();
       if (data?.status === 'success') {
         const wallets = (Array.isArray(data.wallets) ? data.wallets : []) as SellerWalletBalanceItem[];
-        const walletsWithPositiveBalance = wallets.filter((item) => Number(item?.currentUsdtBalance || 0) > 0);
-        const totalPositiveBalance = walletsWithPositiveBalance.reduce((sum, item) => {
-          return sum + Number(item?.currentUsdtBalance || 0);
-        }, 0);
-
-        setSellersBalance(walletsWithPositiveBalance);
-        setSellersBalanceTotalUsdt(totalPositiveBalance);
+        setSellersBalance(wallets);
+        setSellersBalanceTotalUsdt(Number(data.totalCurrentUsdtBalance || 0));
         setSellersBalanceUpdatedAt(String(data.updatedAt || ''));
       } else {
         console.error('Error fetching sellers balance', data);
@@ -6103,12 +6098,12 @@ const fetchBuyOrders = async () => {
                   Seller Wallet Monitor
                 </span>
                 <span className="text-xs text-zinc-500">
-                  store.liveOnAndOff=true · store.sellerWalletAddress · 10s
+                  users.nickname=seller · users.walletAddress · 10s
                 </span>
               </div>
 
               <div className="flex items-center gap-2.5 text-sm text-zinc-500">
-                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>0)`}</span>
+                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>=0)`}</span>
                 <span>
                   {sellersBalanceUpdatedAt
                     ? new Date(sellersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
@@ -6201,7 +6196,7 @@ const fetchBuyOrders = async () => {
                     })}
                   </div>
                 ) : (
-                  <div className="mt-2 text-xs text-zinc-500">잔고가 0보다 큰 지갑이 없습니다.</div>
+                  <div className="mt-2 text-xs text-zinc-500">조회된 seller 지갑이 없습니다.</div>
                 )}
               </>
             ) : (
