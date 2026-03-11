@@ -151,6 +151,26 @@ const isSmartAccountEscrowWallet = (
   return mode === SMART_ESCROW_WALLET_MODE || (!!smartAccountAddress && !!signerAddress);
 };
 
+const isSmartAccountSellerWallet = (
+  seller?: {
+    walletAddress?: string;
+    signerAddress?: string;
+  } | null,
+) => {
+  if (!seller) {
+    return false;
+  }
+
+  const walletAddress = String(seller.walletAddress || "").trim().toLowerCase();
+  const signerAddress = String(seller.signerAddress || "").trim().toLowerCase();
+
+  if (!signerAddress) {
+    return false;
+  }
+
+  return !walletAddress || signerAddress !== walletAddress;
+};
+
 const RevealText: React.FC<{ value: any; className?: string; children: React.ReactNode }> = ({
   value,
   className = '',
@@ -6802,6 +6822,13 @@ const fetchBuyOrders = async () => {
                                 }
                               </span>
                             </div>
+
+                            {isSmartAccountSellerWallet(item?.seller) && (
+                              <div className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700 shadow-sm">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                Smart
+                              </div>
+                            )}
 
                             {/* wallet address */}
                             <div className="flex flex-row items-center justify-center gap-1">
