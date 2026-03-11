@@ -4341,7 +4341,13 @@ const fetchBuyOrders = async () => {
     try {
       const query = new URLSearchParams();
       query.set("public", "1");
-      query.set("limit", "200");
+      query.set("limit", "1000");
+      if (searchFromDate) {
+        query.set("fromDate", searchFromDate);
+      }
+      if (searchToDate) {
+        query.set("toDate", searchToDate);
+      }
 
       const response = await fetch(`/api/realtime/buyorder/buyer-wallets?${query.toString()}`, {
         method: 'GET',
@@ -4404,7 +4410,7 @@ const fetchBuyOrders = async () => {
       fetchBuyersBalance();
     }, BUYER_WALLET_POLLING_MS);
     return () => clearInterval(interval);
-  }, [address]);
+  }, [address, searchFromDate, searchToDate]);
 
 
   //console.log('sellersBalance', sellersBalance);
@@ -6212,7 +6218,7 @@ const fetchBuyOrders = async () => {
                   Buyer Wallet Monitor
                 </span>
                 <span className="text-xs text-zinc-500">
-                  paymentConfirmed · transactionHash sent · settlement pending · 15s
+                  paymentConfirmed · transactionHash sent · settlement pending · date filtered · 15s
                 </span>
               </div>
 

@@ -1192,40 +1192,66 @@ export async function getRealtimeNicknameSellerWalletBalances({
 }
 
 export async function getRealtimeBuyOrderBuyerWalletBalances({
+  fromDate = "",
+  toDate = "",
   limit = 120,
 }: {
+  fromDate?: string;
+  toDate?: string;
   limit?: number;
 } = {}): Promise<RealtimeBuyerWalletBalanceResult> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection("buyorders");
-  const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 400);
+  const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 1000);
+  const safeFromDate = String(fromDate || "").trim();
+  const safeToDate = String(toDate || "").trim();
+
+  const fromDateValue = safeFromDate
+    ? new Date(`${safeFromDate}T00:00:00+09:00`).toISOString()
+    : "";
+  const toDateValue = safeToDate
+    ? new Date(`${safeToDate}T23:59:59+09:00`).toISOString()
+    : "";
+
+  const matchStage: Record<string, unknown> = {
+    privateSale: { $ne: true },
+    status: "paymentConfirmed",
+    walletAddress: { $type: "string", $ne: "" },
+    transactionHash: { $type: "string", $nin: ["", "0x"] },
+    transactionHashFail: { $ne: true },
+    $and: [
+      {
+        $or: [
+          { settlement: { $exists: false } },
+          { "settlement.status": { $ne: "paymentSettled" } },
+        ],
+      },
+      {
+        $or: [
+          { "settlement.txid": { $exists: false } },
+          { "settlement.txid": null },
+          { "settlement.txid": "" },
+          { "settlement.txid": "0x" },
+        ],
+      },
+    ],
+  };
+
+  if (fromDateValue || toDateValue) {
+    const createdAtRange: Record<string, string> = {};
+    if (fromDateValue) {
+      createdAtRange.$gte = fromDateValue;
+    }
+    if (toDateValue) {
+      createdAtRange.$lte = toDateValue;
+    }
+    matchStage.createdAt = createdAtRange;
+  }
 
   const groupedWallets = await collection
     .aggregate([
       {
-        $match: {
-          privateSale: { $ne: true },
-          status: "paymentConfirmed",
-          walletAddress: { $type: "string", $ne: "" },
-          transactionHash: { $type: "string", $nin: ["", "0x"] },
-          transactionHashFail: { $ne: true },
-          $and: [
-            {
-              $or: [
-                { settlement: { $exists: false } },
-                { "settlement.status": { $ne: "paymentSettled" } },
-              ],
-            },
-            {
-              $or: [
-                { "settlement.txid": { $exists: false } },
-                { "settlement.txid": null },
-                { "settlement.txid": "" },
-                { "settlement.txid": "0x" },
-              ],
-            },
-          ],
-        },
+        $match: matchStage,
       },
       {
         $project: {

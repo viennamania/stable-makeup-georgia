@@ -24,7 +24,7 @@ const BUYER_WALLETS_ROUTE_DEFAULT_LIMIT = Math.max(
   1,
 );
 const BUYER_WALLETS_ROUTE_MAX_LIMIT = Math.max(
-  Number.parseInt(process.env.BUYER_WALLETS_ROUTE_MAX_LIMIT || "", 10) || 200,
+  Number.parseInt(process.env.BUYER_WALLETS_ROUTE_MAX_LIMIT || "", 10) || 1000,
   1,
 );
 const BUYER_WALLETS_ROUTE_TRANSIENT_RETRY_COUNT = Math.max(
@@ -163,11 +163,17 @@ export async function GET(request: NextRequest) {
     request.nextUrl.searchParams.get("limit"),
     BUYER_WALLETS_ROUTE_DEFAULT_LIMIT,
   );
+  const fromDate = String(request.nextUrl.searchParams.get("fromDate") || "").trim();
+  const toDate = String(request.nextUrl.searchParams.get("toDate") || "").trim();
   const limit = Math.min(
     Math.max(1, requestedLimit),
     Math.max(1, BUYER_WALLETS_ROUTE_MAX_LIMIT),
   );
-  const cacheKey = JSON.stringify({ limit });
+  const cacheKey = JSON.stringify({
+    fromDate,
+    toDate,
+    limit,
+  });
   const routeCache = getRouteCache();
   pruneRouteCache(routeCache);
   const cachedEntry = routeCache.get(cacheKey);
@@ -178,6 +184,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         status: "success",
         role,
+        fromDate,
+        toDate,
         totalCount: cachedEntry?.value?.totalCount || 0,
         totalCurrentUsdtBalance: cachedEntry?.value?.totalCurrentUsdtBalance || 0,
         wallets: cachedEntry?.value?.wallets || [],
@@ -192,6 +200,8 @@ export async function GET(request: NextRequest) {
       ? pending
       : withTransientMongoRetry(() =>
           getRealtimeBuyOrderBuyerWalletBalances({
+            fromDate,
+            toDate,
             limit,
           }),
         ).finally(() => {
@@ -211,6 +221,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: "success",
       role,
+      fromDate,
+      toDate,
       totalCount: result.totalCount,
       totalCurrentUsdtBalance: result.totalCurrentUsdtBalance,
       wallets: result.wallets,
@@ -224,6 +236,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         status: "success",
         role,
+        fromDate,
+        toDate,
         totalCount: cachedEntry.value.totalCount || 0,
         totalCurrentUsdtBalance: cachedEntry.value.totalCurrentUsdtBalance || 0,
         wallets: cachedEntry.value.wallets || [],
