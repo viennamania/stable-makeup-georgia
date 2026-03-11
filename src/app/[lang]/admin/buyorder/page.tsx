@@ -325,6 +325,7 @@ const ADMIN_ESCROW_BALANCE_POLLING_MS = 15_000;
 const SELLER_WALLET_POLLING_MS = 15_000;
 const BUYER_WALLET_POLLING_MS = 15_000;
 const SELLER_EXCLUDED_STORECODE = "admin";
+const SELLER_WALLET_MIN_USDT_BALANCE = 0.1;
 
 const isDocumentHidden = () => {
   if (typeof document === "undefined") {
@@ -4313,8 +4314,13 @@ const fetchBuyOrders = async () => {
       const data = await response.json();
       if (data?.status === 'success') {
         const wallets = (Array.isArray(data.wallets) ? data.wallets : []) as SellerWalletBalanceItem[];
-        setSellersBalance(wallets);
-        setSellersBalanceTotalUsdt(Number(data.totalCurrentUsdtBalance || 0));
+        const filteredWallets = wallets.filter((item) => Number(item?.currentUsdtBalance || 0) >= SELLER_WALLET_MIN_USDT_BALANCE);
+        const filteredTotalUsdt = filteredWallets.reduce((sum, item) => {
+          return sum + Number(item?.currentUsdtBalance || 0);
+        }, 0);
+
+        setSellersBalance(filteredWallets);
+        setSellersBalanceTotalUsdt(filteredTotalUsdt);
         setSellersBalanceUpdatedAt(String(data.updatedAt || ''));
       } else {
         console.error('Error fetching sellers balance', data);
@@ -6098,12 +6104,12 @@ const fetchBuyOrders = async () => {
                   Seller Wallet Monitor
                 </span>
                 <span className="text-xs text-zinc-500">
-                  users.nickname=seller · users.walletAddress · 10s
+                  users.nickname=seller · users.walletAddress · {SELLER_WALLET_MIN_USDT_BALANCE} USDT+ · 10s
                 </span>
               </div>
 
               <div className="flex items-center gap-2.5 text-sm text-zinc-500">
-                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>=0)`}</span>
+                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>=${SELLER_WALLET_MIN_USDT_BALANCE})`}</span>
                 <span>
                   {sellersBalanceUpdatedAt
                     ? new Date(sellersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
@@ -6196,7 +6202,7 @@ const fetchBuyOrders = async () => {
                     })}
                   </div>
                 ) : (
-                  <div className="mt-2 text-xs text-zinc-500">조회된 seller 지갑이 없습니다.</div>
+                  <div className="mt-2 text-xs text-zinc-500">잔고가 {SELLER_WALLET_MIN_USDT_BALANCE} USDT 이상인 seller 지갑이 없습니다.</div>
                 )}
               </>
             ) : (
