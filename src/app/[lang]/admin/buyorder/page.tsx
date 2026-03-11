@@ -6358,7 +6358,7 @@ const fetchBuyOrders = async () => {
                     >
 
                       <div
-                        className={`relative h-32 w-32 overflow-hidden flex flex-col items-start justify-start gap-2 rounded-lg border
+                        className={`relative min-h-32 w-32 overflow-hidden flex flex-col items-start justify-start gap-1.5 rounded-lg border
                         ${statusCardTone(item.status, item.settlement)}
                         cursor-pointer transition-all duration-200 ease-in-out
                         hover:scale-105 hover:shadow-lg hover:shadow-emerald-100/80 hover:cursor-pointer p-2`}
