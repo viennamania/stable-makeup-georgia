@@ -259,6 +259,23 @@ export type RealtimeNicknameSellerWalletBalanceResult = {
   updatedAt: string;
 };
 
+export type RealtimeBuyerWalletBalanceItem = {
+  walletAddress: string;
+  nickname: string | null;
+  avatar: string | null;
+  orderCount: number;
+  totalAmountUsdt: number;
+  latestPaymentConfirmedAt: string | null;
+  currentUsdtBalance: number;
+};
+
+export type RealtimeBuyerWalletBalanceResult = {
+  totalCount: number;
+  totalCurrentUsdtBalance: number;
+  wallets: RealtimeBuyerWalletBalanceItem[];
+  updatedAt: string;
+};
+
 function toNullableText(value: unknown): string | null {
   const normalized = String(value || "").trim();
   return normalized || null;
@@ -967,37 +984,37 @@ export async function getRealtimeNicknameSellerWalletBalances({
   limit?: number;
 } = {}): Promise<RealtimeNicknameSellerWalletBalanceResult> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection("users");
+  const storeCollection = client.db(dbName).collection("stores");
+  const userCollection = client.db(dbName).collection("users");
 
   const safeNickname = toNullableText(nickname)?.toLowerCase() || "seller";
   const safeExcludeStorecode = toNullableText(excludeStorecode)?.toLowerCase() || "";
   const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 400);
 
-  const nicknameRegex = new RegExp(`^${escapeRegex(safeNickname)}$`, "i");
-  const userQuery: Record<string, unknown> = {
-    nickname: nicknameRegex,
-    walletAddress: { $type: "string", $ne: "" },
+  const storeQuery: Record<string, unknown> = {
+    liveOnAndOff: true,
+    sellerWalletAddress: { $type: "string", $ne: "" },
   };
 
   if (safeExcludeStorecode) {
     const excludeStorecodeRegex = new RegExp(`^${escapeRegex(safeExcludeStorecode)}$`, "i");
-    userQuery.storecode = { $not: excludeStorecodeRegex };
+    storeQuery.storecode = { $not: excludeStorecodeRegex };
   }
 
-  const users = await collection
+  const stores = await storeCollection
     .find(
-      userQuery,
+      storeQuery,
       {
         projection: {
           _id: 0,
-          id: 1,
-          nickname: 1,
           storecode: 1,
-          walletAddress: 1,
-          signerAddress: 1,
+          storeName: 1,
+          storeLogo: 1,
+          sellerWalletAddress: 1,
         },
         sort: {
-          _id: -1,
+          storeName: 1,
+          storecode: 1,
         },
         limit: safeLimit * 4,
         maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
@@ -1007,8 +1024,8 @@ export async function getRealtimeNicknameSellerWalletBalances({
 
   const walletMap = new Map<string, RealtimeNicknameSellerWalletBalanceItem>();
 
-  for (const user of users) {
-    const walletAddress = toNullableText(user?.walletAddress);
+  for (const store of stores) {
+    const walletAddress = toNullableText(store?.sellerWalletAddress);
     if (!walletAddress) {
       continue;
     }
@@ -1019,13 +1036,13 @@ export async function getRealtimeNicknameSellerWalletBalances({
     }
 
     walletMap.set(walletKey, {
-      id: typeof user?.id === "number" ? user.id : null,
-      nickname: toNullableText(user?.nickname) || safeNickname,
-      storecode: toNullableText(user?.storecode),
-      storeName: null,
-      storeLogo: null,
-      signerAddress: toNullableText(user?.signerAddress),
+      id: null,
+      nickname: safeNickname,
+      storecode: toNullableText(store?.storecode),
+      storeName: toNullableText(store?.storeName),
+      storeLogo: toNullableText(store?.storeLogo),
       walletAddress,
+      signerAddress: null,
       currentUsdtBalance: 0,
     });
 
@@ -1034,64 +1051,82 @@ export async function getRealtimeNicknameSellerWalletBalances({
     }
   }
 
-  const wallets = Array.from(walletMap.values());
+  const signerAddressByStoreWallet = new Map<string, string | null>();
+  const signerAddressByWallet = new Map<string, string | null>();
+  const walletQueryConditions = Array.from(walletMap.values()).map((item) => {
+    const condition: Record<string, unknown> = {
+      walletAddress: new RegExp(`^${escapeRegex(item.walletAddress)}$`, "i"),
+    };
+    if (item.storecode) {
+      condition.storecode = new RegExp(`^${escapeRegex(item.storecode)}$`, "i");
+    }
+    return condition;
+  });
 
-  const nonAdminStorecodes = Array.from(
-    new Set(
-      wallets
-        .map((item) => toNullableText(item.storecode)?.toLowerCase() || "")
-        .filter((storecode) => Boolean(storecode && storecode !== "admin")),
-    ),
-  );
-
-  const storeMetaByCode = new Map<string, { storeName: string | null; storeLogo: string | null }>();
-  if (nonAdminStorecodes.length > 0) {
-    try {
-      const storeCollection = client.db(dbName).collection("stores");
-      const stores = await storeCollection
-        .find(
-          {
-            storecode: { $in: nonAdminStorecodes },
+  if (walletQueryConditions.length > 0) {
+    const users = await userCollection
+      .find(
+        {
+          $or: walletQueryConditions,
+        },
+        {
+          projection: {
+            _id: 0,
+            storecode: 1,
+            walletAddress: 1,
+            signerAddress: 1,
+            updatedAt: 1,
           },
-          {
-            projection: {
-              _id: 0,
-              storecode: 1,
-              storeName: 1,
-              storeLogo: 1,
-            },
-            maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+          sort: {
+            updatedAt: -1,
+            _id: -1,
           },
-        )
-        .toArray();
+          maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+        },
+      )
+      .toArray();
 
-      for (const store of stores) {
-        const storecode = toNullableText(store?.storecode)?.toLowerCase();
-        if (!storecode) {
-          continue;
-        }
-
-        storeMetaByCode.set(storecode, {
-          storeName: toNullableText(store?.storeName),
-          storeLogo: toNullableText(store?.storeLogo),
-        });
+    for (const user of users) {
+      const storecode = toNullableText(user?.storecode)?.toLowerCase() || "";
+      const walletAddress = toNullableText(user?.walletAddress);
+      if (!walletAddress) {
+        continue;
       }
-    } catch (error) {
-      console.error("Failed to fetch store metadata for realtime nickname seller balances:", error);
+
+      const signerAddress = toNullableText(user?.signerAddress);
+      const walletKey = walletAddress.toLowerCase();
+      const storeWalletKey = `${storecode}:${walletKey}`;
+
+      if (
+        !signerAddressByStoreWallet.has(storeWalletKey)
+        || (!signerAddressByStoreWallet.get(storeWalletKey) && signerAddress)
+      ) {
+        signerAddressByStoreWallet.set(storeWalletKey, signerAddress);
+      }
+
+      if (
+        !signerAddressByWallet.has(walletKey)
+        || (!signerAddressByWallet.get(walletKey) && signerAddress)
+      ) {
+        signerAddressByWallet.set(walletKey, signerAddress);
+      }
     }
   }
 
-  const walletsWithStoreMeta = wallets.map((item) => {
-    const storecode = toNullableText(item.storecode)?.toLowerCase() || "";
-    const storeMeta = storeMetaByCode.get(storecode);
+  const wallets = Array.from(walletMap.values()).map((item) => {
+    const walletKey = item.walletAddress.toLowerCase();
+    const storeWalletKey = `${String(item.storecode || "").toLowerCase()}:${walletKey}`;
+
     return {
       ...item,
-      storeName: storeMeta?.storeName || null,
-      storeLogo: storeMeta?.storeLogo || null,
+      signerAddress:
+        signerAddressByStoreWallet.get(storeWalletKey)
+        ?? signerAddressByWallet.get(walletKey)
+        ?? null,
     };
   });
 
-  if (walletsWithStoreMeta.length === 0) {
+  if (wallets.length === 0) {
     return {
       totalCount: 0,
       totalCurrentUsdtBalance: 0,
@@ -1104,9 +1139,9 @@ export async function getRealtimeNicknameSellerWalletBalances({
   const usdtContractAddress = getUsdtContractAddress();
   if (!thirdwebSecretKey || !usdtContractAddress) {
     return {
-      totalCount: walletsWithStoreMeta.length,
+      totalCount: wallets.length,
       totalCurrentUsdtBalance: 0,
-      wallets: walletsWithStoreMeta,
+      wallets,
       updatedAt: new Date().toISOString(),
     };
   }
@@ -1123,7 +1158,7 @@ export async function getRealtimeNicknameSellerWalletBalances({
     const decimals = getUsdtDecimals();
 
     const withBalances = await Promise.all(
-      walletsWithStoreMeta.map(async (item) => {
+      wallets.map(async (item) => {
         try {
           const rawBalance = await balanceOf({
             contract,
@@ -1166,9 +1201,213 @@ export async function getRealtimeNicknameSellerWalletBalances({
   } catch (error) {
     console.error("Failed to fetch realtime nickname seller wallet balances:", error);
     return {
-      totalCount: walletsWithStoreMeta.length,
+      totalCount: wallets.length,
       totalCurrentUsdtBalance: 0,
-      wallets: walletsWithStoreMeta,
+      wallets,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+}
+
+export async function getRealtimeBuyOrderBuyerWalletBalances({
+  limit = 120,
+}: {
+  limit?: number;
+} = {}): Promise<RealtimeBuyerWalletBalanceResult> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 400);
+
+  const groupedWallets = await collection
+    .aggregate([
+      {
+        $match: {
+          privateSale: { $ne: true },
+          status: "paymentConfirmed",
+          walletAddress: { $type: "string", $ne: "" },
+          transactionHash: { $type: "string", $nin: ["", "0x"] },
+          transactionHashFail: { $ne: true },
+          $and: [
+            {
+              $or: [
+                { settlement: { $exists: false } },
+                { "settlement.status": { $ne: "paymentSettled" } },
+              ],
+            },
+            {
+              $or: [
+                { "settlement.txid": { $exists: false } },
+                { "settlement.txid": null },
+                { "settlement.txid": "" },
+                { "settlement.txid": "0x" },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          buyerWalletAddress: {
+            $trim: {
+              input: "$walletAddress",
+            },
+          },
+          nickname: "$nickname",
+          avatar: "$avatar",
+          usdtAmount: "$usdtAmount",
+          paymentConfirmedAt: "$paymentConfirmedAt",
+          paymentConfirmedAtDate: {
+            $convert: {
+              input: "$paymentConfirmedAt",
+              to: "date",
+              onError: null,
+              onNull: null,
+            },
+          },
+          createdAtDate: {
+            $convert: {
+              input: "$createdAt",
+              to: "date",
+              onError: null,
+              onNull: null,
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          buyerWalletAddress: { $type: "string", $ne: "" },
+        },
+      },
+      {
+        $sort: {
+          paymentConfirmedAtDate: -1,
+          createdAtDate: -1,
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: { $toLower: "$buyerWalletAddress" },
+          walletAddress: { $first: "$buyerWalletAddress" },
+          nickname: { $first: "$nickname" },
+          avatar: { $first: "$avatar" },
+          orderCount: { $sum: 1 },
+          totalAmountUsdt: { $sum: { $toDouble: { $ifNull: ["$usdtAmount", 0] } } },
+          latestPaymentConfirmedAt: { $first: "$paymentConfirmedAt" },
+        },
+      },
+      {
+        $sort: {
+          orderCount: -1,
+          latestPaymentConfirmedAt: -1,
+          walletAddress: 1,
+        },
+      },
+      {
+        $limit: safeLimit,
+      },
+    ], {
+      maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+    })
+    .toArray();
+
+  const wallets: RealtimeBuyerWalletBalanceItem[] = groupedWallets
+    .map((item: any) => {
+      const walletAddress = toNullableText(item?.walletAddress);
+      if (!walletAddress) {
+        return null;
+      }
+
+      return {
+        walletAddress,
+        nickname: toNullableText(item?.nickname),
+        avatar: toNullableText(item?.avatar),
+        orderCount: Number(item?.orderCount || 0),
+        totalAmountUsdt: toSafeNumber(item?.totalAmountUsdt),
+        latestPaymentConfirmedAt: toIsoString(item?.latestPaymentConfirmedAt),
+        currentUsdtBalance: 0,
+      } satisfies RealtimeBuyerWalletBalanceItem;
+    })
+    .filter((item): item is RealtimeBuyerWalletBalanceItem => Boolean(item));
+
+  if (wallets.length === 0) {
+    return {
+      totalCount: 0,
+      totalCurrentUsdtBalance: 0,
+      wallets: [],
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const thirdwebSecretKey = String(process.env.THIRDWEB_SECRET_KEY || "").trim();
+  const usdtContractAddress = getUsdtContractAddress();
+  if (!thirdwebSecretKey || !usdtContractAddress) {
+    return {
+      totalCount: wallets.length,
+      totalCurrentUsdtBalance: 0,
+      wallets,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  try {
+    const thirdwebClient = createThirdwebClient({
+      secretKey: thirdwebSecretKey,
+    });
+    const contract = getContract({
+      client: thirdwebClient,
+      chain: getThirdwebChain(),
+      address: usdtContractAddress,
+    });
+    const decimals = getUsdtDecimals();
+
+    const withBalances = await Promise.all(
+      wallets.map(async (item) => {
+        try {
+          const rawBalance = await balanceOf({
+            contract,
+            address: item.walletAddress,
+          });
+          return {
+            ...item,
+            currentUsdtBalance: Number(rawBalance) / 10 ** decimals,
+          };
+        } catch (error) {
+          console.error(`Failed to fetch buyer wallet USDT balance (${item.walletAddress}):`, error);
+          return {
+            ...item,
+            currentUsdtBalance: 0,
+          };
+        }
+      }),
+    );
+
+    withBalances.sort((left, right) => {
+      return (
+        right.currentUsdtBalance - left.currentUsdtBalance
+        || right.totalAmountUsdt - left.totalAmountUsdt
+        || (right.orderCount - left.orderCount)
+        || left.walletAddress.localeCompare(right.walletAddress)
+      );
+    });
+
+    const totalCurrentUsdtBalance = withBalances.reduce((sum, item) => {
+      return sum + toSafeNumber(item.currentUsdtBalance);
+    }, 0);
+
+    return {
+      totalCount: withBalances.length,
+      totalCurrentUsdtBalance,
+      wallets: withBalances,
+      updatedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("Failed to fetch realtime buyer wallet balances:", error);
+    return {
+      totalCount: wallets.length,
+      totalCurrentUsdtBalance: 0,
+      wallets,
       updatedAt: new Date().toISOString(),
     };
   }
