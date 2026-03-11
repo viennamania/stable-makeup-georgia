@@ -135,6 +135,22 @@ const statusCardTone = (status: string | undefined, settlement?: any) => {
   }
 };
 
+const SMART_ESCROW_WALLET_MODE = "thirdweb-server-wallet";
+
+const isSmartAccountEscrowWallet = (
+  escrowWallet?: BuyOrder["escrowWallet"] | null,
+) => {
+  if (!escrowWallet) {
+    return false;
+  }
+
+  const mode = String(escrowWallet.mode || escrowWallet.type || "").trim().toLowerCase();
+  const smartAccountAddress = String(escrowWallet.smartAccountAddress || "").trim();
+  const signerAddress = String(escrowWallet.signerAddress || "").trim();
+
+  return mode === SMART_ESCROW_WALLET_MODE || (!!smartAccountAddress && !!signerAddress);
+};
+
 const RevealText: React.FC<{ value: any; className?: string; children: React.ReactNode }> = ({
   value,
   className = '',
@@ -226,6 +242,12 @@ interface BuyOrder {
     address: string;
     balance: number;
     transactionHash: string;
+    mode?: string;
+    type?: string;
+    smartAccountAddress?: string;
+    signerAddress?: string;
+    label?: string;
+    privateKey?: string;
   };
 
   sellerWalletAddressBalance: number; // balance of seller wallet address, added in version 1.1.5
@@ -6162,7 +6184,10 @@ const fetchBuyOrders = async () => {
               {/* if my trading, then tr has differenc color */}
               <tbody>
 
-                {buyOrders.map((item, index) => (
+                {buyOrders.map((item, index) => {
+                  const hasSmartAccountEscrowBadge = isSmartAccountEscrowWallet(item?.escrowWallet);
+
+                  return (
 
                   
                   <tr
@@ -6185,7 +6210,7 @@ const fetchBuyOrders = async () => {
                     >
 
                       <div
-                        className={`h-32 w-32 flex flex-col items-start justify-start gap-2 rounded-lg border
+                        className={`relative h-32 w-32 overflow-hidden flex flex-col items-start justify-start gap-2 rounded-lg border
                         ${statusCardTone(item.status, item.settlement)}
                         cursor-pointer transition-all duration-200 ease-in-out
                         hover:scale-105 hover:shadow-lg hover:shadow-emerald-100/80 hover:cursor-pointer p-2`}
@@ -6196,6 +6221,11 @@ const fetchBuyOrders = async () => {
                         }}
                       
                       >
+                        {hasSmartAccountEscrowBadge && (
+                          <div className="pointer-events-none absolute -right-9 top-3 z-10 w-28 rotate-45 border-y border-emerald-200/80 bg-gradient-to-r from-emerald-700 via-emerald-600 to-lime-500 py-1 text-center text-[9px] font-black tracking-[0.28em] text-white shadow-sm">
+                            SMART
+                          </div>
+                        )}
 
                         <div className="flex flex-row items-center justify-start gap-2">
                           <Image
@@ -9334,7 +9364,8 @@ const fetchBuyOrders = async () => {
 
                   </tr>
 
-                ))}
+                  );
+                })}
 
               </tbody>
 
