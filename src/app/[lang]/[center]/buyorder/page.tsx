@@ -4819,131 +4819,131 @@ useEffect(() => {
           </div>
 
 
-          <div className="mb-6 grid w-full grid-cols-1 gap-4 border-b border-slate-200 pb-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
+          <div className="mb-6 grid w-full grid-cols-1 gap-3 border-b border-slate-200 pb-5 xl:grid-cols-[minmax(0,2.15fr)_minmax(340px,0.95fr)]">
 
-            <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_52%,#eef4ff_100%)] p-5 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.55)]">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <span className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    운영 인프라
-                  </span>
-                  <h2 className="mt-3 text-lg font-semibold text-slate-900 sm:text-xl">
-                    입금 계좌 및 운영 지갑
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    거래에 필요한 입금통장과 USDT 지갑을 한눈에 확인합니다.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                  <div className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span>실시간 운영 요약</span>
+            <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_52%,#eef4ff_100%)] p-4 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.55)] xl:p-4">
+              <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      운영 인프라
+                    </span>
+                    <span className="inline-flex items-center gap-2 text-[11px] font-medium text-slate-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      실시간 운영 요약
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-col gap-1 xl:flex-row xl:items-end xl:justify-between xl:gap-4">
+                    <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
+                      입금 계좌 및 운영 지갑
+                    </h2>
+                    <p className="text-sm text-slate-500 xl:text-right">
+                      거래에 필요한 입금통장과 USDT 지갑을 한눈에 확인합니다.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-5 space-y-4">
-                <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.45)]">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-900/5 ring-1 ring-slate-200">
+              <div className="mt-4 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.82fr)_minmax(0,0.82fr)]">
+                <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-3.5 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.45)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-900/5 ring-1 ring-slate-200">
+                      <Image
+                        src="/icon-bank.png"
+                        alt="Bank"
+                        width={20}
+                        height={20}
+                        className="rounded-lg"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-900">
+                        P2P 거래소 입금통장
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        거래 등급별 입금 계좌
+                      </div>
+                    </div>
+                  </div>
+
+                  {bankSummaryItems.length > 0 ? (
+                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {bankSummaryItems.map((item) => (
+                        <div
+                          key={item.label}
+                          className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-2.5"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`inline-flex min-w-[3rem] items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold ${item.badgeClassName}`}
+                            >
+                              {item.label}
+                            </span>
+                            <span className="truncate text-sm font-medium text-slate-700">
+                              {item.summary}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-400">
+                      등록된 입금 계좌가 없습니다.
+                    </div>
+                  )}
+                </div>
+
+                {infrastructureWallets.map((wallet) => (
+                  <div
+                    key={wallet.label}
+                    className={`rounded-3xl border bg-white/95 p-3.5 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.45)] ${wallet.borderClassName}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${wallet.accentClassName} ring-1 ring-inset ring-white/70`}
+                      >
                         <Image
-                          src="/icon-bank.png"
-                          alt="Bank"
+                          src={wallet.iconSrc}
+                          alt={wallet.iconAlt}
                           width={20}
                           height={20}
-                          className="rounded-lg"
+                          className="w-5 h-5"
                         />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-slate-900">
-                          P2P 거래소 입금통장
+                          {wallet.label}
                         </div>
-                        <div className="text-xs text-slate-500">
-                          거래 등급별 입금 계좌
+                        <div className="mt-1 text-xs text-slate-500">
+                          {wallet.helperText}
+                        </div>
+                        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2">
+                          <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">
+                            Wallet
+                          </div>
+                          <div className="mt-1 font-mono text-sm font-semibold tracking-[0.04em] text-slate-700">
+                            {formatWalletAddress(wallet.address)}
+                          </div>
                         </div>
                       </div>
                     </div>
-
-                    {bankSummaryItems.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {bankSummaryItems.map((item) => (
-                          <div
-                            key={item.label}
-                            className="min-w-[14rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`inline-flex min-w-[3rem] items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold ${item.badgeClassName}`}
-                              >
-                                {item.label}
-                              </span>
-                              <span className="truncate text-sm font-medium text-slate-700">
-                                {item.summary}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-400">
-                        등록된 입금 계좌가 없습니다.
-                      </div>
-                    )}
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {infrastructureWallets.map((wallet) => (
-                    <div
-                      key={wallet.label}
-                      className={`rounded-3xl border bg-white/95 p-4 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.45)] ${wallet.borderClassName}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${wallet.accentClassName} ring-1 ring-inset ring-white/70`}
-                        >
-                          <Image
-                            src={wallet.iconSrc}
-                            alt={wallet.iconAlt}
-                            width={20}
-                            height={20}
-                            className="w-5 h-5"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-semibold text-slate-900">
-                            {wallet.label}
-                          </div>
-                          <div className="mt-1 text-xs text-slate-500">
-                            {wallet.helperText}
-                          </div>
-                          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                            <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">
-                              Wallet
-                            </div>
-                            <div className="mt-1 font-mono text-sm font-semibold tracking-[0.04em] text-slate-700">
-                              {formatWalletAddress(wallet.address)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
 
             {version !== 'bangbang' && (
-              <div className="rounded-[28px] border border-slate-900/10 bg-[linear-gradient(160deg,#0f172a_0%,#172554_46%,#1e293b_100%)] p-5 text-white shadow-[0_28px_60px_-38px_rgba(15,23,42,0.85)]">
+              <div className="rounded-[28px] border border-slate-900/10 bg-[linear-gradient(160deg,#0f172a_0%,#172554_46%,#1e293b_100%)] p-4 text-white shadow-[0_28px_60px_-38px_rgba(15,23,42,0.85)]">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-200">
                       Balance
                     </span>
-                    <h2 className="mt-3 text-lg font-semibold sm:text-xl">
+                    <h2 className="mt-2 text-lg font-semibold sm:text-xl">
                       실시간 보유 현황
                     </h2>
                     <p className="mt-1 text-sm text-slate-300">
-                      자동결제 지갑 기준 보유량과 오늘 차감된 수수료를 보여줍니다.
+                      자동결제 지갑 기준 보유량과 오늘 차감된 수수료
                     </p>
                   </div>
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 backdrop-blur-sm">
@@ -4957,7 +4957,7 @@ useEffect(() => {
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-3">
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur-md">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-medium text-slate-200">
@@ -4973,7 +4973,7 @@ useEffect(() => {
                     </div>
                     <div className="mt-3 flex items-end gap-2">
                       <span
-                        className={`text-3xl font-semibold tracking-tight ${escrowBalanceTextClassName}`}
+                        className={`text-[2rem] font-semibold tracking-tight ${escrowBalanceTextClassName}`}
                         style={{ fontFamily: 'monospace' }}
                       >
                         {formatUsdtAmount(escrowBalance)}
@@ -4999,7 +4999,7 @@ useEffect(() => {
                     </div>
                     <div className="mt-3 flex items-end gap-2">
                       <span
-                        className="text-2xl font-semibold tracking-tight text-rose-300"
+                        className="text-[1.8rem] font-semibold tracking-tight text-rose-300"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {formatUsdtAmount(todayEscrowFeeAmount)}
@@ -5015,7 +5015,7 @@ useEffect(() => {
                   onClick={() => {
                     router.push('/' + params.lang + '/' + params.center + '/escrow-history');
                   }}
-                  className="mt-5 flex w-full items-center justify-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-[0_16px_32px_-24px_rgba(255,255,255,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-100"
+                  className="mt-4 flex w-full items-center justify-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-[0_16px_32px_-24px_rgba(255,255,255,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-100"
                 >
                   보유량 내역
                 </button>
