@@ -5741,7 +5741,7 @@ useEffect(() => {
 
             {showSellerBankStats && (
             <div className="w-full max-w-6xl mx-auto
-              grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4
+              grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2 gap-3
               items-start justify-center">
 
             {/*
@@ -5818,79 +5818,107 @@ useEffect(() => {
             {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
               <div
                 key={index}
-                className={`flex flex-col gap-2 items-start border border-zinc-200 rounded-lg p-3 bg-white shadow-sm transition ${balanceFlashSet.has(index) ? 'balance-flash' : ''}`}
+                className={`rounded-[24px] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_100%)] p-3.5 shadow-[0_18px_36px_-28px_rgba(15,23,42,0.45)] transition ${balanceFlashSet.has(index) ? 'balance-flash' : ''}`}
               >
-                <div className="w-full flex items-center gap-2 text-sm text-zinc-800">
-                  <Image src="/icon-bank.png" alt="Bank" width={18} height={18} className="w-4.5 h-4.5" />
-                  <button
-                    className="font-semibold underline text-blue-600 truncate"
-                    onClick={() => {
-                      const accountNumber = item._id || '기타은행';
-                      navigator.clipboard.writeText(accountNumber)
-                        .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
-                        .catch((err) => toast.error('복사 실패: ' + err));
-                    }}
-                    title="통장번호 복사"
-                  >
-                    {item._id || '기타은행'}
-                  </button>
-                  <span className="text-xs text-zinc-500 truncate">
-                    {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
-                  </span>
-                  {item.bankUserInfo?.[0]?.accountHolder && (
-                    <span className="text-xs font-semibold text-zinc-500">
-                      {item.bankUserInfo[0].accountHolder}
-                    </span>
-                  )}
-                </div>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100">
+                        <Image src="/icon-bank.png" alt="Bank" width={18} height={18} className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <button
+                            className="truncate text-base font-semibold text-blue-700 underline decoration-blue-200 underline-offset-4"
+                            onClick={() => {
+                              const accountNumber = item._id || '기타은행';
+                              navigator.clipboard.writeText(accountNumber)
+                                .then(() => toast.success(`통장번호 ${accountNumber} 복사됨`))
+                                .catch((err) => toast.error('복사 실패: ' + err));
+                            }}
+                            title="통장번호 복사"
+                          >
+                            {item._id || '기타은행'}
+                          </button>
+                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
+                            {item.bankUserInfo?.[0]?.bankName || '은행명 없음'}
+                          </span>
+                          {item.bankUserInfo?.[0]?.accountHolder && (
+                            <span className="text-sm font-medium text-slate-500">
+                              {item.bankUserInfo[0].accountHolder}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="w-full flex items-center justify-between gap-2">
-                  <span className="text-xs text-zinc-500 whitespace-nowrap">사용계좌</span>
-                  <div className="flex flex-col items-end min-w-0">
-                    <span className="text-base font-semibold text-zinc-800 truncate text-right" style={{ fontFamily: 'monospace' }}>
-                      {item.bankUserInfo[0]?.defaultAccountNumber || '기본통장정보없음'}
-                    </span>
+                    <button
+                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 transition hover:-translate-y-0.5 hover:bg-slate-50"
+                      onClick={() => fetchDepositsByAccount(
+                        item.bankUserInfo?.[0]?.realAccountNumber
+                        || item.bankUserInfo?.[0]?.accountNumber
+                        || item._id
+                        || '기타은행',
+                        {
+                          bankName: item.bankUserInfo?.[0]?.bankName,
+                          accountHolder: item.bankUserInfo?.[0]?.accountHolder,
+                          aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                          defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
+                          realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || ''
+                        }
+                      )}
+                    >
+                      입금내역 보기
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 rounded-[22px] border border-slate-200/80 bg-white/90 p-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,0.95fr)]">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400">
+                        사용계좌
+                      </div>
+                      <div
+                        className="mt-1 truncate text-base font-semibold text-slate-800"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {item.bankUserInfo[0]?.defaultAccountNumber || '기본통장정보없음'}
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 xl:text-right">
+                      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400">
+                        잔액(원)
+                      </div>
+                      <div
+                        className={`mt-1 truncate text-xl font-semibold text-amber-600 ${balanceFlashSet.has(index) ? 'balance-flash-target' : ''}`}
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {lastestBalanceArray && lastestBalanceArray[index] !== undefined
+                          ? lastestBalanceArray[index].toLocaleString()
+                          : '잔액정보없음'}
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 sm:col-span-2 xl:col-span-1 xl:text-right">
+                      <div className="text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400">
+                        거래 요약
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 xl:justify-end">
+                        <span className="text-sm font-semibold text-slate-600">
+                          거래 {item.totalCount?.toLocaleString() || '0'}건
+                        </span>
+                        <span
+                          className="text-base font-semibold text-emerald-700"
+                          style={{ fontFamily: 'monospace' }}
+                        >
+                          {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
+                            ? sellerBankAccountDisplayValueArray[index].toLocaleString()
+                            : '0'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="w-full flex items-center justify-between">
-                  <span className="text-xs text-zinc-500">잔액(원)</span>
-                  <span className={`text-lg font-semibold text-amber-600 ${balanceFlashSet.has(index) ? 'balance-flash-target' : ''}`} style={{ fontFamily: 'monospace' }}>
-                    {lastestBalanceArray && lastestBalanceArray[index] !== undefined
-                      ? lastestBalanceArray[index].toLocaleString()
-                      : '잔액정보없음'}
-                  </span>
-                </div>
-
-                <div className="w-full flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-500">
-                    거래 {item.totalCount?.toLocaleString() || '0'}건
-                  </span>
-                  <span className="text-sm font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
-                    {sellerBankAccountDisplayValueArray && sellerBankAccountDisplayValueArray[index] !== undefined
-                      ? sellerBankAccountDisplayValueArray[index].toLocaleString()
-                      : '0'}
-                  </span>
-                </div>
-
-                <button
-                  className="w-full text-xs px-3 py-2 border border-zinc-200 rounded-md text-zinc-600 hover:bg-zinc-50 transition text-center"
-                  onClick={() => fetchDepositsByAccount(
-                    item.bankUserInfo?.[0]?.realAccountNumber
-                    || item.bankUserInfo?.[0]?.accountNumber
-                    || item._id
-                    || '기타은행',
-                    {
-                      bankName: item.bankUserInfo?.[0]?.bankName,
-                      accountHolder: item.bankUserInfo?.[0]?.accountHolder,
-                      aliasAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                      defaultAccountNumber: item.bankUserInfo?.[0]?.defaultAccountNumber || item._id || '',
-                      realAccountNumber: item.bankUserInfo?.[0]?.realAccountNumber || item.bankUserInfo?.[0]?.accountNumber || item._id || ''
-                    }
-                  )}
-                >
-                  입금내역 보기
-                </button>
               </div>
             ))}
 
