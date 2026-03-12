@@ -235,6 +235,12 @@ const BUYORDER_READ_INDEX_STORE_WALLET_STATUS_CREATED =
   "idx_buyorders_store_wallet_status_created";
 // Duplicate-order prevention should only block actionable, in-flight orders.
 const BLOCKING_BUYORDER_STATUSES = ["ordered", "accepted", "paymentRequested"] as const;
+const USER_BUYORDER_SYNC_STATUSES = [
+  ...BLOCKING_BUYORDER_STATUSES,
+  "paymentConfirmed",
+  "cancelled",
+  "completed",
+] as const;
 
 const globalBuyOrderReadState = globalThis as typeof globalThis & {
   __buyOrderReadIndexesReady?: boolean;
@@ -408,6 +414,98 @@ export async function getBlockingBuyOrderByStorecodeAndWalletAddress(
       },
     },
   );
+}
+
+async function syncUserBuyOrderStateByWalletAndStorecode({
+  client,
+  buyOrderCollection,
+  storecode,
+  walletAddress,
+}: {
+  client: any;
+  buyOrderCollection: any;
+  storecode: string;
+  walletAddress: string;
+}) {
+  const normalizedStorecode = String(storecode || "").trim();
+  const normalizedWalletAddress = normalizeWalletAddress(walletAddress);
+
+  if (!normalizedStorecode || !normalizedWalletAddress) {
+    return null;
+  }
+
+  const walletAddressRegex = new RegExp(
+    `^${escapeRegExp(normalizedWalletAddress)}$`,
+    "i",
+  );
+
+  const [latestOrder, totalPaymentConfirmed] = await Promise.all([
+    buyOrderCollection.findOne(
+      {
+        storecode: normalizedStorecode,
+        walletAddress: walletAddressRegex,
+        status: { $in: [...USER_BUYORDER_SYNC_STATUSES] },
+      },
+      {
+        sort: { createdAt: -1 },
+        projection: {
+          status: 1,
+          createdAt: 1,
+          acceptedAt: 1,
+          paymentRequestedAt: 1,
+          paymentConfirmedAt: 1,
+          cancelledAt: 1,
+        },
+      },
+    ),
+    buyOrderCollection.aggregate([
+      {
+        $match: {
+          storecode: normalizedStorecode,
+          walletAddress: walletAddressRegex,
+          status: "paymentConfirmed",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPaymentConfirmedCount: { $sum: 1 },
+          totalKrwAmount: { $sum: "$krwAmount" },
+          totalUsdtAmount: { $sum: "$usdtAmount" },
+        },
+      },
+    ]).toArray(),
+  ]);
+
+  const totals = totalPaymentConfirmed[0] || null;
+  const nextBuyOrderStatus = latestOrder?.status
+    ? String(latestOrder.status)
+    : (totals ? "paymentConfirmed" : "");
+
+  const userCollection = client.db(dbName).collection("users");
+  const result = await userCollection.updateMany(
+    {
+      storecode: normalizedStorecode,
+      walletAddress: walletAddressRegex,
+    },
+    {
+      $set: {
+        buyOrderStatus: nextBuyOrderStatus,
+        totalPaymentConfirmedCount: totals?.totalPaymentConfirmedCount || 0,
+        totalPaymentConfirmedKrwAmount: totals?.totalKrwAmount || 0,
+        totalPaymentConfirmedUsdtAmount: totals?.totalUsdtAmount || 0,
+      },
+    },
+  );
+
+  return {
+    buyOrderStatus: nextBuyOrderStatus,
+    totalPaymentConfirmedCount: totals?.totalPaymentConfirmedCount || 0,
+    totalPaymentConfirmedKrwAmount: totals?.totalKrwAmount || 0,
+    totalPaymentConfirmedUsdtAmount: totals?.totalUsdtAmount || 0,
+    matchedCount: result.matchedCount || 0,
+    modifiedCount: result.modifiedCount || 0,
+  };
 }
 
 async function fetchBuyOrderRealtimeSnapshot(
@@ -4785,7 +4883,7 @@ export async function buyOrderRequestPayment(data: any) {
 
 
 
-  if (result) {
+  if (result && result.modifiedCount > 0) {
 
 
     const order = await collection.findOne<OrderProps>(
@@ -4793,16 +4891,12 @@ export async function buyOrderRequestPayment(data: any) {
       { projection: { storecode: 1, walletAddress: 1 } }
     );
     if (order) {
-
-      // update user collection buyOrderStatus to "paymentRequested"
-      const userCollection = client.db(dbName).collection('users');
-      await userCollection.updateOne(
-        {
-          walletAddress: order.walletAddress,
-          storecode: order.storecode,
-        },
-        { $set: { buyOrderStatus: 'paymentRequested' } }
-      );
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(order.storecode || ""),
+        walletAddress: String(order.walletAddress || ""),
+      });
 
     }
 
@@ -5052,73 +5146,12 @@ export async function buyOrderConfirmPayment(data: any) {
       const storecode = order.storecode;
       const walletAddress = order.walletAddress;
 
-      // update user collection buyOrderStatus to "paymentConfirmed"
-      const userCollection = client.db(dbName).collection('users');
-
-      if (userCollection) {
-
-
-        
-        //const toalPaymentConfirmedCount = await collection.countDocuments(
-        //  { walletAddress: order.walletAddress, storecode: order.storecode, status: 'paymentConfirmed' }
-        //);
-        const totalPaymentConfirmed = await collection.aggregate([
-          { $match: {
-            walletAddress: walletAddress,
-            storecode: storecode,
-            status: 'paymentConfirmed'
-          } },
-          { $group: {
-            _id: null,
-            totalPaymentConfirmedCount: { $sum: 1 },
-            totalKrwAmount: { $sum: '$krwAmount' },
-            totalUsdtAmount: { $sum: '$usdtAmount' }
-          }}
-        ]).toArray();
-
-        //console.log('confirmPayment totalPaymentConfirmed: ' + JSON.stringify(totalPaymentConfirmed));
-
-
-        await userCollection.updateOne(
-          { walletAddress: walletAddress,
-            storecode: storecode,
-          },
-          { $set: {
-              buyOrderStatus: 'paymentConfirmed',
-              totalPaymentConfirmedCount: totalPaymentConfirmed[0]?.totalPaymentConfirmedCount || 0,
-              totalPaymentConfirmedKrwAmount: totalPaymentConfirmed[0]?.totalKrwAmount || 0,
-              totalPaymentConfirmedUsdtAmount: totalPaymentConfirmed[0]?.totalUsdtAmount || 0,
-            }
-          }
-        );
-        
-
-
-
-        // set buyOrderStatus = 'paymentConfirmed'
-        // set totalPaymentConfirmedCount increase by 1
-        // set totalPaymentConfirmedKrwAmount increase by krwAmount
-        // set totalPaymentConfirmedUsdtAmount increase by usdtAmount
-        /*
-        await userCollection.updateOne(
-          { walletAddress: walletAddress,
-            storecode: storecode,
-          },
-          { $set: { buyOrderStatus: 'paymentConfirmed' },
-            $inc: {
-              totalPaymentConfirmedCount: 1,
-              totalPaymentConfirmedKrwAmount: paymentAmount,
-              
-              //totalPaymentConfirmedUsdtAmount: data.usdtAmount || 0,
-              // convert data.usdtAmount to number
-              totalPaymentConfirmedUsdtAmount: Number(data.usdtAmount) || 0,
-
-            }
-          }
-        );
-        */
-
-      }
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(storecode || ""),
+        walletAddress: String(walletAddress || ""),
+      });
 
 
       /*
@@ -5359,6 +5392,14 @@ export async function buyOrderConfirmPaymentEnqueueTransaction(data: any) {
       collection,
       { _id: new ObjectId(data.orderId + '') },
     );
+    if (updatedOrder?.storecode && updatedOrder?.walletAddress) {
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(updatedOrder.storecode || ""),
+        walletAddress: String(updatedOrder.walletAddress || ""),
+      });
+    }
     const nextStatus =
       updatedOrder?.status ? String(updatedOrder.status) : previousStatus || "paymentConfirmed";
     const nextQueueId =
@@ -5451,6 +5492,14 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
       collection,
       { queueId: data.queueId },
     );
+    if (updatedOrder?.storecode && updatedOrder?.walletAddress) {
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(updatedOrder.storecode || ""),
+        walletAddress: String(updatedOrder.walletAddress || ""),
+      });
+    }
     const nextStatus =
       updatedOrder?.status ? String(updatedOrder.status) : previousStatus || "paymentConfirmed";
     const nextTransactionHash = toNormalizedHash(updatedOrder?.transactionHash);
@@ -5541,24 +5590,18 @@ export async function buyOrderRollbackPayment(data: any) {
   if (result.modifiedCount > 0) {
 
 
-    // update user collection buyOrderStatus to "cancelled"
     const order = await collection.findOne<any>(
       { _id: new ObjectId(data.orderId+'') },
       { projection: { storecode: 1, walletAddress: 1 } }
     );
 
     if (order) {
-      
-      // update user collection buyOrderStatus to "cancelled"
-      const userCollection = client.db(dbName).collection('users');
-      await userCollection.updateOne(
-        {
-          walletAddress: order.walletAddress,
-          storecode: order.storecode,
-        },
-        { $set: { buyOrderStatus: 'cancelled' } }
-      );
-
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(order.storecode || ""),
+        walletAddress: String(order.walletAddress || ""),
+      });
     }
 
 
@@ -5721,18 +5764,13 @@ export async function cancelTradeBySeller(
       { projection: { storecode: 1, walletAddress: 1 } }
     );
 
-
-    // update user status to 'cancelled'
-    const userCollection = client.db(dbName).collection('users');
-
     if (order) {
-      await userCollection.updateOne(
-        {
-          walletAddress: order.walletAddress,
-          storecode: order.storecode,
-        },
-        { $set: { buyOrderStatus: 'cancelled' } }
-      );
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(order.storecode || ""),
+        walletAddress: String(order.walletAddress || ""),
+      });
     }
 
 
@@ -5949,6 +5987,14 @@ export async function updateBuyOrderByQueueId(data: any) {
 
   if (result.modifiedCount > 0) {
     const updatedOrder = await fetchBuyOrderRealtimeSnapshot(collection, query);
+    if (updatedOrder?.storecode && updatedOrder?.walletAddress) {
+      await syncUserBuyOrderStateByWalletAndStorecode({
+        client,
+        buyOrderCollection: collection,
+        storecode: String(updatedOrder.storecode || ""),
+        walletAddress: String(updatedOrder.walletAddress || ""),
+      });
+    }
     const nextStatus =
       updatedOrder?.status ? String(updatedOrder.status) : previousStatus || "paymentConfirmed";
     const nextTransactionHash = toNormalizedHash(updatedOrder?.transactionHash);

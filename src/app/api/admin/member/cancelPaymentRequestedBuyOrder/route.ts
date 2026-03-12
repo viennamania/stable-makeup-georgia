@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import clientPromise, { dbName } from "@/lib/mongodb";
 
 import {
   buyOrderGetOrderById,
@@ -12,12 +13,52 @@ import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 const ROUTE = "/api/admin/member/cancelPaymentRequestedBuyOrder";
 const SIGNING_PREFIX = "stable-georgia:admin-member-cancel-payment-requested-buy-order:v1";
+const BUYORDER_STATUS_HISTORY_STATUSES = [
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+  "cancelled",
+  "completed",
+] as const;
 
 const normalizeString = (value: unknown): string => {
   if (typeof value !== "string") {
     return "";
   }
   return value.trim();
+};
+
+const escapeRegexText = (value: string) =>
+  String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getLatestBuyOrderForMember = async ({
+  storecode,
+  walletAddress,
+}: {
+  storecode: string;
+  walletAddress: string;
+}) => {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const walletAddressRegex = new RegExp(`^${escapeRegexText(walletAddress)}$`, "i");
+
+  return collection.findOne(
+    {
+      storecode,
+      walletAddress: walletAddressRegex,
+      status: { $in: [...BUYORDER_STATUS_HISTORY_STATUSES] },
+    },
+    {
+      sort: { createdAt: -1 },
+      projection: {
+        _id: 1,
+        tradeId: 1,
+        status: 1,
+        createdAt: 1,
+      },
+    },
+  );
 };
 
 export async function POST(request: NextRequest) {
@@ -75,12 +116,22 @@ export async function POST(request: NextRequest) {
   });
 
   if (!blockingOrder?._id) {
+    const latestOrder = await getLatestBuyOrderForMember({
+      storecode,
+      walletAddress,
+    });
+
     return NextResponse.json(
       {
         result: null,
-        error: "No active buy order found for this member",
+        error: latestOrder?._id
+          ? "This member no longer has an active buy order"
+          : "No buy order found for this member",
+        currentStatus: latestOrder?.status ? String(latestOrder.status) : "",
+        orderId: latestOrder?._id ? String(latestOrder._id) : null,
+        tradeId: latestOrder?.tradeId ? String(latestOrder.tradeId) : null,
       },
-      { status: 404 },
+      { status: latestOrder?._id ? 409 : 404 },
     );
   }
 
@@ -92,6 +143,7 @@ export async function POST(request: NextRequest) {
         error: "Only paymentRequested orders can be cancelled from admin member page",
         currentStatus,
         orderId: String(blockingOrder._id),
+        tradeId: blockingOrder.tradeId ? String(blockingOrder.tradeId) : null,
       },
       { status: 409 },
     );

@@ -677,6 +677,7 @@ export default function Index({ params }: any) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isStatusChangeModalOpen, setStatusChangeModalOpen] = useState(false);
   const [statusChangeTarget, setStatusChangeTarget] = useState<any>(null);
+  const [openingStatusChangeModal, setOpeningStatusChangeModal] = useState(false);
   const [updatingBuyOrderStatus, setUpdatingBuyOrderStatus] = useState(false);
 
   const closeModal = () => setModalOpen(false);
@@ -1075,12 +1076,79 @@ export default function Index({ params }: any) {
     if (status === 'cancelled') {
       return '거래취소';
     }
+    if (status === 'completed') {
+      return '거래완료';
+    }
     return '';
   };
 
-  const openStatusChangeModal = (item: any) => {
-    setStatusChangeTarget(item);
-    setStatusChangeModalOpen(true);
+  const getBuyOrderStatusTextClass = (status: string) => {
+    if (status === 'ordered') {
+      return 'text-yellow-500';
+    }
+    if (status === 'accepted' || status === 'paymentConfirmed' || status === 'completed') {
+      return 'text-green-500';
+    }
+    if (status === 'paymentRequested' || status === 'cancelled') {
+      return 'text-red-500';
+    }
+    return 'text-zinc-500';
+  };
+
+  const openStatusChangeModal = async (item: any) => {
+    if (openingStatusChangeModal || updatingBuyOrderStatus) {
+      return;
+    }
+
+    if (fetchingAllBuyer) {
+      toast.error('회원 목록을 갱신 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    const targetStorecode = String(item?.storecode || '').trim();
+    const targetWalletAddress = String(item?.walletAddress || '').trim().toLowerCase();
+
+    if (!targetStorecode || !targetWalletAddress) {
+      toast.error('대상 회원 정보가 올바르지 않습니다.');
+      return;
+    }
+
+    setOpeningStatusChangeModal(true);
+
+    try {
+      const latestUsers = await fetchAllBuyer();
+
+      if (!Array.isArray(latestUsers)) {
+        return;
+      }
+
+      const latestTarget =
+        latestUsers.find((candidate: any) => {
+          const candidateStorecode = String(candidate?.storecode || '').trim();
+          const candidateWalletAddress = String(candidate?.walletAddress || '').trim().toLowerCase();
+          return (
+            candidateStorecode === targetStorecode &&
+            candidateWalletAddress === targetWalletAddress
+          );
+        }) || null;
+
+      const nextTarget = latestTarget || item;
+      const nextStatus = String(nextTarget?.buyOrderStatus || '').trim();
+
+      if (nextStatus !== 'paymentRequested') {
+        toast.error(
+          nextStatus
+            ? `최신 주문상태는 ${getBuyOrderStatusLabel(nextStatus) || nextStatus}입니다.`
+            : '이 회원의 활성 구매주문을 찾지 못했습니다.',
+        );
+        return;
+      }
+
+      setStatusChangeTarget(nextTarget);
+      setStatusChangeModalOpen(true);
+    } finally {
+      setOpeningStatusChangeModal(false);
+    }
   };
 
   const cancelPaymentRequestedBuyOrder = async () => {
@@ -1120,6 +1188,22 @@ export default function Index({ params }: any) {
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok || !payload?.result?.success) {
+        if (response.status === 404 || response.status === 409) {
+          const currentStatus = String(payload?.currentStatus || '').trim();
+          const currentStatusLabel = getBuyOrderStatusLabel(currentStatus) || currentStatus;
+          const tradeId = String(payload?.tradeId || '').trim();
+
+          setStatusChangeModalOpen(false);
+          setStatusChangeTarget(null);
+          await fetchAllBuyer();
+
+          if (currentStatusLabel) {
+            throw new Error(
+              `주문상태가 이미 ${currentStatusLabel}로 변경되었습니다${tradeId ? ` (tradeId: ${tradeId})` : ''}.`,
+            );
+          }
+        }
+
         throw new Error(payload?.error || '주문상태 변경에 실패했습니다.');
       }
 
@@ -2709,44 +2793,23 @@ export default function Index({ params }: any) {
 
                           <td className="px-3 py-3 border-b border-slate-100 align-top">
                             <div className="flex flex-col sm:flex-row items-start justify-center gap-2">
-                              <span className="text-sm text-zinc-500">
-                                {
-                                item?.buyOrderStatus === 'ordered' ? (
-                                  <span className="text-sm text-yellow-500">
-                                    구매주문
-                                  </span>
-                                ) : item?.buyOrderStatus === 'accepted' ? (
-                                  <span className="text-sm text-green-500">
-                                    판매자확정
-                                  </span>
-                                ) : item?.buyOrderStatus === 'paymentRequested' ? (
-                                  <span className="text-sm text-red-500">
-                                    결제요청
-                                  </span>
-                                ) : item?.buyOrderStatus === 'paymentConfirmed' ? (
-                                  <span className="text-sm text-green-500">
-                                    결제완료
-                                  </span>
-                                ) : item?.buyOrderStatus === 'cancelled' ? (
-                                  <span className="text-sm text-red-500">
-                                    거래취소
-                                  </span>
-                                ) : ''
-                                }
-
+                              <span className={`text-sm ${getBuyOrderStatusTextClass(item?.buyOrderStatus || '')}`}>
+                                {getBuyOrderStatusLabel(item?.buyOrderStatus || '')}
                               </span>
 
                               {item?.buyOrderStatus === 'paymentRequested' && (
                                 <button
-                                  disabled={!isAdmin || updatingBuyOrderStatus}
-                                  onClick={() => openStatusChangeModal(item)}
+                                  disabled={!isAdmin || updatingBuyOrderStatus || openingStatusChangeModal}
+                                  onClick={() => {
+                                    void openStatusChangeModal(item);
+                                  }}
                                   className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition ${
-                                    !isAdmin || updatingBuyOrderStatus
+                                    !isAdmin || updatingBuyOrderStatus || openingStatusChangeModal
                                       ? 'cursor-not-allowed bg-slate-300'
                                       : 'bg-rose-500 hover:bg-rose-600'
                                   }`}
                                 >
-                                  상태변경하기
+                                  {openingStatusChangeModal ? '확인 중...' : '상태변경하기'}
                                 </button>
                               )}
                             </div>

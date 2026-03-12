@@ -80,6 +80,169 @@ const escapeRegexText = (value: string) => {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 };
 
+const BUYORDER_STATUS_OVERVIEW_STATUSES = [
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+  "cancelled",
+  "completed",
+] as const;
+
+const getUserBuyOrderStatusKey = (
+  storecode: unknown,
+  walletAddress: unknown,
+) => {
+  const normalizedStorecode = String(storecode || "").trim().toLowerCase();
+  const normalizedWalletAddress = String(walletAddress || "").trim().toLowerCase();
+
+  if (!normalizedStorecode || !normalizedWalletAddress) {
+    return "";
+  }
+
+  return `${normalizedStorecode}::${normalizedWalletAddress}`;
+};
+
+type LatestUserBuyOrderStatus = {
+  _id: {
+    storecode: string;
+    walletAddress: string;
+  };
+  buyOrderStatus?: string;
+  latestBuyOrderId?: unknown;
+  latestBuyOrderTradeId?: string;
+  latestBuyOrderCreatedAt?: string;
+};
+
+async function hydrateUsersWithLatestBuyOrderStatus({
+  client,
+  users,
+}: {
+  client: any;
+  users: any[];
+}) {
+  if (!Array.isArray(users) || users.length === 0) {
+    return users;
+  }
+
+  const keys = new Map<
+    string,
+    { normalizedStorecode: string; normalizedWalletAddress: string; storecodeCandidates: string[] }
+  >();
+
+  for (const user of users) {
+    const rawStorecode = String(user?.storecode || "").trim();
+    const normalizedStorecode = rawStorecode.toLowerCase();
+    const normalizedWalletAddress = String(user?.walletAddress || "").trim().toLowerCase();
+    const key = getUserBuyOrderStatusKey(rawStorecode, normalizedWalletAddress);
+
+    if (!key) {
+      continue;
+    }
+
+    keys.set(key, {
+      normalizedStorecode,
+      normalizedWalletAddress,
+      storecodeCandidates: Array.from(
+        new Set([rawStorecode, normalizedStorecode].filter(Boolean)),
+      ),
+    });
+  }
+
+  if (keys.size === 0) {
+    return users;
+  }
+
+  const buyOrderCollection = client.db(dbName).collection("buyorders");
+  const matchPairs = Array.from(keys.values()).map(
+    ({ normalizedStorecode, normalizedWalletAddress }) => ({
+      _normalizedStorecode: normalizedStorecode,
+      _normalizedWalletAddress: normalizedWalletAddress,
+    }),
+  );
+  const storecodeCandidates = Array.from(
+    new Set(
+      Array.from(keys.values()).flatMap(({ storecodeCandidates }) => storecodeCandidates),
+    ),
+  );
+
+  const latestOrders = (await buyOrderCollection.aggregate([
+    {
+      $match: {
+        storecode: { $in: storecodeCandidates },
+        walletAddress: { $type: "string", $ne: "" },
+        status: { $in: [...BUYORDER_STATUS_OVERVIEW_STATUSES] },
+      },
+    },
+    {
+      $addFields: {
+        _normalizedStorecode: {
+          $toLower: {
+            $trim: {
+              input: { $ifNull: ["$storecode", ""] },
+            },
+          },
+        },
+        _normalizedWalletAddress: {
+          $toLower: {
+            $trim: {
+              input: { $ifNull: ["$walletAddress", ""] },
+            },
+          },
+        },
+      },
+    },
+    {
+      $match: {
+        $or: matchPairs,
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+    {
+      $group: {
+        _id: {
+          storecode: "$_normalizedStorecode",
+          walletAddress: "$_normalizedWalletAddress",
+        },
+        buyOrderStatus: { $first: "$status" },
+        latestBuyOrderId: { $first: "$_id" },
+        latestBuyOrderTradeId: { $first: "$tradeId" },
+        latestBuyOrderCreatedAt: { $first: "$createdAt" },
+      },
+    },
+  ]).toArray()) as LatestUserBuyOrderStatus[];
+
+  const latestOrderMap = new Map<string, LatestUserBuyOrderStatus>(
+    latestOrders.map((order) => [
+      `${String(order?._id?.storecode || "")}::${String(order?._id?.walletAddress || "")}`,
+      order,
+    ]),
+  );
+
+  return users.map((user) => {
+    const key = getUserBuyOrderStatusKey(user?.storecode, user?.walletAddress);
+    const latestOrder = key ? latestOrderMap.get(key) : null;
+
+    return {
+      ...user,
+      buyOrderStatus: latestOrder?.buyOrderStatus
+        ? String(latestOrder.buyOrderStatus)
+        : "",
+      latestBuyOrderId: latestOrder?.latestBuyOrderId
+        ? String(latestOrder.latestBuyOrderId)
+        : "",
+      latestBuyOrderTradeId: latestOrder?.latestBuyOrderTradeId
+        ? String(latestOrder.latestBuyOrderTradeId)
+        : "",
+      latestBuyOrderCreatedAt: latestOrder?.latestBuyOrderCreatedAt || "",
+    };
+  });
+}
+
 
 
 
@@ -1504,12 +1667,15 @@ export async function getAllBuyers(
     totalCount = await collection.countDocuments(baseUserMatch);
   }
 
-
+  const usersWithLatestBuyOrderStatus = await hydrateUsersWithLatestBuyOrderStatus({
+    client,
+    users,
+  });
 
   return {
     totalCount: totalCount,
     totalResult: totalCount,
-    users,
+    users: usersWithLatestBuyOrderStatus,
   };
 }
 
