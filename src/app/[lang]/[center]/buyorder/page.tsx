@@ -174,6 +174,7 @@ interface BuyOrder {
 
   escrowTransactionHash: string;
   transactionHash: string;
+  transactionHashFail?: boolean;
 
   settlement: any;
 
@@ -208,6 +209,107 @@ interface BuyOrder {
   userType: string;
 
 }
+
+const isValidTransactionHash = (transactionHash?: string | null) => {
+  const normalized = String(transactionHash || "").trim();
+  return normalized !== "" && normalized !== "0x";
+};
+
+const getTransactionExplorerUrl = (transactionHash?: string | null) => {
+  if (!isValidTransactionHash(transactionHash)) {
+    return "";
+  }
+
+  if (chain === "ethereum") {
+    return `https://etherscan.io/tx/${transactionHash}`;
+  }
+  if (chain === "polygon") {
+    return `https://polygonscan.com/tx/${transactionHash}`;
+  }
+  if (chain === "bsc") {
+    return `https://bscscan.com/tx/${transactionHash}`;
+  }
+
+  return `https://arbiscan.io/tx/${transactionHash}`;
+};
+
+const formatWalletAddress = (walletAddress?: string | null) => {
+  const normalized = String(walletAddress || "").trim();
+  if (!normalized) {
+    return "-";
+  }
+  if (normalized.length <= 12) {
+    return normalized;
+  }
+  return `${normalized.substring(0, 6)}...${normalized.substring(normalized.length - 4)}`;
+};
+
+const formatUsdtAmount = (value?: number | string | null) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return "0.000";
+  }
+
+  return numericValue.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+const getBuyOrderTransferMeta = (
+  order: Pick<BuyOrder, "status" | "transactionHash" | "transactionHashFail">,
+) => {
+  if (order?.transactionHashFail === true) {
+    return {
+      label: "전송실패",
+      badgeClassName: "border-red-200 bg-red-50 text-red-700",
+      helperText: "전송해시 기록 실패",
+    };
+  }
+
+  if (isValidTransactionHash(order?.transactionHash)) {
+    return {
+      label: "전송완료",
+      badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      helperText: "판매자 지갑에서 구매자 지갑으로 전송됨",
+    };
+  }
+
+  if (order?.status === "paymentConfirmed") {
+    return {
+      label: "확인중",
+      badgeClassName: "border-sky-200 bg-sky-50 text-sky-700",
+      helperText: "전송해시 동기화 대기",
+    };
+  }
+
+  if (order?.status === "paymentRequested") {
+    return {
+      label: "전송대기",
+      badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
+      helperText: "입금 확인 후 전송 예정",
+    };
+  }
+
+  if (order?.status === "accepted") {
+    return {
+      label: "전송준비",
+      badgeClassName: "border-blue-200 bg-blue-50 text-blue-700",
+      helperText: "판매자가 거래 진행 중",
+    };
+  }
+
+  if (order?.status === "cancelled") {
+    return {
+      label: "미전송",
+      badgeClassName: "border-zinc-200 bg-zinc-100 text-zinc-700",
+      helperText: "취소된 주문",
+    };
+  }
+
+  return {
+    label: "매칭대기",
+    badgeClassName: "border-zinc-200 bg-zinc-100 text-zinc-700",
+    helperText: "판매자 매칭 전",
+  };
+};
 
 
 const wallets = [
@@ -5841,9 +5943,9 @@ const fetchBuyOrders = async () => {
           {tableView ? (
 
 
-            <div className="w-full max-w-[72rem] mx-auto overflow-x-auto">
+            <div className="w-full max-w-[88rem] mx-auto overflow-x-auto">
 
-              <table className="min-w-[68rem] w-full table-fixed border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
+              <table className="min-w-[84rem] w-full table-fixed border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white">
 
                 <thead className="bg-neutral-900 text-white text-sm font-semibold">
                   <tr>
@@ -5915,6 +6017,14 @@ const fetchBuyOrders = async () => {
 
 
 
+                    <th className="p-2 w-[17rem] align-top text-left">
+                      <div className="flex flex-col items-start justify-center gap-2">
+                        <span>USDT 전송</span>
+                        <span>전송해시</span>
+                        <span>판매자 → 구매자</span>
+                      </div>
+                    </th>
+
                     <th className="p-2 w-[12rem] align-top text-right">
                       <div className="flex flex-col items-end justify-center gap-2">
 
@@ -5952,6 +6062,8 @@ const fetchBuyOrders = async () => {
 
                   {buyOrders.map((item, index) => {
                     const hasSmartAccountEscrowBadge = isSmartAccountEscrowWallet(item?.escrowWallet);
+                    const transferMeta = getBuyOrderTransferMeta(item);
+                    const transferExplorerUrl = getTransactionExplorerUrl(item?.transactionHash);
 
                     return (
 
@@ -6852,6 +6964,107 @@ const fetchBuyOrders = async () => {
                       </td>
 
 
+                      <td className="p-2 align-top">
+                        <div className="
+                          w-full max-w-[17rem]
+                          flex flex-col gap-2 items-start justify-start">
+
+                          <div className="flex flex-row items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${transferMeta.badgeClassName}`}
+                            >
+                              {transferMeta.label}
+                            </span>
+                            <span className="text-xs text-zinc-500">
+                              {transferMeta.helperText}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-row items-center gap-2">
+                            <Image
+                              src="/icon-tether.png"
+                              alt="Tether"
+                              width={20}
+                              height={20}
+                              className="w-4 h-4"
+                            />
+                            <span
+                              className="text-base text-[#409192] font-semibold"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {formatUsdtAmount(item.usdtAmount)} USDT
+                            </span>
+                          </div>
+
+                          <div className="w-full flex flex-col gap-1">
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="w-10 text-xs text-zinc-500">판매자</span>
+                              {item?.seller?.walletAddress ? (
+                                <button
+                                  className="text-sm text-blue-600 font-semibold underline"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.seller?.walletAddress);
+                                    toast.success(Copied_Wallet_Address);
+                                  }}
+                                >
+                                  {formatWalletAddress(item.seller?.walletAddress)}
+                                </button>
+                              ) : (
+                                <span className="text-sm text-zinc-400">-</span>
+                              )}
+                            </div>
+
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="w-10 text-xs text-zinc-500">구매자</span>
+                              <button
+                                className="text-sm text-blue-600 font-semibold underline"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                }}
+                              >
+                                {formatWalletAddress(item.walletAddress)}
+                              </button>
+                            </div>
+                          </div>
+
+                          {transferExplorerUrl ? (
+                            <button
+                              className="w-full rounded-lg border border-sky-200 bg-sky-50 px-2 py-2 text-left transition-all duration-200 ease-in-out hover:bg-sky-100 hover:shadow-sm"
+                              onClick={() => {
+                                window.open(transferExplorerUrl, '_blank');
+                              }}
+                            >
+                              <div className="flex flex-row items-center gap-2">
+                                <Image
+                                  src="/icon-trade.png"
+                                  alt="Transfer Hash"
+                                  width={18}
+                                  height={18}
+                                  className="w-4 h-4"
+                                />
+                                <span className="text-xs text-sky-700 font-semibold">
+                                  {formatWalletAddress(item.transactionHash)}
+                                </span>
+                              </div>
+                              {item.paymentConfirmedAt && (
+                                <span className="mt-1 block text-[11px] text-zinc-500">
+                                  {new Date(item.paymentConfirmedAt).toLocaleString('ko-KR')}
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <div className="w-full rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-2 py-2 text-xs text-zinc-500">
+                              {item?.transactionHashFail === true
+                                ? '전송해시를 저장하지 못했습니다.'
+                                : item?.status === 'cancelled'
+                                ? '전송이 발생하지 않았습니다.'
+                                : '전송해시가 아직 없습니다.'}
+                            </div>
+                          )}
+
+                        </div>
+                      </td>
 
 
                       <td className="p-2 align-top">
