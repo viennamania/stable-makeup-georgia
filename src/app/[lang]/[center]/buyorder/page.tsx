@@ -6243,14 +6243,6 @@ useEffect(() => {
 
 
 
-                    <th className="p-2 w-[17rem] align-top text-left">
-                      <div className="flex flex-col items-start justify-center gap-2">
-                        <span>USDT 전송</span>
-                        <span>전송해시</span>
-                        <span>판매자 → 구매자</span>
-                      </div>
-                    </th>
-
                     <th className="p-2 w-[12rem] align-top text-right">
                       <div className="flex flex-col items-end justify-center gap-2">
 
@@ -6277,6 +6269,14 @@ useEffect(() => {
 
                       </div>
 
+                    </th>
+
+                    <th className="p-2 w-[17rem] align-top text-left">
+                      <div className="flex flex-col items-start justify-center gap-2">
+                        <span>USDT 전송</span>
+                        <span>전송해시</span>
+                        <span>판매자 → 구매자</span>
+                      </div>
                     </th>
 
 
@@ -7193,109 +7193,6 @@ useEffect(() => {
 
 
                       <td className="p-2 align-top">
-                        <div className="
-                          w-full max-w-[17rem]
-                          flex flex-col gap-2 items-start justify-start">
-
-                          <div className="flex flex-row items-center gap-2">
-                            <span
-                              className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${transferMeta.badgeClassName}`}
-                            >
-                              {transferMeta.label}
-                            </span>
-                            <span className="text-xs text-zinc-500">
-                              {transferMeta.helperText}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-row items-center gap-2">
-                            <Image
-                              src="/icon-tether.png"
-                              alt="Tether"
-                              width={20}
-                              height={20}
-                              className="w-4 h-4"
-                            />
-                            <span
-                              className="text-base text-[#409192] font-semibold"
-                              style={{ fontFamily: 'monospace' }}
-                            >
-                              {formatUsdtAmount(item.usdtAmount)} USDT
-                            </span>
-                          </div>
-
-                          <div className="w-full flex flex-col gap-1">
-                            <div className="flex flex-row items-center gap-2">
-                              <span className="w-10 text-xs text-zinc-500">판매자</span>
-                              {item?.seller?.walletAddress ? (
-                                <button
-                                  className="text-sm text-blue-600 font-semibold underline"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(item.seller?.walletAddress);
-                                    toast.success(Copied_Wallet_Address);
-                                  }}
-                                >
-                                  {formatWalletAddress(item.seller?.walletAddress)}
-                                </button>
-                              ) : (
-                                <span className="text-sm text-zinc-400">-</span>
-                              )}
-                            </div>
-
-                            <div className="flex flex-row items-center gap-2">
-                              <span className="w-10 text-xs text-zinc-500">구매자</span>
-                              <button
-                                className="text-sm text-blue-600 font-semibold underline"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(item.walletAddress);
-                                  toast.success(Copied_Wallet_Address);
-                                }}
-                              >
-                                {formatWalletAddress(item.walletAddress)}
-                              </button>
-                            </div>
-                          </div>
-
-                          {transferExplorerUrl ? (
-                            <button
-                              className="w-full rounded-lg border border-sky-200 bg-sky-50 px-2 py-2 text-left transition-all duration-200 ease-in-out hover:bg-sky-100 hover:shadow-sm"
-                              onClick={() => {
-                                window.open(transferExplorerUrl, '_blank');
-                              }}
-                            >
-                              <div className="flex flex-row items-center gap-2">
-                                <Image
-                                  src="/icon-trade.png"
-                                  alt="Transfer Hash"
-                                  width={18}
-                                  height={18}
-                                  className="w-4 h-4"
-                                />
-                                <span className="text-xs text-sky-700 font-semibold">
-                                  {formatWalletAddress(item.transactionHash)}
-                                </span>
-                              </div>
-                              {item.paymentConfirmedAt && (
-                                <span className="mt-1 block text-[11px] text-zinc-500">
-                                  {new Date(item.paymentConfirmedAt).toLocaleString('ko-KR')}
-                                </span>
-                              )}
-                            </button>
-                          ) : (
-                            <div className="w-full rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-2 py-2 text-xs text-zinc-500">
-                              {item?.transactionHashFail === true
-                                ? '전송해시를 저장하지 못했습니다.'
-                                : item?.status === 'cancelled'
-                                ? '전송이 발생하지 않았습니다.'
-                                : '전송해시가 아직 없습니다.'}
-                            </div>
-                          )}
-
-                        </div>
-                      </td>
-
-
-                      <td className="p-2 align-top">
 
                         {item?.status === 'paymentConfirmed' && (
                           <div className="
@@ -7495,6 +7392,109 @@ useEffect(() => {
                           </div>
 
                         )}
+                      </td>
+
+
+                      <td className="p-2 align-top">
+                        <div className="
+                          w-full max-w-[17rem]
+                          flex flex-col gap-2 items-start justify-start">
+
+                          <div className="flex flex-row items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-1 text-[11px] font-semibold ${transferMeta.badgeClassName}`}
+                            >
+                              {transferMeta.label}
+                            </span>
+                            <span className="text-xs text-zinc-500">
+                              {transferMeta.helperText}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-row items-center gap-2">
+                            <Image
+                              src="/icon-tether.png"
+                              alt="Tether"
+                              width={20}
+                              height={20}
+                              className="w-4 h-4"
+                            />
+                            <span
+                              className="text-base text-[#409192] font-semibold"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {formatUsdtAmount(item.usdtAmount)} USDT
+                            </span>
+                          </div>
+
+                          <div className="w-full flex flex-col gap-1">
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="w-10 text-xs text-zinc-500">판매자</span>
+                              {item?.seller?.walletAddress ? (
+                                <button
+                                  className="text-sm text-blue-600 font-semibold underline"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(item.seller?.walletAddress);
+                                    toast.success(Copied_Wallet_Address);
+                                  }}
+                                >
+                                  {formatWalletAddress(item.seller?.walletAddress)}
+                                </button>
+                              ) : (
+                                <span className="text-sm text-zinc-400">-</span>
+                              )}
+                            </div>
+
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="w-10 text-xs text-zinc-500">구매자</span>
+                              <button
+                                className="text-sm text-blue-600 font-semibold underline"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                }}
+                              >
+                                {formatWalletAddress(item.walletAddress)}
+                              </button>
+                            </div>
+                          </div>
+
+                          {transferExplorerUrl ? (
+                            <button
+                              className="w-full rounded-lg border border-sky-200 bg-sky-50 px-2 py-2 text-left transition-all duration-200 ease-in-out hover:bg-sky-100 hover:shadow-sm"
+                              onClick={() => {
+                                window.open(transferExplorerUrl, '_blank');
+                              }}
+                            >
+                              <div className="flex flex-row items-center gap-2">
+                                <Image
+                                  src="/icon-trade.png"
+                                  alt="Transfer Hash"
+                                  width={18}
+                                  height={18}
+                                  className="w-4 h-4"
+                                />
+                                <span className="text-xs text-sky-700 font-semibold">
+                                  {formatWalletAddress(item.transactionHash)}
+                                </span>
+                              </div>
+                              {item.paymentConfirmedAt && (
+                                <span className="mt-1 block text-[11px] text-zinc-500">
+                                  {new Date(item.paymentConfirmedAt).toLocaleString('ko-KR')}
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <div className="w-full rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-2 py-2 text-xs text-zinc-500">
+                              {item?.transactionHashFail === true
+                                ? '전송해시를 저장하지 못했습니다.'
+                                : item?.status === 'cancelled'
+                                ? '전송이 발생하지 않았습니다.'
+                                : '전송해시가 아직 없습니다.'}
+                            </div>
+                          )}
+
+                        </div>
                       </td>
 
 
