@@ -312,6 +312,9 @@ type BuyerWalletBalanceItem = {
   walletAddress: string;
   nickname?: string | null;
   avatar?: string | null;
+  storecode?: string | null;
+  storeName?: string | null;
+  storeLogo?: string | null;
   orderCount?: number;
   totalAmountUsdt?: number;
   latestPaymentConfirmedAt?: string | null;
@@ -6173,11 +6176,11 @@ const fetchBuyOrders = async () => {
                                 </span>
                               ) : null}
                             </div>
-                            <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                              {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                                ? currentUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                : '0.00'}
-                            </span>
+                              <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                                {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                                ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                : '0.000'}
+                              </span>
                           </div>
                           <div className="mt-0.5 flex items-center gap-1 min-w-0">
                             <Image
@@ -6261,7 +6264,7 @@ const fetchBuyOrders = async () => {
                       : ''}`}
                       >
                         <div className="flex items-start justify-between gap-1.5">
-                          <div className="min-w-0 max-w-[58%]">
+                          <div className="min-w-0 flex-1">
                             <button
                               className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
                               onClick={() => {
@@ -6272,23 +6275,39 @@ const fetchBuyOrders = async () => {
                             >
                               {buyer.walletAddress.substring(0, 6)}...{buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
                             </button>
-                            <div className="mt-0.5 flex items-center gap-1 min-w-0">
-                              <Image
-                                src={buyer.avatar || '/icon-buyer.png'}
-                                alt={buyer.nickname || 'Buyer'}
-                                width={10}
-                                height={10}
-                                className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
-                              />
-                              <span className="text-xs text-zinc-500 truncate">
-                                {buyer.nickname || '-'}
-                              </span>
+                            <div className="mt-0.5 flex items-center justify-between gap-1.5 min-w-0">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <Image
+                                  src={buyer.avatar || '/icon-buyer.png'}
+                                  alt={buyer.nickname || 'Buyer'}
+                                  width={10}
+                                  height={10}
+                                  className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
+                                />
+                                <span className="text-xs text-zinc-500 truncate">
+                                  {buyer.nickname || '-'}
+                                </span>
+                              </div>
+                              {buyer.storeName && (
+                                <div className="flex items-center gap-1 min-w-0 shrink">
+                                  <Image
+                                    src={buyer.storeLogo || '/icon-store.png'}
+                                    alt={buyer.storeName || buyer.storecode || 'Store'}
+                                    width={10}
+                                    height={10}
+                                    className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
+                                  />
+                                  <span className="text-[11px] text-zinc-500 truncate max-w-[72px]">
+                                    {buyer.storeName}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <span className="text-base font-semibold text-sky-700 shrink-0" style={{ fontFamily: 'monospace' }}>
                             {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
-                              ? currentBuyerUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              : '0.00'}
+                              ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              : '0.000'}
                           </span>
                         </div>
                         <div className="mt-0.5 flex items-center justify-between gap-1 text-[11px] text-zinc-500">

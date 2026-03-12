@@ -6012,8 +6012,8 @@ useEffect(() => {
                           </div>
                           <span className="text-base font-semibold text-sky-700 shrink-0" style={{ fontFamily: 'monospace' }}>
                             {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
-                              ? currentBuyerUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              : '0.00'}
+                              ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              : '0.000'}
                           </span>
                         </div>
                         <div className="mt-0.5 flex items-center justify-between gap-1 text-[11px] text-zinc-500">

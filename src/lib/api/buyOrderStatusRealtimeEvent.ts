@@ -263,6 +263,9 @@ export type RealtimeBuyerWalletBalanceItem = {
   walletAddress: string;
   nickname: string | null;
   avatar: string | null;
+  storecode: string | null;
+  storeName: string | null;
+  storeLogo: string | null;
   orderCount: number;
   totalAmountUsdt: number;
   latestPaymentConfirmedAt: string | null;
@@ -1204,6 +1207,7 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
 } = {}): Promise<RealtimeBuyerWalletBalanceResult> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection("buyorders");
+  const storeCollection = client.db(dbName).collection("stores");
   const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 1000);
   const safeFromDate = String(fromDate || "").trim();
   const safeToDate = String(toDate || "").trim();
@@ -1269,6 +1273,9 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
           },
           nickname: "$nickname",
           avatar: "$avatar",
+          storecode: "$storecode",
+          storeName: "$store.storeName",
+          storeLogo: "$store.storeLogo",
           usdtAmount: "$usdtAmount",
           paymentConfirmedAt: "$paymentConfirmedAt",
           paymentConfirmedAtDate: {
@@ -1307,6 +1314,9 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
           walletAddress: { $first: "$buyerWalletAddress" },
           nickname: { $first: "$nickname" },
           avatar: { $first: "$avatar" },
+          storecode: { $first: "$storecode" },
+          storeName: { $first: "$storeName" },
+          storeLogo: { $first: "$storeLogo" },
           orderCount: { $sum: 1 },
           totalAmountUsdt: { $sum: { $toDouble: { $ifNull: ["$usdtAmount", 0] } } },
           latestPaymentConfirmedAt: { $first: "$paymentConfirmedAt" },
@@ -1327,7 +1337,7 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
     })
     .toArray();
 
-  const wallets: RealtimeBuyerWalletBalanceItem[] = groupedWallets
+  let wallets: RealtimeBuyerWalletBalanceItem[] = groupedWallets
     .map((item: any) => {
       const walletAddress = toNullableText(item?.walletAddress);
       if (!walletAddress) {
@@ -1338,6 +1348,9 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
         walletAddress,
         nickname: toNullableText(item?.nickname),
         avatar: toNullableText(item?.avatar),
+        storecode: toNullableText(item?.storecode),
+        storeName: toNullableText(item?.storeName),
+        storeLogo: toNullableText(item?.storeLogo),
         orderCount: Number(item?.orderCount || 0),
         totalAmountUsdt: toSafeNumber(item?.totalAmountUsdt),
         latestPaymentConfirmedAt: toIsoString(item?.latestPaymentConfirmedAt),
@@ -1353,6 +1366,63 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
       wallets: [],
       updatedAt: new Date().toISOString(),
     };
+  }
+
+  const storecodeSet = new Set<string>();
+  for (const item of wallets) {
+    const storecode = toNullableText(item.storecode)?.toLowerCase();
+    if (storecode) {
+      storecodeSet.add(storecode);
+    }
+  }
+
+  if (storecodeSet.size > 0) {
+    const storeByCode = new Map<string, { storeName: string | null; storeLogo: string | null }>();
+    const storeQueryConditions = Array.from(storecodeSet).map((storecode) => ({
+      storecode: new RegExp(`^${escapeRegex(storecode)}$`, "i"),
+    }));
+
+    const stores = await storeCollection
+      .find(
+        {
+          $or: storeQueryConditions,
+        },
+        {
+          projection: {
+            _id: 0,
+            storecode: 1,
+            storeName: 1,
+            storeLogo: 1,
+          },
+          sort: {
+            storeName: 1,
+            storecode: 1,
+          },
+          maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+        },
+      )
+      .toArray();
+
+    for (const store of stores) {
+      const storecode = toNullableText(store?.storecode)?.toLowerCase();
+      if (!storecode || storeByCode.has(storecode)) {
+        continue;
+      }
+      storeByCode.set(storecode, {
+        storeName: toNullableText(store?.storeName),
+        storeLogo: toNullableText(store?.storeLogo),
+      });
+    }
+
+    wallets = wallets.map((item) => {
+      const storeInfo = storeByCode.get(String(item.storecode || "").toLowerCase());
+
+      return {
+        ...item,
+        storeName: storeInfo?.storeName ?? item.storeName ?? null,
+        storeLogo: storeInfo?.storeLogo ?? item.storeLogo ?? null,
+      };
+    });
   }
 
   const thirdwebSecretKey = String(process.env.THIRDWEB_SECRET_KEY || "").trim();
