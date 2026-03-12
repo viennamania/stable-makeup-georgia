@@ -165,6 +165,7 @@ export async function GET(request: NextRequest) {
   );
   const fromDate = String(request.nextUrl.searchParams.get("fromDate") || "").trim();
   const toDate = String(request.nextUrl.searchParams.get("toDate") || "").trim();
+  const storecode = String(request.nextUrl.searchParams.get("storecode") || "").trim();
   const limit = Math.min(
     Math.max(1, requestedLimit),
     Math.max(1, BUYER_WALLETS_ROUTE_MAX_LIMIT),
@@ -172,6 +173,7 @@ export async function GET(request: NextRequest) {
   const cacheKey = JSON.stringify({
     fromDate,
     toDate,
+    storecode,
     limit,
   });
   const routeCache = getRouteCache();
@@ -186,6 +188,7 @@ export async function GET(request: NextRequest) {
         role,
         fromDate,
         toDate,
+        storecode,
         totalCount: cachedEntry?.value?.totalCount || 0,
         totalCurrentUsdtBalance: cachedEntry?.value?.totalCurrentUsdtBalance || 0,
         wallets: cachedEntry?.value?.wallets || [],
@@ -202,6 +205,7 @@ export async function GET(request: NextRequest) {
           getRealtimeBuyOrderBuyerWalletBalances({
             fromDate,
             toDate,
+            storecode,
             limit,
           }),
         ).finally(() => {
@@ -223,6 +227,7 @@ export async function GET(request: NextRequest) {
       role,
       fromDate,
       toDate,
+      storecode,
       totalCount: result.totalCount,
       totalCurrentUsdtBalance: result.totalCurrentUsdtBalance,
       wallets: result.wallets,
@@ -238,6 +243,7 @@ export async function GET(request: NextRequest) {
         role,
         fromDate,
         toDate,
+        storecode,
         totalCount: cachedEntry.value.totalCount || 0,
         totalCurrentUsdtBalance: cachedEntry.value.totalCurrentUsdtBalance || 0,
         wallets: cachedEntry.value.wallets || [],

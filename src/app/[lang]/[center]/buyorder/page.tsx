@@ -210,6 +210,16 @@ interface BuyOrder {
 
 }
 
+type BuyerWalletBalanceItem = {
+  walletAddress: string;
+  nickname?: string | null;
+  avatar?: string | null;
+  orderCount?: number;
+  totalAmountUsdt?: number;
+  latestPaymentConfirmedAt?: string | null;
+  currentUsdtBalance?: number;
+};
+
 const isValidTransactionHash = (transactionHash?: string | null) => {
   const normalized = String(transactionHash || "").trim();
   return normalized !== "" && normalized !== "0x";
@@ -309,6 +319,15 @@ const getBuyOrderTransferMeta = (
     badgeClassName: "border-zinc-200 bg-zinc-100 text-zinc-700",
     helperText: "판매자 매칭 전",
   };
+};
+
+const BUYER_WALLET_POLLING_MS = 15_000;
+
+const isDocumentHidden = () => {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return Boolean(document.hidden);
 };
 
 
@@ -632,6 +651,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedCenterStorecode = String(params.center || "").trim();
 
 
 
@@ -1302,6 +1322,13 @@ export default function Index({ params }: any) {
   const unmatchedScrollRef = useRef<HTMLDivElement | null>(null);
   const [showSellerBankStats, setShowSellerBankStats] = useState(true);
   const [showSellerAliasStats, setShowSellerAliasStats] = useState(true);
+  const [buyersBalance, setBuyersBalance] = useState<BuyerWalletBalanceItem[]>([]);
+  const [buyersBalanceTotalUsdt, setBuyersBalanceTotalUsdt] = useState(0);
+  const [buyersBalanceUpdatedAt, setBuyersBalanceUpdatedAt] = useState("");
+  const [loadingBuyersBalance, setLoadingBuyersBalance] = useState(false);
+  const animatedBuyerWalletTotalUsdt = useAnimatedNumber(buyersBalanceTotalUsdt, { decimalPlaces: 3 });
+  const [isBuyerWalletMonitorOpen, setIsBuyerWalletMonitorOpen] = useState(true);
+  const [currentBuyerUsdtBalanceArray, setCurrentBuyerUsdtBalanceArray] = useState<number[]>([]);
 
   const formatKstDateTime = (value?: string | Date) => {
     if (!value) return '';
@@ -3337,6 +3364,97 @@ const fetchBuyOrders = async () => {
 
   return data.result.orders;
 }
+
+const fetchBuyersBalance = async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
+  if (!normalizedCenterStorecode) {
+    return;
+  }
+
+  if (showLoading) {
+    setLoadingBuyersBalance(true);
+  }
+
+  try {
+    const query = new URLSearchParams();
+    query.set("public", "1");
+    query.set("limit", "1000");
+    query.set("storecode", normalizedCenterStorecode);
+
+    const response = await fetch(`/api/realtime/buyorder/buyer-wallets?${query.toString()}`, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error('Error fetching buyers balance: non-ok response', response.status);
+      return;
+    }
+
+    const data = await response.json();
+    if (data?.status === 'success') {
+      const wallets = (Array.isArray(data.wallets) ? data.wallets : []) as BuyerWalletBalanceItem[];
+      setBuyersBalance(wallets);
+      setBuyersBalanceTotalUsdt(Number(data.totalCurrentUsdtBalance || 0));
+      setBuyersBalanceUpdatedAt(String(data.updatedAt || ''));
+    } else {
+      console.error('Error fetching buyers balance', data);
+    }
+  } catch (error) {
+    console.error('Error fetching buyers balance', error);
+  } finally {
+    if (showLoading) {
+      setLoadingBuyersBalance(false);
+    }
+  }
+}
+
+useEffect(() => {
+  if (!address || !normalizedCenterStorecode) {
+    setBuyersBalance([]);
+    setBuyersBalanceTotalUsdt(0);
+    setBuyersBalanceUpdatedAt('');
+    setLoadingBuyersBalance(false);
+    return;
+  }
+
+  fetchBuyersBalance({ showLoading: true });
+  const interval = setInterval(() => {
+    if (isDocumentHidden()) {
+      return;
+    }
+    fetchBuyersBalance();
+  }, BUYER_WALLET_POLLING_MS);
+
+  return () => clearInterval(interval);
+}, [address, normalizedCenterStorecode]);
+
+function animateBuyerUsdtBalance(targetBalances: number[]) {
+  const animationDuration = 1000;
+  const frameRate = 30;
+  const totalFrames = Math.round((animationDuration / 1000) * frameRate);
+  const initialBalances = currentBuyerUsdtBalanceArray.length === targetBalances.length
+    ? [...currentBuyerUsdtBalanceArray]
+    : targetBalances.map(() => 0);
+
+  let frame = 0;
+  const interval = setInterval(() => {
+    frame += 1;
+    const nextBalances = targetBalances.map((target, index) => {
+      const initial = initialBalances[index];
+      const progress = Math.min(frame / totalFrames, 1);
+      return initial + (target - initial) * progress;
+    });
+    setCurrentBuyerUsdtBalanceArray(nextBalances);
+    if (frame >= totalFrames) {
+      clearInterval(interval);
+    }
+  }, 1000 / frameRate);
+}
+
+useEffect(() => {
+  const targetBalances = buyersBalance.map((buyer) => buyer.currentUsdtBalance || 0);
+  animateBuyerUsdtBalance(targetBalances);
+}, [buyersBalance]);
 
 
 
@@ -5937,6 +6055,114 @@ const fetchBuyOrders = async () => {
           )}
         </div>
 
+        <div className="w-full flex flex-col items-center justify-center mt-4">
+          <div className="w-full max-w-6xl rounded-xl border border-sky-200 bg-white px-3 py-2 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <Image src="/icon-buyer.png" alt="Buyer" width={16} height={16} className="w-4 h-4" />
+                <span className="text-sm font-semibold text-zinc-900">
+                  Buyer Wallet Monitor
+                </span>
+                <span className="text-xs text-zinc-500">
+                  {normalizedCenterStorecode || params.center} · paymentConfirmed · transactionHash sent · settlement pending · 15s
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2.5 text-sm text-zinc-500">
+                <span>{loadingBuyersBalance ? '갱신중...' : `${buyersBalance.length.toLocaleString()} wallets`}</span>
+                <span>
+                  {buyersBalanceUpdatedAt
+                    ? new Date(buyersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })
+                    : '--:--:--'}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border border-sky-200 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-50"
+                  onClick={() => setIsBuyerWalletMonitorOpen((open) => !open)}
+                >
+                  {isBuyerWalletMonitorOpen ? '접기' : '펼치기'}
+                </button>
+              </div>
+            </div>
+
+            {isBuyerWalletMonitorOpen ? (
+              <>
+                <div className="mt-1.5 flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
+                  <span className="text-xs font-medium text-sky-700">TOTAL USDT</span>
+                  <div className="flex items-center gap-1.5">
+                    <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
+                    <span className="text-xl font-bold text-sky-700" style={{ fontFamily: 'monospace' }}>
+                      {(animatedBuyerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </span>
+                  </div>
+                </div>
+
+                {buyersBalance.length > 0 ? (
+                  <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-52 overflow-y-auto pr-0.5">
+                    {buyersBalance.map((buyer, index) => (
+                      <div
+                        key={`${buyer.walletAddress}-${index}`}
+                        className={`rounded-md border border-zinc-200 px-2 py-1 bg-white ${
+                          currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined && currentBuyerUsdtBalanceArray[index] !== buyer.currentUsdtBalance
+                            ? 'ring-1 ring-sky-200'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="min-w-0 max-w-[58%]">
+                            <button
+                              className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
+                              onClick={() => {
+                                navigator.clipboard.writeText(buyer.walletAddress);
+                                toast.success(Copied_Wallet_Address);
+                              }}
+                              title={buyer.walletAddress}
+                            >
+                              {buyer.walletAddress.substring(0, 6)}...{buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
+                            </button>
+                            <div className="mt-0.5 flex items-center gap-1 min-w-0">
+                              <Image
+                                src={buyer.avatar || '/icon-buyer.png'}
+                                alt={buyer.nickname || 'Buyer'}
+                                width={10}
+                                height={10}
+                                className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
+                              />
+                              <span className="text-xs text-zinc-500 truncate">
+                                {buyer.nickname || '-'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-base font-semibold text-sky-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                            {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
+                              ? currentBuyerUsdtBalanceArray[index].toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              : '0.00'}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 flex items-center justify-between gap-1 text-[11px] text-zinc-500">
+                          <span>{Number(buyer.orderCount || 0).toLocaleString()} orders</span>
+                          <span className="font-mono text-sky-700">
+                            {Number(buyer.totalAmountUsdt || 0).toFixed(3)} USDT
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-zinc-500">미정산 구매자 지갑이 없습니다.</div>
+                )}
+              </>
+            ) : (
+              <div className="mt-1.5 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
+            )}
+          </div>
+        </div>
+
 
 
           {/* table view is horizontal scroll */}
@@ -6672,30 +6898,32 @@ const fetchBuyOrders = async () => {
 
                             <div className="w-full flex flex-col gap-2 items-start justify-start">
 
-                              <div className="flex flex-row items-center justify-center gap-2"> 
-                                <Image
-                                  src={item?.seller?.avatar || "/icon-seller.png"}
-                                  alt="Avatar"
-                                  width={20}
-                                  height={20}
-                                  className="rounded-sm w-5 h-5"
-                                />
-                                <span className="text-lg font-semibold text-zinc-500">
-                                  {
-                                    item.seller?.nickname &&
-                                    item.seller.nickname.length > 10 ?
-                                    item.seller.nickname.slice(0, 10) + '...' :
-                                    item.seller?.nickname
-                                  }
-                                </span>
-                              </div>
-
-                              {isSmartAccountSellerWallet(item?.seller) && (
-                                <div className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700 shadow-sm">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                  Smart
+                              <div className="flex flex-row flex-wrap items-center justify-start gap-2">
+                                <div className="flex flex-row items-center justify-center gap-2">
+                                  <Image
+                                    src={item?.seller?.avatar || "/icon-seller.png"}
+                                    alt="Avatar"
+                                    width={20}
+                                    height={20}
+                                    className="rounded-sm w-5 h-5"
+                                  />
+                                  <span className="text-lg font-semibold text-zinc-500">
+                                    {
+                                      item.seller?.nickname &&
+                                      item.seller.nickname.length > 10 ?
+                                      item.seller.nickname.slice(0, 10) + '...' :
+                                      item.seller?.nickname
+                                    }
+                                  </span>
                                 </div>
-                              )}
+
+                                {isSmartAccountSellerWallet(item?.seller) && (
+                                  <div className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-700 shadow-sm">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                    Smart
+                                  </div>
+                                )}
+                              </div>
 
                               {/* wallet address */}
                               <div className="flex flex-row items-center justify-center gap-1">

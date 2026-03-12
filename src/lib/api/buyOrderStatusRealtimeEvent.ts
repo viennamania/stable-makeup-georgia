@@ -1195,16 +1195,19 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
   fromDate = "",
   toDate = "",
   limit = 120,
+  storecode = "",
 }: {
   fromDate?: string;
   toDate?: string;
   limit?: number;
+  storecode?: string;
 } = {}): Promise<RealtimeBuyerWalletBalanceResult> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection("buyorders");
   const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 1000);
   const safeFromDate = String(fromDate || "").trim();
   const safeToDate = String(toDate || "").trim();
+  const safeStorecode = String(storecode || "").trim();
 
   const fromDateValue = safeFromDate
     ? new Date(`${safeFromDate}T00:00:00+09:00`).toISOString()
@@ -1236,6 +1239,10 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
       },
     ],
   };
+
+  if (safeStorecode) {
+    matchStage.storecode = new RegExp(`^${escapeRegex(safeStorecode)}$`, "i");
+  }
 
   if (fromDateValue || toDateValue) {
     const createdAtRange: Record<string, string> = {};
