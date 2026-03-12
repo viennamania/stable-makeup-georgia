@@ -263,6 +263,78 @@ const formatUsdtAmount = (value?: number | string | null) => {
   return numericValue.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
+const formatMaskedAccountNumber = (accountNumber?: string | null) => {
+  const normalized = String(accountNumber || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  if (normalized.length <= 5) {
+    return normalized;
+  }
+  return `${normalized.slice(0, 5)}...`;
+};
+
+const formatBankInfoSummary = (
+  bankInfo?: {
+    accountHolder?: string;
+    accountNumber?: string;
+    bankName?: string;
+  } | null,
+) => {
+  if (!bankInfo) {
+    return "등록된 계좌가 없습니다.";
+  }
+
+  return [
+    String(bankInfo.accountHolder || "").trim(),
+    formatMaskedAccountNumber(bankInfo.accountNumber),
+    String(bankInfo.bankName || "").trim(),
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const getStoreBankSummaryItems = (store: any) => {
+  return [
+    {
+      label: "일반",
+      badgeClassName: "bg-slate-900 text-white",
+      bankInfo: store?.bankInfo,
+    },
+    {
+      label: "1등급",
+      badgeClassName: "bg-rose-500 text-white",
+      bankInfo: store?.bankInfoAAA,
+    },
+    {
+      label: "2등급",
+      badgeClassName: "bg-orange-500 text-white",
+      bankInfo: store?.bankInfoBBB,
+    },
+    {
+      label: "3등급",
+      badgeClassName: "bg-amber-400 text-white",
+      bankInfo: store?.bankInfoCCC,
+    },
+    {
+      label: "4등급",
+      badgeClassName: "bg-emerald-500 text-white",
+      bankInfo: store?.bankInfoDDD,
+    },
+  ]
+    .filter((item) => {
+      const bankInfo = item.bankInfo;
+      return Boolean(
+        bankInfo &&
+          (bankInfo.accountHolder || bankInfo.accountNumber || bankInfo.bankName),
+      );
+    })
+    .map((item) => ({
+      ...item,
+      summary: formatBankInfoSummary(item.bankInfo),
+    }));
+};
+
 const getBuyOrderTransferMeta = (
   order: Pick<BuyOrder, "status" | "transactionHash" | "transactionHashFail">,
 ) => {
@@ -4086,6 +4158,35 @@ useEffect(() => {
 
 
 
+  const bankSummaryItems = getStoreBankSummaryItems(store);
+  const todayEscrowFeeAmount =
+    todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0
+      ? todayMinusedEscrowAmount
+      : 0;
+  const escrowBalanceTextClassName =
+    escrowBalance < 0 ? "text-amber-300" : "text-emerald-300";
+
+  const infrastructureWallets = [
+    {
+      label: "P2P 거래소 판매용 USDT지갑",
+      helperText: "판매 주문 전송 지갑",
+      address: store?.sellerWalletAddress,
+      iconSrc: "/icon-shield.png",
+      iconAlt: "Seller Wallet",
+      accentClassName: "from-emerald-500/10 via-white to-emerald-50",
+      borderClassName: "border-emerald-100",
+    },
+    {
+      label: "가맹점 자동결제용 USDT지갑",
+      helperText: "자동결제 및 정산 지갑",
+      address: store?.settlementWalletAddress,
+      iconSrc: "/icon-shield.png",
+      iconAlt: "Settlement Wallet",
+      accentClassName: "from-sky-500/10 via-white to-sky-50",
+      borderClassName: "border-sky-100",
+    },
+  ];
+
   return (
 
     <>
@@ -4697,7 +4798,8 @@ useEffect(() => {
           </div>
 
 
-          <div className='flex flex-row items-center space-x-4'>
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-[0_16px_32px_-24px_rgba(15,23,42,0.45)]">
               <Image
                 src="/icon-buyorder.png"
                 alt="Trade"
@@ -4705,382 +4807,220 @@ useEffect(() => {
                 height={35}
                 className="w-6 h-6"
               />
-
-              <div className="text-xl font-semibold">
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+                P2P Operations
+              </div>
+              <div className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
                 구매주문관리
               </div>
-
+            </div>
           </div>
 
 
-          <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6
-          border-b border-zinc-300 pb-4">
+          <div className="mb-6 grid w-full grid-cols-1 gap-4 border-b border-slate-200 pb-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
 
-            <div className="flex flex-col items-start gap-4">
-
-              {/* P2P 거래소 입금통장 */}
-              <div className="flex flex-col sm:flex-row items-start justify-start gap-1">
-                <div className="flex flex-row gap-2 items-center">
-                  {/* dot */}
-                  <div className="w-1 h-1 rounded-full bg-zinc-500" />
-                  <span className="text-sm text-zinc-500">
-                    P2P 거래소 입금통장
+            <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#ffffff_0%,#f8fafc_52%,#eef4ff_100%)] p-5 shadow-[0_24px_50px_-40px_rgba(15,23,42,0.55)]">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <span className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    운영 인프라
                   </span>
+                  <h2 className="mt-3 text-lg font-semibold text-slate-900 sm:text-xl">
+                    입금 계좌 및 운영 지갑
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    거래에 필요한 입금통장과 USDT 지갑을 한눈에 확인합니다.
+                  </p>
                 </div>
-
-                <div className="w-60 flex flex-row items-start justify-start gap-1">
-                  <Image
-                    src="/icon-bank.png"
-                    alt="Bank"
-                    width={20}
-                    height={20}
-                    className="rounded-lg"
-                  />
-                  <div className="w-full flex flex-col items-start justify-center">
-
-                    {/* 일반 */}
-                    {store?.bankInfo && (
-                    <div className="flex flex-row items-center gap-1">
-                      <div className="w-10 h-5 rounded-full bg-zinc-500 flex items-center justify-center">
-                        <span className="text-xs text-white">일반</span>
-                      </div>
-                      <span className="text-sm text-zinc-500">
-                          {store?.bankInfo?.accountNumber.length > 5 ? (
-                            <>
-                              {store?.bankInfo?.accountHolder
-                              + " " + store?.bankInfo?.accountNumber.slice(0, 5) + "..."
-                              + " " + store?.bankInfo?.bankName}
-                            </>
-                          ) : (
-                            <>
-                              {store?.bankInfo?.accountHolder
-                              + " " + store?.bankInfo?.accountNumber
-                              + " " + store?.bankInfo?.bankName}
-                            </>
-                          )}
-                      </span>
-                    </div>
-                    )}
-                    {/* 1등급 */}
-                    {store?.bankInfoAAA && (
-                    <div className="flex flex-row items-center gap-1">
-                      <div className="w-10 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                        <span className="text-xs text-white">1등급</span>
-                      </div>
-                      <span className="text-sm text-zinc-500">
-                          {store?.bankInfoAAA?.accountNumber.length > 5 ? (
-                            <>
-                              {store?.bankInfoAAA?.accountHolder
-                              + " " + store?.bankInfoAAA?.accountNumber.slice(0, 5) + "..."
-                              + " " + store?.bankInfoAAA?.bankName}
-                            </>
-                          ) : (
-                            <>
-                              {store?.bankInfoAAA?.accountHolder
-                              + " " + store?.bankInfoAAA?.accountNumber
-                              + " " + store?.bankInfoAAA?.bankName}
-                            </>
-                          )}
-                      </span>
-                    </div>
-                    )}
-                    {/* 2등급 */}
-                    {store?.bankInfoBBB && (
-                    <div className="flex flex-row items-center gap-1">
-                      <div className="w-10 h-5 rounded-full bg-orange-500 flex items-center justify-center">
-                        <span className="text-xs text-white">2등급</span>
-                      </div>
-                      <span className="text-sm text-zinc-500">
-                          {store?.bankInfoBBB?.accountNumber.length > 5 ? (
-                            <>
-                              {store?.bankInfoBBB?.accountHolder
-                              + " " + store?.bankInfoBBB?.accountNumber.slice(0, 5) + "..."
-                              + " " + store?.bankInfoBBB?.bankName}
-                            </>
-                          ) : (
-                            <>
-                              {store?.bankInfoBBB?.accountHolder
-                              + " " + store?.bankInfoBBB?.accountNumber
-                              + " " + store?.bankInfoBBB?.bankName}
-                            </>
-                          )}
-                      </span>
-                    </div>
-                    )}
-                    {/* 3등급 */}
-                    {store?.bankInfoCCC && (
-                    <div className="flex flex-row items-center gap-1">
-                      <div className="w-10 h-5 rounded-full bg-yellow-500 flex items-center justify-center">
-                        <span className="text-xs text-white">3등급</span>
-                      </div>
-                      <span className="text-sm text-zinc-500">
-                          {store?.bankInfoCCC?.accountNumber.length > 5 ? (
-                            <>
-                              {store?.bankInfoCCC?.accountHolder
-                              + " " + store?.bankInfoCCC?.accountNumber.slice(0, 5) + "..."
-                              + " " + store?.bankInfoCCC?.bankName}
-                            </>
-                          ) : (
-                            <>
-                              {store?.bankInfoCCC?.accountHolder
-                              + " " + store?.bankInfoCCC?.accountNumber
-                              + " " + store?.bankInfoCCC?.bankName}
-                            </>
-                          )}
-                      </span>
-                    </div>
-                    )}
-                    {/* 4등급 */}
-                    {store?.bankInfoDDD && (
-                    <div className="flex flex-row items-center gap-1">
-                      <div className="w-10 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                        <span className="text-xs text-white">4등급</span>
-                      </div>
-                      <span className="text-sm text-zinc-500">
-                          {store?.bankInfoDDD?.accountNumber.length > 5 ? (
-                            <>
-                              {store?.bankInfoDDD?.accountHolder
-                              + " " + store?.bankInfoDDD?.accountNumber.slice(0, 5) + "..."
-                              + " " + store?.bankInfoDDD?.bankName}
-                            </>
-                          ) : (
-                            <>
-                              {store?.bankInfoDDD?.accountHolder
-                              + " " + store?.bankInfoDDD?.accountNumber
-                              + " " + store?.bankInfoDDD?.bankName}
-                            </>
-                          )}
-                      </span>
-                    </div>
-                    )}
-                  
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* 판매용 USDT지갑 */}
-              {/* storeInfo.walletAddress */}
-              <div className="flex flex-col sm:flex-row items-start justify-start gap-1">
-                <div className="flex flex-row gap-2 items-center">
-                  {/* dot */}
-                  <div className="w-1 h-1 rounded-full bg-zinc-500" /> 
-                  <span className="text-sm text-zinc-500">
-                    P2P 거래소 판매용 USDT지갑
-                  </span>
-                </div>
-                <div className="w-56 flex flex-row items-center justify-start gap-1">
-                  <Image
-                    src="/icon-shield.png"
-                    alt="Shield"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-sm text-zinc-500">
-                    {
-                    store?.sellerWalletAddress
-                    && store?.sellerWalletAddress.slice(0, 6) + "..." + store?.sellerWalletAddress.slice(-4)
-                    }
-                  </span>
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+                  <div className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span>실시간 운영 요약</span>
                 </div>
               </div>
 
-              {/* 자동결제용 USDT지갑 */}
-              {/* store.settlementWalletAddress */}
-              <div className="flex flex-col sm:flex-row items-start justify-start gap-1">
-                <div className="flex flex-row gap-2 items-center">
-                  {/* dot */}
-                  <div className="w-1 h-1 rounded-full bg-zinc-500" />
-                  <span className="text-sm text-zinc-500">
-                    가맹점 자동결제용 USDT지갑
-                  </span>
-                </div>
-                <div className="w-56 flex flex-row items-center justify-start gap-1">
-                  <Image
-                    src="/icon-shield.png"
-                    alt="Shield"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-sm text-zinc-500">
-                    {
-                    store?.settlementWalletAddress
-                    && store?.settlementWalletAddress.slice(0, 6) + "..." + store?.settlementWalletAddress.slice(-4)
-                    }
-                  </span>
-                </div>
-              </div>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-4 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.45)]">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-900/5 ring-1 ring-slate-200">
+                        <Image
+                          src="/icon-bank.png"
+                          alt="Bank"
+                          width={20}
+                          height={20}
+                          className="rounded-lg"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900">
+                          P2P 거래소 입금통장
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          거래 등급별 입금 계좌
+                        </div>
+                      </div>
+                    </div>
 
-
-              {/*address && (
-                  <div className={`
-                    ${address === store?.sellerWalletAddress ? 'bg-green-100' : 'bg-white'}
-                    p-4 rounded-lg shadow-md
-                    flex flex-col items-end
-                  `}>
-
-                      <div className="flex flex-row items-center justify-center gap-2">
-
-                          <div className="flex flex-row gap-2 items-center">
-                            <div className="w-1 h-1 rounded-full bg-zinc-500" />
-                            <span className="text-sm text-zinc-500">
-                              나의 USDT지갑
-                            </span>
+                    {bankSummaryItems.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {bankSummaryItems.map((item) => (
+                          <div
+                            key={item.label}
+                            className="min-w-[14rem] flex-1 rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-3"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`inline-flex min-w-[3rem] items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold ${item.badgeClassName}`}
+                              >
+                                {item.label}
+                              </span>
+                              <span className="truncate text-sm font-medium text-slate-700">
+                                {item.summary}
+                              </span>
+                            </div>
                           </div>
-
-                          <Image
-                              src="/icon-shield.png"
-                              alt="Wallet"
-                              width={100}
-                              height={100}
-                              className="w-6 h-6"
-                          />
-                          <button
-                              className="text-lg text-zinc-600 underline"
-                              onClick={() => {
-                                  navigator.clipboard.writeText(address);
-                                  toast.success(Copied_Wallet_Address);
-                              } }
-                          >
-                              {address.substring(0, 6)}...{address.substring(address.length - 4)}
-                          </button>
-
+                        ))}
                       </div>
-                      <div className="flex flex-row items-center justify-center gap-1">
-                          <Image
-                              src="/icon-tether.png"
-                              alt="Tether"
-                              width={20}
-                              height={20}
-                              className="w-5 h-5"
-                          />
-                          <span className="text-2xl xl:text-4xl font-semibold text-[#409192]"
-                              style={{ fontFamily: 'monospace' }}
-                          >
-                              {Number(balance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          </span>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-400">
+                        등록된 입금 계좌가 없습니다.
                       </div>
-                      
-                      {address === store?.sellerWalletAddress && (
-                        <div className="flex flex-row gap-2 items-center">
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {infrastructureWallets.map((wallet) => (
+                    <div
+                      key={wallet.label}
+                      className={`rounded-3xl border bg-white/95 p-4 shadow-[0_18px_30px_-28px_rgba(15,23,42,0.45)] ${wallet.borderClassName}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${wallet.accentClassName} ring-1 ring-inset ring-white/70`}
+                        >
                           <Image
-                            src="/icon-info.png"
-                            alt="Information"
+                            src={wallet.iconSrc}
+                            alt={wallet.iconAlt}
                             width={20}
                             height={20}
                             className="w-5 h-5"
                           />
-                          <span className="text-sm text-zinc-500">
-                            이 지갑은 판매용 지갑입니다.
-                          </span>
                         </div>
-                      )}
-
-                  </div>
-              )}
-              */}
-
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-slate-900">
+                            {wallet.label}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {wallet.helperText}
+                          </div>
+                          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-2">
+                            <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-slate-400">
+                              Wallet
+                            </div>
+                            <div className="mt-1 font-mono text-sm font-semibold tracking-[0.04em] text-slate-700">
+                              {formatWalletAddress(wallet.address)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-2 mt-4">
+            {version !== 'bangbang' && (
+              <div className="rounded-[28px] border border-slate-900/10 bg-[linear-gradient(160deg,#0f172a_0%,#172554_46%,#1e293b_100%)] p-5 text-white shadow-[0_28px_60px_-38px_rgba(15,23,42,0.85)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-200">
+                      Balance
+                    </span>
+                    <h2 className="mt-3 text-lg font-semibold sm:text-xl">
+                      실시간 보유 현황
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-300">
+                      자동결제 지갑 기준 보유량과 오늘 차감된 수수료를 보여줍니다.
+                    </p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 backdrop-blur-sm">
+                    <Image
+                      src="/icon-escrow.png"
+                      alt="Escrow"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5"
+                    />
+                  </div>
+                </div>
 
-              {/* 가맹점 보유량 */}
-              {version !== 'bangbang' && (
-              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2
-                bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
-
-                  <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
-                    <div className="flex flex-row gap-2 items-center">
-                      <div className="flex flex-row gap-2 items-center">
-                        <Image
-                          src="/icon-escrow.png"
-                          alt="Escrow"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-lg font-semibold text-zinc-500">
-                          현재 보유량
-                        </span>
+                <div className="mt-5 space-y-3">
+                  <div className="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-medium text-slate-200">
+                        현재 보유량
                       </div>
-
-                      <div className="
-                        w-40
-                        flex flex-row gap-2 items-center justify-between
-                      ">
-                        <Image
-                          src="/icon-tether.png"
-                          alt="Tether"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-lg text-[#409192] font-semibold"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {
-                            escrowBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          }
-                        </span>
-                      </div>
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
                     </div>
-
-                    {/* 오늘 수수료 차감량 */}
-                    <div className="flex flex-row gap-2 items-center">
-                      <span className="text-sm text-zinc-500 font-semibold">
-                        오늘 수수료 차감량
+                    <div className="mt-3 flex items-end gap-2">
+                      <span
+                        className={`text-3xl font-semibold tracking-tight ${escrowBalanceTextClassName}`}
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {formatUsdtAmount(escrowBalance)}
                       </span>
-                      <div className="
-                        w-40
-                        flex flex-row gap-2 items-center justify-between
-                      ">
-                        <Image
-                          src="/icon-tether.png"
-                          alt="Tether"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-lg text-red-600 font-semibold"
-                          style={{ fontFamily: 'monospace' }}
-                        >
-                          {
-                            todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0 ?
-                            todayMinusedEscrowAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') :
-                            '0.000'
-                          }
-                        </span>
-                      </div>
+                      <span className="pb-1 text-sm font-medium uppercase tracking-[0.24em] text-slate-400">
+                        USDT
+                      </span>
                     </div>
-
                   </div>
 
+                  <div className="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-medium text-slate-200">
+                        오늘 수수료 차감량
+                      </div>
+                      <Image
+                        src="/icon-tether.png"
+                        alt="Tether"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5"
+                      />
+                    </div>
+                    <div className="mt-3 flex items-end gap-2">
+                      <span
+                        className="text-2xl font-semibold tracking-tight text-rose-300"
+                        style={{ fontFamily: 'monospace' }}
+                      >
+                        {formatUsdtAmount(todayEscrowFeeAmount)}
+                      </span>
+                      <span className="pb-1 text-sm font-medium uppercase tracking-[0.24em] text-slate-400">
+                        USDT
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-                {/* 보유량 내역 */}
                 <button
                   onClick={() => {
                     router.push('/' + params.lang + '/' + params.center + '/escrow-history');
                   }}
-                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80
-                  flex items-center justify-center gap-2
-                  border border-zinc-300 hover:border-[#3167b4]"
+                  className="mt-5 flex w-full items-center justify-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-[0_16px_32px_-24px_rgba(255,255,255,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-100"
                 >
                   보유량 내역
                 </button>
-
               </div>
-              )}
-
-
-
-
-
-
-
-            </div>
+            )}
 
           </div>
 
