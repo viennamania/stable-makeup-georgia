@@ -6133,18 +6133,18 @@ const fetchBuyOrders = async () => {
               </div>
             </div>
 
+            <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
+              <span className="text-xs font-medium text-emerald-700">TOTAL USDT</span>
+              <div className="flex items-center gap-1.5">
+                <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
+                <span className="text-xl font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                  {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                </span>
+              </div>
+            </div>
+
             {isSellerWalletMonitorOpen ? (
               <>
-                <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
-                  <span className="text-xs font-medium text-emerald-700">TOTAL USDT</span>
-                  <div className="flex items-center gap-1.5">
-                    <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
-                    <span className="text-xl font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
-                      {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </span>
-                  </div>
-                </div>
-
                 {sellersBalance.length > 0 ? (
                   <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-44 overflow-y-auto pr-0.5">
                     {sellersBalance.map((seller, index) => {
@@ -6241,18 +6241,18 @@ const fetchBuyOrders = async () => {
               </div>
             </div>
 
+            <div className="mt-1.5 flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
+              <span className="text-xs font-medium text-sky-700">TOTAL USDT</span>
+              <div className="flex items-center gap-1.5">
+                <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
+                <span className="text-xl font-bold text-sky-700" style={{ fontFamily: 'monospace' }}>
+                  {(animatedBuyerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                </span>
+              </div>
+            </div>
+
             {isBuyerWalletMonitorOpen ? (
               <>
-                <div className="mt-1.5 flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
-                  <span className="text-xs font-medium text-sky-700">TOTAL USDT</span>
-                  <div className="flex items-center gap-1.5">
-                    <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
-                    <span className="text-xl font-bold text-sky-700" style={{ fontFamily: 'monospace' }}>
-                      {(animatedBuyerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    </span>
-                  </div>
-                </div>
-
                 {buyersBalance.length > 0 ? (
                   <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-52 overflow-y-auto pr-0.5">
                     {buyersBalance.map((buyer, index) => (
