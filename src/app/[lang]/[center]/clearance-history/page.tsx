@@ -3779,20 +3779,20 @@ export default function Index({ params }: any) {
 
 
 
+          <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
           {/* buyOrderStats.totalByBuyerBankAccountNumber */}
-          <div className="w-full
-            flex flex-col sm:flex-row items-start justify-start gap-4
+          <div className="w-full min-w-0
+            flex flex-col sm:flex-row items-start justify-start gap-3
             bg-white
-            p-4 rounded-2xl border border-zinc-200 shadow-sm
+            p-3 rounded-2xl border border-zinc-200 shadow-sm
           ">
 
-            <div className="w-full sm:w-24 text-sm font-semibold mb-2 sm:mb-0 text-zinc-800">
-              구매자<br />통장별<br />청산통계
+            <div className="w-full sm:w-[150px] text-sm font-semibold leading-tight text-zinc-800">
+              구매자 통장별 청산통계
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4
-              w-full
-            ">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 w-full">
               {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
                 <div key={index} className="flex flex-col gap-2 items-center
                   border border-zinc-200 rounded-lg p-4
@@ -4051,10 +4051,10 @@ export default function Index({ params }: any) {
                 판매자 통장별 청산통계
               </div>
 
-              <div className="flex w-full flex-wrap items-start gap-2">
+              <div className="flex w-full flex-col gap-2">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="w-fit min-w-[172px] max-w-[240px] flex flex-col gap-1.5 items-start
-                    border border-zinc-200 rounded-lg p-2.5
+                  <div key={index} className="w-full flex flex-row flex-wrap items-center justify-between gap-3
+                    border border-zinc-200 rounded-lg p-3
                     bg-zinc-50 shadow-sm
                   ">
 
@@ -4085,7 +4085,7 @@ export default function Index({ params }: any) {
                       </button>
                     </div>
 
-                    <div className="min-w-0 flex flex-col items-start gap-1">
+                    <div className="min-w-0 flex flex-row flex-wrap items-center gap-3 sm:gap-4">
                       <div className="inline-flex w-fit items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
                         {item.totalCount?.toLocaleString() || '0'}건
                       </div>
@@ -4105,7 +4105,7 @@ export default function Index({ params }: any) {
                             : '0.000'}
                         </span>
                       </div>
-                      <span className="block min-w-0 max-w-[190px] truncate whitespace-nowrap pl-6 text-sm font-semibold text-yellow-600"
+                      <span className="block min-w-0 max-w-[190px] truncate whitespace-nowrap text-sm font-semibold text-yellow-600"
                         style={{ fontFamily: 'monospace' }}>
                         {item.totalKrwAmount?.toLocaleString() || '0'}
                       </span>
@@ -4116,6 +4116,8 @@ export default function Index({ params }: any) {
               </div>
 
             </div>
+
+          </div>
 
             <div className="w-full min-w-0 flex flex-col gap-1.5
               bg-white
@@ -4132,7 +4134,7 @@ export default function Index({ params }: any) {
                     key={index}
                     className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 flex flex-col gap-2"
                   >
-                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2">
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-zinc-100 border border-zinc-200">
                         <Image
                           src="/icon-seller.png"
@@ -4160,15 +4162,6 @@ export default function Index({ params }: any) {
                           {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                         </button>
                       </div>
-
-                      <button
-                        onClick={() => {
-                          router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
-                        }}
-                        className="shrink-0 whitespace-nowrap px-2.5 py-1.5 rounded-lg border border-zinc-300 bg-white text-[#3167b4] text-sm font-semibold hover:bg-zinc-50 transition"
-                      >
-                        출금하기
-                      </button>
                     </div>
 
                     <div className="min-w-0 flex flex-wrap items-center gap-1.5 text-sm font-semibold text-emerald-700">
