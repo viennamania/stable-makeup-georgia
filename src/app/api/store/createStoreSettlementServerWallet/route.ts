@@ -11,10 +11,11 @@ import {
 } from "@lib/api/user";
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
-import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 export const runtime = "nodejs";
 export const preferredRegion = "icn1";
+const ROUTE_PATH = "/api/store/createStoreSettlementServerWallet";
 
 const normalizeString = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
 
   const guard = await verifyStoreSettingsAdminGuard({
     request,
-    route: "/api/store/createStoreSettlementServerWallet",
+    route: ROUTE_PATH,
     body,
     requireSigned: true,
   });
@@ -113,6 +114,13 @@ export async function POST(request: NextRequest) {
       { status: guard.status },
     );
   }
+
+  const settlementWalletAudit = {
+    route: ROUTE_PATH,
+    publicIp: guard.ip || getRequestIp(request),
+    requesterWalletAddress: guard.requesterWalletAddress,
+    userAgent: request.headers.get("user-agent"),
+  };
 
   const store = await getStoreByStorecode({ storecode });
   if (!store) {
@@ -139,6 +147,7 @@ export async function POST(request: NextRequest) {
     const updatedStore = await updateStoreSettlementWalletAddress({
       storecode,
       settlementWalletAddress: existingWalletAddress,
+      audit: settlementWalletAudit,
     });
 
     if (!updatedStore) {
@@ -231,6 +240,7 @@ export async function POST(request: NextRequest) {
     const updatedStore = await updateStoreSettlementWalletAddress({
       storecode,
       settlementWalletAddress: smartAccountAddress,
+      audit: settlementWalletAudit,
     });
 
     if (!updatedStore) {

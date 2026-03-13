@@ -8,7 +8,9 @@ import {
 } from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
-import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
+
+const ROUTE_PATH = "/api/store/updateStoreSettlementWalletAddress";
 
 
 export async function POST(request: NextRequest) {
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const guard = await verifyStoreSettingsAdminGuard({
     request,
-    route: "/api/store/updateStoreSettlementWalletAddress",
+    route: ROUTE_PATH,
     body,
     requireSigned: true,
   });
@@ -60,6 +62,12 @@ export async function POST(request: NextRequest) {
   const result = await updateStoreSettlementWalletAddress({
     storecode,
     settlementWalletAddress: normalizedSettlementWalletAddress,
+    audit: {
+      route: ROUTE_PATH,
+      publicIp: guard.ip || getRequestIp(request),
+      requesterWalletAddress: guard.requesterWalletAddress,
+      userAgent: request.headers.get("user-agent"),
+    },
   });
 
   if (!result) {

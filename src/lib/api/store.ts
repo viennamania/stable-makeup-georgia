@@ -38,6 +38,15 @@ const getStoreByCodeCache = () => {
   return globalStoreReadState.__storeByCodeCache;
 };
 
+const clearCachedStoreByCode = (storecode: string) => {
+  const cache = getStoreByCodeCache();
+  const key = String(storecode || "").trim().toLowerCase();
+  if (!key) {
+    return;
+  }
+  cache.delete(key);
+};
+
 const getCachedStoreByCode = (storecode: string) => {
   const cache = getStoreByCodeCache();
   const key = String(storecode || "").trim().toLowerCase();
@@ -516,23 +525,91 @@ export async function updateStoreSellerWalletAddress(
 
 
 // updateStoreSettlementWalletAddress
+const STORE_SETTLEMENT_WALLET_HISTORY_COLLECTION = "storeSettlementWalletAddressHistory";
+
+type UpdateStoreSettlementWalletAddressAudit = {
+  route?: string | null;
+  publicIp?: string | null;
+  requesterWalletAddress?: string | null;
+  userAgent?: string | null;
+  updatedAt?: Date | string | null;
+};
+
+const normalizeAuditString = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const logStoreSettlementWalletAddressHistory = async (
+  historyCollection: any,
+  payload: any,
+) => {
+  try {
+    await historyCollection.insertOne(payload);
+  } catch (error) {
+    console.error("Failed to log settlement wallet address history", error);
+  }
+};
+
 export async function updateStoreSettlementWalletAddress(
   {
     storecode,
     settlementWalletAddress,
+    audit,
   }: {
     storecode: string;
     settlementWalletAddress: string;
+    audit?: UpdateStoreSettlementWalletAddressAudit;
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection(STORE_SETTLEMENT_WALLET_HISTORY_COLLECTION);
+  const safeStorecode = normalizeAuditString(storecode);
+  const nextSettlementWalletAddress = normalizeAuditString(settlementWalletAddress);
+
+  const existingStore = await collection.findOne(
+    { storecode: safeStorecode },
+    { projection: { settlementWalletAddress: 1 } },
+  );
+
+  if (!existingStore) {
+    return false;
+  }
+
+  const beforeSettlementWalletAddress =
+    normalizeAuditString(existingStore?.settlementWalletAddress) || null;
 
   // update storecode
   const result = await collection.updateOne(
-    { storecode: storecode },
-    { $set: { settlementWalletAddress: settlementWalletAddress } }
+    { storecode: safeStorecode },
+    { $set: { settlementWalletAddress: nextSettlementWalletAddress } }
   );
+
+  if (result?.acknowledged && result?.matchedCount > 0) {
+    clearCachedStoreByCode(safeStorecode);
+
+    const afterSettlementWalletAddress = nextSettlementWalletAddress || null;
+    await logStoreSettlementWalletAddressHistory(historyCollection, {
+      storecode: safeStorecode,
+      field: "settlementWalletAddress",
+      before: beforeSettlementWalletAddress,
+      after: afterSettlementWalletAddress,
+      changed:
+        String(beforeSettlementWalletAddress || "").toLowerCase() !==
+        String(afterSettlementWalletAddress || "").toLowerCase(),
+      publicIp: normalizeAuditString(audit?.publicIp) || null,
+      requesterWalletAddress:
+        normalizeAuditString(audit?.requesterWalletAddress).toLowerCase() || null,
+      userAgent: normalizeAuditString(audit?.userAgent).slice(0, 1000) || null,
+      route: normalizeAuditString(audit?.route) || null,
+      updatedAt: audit?.updatedAt ? new Date(audit.updatedAt) : new Date(),
+    });
+  }
+
   return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
