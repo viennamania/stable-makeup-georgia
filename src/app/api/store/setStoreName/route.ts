@@ -3,19 +3,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	updateStoreName,
 } from '@lib/api/store';
-
-import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
+import { verifyStoreBrandingMutationGuard } from "@/lib/server/store-branding-mutation-guard";
 
 
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  const guard = await verifyStoreSettingsAdminGuard({
+  const guard = await verifyStoreBrandingMutationGuard({
     request,
     route: "/api/store/setStoreName",
     body,
-  requireSigned: true,
   });
 
   if (!guard.ok) {

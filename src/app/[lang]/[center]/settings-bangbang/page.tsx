@@ -51,6 +51,7 @@ import { balanceOf, transfer } from "thirdweb/extensions/erc20";
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 
 
@@ -466,10 +467,10 @@ export default function SettingsPage({ params }: any) {
 
         setSettingStoreName(true);
 
-        const response = await postAdminSignedJson({
+        const response = await postCenterStoreAdminSignedJson({
             account: smartAccount,
             route: '/api/store/setStoreName',
-            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            storecode: params.center,
             requesterWalletAddress: address,
             body: {
                 lang: params.lang,
@@ -516,10 +517,10 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         setWritingStoreDescription(true);
-        const response = await postAdminSignedJson({
+        const response = await postCenterStoreAdminSignedJson({
             account: smartAccount,
             route: '/api/store/setStoreDescription',
-            signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+            storecode: params.center,
             requesterWalletAddress: address,
             body: {
                 lang: params.lang,
@@ -1904,6 +1905,7 @@ export default function SettingsPage({ params }: any) {
                                 <Uploader
                                     lang={params.lang}
                                     storecode={params.center as string}
+                                    signMode="center"
                                 />
                             </div>
 

@@ -4,21 +4,29 @@ import { useState, useCallback, useMemo, ChangeEvent, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import LoadingDots from './loading-dots'
 import { PutBlobResult } from '@vercel/blob'
+import { useActiveAccount } from "thirdweb/react";
 
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 import { getDictionary } from "../app/dictionaries";
+
+const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 
 export default function Uploader(
 
   {
     lang,
     storecode,
+    signMode = "admin",
   }: {
     lang: string,
-    storecode: string  
+    storecode: string,
+    signMode?: "admin" | "center",
   }
 
 ) {
+  const activeAccount = useActiveAccount();
 
   //console.log("lang", lang);
 
@@ -150,22 +158,39 @@ const {
 
             ///console.log("url", url);
 
+            if (!activeAccount) {
+              throw new Error('지갑을 먼저 연결하세요.');
+            }
 
-            const result = await fetch("/api/store/setStoreLogo", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                storecode: storecode,
-                storeLogo: url,
-              }),
-            });
+            const result = signMode === "center"
+              ? await postCenterStoreAdminSignedJson({
+                  account: activeAccount,
+                  route: "/api/store/setStoreLogo",
+                  storecode,
+                  requesterWalletAddress: activeAccount.address,
+                  body: {
+                    storecode,
+                    walletAddress: activeAccount.address,
+                    storeLogo: url,
+                  },
+                })
+              : await postAdminSignedJson({
+                  account: activeAccount,
+                  route: "/api/store/setStoreLogo",
+                  signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+                  requesterWalletAddress: activeAccount.address,
+                  body: {
+                    storecode,
+                    walletAddress: activeAccount.address,
+                    storeLogo: url,
+                  },
+                });
 
-            
+            const resultData = await result.json();
 
-
-
+            if (!result.ok || !resultData?.result) {
+              throw new Error(resultData?.error || '로고 저장에 실패했습니다.');
+            }
 
             toast(
               (t: { id: string } 
@@ -231,12 +256,11 @@ const {
             const error = await res.text()
             toast.error(error)
           }
-          
+        }).catch((error) => {
+          toast.error(error instanceof Error ? error.message : '업로드에 실패했습니다.');
+        }).finally(() => {
           setSaving(false)
-
-
           setFileUpdated(false);
-
         })
       }}
     >
