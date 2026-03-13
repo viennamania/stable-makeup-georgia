@@ -1356,6 +1356,15 @@ export default function Index({ params }: any) {
       }
     };
 
+    const handlePlaceOrderClick = () => {
+      if (isEmbedded) {
+        buyOrder();
+        return;
+      }
+
+      openBuyOrderPreviewModal();
+    };
+
     const buyOrder = async () => {
 
       if (buyOrdering) {
@@ -2937,7 +2946,7 @@ export default function Index({ params }: any) {
                                       // open modal of trade detail
                                       ///openModal();
 
-                                      openBuyOrderPreviewModal();
+                                      handlePlaceOrderClick();
                                   }}
                               >
                                 {Place_Order}
@@ -3139,7 +3148,7 @@ export default function Index({ params }: any) {
                                           }
                                         `}
                                         onClick={() => {
-                                            openBuyOrderPreviewModal();
+                                            handlePlaceOrderClick();
                                         }}
                                     >
                                       매입신청
@@ -4484,6 +4493,7 @@ export default function Index({ params }: any) {
           </Modal>
 
 
+          {!isEmbedded && (
           <Modal isOpen={isModalOpen} onClose={closeModal} panelClassName="max-w-2xl p-0">
             <div className="overflow-hidden rounded-2xl">
               <div className="border-b border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 text-white">
@@ -4660,6 +4670,7 @@ export default function Index({ params }: any) {
               </div>
             </div>
           </Modal>
+          )}
 
 
         </main>
