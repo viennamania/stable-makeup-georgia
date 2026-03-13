@@ -8,7 +8,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 const ClearancePage = dynamic(
-  () => import("../[storecode]/clearance/page"),
+  () => import("../[storecode]/clearance/clearance-page"),
   {
     ssr: false,
     loading: () => (

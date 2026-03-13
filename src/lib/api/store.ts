@@ -505,6 +505,7 @@ export async function updateStoreAdminWalletAddress(
 // updateStoreSellerWalletAddress
 const STORE_SELLER_WALLET_HISTORY_COLLECTION = "storeSellerWalletAddressHistory";
 const STORE_SETTLEMENT_WALLET_HISTORY_COLLECTION = "storeSettlementWalletAddressHistory";
+const STORE_PRIVATE_SELLER_WALLET_HISTORY_COLLECTION = "storePrivateSellerWalletAddressHistory";
 
 type UpdateStoreWalletAddressAudit = {
   route?: string | null;
@@ -669,18 +670,63 @@ export async function updateStorePrivateSellerWalletAddress(
   {
     storecode,
     privateSellerWalletAddress,
+    audit,
   }: {
     storecode: string;
     privateSellerWalletAddress: string;
+    audit?: UpdateStoreWalletAddressAudit;
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection(STORE_PRIVATE_SELLER_WALLET_HISTORY_COLLECTION);
+  const safeStorecode = normalizeAuditString(storecode);
+  const nextPrivateSellerWalletAddress = normalizeAuditString(privateSellerWalletAddress);
+
+  const existingStore = await collection.findOne(
+    { storecode: safeStorecode },
+    { projection: { privateSellerWalletAddress: 1 } },
+  );
+
+  if (!existingStore) {
+    return false;
+  }
+
+  const beforePrivateSellerWalletAddress =
+    normalizeAuditString(existingStore?.privateSellerWalletAddress) || null;
+
   // update storecode
   const result = await collection.updateOne(
-    { storecode: storecode },
-    { $set: { privateSellerWalletAddress: privateSellerWalletAddress } }
+    { storecode: safeStorecode },
+    { $set: { privateSellerWalletAddress: nextPrivateSellerWalletAddress } }
   );
+
+  if (result?.acknowledged && result?.matchedCount > 0) {
+    clearCachedStoreByCode(safeStorecode);
+
+    const afterPrivateSellerWalletAddress = nextPrivateSellerWalletAddress || null;
+    await logStoreWalletAddressHistory(
+      historyCollection,
+      {
+        storecode: safeStorecode,
+        field: "privateSellerWalletAddress",
+        before: beforePrivateSellerWalletAddress,
+        after: afterPrivateSellerWalletAddress,
+        changed:
+          String(beforePrivateSellerWalletAddress || "").toLowerCase() !==
+          String(afterPrivateSellerWalletAddress || "").toLowerCase(),
+        publicIp: normalizeAuditString(audit?.publicIp) || null,
+        requesterWalletAddress:
+          normalizeAuditString(audit?.requesterWalletAddress).toLowerCase() || null,
+        userAgent: normalizeAuditString(audit?.userAgent).slice(0, 1000) || null,
+        route: normalizeAuditString(audit?.route) || null,
+        updatedAt: audit?.updatedAt ? new Date(audit.updatedAt) : new Date(),
+      },
+      "Failed to log private seller wallet address history",
+    );
+  }
+
   return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 

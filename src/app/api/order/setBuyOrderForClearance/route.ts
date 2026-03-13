@@ -6,15 +6,23 @@ import {
   insertBuyOrderForClearance,
 } from "@lib/api/order";
 import { getStoreByStorecode } from "@lib/api/store";
-import { getOneByWalletAddress } from "@lib/api/user";
+import { getOneServerWalletByStorecodeAndWalletAddress } from "@lib/api/user";
 import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 import {
+  DEFAULT_CLEARANCE_DAILY_MAX_KRW_AMOUNT,
+  DEFAULT_CLEARANCE_MAX_KRW_AMOUNT,
+  findExistingActiveClearanceOrder,
+  formatKrwAmount,
   getConfiguredClearanceRequesterWallets,
   getConfiguredClearanceSettlementWalletAddress,
+  getClearanceOrderDailyTotals,
+  getCurrentKstDayRange,
   isConfiguredClearanceRequesterWallet,
+  resolveConfiguredClearanceLimit,
   resolveConfiguredClearanceBuyer,
   resolveConfiguredClearanceSellerBankInfo,
 } from "@/lib/server/clearance-order-security";
+import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
 import {
   getRequestCountry,
   getRequestIp,
@@ -23,6 +31,7 @@ import {
 
 const ROUTE = "/api/order/setBuyOrderForClearance";
 const SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX = "stable-georgia:set-buy-order-for-clearance:v1";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 type SetBuyOrderForClearanceRequestBody = {
   storecode?: unknown;
@@ -210,6 +219,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (normalizedClearanceWalletAddress === ZERO_ADDRESS) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "zero_wallet_address_not_allowed",
+      meta: {
+        storecode,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "walletAddress cannot be zero address",
+      },
+      { status: 400 },
+    );
+  }
+
   if (!privateSale) {
     await writeAdminApiCallLog({
       status: "blocked",
@@ -244,6 +271,47 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const platformAdminStore = await getStoreByStorecode({ storecode: "admin" });
+  const platformAdminWalletAddress = normalizeWalletAddress(platformAdminStore?.adminWalletAddress);
+  const normalizedRequesterWalletAddress = normalizeWalletAddress(requesterWalletAddress);
+
+  if (!platformAdminWalletAddress) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "missing_platform_admin_wallet",
+      meta: {
+        storecode,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Platform admin wallet is not configured",
+      },
+      { status: 500 },
+    );
+  }
+
+  if (normalizedRequesterWalletAddress !== platformAdminWalletAddress) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "forbidden_not_platform_admin_wallet",
+      meta: {
+        storecode,
+        platformAdminWalletAddress,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "Only the platform admin wallet can create clearance buy orders",
+      },
+      { status: 403 },
+    );
+  }
+
   if (!isConfiguredClearanceRequesterWallet(store, normalizedClearanceWalletAddress)) {
     await writeAdminApiCallLog({
       status: "blocked",
@@ -263,7 +331,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const clearanceUser = await getOneByWalletAddress("admin", normalizedClearanceWalletAddress);
+  const clearanceUser = await getOneServerWalletByStorecodeAndWalletAddress(
+    "admin",
+    normalizedClearanceWalletAddress,
+  );
   if (!clearanceUser) {
     await writeAdminApiCallLog({
       status: "blocked",
@@ -277,6 +348,91 @@ export async function POST(request: NextRequest) {
       {
         result: null,
         error: "Configured clearance wallet user not found",
+      },
+      { status: 400 },
+    );
+  }
+
+  let resolvedThirdwebServerWallet = null;
+  try {
+    resolvedThirdwebServerWallet = await resolveThirdwebServerWalletByAddress(
+      normalizedClearanceWalletAddress,
+    );
+  } catch (error) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "clearance_requester_validation_failed",
+      meta: {
+        storecode,
+        message: error instanceof Error ? error.message : "unknown",
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: error instanceof Error ? error.message : "Failed to validate clearance wallet",
+      },
+      { status: 500 },
+    );
+  }
+
+  if (!resolvedThirdwebServerWallet) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "clearance_requester_not_server_wallet",
+      meta: {
+        storecode,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "walletAddress must be an active Thirdweb server wallet",
+      },
+      { status: 400 },
+    );
+  }
+
+  if (resolvedThirdwebServerWallet.smartAccountAddress !== normalizedClearanceWalletAddress) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "clearance_requester_not_smart_account",
+      meta: {
+        storecode,
+        signerAddress: resolvedThirdwebServerWallet.signerAddress,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "walletAddress must be a Thirdweb server wallet smart account address",
+      },
+      { status: 400 },
+    );
+  }
+
+  const clearanceUserSignerAddress = normalizeWalletAddress(clearanceUser?.signerAddress);
+  if (
+    !clearanceUserSignerAddress
+    || clearanceUserSignerAddress !== resolvedThirdwebServerWallet.signerAddress
+  ) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "clearance_requester_signer_mismatch",
+      meta: {
+        storecode,
+        expectedSignerAddress: clearanceUserSignerAddress,
+        resolvedSignerAddress: resolvedThirdwebServerWallet.signerAddress,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "walletAddress signer does not match the configured server wallet user",
       },
       { status: 400 },
     );
@@ -315,6 +471,117 @@ export async function POST(request: NextRequest) {
       {
         result: null,
         error: "Invalid buyer bank info",
+      },
+      { status: 400 },
+    );
+  }
+
+  const impliedRate = krwAmount / usdtAmount;
+  const allowedRateDelta = Math.max(1, rate * 0.01);
+  if (Math.abs(impliedRate - rate) > allowedRateDelta) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "rate_amount_mismatch",
+      meta: {
+        storecode,
+        impliedRate,
+        allowedRateDelta,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "krwAmount, usdtAmount, and rate do not match within the allowed tolerance",
+      },
+      { status: 400 },
+    );
+  }
+
+  const maxKrwAmount = resolveConfiguredClearanceLimit({
+    storeValue: (store as Record<string, unknown>)?.clearanceMaxKrwAmount,
+    envValue: process.env.CLEARANCE_BUYORDER_MAX_KRW_AMOUNT,
+    fallback: DEFAULT_CLEARANCE_MAX_KRW_AMOUNT,
+  });
+
+  if (krwAmount > maxKrwAmount) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "amount_exceeds_per_order_limit",
+      meta: {
+        storecode,
+        maxKrwAmount,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: `매입신청 1회 한도는 ${formatKrwAmount(maxKrwAmount)}입니다.`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const existingActiveOrder = await findExistingActiveClearanceOrder({
+    storecode,
+    walletAddress: normalizedClearanceWalletAddress,
+    sellerBankInfo,
+    buyerBankInfo: buyer.bankInfo,
+    usdtAmount,
+    krwAmount,
+    rate,
+  });
+
+  if (existingActiveOrder) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "existing_active_buy_order",
+      meta: {
+        storecode,
+        existingOrderId: existingActiveOrder?._id?.toString?.() || null,
+        existingTradeId: existingActiveOrder?.tradeId || null,
+        existingStatus: existingActiveOrder?.status || null,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: "An identical active clearance buy order already exists",
+      },
+      { status: 409 },
+    );
+  }
+
+  const { startCreatedAtIso, endCreatedAtIso, label: kstDayLabel } = getCurrentKstDayRange();
+  const maxDailyKrwAmount = resolveConfiguredClearanceLimit({
+    storeValue: (store as Record<string, unknown>)?.clearanceDailyMaxKrwAmount,
+    envValue: process.env.CLEARANCE_BUYORDER_DAILY_MAX_KRW_AMOUNT,
+    fallback: DEFAULT_CLEARANCE_DAILY_MAX_KRW_AMOUNT,
+  });
+  const dailyTotals = await getClearanceOrderDailyTotals({
+    storecode,
+    startCreatedAtIso,
+    endCreatedAtIso,
+  });
+
+  if (dailyTotals.totalKrwAmount + krwAmount > maxDailyKrwAmount) {
+    await writeAdminApiCallLog({
+      status: "blocked",
+      reason: "amount_exceeds_daily_limit",
+      meta: {
+        storecode,
+        kstDayLabel,
+        maxDailyKrwAmount,
+        currentDailyKrwAmount: dailyTotals.totalKrwAmount,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        result: null,
+        error: `매입신청 1일 누적 한도는 ${formatKrwAmount(maxDailyKrwAmount)}입니다.`,
       },
       { status: 400 },
     );
@@ -393,6 +660,7 @@ export async function POST(request: NextRequest) {
       tradeId: result?.tradeId || null,
       storecode,
       settlementWalletAddress,
+      kstDayLabel,
     },
   });
 

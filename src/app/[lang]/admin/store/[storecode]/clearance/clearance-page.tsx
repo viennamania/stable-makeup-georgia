@@ -129,6 +129,40 @@ interface QueueCheckBanner {
   message: string;
 }
 
+interface ClearanceOrderPreview {
+  storecode: string;
+  requesterWalletAddress: string;
+  platformAdminWalletAddress: string | null;
+  requesterIsPlatformAdmin: boolean;
+  clearanceWalletAddress: string;
+  clearanceWalletAllowed: boolean;
+  clearanceWalletIsServerWallet: boolean;
+  settlementWalletAddress: string | null;
+  requestedKrwAmount: number;
+  requestedUsdtAmount: number;
+  rate: number;
+  maxKrwAmount: number;
+  maxDailyKrwAmount: number;
+  currentDailyKrwAmount: number;
+  currentDailyUsdtAmount: number;
+  currentDailyOrderCount: number;
+  projectedDailyKrwAmount: number;
+  remainingDailyKrwAmount: number;
+  withinPerOrderLimit: boolean;
+  withinDailyLimit: boolean;
+  withinRateTolerance: boolean;
+  impliedRate: number;
+  allowedRateDelta: number;
+  existingActiveOrder?: {
+    orderId?: string | null;
+    tradeId?: string | null;
+    status?: string | null;
+  } | null;
+  blockingReasons: string[];
+  canSubmit: boolean;
+  kstDayLabel: string;
+}
+
 
 
 const wallets = [
@@ -160,6 +194,7 @@ import {
 } from "@/app/config/contractAddresses";
 
 const SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX = "stable-georgia:set-buy-order-for-clearance:v1";
+const GET_CLEARANCE_ORDER_PREVIEW_SIGNING_PREFIX = "stable-georgia:get-clearance-order-preview:v1";
 
 const normalizeStringValue = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -170,6 +205,14 @@ const normalizeStringValue = (value: unknown): string => {
 
 const normalizeWalletAddressForSignature = (value: unknown): string => {
   return normalizeStringValue(value).toLowerCase();
+};
+
+const formatKrwDisplay = (value: unknown) => {
+  return `${Math.trunc(Number(value || 0)).toLocaleString("ko-KR")}원`;
+};
+
+const formatUsdtDisplay = (value: unknown) => {
+  return Number(value || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
 
@@ -744,13 +787,8 @@ export default function Index({ params }: any) {
         nextParams.delete('toDate');
       }
 
-      if (isEmbedded) {
-        nextParams.set('storecode', storecode);
-        router.push(`/${params.lang}/admin/store/clearance-management?${nextParams.toString()}`);
-        return;
-      }
-
-      router.push(`/${params.lang}/admin/store/${storecode}/clearance?${nextParams.toString()}`);
+      nextParams.set('storecode', storecode);
+      router.push(`/${params.lang}/admin/store/clearance-management?${nextParams.toString()}`);
     };
 
     const moveToPage = (targetPage: number, nextLimit = currentLimit) => {
@@ -1113,19 +1151,19 @@ export default function Index({ params }: any) {
 
 
     const [isModalOpen, setModalOpen] = useState(false);
+    const [clearanceOrderPreview, setClearanceOrderPreview] = useState<ClearanceOrderPreview | null>(null);
+    const [loadingClearanceOrderPreview, setLoadingClearanceOrderPreview] = useState(false);
 
-    const closeModal = () => setModalOpen(false);
+    const closeModal = () => {
+      setModalOpen(false);
+      setLoadingClearanceOrderPreview(false);
+      setClearanceOrderPreview(null);
+    };
     const openModal = () => setModalOpen(true);
     const [withdrawConfirmTarget, setWithdrawConfirmTarget] = useState<{
       index: number;
       order: BuyOrder;
     } | null>(null);
-
-    const goChat = () => {
-        console.log('Go Chat');
-        router.push(`/chat?tradeId=12345`);
-    }
-
 
     const [usdtAmount, setUsdtAmount] = useState(0);
 
@@ -1191,7 +1229,132 @@ export default function Index({ params }: any) {
       accountHolder: "",
     });
 
-    //console.log('buyerBankInfo', buyerBankInfo);
+    const buildClearanceOrderRequestPayload = () => {
+      let orderUsdtAmount = usdtAmount;
+
+      if (checkInputKrwAmount) {
+        orderUsdtAmount = parseFloat(Number(safeKrwAmount / rate).toFixed(2));
+      }
+
+      const clearanceWalletAddress = normalizeStringValue(store?.privateSaleWalletAddress || store?.sellerWalletAddress);
+      const requesterWalletAddress = normalizeWalletAddressForSignature(address);
+      const clearanceWalletAddressForSignature = normalizeWalletAddressForSignature(clearanceWalletAddress);
+      const signatureUsdtAmount = Number(orderUsdtAmount);
+      const signatureKrwAmount = Number(safeKrwAmount);
+      const signatureRate = Number(rate);
+
+      return {
+        requesterWalletAddress,
+        clearanceWalletAddress,
+        clearanceWalletAddressForSignature,
+        signatureUsdtAmount,
+        signatureKrwAmount,
+        signatureRate,
+        body: {
+          storecode: normalizedStorecode,
+          walletAddress: clearanceWalletAddressForSignature,
+          sellerBankInfo: {
+            bankName: withdrawalBankInfo.bankName,
+            accountNumber: withdrawalBankInfo.accountNumber,
+            accountHolder: withdrawalBankInfo.accountHolder,
+          },
+          usdtAmount: signatureUsdtAmount,
+          krwAmount: signatureKrwAmount,
+          rate: signatureRate,
+          privateSale: true,
+          buyer: {
+            bankInfo: {
+              bankName: buyerBankInfo.bankName,
+              accountNumber: buyerBankInfo.accountNumber,
+              accountHolder: buyerBankInfo.accountHolder,
+            },
+          },
+        },
+      };
+    };
+
+    const validateClearanceOrderRequestPayload = (payload: ReturnType<typeof buildClearanceOrderRequestPayload>) => {
+      if (
+        !normalizedStorecode
+        || !payload.clearanceWalletAddress
+        || !payload.requesterWalletAddress
+        || !payload.clearanceWalletAddressForSignature
+        || !Number.isFinite(payload.signatureUsdtAmount) || payload.signatureUsdtAmount <= 0
+        || !Number.isFinite(payload.signatureKrwAmount) || payload.signatureKrwAmount <= 0
+        || !Number.isFinite(payload.signatureRate) || payload.signatureRate <= 0
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    const openBuyOrderPreviewModal = async () => {
+      if (buyOrdering || loadingClearanceOrderPreview) {
+        return;
+      }
+
+      if (!address || !activeAccount) {
+        toast.error('지갑 연결이 필요합니다.');
+        return;
+      }
+
+      if (!isAdminUser) {
+        toast.error('관리자 권한(role=admin)에서만 매입신청이 가능합니다.');
+        return;
+      }
+
+      if (agreementPlaceOrder === false) {
+        toast.error('거래 조건 동의가 필요합니다.');
+        return;
+      }
+
+      if (safeKrwAmount <= 0) {
+        toast.error('매입금액을 입력해주세요.');
+        return;
+      }
+
+      const payload = buildClearanceOrderRequestPayload();
+      if (!validateClearanceOrderRequestPayload(payload)) {
+        toast.error('매입신청 요청 파라미터가 올바르지 않습니다.');
+        return;
+      }
+
+      setLoadingClearanceOrderPreview(true);
+
+      try {
+        const response = await postAdminSignedJson({
+          account: activeAccount,
+          route: '/api/order/getClearanceOrderPreview',
+          signingPrefix: GET_CLEARANCE_ORDER_PREVIEW_SIGNING_PREFIX,
+          requesterStorecode: 'admin',
+          requesterWalletAddress: payload.requesterWalletAddress,
+          body: payload.body,
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.result) {
+          toast.error(
+            typeof data?.error === 'string' && data.error.trim()
+              ? data.error.trim()
+              : '매입신청 미리 계산 정보를 불러오지 못했습니다.',
+          );
+          return;
+        }
+
+        setClearanceOrderPreview(data.result as ClearanceOrderPreview);
+        openModal();
+      } catch (error) {
+        toast.error(
+          error instanceof Error && error.message
+            ? error.message
+            : '매입신청 미리 계산 중 오류가 발생했습니다.',
+        );
+      } finally {
+        setLoadingClearanceOrderPreview(false);
+      }
+    };
 
     const buyOrder = async () => {
 
@@ -1221,28 +1384,9 @@ export default function Index({ params }: any) {
 
       setBuyOrdering(true);
 
-      let orderUsdtAmount = usdtAmount;
+      const payload = buildClearanceOrderRequestPayload();
 
-      if (checkInputKrwAmount) {
-        orderUsdtAmount = parseFloat(Number(safeKrwAmount / rate).toFixed(2));
-      }
-
-      const clearanceWalletAddress = normalizeStringValue(store?.privateSaleWalletAddress || store?.sellerWalletAddress);
-      const requesterWalletAddress = normalizeWalletAddressForSignature(address);
-      const clearanceWalletAddressForSignature = normalizeWalletAddressForSignature(clearanceWalletAddress);
-      const signatureUsdtAmount = Number(orderUsdtAmount);
-      const signatureKrwAmount = Number(safeKrwAmount);
-      const signatureRate = Number(rate);
-
-      if (
-        !normalizedStorecode
-        || !clearanceWalletAddress
-        || !requesterWalletAddress
-        || !clearanceWalletAddressForSignature
-        || !Number.isFinite(signatureUsdtAmount) || signatureUsdtAmount <= 0
-        || !Number.isFinite(signatureKrwAmount) || signatureKrwAmount <= 0
-        || !Number.isFinite(signatureRate) || signatureRate <= 0
-      ) {
+      if (!validateClearanceOrderRequestPayload(payload)) {
         setBuyOrdering(false);
         toast.error('매입신청 요청 파라미터가 올바르지 않습니다.');
         return;
@@ -1253,34 +1397,24 @@ export default function Index({ params }: any) {
         route: '/api/order/setBuyOrderForClearance',
         signingPrefix: SET_BUY_ORDER_FOR_CLEARANCE_SIGNING_PREFIX,
         requesterStorecode: 'admin',
-        requesterWalletAddress,
-        body: {
-          storecode: normalizedStorecode,
-          walletAddress: clearanceWalletAddressForSignature,
-          sellerBankInfo: {
-            bankName: withdrawalBankInfo.bankName,
-            accountNumber: withdrawalBankInfo.accountNumber,
-            accountHolder: withdrawalBankInfo.accountHolder,
-          },
-          usdtAmount: signatureUsdtAmount,
-          krwAmount: signatureKrwAmount,
-          rate: signatureRate,
-          privateSale: true,
-          buyer: {
-            bankInfo: {
-              bankName: buyerBankInfo.bankName,
-              accountNumber: buyerBankInfo.accountNumber,
-              accountHolder: buyerBankInfo.accountHolder,
-            },
-          },
-        },
+        requesterWalletAddress: payload.requesterWalletAddress,
+        body: payload.body,
       });
 
       ////console.log('buyOrder response', response);
 
       if (!response.ok) {
         setBuyOrdering(false);
-        toast.error('주문을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        let errorMessage = '주문을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+        try {
+          const errorData = await response.json();
+          if (typeof errorData?.error === 'string' && errorData.error.trim()) {
+            errorMessage = errorData.error.trim();
+          }
+        } catch {
+          // Ignore JSON parse failures and keep fallback message.
+        }
+        toast.error(errorMessage);
         return;
       }
 
@@ -2803,7 +2937,7 @@ export default function Index({ params }: any) {
                                       // open modal of trade detail
                                       ///openModal();
 
-                                      buyOrder();
+                                      openBuyOrderPreviewModal();
                                   }}
                               >
                                 {Place_Order}
@@ -3005,7 +3139,7 @@ export default function Index({ params }: any) {
                                           }
                                         `}
                                         onClick={() => {
-                                            buyOrder();
+                                            openBuyOrderPreviewModal();
                                         }}
                                     >
                                       매입신청
@@ -3271,7 +3405,12 @@ export default function Index({ params }: any) {
                       <div
                         key={index}
                         className="relative flex min-w-[300px] flex-row items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-                        {seller.walletAddress === store?.settlementWalletAddress ? (
+                        {String(seller.walletAddress || "").toLowerCase() === String(
+                          store?.privateSellerWalletAddress
+                          || store?.settlementWalletAddress
+                          || store?.adminWalletAddress
+                          || "",
+                        ).toLowerCase() ? (
                           <div className="absolute top-0 right-0 bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">
                             기본지갑
                           </div>
@@ -4345,11 +4484,181 @@ export default function Index({ params }: any) {
           </Modal>
 
 
-          <Modal isOpen={isModalOpen} onClose={closeModal}>
-              <TradeDetail
-                  closeModal={closeModal}
-                  goChat={goChat}
-              />
+          <Modal isOpen={isModalOpen} onClose={closeModal} panelClassName="max-w-2xl p-0">
+            <div className="overflow-hidden rounded-2xl">
+              <div className="border-b border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 text-white">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs font-semibold tracking-[0.2em] text-slate-300">
+                      CLEARANCE PREVIEW
+                    </div>
+                    <h2 className="mt-1 text-xl font-semibold">매입신청 사전 점검</h2>
+                    <p className="mt-1 text-sm text-slate-300">
+                      신청 전 한도, 누적 금액, 차단 사유를 먼저 확인합니다.
+                    </p>
+                  </div>
+                  <button
+                    onClick={closeModal}
+                    className="rounded-full border border-white/20 px-3 py-1 text-sm text-slate-200 hover:bg-white/10"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 px-5 py-5">
+                {loadingClearanceOrderPreview ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                    매입신청 미리 계산 중입니다...
+                  </div>
+                ) : clearanceOrderPreview ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="text-[11px] font-semibold tracking-wide text-slate-500">신청금액</div>
+                        <div className="mt-2 text-2xl font-semibold text-amber-600" style={{ fontFamily: 'monospace' }}>
+                          {formatKrwDisplay(clearanceOrderPreview.requestedKrwAmount)}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="text-[11px] font-semibold tracking-wide text-slate-500">예상 매입량</div>
+                        <div className="mt-2 text-2xl font-semibold text-emerald-600" style={{ fontFamily: 'monospace' }}>
+                          {formatUsdtDisplay(clearanceOrderPreview.requestedUsdtAmount)} USDT
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="text-[11px] font-semibold tracking-wide text-slate-500">적용 환율</div>
+                        <div className="mt-2 text-2xl font-semibold text-slate-800" style={{ fontFamily: 'monospace' }}>
+                          {Number(clearanceOrderPreview.rate || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <div className="text-sm font-semibold text-slate-800">한도 점검</div>
+                        <div className="text-xs text-slate-500">KST {clearanceOrderPreview.kstDayLabel}</div>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className={`rounded-xl border px-4 py-3 ${clearanceOrderPreview.withinPerOrderLimit ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`}>
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">1회 한도</div>
+                          <div className="mt-2 flex items-end justify-between gap-3">
+                            <div>
+                              <div className="text-lg font-semibold text-slate-900">{formatKrwDisplay(clearanceOrderPreview.maxKrwAmount)}</div>
+                              <div className="text-xs text-slate-500">신청 {formatKrwDisplay(clearanceOrderPreview.requestedKrwAmount)}</div>
+                            </div>
+                            <div className={`rounded-full px-2.5 py-1 text-xs font-semibold ${clearanceOrderPreview.withinPerOrderLimit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                              {clearanceOrderPreview.withinPerOrderLimit ? '통과' : '초과'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={`rounded-xl border px-4 py-3 ${clearanceOrderPreview.withinDailyLimit ? 'border-blue-200 bg-blue-50' : 'border-rose-200 bg-rose-50'}`}>
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">1일 누적 한도</div>
+                          <div className="mt-2 space-y-1 text-sm text-slate-700">
+                            <div className="flex items-center justify-between gap-3">
+                              <span>현재 누적</span>
+                              <span className="font-semibold" style={{ fontFamily: 'monospace' }}>
+                                {formatKrwDisplay(clearanceOrderPreview.currentDailyKrwAmount)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                              <span>신청 후 예상</span>
+                              <span className="font-semibold" style={{ fontFamily: 'monospace' }}>
+                                {formatKrwDisplay(clearanceOrderPreview.projectedDailyKrwAmount)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                              <span>최대 한도</span>
+                              <span className="font-semibold" style={{ fontFamily: 'monospace' }}>
+                                {formatKrwDisplay(clearanceOrderPreview.maxDailyKrwAmount)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="mb-3 text-sm font-semibold text-slate-800">실시간 검증</div>
+                      <div className="grid gap-2 text-sm md:grid-cols-2">
+                        <div className="rounded-xl bg-slate-50 px-3 py-2">
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">요청 지갑 권한</div>
+                          <div className={`mt-1 font-semibold ${clearanceOrderPreview.requesterIsPlatformAdmin ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            {clearanceOrderPreview.requesterIsPlatformAdmin ? '상위 admin 지갑 확인' : '상위 admin 지갑 아님'}
+                          </div>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2">
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">청산 지갑 상태</div>
+                          <div className={`mt-1 font-semibold ${clearanceOrderPreview.clearanceWalletIsServerWallet ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            {clearanceOrderPreview.clearanceWalletIsServerWallet ? 'server wallet smart account' : 'server wallet 검증 실패'}
+                          </div>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2">
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">오늘 누적 주문 수</div>
+                          <div className="mt-1 font-semibold text-slate-800">
+                            {Number(clearanceOrderPreview.currentDailyOrderCount || 0).toLocaleString()}건
+                          </div>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-3 py-2">
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">남은 일일 한도</div>
+                          <div className="mt-1 font-semibold text-slate-800" style={{ fontFamily: 'monospace' }}>
+                            {formatKrwDisplay(clearanceOrderPreview.remainingDailyKrwAmount)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {clearanceOrderPreview.existingActiveOrder && (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        동일한 진행중 주문이 있습니다:
+                        {' '}#{clearanceOrderPreview.existingActiveOrder.tradeId}
+                        {' '}({clearanceOrderPreview.existingActiveOrder.status})
+                      </div>
+                    )}
+
+                    {clearanceOrderPreview.blockingReasons.length > 0 ? (
+                      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                        <div className="text-sm font-semibold text-rose-800">현재 상태로는 매입신청이 차단됩니다.</div>
+                        <div className="mt-2 space-y-1 text-sm text-rose-700">
+                          {clearanceOrderPreview.blockingReasons.map((reason, index) => (
+                            <div key={`${reason}-${index}`}>- {reason}</div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        현재 입력 기준으로는 매입신청이 가능합니다. 확인 후 최종 신청하세요.
+                      </div>
+                    )}
+
+                    <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                      <button
+                        onClick={closeModal}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        다시 수정
+                      </button>
+                      <button
+                        disabled={!clearanceOrderPreview.canSubmit || buyOrdering}
+                        onClick={() => {
+                          closeModal();
+                          buyOrder();
+                        }}
+                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white ${
+                          clearanceOrderPreview.canSubmit && !buyOrdering
+                            ? 'bg-slate-900 hover:bg-black'
+                            : 'bg-slate-400'
+                        }`}
+                      >
+                        확인 후 매입신청
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </Modal>
 
 
@@ -4359,123 +4668,3 @@ export default function Index({ params }: any) {
 
 
 };
-
-
-
-
-
-
-// close modal
-
-const TradeDetail = (
-    {
-        closeModal = () => {},
-        goChat = () => {},
-        
-    }
-) => {
-
-
-    const [amount, setAmount] = useState(1000);
-    const price = 91.17; // example price
-    const receiveAmount = (amount / price).toFixed(2);
-    const commission = 0.01; // example commission
-  
-    return (
-
-      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-lg p-6">
-        <div className="flex items-center">
-          <span className="inline-block w-4 h-4 rounded-full bg-green-500 mr-2"></span>
-          <h2 className="text-lg font-semibold text-black ">Iskan9</h2>
-          <span className="ml-2 text-blue-500 text-sm">318 trades</span>
-        </div>
-        <p className="text-gray-600 mt-2">The offer is taken from another source. You can only use chat if the trade is open.</p>
-        
-        <div className="mt-4">
-          <div className="flex justify-between text-gray-700">
-            <span>Price</span>
-            <span>{price} KRW</span>
-          </div>
-          <div className="flex justify-between text-gray-700 mt-2">
-            <span>Limit</span>
-            <span>40680.00 KRW - 99002.9 KRW</span>
-          </div>
-          <div className="flex justify-between text-gray-700 mt-2">
-            <span>Available</span>
-            <span>1085.91 USDT</span>
-          </div>
-          <div className="flex justify-between text-gray-700 mt-2">
-            <span>Seller&apos;s payment method</span>
-            <span className="bg-yellow-100 text-yellow-800 px-2 rounded-full">Tinkoff</span>
-          </div>
-          <div className="mt-4 text-gray-700">
-            <p>24/7</p>
-          </div>
-        </div>
-  
-        <div className="mt-6 border-t pt-4 text-gray-700">
-          <div className="flex flex-col space-y-4">
-            <div>
-              <label className="block text-gray-700">I want to pay</label>
-              <input 
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(
-                    e.target.value === '' ? 0 : parseInt(e.target.value)
-                ) }
-
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">I will receive</label>
-              <input 
-                type="text"
-                value={`${receiveAmount} USDT`}
-                readOnly
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700">Commission</label>
-              <input 
-                type="text"
-                value={`${commission} USDT`}
-                readOnly
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div>
-          
-          <div className="mt-6 flex space-x-4">
-            <button
-                className="bg-green-500 text-white px-4 py-2 rounded-lg"
-                onClick={() => {
-                    console.log('Buy USDT');
-                    // go to chat
-                    // close modal
-                    closeModal();
-                    goChat();
-
-                }}
-            >
-                Buy USDT
-            </button>
-            <button
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg"
-                onClick={() => {
-                    console.log('Cancel');
-                    // close modal
-                    closeModal();
-                }}
-            >
-                Cancel
-            </button>
-          </div>
-
-        </div>
-
-
-      </div>
-    );
-  };

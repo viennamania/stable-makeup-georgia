@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getStoreByStorecode } from "@lib/api/store";
+import { getConfiguredClearanceSettlementWalletAddress } from "@/lib/server/clearance-order-security";
 
 import { createThirdwebClient, getContract } from "thirdweb";
 import { ethereum, polygon, arbitrum, bsc } from "thirdweb/chains";
@@ -88,7 +89,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const sellerWalletAddress = String(storeInfo?.sellerWalletAddress || "").trim();
+  const sellerWalletAddress = String(
+    getConfiguredClearanceSettlementWalletAddress(storeInfo)
+    || storeInfo?.sellerWalletAddress
+    || "",
+  ).trim();
 
   const result: {
     users: SellerBalanceUser[];

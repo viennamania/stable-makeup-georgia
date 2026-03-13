@@ -2304,7 +2304,7 @@ export default function Index({ params }: any) {
                                   disabled={!isAdmin}
                                   onClick={() => {
                                     router.push(
-                                      '/' + params.lang + '/admin/store/' + item.storecode + '/clearance'
+                                      '/' + params.lang + '/admin/store/clearance-management?storecode=' + item.storecode
                                     );
                                   }}
                                   className={`${

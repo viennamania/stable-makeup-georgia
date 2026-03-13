@@ -19,6 +19,11 @@ const AppBarComponent = () => {
   const [currentLang, setCurrentLang] = React.useState("en");
   const [selectedLang, setSelectedLang] = React.useState("English");
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const pathLang = pathname?.split("/").at(1) || "en";
+  const adminClearanceManagementPath = `/${pathLang}/admin/store/clearance-management`;
+  const isAdminPath = pathname?.startsWith(`/${pathLang}/admin`) || false;
+  const isAdminClearanceManagementPath =
+    pathname?.startsWith(adminClearanceManagementPath) || false;
 
   React.useEffect(() => {
     
@@ -128,6 +133,33 @@ const AppBarComponent = () => {
               </Menu>
             </div>
           </div>
+
+          {isAdminPath && (
+            <Button
+              size="small"
+              onClick={() => router.push(adminClearanceManagementPath)}
+              sx={{
+                color: "#fff",
+                borderColor: isAdminClearanceManagementPath
+                  ? "rgba(255,255,255,0.8)"
+                  : "rgba(255,255,255,0.35)",
+                backgroundColor: isAdminClearanceManagementPath
+                  ? "rgba(255,255,255,0.18)"
+                  : "transparent",
+                borderRadius: "9999px",
+                px: 1.75,
+                py: 0.5,
+                whiteSpace: "nowrap",
+                "&:hover": {
+                  borderColor: "rgba(255,255,255,0.75)",
+                  backgroundColor: "rgba(255,255,255,0.12)",
+                },
+              }}
+              variant="outlined"
+            >
+              가맹점 청산관리
+            </Button>
+          )}
         </div>
       </Toolbar>
     </AppBar>

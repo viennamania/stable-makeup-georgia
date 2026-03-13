@@ -2300,7 +2300,7 @@ export default function Index({ params }: any) {
               <button onClick={() => router.push('/' + params.lang + '/admin/buyorder')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">구매주문관리</button>
               <button onClick={() => router.push('/' + params.lang + '/admin/trade-history')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">P2P 거래내역</button>
               {version !== 'bangbang' && (
-                <button onClick={() => router.push('/' + params.lang + '/admin/clearance-history')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">청산관리</button>
+                <button onClick={() => router.push('/' + params.lang + '/admin/store/clearance-management')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">청산관리</button>
               )}
               <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">P2P통계(가맹)</button>
               <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')} className="flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">P2P통계(AG)</button>
@@ -3750,28 +3750,6 @@ export default function Index({ params }: any) {
                                 </div>
 
                               </div>
-
-                              {/* 청산하기 button */}
-                              
-                              <button
-                                disabled={!isAdmin || insertingStore}
-                                onClick={() => {
-                                  router.push(
-                                    '/' + params.lang + '/admin/store/' + item.storecode + '/clearance'
-                                  );
-                                }
-                                }
-                                className={`
-                                  ${!isAdmin || insertingStore ? 'opacity-50 cursor-not-allowed' : ''}
-                                  w-full mb-2
-                                  bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-white px-2 py-1 rounded-lg
-                                  hover:from-[#1d4ed8] hover:to-[#1e40af]
-                                `}
-                              >
-                                청산관리
-                              </button>
-
-
 
                             </div>
 
