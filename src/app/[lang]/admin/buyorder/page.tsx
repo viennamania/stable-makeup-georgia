@@ -6361,8 +6361,8 @@ const fetchBuyOrders = async () => {
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
             {/* nickname=seller 지갑 잔고 카드 (10초 주기) */}
             <div className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                   <Image src="/icon-seller.png" alt="Seller" width={16} height={16} className="w-4 h-4" />
                   <span className="text-sm font-semibold text-zinc-900">
                     Seller Wallet Monitor
@@ -6372,7 +6372,7 @@ const fetchBuyOrders = async () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2.5 text-sm text-zinc-500">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-zinc-500">
                   <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>=${SELLER_WALLET_MIN_USDT_BALANCE})`}</span>
                   <span>
                     {sellersBalanceUpdatedAt
@@ -6407,20 +6407,20 @@ const fetchBuyOrders = async () => {
               {isSellerWalletMonitorOpen ? (
                 <>
                   {sellersBalance.length > 0 ? (
-                    <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1 max-h-44 overflow-y-auto pr-0.5">
+                    <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3 max-h-52 overflow-y-auto pr-0.5">
                       {sellersBalance.map((seller, index) => {
                         const smartSellerWallet = isSmartAccountSellerWallet(seller);
 
                         return (
                           <div
                             key={`${seller.walletAddress}-${index}`}
-                            className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
+                            className={`rounded-lg border border-zinc-200 px-3 py-2 bg-white
                     ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
                       ? 'ring-1 ring-emerald-200'
                       : ''}`}
                           >
-                            <div className="flex items-start justify-between gap-1.5">
-                              <div className="min-w-0 max-w-[58%]">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
                                 <button
                                   className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
                                   onClick={() => {
@@ -6431,29 +6431,36 @@ const fetchBuyOrders = async () => {
                                 >
                                   {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                                 </button>
-                                {smartSellerWallet ? (
-                                  <span className="mt-0.5 inline-flex rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
-                                    스마트 지갑
-                                  </span>
-                                ) : null}
+                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                  {smartSellerWallet ? (
+                                    <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
+                                      스마트 지갑
+                                    </span>
+                                  ) : null}
+                                  <div className="flex min-w-0 items-center gap-1.5">
+                                    <Image
+                                      src={seller.storeLogo || '/icon-store.png'}
+                                      alt={seller.storeName || seller.storecode || 'Store'}
+                                      width={14}
+                                      height={14}
+                                      className="h-3.5 w-3.5 rounded object-cover shrink-0"
+                                    />
+                                    <span className="text-xs text-zinc-500 truncate">
+                                      {seller.storeName || seller.storecode || '-'}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                                {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                                  ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                  : '0.000'}
-                              </span>
-                            </div>
-                            <div className="mt-0.5 flex items-center gap-1 min-w-0">
-                              <Image
-                                src={seller.storeLogo || '/icon-store.png'}
-                                alt={seller.storeName || seller.storecode || 'Store'}
-                                width={10}
-                                height={10}
-                                className="w-2.5 h-2.5 rounded object-cover shrink-0"
-                              />
-                              <span className="text-xs text-zinc-500 truncate">
-                                {seller.storeName || seller.storecode || '-'}
-                              </span>
+                              <div className="shrink-0 text-right">
+                                <span className="block text-lg font-semibold leading-none text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                                  {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                                    ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                    : '0.000'}
+                                </span>
+                                <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.18em] text-emerald-500">
+                                  USDT
+                                </span>
+                              </div>
                             </div>
                           </div>
                         );
@@ -6469,8 +6476,8 @@ const fetchBuyOrders = async () => {
             </div>
 
             <div className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
-                <div className="flex items-center gap-1.5">
+              <div className="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
                   <Image src="/icon-buyer.png" alt="Buyer" width={16} height={16} className="w-4 h-4" />
                   <span className="text-sm font-semibold text-zinc-900">
                     Buyer Wallet Monitor
@@ -6480,7 +6487,7 @@ const fetchBuyOrders = async () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2.5 text-sm text-zinc-500">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-zinc-500">
                   <span>{loadingBuyersBalance ? '갱신중...' : `${buyersBalance.length.toLocaleString()} wallets`}</span>
                   <span>
                     {buyersBalanceUpdatedAt
@@ -6515,16 +6522,16 @@ const fetchBuyOrders = async () => {
               {isBuyerWalletMonitorOpen ? (
                 <>
                   {buyersBalance.length > 0 ? (
-                    <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1 max-h-52 overflow-y-auto pr-0.5">
+                    <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3 max-h-52 overflow-y-auto pr-0.5">
                       {buyersBalance.map((buyer, index) => (
                         <div
                           key={`${buyer.walletAddress}-${index}`}
-                          className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
+                          className={`rounded-lg border border-zinc-200 px-3 py-2 bg-white
                     ${currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined && currentBuyerUsdtBalanceArray[index] !== buyer.currentUsdtBalance
                       ? 'ring-1 ring-sky-200'
                       : ''}`}
                         >
-                          <div className="flex items-start justify-between gap-1.5">
+                          <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <button
                                 className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
@@ -6536,7 +6543,7 @@ const fetchBuyOrders = async () => {
                               >
                                 {buyer.walletAddress.substring(0, 6)}...{buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
                               </button>
-                              <div className="mt-0.5 flex items-center justify-between gap-1.5 min-w-0">
+                              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
                                 <div className="flex items-center gap-1 min-w-0">
                                   <Image
                                     src={buyer.avatar || '/icon-buyer.png'}
@@ -6550,7 +6557,7 @@ const fetchBuyOrders = async () => {
                                   </span>
                                 </div>
                                 {buyer.storeName && (
-                                  <div className="flex items-center gap-1 min-w-0 shrink">
+                                  <div className="flex items-center gap-1 min-w-0">
                                     <Image
                                       src={buyer.storeLogo || '/icon-store.png'}
                                       alt={buyer.storeName || buyer.storecode || 'Store'}
@@ -6558,20 +6565,25 @@ const fetchBuyOrders = async () => {
                                       height={10}
                                       className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
                                     />
-                                    <span className="text-[11px] text-zinc-500 truncate max-w-[72px]">
+                                    <span className="text-[11px] text-zinc-500 truncate">
                                       {buyer.storeName}
                                     </span>
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <span className="text-base font-semibold text-sky-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                              {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
-                                ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                : '0.000'}
-                            </span>
+                            <div className="shrink-0 text-right">
+                              <span className="block text-lg font-semibold leading-none text-sky-700" style={{ fontFamily: 'monospace' }}>
+                                {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
+                                  ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                  : '0.000'}
+                              </span>
+                              <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.18em] text-sky-500">
+                                USDT
+                              </span>
+                            </div>
                           </div>
-                          <div className="mt-0.5 flex items-center justify-between gap-1 text-[11px] text-zinc-500">
+                          <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
                             <span>{Number(buyer.orderCount || 0).toLocaleString()} orders</span>
                             <span className="font-mono text-sky-700">
                               {Number(buyer.totalAmountUsdt || 0).toFixed(3)} USDT
