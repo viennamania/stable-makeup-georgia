@@ -3412,7 +3412,7 @@ export default function Index({ params }: any) {
                     {sellersBalance.map((seller, index) => (
                       <div
                         key={index}
-                        className="relative flex min-w-[300px] flex-row items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                        className="relative flex min-w-[300px] flex-wrap items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                         {String(seller.walletAddress || "").toLowerCase() === String(
                           store?.privateSellerWalletAddress
                           || store?.settlementWalletAddress
@@ -3446,34 +3446,50 @@ export default function Index({ params }: any) {
                             </button>
                           </div>
                         </div>
-                      
-                        <div className="flex flex-row items-center gap-2">
-                          <Image
-                            src="/icon-tether.png"
-                            alt="USDT"
-                            width={20}
-                            height={20}
-                            className="w-5 h-5"
-                          />
-                          <span className="text-lg font-semibold text-[#409192]"
-                            style={{ fontFamily: 'monospace' }}>
-                            {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          </span>
-                        </div>
-                       
 
-                        {/* if seller nickname is 'seller', then show withdraw button */}
-                        
-                        {seller.nickname === 'seller' && (
-                          <button
-                            onClick={() => {
-                              router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
-                            }}
-                            className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#3167b4] hover:bg-zinc-100 transition"
-                          >
-                            출금하기
-                          </button>
-                        )}
+                        <div className="flex min-w-[180px] flex-col rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                          <span className="text-[11px] font-semibold text-amber-700">
+                            미전송 정산주문
+                          </span>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className="text-xs font-medium text-zinc-600">
+                              {Number(seller.pendingTransferCount || 0).toLocaleString()}건
+                            </span>
+                            <span
+                              className="text-sm font-semibold text-amber-700"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {Number(seller.pendingTransferUsdtAmount || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')} USDT
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-row items-center gap-2 sm:ml-auto">
+                          <div className="flex flex-row items-center gap-2">
+                            <Image
+                              src="/icon-tether.png"
+                              alt="USDT"
+                              width={20}
+                              height={20}
+                              className="w-5 h-5"
+                            />
+                            <span className="text-lg font-semibold text-[#409192]"
+                              style={{ fontFamily: 'monospace' }}>
+                              {Number(seller.currentUsdtBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            </span>
+                          </div>
+
+                          {seller.nickname === 'seller' && (
+                            <button
+                              onClick={() => {
+                                router.push('/' + params.lang + '/admin/withdraw-vault?walletAddress=' + seller.walletAddress);
+                              }}
+                              className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#3167b4] hover:bg-zinc-100 transition"
+                            >
+                              출금하기
+                            </button>
+                          )}
+                        </div>
                         
                       </div>
                       

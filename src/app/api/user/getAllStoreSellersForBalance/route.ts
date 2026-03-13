@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getStoreByStorecode } from "@lib/api/store";
+import clientPromise, { dbName } from "@/lib/mongodb";
 import { getConfiguredClearanceSettlementWalletAddress } from "@/lib/server/clearance-order-security";
 
 import { createThirdwebClient, getContract } from "thirdweb";
@@ -22,6 +23,8 @@ type SellerBalanceUser = {
   nickname: string;
   walletAddress: string;
   currentUsdtBalance?: number;
+  pendingTransferCount?: number;
+  pendingTransferUsdtAmount?: number;
 };
 
 const getUsdtContractAddress = () => {
@@ -95,10 +98,45 @@ export async function POST(request: NextRequest) {
     || "",
   ).trim();
 
+  const client = await clientPromise;
+  const buyOrderCollection = client.db(dbName).collection("buyorders");
+
+  const [pendingTransferSummary] = await buyOrderCollection.aggregate<{
+    pendingTransferCount?: number;
+    pendingTransferUsdtAmount?: number;
+  }>([
+    {
+      $match: {
+        storecode: normalizedStorecode,
+        privateSale: true,
+        status: "paymentConfirmed",
+        $or: [
+          { transactionHash: { $exists: false } },
+          { transactionHash: null },
+          { transactionHash: "" },
+          { transactionHash: "0x" },
+        ],
+        "settlement.status": { $ne: "paymentSettled" },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        pendingTransferCount: { $sum: 1 },
+        pendingTransferUsdtAmount: { $sum: { $toDouble: "$usdtAmount" } },
+      },
+    },
+  ]).toArray();
+
+  const totalPendingTransferCount = Number(pendingTransferSummary?.pendingTransferCount || 0);
+  const totalPendingTransferUsdtAmount = Number(pendingTransferSummary?.pendingTransferUsdtAmount || 0);
+
   const result: {
     users: SellerBalanceUser[];
     totalCount: number;
     totalCurrentUsdtBalance: number;
+    totalPendingTransferCount: number;
+    totalPendingTransferUsdtAmount: number;
   } = {
     users: sellerWalletAddress
       ? [
@@ -106,11 +144,15 @@ export async function POST(request: NextRequest) {
             nickname: "판매자지갑",
             walletAddress: sellerWalletAddress,
             currentUsdtBalance: 0,
+            pendingTransferCount: totalPendingTransferCount,
+            pendingTransferUsdtAmount: totalPendingTransferUsdtAmount,
           },
         ]
       : [],
     totalCount: sellerWalletAddress ? 1 : 0,
     totalCurrentUsdtBalance: 0,
+    totalPendingTransferCount,
+    totalPendingTransferUsdtAmount,
   };
 
   if (result.users.length === 0) {
@@ -118,12 +160,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const client = createThirdwebClient({
+    const thirdwebClient = createThirdwebClient({
       secretKey: process.env.THIRDWEB_SECRET_KEY || "",
     });
 
     const contract = getContract({
-      client,
+      client: thirdwebClient,
       chain: getThirdwebChain(),
       address: getUsdtContractAddress(),
     });
