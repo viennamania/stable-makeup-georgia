@@ -132,8 +132,7 @@ interface QueueCheckBanner {
 interface ClearanceOrderPreview {
   storecode: string;
   requesterWalletAddress: string;
-  platformAdminWalletAddress: string | null;
-  requesterIsPlatformAdmin: boolean;
+  requesterIsAuthorizedAdmin: boolean;
   clearanceWalletAddress: string;
   clearanceWalletAllowed: boolean;
   clearanceWalletIsServerWallet: boolean;
@@ -4594,9 +4593,9 @@ export default function Index({ params }: any) {
                       <div className="mb-3 text-sm font-semibold text-slate-800">실시간 검증</div>
                       <div className="grid gap-2 text-sm md:grid-cols-2">
                         <div className="rounded-xl bg-slate-50 px-3 py-2">
-                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">요청 지갑 권한</div>
-                          <div className={`mt-1 font-semibold ${clearanceOrderPreview.requesterIsPlatformAdmin ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {clearanceOrderPreview.requesterIsPlatformAdmin ? '상위 admin 지갑 확인' : '상위 admin 지갑 아님'}
+                          <div className="text-[11px] font-semibold tracking-wide text-slate-500">요청 관리자 권한</div>
+                          <div className={`mt-1 font-semibold ${clearanceOrderPreview.requesterIsAuthorizedAdmin ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            {clearanceOrderPreview.requesterIsAuthorizedAdmin ? 'admin 권한 확인' : 'admin 권한 확인 실패'}
                           </div>
                         </div>
                         <div className="rounded-xl bg-slate-50 px-3 py-2">

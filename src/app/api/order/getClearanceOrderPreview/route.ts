@@ -192,11 +192,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const platformAdminStore = await getStoreByStorecode({ storecode: "admin" });
-  const platformAdminWalletAddress = normalizeWalletAddress(platformAdminStore?.adminWalletAddress);
   const requesterWalletAddress = normalizeWalletAddress(authResult.requesterWalletAddress);
-  const requesterIsPlatformAdmin =
-    Boolean(platformAdminWalletAddress) && requesterWalletAddress === platformAdminWalletAddress;
+  const requesterIsAuthorizedAdmin = true;
 
   const clearanceWalletAllowed =
     normalizedClearanceWalletAddress !== ZERO_ADDRESS
@@ -270,9 +267,6 @@ export async function POST(request: NextRequest) {
 
   const blockingReasons: string[] = [];
 
-  if (!requesterIsPlatformAdmin) {
-    blockingReasons.push("플랫폼 상위 관리자 지갑에서만 매입신청할 수 있습니다.");
-  }
   if (normalizedClearanceWalletAddress === ZERO_ADDRESS) {
     blockingReasons.push("청산 요청 지갑이 0 주소입니다.");
   } else if (!clearanceWalletAllowed) {
@@ -306,8 +300,7 @@ export async function POST(request: NextRequest) {
     result: {
       storecode,
       requesterWalletAddress,
-      platformAdminWalletAddress,
-      requesterIsPlatformAdmin,
+      requesterIsAuthorizedAdmin,
       clearanceWalletAddress: normalizedClearanceWalletAddress,
       clearanceWalletAllowed,
       clearanceWalletIsServerWallet,

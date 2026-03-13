@@ -271,47 +271,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const platformAdminStore = await getStoreByStorecode({ storecode: "admin" });
-  const platformAdminWalletAddress = normalizeWalletAddress(platformAdminStore?.adminWalletAddress);
-  const normalizedRequesterWalletAddress = normalizeWalletAddress(requesterWalletAddress);
-
-  if (!platformAdminWalletAddress) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "missing_platform_admin_wallet",
-      meta: {
-        storecode,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        result: null,
-        error: "Platform admin wallet is not configured",
-      },
-      { status: 500 },
-    );
-  }
-
-  if (normalizedRequesterWalletAddress !== platformAdminWalletAddress) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "forbidden_not_platform_admin_wallet",
-      meta: {
-        storecode,
-        platformAdminWalletAddress,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        result: null,
-        error: "Only the platform admin wallet can create clearance buy orders",
-      },
-      { status: 403 },
-    );
-  }
-
   if (!isConfiguredClearanceRequesterWallet(store, normalizedClearanceWalletAddress)) {
     await writeAdminApiCallLog({
       status: "blocked",
