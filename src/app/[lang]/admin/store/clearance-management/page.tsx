@@ -34,6 +34,7 @@ interface StoreSummary {
 const STORECODE_QUERY_KEY = "storecode";
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX =
   "stable-georgia:store-settings-mutation:v1";
+const version = process.env.NEXT_PUBLIC_VERSION;
 
 const getKstToday = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -80,6 +81,9 @@ const compareStoresForSidebar = (a: StoreSummary, b: StoreSummary) => {
   const bName = (b.storeName || b.storecode || "").trim();
   return aName.localeCompare(bName, "ko-KR", { sensitivity: "base" });
 };
+
+const menuButtonBase =
+  "flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md";
 
 export default function ClearanceManagementPage({ params }: any) {
   const router = useRouter();
@@ -371,7 +375,48 @@ export default function ClearanceManagementPage({ params }: any) {
 
   return (
     <main className="min-h-screen overflow-x-auto bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 lg:p-6">
-      <div className="mx-auto grid w-full lg:w-[1520px] lg:min-w-[1520px] lg:max-w-[1520px] grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
+      <div className="mx-auto flex w-full flex-col gap-4 lg:w-[1520px] lg:min-w-[1520px] lg:max-w-[1520px]">
+        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 overflow-x-auto pb-1">
+          <button onClick={() => router.push('/' + params.lang + '/admin/store')} className={menuButtonBase}>
+            가맹점관리
+          </button>
+          <button onClick={() => router.push('/' + params.lang + '/admin/agent')} className={menuButtonBase}>
+            에이전트관리
+          </button>
+          <button onClick={() => router.push('/' + params.lang + '/admin/member')} className={menuButtonBase}>
+            회원관리
+          </button>
+          <button onClick={() => router.push('/' + params.lang + '/admin/buyorder')} className={menuButtonBase}>
+            구매주문관리
+          </button>
+          <button onClick={() => router.push('/' + params.lang + '/admin/trade-history')} className={menuButtonBase}>
+            P2P 거래내역
+          </button>
+          {version !== 'bangbang' && (
+            <button onClick={() => router.push('/' + params.lang + '/admin/clearance-history')} className={menuButtonBase}>
+              청산내역
+            </button>
+          )}
+          {version !== 'bangbang' && (
+            <div className="flex w-40 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)]">
+              <Image src="/icon-store.png" alt="Store" width={35} height={35} className="h-4 w-4" />
+              <div className="text-sm font-semibold drop-shadow-sm">가맹점 청산관리</div>
+            </div>
+          )}
+          <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className={menuButtonBase}>
+            P2P통계(가맹)
+          </button>
+          <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')} className={menuButtonBase}>
+            P2P통계(AG)
+          </button>
+          {version !== 'bangbang' && (
+            <button onClick={() => router.push('/' + params.lang + '/admin/escrow-history')} className={menuButtonBase}>
+              보유량내역
+            </button>
+          )}
+        </div>
+
+        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
         <aside className="w-full self-start rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-4 py-3">
             <h1 className="text-lg font-semibold text-slate-900">
@@ -632,6 +677,7 @@ export default function ClearanceManagementPage({ params }: any) {
             </>
           )}
         </section>
+        </div>
       </div>
     </main>
   );
