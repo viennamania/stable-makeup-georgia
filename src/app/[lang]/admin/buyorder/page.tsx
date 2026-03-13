@@ -183,6 +183,52 @@ const getBuyOrderCreatedRequestIp = (
   return publicIp;
 };
 
+const getBlockedOrderToneClasses = (tone?: BlockedBuyOrderMonitorItem["tone"]) => {
+  switch (tone) {
+    case "rose":
+      return {
+        card: "border-rose-200 bg-white hover:border-rose-300 hover:bg-rose-50/40",
+        badge: "border-rose-200 bg-rose-50 text-rose-700",
+        accent: "text-rose-700",
+      };
+    case "amber":
+      return {
+        card: "border-amber-200 bg-white hover:border-amber-300 hover:bg-amber-50/40",
+        badge: "border-amber-200 bg-amber-50 text-amber-700",
+        accent: "text-amber-700",
+      };
+    default:
+      return {
+        card: "border-sky-200 bg-white hover:border-sky-300 hover:bg-sky-50/40",
+        badge: "border-sky-200 bg-sky-50 text-sky-700",
+        accent: "text-sky-700",
+      };
+  }
+};
+
+const getBlockedOrderSeverityLabel = (severity?: BlockedBuyOrderMonitorItem["severity"]) => {
+  switch (severity) {
+    case "critical":
+      return "긴급";
+    case "warning":
+      return "주의";
+    default:
+      return "안내";
+  }
+};
+
+const stringifyMonitorPayload = (value: unknown) => {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return "";
+  }
+};
+
 const RevealText: React.FC<{ value: any; className?: string; children: React.ReactNode }> = ({
   value,
   className = '',
@@ -321,12 +367,47 @@ type BuyerWalletBalanceItem = {
   currentUsdtBalance?: number;
 };
 
+type BlockedBuyOrderMonitorItem = {
+  blockedKey: string;
+  orderId?: string | null;
+  tradeId?: string | null;
+  storecode?: string | null;
+  storeName?: string | null;
+  storeLogo?: string | null;
+  buyerNickname?: string | null;
+  buyerDepositName?: string | null;
+  buyerWalletAddress?: string | null;
+  sellerNickname?: string | null;
+  status?: string | null;
+  settlementStatus?: string | null;
+  amountUsdt?: number;
+  amountKrw?: number;
+  route: string;
+  routeLabel?: string | null;
+  guardType?: string | null;
+  latestReason?: string | null;
+  latestReasonLabel?: string | null;
+  latestReasonDetail?: string | null;
+  tone?: "rose" | "amber" | "sky";
+  severity?: "critical" | "warning" | "info";
+  blockedCount?: number;
+  firstBlockedAt?: string | null;
+  latestBlockedAt?: string | null;
+  latestPublicIp?: string | null;
+  latestRequesterWalletAddress?: string | null;
+  distinctReasons?: string[];
+  requestBody?: Record<string, unknown> | null;
+  meta?: Record<string, unknown> | null;
+};
+
 const ADMIN_BUYORDERS_POLLING_MS = 8_000;
 const ADMIN_BUYORDER_SUMMARY_POLLING_MS = 12_000;
 const ADMIN_UNMATCHED_TRANSFER_POLLING_MS = 15_000;
 const ADMIN_ESCROW_BALANCE_POLLING_MS = 15_000;
 const SELLER_WALLET_POLLING_MS = 15_000;
 const BUYER_WALLET_POLLING_MS = 15_000;
+const BLOCKED_BUY_ORDERS_POLLING_MS = 15_000;
+const BLOCKED_BUY_ORDERS_LOOKBACK_HOURS = 24 * 14;
 const SELLER_EXCLUDED_STORECODE = "";
 const SELLER_WALLET_MIN_USDT_BALANCE = 0.1;
 
@@ -1724,6 +1805,10 @@ const [targetConfirmOrder, setTargetConfirmOrder] = useState<BuyOrder | null>(nu
 const [tradeDetailOpen, setTradeDetailOpen] = useState(false);
 const [tradeDetailLoading, setTradeDetailLoading] = useState(false);
 const [tradeDetailData, setTradeDetailData] = useState<any>(null);
+const [blockedOrderPanelOpen, setBlockedOrderPanelOpen] = useState(false);
+const [blockedOrderPanelLoading, setBlockedOrderPanelLoading] = useState(false);
+const [blockedOrderPanelItem, setBlockedOrderPanelItem] = useState<BlockedBuyOrderMonitorItem | null>(null);
+const [blockedOrderPanelOrder, setBlockedOrderPanelOrder] = useState<any>(null);
 const selectedDepositTotal = useMemo(() => {
   return depositOptions.reduce((sum, trx, idx) => {
     const key = trx?._id || String(idx);
@@ -1741,6 +1826,13 @@ const depositAmountMatches = useMemo(() => {
   const closeTradeDetailModal = () => {
     setTradeDetailOpen(false);
     setTradeDetailData(null);
+  };
+
+  const closeBlockedOrderPanel = () => {
+    setBlockedOrderPanelOpen(false);
+    setBlockedOrderPanelItem(null);
+    setBlockedOrderPanelOrder(null);
+    setBlockedOrderPanelLoading(false);
   };
 
   const openTradeDetailModal = async (tradeId: string) => {
@@ -1763,6 +1855,43 @@ const depositAmountMatches = useMemo(() => {
       toast.error(error?.message || '거래상세 조회 실패');
     } finally {
       setTradeDetailLoading(false);
+    }
+  };
+
+  const openBlockedOrderPanel = async (item: BlockedBuyOrderMonitorItem) => {
+    setBlockedOrderPanelItem(item);
+    setBlockedOrderPanelOrder(null);
+    setBlockedOrderPanelOpen(true);
+
+    const tradeId = String(item?.tradeId || "").trim();
+    const orderId = String(item?.orderId || "").trim();
+    if (!tradeId && !orderId) {
+      return;
+    }
+
+    setBlockedOrderPanelLoading(true);
+    try {
+      const endpoint = tradeId
+        ? '/api/order/getOneBuyOrderByTradeId'
+        : '/api/order/getOneBuyOrderByOrderId';
+      const payload = tradeId ? { tradeId } : { orderId };
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (!res.ok || data?.error) {
+        throw new Error(data?.error || '차단 주문 상세정보를 불러오지 못했습니다.');
+      }
+
+      setBlockedOrderPanelOrder(data?.result || null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || '차단 주문 상세 조회 실패');
+    } finally {
+      setBlockedOrderPanelLoading(false);
     }
   };
 
@@ -4289,8 +4418,15 @@ const fetchBuyOrders = async () => {
   const [buyersBalanceUpdatedAt, setBuyersBalanceUpdatedAt] = useState("");
   const [loadingBuyersBalance, setLoadingBuyersBalance] = useState(false);
   const animatedBuyerWalletTotalUsdt = useAnimatedNumber(buyersBalanceTotalUsdt, { decimalPlaces: 3 });
+  const [blockedBuyOrders, setBlockedBuyOrders] = useState<BlockedBuyOrderMonitorItem[]>([]);
+  const [blockedBuyOrdersUpdatedAt, setBlockedBuyOrdersUpdatedAt] = useState("");
+  const [blockedBuyOrdersCriticalCount, setBlockedBuyOrdersCriticalCount] = useState(0);
+  const [blockedBuyOrdersWarningCount, setBlockedBuyOrdersWarningCount] = useState(0);
+  const [blockedBuyOrdersInfoCount, setBlockedBuyOrdersInfoCount] = useState(0);
+  const [loadingBlockedBuyOrders, setLoadingBlockedBuyOrders] = useState(false);
   const [isSellerWalletMonitorOpen, setIsSellerWalletMonitorOpen] = useState(true);
   const [isBuyerWalletMonitorOpen, setIsBuyerWalletMonitorOpen] = useState(true);
+  const [isBlockedBuyOrderMonitorOpen, setIsBlockedBuyOrderMonitorOpen] = useState(true);
 
   const fetchSellersBalance = async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
     if (showLoading) {
@@ -4373,6 +4509,46 @@ const fetchBuyOrders = async () => {
       }
     }
   };
+  const fetchBlockedBuyOrders = async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
+    if (showLoading) {
+      setLoadingBlockedBuyOrders(true);
+    }
+
+    try {
+      const query = new URLSearchParams();
+      query.set("public", "1");
+      query.set("limit", "24");
+      query.set("lookbackHours", String(BLOCKED_BUY_ORDERS_LOOKBACK_HOURS));
+
+      const response = await fetch(`/api/realtime/buyorder/blocked-orders?${query.toString()}`, {
+        method: 'GET',
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        console.error('Error fetching blocked buy orders: non-ok response', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      if (data?.status === 'success') {
+        const orders = (Array.isArray(data.orders) ? data.orders : []) as BlockedBuyOrderMonitorItem[];
+        setBlockedBuyOrders(orders);
+        setBlockedBuyOrdersUpdatedAt(String(data.updatedAt || ''));
+        setBlockedBuyOrdersCriticalCount(Number(data.criticalCount || 0));
+        setBlockedBuyOrdersWarningCount(Number(data.warningCount || 0));
+        setBlockedBuyOrdersInfoCount(Number(data.infoCount || 0));
+      } else {
+        console.error('Error fetching blocked buy orders', data);
+      }
+    } catch (error) {
+      console.error('Error fetching blocked buy orders', error);
+    } finally {
+      if (showLoading) {
+        setLoadingBlockedBuyOrders(false);
+      }
+    }
+  };
   useEffect(() => {
     if (!address) {
       setSellersBalance([]);
@@ -4406,6 +4582,25 @@ const fetchBuyOrders = async () => {
       }
       fetchBuyersBalance();
     }, BUYER_WALLET_POLLING_MS);
+    return () => clearInterval(interval);
+  }, [address]);
+  useEffect(() => {
+    if (!address) {
+      setBlockedBuyOrders([]);
+      setBlockedBuyOrdersUpdatedAt('');
+      setBlockedBuyOrdersCriticalCount(0);
+      setBlockedBuyOrdersWarningCount(0);
+      setBlockedBuyOrdersInfoCount(0);
+      setLoadingBlockedBuyOrders(false);
+      return;
+    }
+    fetchBlockedBuyOrders({ showLoading: true });
+    const interval = setInterval(() => {
+      if (isDocumentHidden()) {
+        return;
+      }
+      fetchBlockedBuyOrders();
+    }, BLOCKED_BUY_ORDERS_POLLING_MS);
     return () => clearInterval(interval);
   }, [address]);
 
@@ -6325,6 +6520,179 @@ const fetchBuyOrders = async () => {
               </>
             ) : (
               <div className="mt-1.5 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
+            )}
+          </div>
+
+          <div className="w-full rounded-2xl border border-rose-200 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_rgba(255,247,247,0.98)_42%,_rgba(255,255,255,1)_100%)] px-3 py-3 shadow-sm">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-rose-200 bg-white text-sm font-black text-rose-600">
+                    !
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-zinc-900">
+                        Blocked Buy Order Monitor
+                      </span>
+                      <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                        실시간 차단 주문
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      blocked order action logs · unresolved orders only · {Math.floor(BLOCKED_BUY_ORDERS_LOOKBACK_HOURS / 24)}d window · 15s
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2.5 text-sm text-zinc-500">
+                <span>{loadingBlockedBuyOrders ? '갱신중...' : `${blockedBuyOrders.length.toLocaleString()} orders`}</span>
+                <span>
+                  {blockedBuyOrdersUpdatedAt
+                    ? new Date(blockedBuyOrdersUpdatedAt).toLocaleTimeString('ko-KR', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })
+                    : '--:--:--'}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border border-rose-200 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50"
+                  onClick={() => setIsBlockedBuyOrderMonitorOpen((open) => !open)}
+                >
+                  {isBlockedBuyOrderMonitorOpen ? '접기' : '펼치기'}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
+              <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">ACTIVE BLOCKS</div>
+                <div className="mt-1 text-2xl font-black text-zinc-900" style={{ fontFamily: 'monospace' }}>
+                  {blockedBuyOrders.length.toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-rose-600">CRITICAL</div>
+                <div className="mt-1 text-2xl font-black text-rose-700" style={{ fontFamily: 'monospace' }}>
+                  {blockedBuyOrdersCriticalCount.toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-amber-700">WARNING</div>
+                <div className="mt-1 text-2xl font-black text-amber-700" style={{ fontFamily: 'monospace' }}>
+                  {blockedBuyOrdersWarningCount.toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-sky-700">INFO</div>
+                <div className="mt-1 text-2xl font-black text-sky-700" style={{ fontFamily: 'monospace' }}>
+                  {blockedBuyOrdersInfoCount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {isBlockedBuyOrderMonitorOpen ? (
+              blockedBuyOrders.length > 0 ? (
+                <div className="mt-2 grid grid-cols-1 gap-2 xl:grid-cols-2 2xl:grid-cols-3">
+                  {blockedBuyOrders.map((item, index) => {
+                    const tone = getBlockedOrderToneClasses(item.tone);
+                    const identity = item.tradeId || item.orderId || item.blockedKey;
+                    const isSelected = blockedOrderPanelItem?.blockedKey === item.blockedKey && blockedOrderPanelOpen;
+
+                    return (
+                      <button
+                        key={`${item.blockedKey}-${index}`}
+                        type="button"
+                        onClick={() => openBlockedOrderPanel(item)}
+                        className={`group rounded-2xl border px-3 py-3 text-left shadow-sm transition ${tone.card} ${isSelected ? 'ring-2 ring-rose-300 shadow-md' : 'hover:shadow-md'}`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-sm font-bold text-zinc-900">
+                                {identity || '-'}
+                              </span>
+                              <span className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${tone.badge}`}>
+                                {getBlockedOrderSeverityLabel(item.severity)}
+                              </span>
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500">
+                              <span>{item.routeLabel || item.route}</span>
+                              <span>·</span>
+                              <span>{formatTimeAgo(item.latestBlockedAt || '')}</span>
+                              <span>·</span>
+                              <span>{Number(item.blockedCount || 0).toLocaleString()}회</span>
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="text-[11px] text-zinc-500">현재 상태</div>
+                            <div className="mt-1 text-sm font-semibold text-zinc-800">
+                              {item.status || '-'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <div className="min-w-0 flex items-center gap-2">
+                            <Image
+                              src={item.storeLogo || '/icon-store.png'}
+                              alt={item.storeName || item.storecode || 'Store'}
+                              width={28}
+                              height={28}
+                              className="h-7 w-7 rounded-xl border border-zinc-200 bg-white object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold text-zinc-900">
+                                {item.storeName || item.storecode || '가맹점 정보 없음'}
+                              </div>
+                              <div className="truncate text-xs text-zinc-500">
+                                {item.buyerNickname || item.buyerDepositName || '구매자 정보 없음'}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="text-[11px] text-zinc-500">USDT / KRW</div>
+                            <div className="font-mono text-sm font-bold text-zinc-900">
+                              {Number(item.amountUsdt || 0).toFixed(3)}
+                            </div>
+                            <div className="font-mono text-[11px] text-zinc-500">
+                              {(Number(item.amountKrw || 0) || 0).toLocaleString()}원
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={`mt-3 rounded-xl border px-3 py-2 ${tone.badge}`}>
+                          <div className="text-[11px] font-semibold uppercase tracking-wide">
+                            {item.latestReasonLabel || item.latestReason || '차단 사유'}
+                          </div>
+                          <p className="mt-1 line-clamp-2 text-[12px] leading-5">
+                            {item.latestReasonDetail || '-'}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
+                          <span className="truncate">
+                            요청지갑 {item.latestRequesterWalletAddress ? `${item.latestRequesterWalletAddress.slice(0, 6)}...${item.latestRequesterWalletAddress.slice(-4)}` : '-'}
+                          </span>
+                          <span className={`${tone.accent} font-semibold`}>
+                            패널 열기
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-2 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-5 text-center text-sm text-zinc-500">
+                  현재 unresolved blocked buy order가 없습니다.
+                </div>
+              )
+            ) : (
+              <div className="mt-2 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
             )}
           </div>
 
@@ -9977,6 +10345,230 @@ const fetchBuyOrders = async () => {
             )}
           </div>
         </Modal>
+
+        <div
+          className={`fixed inset-0 z-50 transition-all duration-300 ${
+            blockedOrderPanelOpen ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+        >
+          <div
+            className={`absolute inset-0 bg-black/30 transition-opacity duration-300 ${
+              blockedOrderPanelOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={closeBlockedOrderPanel}
+          />
+
+          <div
+            className={`absolute inset-y-0 left-0 h-full w-full max-w-[760px] overflow-y-auto bg-white shadow-2xl transition-transform duration-300 ease-out ${
+              blockedOrderPanelOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+          >
+            <div className="sticky top-0 z-10 border-b border-zinc-200 bg-gradient-to-b from-white to-zinc-50 shadow-sm">
+              <div className="flex flex-col gap-3 p-4">
+                <button
+                  className="self-start rounded-md border border-zinc-200 px-3 py-1.5 text-sm transition hover:bg-zinc-100 active:scale-95"
+                  onClick={closeBlockedOrderPanel}
+                >
+                  닫기
+                </button>
+
+                {blockedOrderPanelItem ? (
+                  (() => {
+                    const tone = getBlockedOrderToneClasses(blockedOrderPanelItem.tone);
+                    const requestBodyText = stringifyMonitorPayload(blockedOrderPanelItem.requestBody);
+                    const metaText = stringifyMonitorPayload(blockedOrderPanelItem.meta);
+
+                    return (
+                      <>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs uppercase tracking-[0.24em] text-zinc-500">
+                                  Blocked Order
+                                </span>
+                                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}>
+                                  {getBlockedOrderSeverityLabel(blockedOrderPanelItem.severity)}
+                                </span>
+                              </div>
+                              <div className="mt-2 font-mono text-2xl font-black text-zinc-900">
+                                {blockedOrderPanelItem.tradeId || blockedOrderPanelItem.orderId || blockedOrderPanelItem.blockedKey}
+                              </div>
+                              <div className="mt-1 text-sm text-zinc-500">
+                                {blockedOrderPanelItem.routeLabel || blockedOrderPanelItem.route}
+                              </div>
+                            </div>
+
+                            <div className="min-w-0 text-right">
+                              <div className="text-xs text-zinc-500">최근 차단</div>
+                              <div className="mt-1 text-sm font-semibold text-zinc-900">
+                                {formatKstDateTime(blockedOrderPanelItem.latestBlockedAt || '') || '-'}
+                              </div>
+                              <div className="mt-1 text-xs text-zinc-500">
+                                {formatTimeAgo(blockedOrderPanelItem.latestBlockedAt || '')}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className={`rounded-2xl border px-4 py-3 ${tone.badge}`}>
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em]">
+                              {blockedOrderPanelItem.latestReasonLabel || blockedOrderPanelItem.latestReason || '차단 사유'}
+                            </div>
+                            <div className="mt-2 text-sm leading-6">
+                              {blockedOrderPanelItem.latestReasonDetail || '-'}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-[12px] text-zinc-600">
+                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-zinc-500">가맹점</div>
+                            <div className="mt-1 font-semibold text-zinc-900">
+                              {blockedOrderPanelItem.storeName || blockedOrderPanelItem.storecode || '-'}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-zinc-500">구매자</div>
+                            <div className="mt-1 font-semibold text-zinc-900">
+                              {blockedOrderPanelItem.buyerNickname || blockedOrderPanelItem.buyerDepositName || '-'}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-zinc-500">현재 상태</div>
+                            <div className="mt-1 font-semibold text-zinc-900">
+                              {blockedOrderPanelItem.status || '-'}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-zinc-500">정산 상태</div>
+                            <div className="mt-1 font-semibold text-zinc-900">
+                              {blockedOrderPanelItem.settlementStatus || '-'}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-zinc-500">USDT</div>
+                            <div className="mt-1 font-mono text-base font-bold text-zinc-900">
+                              {Number(blockedOrderPanelItem.amountUsdt || 0).toFixed(3)}
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-zinc-500">KRW</div>
+                            <div className="mt-1 font-mono text-base font-bold text-zinc-900">
+                              {(Number(blockedOrderPanelItem.amountKrw || 0) || 0).toLocaleString()}원
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-[12px] text-zinc-600">
+                          <div className="flex items-center justify-between gap-3">
+                            <span>차단 횟수</span>
+                            <span className="font-mono font-semibold text-zinc-900">
+                              {Number(blockedOrderPanelItem.blockedCount || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>요청 IP</span>
+                            <span className="font-mono font-semibold text-zinc-900">
+                              {blockedOrderPanelItem.latestPublicIp || '-'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>요청 지갑</span>
+                            <span className="font-mono font-semibold text-zinc-900 break-all text-right">
+                              {blockedOrderPanelItem.latestRequesterWalletAddress || '-'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>최초 차단</span>
+                            <span className="font-mono font-semibold text-zinc-900">
+                              {formatKstDateTime(blockedOrderPanelItem.firstBlockedAt || '') || '-'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-zinc-900">주문 상세정보</span>
+                            {(blockedOrderPanelItem.tradeId || blockedOrderPanelItem.orderId) && (
+                              <button
+                                type="button"
+                                className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                                onClick={() => {
+                                  if (blockedOrderPanelItem.tradeId) {
+                                    openTradeDetailModal(String(blockedOrderPanelItem.tradeId));
+                                  }
+                                }}
+                              >
+                                모달 상세
+                              </button>
+                            )}
+                          </div>
+
+                          {blockedOrderPanelLoading ? (
+                            <div className="mt-3 text-sm text-zinc-500">주문 상세를 불러오는 중...</div>
+                          ) : blockedOrderPanelOrder ? (
+                            <div className="mt-3 grid grid-cols-1 gap-2 text-[12px] text-zinc-600">
+                              <div className="flex items-center justify-between gap-3">
+                                <span>거래번호</span>
+                                <span className="font-mono font-semibold text-zinc-900">{blockedOrderPanelOrder.tradeId || '-'}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span>주문 ID</span>
+                                <span className="font-mono font-semibold text-zinc-900">{blockedOrderPanelOrder._id || '-'}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span>구매자 지갑</span>
+                                <span className="font-mono font-semibold text-zinc-900 break-all text-right">{blockedOrderPanelOrder.walletAddress || '-'}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span>판매자</span>
+                                <span className="font-semibold text-zinc-900">{blockedOrderPanelOrder?.seller?.nickname || '-'}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span>생성 시각</span>
+                                <span className="font-mono font-semibold text-zinc-900">{formatKstDateTime(blockedOrderPanelOrder.createdAt) || '-'}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span>결제요청 시각</span>
+                                <span className="font-mono font-semibold text-zinc-900">{formatKstDateTime(blockedOrderPanelOrder.paymentRequestedAt) || '-'}</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span>입금확인 시각</span>
+                                <span className="font-mono font-semibold text-zinc-900">{formatKstDateTime(blockedOrderPanelOrder.paymentConfirmedAt) || '-'}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-3 text-sm text-zinc-500">연결된 주문 상세를 찾지 못했습니다.</div>
+                          )}
+                        </div>
+
+                        {requestBodyText ? (
+                          <div className="rounded-2xl border border-zinc-200 bg-zinc-950 p-4 text-zinc-50">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-300">Request Body</div>
+                            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-all text-[11px] leading-5">
+                              {requestBodyText}
+                            </pre>
+                          </div>
+                        ) : null}
+
+                        {metaText ? (
+                          <div className="rounded-2xl border border-zinc-200 bg-zinc-950 p-4 text-zinc-50">
+                            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-300">Meta</div>
+                            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-all text-[11px] leading-5">
+                              {metaText}
+                            </pre>
+                          </div>
+                        ) : null}
+                      </>
+                    );
+                  })()
+                ) : (
+                  <div className="text-sm text-zinc-500">선택된 blocked order가 없습니다.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* 사용계좌 이력 패널 (좌측 슬라이드) */}
         <div

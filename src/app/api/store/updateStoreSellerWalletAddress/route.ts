@@ -3,10 +3,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	updateStoreSellerWalletAddress,
 } from '@lib/api/store';
+import {
+  getOneServerWalletByStorecodeAndWalletAddress,
+} from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
-import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
+import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
+const ROUTE_PATH = "/api/store/updateStoreSellerWalletAddress";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const ALLOWED_BODY_KEYS = new Set([
   "storecode",
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
 
   const guard = await verifyStoreSettingsAdminGuard({
     request,
-    route: "/api/store/updateStoreSellerWalletAddress",
+    route: ROUTE_PATH,
     body: guardBody,
     requireSigned: true,
   });
@@ -93,9 +98,62 @@ export async function POST(request: NextRequest) {
       error: guard.error,
     }, { status: guard.status });
   }
+
+  const serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
+    storecode,
+    normalizedSellerWalletAddress,
+  );
+
+  if (!serverWalletUser) {
+    return NextResponse.json({
+      result: null,
+      error: "sellerWalletAddress must belong to a server wallet user in the same store",
+    }, { status: 400 });
+  }
+
+  let resolvedThirdwebServerWallet = null;
+  try {
+    resolvedThirdwebServerWallet = await resolveThirdwebServerWalletByAddress(
+      normalizedSellerWalletAddress,
+    );
+  } catch (error) {
+    return NextResponse.json({
+      result: null,
+      error: error instanceof Error ? error.message : "Failed to validate sellerWalletAddress",
+    }, { status: 500 });
+  }
+
+  if (!resolvedThirdwebServerWallet) {
+    return NextResponse.json({
+      result: null,
+      error: "sellerWalletAddress must be an active Thirdweb server wallet",
+    }, { status: 400 });
+  }
+
+  if (resolvedThirdwebServerWallet.smartAccountAddress !== normalizedSellerWalletAddress) {
+    return NextResponse.json({
+      result: null,
+      error: "sellerWalletAddress must be a Thirdweb server wallet smart account address",
+    }, { status: 400 });
+  }
+
+  const serverWalletUserSignerAddress = normalizeWalletAddress(serverWalletUser?.signerAddress);
+  if (!serverWalletUserSignerAddress || serverWalletUserSignerAddress !== resolvedThirdwebServerWallet.signerAddress) {
+    return NextResponse.json({
+      result: null,
+      error: "sellerWalletAddress does not match the store server wallet signer",
+    }, { status: 400 });
+  }
+
   const result = await updateStoreSellerWalletAddress({
     storecode,
     sellerWalletAddress: normalizedSellerWalletAddress,
+    audit: {
+      route: ROUTE_PATH,
+      publicIp: guard.ip || getRequestIp(request),
+      requesterWalletAddress: guard.requesterWalletAddress,
+      userAgent: request.headers.get("user-agent"),
+    },
   });
 
   if (!result) {

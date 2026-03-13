@@ -3,12 +3,37 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   BANKTRANSFER_ABLY_CHANNEL,
   BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
+  BUYORDER_BLOCKED_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_CHANNEL,
 } from "@lib/ably/constants";
 import { getAblyRestClient } from "@lib/ably/server";
+import {
+  createPublicRealtimePreflightResponse,
+  jsonWithPublicRealtimeCors,
+} from "@lib/realtime/publicCors";
 import { authorizeRealtimeRequest } from "@lib/realtime/rbac";
 
 export const runtime = "nodejs";
+
+const jsonResponse = ({
+  body,
+  isPublic,
+  init,
+}: {
+  body: unknown;
+  isPublic: boolean;
+  init?: ResponseInit;
+}) => {
+  if (isPublic) {
+    return jsonWithPublicRealtimeCors(body, init);
+  }
+
+  return NextResponse.json(body, init);
+};
+
+export async function OPTIONS() {
+  return createPublicRealtimePreflightResponse();
+}
 
 export async function GET(request: NextRequest) {
   const isPublic = request.nextUrl.searchParams.get("public") === "1";
@@ -18,13 +43,14 @@ export async function GET(request: NextRequest) {
   if (!isPublic) {
     const authResult = authorizeRealtimeRequest(request, ["admin", "viewer"]);
     if (!authResult.ok) {
-      return NextResponse.json(
-        {
+      return jsonResponse({
+        isPublic,
+        body: {
           status: "error",
           message: authResult.message,
         },
-        { status: authResult.status },
-      );
+        init: { status: authResult.status },
+      });
     }
 
     role = authResult.role;
@@ -32,13 +58,14 @@ export async function GET(request: NextRequest) {
 
   const ably = getAblyRestClient();
   if (!ably) {
-    return NextResponse.json(
-      {
+    return jsonResponse({
+      isPublic,
+      body: {
         status: "error",
         message: "ABLY_API_KEY is not configured",
       },
-      { status: 500 },
-    );
+      init: { status: 500 },
+    });
   }
 
   const clientIdParam = request.nextUrl.searchParams.get("clientId");
@@ -49,6 +76,8 @@ export async function GET(request: NextRequest) {
   const capability: Record<string, string[]> = {};
   if (stream === "buyorder") {
     capability[BUYORDER_STATUS_ABLY_CHANNEL] = ["subscribe"];
+  } else if (stream === "buyorder-blocked") {
+    capability[BUYORDER_BLOCKED_ABLY_CHANNEL] = ["subscribe"];
   } else if (stream === "banktransfer") {
     capability[BANKTRANSFER_ABLY_CHANNEL] = ["subscribe"];
     capability[BANKTRANSFER_UNMATCHED_ABLY_CHANNEL] = ["subscribe"];
@@ -56,6 +85,7 @@ export async function GET(request: NextRequest) {
     capability[BANKTRANSFER_ABLY_CHANNEL] = ["subscribe"];
     capability[BANKTRANSFER_UNMATCHED_ABLY_CHANNEL] = ["subscribe"];
     capability[BUYORDER_STATUS_ABLY_CHANNEL] = ["subscribe"];
+    capability[BUYORDER_BLOCKED_ABLY_CHANNEL] = ["subscribe"];
   }
 
   try {
@@ -63,15 +93,24 @@ export async function GET(request: NextRequest) {
       clientId,
       capability: JSON.stringify(capability),
     });
-    return NextResponse.json(tokenRequest);
+    return jsonResponse({
+      isPublic,
+      body: tokenRequest,
+      init: {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    });
   } catch (error) {
     console.error("Failed to create Ably token request:", error);
-    return NextResponse.json(
-      {
+    return jsonResponse({
+      isPublic,
+      body: {
         status: "error",
         message: "Failed to create Ably token request",
       },
-      { status: 500 },
-    );
+      init: { status: 500 },
+    });
   }
 }

@@ -279,6 +279,51 @@ export type RealtimeBuyerWalletBalanceResult = {
   updatedAt: string;
 };
 
+export type RealtimeBlockedBuyOrderMonitorTone = "rose" | "amber" | "sky";
+export type RealtimeBlockedBuyOrderSeverity = "critical" | "warning" | "info";
+
+export type RealtimeBlockedBuyOrderItem = {
+  blockedKey: string;
+  orderId: string | null;
+  tradeId: string | null;
+  storecode: string | null;
+  storeName: string | null;
+  storeLogo: string | null;
+  buyerNickname: string | null;
+  buyerDepositName: string | null;
+  buyerWalletAddress: string | null;
+  sellerNickname: string | null;
+  status: string | null;
+  settlementStatus: string | null;
+  amountUsdt: number;
+  amountKrw: number;
+  route: string;
+  routeLabel: string;
+  guardType: string | null;
+  latestReason: string | null;
+  latestReasonLabel: string;
+  latestReasonDetail: string;
+  tone: RealtimeBlockedBuyOrderMonitorTone;
+  severity: RealtimeBlockedBuyOrderSeverity;
+  blockedCount: number;
+  firstBlockedAt: string | null;
+  latestBlockedAt: string | null;
+  latestPublicIp: string | null;
+  latestRequesterWalletAddress: string | null;
+  distinctReasons: string[];
+  requestBody: Record<string, unknown> | null;
+  meta: Record<string, unknown> | null;
+};
+
+export type RealtimeBlockedBuyOrderResult = {
+  totalCount: number;
+  criticalCount: number;
+  warningCount: number;
+  infoCount: number;
+  orders: RealtimeBlockedBuyOrderItem[];
+  updatedAt: string;
+};
+
 function toNullableText(value: unknown): string | null {
   const normalized = String(value || "").trim();
   return normalized || null;
@@ -1496,4 +1541,523 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
       updatedAt: new Date().toISOString(),
     };
   }
+}
+
+const BLOCKED_BUYORDER_MONITOR_ROUTES = new Set([
+  "/api/order/setBuyOrderForClearance",
+  "/api/order/buyOrderSettlement",
+  "/api/order/updateBuyOrderSettlement",
+  "/api/order/buyOrderConfirmPaymentWithoutEscrow",
+  "/api/order/buyOrderRequestPayment",
+  "/api/order/requestPayment",
+  "/api/order/acceptBuyOrderTask",
+  "/api/order/acceptBuyOrderTaskBangbang",
+  "/api/order/cancelTradeBySellerWithEscrow",
+  "/api/order/cancelTradeBySeller",
+]);
+
+const BLOCKED_BUYORDER_ACTIVE_STATUSES = new Set([
+  "ordered",
+  "accepted",
+  "paymentrequested",
+]);
+
+const getBlockedBuyOrderRouteLabel = (route: string | null) => {
+  switch (route) {
+    case "/api/order/setBuyOrderForClearance":
+      return "정산 주문 생성";
+    case "/api/order/buyOrderSettlement":
+    case "/api/order/updateBuyOrderSettlement":
+      return "정산 처리";
+    case "/api/order/buyOrderConfirmPaymentWithoutEscrow":
+      return "수동 입금확인";
+    case "/api/order/buyOrderRequestPayment":
+    case "/api/order/requestPayment":
+      return "결제 요청";
+    case "/api/order/acceptBuyOrderTask":
+    case "/api/order/acceptBuyOrderTaskBangbang":
+      return "판매자 수락";
+    case "/api/order/cancelTradeBySellerWithEscrow":
+    case "/api/order/cancelTradeBySeller":
+      return "판매자 취소";
+    default:
+      return route || "주문 처리";
+  }
+};
+
+const getBlockedBuyOrderReasonMeta = ({
+  reason,
+  route,
+  meta,
+}: {
+  reason: string | null;
+  route: string | null;
+  meta?: Record<string, unknown> | null;
+}): {
+  label: string;
+  detail: string;
+  tone: RealtimeBlockedBuyOrderMonitorTone;
+  severity: RealtimeBlockedBuyOrderSeverity;
+} => {
+  const normalizedReason = String(reason || "").trim().toLowerCase();
+  const existingTradeId = toNullableText(meta?.existingTradeId);
+  const existingStatus = toNullableText(meta?.existingStatus);
+  const errorMessage = toNullableText(meta?.message);
+
+  switch (normalizedReason) {
+    case "existing_active_buy_order":
+      return {
+        label: "진행 중 주문 충돌",
+        detail: existingTradeId
+          ? `이미 진행 중인 주문 ${existingTradeId}${existingStatus ? ` · ${existingStatus}` : ""} 이 있어 새 요청이 차단되었습니다.`
+          : "이미 진행 중인 주문이 있어 새 요청이 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "hmac_key_store_error":
+      return {
+        label: "정산 키 저장소 오류",
+        detail: errorMessage || "정산 HMAC 키 저장소 오류로 주문 정산 요청이 차단되었습니다.",
+        tone: "rose",
+        severity: "critical",
+      };
+    case "invalid_hmac_signature":
+      return {
+        label: "HMAC 서명 불일치",
+        detail: "정산 요청 서명이 일치하지 않아 차단되었습니다.",
+        tone: "rose",
+        severity: "critical",
+      };
+    case "replayed_nonce":
+      return {
+        label: "중복 요청 감지",
+        detail: "이미 사용된 nonce가 감지되어 재전송 요청이 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "expired_timestamp":
+      return {
+        label: "만료된 요청 시각",
+        detail: "허용 시간을 벗어난 요청이라 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "missing_or_invalid_hmac_headers":
+      return {
+        label: "정산 인증 헤더 누락",
+        detail: "HMAC 헤더가 없거나 형식이 올바르지 않아 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "missing_or_invalid_signature_fields":
+      return {
+        label: "서명 필드 누락",
+        detail: "서명 검증에 필요한 필드가 빠져 요청이 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "invalid_signature":
+      return {
+        label: "서명 불일치",
+        detail: "요청 서명이 검증되지 않아 차단되었습니다.",
+        tone: "rose",
+        severity: "critical",
+      };
+    case "invalid_nonce":
+      return {
+        label: "유효하지 않은 nonce",
+        detail: "nonce 값이 잘못되어 요청이 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "invalid_wallet_address":
+      return {
+        label: "잘못된 지갑 주소",
+        detail: "지갑 주소 형식이 올바르지 않아 요청이 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "forbidden_wallet_mismatch":
+      return {
+        label: "관리 지갑 불일치",
+        detail: "요청 지갑이 주문/가맹점 관리자 지갑과 일치하지 않아 차단되었습니다.",
+        tone: "rose",
+        severity: "critical",
+      };
+    case "store_admin_wallet_not_configured":
+      return {
+        label: "관리 지갑 미설정",
+        detail: "가맹점 관리자 지갑이 설정되지 않아 주문 처리가 차단되었습니다.",
+        tone: "amber",
+        severity: "warning",
+      };
+    case "storecode_required":
+      return {
+        label: "storecode 누락",
+        detail: "가맹점 식별값이 없어 요청이 차단되었습니다.",
+        tone: "sky",
+        severity: "info",
+      };
+    default:
+      return {
+        label: normalizedReason || "차단됨",
+        detail: route
+          ? `${getBlockedBuyOrderRouteLabel(route)} 요청이 ${normalizedReason || "unknown_reason"} 사유로 차단되었습니다.`
+          : "주문 요청이 차단되었습니다.",
+        tone: "sky",
+        severity: "info",
+      };
+  }
+};
+
+const isBlockedBuyOrderStillActive = ({
+  route,
+  reason,
+  order,
+}: {
+  route: string | null;
+  reason: string | null;
+  order: any;
+}) => {
+  if (!order) {
+    return false;
+  }
+
+  const normalizedRoute = String(route || "").trim();
+  const normalizedReason = String(reason || "").trim().toLowerCase();
+  const status = String(order?.status || "").trim().toLowerCase();
+  const settlementStatus = String(order?.settlement?.status || "").trim().toLowerCase();
+
+  if (normalizedRoute === "/api/order/setBuyOrderForClearance" && normalizedReason === "existing_active_buy_order") {
+    return BLOCKED_BUYORDER_ACTIVE_STATUSES.has(status);
+  }
+
+  if (
+    normalizedRoute === "/api/order/buyOrderSettlement"
+    || normalizedRoute === "/api/order/updateBuyOrderSettlement"
+  ) {
+    return settlementStatus !== "paymentsettled" && status !== "cancelled";
+  }
+
+  if (normalizedRoute === "/api/order/buyOrderConfirmPaymentWithoutEscrow") {
+    return status !== "paymentconfirmed" && status !== "paymentsettled" && status !== "cancelled";
+  }
+
+  if (
+    normalizedRoute === "/api/order/acceptBuyOrderTask"
+    || normalizedRoute === "/api/order/acceptBuyOrderTaskBangbang"
+  ) {
+    return status === "ordered";
+  }
+
+  if (
+    normalizedRoute === "/api/order/cancelTradeBySellerWithEscrow"
+    || normalizedRoute === "/api/order/cancelTradeBySeller"
+  ) {
+    return status !== "cancelled";
+  }
+
+  if (
+    normalizedRoute === "/api/order/buyOrderRequestPayment"
+    || normalizedRoute === "/api/order/requestPayment"
+  ) {
+    return status !== "paymentrequested" && status !== "paymentconfirmed" && status !== "paymentsettled";
+  }
+
+  return true;
+};
+
+export async function getRealtimeBlockedBuyOrders({
+  limit = 24,
+  lookbackHours = 24 * 14,
+  scanLimit = 800,
+}: {
+  limit?: number;
+  lookbackHours?: number;
+  scanLimit?: number;
+} = {}): Promise<RealtimeBlockedBuyOrderResult> {
+  const client = await clientPromise;
+  const db = client.db(dbName);
+  const logCollection = db.collection("adminApiCallLogs");
+  const orderCollection = db.collection("buyorders");
+
+  const safeLimit = Math.min(Math.max(Number(limit) || 24, 1), 100);
+  const safeLookbackHours = Math.min(Math.max(Number(lookbackHours) || 24 * 14, 1), 24 * 90);
+  const safeScanLimit = Math.min(Math.max(Number(scanLimit) || 800, safeLimit), 3000);
+  const lookbackStart = new Date(Date.now() - safeLookbackHours * 60 * 60 * 1000);
+
+  const routeList = Array.from(BLOCKED_BUYORDER_MONITOR_ROUTES);
+  const rawLogs = await logCollection
+    .find(
+      {
+        status: "blocked",
+        route: { $in: routeList },
+        createdAt: { $gte: lookbackStart },
+        $or: [
+          { "requestBody.orderId": { $type: "string", $ne: "" } },
+          { "requestBody.tradeId": { $type: "string", $ne: "" } },
+          { "meta.existingOrderId": { $type: "string", $ne: "" } },
+          { "meta.existingTradeId": { $type: "string", $ne: "" } },
+        ],
+      },
+      {
+        projection: {
+          _id: 0,
+          route: 1,
+          guardType: 1,
+          reason: 1,
+          publicIp: 1,
+          requesterWalletAddress: 1,
+          requestBody: 1,
+          meta: 1,
+          createdAt: 1,
+        },
+        sort: { createdAt: -1 },
+        limit: safeScanLimit,
+        maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+      },
+    )
+    .toArray();
+
+  type GroupedBlockedItem = {
+    blockedKey: string;
+    orderId: string | null;
+    tradeId: string | null;
+    route: string | null;
+    guardType: string | null;
+    latestReason: string | null;
+    latestPublicIp: string | null;
+    latestRequesterWalletAddress: string | null;
+    requestBody: Record<string, unknown> | null;
+    meta: Record<string, unknown> | null;
+    firstBlockedAt: string | null;
+    latestBlockedAt: string | null;
+    blockedCount: number;
+    distinctReasons: Set<string>;
+  };
+
+  const grouped = new Map<string, GroupedBlockedItem>();
+
+  for (const log of rawLogs) {
+    const metaValue = log && typeof log.meta === "object" ? log.meta as Record<string, unknown> : null;
+    const requestBodyValue = log && typeof log.requestBody === "object" ? log.requestBody as Record<string, unknown> : null;
+    const tradeId =
+      toNullableText(metaValue?.existingTradeId)
+      || toNullableText(requestBodyValue?.tradeId);
+    const orderId =
+      toNullableText(metaValue?.existingOrderId)
+      || toNullableText(requestBodyValue?.orderId);
+    const blockedKey = tradeId ? `trade:${tradeId}` : orderId ? `order:${orderId}` : null;
+
+    if (!blockedKey) {
+      continue;
+    }
+
+    const createdAt = toIsoString(log?.createdAt);
+    const createdAtTime = createdAt ? Date.parse(createdAt) : 0;
+    const existing = grouped.get(blockedKey);
+
+    if (!existing) {
+      grouped.set(blockedKey, {
+        blockedKey,
+        orderId,
+        tradeId,
+        route: toNullableText(log?.route),
+        guardType: toNullableText(log?.guardType),
+        latestReason: toNullableText(log?.reason),
+        latestPublicIp: toNullableText(log?.publicIp),
+        latestRequesterWalletAddress: toNullableText(log?.requesterWalletAddress),
+        requestBody: requestBodyValue,
+        meta: metaValue,
+        firstBlockedAt: createdAt,
+        latestBlockedAt: createdAt,
+        blockedCount: 1,
+        distinctReasons: new Set([toNullableText(log?.reason) || "unknown"]),
+      });
+      continue;
+    }
+
+    existing.blockedCount += 1;
+    existing.distinctReasons.add(toNullableText(log?.reason) || "unknown");
+
+    const firstTime = existing.firstBlockedAt ? Date.parse(existing.firstBlockedAt) : createdAtTime;
+    if (createdAtTime && (!firstTime || createdAtTime < firstTime)) {
+      existing.firstBlockedAt = createdAt;
+    }
+
+    const latestTime = existing.latestBlockedAt ? Date.parse(existing.latestBlockedAt) : 0;
+    if (createdAtTime >= latestTime) {
+      existing.orderId = orderId || existing.orderId;
+      existing.tradeId = tradeId || existing.tradeId;
+      existing.route = toNullableText(log?.route);
+      existing.guardType = toNullableText(log?.guardType);
+      existing.latestReason = toNullableText(log?.reason);
+      existing.latestPublicIp = toNullableText(log?.publicIp);
+      existing.latestRequesterWalletAddress = toNullableText(log?.requesterWalletAddress);
+      existing.requestBody = requestBodyValue;
+      existing.meta = metaValue;
+      existing.latestBlockedAt = createdAt;
+    }
+  }
+
+  if (grouped.size === 0) {
+    return {
+      totalCount: 0,
+      criticalCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      orders: [],
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const tradeIds = new Set<string>();
+  const objectIds: ObjectId[] = [];
+
+  for (const item of grouped.values()) {
+    if (item.tradeId) {
+      tradeIds.add(item.tradeId);
+    }
+    if (item.orderId && ObjectId.isValid(item.orderId)) {
+      objectIds.push(new ObjectId(item.orderId));
+    }
+  }
+
+  const orderQuery: Record<string, unknown>[] = [];
+  if (tradeIds.size > 0) {
+    orderQuery.push({
+      tradeId: { $in: Array.from(tradeIds) },
+    });
+  }
+  if (objectIds.length > 0) {
+    orderQuery.push({
+      _id: { $in: objectIds },
+    });
+  }
+
+  const orders = orderQuery.length > 0
+    ? await orderCollection
+        .find(
+          { $or: orderQuery },
+          {
+            projection: {
+              _id: 1,
+              tradeId: 1,
+              storecode: 1,
+              status: 1,
+              createdAt: 1,
+              acceptedAt: 1,
+              paymentRequestedAt: 1,
+              paymentConfirmedAt: 1,
+              usdtAmount: 1,
+              krwAmount: 1,
+              walletAddress: 1,
+              nickname: 1,
+              buyer: 1,
+              seller: 1,
+              store: 1,
+              settlement: 1,
+            },
+            maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+          },
+        )
+        .toArray()
+    : [];
+
+  const orderByTradeId = new Map<string, any>();
+  const orderByOrderId = new Map<string, any>();
+
+  for (const order of orders) {
+    const tradeId = toNullableText(order?.tradeId);
+    const orderId = order?._id instanceof ObjectId ? order._id.toHexString() : toNullableText(order?._id);
+    if (tradeId) {
+      orderByTradeId.set(tradeId, order);
+    }
+    if (orderId) {
+      orderByOrderId.set(orderId, order);
+    }
+  }
+
+  const items: RealtimeBlockedBuyOrderItem[] = Array.from(grouped.values())
+    .map((item) => {
+      const order = (item.tradeId ? orderByTradeId.get(item.tradeId) : null)
+        || (item.orderId ? orderByOrderId.get(item.orderId) : null)
+        || null;
+
+      if (!order) {
+        return null;
+      }
+
+      if (!isBlockedBuyOrderStillActive({
+        route: item.route,
+        reason: item.latestReason,
+        order,
+      })) {
+        return null;
+      }
+
+      const reasonMeta = getBlockedBuyOrderReasonMeta({
+        reason: item.latestReason,
+        route: item.route,
+        meta: item.meta,
+      });
+
+      return {
+        blockedKey: item.blockedKey,
+        orderId: item.orderId || (order?._id instanceof ObjectId ? order._id.toHexString() : null),
+        tradeId: item.tradeId || toNullableText(order?.tradeId),
+        storecode: toNullableText(order?.storecode || order?.store?.storecode),
+        storeName: toNullableText(order?.store?.storeName),
+        storeLogo: toNullableText(order?.store?.storeLogo),
+        buyerNickname: toNullableText(order?.nickname || order?.buyer?.nickname),
+        buyerDepositName: toNullableText(order?.buyer?.depositName),
+        buyerWalletAddress: toNullableText(order?.walletAddress),
+        sellerNickname: toNullableText(order?.seller?.nickname),
+        status: toNullableText(order?.status),
+        settlementStatus: toNullableText(order?.settlement?.status),
+        amountUsdt: toSafeNumber(order?.usdtAmount),
+        amountKrw: toSafeNumber(order?.krwAmount),
+        route: item.route || "",
+        routeLabel: getBlockedBuyOrderRouteLabel(item.route),
+        guardType: item.guardType,
+        latestReason: item.latestReason,
+        latestReasonLabel: reasonMeta.label,
+        latestReasonDetail: reasonMeta.detail,
+        tone: reasonMeta.tone,
+        severity: reasonMeta.severity,
+        blockedCount: item.blockedCount,
+        firstBlockedAt: item.firstBlockedAt,
+        latestBlockedAt: item.latestBlockedAt,
+        latestPublicIp: item.latestPublicIp,
+        latestRequesterWalletAddress: item.latestRequesterWalletAddress,
+        distinctReasons: Array.from(item.distinctReasons).sort(),
+        requestBody: item.requestBody,
+        meta: item.meta,
+      } satisfies RealtimeBlockedBuyOrderItem;
+    })
+    .filter((item): item is RealtimeBlockedBuyOrderItem => Boolean(item))
+    .sort((left, right) => {
+      const leftTime = left.latestBlockedAt ? Date.parse(left.latestBlockedAt) : 0;
+      const rightTime = right.latestBlockedAt ? Date.parse(right.latestBlockedAt) : 0;
+      return (
+        rightTime - leftTime
+        || right.blockedCount - left.blockedCount
+        || right.amountKrw - left.amountKrw
+        || String(left.tradeId || left.orderId || "").localeCompare(String(right.tradeId || right.orderId || ""))
+      );
+    })
+    .slice(0, safeLimit);
+
+  const criticalCount = items.filter((item) => item.severity === "critical").length;
+  const warningCount = items.filter((item) => item.severity === "warning").length;
+  const infoCount = items.filter((item) => item.severity === "info").length;
+
+  return {
+    totalCount: items.length,
+    criticalCount,
+    warningCount,
+    infoCount,
+    orders: items,
+    updatedAt: new Date().toISOString(),
+  };
 }

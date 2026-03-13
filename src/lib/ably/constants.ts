@@ -4,6 +4,8 @@ export const BANKTRANSFER_UNMATCHED_ABLY_CHANNEL = "banktransfer-unmatched-event
 export const BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME = "banktransfer.unmatched";
 export const BUYORDER_STATUS_ABLY_CHANNEL = "buyorder-status-events";
 export const BUYORDER_STATUS_ABLY_EVENT_NAME = "buyorder.status.changed";
+export const BUYORDER_BLOCKED_ABLY_CHANNEL = "buyorder-blocked-events";
+export const BUYORDER_BLOCKED_ABLY_EVENT_NAME = "buyorder.blocked";
 
 export type BankTransferDashboardStore = {
   code: string | null;
@@ -87,5 +89,23 @@ export type BuyOrderStatusRealtimeEvent = {
   queueId: string | null;
   minedAt: string | null;
   reason: string | null;
+  publishedAt: string;
+};
+
+export type BlockedBuyOrderRealtimeEvent = {
+  eventId: string;
+  logId: string;
+  route: string;
+  guardType: string;
+  status: "blocked";
+  reason: string | null;
+  orderId: string | null;
+  tradeId: string | null;
+  storecode: string | null;
+  publicIp: string | null;
+  requesterWalletAddress: string | null;
+  requestBody: Record<string, unknown> | null;
+  meta: Record<string, unknown> | null;
+  createdAt: string;
   publishedAt: string;
 };

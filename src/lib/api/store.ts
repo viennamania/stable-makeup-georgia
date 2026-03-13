@@ -503,31 +503,10 @@ export async function updateStoreAdminWalletAddress(
 
 
 // updateStoreSellerWalletAddress
-export async function updateStoreSellerWalletAddress(
-  {
-    storecode,
-    sellerWalletAddress,
-  }: {
-    storecode: string;
-    sellerWalletAddress: string;
-  }
-): Promise<boolean> {
-  const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
-
-  // update storecode
-  const result = await collection.updateOne(
-    { storecode: storecode },
-    { $set: { sellerWalletAddress: sellerWalletAddress } }
-  );
-  return Boolean(result?.acknowledged && result?.matchedCount > 0);
-}
-
-
-// updateStoreSettlementWalletAddress
+const STORE_SELLER_WALLET_HISTORY_COLLECTION = "storeSellerWalletAddressHistory";
 const STORE_SETTLEMENT_WALLET_HISTORY_COLLECTION = "storeSettlementWalletAddressHistory";
 
-type UpdateStoreSettlementWalletAddressAudit = {
+type UpdateStoreWalletAddressAudit = {
   route?: string | null;
   publicIp?: string | null;
   requesterWalletAddress?: string | null;
@@ -542,17 +521,84 @@ const normalizeAuditString = (value: unknown) => {
   return value.trim();
 };
 
-const logStoreSettlementWalletAddressHistory = async (
+const logStoreWalletAddressHistory = async (
   historyCollection: any,
   payload: any,
+  errorMessage: string,
 ) => {
   try {
     await historyCollection.insertOne(payload);
   } catch (error) {
-    console.error("Failed to log settlement wallet address history", error);
+    console.error(errorMessage, error);
   }
 };
 
+export async function updateStoreSellerWalletAddress(
+  {
+    storecode,
+    sellerWalletAddress,
+    audit,
+  }: {
+    storecode: string;
+    sellerWalletAddress: string;
+    audit?: UpdateStoreWalletAddressAudit;
+  }
+): Promise<boolean> {
+  const client = await clientPromise;
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection(STORE_SELLER_WALLET_HISTORY_COLLECTION);
+  const safeStorecode = normalizeAuditString(storecode);
+  const nextSellerWalletAddress = normalizeAuditString(sellerWalletAddress);
+
+  const existingStore = await collection.findOne(
+    { storecode: safeStorecode },
+    { projection: { sellerWalletAddress: 1 } },
+  );
+
+  if (!existingStore) {
+    return false;
+  }
+
+  const beforeSellerWalletAddress =
+    normalizeAuditString(existingStore?.sellerWalletAddress) || null;
+
+  // update storecode
+  const result = await collection.updateOne(
+    { storecode: safeStorecode },
+    { $set: { sellerWalletAddress: nextSellerWalletAddress } }
+  );
+
+  if (result?.acknowledged && result?.matchedCount > 0) {
+    clearCachedStoreByCode(safeStorecode);
+
+    const afterSellerWalletAddress = nextSellerWalletAddress || null;
+    await logStoreWalletAddressHistory(
+      historyCollection,
+      {
+        storecode: safeStorecode,
+        field: "sellerWalletAddress",
+        before: beforeSellerWalletAddress,
+        after: afterSellerWalletAddress,
+        changed:
+          String(beforeSellerWalletAddress || "").toLowerCase() !==
+          String(afterSellerWalletAddress || "").toLowerCase(),
+        publicIp: normalizeAuditString(audit?.publicIp) || null,
+        requesterWalletAddress:
+          normalizeAuditString(audit?.requesterWalletAddress).toLowerCase() || null,
+        userAgent: normalizeAuditString(audit?.userAgent).slice(0, 1000) || null,
+        route: normalizeAuditString(audit?.route) || null,
+        updatedAt: audit?.updatedAt ? new Date(audit.updatedAt) : new Date(),
+      },
+      "Failed to log seller wallet address history",
+    );
+  }
+
+  return Boolean(result?.acknowledged && result?.matchedCount > 0);
+}
+
+
+// updateStoreSettlementWalletAddress
 export async function updateStoreSettlementWalletAddress(
   {
     storecode,
@@ -561,7 +607,7 @@ export async function updateStoreSettlementWalletAddress(
   }: {
     storecode: string;
     settlementWalletAddress: string;
-    audit?: UpdateStoreSettlementWalletAddressAudit;
+    audit?: UpdateStoreWalletAddressAudit;
   }
 ): Promise<boolean> {
   const client = await clientPromise;
@@ -593,21 +639,25 @@ export async function updateStoreSettlementWalletAddress(
     clearCachedStoreByCode(safeStorecode);
 
     const afterSettlementWalletAddress = nextSettlementWalletAddress || null;
-    await logStoreSettlementWalletAddressHistory(historyCollection, {
-      storecode: safeStorecode,
-      field: "settlementWalletAddress",
-      before: beforeSettlementWalletAddress,
-      after: afterSettlementWalletAddress,
-      changed:
-        String(beforeSettlementWalletAddress || "").toLowerCase() !==
-        String(afterSettlementWalletAddress || "").toLowerCase(),
-      publicIp: normalizeAuditString(audit?.publicIp) || null,
-      requesterWalletAddress:
-        normalizeAuditString(audit?.requesterWalletAddress).toLowerCase() || null,
-      userAgent: normalizeAuditString(audit?.userAgent).slice(0, 1000) || null,
-      route: normalizeAuditString(audit?.route) || null,
-      updatedAt: audit?.updatedAt ? new Date(audit.updatedAt) : new Date(),
-    });
+    await logStoreWalletAddressHistory(
+      historyCollection,
+      {
+        storecode: safeStorecode,
+        field: "settlementWalletAddress",
+        before: beforeSettlementWalletAddress,
+        after: afterSettlementWalletAddress,
+        changed:
+          String(beforeSettlementWalletAddress || "").toLowerCase() !==
+          String(afterSettlementWalletAddress || "").toLowerCase(),
+        publicIp: normalizeAuditString(audit?.publicIp) || null,
+        requesterWalletAddress:
+          normalizeAuditString(audit?.requesterWalletAddress).toLowerCase() || null,
+        userAgent: normalizeAuditString(audit?.userAgent).slice(0, 1000) || null,
+        route: normalizeAuditString(audit?.route) || null,
+        updatedAt: audit?.updatedAt ? new Date(audit.updatedAt) : new Date(),
+      },
+      "Failed to log settlement wallet address history",
+    );
   }
 
   return Boolean(result?.acknowledged && result?.matchedCount > 0);

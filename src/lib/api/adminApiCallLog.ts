@@ -1,4 +1,6 @@
 import clientPromise, { dbName } from "@/lib/mongodb";
+import type { BlockedBuyOrderRealtimeEvent } from "@lib/ably/constants";
+import { publishBlockedBuyOrderEvent } from "@lib/ably/server";
 
 export const ADMIN_API_CALL_LOG_COLLECTION = "adminApiCallLogs";
 
@@ -59,6 +61,19 @@ const ACCOUNT_NUMBER_KEYS = [
   "defaultaccountnumber",
 ];
 
+const BLOCKED_BUYORDER_REALTIME_ROUTES = new Set([
+  "/api/order/setBuyOrderForClearance",
+  "/api/order/buyOrderSettlement",
+  "/api/order/updateBuyOrderSettlement",
+  "/api/order/buyOrderConfirmPaymentWithoutEscrow",
+  "/api/order/buyOrderRequestPayment",
+  "/api/order/requestPayment",
+  "/api/order/acceptBuyOrderTask",
+  "/api/order/acceptBuyOrderTaskBangbang",
+  "/api/order/cancelTradeBySellerWithEscrow",
+  "/api/order/cancelTradeBySeller",
+]);
+
 const sanitizePayload = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map((item) => sanitizePayload(item));
@@ -109,6 +124,102 @@ const sanitizeRequesterUser = (user: any) => {
   });
 };
 
+const toNullableText = (value: unknown) => {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+
+  if (typeof value === "number" || typeof value === "bigint") {
+    const normalized = String(value).trim();
+    return normalized || null;
+  }
+
+  return null;
+};
+
+const toRecordOrNull = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+};
+
+const getInsertedIdText = (value: unknown) => {
+  if (value && typeof value === "object" && "toHexString" in value) {
+    const maybeObjectId = value as { toHexString?: () => string };
+    if (typeof maybeObjectId.toHexString === "function") {
+      return maybeObjectId.toHexString();
+    }
+  }
+
+  return toNullableText(String(value ?? "")) || `blocked-buyorder-${Date.now()}`;
+};
+
+const buildBlockedBuyOrderRealtimeEvent = ({
+  insertedId,
+  payload,
+}: {
+  insertedId: string;
+  payload: {
+    route: string;
+    guardType: InsertAdminApiCallLogInput["guardType"];
+    status: InsertAdminApiCallLogInput["status"];
+    reason: string | null;
+    publicIp: string | null;
+    requesterWalletAddress: string | null;
+    requesterUser: unknown;
+    requestBody: unknown;
+    meta: unknown;
+    createdAt: Date;
+  };
+}): BlockedBuyOrderRealtimeEvent | null => {
+  if (payload.status !== "blocked") {
+    return null;
+  }
+
+  if (!BLOCKED_BUYORDER_REALTIME_ROUTES.has(payload.route)) {
+    return null;
+  }
+
+  const requestBody = toRecordOrNull(payload.requestBody);
+  const meta = toRecordOrNull(payload.meta);
+  const requesterUser = toRecordOrNull(payload.requesterUser);
+
+  const tradeId =
+    toNullableText(meta?.existingTradeId)
+    || toNullableText(requestBody?.tradeId);
+  const orderId =
+    toNullableText(meta?.existingOrderId)
+    || toNullableText(requestBody?.orderId);
+
+  if (!tradeId && !orderId) {
+    return null;
+  }
+
+  return {
+    eventId: `blocked-buyorder:${insertedId}`,
+    logId: insertedId,
+    route: payload.route,
+    guardType: payload.guardType,
+    status: "blocked",
+    reason: payload.reason,
+    orderId,
+    tradeId,
+    storecode:
+      toNullableText(meta?.storecode)
+      || toNullableText(requestBody?.storecode)
+      || toNullableText(requesterUser?.storecode),
+    publicIp: payload.publicIp,
+    requesterWalletAddress: payload.requesterWalletAddress,
+    requestBody,
+    meta,
+    createdAt: payload.createdAt.toISOString(),
+    publishedAt: new Date().toISOString(),
+  };
+};
+
 export async function insertAdminApiCallLog(input: InsertAdminApiCallLogInput) {
   try {
     const client = await clientPromise;
@@ -132,6 +243,18 @@ export async function insertAdminApiCallLog(input: InsertAdminApiCallLogInput) {
     const result = await collection.insertOne(payload);
     if (!result?.acknowledged) {
       return null;
+    }
+
+    const insertedId = getInsertedIdText(result.insertedId);
+    const blockedRealtimeEvent = buildBlockedBuyOrderRealtimeEvent({
+      insertedId,
+      payload,
+    });
+
+    if (blockedRealtimeEvent) {
+      void publishBlockedBuyOrderEvent(blockedRealtimeEvent).catch((error) => {
+        console.error("Failed to publish blocked buy order realtime event:", error);
+      });
     }
 
     return {
