@@ -209,12 +209,23 @@ const getBlockedOrderToneClasses = (tone?: BlockedBuyOrderMonitorItem["tone"]) =
 const getBlockedOrderSeverityLabel = (severity?: BlockedBuyOrderMonitorItem["severity"]) => {
   switch (severity) {
     case "critical":
-      return "긴급";
+      return "고위험";
     case "warning":
-      return "주의";
+      return "의심";
     default:
-      return "안내";
+      return "관찰";
   }
+};
+
+const getBlockedHistoryStatusTone = (status?: string | null) => {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "paymentconfirmed" || normalized === "paymentsettled") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+  if (normalized === "cancelled") {
+    return "border-zinc-200 bg-zinc-100 text-zinc-600";
+  }
+  return "border-amber-200 bg-amber-50 text-amber-700";
 };
 
 const stringifyMonitorPayload = (value: unknown) => {
@@ -398,6 +409,35 @@ type BlockedBuyOrderMonitorItem = {
   distinctReasons?: string[];
   requestBody?: Record<string, unknown> | null;
   meta?: Record<string, unknown> | null;
+};
+
+type BlockedBuyOrderHistoryItem = {
+  orderId?: string | null;
+  tradeId?: string | null;
+  status?: string | null;
+  settlementStatus?: string | null;
+  amountUsdt?: number;
+  amountKrw?: number;
+  createdAt?: string | null;
+  paymentRequestedAt?: string | null;
+  paymentConfirmedAt?: string | null;
+  buyerNickname?: string | null;
+  buyerDepositName?: string | null;
+  sellerNickname?: string | null;
+};
+
+type BlockedBuyOrderHistoryResult = {
+  anchorTradeId?: string | null;
+  anchorOrderId?: string | null;
+  anchorCreatedAt?: string | null;
+  storecode?: string | null;
+  matchType?: "walletAddress" | "depositName" | "none";
+  matchValue?: string | null;
+  totalCount?: number;
+  paymentConfirmedCount?: number;
+  cancelledCount?: number;
+  activeCount?: number;
+  orders?: BlockedBuyOrderHistoryItem[];
 };
 
 const ADMIN_BUYORDERS_POLLING_MS = 8_000;
@@ -1809,6 +1849,8 @@ const [blockedOrderPanelOpen, setBlockedOrderPanelOpen] = useState(false);
 const [blockedOrderPanelLoading, setBlockedOrderPanelLoading] = useState(false);
 const [blockedOrderPanelItem, setBlockedOrderPanelItem] = useState<BlockedBuyOrderMonitorItem | null>(null);
 const [blockedOrderPanelOrder, setBlockedOrderPanelOrder] = useState<any>(null);
+const [blockedOrderPanelHistoryLoading, setBlockedOrderPanelHistoryLoading] = useState(false);
+const [blockedOrderPanelHistory, setBlockedOrderPanelHistory] = useState<BlockedBuyOrderHistoryResult | null>(null);
 const selectedDepositTotal = useMemo(() => {
   return depositOptions.reduce((sum, trx, idx) => {
     const key = trx?._id || String(idx);
@@ -1833,6 +1875,8 @@ const depositAmountMatches = useMemo(() => {
     setBlockedOrderPanelItem(null);
     setBlockedOrderPanelOrder(null);
     setBlockedOrderPanelLoading(false);
+    setBlockedOrderPanelHistory(null);
+    setBlockedOrderPanelHistoryLoading(false);
   };
 
   const openTradeDetailModal = async (tradeId: string) => {
@@ -1861,6 +1905,7 @@ const depositAmountMatches = useMemo(() => {
   const openBlockedOrderPanel = async (item: BlockedBuyOrderMonitorItem) => {
     setBlockedOrderPanelItem(item);
     setBlockedOrderPanelOrder(null);
+    setBlockedOrderPanelHistory(null);
     setBlockedOrderPanelOpen(true);
 
     const tradeId = String(item?.tradeId || "").trim();
@@ -1870,28 +1915,48 @@ const depositAmountMatches = useMemo(() => {
     }
 
     setBlockedOrderPanelLoading(true);
+    setBlockedOrderPanelHistoryLoading(true);
     try {
-      const endpoint = tradeId
+      const orderEndpoint = tradeId
         ? '/api/order/getOneBuyOrderByTradeId'
         : '/api/order/getOneBuyOrderByOrderId';
       const payload = tradeId ? { tradeId } : { orderId };
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
 
-      if (!res.ok || data?.error) {
-        throw new Error(data?.error || '차단 주문 상세정보를 불러오지 못했습니다.');
+      const [detailRes, historyRes] = await Promise.all([
+        fetch(orderEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }),
+        fetch('/api/order/getBlockedBuyOrderHistory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...payload,
+            limit: 8,
+          }),
+        }),
+      ]);
+
+      const detailData = await detailRes.json();
+      const historyData = await historyRes.json();
+
+      if (!detailRes.ok || detailData?.error) {
+        throw new Error(detailData?.error || '차단 주문 상세정보를 불러오지 못했습니다.');
       }
 
-      setBlockedOrderPanelOrder(data?.result || null);
+      if (!historyRes.ok || historyData?.error) {
+        throw new Error(historyData?.error || '이전 주문 이력을 불러오지 못했습니다.');
+      }
+
+      setBlockedOrderPanelOrder(detailData?.result || null);
+      setBlockedOrderPanelHistory((historyData?.result || null) as BlockedBuyOrderHistoryResult | null);
     } catch (error: any) {
       console.error(error);
       toast.error(error?.message || '차단 주문 상세 조회 실패');
     } finally {
       setBlockedOrderPanelLoading(false);
+      setBlockedOrderPanelHistoryLoading(false);
     }
   };
 
@@ -6341,22 +6406,22 @@ const fetchBuyOrders = async () => {
             {isSellerWalletMonitorOpen ? (
               <>
                 {sellersBalance.length > 0 ? (
-                  <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-44 overflow-y-auto pr-0.5">
+                  <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-2 md:grid-cols-1 max-h-52 overflow-y-auto pr-0.5">
                     {sellersBalance.map((seller, index) => {
                       const smartSellerWallet = isSmartAccountSellerWallet(seller);
 
                       return (
                         <div
                           key={`${seller.walletAddress}-${index}`}
-                          className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
+                          className={`rounded-md border border-zinc-200 px-2 py-1.5 bg-white
                     ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
                       ? 'ring-1 ring-emerald-200'
                       : ''}`}
                         >
-                          <div className="flex items-start justify-between gap-1.5">
-                            <div className="min-w-0 max-w-[58%]">
+                          <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3">
+                            <div className="min-w-0 md:flex md:min-w-0 md:flex-1 md:items-center md:gap-3">
                               <button
-                                className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
+                                className="block w-full truncate text-left font-mono text-sm text-zinc-700 underline md:max-w-[220px]"
                                 onClick={() => {
                                   navigator.clipboard.writeText(seller.walletAddress);
                                   toast.success(Copied_Wallet_Address);
@@ -6370,24 +6435,28 @@ const fetchBuyOrders = async () => {
                                   스마트 지갑
                                 </span>
                               ) : null}
+                              <div className="mt-0.5 flex min-w-0 items-center gap-1 md:mt-0 md:flex-1">
+                                <Image
+                                  src={seller.storeLogo || '/icon-store.png'}
+                                  alt={seller.storeName || seller.storecode || 'Store'}
+                                  width={10}
+                                  height={10}
+                                  className="w-2.5 h-2.5 rounded object-cover shrink-0"
+                                />
+                                <span className="truncate text-xs text-zinc-500">
+                                  {seller.storeName || seller.storecode || '-'}
+                                </span>
+                              </div>
                             </div>
-                              <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                                {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
-                                ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                : '0.000'}
+
+                            <div className="flex items-center justify-end gap-2 md:shrink-0">
+                              <span className="text-[11px] text-zinc-500">USDT</span>
+                              <span className="shrink-0 text-base font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                                  {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                                  ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                  : '0.000'}
                               </span>
-                          </div>
-                          <div className="mt-0.5 flex items-center gap-1 min-w-0">
-                            <Image
-                              src={seller.storeLogo || '/icon-store.png'}
-                              alt={seller.storeName || seller.storecode || 'Store'}
-                              width={10}
-                              height={10}
-                              className="w-2.5 h-2.5 rounded object-cover shrink-0"
-                            />
-                            <span className="text-xs text-zinc-500 truncate">
-                              {seller.storeName || seller.storecode || '-'}
-                            </span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -6449,19 +6518,19 @@ const fetchBuyOrders = async () => {
             {isBuyerWalletMonitorOpen ? (
               <>
                 {buyersBalance.length > 0 ? (
-                  <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-1 max-h-52 overflow-y-auto pr-0.5">
+                  <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-2 md:grid-cols-1 max-h-60 overflow-y-auto pr-0.5">
                     {buyersBalance.map((buyer, index) => (
                       <div
                         key={`${buyer.walletAddress}-${index}`}
-                        className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
+                        className={`rounded-md border border-zinc-200 px-2 py-1.5 bg-white
                     ${currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined && currentBuyerUsdtBalanceArray[index] !== buyer.currentUsdtBalance
                       ? 'ring-1 ring-sky-200'
                       : ''}`}
                       >
-                        <div className="flex items-start justify-between gap-1.5">
-                          <div className="min-w-0 flex-1">
+                        <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3">
+                          <div className="min-w-0 md:flex md:min-w-0 md:flex-1 md:items-center md:gap-3">
                             <button
-                              className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
+                              className="block w-full truncate text-left font-mono text-sm text-zinc-700 underline md:max-w-[220px]"
                               onClick={() => {
                                 navigator.clipboard.writeText(buyer.walletAddress);
                                 toast.success(Copied_Wallet_Address);
@@ -6470,8 +6539,8 @@ const fetchBuyOrders = async () => {
                             >
                               {buyer.walletAddress.substring(0, 6)}...{buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
                             </button>
-                            <div className="mt-0.5 flex items-center justify-between gap-1.5 min-w-0">
-                              <div className="flex items-center gap-1 min-w-0">
+                            <div className="mt-0.5 flex flex-col gap-1 md:mt-0 md:flex-row md:min-w-0 md:items-center md:gap-3">
+                              <div className="flex min-w-0 items-center gap-1">
                                 <Image
                                   src={buyer.avatar || '/icon-buyer.png'}
                                   alt={buyer.nickname || 'Buyer'}
@@ -6484,7 +6553,7 @@ const fetchBuyOrders = async () => {
                                 </span>
                               </div>
                               {buyer.storeName && (
-                                <div className="flex items-center gap-1 min-w-0 shrink">
+                                <div className="flex min-w-0 items-center gap-1 shrink">
                                   <Image
                                     src={buyer.storeLogo || '/icon-store.png'}
                                     alt={buyer.storeName || buyer.storecode || 'Store'}
@@ -6499,17 +6568,20 @@ const fetchBuyOrders = async () => {
                               )}
                             </div>
                           </div>
-                          <span className="text-base font-semibold text-sky-700 shrink-0" style={{ fontFamily: 'monospace' }}>
-                            {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
-                              ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              : '0.000'}
-                          </span>
-                        </div>
-                        <div className="mt-0.5 flex items-center justify-between gap-1 text-[11px] text-zinc-500">
-                          <span>{Number(buyer.orderCount || 0).toLocaleString()} orders</span>
-                          <span className="font-mono text-sky-700">
-                            {Number(buyer.totalAmountUsdt || 0).toFixed(3)} USDT
-                          </span>
+
+                          <div className="flex items-center justify-between gap-3 md:shrink-0 md:justify-end">
+                            <div className="text-right text-[11px] text-zinc-500">
+                              <div>{Number(buyer.orderCount || 0).toLocaleString()} orders</div>
+                              <div className="font-mono text-sky-700">
+                                {Number(buyer.totalAmountUsdt || 0).toFixed(3)} USDT
+                              </div>
+                            </div>
+                            <span className="shrink-0 text-base font-semibold text-sky-700" style={{ fontFamily: 'monospace' }}>
+                              {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
+                                ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                : '0.000'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -6533,21 +6605,21 @@ const fetchBuyOrders = async () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-zinc-900">
-                        Blocked Buy Order Monitor
+                        FDS 이상거래 탐지
                       </span>
                       <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
-                        실시간 차단 주문
+                        실시간 탐지
                       </span>
                     </div>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      blocked order action logs · unresolved orders only · {Math.floor(BLOCKED_BUY_ORDERS_LOOKBACK_HOURS / 24)}d window · 15s
+                      FDS 탐지 로그 기준 · 미해결 케이스만 · 최근 {Math.floor(BLOCKED_BUY_ORDERS_LOOKBACK_HOURS / 24)}일 · 15초
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2.5 text-sm text-zinc-500">
-                <span>{loadingBlockedBuyOrders ? '갱신중...' : `${blockedBuyOrders.length.toLocaleString()} orders`}</span>
+                <span>{loadingBlockedBuyOrders ? '갱신중...' : `${blockedBuyOrders.length.toLocaleString()} cases`}</span>
                 <span>
                   {blockedBuyOrdersUpdatedAt
                     ? new Date(blockedBuyOrdersUpdatedAt).toLocaleTimeString('ko-KR', {
@@ -6570,25 +6642,25 @@ const fetchBuyOrders = async () => {
 
             <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
               <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">ACTIVE BLOCKS</div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">OPEN CASES</div>
                 <div className="mt-1 text-2xl font-black text-zinc-900" style={{ fontFamily: 'monospace' }}>
                   {blockedBuyOrders.length.toLocaleString()}
                 </div>
               </div>
               <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-rose-600">CRITICAL</div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-rose-600">HIGH RISK</div>
                 <div className="mt-1 text-2xl font-black text-rose-700" style={{ fontFamily: 'monospace' }}>
                   {blockedBuyOrdersCriticalCount.toLocaleString()}
                 </div>
               </div>
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-amber-700">WARNING</div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-amber-700">SUSPICIOUS</div>
                 <div className="mt-1 text-2xl font-black text-amber-700" style={{ fontFamily: 'monospace' }}>
                   {blockedBuyOrdersWarningCount.toLocaleString()}
                 </div>
               </div>
               <div className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-2">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-sky-700">INFO</div>
+                <div className="text-[11px] font-medium uppercase tracking-wide text-sky-700">WATCH</div>
                 <div className="mt-1 text-2xl font-black text-sky-700" style={{ fontFamily: 'monospace' }}>
                   {blockedBuyOrdersInfoCount.toLocaleString()}
                 </div>
@@ -6629,7 +6701,7 @@ const fetchBuyOrders = async () => {
                             </div>
                           </div>
                           <div className="shrink-0 text-right">
-                            <div className="text-[11px] text-zinc-500">현재 상태</div>
+                            <div className="text-[11px] text-zinc-500">주문 상태</div>
                             <div className="mt-1 text-sm font-semibold text-zinc-800">
                               {item.status || '-'}
                             </div>
@@ -6667,7 +6739,7 @@ const fetchBuyOrders = async () => {
 
                         <div className={`mt-3 rounded-xl border px-3 py-2 ${tone.badge}`}>
                           <div className="text-[11px] font-semibold uppercase tracking-wide">
-                            {item.latestReasonLabel || item.latestReason || '차단 사유'}
+                            {item.latestReasonLabel || item.latestReason || '탐지 사유'}
                           </div>
                           <p className="mt-1 line-clamp-2 text-[12px] leading-5">
                             {item.latestReasonDetail || '-'}
@@ -6679,7 +6751,7 @@ const fetchBuyOrders = async () => {
                             요청지갑 {item.latestRequesterWalletAddress ? `${item.latestRequesterWalletAddress.slice(0, 6)}...${item.latestRequesterWalletAddress.slice(-4)}` : '-'}
                           </span>
                           <span className={`${tone.accent} font-semibold`}>
-                            패널 열기
+                            케이스 보기
                           </span>
                         </div>
                       </button>
@@ -6688,7 +6760,7 @@ const fetchBuyOrders = async () => {
                 </div>
               ) : (
                 <div className="mt-2 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-5 text-center text-sm text-zinc-500">
-                  현재 unresolved blocked buy order가 없습니다.
+                  현재 미해결 FDS 탐지 케이스가 없습니다.
                 </div>
               )
             ) : (
@@ -10385,7 +10457,7 @@ const fetchBuyOrders = async () => {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs uppercase tracking-[0.24em] text-zinc-500">
-                                  Blocked Order
+                                  FDS Case
                                 </span>
                                 <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${tone.badge}`}>
                                   {getBlockedOrderSeverityLabel(blockedOrderPanelItem.severity)}
@@ -10400,7 +10472,7 @@ const fetchBuyOrders = async () => {
                             </div>
 
                             <div className="min-w-0 text-right">
-                              <div className="text-xs text-zinc-500">최근 차단</div>
+                              <div className="text-xs text-zinc-500">최근 탐지</div>
                               <div className="mt-1 text-sm font-semibold text-zinc-900">
                                 {formatKstDateTime(blockedOrderPanelItem.latestBlockedAt || '') || '-'}
                               </div>
@@ -10412,7 +10484,7 @@ const fetchBuyOrders = async () => {
 
                           <div className={`rounded-2xl border px-4 py-3 ${tone.badge}`}>
                             <div className="text-xs font-semibold uppercase tracking-[0.2em]">
-                              {blockedOrderPanelItem.latestReasonLabel || blockedOrderPanelItem.latestReason || '차단 사유'}
+                              {blockedOrderPanelItem.latestReasonLabel || blockedOrderPanelItem.latestReason || '탐지 사유'}
                             </div>
                             <div className="mt-2 text-sm leading-6">
                               {blockedOrderPanelItem.latestReasonDetail || '-'}
@@ -10434,12 +10506,18 @@ const fetchBuyOrders = async () => {
                             </div>
                           </div>
                           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
-                            <div className="text-[11px] text-zinc-500">현재 상태</div>
-                            <div className="mt-1 font-semibold text-zinc-900">
-                              {blockedOrderPanelItem.status || '-'}
+                              <div className="text-[11px] text-zinc-500">현재 상태</div>
+                              <div className="mt-1 font-semibold text-zinc-900">
+                                {blockedOrderPanelItem.status || '-'}
+                              </div>
                             </div>
-                          </div>
-                          <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
+                              <div className="text-[11px] text-zinc-500">FDS 레벨</div>
+                              <div className="mt-1 font-semibold text-zinc-900">
+                                {getBlockedOrderSeverityLabel(blockedOrderPanelItem.severity)}
+                              </div>
+                            </div>
+                            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
                             <div className="text-[11px] text-zinc-500">정산 상태</div>
                             <div className="mt-1 font-semibold text-zinc-900">
                               {blockedOrderPanelItem.settlementStatus || '-'}
@@ -10461,7 +10539,7 @@ const fetchBuyOrders = async () => {
 
                         <div className="grid grid-cols-1 gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 text-[12px] text-zinc-600">
                           <div className="flex items-center justify-between gap-3">
-                            <span>차단 횟수</span>
+                            <span>탐지 횟수</span>
                             <span className="font-mono font-semibold text-zinc-900">
                               {Number(blockedOrderPanelItem.blockedCount || 0).toLocaleString()}
                             </span>
@@ -10479,7 +10557,7 @@ const fetchBuyOrders = async () => {
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span>최초 차단</span>
+                            <span>최초 탐지</span>
                             <span className="font-mono font-semibold text-zinc-900">
                               {formatKstDateTime(blockedOrderPanelItem.firstBlockedAt || '') || '-'}
                             </span>
@@ -10542,6 +10620,113 @@ const fetchBuyOrders = async () => {
                           )}
                         </div>
 
+                        <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <div className="text-sm font-semibold text-zinc-900">이전 주문 이력</div>
+                              <div className="mt-1 text-[11px] text-zinc-500">
+                                같은 가맹점 기준 {blockedOrderPanelHistory?.matchType === 'depositName' ? '입금자명' : '구매자 지갑'} 매칭
+                              </div>
+                            </div>
+                            {blockedOrderPanelHistory?.matchValue ? (
+                              <div className="max-w-[240px] truncate rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px] font-medium text-zinc-600">
+                                {blockedOrderPanelHistory.matchValue}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          {blockedOrderPanelHistoryLoading ? (
+                            <div className="mt-3 text-sm text-zinc-500">이전 주문 이력을 불러오는 중...</div>
+                          ) : blockedOrderPanelHistory ? (
+                            <>
+                              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                                <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
+                                  <div className="text-[11px] text-zinc-500">이전 주문수</div>
+                                  <div className="mt-1 font-mono text-lg font-bold text-zinc-900">
+                                    {Number(blockedOrderPanelHistory.totalCount || 0).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+                                  <div className="text-[11px] text-emerald-600">완료</div>
+                                  <div className="mt-1 font-mono text-lg font-bold text-emerald-700">
+                                    {Number(blockedOrderPanelHistory.paymentConfirmedCount || 0).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                                  <div className="text-[11px] text-amber-700">진행중</div>
+                                  <div className="mt-1 font-mono text-lg font-bold text-amber-700">
+                                    {Number(blockedOrderPanelHistory.activeCount || 0).toLocaleString()}
+                                  </div>
+                                </div>
+                                <div className="rounded-xl border border-zinc-200 bg-zinc-100 px-3 py-2">
+                                  <div className="text-[11px] text-zinc-500">취소</div>
+                                  <div className="mt-1 font-mono text-lg font-bold text-zinc-700">
+                                    {Number(blockedOrderPanelHistory.cancelledCount || 0).toLocaleString()}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {Array.isArray(blockedOrderPanelHistory.orders) && blockedOrderPanelHistory.orders.length > 0 ? (
+                                <div className="mt-3 space-y-2">
+                                  {blockedOrderPanelHistory.orders.map((historyItem, historyIndex) => (
+                                    <div
+                                      key={`${historyItem.orderId || historyItem.tradeId || historyIndex}`}
+                                      className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-3"
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            <span className="font-mono text-sm font-bold text-zinc-900">
+                                              {historyItem.tradeId || historyItem.orderId || '-'}
+                                            </span>
+                                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getBlockedHistoryStatusTone(historyItem.status)}`}>
+                                              {historyItem.status || '-'}
+                                            </span>
+                                          </div>
+                                          <div className="mt-1 text-[11px] text-zinc-500">
+                                            {formatKstDateTime(historyItem.createdAt || '') || '-'}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <div className="font-mono text-sm font-bold text-zinc-900">
+                                            {Number(historyItem.amountUsdt || 0).toFixed(3)} USDT
+                                          </div>
+                                          <div className="text-[11px] text-zinc-500">
+                                            {(Number(historyItem.amountKrw || 0) || 0).toLocaleString()}원
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-zinc-500 md:grid-cols-4">
+                                        <div>
+                                          <div>판매자</div>
+                                          <div className="mt-0.5 font-medium text-zinc-700">{historyItem.sellerNickname || '-'}</div>
+                                        </div>
+                                        <div>
+                                          <div>입금자명</div>
+                                          <div className="mt-0.5 font-medium text-zinc-700">{historyItem.buyerDepositName || historyItem.buyerNickname || '-'}</div>
+                                        </div>
+                                        <div>
+                                          <div>결제요청</div>
+                                          <div className="mt-0.5 font-medium text-zinc-700">{formatKstDateTime(historyItem.paymentRequestedAt || '') || '-'}</div>
+                                        </div>
+                                        <div>
+                                          <div>입금확인</div>
+                                          <div className="mt-0.5 font-medium text-zinc-700">{formatKstDateTime(historyItem.paymentConfirmedAt || '') || '-'}</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="mt-3 text-sm text-zinc-500">같은 구매자 기준 이전 주문 이력이 없습니다.</div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="mt-3 text-sm text-zinc-500">이전 주문 이력을 찾지 못했습니다.</div>
+                          )}
+                        </div>
+
                         {requestBodyText ? (
                           <div className="rounded-2xl border border-zinc-200 bg-zinc-950 p-4 text-zinc-50">
                             <div className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-300">Request Body</div>
@@ -10563,7 +10748,7 @@ const fetchBuyOrders = async () => {
                     );
                   })()
                 ) : (
-                  <div className="text-sm text-zinc-500">선택된 blocked order가 없습니다.</div>
+                  <div className="text-sm text-zinc-500">선택된 FDS 케이스가 없습니다.</div>
                 )}
               </div>
             </div>

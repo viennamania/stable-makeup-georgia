@@ -110,6 +110,35 @@ export interface ResultProps {
   orders: OrderProps[];
 }
 
+export interface BlockedBuyOrderHistoryItem {
+  orderId: string | null;
+  tradeId: string | null;
+  status: string | null;
+  settlementStatus: string | null;
+  amountUsdt: number;
+  amountKrw: number;
+  createdAt: string | null;
+  paymentRequestedAt: string | null;
+  paymentConfirmedAt: string | null;
+  buyerNickname: string | null;
+  buyerDepositName: string | null;
+  sellerNickname: string | null;
+}
+
+export interface BlockedBuyOrderHistoryResult {
+  anchorTradeId: string | null;
+  anchorOrderId: string | null;
+  anchorCreatedAt: string | null;
+  storecode: string | null;
+  matchType: "walletAddress" | "depositName" | "none";
+  matchValue: string | null;
+  totalCount: number;
+  paymentConfirmedCount: number;
+  cancelledCount: number;
+  activeCount: number;
+  orders: BlockedBuyOrderHistoryItem[];
+}
+
 const BUYORDER_REALTIME_PROJECTION = {
   _id: 1,
   tradeId: 1,
@@ -157,6 +186,20 @@ function getBuyOrderBuyerWalletAddress(order: any): string | null {
 function toSafeNumber(value: unknown): number {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
+}
+
+function toNullableText(value: unknown): string | null {
+  if (typeof value === "string") {
+    const normalized = value.trim();
+    return normalized || null;
+  }
+
+  if (typeof value === "number" || typeof value === "bigint") {
+    const normalized = String(value).trim();
+    return normalized || null;
+  }
+
+  return null;
 }
 
 function escapeRegex(value: string): string {
@@ -5919,6 +5962,222 @@ export async function getOneBuyOrderByTradeId(
   } else {
     return null;
   }
+}
+
+export async function getBlockedBuyOrderHistory({
+  tradeId,
+  orderId,
+  limit = 8,
+}: {
+  tradeId?: string | null;
+  orderId?: string | null;
+  limit?: number;
+}): Promise<BlockedBuyOrderHistoryResult> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+
+  const normalizedTradeId = toNullableText(tradeId);
+  const normalizedOrderId = toNullableText(orderId);
+  const safeLimit = Math.min(Math.max(Number(limit) || 8, 1), 20);
+
+  const currentOrder = normalizedTradeId
+    ? await getOneBuyOrderByTradeId({ tradeId: normalizedTradeId })
+    : normalizedOrderId
+      ? await getOneBuyOrderByOrderId(normalizedOrderId)
+      : null;
+
+  if (!currentOrder) {
+    return {
+      anchorTradeId: normalizedTradeId,
+      anchorOrderId: normalizedOrderId,
+      anchorCreatedAt: null,
+      storecode: null,
+      matchType: "none",
+      matchValue: null,
+      totalCount: 0,
+      paymentConfirmedCount: 0,
+      cancelledCount: 0,
+      activeCount: 0,
+      orders: [],
+    };
+  }
+
+  const currentOrderId =
+    currentOrder?._id instanceof ObjectId
+      ? currentOrder._id
+      : toNullableText(currentOrder?._id) && ObjectId.isValid(String(currentOrder._id))
+        ? new ObjectId(String(currentOrder._id))
+        : null;
+  const storecode = toNullableText(currentOrder?.storecode);
+  const anchorCreatedAt =
+    currentOrder?.createdAt instanceof Date
+      ? currentOrder.createdAt
+      : currentOrder?.createdAt
+        ? new Date(currentOrder.createdAt)
+        : null;
+
+  const normalizedWallet = normalizeWalletAddress(
+    currentOrder?.walletAddress || currentOrder?.buyer?.walletAddress || "",
+  );
+  const buyerDepositName = toNullableText(
+    currentOrder?.buyer?.depositName
+      || currentOrder?.buyer?.bankInfo?.accountHolder
+      || null,
+  );
+
+  const identityFilters: Record<string, unknown>[] = [];
+  let matchType: BlockedBuyOrderHistoryResult["matchType"] = "none";
+  let matchValue: string | null = null;
+
+  if (normalizedWallet) {
+    const walletRegex = {
+      $regex: `^${escapeRegex(normalizedWallet)}$`,
+      $options: "i" as const,
+    };
+    identityFilters.push(
+      { walletAddress: walletRegex },
+      { "buyer.walletAddress": walletRegex },
+    );
+    matchType = "walletAddress";
+    matchValue = normalizedWallet;
+  } else if (buyerDepositName) {
+    const depositNameRegex = {
+      $regex: `^${escapeRegex(buyerDepositName)}$`,
+      $options: "i" as const,
+    };
+    identityFilters.push(
+      { "buyer.depositName": depositNameRegex },
+      { "buyer.bankInfo.accountHolder": depositNameRegex },
+    );
+    matchType = "depositName";
+    matchValue = buyerDepositName;
+  }
+
+  if (!storecode || identityFilters.length === 0) {
+    return {
+      anchorTradeId: toNullableText(currentOrder?.tradeId),
+      anchorOrderId: currentOrderId?.toHexString() || toNullableText(currentOrder?._id),
+      anchorCreatedAt: anchorCreatedAt && !Number.isNaN(anchorCreatedAt.getTime())
+        ? anchorCreatedAt.toISOString()
+        : null,
+      storecode,
+      matchType,
+      matchValue,
+      totalCount: 0,
+      paymentConfirmedCount: 0,
+      cancelledCount: 0,
+      activeCount: 0,
+      orders: [],
+    };
+  }
+
+  const query: Record<string, unknown>[] = [
+    { storecode },
+    { $or: identityFilters },
+  ];
+
+  if (currentOrderId) {
+    query.push({ _id: { $ne: currentOrderId } });
+  }
+
+  if (anchorCreatedAt && !Number.isNaN(anchorCreatedAt.getTime())) {
+    query.push({ createdAt: { $lt: anchorCreatedAt } });
+  }
+
+  const matchQuery = query.length > 1 ? { $and: query } : query[0] || {};
+
+  const [orders, statusCounts, totalCount] = await Promise.all([
+    collection.find(
+      matchQuery,
+      {
+        projection: {
+          _id: 1,
+          tradeId: 1,
+          status: 1,
+          settlement: 1,
+          usdtAmount: 1,
+          krwAmount: 1,
+          createdAt: 1,
+          paymentRequestedAt: 1,
+          paymentConfirmedAt: 1,
+          nickname: 1,
+          buyer: 1,
+          seller: 1,
+        },
+      },
+    )
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(safeLimit)
+      .toArray(),
+    collection.aggregate<{ _id: string | null; count: number }>([
+      { $match: matchQuery as any },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]).toArray(),
+    collection.countDocuments(matchQuery),
+  ]);
+
+  let paymentConfirmedCount = 0;
+  let cancelledCount = 0;
+  let activeCount = 0;
+
+  for (const row of statusCounts) {
+    const status = String(row?._id || "").trim().toLowerCase();
+    const count = Number(row?.count || 0);
+
+    if (status === "paymentconfirmed" || status === "paymentsettled") {
+      paymentConfirmedCount += count;
+    } else if (status === "cancelled") {
+      cancelledCount += count;
+    } else if (status === "ordered" || status === "accepted" || status === "paymentrequested") {
+      activeCount += count;
+    }
+  }
+
+  return {
+    anchorTradeId: toNullableText(currentOrder?.tradeId),
+    anchorOrderId: currentOrderId?.toHexString() || toNullableText(currentOrder?._id),
+    anchorCreatedAt: anchorCreatedAt && !Number.isNaN(anchorCreatedAt.getTime())
+      ? anchorCreatedAt.toISOString()
+      : null,
+    storecode,
+    matchType,
+    matchValue,
+    totalCount,
+    paymentConfirmedCount,
+    cancelledCount,
+    activeCount,
+    orders: orders.map((order: any) => ({
+      orderId:
+        order?._id instanceof ObjectId
+          ? order._id.toHexString()
+          : toNullableText(order?._id),
+      tradeId: toNullableText(order?.tradeId),
+      status: toNullableText(order?.status),
+      settlementStatus: toNullableText(order?.settlement?.status),
+      amountUsdt: toSafeNumber(order?.usdtAmount),
+      amountKrw: toSafeNumber(order?.krwAmount),
+      createdAt:
+        order?.createdAt instanceof Date
+          ? order.createdAt.toISOString()
+          : toNullableText(order?.createdAt),
+      paymentRequestedAt:
+        order?.paymentRequestedAt instanceof Date
+          ? order.paymentRequestedAt.toISOString()
+          : toNullableText(order?.paymentRequestedAt),
+      paymentConfirmedAt:
+        order?.paymentConfirmedAt instanceof Date
+          ? order.paymentConfirmedAt.toISOString()
+          : toNullableText(order?.paymentConfirmedAt),
+      buyerNickname: toNullableText(order?.nickname || order?.buyer?.nickname),
+      buyerDepositName: toNullableText(order?.buyer?.depositName),
+      sellerNickname: toNullableText(order?.seller?.nickname),
+    })),
+  };
 }
 
 
