@@ -4051,14 +4051,14 @@ export default function Index({ params }: any) {
                 판매자 통장별 청산통계
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 w-full min-w-0">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="flex flex-col gap-2 items-center
+                  <div key={index} className="min-w-0 flex flex-col gap-2 items-center
                     border border-zinc-200 rounded-lg p-4
                     bg-zinc-50 shadow-sm
                   ">
 
-                    <div className="flex flex-row items-center justify-center gap-1">
+                    <div className="flex w-full min-w-0 flex-row items-center justify-center gap-1">
                       <Image
                         src="/icon-bank.png"
                         alt="Bank"
@@ -4068,7 +4068,7 @@ export default function Index({ params }: any) {
                       />
                       {/* copy account number button */}
                       <button
-                        className="text-sm font-semibold underline text-blue-600"
+                        className="max-w-full truncate text-sm font-semibold underline text-blue-600"
                         onClick={() => {
                           const accountNumber = item._id || '기타은행';
                           navigator.clipboard.writeText(accountNumber)
@@ -4085,7 +4085,7 @@ export default function Index({ params }: any) {
                       </button>
                     </div>
 
-                    <div className="flex flex-row items-center justify-center gap-2">
+                    <div className="flex w-full flex-row items-center justify-center gap-2">
                       <div className="text-sm font-semibold">
                         {item.totalCount?.toLocaleString() || '0'}
                       </div>
