@@ -4008,7 +4008,7 @@ export default function Index({ params }: any) {
 
 
 
-          <div className="w-full grid grid-cols-1 xl:grid-cols-[minmax(320px,390px)_minmax(0,1fr)] gap-4 items-start">
+          <div className="w-full min-w-0">
 
             {/* store.withdrawalBankInfo */}
             {/*
