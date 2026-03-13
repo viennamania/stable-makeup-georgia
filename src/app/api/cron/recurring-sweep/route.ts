@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const ROUTE = "/api/cron/recurring-sweep";
+const CRON_SWEEP_DISABLED = true;
 const LOCK_COLLECTION = "cronLocks";
 const LOCK_KEY = "recurring-usdt-sweep-v1";
 const STATE_COLLECTION = "cronUsdtSweepState";
@@ -334,6 +335,18 @@ const releaseLock = async ({
 };
 
 export async function GET(request: NextRequest) {
+  if (CRON_SWEEP_DISABLED) {
+    return NextResponse.json(
+      {
+        ok: true,
+        route: ROUTE,
+        skipped: true,
+        reason: "cron_disabled",
+      },
+      { status: 200 },
+    );
+  }
+
   const authResult = verifyCronAuth(request);
   if (!authResult.ok) {
     if (authResult.status >= 500) {
