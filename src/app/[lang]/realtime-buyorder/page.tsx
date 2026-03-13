@@ -87,6 +87,57 @@ type SellerWalletBalanceItem = {
   currentUsdtBalance: number;
 };
 
+type RealtimeManualAdminSession = {
+  enabled: boolean;
+  authenticated: boolean;
+  expiresAt: string | null;
+};
+
+type RealtimeManualConfirmOrder = {
+  orderId: string;
+  tradeId: string | null;
+  status: string | null;
+  paymentMethod: string | null;
+  storeCode: string | null;
+  storeName: string | null;
+  storeLogo: string | null;
+  buyerName: string | null;
+  buyerAccountNumber: string | null;
+  krwAmount: number;
+  usdtAmount: number;
+  createdAt: string | null;
+  paymentRequestedAt: string | null;
+  sellerBankName: string | null;
+  sellerAccountNumber: string | null;
+  sellerAccountHolder: string | null;
+};
+
+type RealtimeManualConfirmDeposit = {
+  id: string;
+  transactionName: string | null;
+  amount: number;
+  bankAccountNumber: string | null;
+  balance: number;
+  transactionDate: string | null;
+  memo: string | null;
+  isAmountMatch: boolean;
+  isNameMatch: boolean;
+};
+
+type RealtimeManualConfirmPayload = {
+  order: RealtimeManualConfirmOrder;
+  deposits: RealtimeManualConfirmDeposit[];
+  recommendedFromDate: string | null;
+  recommendedToDate: string | null;
+};
+
+type ActionDockNoticeTone = "info" | "success" | "error";
+
+type ActionDockNotice = {
+  tone: ActionDockNoticeTone;
+  message: string;
+};
+
 const MAX_EVENTS = 150;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 12_000;
@@ -203,6 +254,17 @@ function getStatusClassNameOnLight(status: string | null | undefined): string {
       return "border border-violet-400 bg-violet-200 text-violet-900";
     default:
       return "border border-zinc-400 bg-zinc-200 text-zinc-900";
+  }
+}
+
+function getActionDockNoticeClassName(tone: ActionDockNoticeTone): string {
+  switch (tone) {
+    case "success":
+      return "border-emerald-300 bg-emerald-50 text-emerald-800";
+    case "error":
+      return "border-rose-300 bg-rose-50 text-rose-800";
+    default:
+      return "border-cyan-300 bg-cyan-50 text-cyan-800";
   }
 }
 
@@ -453,6 +515,20 @@ export default function RealtimeBuyOrderPage() {
   const [isBuyOrderListLoading, setIsBuyOrderListLoading] = useState(false);
   const [copiedTradeId, setCopiedTradeId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [manualAdminSession, setManualAdminSession] = useState<RealtimeManualAdminSession>({
+    enabled: false,
+    authenticated: false,
+    expiresAt: null,
+  });
+  const [manualAdminPassword, setManualAdminPassword] = useState("");
+  const [isManualAdminSessionLoading, setIsManualAdminSessionLoading] = useState(false);
+  const [actionDockNotice, setActionDockNotice] = useState<ActionDockNotice | null>(null);
+  const [manualConfirmModalOpen, setManualConfirmModalOpen] = useState(false);
+  const [manualConfirmLoadingOrderId, setManualConfirmLoadingOrderId] = useState<string | null>(null);
+  const [manualConfirmSubmittingOrderId, setManualConfirmSubmittingOrderId] = useState<string | null>(null);
+  const [manualConfirmPayload, setManualConfirmPayload] = useState<RealtimeManualConfirmPayload | null>(null);
+  const [manualConfirmErrorMessage, setManualConfirmErrorMessage] = useState<string | null>(null);
+  const [selectedManualDepositIds, setSelectedManualDepositIds] = useState<string[]>([]);
 
   const cursorRef = useRef<string | null>(null);
   const jackpotTimerMapRef = useRef<Map<string, number>>(new Map());
@@ -1026,6 +1102,41 @@ export default function RealtimeBuyOrderPage() {
     }
   }, []);
 
+  const fetchManualAdminSession = useCallback(async () => {
+    setIsManualAdminSessionLoading(true);
+    try {
+      const response = await fetch("/api/realtime/buyorder/admin/session", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status} ${text}`);
+      }
+
+      const data = await response.json();
+      setManualAdminSession({
+        enabled: Boolean(data?.enabled),
+        authenticated: Boolean(data?.authenticated),
+        expiresAt: data?.expiresAt ? String(data.expiresAt) : null,
+      });
+    } catch (error) {
+      console.error("Failed to fetch realtime manual admin session:", error);
+      setManualAdminSession({
+        enabled: false,
+        authenticated: false,
+        expiresAt: null,
+      });
+      setActionDockNotice({
+        tone: "error",
+        message: "수동입금확인 관리자 상태를 불러오지 못했습니다.",
+      });
+    } finally {
+      setIsManualAdminSessionLoading(false);
+    }
+  }, []);
+
   const handleBuyOrderListSearchSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -1065,6 +1176,268 @@ export default function RealtimeBuyOrderPage() {
       console.error("Failed to copy tradeId:", error);
     }
   }, []);
+
+  const handleManualAdminLogin = useCallback(async () => {
+    const password = manualAdminPassword.trim();
+    if (!password) {
+      setActionDockNotice({
+        tone: "error",
+        message: "관리자 비밀번호를 입력해주세요.",
+      });
+      return;
+    }
+
+    setIsManualAdminSessionLoading(true);
+    setActionDockNotice(null);
+    try {
+      const response = await fetch("/api/realtime/buyorder/admin/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(String(data?.message || `HTTP ${response.status}`));
+      }
+
+      setManualAdminPassword("");
+      setActionDockNotice({
+        tone: "success",
+        message: "수동입금확인 잠금이 해제되었습니다.",
+      });
+      await fetchManualAdminSession();
+    } catch (error) {
+      setActionDockNotice({
+        tone: "error",
+        message: error instanceof Error ? error.message : "수동입금확인 잠금 해제에 실패했습니다.",
+      });
+    } finally {
+      setIsManualAdminSessionLoading(false);
+    }
+  }, [fetchManualAdminSession, manualAdminPassword]);
+
+  const handleManualAdminLogout = useCallback(async () => {
+    setIsManualAdminSessionLoading(true);
+    try {
+      await fetch("/api/realtime/buyorder/admin/session", {
+        method: "DELETE",
+      });
+      setManualConfirmModalOpen(false);
+      setManualConfirmPayload(null);
+      setManualConfirmErrorMessage(null);
+      setSelectedManualDepositIds([]);
+      setActionDockNotice({
+        tone: "info",
+        message: "수동입금확인 잠금을 종료했습니다.",
+      });
+      await fetchManualAdminSession();
+    } catch (error) {
+      setActionDockNotice({
+        tone: "error",
+        message: "로그아웃 처리에 실패했습니다.",
+      });
+    } finally {
+      setIsManualAdminSessionLoading(false);
+    }
+  }, [fetchManualAdminSession]);
+
+  const loadManualConfirmOptions = useCallback(async (orderId: string) => {
+    if (!manualAdminSession.enabled) {
+      setActionDockNotice({
+        tone: "error",
+        message: "REALTIME_BUYORDER_ADMIN_PASSWORD 설정이 없어 수동입금확인이 비활성화되어 있습니다.",
+      });
+      return;
+    }
+
+    if (!manualAdminSession.authenticated) {
+      setActionDockNotice({
+        tone: "info",
+        message: "Action Dock에서 관리자 잠금을 먼저 해제해주세요.",
+      });
+      return;
+    }
+
+    setManualConfirmModalOpen(true);
+    setManualConfirmPayload(null);
+    setManualConfirmErrorMessage(null);
+    setSelectedManualDepositIds([]);
+    setManualConfirmLoadingOrderId(orderId);
+
+    try {
+      const response = await fetch("/api/realtime/buyorder/admin/manual-payment-options", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 401) {
+          await fetchManualAdminSession();
+        }
+        throw new Error(String(data?.message || `HTTP ${response.status}`));
+      }
+
+      const nextPayload: RealtimeManualConfirmPayload = {
+        order: {
+          orderId: String(data?.order?.orderId || orderId),
+          tradeId: data?.order?.tradeId ? String(data.order.tradeId) : null,
+          status: data?.order?.status ? String(data.order.status) : null,
+          paymentMethod: data?.order?.paymentMethod ? String(data.order.paymentMethod) : null,
+          storeCode: data?.order?.storeCode ? String(data.order.storeCode) : null,
+          storeName: data?.order?.storeName ? String(data.order.storeName) : null,
+          storeLogo: data?.order?.storeLogo ? String(data.order.storeLogo) : null,
+          buyerName: data?.order?.buyerName ? String(data.order.buyerName) : null,
+          buyerAccountNumber: data?.order?.buyerAccountNumber ? String(data.order.buyerAccountNumber) : null,
+          krwAmount: Number(data?.order?.krwAmount || 0),
+          usdtAmount: Number(data?.order?.usdtAmount || 0),
+          createdAt: data?.order?.createdAt ? String(data.order.createdAt) : null,
+          paymentRequestedAt: data?.order?.paymentRequestedAt ? String(data.order.paymentRequestedAt) : null,
+          sellerBankName: data?.order?.sellerBankName ? String(data.order.sellerBankName) : null,
+          sellerAccountNumber: data?.order?.sellerAccountNumber ? String(data.order.sellerAccountNumber) : null,
+          sellerAccountHolder: data?.order?.sellerAccountHolder ? String(data.order.sellerAccountHolder) : null,
+        },
+        deposits: Array.isArray(data?.deposits)
+          ? (data.deposits as Array<Record<string, unknown>>).map((deposit) => ({
+              id: String(deposit?.id || ""),
+              transactionName: deposit?.transactionName ? String(deposit.transactionName) : null,
+              amount: Number(deposit?.amount || 0),
+              bankAccountNumber: deposit?.bankAccountNumber ? String(deposit.bankAccountNumber) : null,
+              balance: Number(deposit?.balance || 0),
+              transactionDate: deposit?.transactionDate ? String(deposit.transactionDate) : null,
+              memo: deposit?.memo ? String(deposit.memo) : null,
+              isAmountMatch: Boolean(deposit?.isAmountMatch),
+              isNameMatch: Boolean(deposit?.isNameMatch),
+            }))
+          : [],
+        recommendedFromDate: data?.recommendedFromDate ? String(data.recommendedFromDate) : null,
+        recommendedToDate: data?.recommendedToDate ? String(data.recommendedToDate) : null,
+      };
+
+      setManualConfirmPayload(nextPayload);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "입금 후보를 불러오지 못했습니다.";
+      setManualConfirmErrorMessage(message);
+      setActionDockNotice({
+        tone: "error",
+        message,
+      });
+    } finally {
+      setManualConfirmLoadingOrderId(null);
+    }
+  }, [fetchManualAdminSession, manualAdminSession.authenticated, manualAdminSession.enabled]);
+
+  const closeManualConfirmModal = useCallback(() => {
+    if (manualConfirmSubmittingOrderId) {
+      return;
+    }
+    setManualConfirmModalOpen(false);
+    setManualConfirmPayload(null);
+    setManualConfirmErrorMessage(null);
+    setSelectedManualDepositIds([]);
+  }, [manualConfirmSubmittingOrderId]);
+
+  const refreshManualConfirmOptions = useCallback(async () => {
+    if (!manualConfirmPayload?.order.orderId) {
+      return;
+    }
+    await loadManualConfirmOptions(manualConfirmPayload.order.orderId);
+  }, [loadManualConfirmOptions, manualConfirmPayload?.order.orderId]);
+
+  const handleManualConfirmSubmit = useCallback(async () => {
+    if (!manualConfirmPayload?.order.orderId) {
+      return;
+    }
+
+    const currentPayload = manualConfirmPayload;
+    const orderId = currentPayload.order.orderId;
+    const selectedDeposits = currentPayload.deposits.filter((deposit) => selectedManualDepositIds.includes(deposit.id));
+    const selectedTotalAmount = selectedDeposits.reduce((sum, deposit) => sum + deposit.amount, 0);
+
+    if (selectedManualDepositIds.length > 0 && selectedTotalAmount !== currentPayload.order.krwAmount) {
+      setManualConfirmErrorMessage("선택한 입금 합계와 주문 금액이 일치해야 완료할 수 있습니다.");
+      return;
+    }
+
+    setManualConfirmSubmittingOrderId(orderId);
+    setManualConfirmErrorMessage(null);
+    try {
+      const response = await fetch("/api/realtime/buyorder/admin/manual-confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          orderId,
+          bankTransferIds: selectedManualDepositIds,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 401) {
+          await fetchManualAdminSession();
+        }
+        throw new Error(String(data?.message || `HTTP ${response.status}`));
+      }
+
+      const matchedCount = Array.isArray(data?.result?.matchedTransferIds)
+        ? data.result.matchedTransferIds.length
+        : 0;
+      const unmatchedCount = Array.isArray(data?.result?.unmatchedTransferIds)
+        ? data.result.unmatchedTransferIds.length
+        : 0;
+
+      setActionDockNotice({
+        tone: unmatchedCount > 0 ? "info" : "success",
+        message:
+          unmatchedCount > 0
+            ? `주문을 완료했고 입금 ${matchedCount}건만 매칭되었습니다. 미매칭 ${unmatchedCount}건은 별도 확인이 필요합니다.`
+            : selectedManualDepositIds.length > 0
+              ? `주문을 완료하고 입금 ${matchedCount}건을 매칭했습니다.`
+              : "주문을 수동으로 결제완료 처리했습니다.",
+      });
+
+      setManualConfirmModalOpen(false);
+      setManualConfirmPayload(null);
+      setSelectedManualDepositIds([]);
+      await Promise.all([
+        fetchTodaySummary(),
+        fetchPendingBuyOrders(),
+        fetchBuyOrderList(),
+        fetchSellerWalletBalances(),
+        syncFromApi(),
+      ]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "수동입금확인 처리에 실패했습니다.";
+      setManualConfirmErrorMessage(message);
+      setActionDockNotice({
+        tone: "error",
+        message,
+      });
+    } finally {
+      setManualConfirmSubmittingOrderId(null);
+    }
+  }, [
+    fetchBuyOrderList,
+    fetchManualAdminSession,
+    fetchPendingBuyOrders,
+    fetchSellerWalletBalances,
+    fetchTodaySummary,
+    manualConfirmPayload,
+    selectedManualDepositIds,
+    syncFromApi,
+  ]);
 
   useEffect(() => {
     const realtime = new Ably.Realtime({
@@ -1194,6 +1567,10 @@ export default function RealtimeBuyOrderPage() {
       window.clearInterval(timer);
     };
   }, [fetchSellerWalletBalances]);
+
+  useEffect(() => {
+    void fetchManualAdminSession();
+  }, [fetchManualAdminSession]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1330,6 +1707,23 @@ export default function RealtimeBuyOrderPage() {
   }, [isStoreFilterOpen]);
 
   useEffect(() => {
+    if (!manualConfirmModalOpen) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeManualConfirmModal();
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [closeManualConfirmModal, manualConfirmModalOpen]);
+
+  useEffect(() => {
     const now = Date.now();
     const activeHighlights = events
       .map((item) => item.highlightUntil)
@@ -1441,6 +1835,328 @@ export default function RealtimeBuyOrderPage() {
     }
     return buyOrderStoreOptions.find((store) => store.storeCode === buyOrderListStoreCodeFilter) || null;
   }, [buyOrderListStoreCodeFilter, buyOrderStoreOptions]);
+  const manualAdminSessionExpiryInfo = useMemo(
+    () => getRelativeTimeInfo(manualAdminSession.expiresAt, nowMs),
+    [manualAdminSession.expiresAt, nowMs],
+  );
+  const selectedManualDeposits = useMemo(() => {
+    if (!manualConfirmPayload) {
+      return [] as RealtimeManualConfirmDeposit[];
+    }
+
+    return manualConfirmPayload.deposits.filter((deposit) => selectedManualDepositIds.includes(deposit.id));
+  }, [manualConfirmPayload, selectedManualDepositIds]);
+  const selectedManualDepositTotal = useMemo(
+    () => selectedManualDeposits.reduce((sum, deposit) => sum + deposit.amount, 0),
+    [selectedManualDeposits],
+  );
+  const manualDepositAmountMatches = useMemo(() => {
+    if (!manualConfirmPayload || selectedManualDepositIds.length === 0) {
+      return true;
+    }
+
+    return selectedManualDepositTotal === manualConfirmPayload.order.krwAmount;
+  }, [manualConfirmPayload, selectedManualDepositIds.length, selectedManualDepositTotal]);
+
+  const manualConfirmModalLayer =
+    isHydrated && manualConfirmModalOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div className="fixed inset-0 z-[2600] flex items-center justify-center p-3">
+            <button
+              type="button"
+              aria-label="Close manual confirm modal"
+              onClick={closeManualConfirmModal}
+              className="absolute inset-0 bg-slate-950/65 backdrop-blur-[2px]"
+            />
+
+            <section className="relative z-[1] flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_32px_80px_-36px_rgba(15,23,42,0.46)]">
+              <div className="border-b border-slate-200 bg-[linear-gradient(135deg,rgba(236,253,245,0.96),rgba(239,246,255,0.98))] px-4 py-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700/80">
+                      Manual Confirm
+                    </p>
+                    <h2 className="mt-1 text-lg font-semibold text-slate-950">수동입금확인</h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      지갑 연결 없이 `paymentRequested` 주문을 결제완료로 처리하고, 필요한 경우 입금내역을 수동 매칭합니다.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void refreshManualConfirmOptions();
+                      }}
+                      disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
+                      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      새로고침
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeManualConfirmModal}
+                      disabled={Boolean(manualConfirmSubmittingOrderId)}
+                      className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      닫기
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto bg-slate-50/80 px-4 py-4">
+                {manualConfirmLoadingOrderId && !manualConfirmPayload && (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-8 text-center">
+                    <p className="text-sm font-semibold text-slate-900">입금 후보를 불러오는 중입니다.</p>
+                    <p className="mt-1 font-mono text-xs text-slate-500">orderId={manualConfirmLoadingOrderId}</p>
+                  </div>
+                )}
+
+                {!manualConfirmLoadingOrderId && manualConfirmErrorMessage && !manualConfirmPayload && (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-800">
+                    {manualConfirmErrorMessage}
+                  </div>
+                )}
+
+                {manualConfirmPayload && (
+                  <div className="space-y-4">
+                    <section className="grid gap-3 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`h-11 w-11 shrink-0 rounded-full border border-slate-200 bg-cover bg-center ${manualConfirmPayload.order.storeLogo ? "bg-white" : "bg-slate-100"}`}
+                            style={manualConfirmPayload.order.storeLogo ? { backgroundImage: `url(${manualConfirmPayload.order.storeLogo})` } : undefined}
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-950">
+                              {manualConfirmPayload.order.storeName || manualConfirmPayload.order.storeCode || "-"}
+                            </p>
+                            <p className="mt-0.5 font-mono text-[11px] text-slate-500">
+                              {manualConfirmPayload.order.tradeId || manualConfirmPayload.order.orderId}
+                            </p>
+                          </div>
+                          <span className={`ml-auto rounded-full px-2.5 py-1 text-[11px] font-semibold ${getStatusClassNameOnLight(manualConfirmPayload.order.status)}`}>
+                            {getStatusLabel(manualConfirmPayload.order.status)}
+                          </span>
+                        </div>
+
+                        <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <dt className="text-slate-500">구매자</dt>
+                            <dd className="mt-1 font-semibold text-slate-900">
+                              {manualConfirmPayload.order.buyerName || "-"}
+                            </dd>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <dt className="text-slate-500">입금계좌</dt>
+                            <dd className="mt-1 font-mono font-semibold text-slate-900">
+                              {manualConfirmPayload.order.buyerAccountNumber || "-"}
+                            </dd>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <dt className="text-slate-500">결제수단</dt>
+                            <dd className="mt-1 font-semibold uppercase text-slate-900">
+                              {manualConfirmPayload.order.paymentMethod || "-"}
+                            </dd>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <dt className="text-slate-500">주문금액</dt>
+                            <dd className="mt-1 font-mono text-[15px] font-bold text-slate-950">
+                              {formatKrw(manualConfirmPayload.order.krwAmount)} KRW
+                            </dd>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <dt className="text-slate-500">전송예정</dt>
+                            <dd className="mt-1 font-mono text-[15px] font-bold text-cyan-700">
+                              {formatUsdt(manualConfirmPayload.order.usdtAmount)} USDT
+                            </dd>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <dt className="text-slate-500">결제요청시각</dt>
+                            <dd className="mt-1 text-[11px] font-semibold text-slate-900">
+                              {getRelativeTimeInfo(
+                                manualConfirmPayload.order.paymentRequestedAt || manualConfirmPayload.order.createdAt,
+                                nowMs,
+                              ).absoluteLabel}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p className="text-sm font-semibold text-slate-950">판매자 입금통장</p>
+                        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3">
+                          <p className="text-xs text-emerald-700">입금은행</p>
+                          <p className="mt-1 text-sm font-semibold text-emerald-950">
+                            {manualConfirmPayload.order.sellerBankName || "-"}
+                          </p>
+                          <p className="mt-3 text-xs text-emerald-700">계좌번호</p>
+                          <p className="mt-1 font-mono text-base font-bold text-emerald-950">
+                            {manualConfirmPayload.order.sellerAccountNumber || "-"}
+                          </p>
+                          <p className="mt-3 text-xs text-emerald-700">예금주</p>
+                          <p className="mt-1 text-sm font-semibold text-emerald-950">
+                            {manualConfirmPayload.order.sellerAccountHolder || "-"}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                          <p>
+                            추천 조회일:
+                            <span className="ml-1 font-mono text-slate-900">
+                              {manualConfirmPayload.recommendedFromDate || "-"}
+                            </span>
+                          </p>
+                          <p className="mt-1">
+                            선택하지 않고 완료하면 입금내역 매칭 없이 주문만 결제완료 처리합니다.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="rounded-2xl border border-slate-200 bg-white">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-950">입금 후보 목록</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            amount/name match를 우선 정렬했습니다. 다중 선택 가능, 합계가 주문금액과 같아야 매칭됩니다.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedManualDepositIds([]);
+                          }}
+                          disabled={selectedManualDepositIds.length === 0}
+                          className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          선택해제
+                        </button>
+                      </div>
+
+                      <div className="max-h-[340px] overflow-y-auto px-4 py-3">
+                        {manualConfirmPayload.deposits.length === 0 && (
+                          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                            추천 조건으로 조회된 미매칭 입금내역이 없습니다. 필요하면 선택 없이 완료할 수 있습니다.
+                          </div>
+                        )}
+
+                        {manualConfirmPayload.deposits.length > 0 && (
+                          <div className="space-y-2">
+                            {manualConfirmPayload.deposits.map((deposit) => {
+                              const isSelected = selectedManualDepositIds.includes(deposit.id);
+                              return (
+                                <button
+                                  key={deposit.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedManualDepositIds((previous) => (
+                                      previous.includes(deposit.id)
+                                        ? previous.filter((item) => item !== deposit.id)
+                                        : [...previous, deposit.id]
+                                    ));
+                                  }}
+                                  className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                                    isSelected
+                                      ? "border-cyan-400 bg-cyan-50 shadow-[0_0_0_1px_rgba(6,182,212,0.18)]"
+                                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80"
+                                  }`}
+                                >
+                                  <span className={`flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold ${
+                                    isSelected
+                                      ? "border-cyan-500 bg-cyan-500 text-white"
+                                      : "border-slate-300 bg-white text-slate-400"
+                                  }`}>
+                                    {isSelected ? "✓" : ""}
+                                  </span>
+
+                                  <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <span className="font-semibold text-slate-900">
+                                        {deposit.transactionName || "-"}
+                                      </span>
+                                      {deposit.isAmountMatch && (
+                                        <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                                          금액일치
+                                        </span>
+                                      )}
+                                      {deposit.isNameMatch && (
+                                        <span className="rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
+                                          입금자일치
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                                      <span className="font-mono">{deposit.bankAccountNumber || "-"}</span>
+                                      <span>{getRelativeTimeInfo(deposit.transactionDate, nowMs).absoluteLabel}</span>
+                                      <span className="font-mono">bal {formatKrw(deposit.balance)} KRW</span>
+                                      {deposit.memo ? <span>memo {deposit.memo}</span> : null}
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <p className="font-mono text-[15px] font-bold text-slate-950">
+                                      {formatKrw(deposit.amount)}
+                                    </p>
+                                    <p className="mt-1 font-mono text-[10px] text-slate-400">{deposit.id}</p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                      <p className="text-[11px] text-slate-500">선택 입금 합계</p>
+                      <p className="mt-0.5 font-mono text-base font-bold text-slate-950">
+                        {formatKrw(selectedManualDepositTotal)} KRW
+                      </p>
+                    </div>
+                    <div className={`rounded-2xl border px-3 py-2 ${
+                      manualDepositAmountMatches
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-amber-200 bg-amber-50 text-amber-800"
+                    }`}>
+                      <p className="text-[11px]">주문금액 일치 여부</p>
+                      <p className="mt-0.5 font-semibold">
+                        {selectedManualDepositIds.length === 0
+                          ? "선택 없음"
+                          : manualDepositAmountMatches
+                            ? "일치"
+                            : "불일치"}
+                      </p>
+                    </div>
+                    {manualConfirmErrorMessage && (
+                      <p className="text-sm font-medium text-rose-700">{manualConfirmErrorMessage}</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleManualConfirmSubmit();
+                    }}
+                    disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
+                    className="rounded-full bg-[linear-gradient(135deg,#0f766e,#2563eb)] px-5 py-2 text-sm font-semibold text-white shadow-[0_14px_28px_-18px_rgba(37,99,235,0.6)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {manualConfirmSubmittingOrderId ? "처리중..." : "결제완료 처리"}
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>,
+          document.body,
+        )
+      : null;
 
   const jackpotOverlayLayer =
     isHydrated && typeof document !== "undefined"
@@ -1528,6 +2244,7 @@ export default function RealtimeBuyOrderPage() {
   return (
     <main className="w-full max-w-[1680px] space-y-4 pt-20 text-slate-100">
       <RealtimeTopNav lang={lang} current="buyorder" />
+      {manualConfirmModalLayer}
       {jackpotOverlayLayer}
 
       <section className="overflow-hidden rounded-xl border border-slate-700/70 bg-[linear-gradient(160deg,rgba(14,116,144,0.22),rgba(2,6,23,0.96)_48%)] p-4 shadow-[0_14px_38px_-24px_rgba(6,182,212,0.35)]">
@@ -1752,20 +2469,91 @@ export default function RealtimeBuyOrderPage() {
               ordered / accepted / paymentRequested · updated {getRelativeTimeInfo(pendingBuyOrdersUpdatedAt, nowMs).relativeLabel}
             </p>
 
-            <div className="mt-2 rounded-lg border border-amber-300/55 bg-white/85 p-1.5 shadow-[inset_0_0_16px_rgba(251,191,36,0.08)]">
-              <p className="text-[10px] uppercase tracking-[0.16em] text-amber-800/80">Action Dock (버튼 확장 영역)</p>
-              <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-                {["Slot A", "Slot B", "Slot C", "Slot D"].map((slotLabel) => (
-                  <button
-                    key={slotLabel}
-                    type="button"
-                    disabled
-                    className="rounded-md border border-amber-300/60 bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-semibold text-amber-900/75"
-                  >
-                    {slotLabel}
-                  </button>
-                ))}
+            <div className="mt-2 rounded-lg border border-amber-300/55 bg-white/85 p-2 shadow-[inset_0_0_16px_rgba(251,191,36,0.08)]">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-amber-800/80">Action Dock</p>
+                  <p className="mt-0.5 text-xs font-semibold text-amber-950">수동입금확인 관리자 잠금</p>
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  manualAdminSession.enabled
+                    ? manualAdminSession.authenticated
+                      ? "border border-emerald-300 bg-emerald-50 text-emerald-800"
+                      : "border border-amber-300 bg-amber-50 text-amber-800"
+                    : "border border-slate-300 bg-slate-100 text-slate-600"
+                }`}>
+                  {manualAdminSession.enabled
+                    ? manualAdminSession.authenticated
+                      ? "UNLOCKED"
+                      : "LOCKED"
+                    : "DISABLED"}
+                </span>
               </div>
+
+              {!manualAdminSession.enabled && (
+                <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2 text-[11px] text-slate-600">
+                  `REALTIME_BUYORDER_ADMIN_PASSWORD` 환경변수를 설정하면 이 화면에서도 지갑 연결 없이 수동입금확인이 가능합니다.
+                </p>
+              )}
+
+              {manualAdminSession.enabled && !manualAdminSession.authenticated && (
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="password"
+                    value={manualAdminPassword}
+                    onChange={(event) => {
+                      setManualAdminPassword(event.target.value);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void handleManualAdminLogin();
+                      }
+                    }}
+                    placeholder="관리자 비밀번호"
+                    className="h-9 flex-1 rounded-md border border-amber-300/70 bg-white px-3 text-xs text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-cyan-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleManualAdminLogin();
+                    }}
+                    disabled={isManualAdminSessionLoading}
+                    className="h-9 rounded-md border border-amber-400/70 bg-amber-100 px-3 text-xs font-semibold text-amber-900 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isManualAdminSessionLoading ? "확인중..." : "잠금해제"}
+                  </button>
+                </div>
+              )}
+
+              {manualAdminSession.enabled && manualAdminSession.authenticated && (
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-emerald-900">
+                      수동입금확인 활성화됨
+                    </p>
+                    <p className="mt-0.5 font-mono text-[10px] text-emerald-700">
+                      session expires {manualAdminSessionExpiryInfo.relativeLabel}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleManualAdminLogout();
+                    }}
+                    disabled={isManualAdminSessionLoading}
+                    className="rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    잠금종료
+                  </button>
+                </div>
+              )}
+
+              {actionDockNotice && (
+                <div className={`mt-2 rounded-md border px-2.5 py-2 text-[11px] font-medium ${getActionDockNoticeClassName(actionDockNotice.tone)}`}>
+                  {actionDockNotice.message}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1856,6 +2644,18 @@ export default function RealtimeBuyOrderPage() {
                         <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500">
                           {createdAtInfo.absoluteLabel}
                         </p>
+                        {order.status === "paymentRequested" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void loadManualConfirmOptions(order.orderId);
+                            }}
+                            disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
+                            className="mt-1 inline-flex rounded border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {manualConfirmLoadingOrderId === order.orderId ? "확인중..." : "수동입금"}
+                          </button>
+                        )}
                       </div>
                     </article>
                   );
@@ -2077,6 +2877,18 @@ export default function RealtimeBuyOrderPage() {
                         <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500">
                           {createdAtInfo.absoluteLabel}
                         </p>
+                        {item.status === "paymentRequested" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void loadManualConfirmOptions(item.orderId);
+                            }}
+                            disabled={Boolean(manualConfirmLoadingOrderId || manualConfirmSubmittingOrderId)}
+                            className="mt-1 inline-flex rounded border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-800 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {manualConfirmLoadingOrderId === item.orderId ? "확인중..." : "수동입금"}
+                          </button>
+                        )}
                       </div>
                     </article>
                   );
