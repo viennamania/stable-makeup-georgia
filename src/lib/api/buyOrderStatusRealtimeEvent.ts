@@ -1938,11 +1938,17 @@ export async function getRealtimeBlockedBuyOrders({
   const orders = orderQuery.length > 0
     ? await orderCollection
         .find(
-          { $or: orderQuery },
+          {
+            $and: [
+              { privateSale: { $ne: true } },
+              { $or: orderQuery },
+            ],
+          },
           {
             projection: {
               _id: 1,
               tradeId: 1,
+              privateSale: 1,
               storecode: 1,
               status: 1,
               createdAt: 1,
@@ -1985,6 +1991,10 @@ export async function getRealtimeBlockedBuyOrders({
         || null;
 
       if (!order) {
+        return null;
+      }
+
+      if (order?.privateSale === true) {
         return null;
       }
 
