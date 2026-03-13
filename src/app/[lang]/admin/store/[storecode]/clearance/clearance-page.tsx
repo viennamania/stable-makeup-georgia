@@ -3451,6 +3451,9 @@ export default function Index({ params }: any) {
                           <span className="text-[11px] font-semibold text-amber-700">
                             미전송 정산주문
                           </span>
+                          <span className="text-[10px] text-amber-600/80">
+                            paymentRequested 포함
+                          </span>
                           <div className="mt-1 flex items-center gap-2">
                             <span className="text-xs font-medium text-zinc-600">
                               {Number(seller.pendingTransferCount || 0).toLocaleString()}건

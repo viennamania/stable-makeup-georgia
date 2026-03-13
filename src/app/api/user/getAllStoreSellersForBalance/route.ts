@@ -109,7 +109,9 @@ export async function POST(request: NextRequest) {
       $match: {
         storecode: normalizedStorecode,
         privateSale: true,
-        status: "paymentConfirmed",
+        status: {
+          $in: ["paymentRequested", "paymentConfirmed"],
+        },
         $or: [
           { transactionHash: { $exists: false } },
           { transactionHash: null },
