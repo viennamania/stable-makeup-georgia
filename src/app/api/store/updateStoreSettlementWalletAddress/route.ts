@@ -8,6 +8,7 @@ import {
 } from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
+import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
 import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 const ROUTE_PATH = "/api/store/updateStoreSettlementWalletAddress";
@@ -55,6 +56,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       result: null,
       error: "settlementWalletAddress must belong to a server wallet user in the same store",
+    }, { status: 400 });
+  }
+
+  let resolvedThirdwebServerWallet = null;
+  try {
+    resolvedThirdwebServerWallet = await resolveThirdwebServerWalletByAddress(
+      normalizedSettlementWalletAddress,
+    );
+  } catch (error) {
+    return NextResponse.json({
+      result: null,
+      error: error instanceof Error ? error.message : "Failed to validate settlementWalletAddress",
+    }, { status: 500 });
+  }
+
+  if (!resolvedThirdwebServerWallet) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementWalletAddress must be an active Thirdweb server wallet",
+    }, { status: 400 });
+  }
+
+  if (resolvedThirdwebServerWallet.smartAccountAddress !== normalizedSettlementWalletAddress) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementWalletAddress must be a Thirdweb server wallet smart account address",
+    }, { status: 400 });
+  }
+
+  const serverWalletUserSignerAddress = normalizeWalletAddress(serverWalletUser?.signerAddress);
+  if (!serverWalletUserSignerAddress || serverWalletUserSignerAddress !== resolvedThirdwebServerWallet.signerAddress) {
+    return NextResponse.json({
+      result: null,
+      error: "settlementWalletAddress does not match the store server wallet signer",
     }, { status: 400 });
   }
 

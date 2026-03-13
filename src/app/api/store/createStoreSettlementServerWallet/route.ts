@@ -11,6 +11,7 @@ import {
 } from "@lib/api/user";
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
+import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
 import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 export const runtime = "nodejs";
@@ -143,7 +144,31 @@ export async function POST(request: NextRequest) {
 
   const existingUser = existingUsers?.users?.[0] || null;
   const existingWalletAddress = normalizeWalletAddress(existingUser?.walletAddress);
+  const existingSignerAddress = normalizeWalletAddress(existingUser?.signerAddress);
+  let existingResolvedServerWallet = null;
+
   if (existingUser && existingWalletAddress) {
+    try {
+      existingResolvedServerWallet = await resolveThirdwebServerWalletByAddress(existingWalletAddress);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          result: null,
+          error: error instanceof Error ? error.message : "Failed to validate existing settlement server wallet",
+        },
+        { status: 500 },
+      );
+    }
+  }
+
+  if (
+    existingUser
+    && existingWalletAddress
+    && existingResolvedServerWallet
+    && existingResolvedServerWallet.smartAccountAddress === existingWalletAddress
+    && existingSignerAddress
+    && existingSignerAddress === existingResolvedServerWallet.signerAddress
+  ) {
     const updatedStore = await updateStoreSettlementWalletAddress({
       storecode,
       settlementWalletAddress: existingWalletAddress,
