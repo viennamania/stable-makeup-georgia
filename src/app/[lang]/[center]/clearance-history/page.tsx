@@ -4051,14 +4051,14 @@ export default function Index({ params }: any) {
                 판매자 통장별 청산통계
               </div>
 
-              <div className="flex w-full flex-col gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 w-full">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="w-full flex flex-row flex-wrap items-center justify-between gap-3
-                    border border-zinc-200 rounded-lg p-3
+                  <div key={index} className="flex flex-col gap-2 items-center
+                    border border-zinc-200 rounded-lg p-4
                     bg-zinc-50 shadow-sm
                   ">
 
-                    <div className="flex max-w-full min-w-0 flex-row items-center gap-1">
+                    <div className="flex flex-row items-center justify-center gap-1">
                       <Image
                         src="/icon-bank.png"
                         alt="Bank"
@@ -4068,7 +4068,7 @@ export default function Index({ params }: any) {
                       />
                       {/* copy account number button */}
                       <button
-                        className="min-w-0 max-w-[190px] truncate text-left text-sm font-semibold underline text-blue-600"
+                        className="text-sm font-semibold underline text-blue-600"
                         onClick={() => {
                           const accountNumber = item._id || '기타은행';
                           navigator.clipboard.writeText(accountNumber)
@@ -4085,33 +4085,37 @@ export default function Index({ params }: any) {
                       </button>
                     </div>
 
-                    <div className="min-w-0 flex flex-row flex-wrap items-center gap-3 sm:gap-4">
-                      <div className="inline-flex w-fit items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">
-                        {item.totalCount?.toLocaleString() || '0'}건
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <div className="text-sm font-semibold">
+                        {item.totalCount?.toLocaleString() || '0'}
                       </div>
 
-                      <div className="flex min-w-0 flex-row items-center gap-1">
-                        <Image
-                          src="/icon-tether.png"
-                          alt="Tether"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="block min-w-0 truncate whitespace-nowrap text-sm font-semibold text-green-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {item.totalUsdtAmount
-                            ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                            : '0.000'}
-                        </span>
+                      <div className="flex flex-col gap-1 items-end justify-center">
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          <Image
+                            src="/icon-tether.png"
+                            alt="Tether"
+                            width={20}
+                            height={20}
+                            className="w-5 h-5"
+                          />
+                          <span className="text-sm font-semibold text-green-600"
+                            style={{ fontFamily: 'monospace' }}>
+                            {item.totalUsdtAmount
+                              ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                              : '0.000'}
+                          </span>
+                        </div>
+                        <div className="flex flex-row items-center justify-center gap-1">
+                          <span className="text-sm font-semibold text-yellow-600"
+                            style={{ fontFamily: 'monospace' }}>
+                            {item.totalKrwAmount?.toLocaleString() || '0'}
+                          </span>
+                        </div>
                       </div>
-                      <span className="block min-w-0 max-w-[190px] truncate whitespace-nowrap text-sm font-semibold text-yellow-600"
-                        style={{ fontFamily: 'monospace' }}>
-                        {item.totalKrwAmount?.toLocaleString() || '0'}
-                      </span>
                     </div>
-
                   </div>
+
                 ))}
               </div>
 
