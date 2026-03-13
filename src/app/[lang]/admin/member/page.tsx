@@ -2212,7 +2212,18 @@ export default function Index({ params }: any) {
               프라이빗키 잔고점검
             </button>
             {version !== 'bangbang' && (
-              <button onClick={() => router.push('/' + params.lang + '/admin/escrow-history')} className={menuButtonBase}>청산관리</button>
+              <button onClick={() => router.push('/' + params.lang + '/admin/clearance-history')} className={menuButtonBase}>청산내역</button>
+            )}
+            {version !== 'bangbang' && (
+              <button
+                onClick={() => router.push('/' + params.lang + '/admin/store/clearance-management')}
+                className="flex w-40 shrink-0 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 bg-gradient-to-b from-white via-slate-50 to-slate-100 border border-slate-200 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200"
+              >
+                가맹점 청산관리
+              </button>
+            )}
+            {version !== 'bangbang' && (
+              <button onClick={() => router.push('/' + params.lang + '/admin/escrow-history')} className={menuButtonBase}>보유량내역</button>
             )}
             <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className={menuButtonBase}>P2P통계(가맹)</button>
             <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily-agent')} className={menuButtonBase}>P2P통계(AG)</button>
