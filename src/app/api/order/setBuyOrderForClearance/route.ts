@@ -11,7 +11,6 @@ import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 import {
   DEFAULT_CLEARANCE_DAILY_MAX_KRW_AMOUNT,
   DEFAULT_CLEARANCE_MAX_KRW_AMOUNT,
-  findExistingActiveClearanceOrder,
   formatKrwAmount,
   getConfiguredClearanceRequesterWallets,
   getConfiguredClearanceSettlementWalletAddress,
@@ -479,37 +478,6 @@ export async function POST(request: NextRequest) {
         error: `매입신청 1회 한도는 ${formatKrwAmount(maxKrwAmount)}입니다.`,
       },
       { status: 400 },
-    );
-  }
-
-  const existingActiveOrder = await findExistingActiveClearanceOrder({
-    storecode,
-    walletAddress: normalizedClearanceWalletAddress,
-    sellerBankInfo,
-    buyerBankInfo: buyer.bankInfo,
-    usdtAmount,
-    krwAmount,
-    rate,
-  });
-
-  if (existingActiveOrder) {
-    await writeAdminApiCallLog({
-      status: "blocked",
-      reason: "existing_active_buy_order",
-      meta: {
-        storecode,
-        existingOrderId: existingActiveOrder?._id?.toString?.() || null,
-        existingTradeId: existingActiveOrder?.tradeId || null,
-        existingStatus: existingActiveOrder?.status || null,
-      },
-    });
-
-    return NextResponse.json(
-      {
-        result: null,
-        error: "An identical active clearance buy order already exists",
-      },
-      { status: 409 },
     );
   }
 

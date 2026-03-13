@@ -4621,7 +4621,7 @@ export default function Index({ params }: any) {
 
                     {clearanceOrderPreview.existingActiveOrder && (
                       <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        동일한 진행중 주문이 있습니다:
+                        참고: 동일한 진행중 주문이 있습니다.
                         {' '}#{clearanceOrderPreview.existingActiveOrder.tradeId}
                         {' '}({clearanceOrderPreview.existingActiveOrder.status})
                       </div>

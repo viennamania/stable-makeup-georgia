@@ -292,9 +292,6 @@ export async function POST(request: NextRequest) {
   if (!withinDailyLimit) {
     blockingReasons.push(`매입신청 1일 누적 한도는 ${formatKrwAmount(maxDailyKrwAmount)}입니다.`);
   }
-  if (existingActiveOrder) {
-    blockingReasons.push(`동일한 진행중 매입주문이 이미 있습니다. #${existingActiveOrder.tradeId}`);
-  }
 
   return NextResponse.json({
     result: {
