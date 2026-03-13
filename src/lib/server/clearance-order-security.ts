@@ -8,8 +8,8 @@ export type ClearanceBankInfo = {
 };
 
 export const ACTIVE_CLEARANCE_ORDER_STATUSES = ["ordered", "accepted", "paymentRequested"] as const;
-export const DEFAULT_CLEARANCE_MAX_KRW_AMOUNT = 5_000_000;
-export const DEFAULT_CLEARANCE_DAILY_MAX_KRW_AMOUNT = 500_000_000;
+export const DEFAULT_CLEARANCE_MAX_KRW_AMOUNT = 10_000_000;
+export const DEFAULT_CLEARANCE_DAILY_MAX_KRW_AMOUNT = 1_000_000_000;
 
 const normalizeString = (value: unknown): string => {
   if (typeof value !== "string") {
