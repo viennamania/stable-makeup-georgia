@@ -6358,241 +6358,236 @@ const fetchBuyOrders = async () => {
           </div>
           
 
-          {/* nickname=seller 지갑 잔고 카드 (10초 주기) */}
-          <div className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
-              <div className="flex items-center gap-1.5">
-                <Image src="/icon-seller.png" alt="Seller" width={16} height={16} className="w-4 h-4" />
-                <span className="text-sm font-semibold text-zinc-900">
-                  Seller Wallet Monitor
-                </span>
-                <span className="text-xs text-zinc-500">
-                  users.nickname=seller · users.walletAddress · {SELLER_WALLET_MIN_USDT_BALANCE} USDT+ · 10s
-                </span>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
+            {/* nickname=seller 지갑 잔고 카드 (10초 주기) */}
+            <div className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Image src="/icon-seller.png" alt="Seller" width={16} height={16} className="w-4 h-4" />
+                  <span className="text-sm font-semibold text-zinc-900">
+                    Seller Wallet Monitor
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    users.nickname=seller · users.walletAddress · {SELLER_WALLET_MIN_USDT_BALANCE} USDT+ · 10s
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2.5 text-sm text-zinc-500">
+                  <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>=${SELLER_WALLET_MIN_USDT_BALANCE})`}</span>
+                  <span>
+                    {sellersBalanceUpdatedAt
+                      ? new Date(sellersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
+                          hour12: false,
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })
+                      : '--:--:--'}
+                  </span>
+                  <button
+                    type="button"
+                    className="rounded-md border border-emerald-200 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => setIsSellerWalletMonitorOpen((open) => !open)}
+                  >
+                    {isSellerWalletMonitorOpen ? '접기' : '펼치기'}
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2.5 text-sm text-zinc-500">
-                <span>{loadingSellersBalance ? '갱신중...' : `${sellersBalance.length.toLocaleString()} wallets (>=${SELLER_WALLET_MIN_USDT_BALANCE})`}</span>
-                <span>
-                  {sellersBalanceUpdatedAt
-                    ? new Date(sellersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
-                        hour12: false,
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                      })
-                    : '--:--:--'}
-                </span>
-                <button
-                  type="button"
-                  className="rounded-md border border-emerald-200 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
-                  onClick={() => setIsSellerWalletMonitorOpen((open) => !open)}
-                >
-                  {isSellerWalletMonitorOpen ? '접기' : '펼치기'}
-                </button>
+              <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
+                <span className="text-xs font-medium text-emerald-700">TOTAL USDT</span>
+                <div className="flex items-center gap-1.5">
+                  <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
+                  <span className="text-xl font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
+                    {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-1.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-1.5">
-              <span className="text-xs font-medium text-emerald-700">TOTAL USDT</span>
-              <div className="flex items-center gap-1.5">
-                <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
-                <span className="text-xl font-bold text-emerald-700" style={{ fontFamily: 'monospace' }}>
-                  {(animatedSellerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                </span>
-              </div>
-            </div>
+              {isSellerWalletMonitorOpen ? (
+                <>
+                  {sellersBalance.length > 0 ? (
+                    <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1 max-h-44 overflow-y-auto pr-0.5">
+                      {sellersBalance.map((seller, index) => {
+                        const smartSellerWallet = isSmartAccountSellerWallet(seller);
 
-            {isSellerWalletMonitorOpen ? (
-              <>
-                {sellersBalance.length > 0 ? (
-                  <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-2 md:grid-cols-1 max-h-52 overflow-y-auto pr-0.5">
-                    {sellersBalance.map((seller, index) => {
-                      const smartSellerWallet = isSmartAccountSellerWallet(seller);
-
-                      return (
-                        <div
-                          key={`${seller.walletAddress}-${index}`}
-                          className={`rounded-md border border-zinc-200 px-2 py-1.5 bg-white
+                        return (
+                          <div
+                            key={`${seller.walletAddress}-${index}`}
+                            className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
                     ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
                       ? 'ring-1 ring-emerald-200'
                       : ''}`}
-                        >
-                          <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3">
-                            <div className="min-w-0 md:flex md:min-w-0 md:flex-1 md:items-center md:gap-3">
-                              <button
-                                className="block w-full truncate text-left font-mono text-sm text-zinc-700 underline md:max-w-[220px]"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(seller.walletAddress);
-                                  toast.success(Copied_Wallet_Address);
-                                }}
-                                title={seller.walletAddress}
-                              >
-                                {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
-                              </button>
-                              {smartSellerWallet ? (
-                                <span className="mt-0.5 inline-flex rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
-                                  스마트 지갑
-                                </span>
-                              ) : null}
-                              <div className="mt-0.5 flex min-w-0 items-center gap-1 md:mt-0 md:flex-1">
-                                <Image
-                                  src={seller.storeLogo || '/icon-store.png'}
-                                  alt={seller.storeName || seller.storecode || 'Store'}
-                                  width={10}
-                                  height={10}
-                                  className="w-2.5 h-2.5 rounded object-cover shrink-0"
-                                />
-                                <span className="truncate text-xs text-zinc-500">
-                                  {seller.storeName || seller.storecode || '-'}
-                                </span>
+                          >
+                            <div className="flex items-start justify-between gap-1.5">
+                              <div className="min-w-0 max-w-[58%]">
+                                <button
+                                  className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(seller.walletAddress);
+                                    toast.success(Copied_Wallet_Address);
+                                  }}
+                                  title={seller.walletAddress}
+                                >
+                                  {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
+                                </button>
+                                {smartSellerWallet ? (
+                                  <span className="mt-0.5 inline-flex rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
+                                    스마트 지갑
+                                  </span>
+                                ) : null}
                               </div>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2 md:shrink-0">
-                              <span className="text-[11px] text-zinc-500">USDT</span>
-                              <span className="shrink-0 text-base font-semibold text-emerald-700" style={{ fontFamily: 'monospace' }}>
-                                  {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
+                              <span className="text-base font-semibold text-emerald-700 shrink-0" style={{ fontFamily: 'monospace' }}>
+                                {currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined
                                   ? currentUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                   : '0.000'}
                               </span>
                             </div>
+                            <div className="mt-0.5 flex items-center gap-1 min-w-0">
+                              <Image
+                                src={seller.storeLogo || '/icon-store.png'}
+                                alt={seller.storeName || seller.storecode || 'Store'}
+                                width={10}
+                                height={10}
+                                className="w-2.5 h-2.5 rounded object-cover shrink-0"
+                              />
+                              <span className="text-xs text-zinc-500 truncate">
+                                {seller.storeName || seller.storecode || '-'}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="mt-2 text-xs text-zinc-500">잔고가 {SELLER_WALLET_MIN_USDT_BALANCE} USDT 이상인 seller 지갑이 없습니다.</div>
-                )}
-              </>
-            ) : (
-              <div className="mt-1.5 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
-            )}
-          </div>
-
-          <div className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
-              <div className="flex items-center gap-1.5">
-                <Image src="/icon-buyer.png" alt="Buyer" width={16} height={16} className="w-4 h-4" />
-                <span className="text-sm font-semibold text-zinc-900">
-                  Buyer Wallet Monitor
-                </span>
-                <span className="text-xs text-zinc-500">
-                  paymentConfirmed · transactionHash sent · settlement pending · 15s
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2.5 text-sm text-zinc-500">
-                <span>{loadingBuyersBalance ? '갱신중...' : `${buyersBalance.length.toLocaleString()} wallets`}</span>
-                <span>
-                  {buyersBalanceUpdatedAt
-                    ? new Date(buyersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
-                        hour12: false,
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        second: '2-digit',
-                      })
-                    : '--:--:--'}
-                </span>
-                <button
-                  type="button"
-                  className="rounded-md border border-sky-200 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-50"
-                  onClick={() => setIsBuyerWalletMonitorOpen((open) => !open)}
-                >
-                  {isBuyerWalletMonitorOpen ? '접기' : '펼치기'}
-                </button>
-              </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-xs text-zinc-500">잔고가 {SELLER_WALLET_MIN_USDT_BALANCE} USDT 이상인 seller 지갑이 없습니다.</div>
+                  )}
+                </>
+              ) : (
+                <div className="mt-1.5 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
+              )}
             </div>
 
-            <div className="mt-1.5 flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
-              <span className="text-xs font-medium text-sky-700">TOTAL USDT</span>
-              <div className="flex items-center gap-1.5">
-                <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
-                <span className="text-xl font-bold text-sky-700" style={{ fontFamily: 'monospace' }}>
-                  {(animatedBuyerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                </span>
-              </div>
-            </div>
+            <div className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Image src="/icon-buyer.png" alt="Buyer" width={16} height={16} className="w-4 h-4" />
+                  <span className="text-sm font-semibold text-zinc-900">
+                    Buyer Wallet Monitor
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    paymentConfirmed · transactionHash sent · settlement pending · 15s
+                  </span>
+                </div>
 
-            {isBuyerWalletMonitorOpen ? (
-              <>
-                {buyersBalance.length > 0 ? (
-                  <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-2 md:grid-cols-1 max-h-60 overflow-y-auto pr-0.5">
-                    {buyersBalance.map((buyer, index) => (
-                      <div
-                        key={`${buyer.walletAddress}-${index}`}
-                        className={`rounded-md border border-zinc-200 px-2 py-1.5 bg-white
+                <div className="flex items-center gap-2.5 text-sm text-zinc-500">
+                  <span>{loadingBuyersBalance ? '갱신중...' : `${buyersBalance.length.toLocaleString()} wallets`}</span>
+                  <span>
+                    {buyersBalanceUpdatedAt
+                      ? new Date(buyersBalanceUpdatedAt).toLocaleTimeString('ko-KR', {
+                          hour12: false,
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })
+                      : '--:--:--'}
+                  </span>
+                  <button
+                    type="button"
+                    className="rounded-md border border-sky-200 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-50"
+                    onClick={() => setIsBuyerWalletMonitorOpen((open) => !open)}
+                  >
+                    {isBuyerWalletMonitorOpen ? '접기' : '펼치기'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-1.5 flex items-center justify-between rounded-lg bg-sky-50 px-2.5 py-1.5">
+                <span className="text-xs font-medium text-sky-700">TOTAL USDT</span>
+                <div className="flex items-center gap-1.5">
+                  <Image src="/icon-tether.png" alt="USDT" width={16} height={16} className="w-4 h-4" />
+                  <span className="text-xl font-bold text-sky-700" style={{ fontFamily: 'monospace' }}>
+                    {(animatedBuyerWalletTotalUsdt || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  </span>
+                </div>
+              </div>
+
+              {isBuyerWalletMonitorOpen ? (
+                <>
+                  {buyersBalance.length > 0 ? (
+                    <div className="mt-1.5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1 max-h-52 overflow-y-auto pr-0.5">
+                      {buyersBalance.map((buyer, index) => (
+                        <div
+                          key={`${buyer.walletAddress}-${index}`}
+                          className={`rounded-md border border-zinc-200 px-2 py-1 bg-white
                     ${currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined && currentBuyerUsdtBalanceArray[index] !== buyer.currentUsdtBalance
                       ? 'ring-1 ring-sky-200'
                       : ''}`}
-                      >
-                        <div className="flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3">
-                          <div className="min-w-0 md:flex md:min-w-0 md:flex-1 md:items-center md:gap-3">
-                            <button
-                              className="block w-full truncate text-left font-mono text-sm text-zinc-700 underline md:max-w-[220px]"
-                              onClick={() => {
-                                navigator.clipboard.writeText(buyer.walletAddress);
-                                toast.success(Copied_Wallet_Address);
-                              }}
-                              title={buyer.walletAddress}
-                            >
-                              {buyer.walletAddress.substring(0, 6)}...{buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
-                            </button>
-                            <div className="mt-0.5 flex flex-col gap-1 md:mt-0 md:flex-row md:min-w-0 md:items-center md:gap-3">
-                              <div className="flex min-w-0 items-center gap-1">
-                                <Image
-                                  src={buyer.avatar || '/icon-buyer.png'}
-                                  alt={buyer.nickname || 'Buyer'}
-                                  width={10}
-                                  height={10}
-                                  className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
-                                />
-                                <span className="text-xs text-zinc-500 truncate">
-                                  {buyer.nickname || '-'}
-                                </span>
-                              </div>
-                              {buyer.storeName && (
-                                <div className="flex min-w-0 items-center gap-1 shrink">
+                        >
+                          <div className="flex items-start justify-between gap-1.5">
+                            <div className="min-w-0 flex-1">
+                              <button
+                                className="block w-full text-sm text-zinc-700 underline truncate text-left font-mono"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(buyer.walletAddress);
+                                  toast.success(Copied_Wallet_Address);
+                                }}
+                                title={buyer.walletAddress}
+                              >
+                                {buyer.walletAddress.substring(0, 6)}...{buyer.walletAddress.substring(buyer.walletAddress.length - 4)}
+                              </button>
+                              <div className="mt-0.5 flex items-center justify-between gap-1.5 min-w-0">
+                                <div className="flex items-center gap-1 min-w-0">
                                   <Image
-                                    src={buyer.storeLogo || '/icon-store.png'}
-                                    alt={buyer.storeName || buyer.storecode || 'Store'}
+                                    src={buyer.avatar || '/icon-buyer.png'}
+                                    alt={buyer.nickname || 'Buyer'}
                                     width={10}
                                     height={10}
                                     className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
                                   />
-                                  <span className="text-[11px] text-zinc-500 truncate max-w-[72px]">
-                                    {buyer.storeName}
+                                  <span className="text-xs text-zinc-500 truncate">
+                                    {buyer.nickname || '-'}
                                   </span>
                                 </div>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-3 md:shrink-0 md:justify-end">
-                            <div className="text-right text-[11px] text-zinc-500">
-                              <div>{Number(buyer.orderCount || 0).toLocaleString()} orders</div>
-                              <div className="font-mono text-sky-700">
-                                {Number(buyer.totalAmountUsdt || 0).toFixed(3)} USDT
+                                {buyer.storeName && (
+                                  <div className="flex items-center gap-1 min-w-0 shrink">
+                                    <Image
+                                      src={buyer.storeLogo || '/icon-store.png'}
+                                      alt={buyer.storeName || buyer.storecode || 'Store'}
+                                      width={10}
+                                      height={10}
+                                      className="w-2.5 h-2.5 rounded-full object-cover shrink-0"
+                                    />
+                                    <span className="text-[11px] text-zinc-500 truncate max-w-[72px]">
+                                      {buyer.storeName}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <span className="shrink-0 text-base font-semibold text-sky-700" style={{ fontFamily: 'monospace' }}>
+                            <span className="text-base font-semibold text-sky-700 shrink-0" style={{ fontFamily: 'monospace' }}>
                               {currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined
                                 ? currentBuyerUsdtBalanceArray[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
                                 : '0.000'}
                             </span>
                           </div>
+                          <div className="mt-0.5 flex items-center justify-between gap-1 text-[11px] text-zinc-500">
+                            <span>{Number(buyer.orderCount || 0).toLocaleString()} orders</span>
+                            <span className="font-mono text-sky-700">
+                              {Number(buyer.totalAmountUsdt || 0).toFixed(3)} USDT
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="mt-2 text-xs text-zinc-500">미정산 구매자 지갑이 없습니다.</div>
-                )}
-              </>
-            ) : (
-              <div className="mt-1.5 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
-            )}
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-xs text-zinc-500">미정산 구매자 지갑이 없습니다.</div>
+                  )}
+                </>
+              ) : (
+                <div className="mt-1.5 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
+              )}
+            </div>
           </div>
 
           <div className="w-full rounded-2xl border border-rose-200 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.95),_rgba(255,247,247,0.98)_42%,_rgba(255,255,255,1)_100%)] px-3 py-3 shadow-sm">
