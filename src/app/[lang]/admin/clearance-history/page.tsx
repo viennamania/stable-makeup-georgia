@@ -278,6 +278,28 @@ const getDepositCompletedActorLabel = (buyer: any) => {
   return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
 };
 
+const getDepositCompletedActorMeta = (buyer: any) => {
+  const actor = buyer?.depositCompletedBy;
+  const nickname = String(actor?.nickname || "").trim().toLowerCase();
+  const role = String(actor?.role || "").trim().toLowerCase();
+
+  if (!actor) {
+    return null;
+  }
+
+  if (role === "system" || nickname === "withdrawal webhook") {
+    return {
+      label: "시스템 처리",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    label: "관리자 처리",
+    className: "border-sky-200 bg-sky-50 text-sky-700",
+  };
+};
+
 
 
 const wallets = [
@@ -5764,6 +5786,15 @@ export default function Index({ params, isYear2025 = false }: any) {
                               </span>
                               {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
                                 <div className="text-center text-[11px] leading-4 text-zinc-500">
+                                  {getDepositCompletedActorMeta(item?.buyer) && (
+                                    <div className="mb-1">
+                                      <span
+                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
+                                      >
+                                        {getDepositCompletedActorMeta(item?.buyer)?.label}
+                                      </span>
+                                    </div>
+                                  )}
                                   {getDepositCompletedActorLabel(item?.buyer) && (
                                     <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
                                   )}

@@ -4600,6 +4600,7 @@ export async function deleteWebhookGeneratedClearanceOrderByAdmin({
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection("buyorders");
+  const bankTransferCollection = client.db(dbName).collection("bankTransfers");
   const historyCollection = client
     .db(dbName)
     .collection("clearanceWebhookOrderDeletionHistory");
@@ -4641,6 +4642,45 @@ export async function deleteWebhookGeneratedClearanceOrderByAdmin({
   }
 
   const deletionTimestamp = new Date().toISOString();
+  const normalizedDeleteReason =
+    String(deleteReason || "").trim() || "not_a_clearance_withdrawal";
+  const linkedBankTransfers = existingOrder?.tradeId
+    ? await bankTransferCollection.find({
+      tradeId: String(existingOrder.tradeId || ""),
+    }).toArray()
+    : [];
+
+  if (linkedBankTransfers.length > 0) {
+    await bankTransferCollection.updateMany(
+      {
+        _id: {
+          $in: linkedBankTransfers.map((item) => item?._id).filter(Boolean),
+        },
+      },
+      {
+        $set: {
+          tradeId: null,
+          match: null,
+          matchedByAdmin: false,
+          buyerInfo: null,
+          sellerInfo: null,
+          errorMessage: null,
+          memo: "legacy 출금 webhook 자동생성 주문 삭제됨",
+          webhookGeneratedClearanceOrderDeletedAt: deletionTimestamp,
+          webhookGeneratedClearanceOrderDeletedReason: normalizedDeleteReason,
+          webhookGeneratedClearanceOrderDeletedBy: {
+            walletAddress: actor?.walletAddress || null,
+            nickname: actor?.nickname || null,
+            storecode: actor?.storecode || null,
+            role: actor?.role || null,
+            publicIp: actor?.publicIp || null,
+            signedAt: actor?.signedAt || null,
+          },
+        },
+      },
+    );
+  }
+
   const result = await collection.deleteOne({
     _id: new ObjectId(orderId),
   });
@@ -4660,7 +4700,7 @@ export async function deleteWebhookGeneratedClearanceOrderByAdmin({
     walletAddress: existingOrder?.walletAddress || null,
     createdBySource:
       existingOrder?.createdBy?.source || WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
-    deleteReason: String(deleteReason || "").trim() || "not_a_clearance_withdrawal",
+    deleteReason: normalizedDeleteReason,
     deletedAt: deletionTimestamp,
     deletedBy: {
       walletAddress: actor?.walletAddress || null,
@@ -4670,6 +4710,8 @@ export async function deleteWebhookGeneratedClearanceOrderByAdmin({
       publicIp: actor?.publicIp || null,
       signedAt: actor?.signedAt || null,
     },
+    linkedBankTransferIds: linkedBankTransfers.map((item) => item?._id).filter(Boolean),
+    linkedBankTransferTradeId: existingOrder?.tradeId || null,
     orderSnapshot: existingOrder,
   });
 

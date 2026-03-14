@@ -249,6 +249,28 @@ const getDepositCompletedActorLabel = (buyer: any) => {
   return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
 };
 
+const getDepositCompletedActorMeta = (buyer: any) => {
+  const actor = buyer?.depositCompletedBy;
+  const nickname = String(actor?.nickname || "").trim().toLowerCase();
+  const role = String(actor?.role || "").trim().toLowerCase();
+
+  if (!actor) {
+    return null;
+  }
+
+  if (role === "system" || nickname === "withdrawal webhook") {
+    return {
+      label: "시스템 처리",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    label: "관리자 처리",
+    className: "border-sky-200 bg-sky-50 text-sky-700",
+  };
+};
+
 const getCreatedByActorLabel = (order: BuyOrder | any) => {
   const actor = order?.createdBy;
   return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
@@ -3921,10 +3943,6 @@ export default function Index({ params }: any) {
 
                 {isHistoryOnly && (
                   <>
-                    <div className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                      관리자 전용 청산관리 화면입니다. 은행출금 webhook 기반으로 자동 생성된 청산주문만 삭제할 수 있습니다.
-                    </div>
-
                     <section className="mt-4 w-full rounded-2xl border border-sky-200 bg-white shadow-sm">
                       <div className="border-b border-sky-100 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-3">
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -4985,6 +5003,15 @@ export default function Index({ params }: any) {
                                   </span>
                                   {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
                                     <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-center text-[11px] leading-4 text-emerald-800">
+                                      {getDepositCompletedActorMeta(item?.buyer) && (
+                                        <div className="mb-1">
+                                          <span
+                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
+                                          >
+                                            {getDepositCompletedActorMeta(item?.buyer)?.label}
+                                          </span>
+                                        </div>
+                                      )}
                                       {getDepositCompletedActorLabel(item?.buyer) && (
                                         <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
                                       )}
