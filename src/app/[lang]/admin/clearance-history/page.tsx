@@ -224,6 +224,34 @@ const formatAdminActionDateTime = (value: string | null | undefined) => {
   return date.toLocaleString("ko-KR");
 };
 
+const normalizeStoreBankAccountNumber = (value: string | null | undefined) =>
+  String(value || "").replace(/[\s-]/g, "");
+
+const getStoreConfiguredBankInfoByAccountNumber = (store: any, bankAccountNumber: string | null | undefined) => {
+  if (!store) {
+    return null;
+  }
+
+  const target = normalizeStoreBankAccountNumber(bankAccountNumber);
+  if (!target) {
+    return null;
+  }
+
+  const candidates = [
+    store?.bankInfo,
+    store?.bankInfoAAA,
+    store?.bankInfoBBB,
+    store?.bankInfoCCC,
+    store?.bankInfoDDD,
+  ].filter((item) => item && (item.accountNumber || item.bankName || item.accountHolder));
+
+  return (
+    candidates.find((candidate) => {
+      return normalizeStoreBankAccountNumber(candidate?.accountNumber) === target;
+    }) || null
+  );
+};
+
 const getDepositCompletedActorLabel = (buyer: any) => {
   const actor = buyer?.depositCompletedBy;
   return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
@@ -4403,6 +4431,20 @@ export default function Index({ params, isYear2025 = false }: any) {
                       const eventStoreName = String(item.data.store?.name || item.data.storecode || "미매칭").trim();
                       const eventStoreLogo = String(item.data.store?.logo || "/icon-store.png").trim() || "/icon-store.png";
                       const eventStatus = String(item.data.status || "").toLowerCase();
+                      const matchedStore =
+                        allStores.find((store: any) => String(store?.storecode || "").trim() === String(item.data.storecode || "").trim()) ||
+                        null;
+                      const configuredFromBankInfo = getStoreConfiguredBankInfoByAccountNumber(
+                        matchedStore,
+                        item.data.bankAccountNumber,
+                      );
+                      const isConfiguredAccountMatched = Boolean(configuredFromBankInfo);
+                      const normalizedWebhookName = String(item.data.transactionName || "").trim();
+                      const normalizedConfiguredHolder = String(configuredFromBankInfo?.accountHolder || "").trim();
+                      const isConfiguredHolderMatched =
+                        Boolean(normalizedWebhookName) &&
+                        Boolean(normalizedConfiguredHolder) &&
+                        normalizedWebhookName === normalizedConfiguredHolder;
 
                       return (
                         <article
@@ -4481,6 +4523,51 @@ export default function Index({ params, isYear2025 = false }: any) {
                                 {(receiverAccountHolder || "-") + " · " + (receiverAccountNumber || "-")}
                               </div>
                             </div>
+                          </div>
+
+                          <div className="mt-2 rounded-xl border border-zinc-200 bg-white px-2.5 py-2">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                                설정 통장
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                  isConfiguredAccountMatched
+                                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border border-amber-200 bg-amber-50 text-amber-700"
+                                }`}
+                              >
+                                {isConfiguredAccountMatched ? "계좌 일치" : "계좌 미일치"}
+                              </span>
+                              {isConfiguredAccountMatched && (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                    isConfiguredHolderMatched
+                                      ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      : "border border-zinc-200 bg-zinc-50 text-zinc-600"
+                                  }`}
+                                >
+                                  {isConfiguredHolderMatched ? "예금주 일치" : "예금주 상이"}
+                                </span>
+                              )}
+                            </div>
+
+                            {isConfiguredAccountMatched ? (
+                              <div className="mt-1.5 space-y-1">
+                                <div className="text-xs font-semibold text-zinc-900">
+                                  {String(configuredFromBankInfo?.bankName || "-").trim() || "-"}
+                                </div>
+                                <div className="text-[10px] text-zinc-600">
+                                  {(String(configuredFromBankInfo?.accountHolder || "-").trim() || "-") +
+                                    " · " +
+                                    (String(configuredFromBankInfo?.accountNumber || "-").trim() || "-")}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-1.5 text-[10px] text-zinc-500">
+                                해당 가맹점 설정 통장에서 FROM 계좌를 찾지 못했습니다.
+                              </div>
+                            )}
                           </div>
 
                           <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px]">
