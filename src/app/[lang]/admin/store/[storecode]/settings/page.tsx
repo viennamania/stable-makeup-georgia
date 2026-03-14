@@ -51,6 +51,7 @@ import { balanceOf, transfer } from "thirdweb/extensions/erc20";
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../../../dictionaries";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 
 
 
@@ -807,18 +808,51 @@ export default function SettingsPage({ params }: any) {
         return;
         }
         setFetchingStore(true);
-        const response = await fetch('/api/store/getOneStore', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(
-            {
-                ////walletAddress: address,
+        let response: Response;
+
+        if (smartAccount && address) {
+            response = await postCenterStoreAdminSignedJson({
+                account: smartAccount,
+                route: '/api/store/getOneStore',
                 storecode: params.storecode,
-            }
-        ),
-        });
+                requesterWalletAddress: address,
+                body: {
+                    storecode: params.storecode,
+                },
+            });
+        } else {
+            response = await fetch('/api/store/getOneStore', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(
+                    {
+                        storecode: params.storecode,
+                    }
+                ),
+            });
+        }
+
+        if (!response.ok && (!smartAccount || !address)) {
+            setFetchingStore(false);
+            return;
+        }
+
+        if (!response.ok) {
+            response = await fetch('/api/store/getOneStore', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(
+                    {
+                        storecode: params.storecode,
+                    }
+                ),
+            });
+        }
+
         if (!response.ok) {
         setFetchingStore(false);
         return;
@@ -841,7 +875,7 @@ export default function SettingsPage({ params }: any) {
             return;
         }
         fetchStore();
-    } , [params.storecode])
+    } , [params.storecode, address, smartAccount])
     // update escrowAmountUSDT of store
     // 가맹점 에스크로 수량 변경
     const [updatingEscrowAmountUSDT, setUpdatingEscrowAmountUSDT] = useState(false);
