@@ -5,6 +5,7 @@ import {
   BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
   BUYORDER_BLOCKED_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_CHANNEL,
+  USDT_TRANSACTION_HASH_ABLY_CHANNEL,
 } from "@lib/ably/constants";
 import { getAblyRestClient } from "@lib/ably/server";
 import {
@@ -78,6 +79,8 @@ export async function GET(request: NextRequest) {
     capability[BUYORDER_STATUS_ABLY_CHANNEL] = ["subscribe"];
   } else if (stream === "buyorder-blocked") {
     capability[BUYORDER_BLOCKED_ABLY_CHANNEL] = ["subscribe"];
+  } else if (stream === "usdt-txhash") {
+    capability[USDT_TRANSACTION_HASH_ABLY_CHANNEL] = ["subscribe"];
   } else if (stream === "banktransfer") {
     capability[BANKTRANSFER_ABLY_CHANNEL] = ["subscribe"];
     capability[BANKTRANSFER_UNMATCHED_ABLY_CHANNEL] = ["subscribe"];
@@ -86,6 +89,7 @@ export async function GET(request: NextRequest) {
     capability[BANKTRANSFER_UNMATCHED_ABLY_CHANNEL] = ["subscribe"];
     capability[BUYORDER_STATUS_ABLY_CHANNEL] = ["subscribe"];
     capability[BUYORDER_BLOCKED_ABLY_CHANNEL] = ["subscribe"];
+    capability[USDT_TRANSACTION_HASH_ABLY_CHANNEL] = ["subscribe"];
   }
 
   try {

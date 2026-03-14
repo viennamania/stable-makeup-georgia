@@ -6,6 +6,8 @@ export const BUYORDER_STATUS_ABLY_CHANNEL = "buyorder-status-events";
 export const BUYORDER_STATUS_ABLY_EVENT_NAME = "buyorder.status.changed";
 export const BUYORDER_BLOCKED_ABLY_CHANNEL = "buyorder-blocked-events";
 export const BUYORDER_BLOCKED_ABLY_EVENT_NAME = "buyorder.blocked";
+export const USDT_TRANSACTION_HASH_ABLY_CHANNEL = "usdt-transaction-hash-events";
+export const USDT_TRANSACTION_HASH_ABLY_EVENT_NAME = "usdt.transactionHash.registered";
 
 export type BankTransferDashboardStore = {
   code: string | null;
@@ -106,6 +108,28 @@ export type BlockedBuyOrderRealtimeEvent = {
   requesterWalletAddress: string | null;
   requestBody: Record<string, unknown> | null;
   meta: Record<string, unknown> | null;
+  createdAt: string;
+  publishedAt: string;
+};
+
+export type UsdtTransactionHashRealtimeEvent = {
+  eventId: string;
+  idempotencyKey: string;
+  source: string;
+  orderId: string | null;
+  tradeId: string | null;
+  chain: string | null;
+  tokenSymbol: string;
+  store: BuyOrderRealtimeStore | null;
+  amountUsdt: number;
+  transactionHash: string;
+  fromWalletAddress: string | null;
+  toWalletAddress: string | null;
+  fromLabel: string | null;
+  toLabel: string | null;
+  status: string | null;
+  queueId: string | null;
+  minedAt: string | null;
   createdAt: string;
   publishedAt: string;
 };

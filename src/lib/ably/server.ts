@@ -9,10 +9,13 @@ import {
   BUYORDER_BLOCKED_ABLY_EVENT_NAME,
   BUYORDER_STATUS_ABLY_CHANNEL,
   BUYORDER_STATUS_ABLY_EVENT_NAME,
+  USDT_TRANSACTION_HASH_ABLY_CHANNEL,
+  USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
   type BankTransferDashboardEvent,
   type BankTransferUnmatchedRealtimeEvent,
   type BlockedBuyOrderRealtimeEvent,
   type BuyOrderStatusRealtimeEvent,
+  type UsdtTransactionHashRealtimeEvent,
 } from "@lib/ably/constants";
 
 let ablyRestClient: Ably.Rest | null = null;
@@ -118,6 +121,17 @@ export async function publishBlockedBuyOrderEvent(
   await publishRealtimeEvent({
     channelName: BUYORDER_BLOCKED_ABLY_CHANNEL,
     eventName: BUYORDER_BLOCKED_ABLY_EVENT_NAME,
+    eventId: event.eventId,
+    payload: event,
+  });
+}
+
+export async function publishUsdtTransactionHashEvent(
+  event: UsdtTransactionHashRealtimeEvent,
+): Promise<void> {
+  await publishRealtimeEvent({
+    channelName: USDT_TRANSACTION_HASH_ABLY_CHANNEL,
+    eventName: USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
     eventId: event.eventId,
     payload: event,
   });

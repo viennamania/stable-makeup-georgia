@@ -9,13 +9,18 @@ import { dbName } from '../mongodb';
 import { ObjectId } from 'mongodb';
 import {
   type BuyOrderStatusRealtimeEvent,
+  type UsdtTransactionHashRealtimeEvent,
 } from "@lib/ably/constants";
 import {
   publishBuyOrderStatusEvent,
+  publishUsdtTransactionHashEvent,
 } from "@lib/ably/server";
 import {
   saveBuyOrderStatusRealtimeEvent,
 } from "@lib/api/buyOrderStatusRealtimeEvent";
+import {
+  saveTransactionHashLogEvent,
+} from "@lib/api/tokenTransfer";
 import {
   getConfiguredClearanceSettlementWalletAddress,
   isConfiguredClearanceRequesterWallet,
@@ -23,6 +28,7 @@ import {
   resolveConfiguredClearanceSellerBankInfo,
 } from "@/lib/server/clearance-order-security";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
+import { chain as configuredChain } from "@/app/config/contractAddresses";
 
 
 
@@ -640,6 +646,94 @@ async function emitBuyOrderStatusRealtimeEvent({
     await publishBuyOrderStatusEvent(saved.event);
   } catch (error) {
     console.error("Failed to publish buyorder status realtime event:", error);
+  }
+}
+
+function getSellerPartyLabel(order: any): string | null {
+  const nickname = toNullableText(order?.seller?.nickname);
+  if (nickname) {
+    return nickname;
+  }
+
+  return (
+    toNullableText(order?.seller?.bankInfo?.accountHolder) ||
+    toNullableText(order?.seller?.bankInfo?.accountNumber) ||
+    toNullableText(order?.seller?.walletAddress)
+  );
+}
+
+function getBuyerPartyLabel(order: any): string | null {
+  return (
+    getBuyOrderBuyerName(order) ||
+    getBuyOrderBuyerAccountNumber(order) ||
+    getBuyOrderBuyerWalletAddress(order)
+  );
+}
+
+async function emitUsdtTransactionHashRealtimeEvent({
+  source,
+  status,
+  order,
+}: {
+  source: string;
+  status: string | null;
+  order: any | null;
+}) {
+  const normalizedTransactionHash = toNormalizedHash(order?.transactionHash);
+  if (!order || !normalizedTransactionHash) {
+    return;
+  }
+
+  const orderId = order?._id ? String(order._id) : "";
+  const tradeId = String(order?.tradeId || "");
+  const baseKeySource = [
+    orderId,
+    tradeId,
+    normalizedTransactionHash,
+  ]
+    .map((value) => String(value || "").trim())
+    .join("|");
+
+  const idempotencyKey = `usdt-tx:${createHash("sha256").update(baseKeySource).digest("hex")}`;
+  const eventId = `usdt-tx-${createHash("sha256")
+    .update(`${idempotencyKey}|${normalizedTransactionHash}`)
+    .digest("hex")}`;
+
+  const event: UsdtTransactionHashRealtimeEvent = {
+    eventId,
+    idempotencyKey,
+    source,
+    orderId: orderId || null,
+    tradeId: tradeId || null,
+    chain: toNullableText(order?.chain) || configuredChain || null,
+    tokenSymbol: "USDT",
+    store: {
+      code: toNullableText(order?.storecode || order?.store?.storecode),
+      logo: toNullableText(order?.store?.storeLogo),
+      name: toNullableText(order?.store?.storeName),
+    },
+    amountUsdt: toSafeNumber(order?.usdtAmount),
+    transactionHash: normalizedTransactionHash,
+    fromWalletAddress: normalizeWalletAddress(order?.seller?.walletAddress),
+    toWalletAddress: normalizeWalletAddress(getBuyOrderBuyerWalletAddress(order)),
+    fromLabel: getSellerPartyLabel(order),
+    toLabel: getBuyerPartyLabel(order),
+    status: toNullableText(status || order?.status),
+    queueId: toNullableText(order?.queueId),
+    minedAt: toNullableText(order?.minedAt),
+    createdAt: new Date().toISOString(),
+    publishedAt: new Date().toISOString(),
+  };
+
+  try {
+    const saved = await saveTransactionHashLogEvent(event);
+    if (saved.isDuplicate) {
+      return;
+    }
+
+    await publishUsdtTransactionHashEvent(saved.event);
+  } catch (error) {
+    console.error("Failed to publish usdt transaction hash realtime event:", error);
   }
 }
 
@@ -5376,6 +5470,12 @@ export async function buyOrderConfirmPayment(data: any) {
       ],
     });
 
+    await emitUsdtTransactionHashRealtimeEvent({
+      source: "order.buyOrderConfirmPayment",
+      status: "paymentConfirmed",
+      order: confirmedOrder,
+    });
+
 
 
     return {
@@ -5560,6 +5660,12 @@ export async function buyOrderConfirmPaymentCompleted(data: any) {
       order: updatedOrder,
       idempotencyParts: [String(data.queueId || ""), String(data.transactionHash || "")],
     });
+
+    await emitUsdtTransactionHashRealtimeEvent({
+      source: "order.buyOrderConfirmPaymentCompleted",
+      status: nextStatus,
+      order: updatedOrder,
+    });
   }
   
   return {
@@ -5671,6 +5777,12 @@ export async function buyOrderRollbackPayment(data: any) {
           String(data.queueId || ""),
           String(data.transactionHash || ""),
         ],
+      });
+
+      await emitUsdtTransactionHashRealtimeEvent({
+        source: "order.buyOrderRollbackPayment",
+        status: "cancelled",
+        order: updated,
       });
     }
 
@@ -6270,6 +6382,12 @@ export async function updateBuyOrderByQueueId(data: any) {
           String(data.transactionHash || ""),
           String(data.minedAt || ""),
         ],
+      });
+
+      await emitUsdtTransactionHashRealtimeEvent({
+        source: "order.updateBuyOrderByQueueId",
+        status: nextStatus,
+        order: updatedOrder,
       });
     }
 
