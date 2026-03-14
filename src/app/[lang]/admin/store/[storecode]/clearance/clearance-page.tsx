@@ -4371,18 +4371,12 @@ export default function Index({ params }: any) {
                                   className="mt-0.5 rounded-lg w-5 h-5"
                                 />
                                 <div className="flex flex-col gap-0.5 leading-tight">
-                                  <div className="flex flex-row flex-wrap items-center gap-1">
-                                    <span className="text-sm text-zinc-600 font-semibold">
-                                      {item?.buyer?.bankInfo?.bankName}
-                                    </span>
-                                    <span className="text-sm text-zinc-600 font-semibold">
-                                      {item?.buyer?.bankInfo?.accountNumber?.length > 5 ?
-                                        item?.buyer?.bankInfo?.accountNumber.slice(0, 3) + '****' + item?.buyer?.bankInfo?.accountNumber.slice(-2)
-                                        :
-                                        item?.buyer?.bankInfo?.accountNumber
-                                      }
-                                    </span>
-                                  </div>
+                                  <span className="text-sm text-zinc-600 font-semibold">
+                                    {item?.buyer?.bankInfo?.bankName}
+                                  </span>
+                                  <span className="text-sm text-zinc-600 font-semibold break-all">
+                                    {item?.buyer?.bankInfo?.accountNumber}
+                                  </span>
                                   <span className="text-sm text-zinc-600 font-semibold">
                                     {item?.buyer?.bankInfo?.accountHolder}
                                   </span>
