@@ -68,6 +68,7 @@ import { useSearchParams } from 'next/navigation';
 
 
 import { version } from "../../../config/version";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 
 
 
@@ -118,6 +119,36 @@ interface BuyOrder {
   agent: any;
 
 }
+
+const BUY_ORDER_DEPOSIT_COMPLETED_SIGNING_PREFIX = "admin-buyorder-deposit-completed-v1";
+
+const formatShortWalletAddress = (value: string | null | undefined) => {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  if (normalized.length <= 14) {
+    return normalized;
+  }
+  return `${normalized.slice(0, 6)}...${normalized.slice(-4)}`;
+};
+
+const formatAdminActionDateTime = (value: string | null | undefined) => {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) {
+    return normalized;
+  }
+  return date.toLocaleString("ko-KR");
+};
+
+const getDepositCompletedActorLabel = (buyer: any) => {
+  const actor = buyer?.depositCompletedBy;
+  return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
+};
 
 
 
@@ -1896,23 +1927,34 @@ export default function Index({ params, isYear2025 = false }: any) {
       loadingDeposit.map((item, idx) => idx === index ? true : item)
     );
 
+    if (!activeAccount || !address) {
+      setLoadingDeposit(
+        loadingDeposit.map((item, idx) => idx === index ? false : item)
+      );
+      toast.error('관리자 지갑을 연결해주세요.');
+      return;
+    }
 
-
-    const response = await fetch('/api/order/buyOrderDepositCompleted', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const response = await postAdminSignedJson({
+      account: activeAccount,
+      route: '/api/order/buyOrderDepositCompleted',
+      signingPrefix: BUY_ORDER_DEPOSIT_COMPLETED_SIGNING_PREFIX,
+      requesterWalletAddress: address,
+      body: {
         orderId: orderId,
-        walletAddress: address,
-      }),
+      },
     });
+    const responseData = await response.json().catch(() => ({}));
     
 
     setLoadingDeposit(
       loadingDeposit.map((item, idx) => idx === index ? false : item)
     );
+
+    if (!response.ok) {
+      toast.error(responseData?.error || '출금완료 처리에 실패했습니다.');
+      return;
+    }
 
     
     // fetch Buy Orders
@@ -1976,6 +2018,12 @@ export default function Index({ params, isYear2025 = false }: any) {
       console.error('Error fetching buy orders:', error);
     });
 
+    if (responseData?.result?.alreadyCompleted) {
+      toast.success('이미 출금완료 처리된 주문입니다.');
+      return;
+    }
+
+    toast.success('출금완료 처리되었습니다.');
 
 
   }
@@ -5062,11 +5110,23 @@ export default function Index({ params, isYear2025 = false }: any) {
 
                             </div>
                           ) : (
-                            <span className="text-sm text-[#409192]
-                              border border-green-600
-                              rounded-md px-2 py-1">
-                              출금완료
-                            </span>
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="text-sm text-[#409192]
+                                border border-green-600
+                                rounded-md px-2 py-1">
+                                출금완료
+                              </span>
+                              {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
+                                <div className="text-center text-[11px] leading-4 text-zinc-500">
+                                  {getDepositCompletedActorLabel(item?.buyer) && (
+                                    <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
+                                  )}
+                                  {item?.buyer?.depositCompletedAt && (
+                                    <div>{formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           )}
 
                           </>

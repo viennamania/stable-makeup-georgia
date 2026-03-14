@@ -345,6 +345,11 @@ const setBuyOrderCachedValue = (key: string, value: any) => {
   });
 };
 
+const clearBuyOrderReadCache = () => {
+  const cache = getBuyOrderReadCache();
+  cache.clear();
+};
+
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -9800,64 +9805,93 @@ export async function getEscrowHistory(
 export async function updateBuyOrderDepositCompleted(
   {
     orderId,
+    actor,
   }: {
     orderId: string;
+    actor?: {
+      walletAddress?: string | null;
+      nickname?: string | null;
+      storecode?: string | null;
+      role?: string | null;
+      publicIp?: string | null;
+      signedAt?: string | null;
+    } | null;
   }
-): Promise<boolean> {
+): Promise<{
+  ok: boolean;
+  alreadyCompleted: boolean;
+  order: any | null;
+}> {
 
   console.log('updateBuyOrderDepositCompleted orderId: ' + orderId);
 
-
-
-
-  const client = await clientPromise;
-
-  const collection = client.db(dbName).collection('buyorders');
-
-
-  /*
-  // get buyer from order
-  const order = await collection.findOne<any>(
-    { _id: new ObjectId(orderId) },
-    { projection: { buyer: 1 } }
-  );
-
-  if (!order) {
-    console.log('order not found for orderId: ' + orderId);
-    return false;
+  if (!ObjectId.isValid(orderId)) {
+    return {
+      ok: false,
+      alreadyCompleted: false,
+      order: null,
+    };
   }
 
-  // get buyer walletAddress from order
-  const buyerWalletAddress = order.walletAddress;
+  const completedAt = new Date().toISOString();
+  const normalizedActor = actor
+    ? {
+        walletAddress: toNullableText(actor.walletAddress)?.toLowerCase() || null,
+        nickname: toNullableText(actor.nickname),
+        storecode: toNullableText(actor.storecode),
+        role: toNullableText(actor.role),
+        publicIp: toNullableText(actor.publicIp),
+        signedAt: toNullableText(actor.signedAt),
+        completedAt,
+      }
+    : null;
 
-  // update user total buy amount 
-  const collectionUsers = client.db(dbName).collection('users');
-  const resultUser = await collectionUsers.updateOne(
-    { walletAddress: buyerWalletAddress },
-    { $inc: { 'buyer.totalBuyAmount': order.totalAmount } }
-  );
-  */
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
 
-
-  // update buyorder
   const result = await collection.updateOne(
-    { _id: new ObjectId(orderId) },
+    {
+      _id: new ObjectId(orderId),
+      'buyer.depositCompleted': { $ne: true },
+    },
     { $set: {
       'buyer.depositCompleted': true,
-      'buyer.depositCompletedAt': new Date().toISOString(),
+      'buyer.depositCompletedAt': completedAt,
+      ...(normalizedActor ? { 'buyer.depositCompletedBy': normalizedActor } : {}),
     } }
   );
 
-
-
-
-  ////console.log('updateBuyOrderDepositCompleted result: ' + JSON.stringify(result));
-
   if (result.modifiedCount === 1) {
-    return true;
-  } else {
-    return false;
+    clearBuyOrderReadCache();
+    const updatedOrder = await collection.findOne<any>(
+      { _id: new ObjectId(orderId) },
+      { projection: { buyer: 1, tradeId: 1, transactionHash: 1 } }
+    );
+    return {
+      ok: true,
+      alreadyCompleted: false,
+      order: updatedOrder,
+    };
   }
+
+  const existingOrder = await collection.findOne<any>(
+    { _id: new ObjectId(orderId) },
+    { projection: { buyer: 1, tradeId: 1, transactionHash: 1 } }
+  );
+
+  if (existingOrder?.buyer?.depositCompleted === true) {
+    return {
+      ok: true,
+      alreadyCompleted: true,
+      order: existingOrder,
+    };
+  }
+
+  return {
+    ok: false,
+    alreadyCompleted: false,
+    order: existingOrder,
+  };
 }
 
 
