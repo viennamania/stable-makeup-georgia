@@ -19,6 +19,7 @@ import {
 // checkBuyOrderMatchDeposit
 import {
   checkBuyOrderMatchDeposit,
+  buyOrderConfirmPayment,
   insertBuyOrderForClearance,
   updateBuyOrderDepositCompleted,
 } from '@lib/api/order';
@@ -246,6 +247,39 @@ async function getBuyOrderByTradeId(tradeId: string | null | undefined) {
       },
     },
   );
+}
+
+async function markWebhookClearanceOrderAsPaymentConfirmed({
+  orderId,
+  tradeId,
+  paymentAmount,
+  usdtAmount,
+}: {
+  orderId?: string | null;
+  tradeId?: string | null;
+  paymentAmount?: number | null;
+  usdtAmount?: number | null;
+}) {
+  const normalizedOrderId = String(orderId || "").trim();
+  if (!normalizedOrderId) {
+    return null;
+  }
+
+  const order = tradeId ? await getBuyOrderByTradeId(tradeId) : null;
+  const transactionHash = String(order?.transactionHash || "").trim();
+  if (!transactionHash || transactionHash === "0x") {
+    return order;
+  }
+
+  await buyOrderConfirmPayment({
+    orderId: normalizedOrderId,
+    transactionHash,
+    paymentAmount: Number(paymentAmount || order?.krwAmount || 0),
+    usdtAmount: Number(usdtAmount || order?.usdtAmount || 0),
+    privateSale: true,
+  });
+
+  return tradeId ? await getBuyOrderByTradeId(tradeId) : order;
 }
 
 async function getAdminUserByWalletAddress(walletAddress: string | null | undefined) {
@@ -1109,6 +1143,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingOrder) {
+      const confirmedExistingOrder = await markWebhookClearanceOrderAsPaymentConfirmed({
+        orderId: String(existingOrder._id || ""),
+        tradeId: String(existingOrder.tradeId || ""),
+        paymentAmount: Number(existingOrder?.krwAmount || 0),
+        usdtAmount: Number(existingOrder?.usdtAmount || 0),
+      });
+
       await updateBuyOrderDepositCompleted({
         orderId: String(existingOrder._id),
         actor: {
@@ -1121,7 +1162,7 @@ export async function POST(request: NextRequest) {
 
       const refreshedExistingOrder = await getBuyOrderByTradeId(existingOrder.tradeId);
       return {
-        order: refreshedExistingOrder || existingOrder,
+        order: refreshedExistingOrder || confirmedExistingOrder || existingOrder,
         created: false,
         errorMessage: null,
         rate: Number(existingOrder?.rate || 0) || null,
@@ -1228,6 +1269,13 @@ export async function POST(request: NextRequest) {
         usdtAmount,
       };
     }
+
+    await markWebhookClearanceOrderAsPaymentConfirmed({
+      orderId: String(createdOrder._id || ""),
+      tradeId: String(createdOrder.tradeId || ""),
+      paymentAmount: krwAmount,
+      usdtAmount,
+    });
 
     await updateBuyOrderDepositCompleted({
       orderId: String(createdOrder._id),
