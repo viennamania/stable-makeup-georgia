@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createHash } from "crypto";
+import clientPromise, { dbName } from "@/lib/mongodb";
 
 
 // getAllUsersByStorecode
@@ -18,6 +19,8 @@ import {
 // checkBuyOrderMatchDeposit
 import {
   checkBuyOrderMatchDeposit,
+  insertBuyOrderForClearance,
+  updateBuyOrderDepositCompleted,
 } from '@lib/api/order';
 
 
@@ -26,6 +29,7 @@ import {
 import {
   getStoreByBankAccountNumber,
 } from '@lib/api/store';
+import { getOne as getClient } from "@lib/api/client";
 
 
 
@@ -56,8 +60,19 @@ import {
 import {
   saveBankTransferRealtimeEvent,
 } from "@lib/api/bankTransferRealtimeEvent";
+import {
+  getConfiguredClearanceRequesterWallets,
+  getConfiguredClearanceSellerBankInfos,
+} from "@/lib/server/clearance-order-security";
+import {
+  WITHDRAWAL_WEBHOOK_CLEARANCE_CREATED_BY_ROUTE,
+  WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
+} from "@/lib/clearance-webhook-order";
+import { chain as configuredChain } from "@/app/config/contractAddresses";
 import { error } from "console";
 import { memo } from "react";
+
+const clientId = process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID;
 
 function toNullableString(value: unknown): string | null {
   const normalized = String(value || "").trim();
@@ -136,6 +151,101 @@ function pickStoreBankInfoByAccountNumber(storeInfo: any, bankAccountNumber: str
   }
 
   return candidates[0] || null;
+}
+
+async function getWithdrawalWebhookClearanceRate(): Promise<number> {
+  let rateKRW = 1400;
+
+  const client = await getClient(clientId || "");
+  if (client?.exchangeRateUSDTSell?.KRW) {
+    rateKRW = Number(client.exchangeRateUSDTSell.KRW);
+  }
+
+  return Number.isFinite(rateKRW) && rateKRW > 0 ? rateKRW : 1400;
+}
+
+async function findExistingWithdrawalWebhookClearanceOrder({
+  requestIdempotencyKey,
+  traceId,
+}: {
+  requestIdempotencyKey: string;
+  traceId?: string | null;
+}) {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+
+  const idempotencyFilters: Record<string, unknown>[] = [];
+  if (requestIdempotencyKey) {
+    idempotencyFilters.push({ "createdBy.idempotencyKey": requestIdempotencyKey });
+  }
+  if (traceId) {
+    idempotencyFilters.push({ "createdBy.traceId": traceId });
+  }
+
+  if (idempotencyFilters.length === 0) {
+    return null;
+  }
+
+  return collection.findOne<any>(
+    {
+      privateSale: true,
+      $and: [
+        { $or: idempotencyFilters },
+        {
+          $or: [
+            { "createdBy.source": WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+            { "clearanceSource.source": WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+            { source: WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+            { automationSource: WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+          ],
+        },
+      ],
+    },
+    {
+      projection: {
+        _id: 1,
+        tradeId: 1,
+        storecode: 1,
+        status: 1,
+        createdAt: 1,
+        buyer: 1,
+        seller: 1,
+        transactionHash: 1,
+        transactionHashDummy: 1,
+        createdBy: 1,
+      },
+    },
+  );
+}
+
+async function getBuyOrderByTradeId(tradeId: string | null | undefined) {
+  const normalizedTradeId = String(tradeId || "").trim();
+  if (!normalizedTradeId) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  return collection.findOne<any>(
+    { tradeId: normalizedTradeId },
+    {
+      projection: {
+        _id: 1,
+        tradeId: 1,
+        storecode: 1,
+        status: 1,
+        createdAt: 1,
+        buyer: 1,
+        seller: 1,
+        transactionHash: 1,
+        transactionHashDummy: 1,
+        createdBy: 1,
+        krwAmount: 1,
+        usdtAmount: 1,
+        rate: 1,
+      },
+    },
+  );
 }
 
 // webhook
@@ -941,6 +1051,172 @@ export async function POST(request: NextRequest) {
       console.error("Failed to publish banktransfer unmatched realtime event:", publishError);
     }
   };
+
+  const createClearanceOrderFromWithdrawalWebhook = async ({
+    storeInfo,
+  }: {
+    storeInfo: any;
+  }): Promise<{
+    order: any | null;
+    created: boolean;
+    errorMessage: string | null;
+    rate: number | null;
+    usdtAmount: number | null;
+  }> => {
+    const normalizedTransactionType = String(transaction_type || "").trim().toLowerCase();
+    if (normalizedTransactionType !== "withdrawn" && normalizedTransactionType !== "withdrawal" && normalizedTransactionType !== "출금") {
+      return {
+        order: null,
+        created: false,
+        errorMessage: null,
+        rate: null,
+        usdtAmount: null,
+      };
+    }
+
+    const existingOrder = await findExistingWithdrawalWebhookClearanceOrder({
+      requestIdempotencyKey,
+      traceId,
+    });
+
+    if (existingOrder) {
+      await updateBuyOrderDepositCompleted({
+        orderId: String(existingOrder._id),
+        actor: {
+          nickname: "withdrawal webhook",
+          storecode: "admin",
+          role: "system",
+          signedAt: transactionDateNormalized,
+        },
+      });
+
+      const refreshedExistingOrder = await getBuyOrderByTradeId(existingOrder.tradeId);
+      return {
+        order: refreshedExistingOrder || existingOrder,
+        created: false,
+        errorMessage: null,
+        rate: Number(existingOrder?.rate || 0) || null,
+        usdtAmount: Number(existingOrder?.usdtAmount || 0) || null,
+      };
+    }
+
+    const buyerBankInfo = pickStoreBankInfoByAccountNumber(storeInfo, bankAccountNumber);
+    if (!buyerBankInfo) {
+      return {
+        order: null,
+        created: false,
+        errorMessage: "No configured buyer bank info matched this withdrawal account",
+        rate: null,
+        usdtAmount: null,
+      };
+    }
+
+    const sellerBankInfo = getConfiguredClearanceSellerBankInfos(storeInfo)[0] || null;
+    if (!sellerBankInfo) {
+      return {
+        order: null,
+        created: false,
+        errorMessage: "No configured seller withdrawal bank info found for webhook clearance order",
+        rate: null,
+        usdtAmount: null,
+      };
+    }
+
+    const requesterWalletAddress = getConfiguredClearanceRequesterWallets(storeInfo)[0] || null;
+    if (!requesterWalletAddress) {
+      return {
+        order: null,
+        created: false,
+        errorMessage: "No configured clearance requester wallet found for webhook clearance order",
+        rate: null,
+        usdtAmount: null,
+      };
+    }
+
+    const krwAmount = Number(amount || 0);
+    if (!Number.isFinite(krwAmount) || krwAmount <= 0) {
+      return {
+        order: null,
+        created: false,
+        errorMessage: "Invalid withdrawal amount for webhook clearance order",
+        rate: null,
+        usdtAmount: null,
+      };
+    }
+
+    const rate = await getWithdrawalWebhookClearanceRate();
+    const usdtAmount = Number((krwAmount / rate).toFixed(3));
+    if (!Number.isFinite(usdtAmount) || usdtAmount <= 0) {
+      return {
+        order: null,
+        created: false,
+        errorMessage: "Failed to derive USDT amount for webhook clearance order",
+        rate,
+        usdtAmount: null,
+      };
+    }
+
+    const createdBy = {
+      route: WITHDRAWAL_WEBHOOK_CLEARANCE_CREATED_BY_ROUTE,
+      source: WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
+      traceId: traceId || null,
+      idempotencyKey: requestIdempotencyKey,
+      requestedAt: new Date().toISOString(),
+      transactionType: normalizedTransactionType,
+      bankAccountId: toNullableString(bank_account_id),
+      bankAccountNumber: toNullableString(bankAccountNumber),
+      originalBankAccountNumber: toNullableString(bank_account_number),
+      amount: krwAmount,
+      transactionDate: transactionDateNormalized,
+      processingDate: toNullableString(processing_date),
+      transactionName: toNullableString(transaction_name),
+    };
+
+    const createdOrder = await insertBuyOrderForClearance({
+      chain: configuredChain,
+      storecode: storeInfo?.storecode,
+      walletAddress: requesterWalletAddress,
+      sellerBankInfo,
+      nickname: toNullableString(transaction_name) || "",
+      usdtAmount,
+      krwAmount,
+      rate,
+      privateSale: true,
+      buyer: {
+        bankInfo: buyerBankInfo,
+      },
+      createdBy,
+    });
+
+    if (!createdOrder?._id || !createdOrder?.tradeId) {
+      return {
+        order: null,
+        created: false,
+        errorMessage: "Failed to create webhook clearance order",
+        rate,
+        usdtAmount,
+      };
+    }
+
+    await updateBuyOrderDepositCompleted({
+      orderId: String(createdOrder._id),
+      actor: {
+        nickname: "withdrawal webhook",
+        storecode: "admin",
+        role: "system",
+        signedAt: transactionDateNormalized,
+      },
+    });
+
+    const insertedOrder = await getBuyOrderByTradeId(createdOrder.tradeId);
+    return {
+      order: insertedOrder,
+      created: true,
+      errorMessage: null,
+      rate,
+      usdtAmount,
+    };
+  };
   
 
 
@@ -1088,6 +1364,55 @@ export async function POST(request: NextRequest) {
       */
 
 
+    } else if (transaction_type === 'withdrawn') {
+      const autoCreatedClearanceOrder = await createClearanceOrderFromWithdrawalWebhook({
+        storeInfo,
+      });
+
+      if (autoCreatedClearanceOrder.order) {
+        tradeId = toNullableString(autoCreatedClearanceOrder.order?.tradeId);
+        buyerInfo = autoCreatedClearanceOrder.order?.buyer || null;
+        sellerInfo = autoCreatedClearanceOrder.order?.seller || null;
+        matchResult = "success";
+
+        await insertWebhookLog({
+          event: autoCreatedClearanceOrder.created
+            ? "banktransfer_clearance_order_created"
+            : "banktransfer_clearance_order_reused",
+          headers: headersPayload,
+          body: {
+            traceId: traceId || null,
+            idempotencyKey: requestIdempotencyKey,
+            storecode: storeInfo?.storecode || null,
+            tradeId,
+            amount: Number(amount || 0),
+            rate: autoCreatedClearanceOrder.rate,
+            usdtAmount: autoCreatedClearanceOrder.usdtAmount,
+            bankAccountNumber: bankAccountNumber,
+            transactionDate: transactionDateNormalized,
+            transactionName: toNullableString(transaction_name),
+          },
+          error: null,
+          createdAt: new Date(),
+        });
+      } else if (autoCreatedClearanceOrder.errorMessage) {
+        errorMessage = errorMessage
+          ? `${errorMessage} | ${autoCreatedClearanceOrder.errorMessage}`
+          : autoCreatedClearanceOrder.errorMessage;
+
+        await logBankTransferStoreSkip({
+          reasonCode: "CLEARANCE_ORDER_NOT_CREATED",
+          reason: autoCreatedClearanceOrder.errorMessage,
+          stage: "create_withdrawal_clearance_order",
+          normalizedBankAccountNumber: bankAccountNumber,
+          details: {
+            storecode: storeInfo?.storecode || null,
+            traceId: traceId || null,
+            idempotencyKey: requestIdempotencyKey,
+            amount: Number(amount || 0),
+          },
+        });
+      }
     }
 
     const storeBankInfo = pickStoreBankInfoByAccountNumber(storeInfo, bankAccountNumber);
@@ -1130,7 +1455,10 @@ export async function POST(request: NextRequest) {
       buyerInfo: buyerInfo,
       sellerInfo: sellerInfo,
       errorMessage: errorMessage,
-      memo: '자동 매칭',
+      memo:
+        transaction_type === "withdrawn" && tradeId
+          ? "출금 webhook 청산주문 자동생성"
+          : "자동 매칭",
     });
 
     await publishDashboardEvent({
