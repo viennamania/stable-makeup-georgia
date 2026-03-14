@@ -201,28 +201,6 @@ const formatRealtimeRelative = (value: string | null | undefined, nowMs: number)
   return `${diffDays}일 전`;
 };
 
-const formatMaskedAccountNumber = (value: string | null | undefined) => {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    return "-";
-  }
-  if (normalized.length <= 8) {
-    return normalized;
-  }
-  return `${normalized.slice(0, 4)}...${normalized.slice(-4)}`;
-};
-
-const formatMaskedName = (value: string | null | undefined) => {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    return "-";
-  }
-  if (normalized.length <= 2) {
-    return normalized[0] + "*";
-  }
-  return `${normalized[0]}${"*".repeat(Math.max(1, normalized.length - 2))}${normalized.slice(-1)}`;
-};
-
 const formatShortWalletAddress = (value: string | null | undefined) => {
   const normalized = String(value || "").trim();
   if (!normalized) {
@@ -4306,44 +4284,51 @@ export default function Index({ params, isYear2025 = false }: any) {
             </div>
           </div>
 
-          <section className="mb-4 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm">
-            <div className="border-b border-sky-100 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-4">
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-sky-200 bg-white shadow-sm">
-                    <Image
-                      src="/icon-bank.png"
-                      alt="Webhook Withdrawals"
-                      width={28}
-                      height={28}
-                      className="h-7 w-7"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
-                        webhook 통장출금 LIVE
-                      </h2>
-                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">
-                        Ably
-                      </span>
-                      <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 font-mono text-[11px] text-zinc-500">
-                        {BANKTRANSFER_ABLY_EVENT_NAME}
-                      </span>
+          <section className="mb-4 w-full min-w-0 overflow-hidden rounded-2xl border border-sky-200 bg-white shadow-sm">
+            <div className="border-b border-sky-100 bg-gradient-to-r from-sky-50 via-white to-cyan-50 px-4 py-3">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-200 bg-white shadow-sm">
+                      <Image
+                        src="/icon-bank.png"
+                        alt="Webhook Withdrawals"
+                        width={20}
+                        height={20}
+                        className="h-5 w-5"
+                      />
                     </div>
-                    <p className="mt-1 text-sm text-zinc-600">
-                      webhook 통장출금 이벤트를 실시간으로 보여줍니다.
-                      {searchStorecode ? ` 현재 필터: ${selectedStoreLabel}` : " 현재는 전체 가맹점 기준입니다."}
-                    </p>
+                    <h2 className="text-base font-semibold tracking-tight text-zinc-900">
+                      webhook 통장출금 LIVE
+                    </h2>
+                    <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
+                      Ably
+                    </span>
+                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 font-mono text-[10px] text-zinc-500">
+                      {BANKTRANSFER_ABLY_EVENT_NAME}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
+                      필터 {searchStorecode ? selectedStoreLabel : "전체 가맹점"}
+                    </span>
+                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
+                      최근 {latestWithdrawalRealtimeAt ? formatRealtimeRelative(latestWithdrawalRealtimeAt, withdrawalRealtimeNowMs) : "-"}
+                    </span>
+                    {searchTradeId && (
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-sky-700">
+                        tradeId #{searchTradeId}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="flex flex-wrap items-center gap-2 xl:justify-end">
                   <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+                    <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500">
                       Connection
                     </div>
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-zinc-800">
                       <span
                         className={`inline-block h-2.5 w-2.5 rounded-full ${
                           withdrawalRealtimeConnectionState === "connected"
@@ -4354,38 +4339,31 @@ export default function Index({ params, isYear2025 = false }: any) {
                               : "bg-rose-500"
                         }`}
                       />
-                      <span className="text-sm font-semibold text-zinc-800">
-                        {withdrawalRealtimeConnectionState}
-                      </span>
+                      {withdrawalRealtimeConnectionState}
                     </div>
                   </div>
-
                   <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+                    <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500">
                       Events
                     </div>
-                    <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-900">
+                    <div className="mt-1 text-sm font-semibold tabular-nums text-zinc-900">
                       {withdrawalRealtimeEventCount.toLocaleString("ko-KR")}
                     </div>
                   </div>
-
                   <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-                      Withdrawn KRW
+                    <div className="text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+                      Withdrawn
                     </div>
-                    <div className="mt-1 text-lg font-semibold tabular-nums text-rose-600">
-                      {withdrawalRealtimeAmountTotal.toLocaleString("ko-KR")}
+                    <div className="mt-1 text-sm font-semibold tabular-nums text-rose-600">
+                      {withdrawalRealtimeAmountTotal.toLocaleString("ko-KR")} KRW
                     </div>
                   </div>
-
-                  <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
-                    <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-                      Last Sync
-                    </div>
-                    <div className="mt-1 text-sm font-semibold text-zinc-800">
-                      {formatRealtimeDateTime(withdrawalRealtimeLastSyncedAt)}
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => router.push('/' + params.lang + '/realtime-banktransfer')}
+                    className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
+                  >
+                    실시간 입출금 보기
+                  </button>
                 </div>
               </div>
 
@@ -4405,146 +4383,127 @@ export default function Index({ params, isYear2025 = false }: any) {
               )}
             </div>
 
-            <div className="px-4 py-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1">
-                    실시간 동기화 {withdrawalRealtimeSyncing ? "진행중" : "대기"}
-                  </span>
-                  <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1">
-                    최근 이벤트 {latestWithdrawalRealtimeAt ? formatRealtimeRelative(latestWithdrawalRealtimeAt, withdrawalRealtimeNowMs) : "-"}
-                  </span>
-                  {searchTradeId && (
-                    <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-1 text-sky-700">
-                      tradeId #{searchTradeId}
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => router.push('/' + params.lang + '/realtime-banktransfer')}
-                  className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-                >
-                  실시간 입출금 보기
-                </button>
-              </div>
-
+            <div className="px-4 py-3">
               {withdrawalRealtimeEventCount === 0 ? (
                 <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
                   현재 조건에 맞는 통장출금 webhook 이벤트가 없습니다.
                 </div>
               ) : (
-                <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-                  {filteredWithdrawalRealtimeEvents.map((item) => {
-                    const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
-                    const publishedAt = item.data.processingDate || item.data.transactionDate || item.data.publishedAt || item.receivedAt;
-                    const receiverBankName = String(item.data.receiver?.bankName || "").trim();
-                    const receiverAccountNumber = String(
-                      item.data.receiver?.accountNumber || item.data.bankAccountNumber || "",
-                    ).trim();
-                    const receiverAccountHolder = String(item.data.receiver?.accountHolder || "").trim();
-                    const eventStoreName = String(item.data.store?.name || item.data.storecode || "미매칭").trim();
-                    const eventStoreLogo = String(item.data.store?.logo || "/icon-store.png").trim() || "/icon-store.png";
+                <div className="-mx-4 overflow-x-auto px-4 pb-1">
+                  <div className="flex min-w-full items-stretch gap-3">
+                    {filteredWithdrawalRealtimeEvents.map((item) => {
+                      const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
+                      const publishedAt =
+                        item.data.processingDate || item.data.transactionDate || item.data.publishedAt || item.receivedAt;
+                      const receiverBankName = String(item.data.receiver?.bankName || "").trim();
+                      const receiverAccountNumber = String(
+                        item.data.receiver?.accountNumber || item.data.bankAccountNumber || "",
+                      ).trim();
+                      const receiverAccountHolder = String(item.data.receiver?.accountHolder || "").trim();
+                      const eventStoreName = String(item.data.store?.name || item.data.storecode || "미매칭").trim();
+                      const eventStoreLogo = String(item.data.store?.logo || "/icon-store.png").trim() || "/icon-store.png";
+                      const eventStatus = String(item.data.status || "").toLowerCase();
 
-                    return (
-                      <article
-                        key={item.id}
-                        className={`rounded-2xl border px-4 py-3 transition-all ${
-                          isHighlighted
-                            ? "border-sky-300 bg-sky-50 shadow-[0_10px_24px_-18px_rgba(14,165,233,0.75)]"
-                            : "border-zinc-200 bg-white shadow-sm"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-rose-700">
-                                출금
-                              </span>
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                  String(item.data.status || "").toLowerCase() === "stored"
-                                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : "border border-amber-200 bg-amber-50 text-amber-700"
-                                }`}
-                              >
-                                {String(item.data.status || "").toLowerCase() === "stored" ? "저장완료" : "오류"}
-                              </span>
-                              {isHighlighted && (
-                                <span className="rounded-full border border-sky-300 bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700">
-                                  NEW
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-2 text-xl font-semibold tabular-nums text-rose-600">
-                              {Number(item.data.amount || 0).toLocaleString("ko-KR")} KRW
-                            </div>
-                            <div className="mt-1 text-xs text-zinc-500">
-                              {formatRealtimeDateTime(publishedAt)} · {formatRealtimeRelative(publishedAt, withdrawalRealtimeNowMs)}
-                            </div>
-                          </div>
-
-                          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-2">
-                            <Image
-                              src={eventStoreLogo}
-                              alt={eventStoreName}
-                              width={28}
-                              height={28}
-                              className="h-7 w-7 rounded-full object-cover"
-                            />
+                      return (
+                        <article
+                          key={item.id}
+                          className={`w-[280px] min-w-[280px] shrink-0 rounded-2xl border px-3 py-3 transition-all ${
+                            isHighlighted
+                              ? "border-sky-300 bg-sky-50 shadow-[0_10px_24px_-18px_rgba(14,165,233,0.75)]"
+                              : "border-zinc-200 bg-white shadow-sm"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-zinc-800">
-                                {eventStoreName}
+                              <div className="flex items-center gap-2">
+                                <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-rose-700">
+                                  출금
+                                </span>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                    eventStatus === "stored"
+                                      ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      : "border border-amber-200 bg-amber-50 text-amber-700"
+                                  }`}
+                                >
+                                  {eventStatus === "stored" ? "저장완료" : "오류"}
+                                </span>
+                                {isHighlighted && (
+                                  <span className="rounded-full border border-sky-300 bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                                    NEW
+                                  </span>
+                                )}
                               </div>
-                              <div className="truncate text-[11px] text-zinc-500">
-                                {item.data.storecode || "-"}
+                              <div className="mt-2 text-lg font-semibold tabular-nums text-rose-600">
+                                {Number(item.data.amount || 0).toLocaleString("ko-KR")}
+                                <span className="ml-1 text-[11px] font-medium text-rose-500">KRW</span>
+                              </div>
+                              <div className="mt-1 text-[11px] text-zinc-500">
+                                {formatRealtimeDateTime(publishedAt)}
+                              </div>
+                            </div>
+
+                            <div className="flex min-w-0 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-1.5">
+                              <Image
+                                src={eventStoreLogo}
+                                alt={eventStoreName}
+                                width={24}
+                                height={24}
+                                className="h-6 w-6 rounded-full object-cover"
+                              />
+                              <div className="min-w-0">
+                                <div className="truncate text-[11px] font-semibold text-zinc-800">
+                                  {eventStoreName}
+                                </div>
+                                <div className="truncate text-[10px] text-zinc-500">
+                                  {item.data.storecode || "-"}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                            <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-                              Sender Account
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
+                              <div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">From</div>
+                              <div className="mt-1 text-xs font-semibold text-zinc-900">
+                                {String(item.data.bankAccountNumber || "-").trim() || "-"}
+                              </div>
+                              <div className="mt-1 text-[10px] text-zinc-500">
+                                {String(item.data.transactionName || "-").trim() || "-"}
+                              </div>
                             </div>
-                            <div className="mt-1 text-sm font-semibold text-zinc-900">
-                              {formatMaskedAccountNumber(item.data.bankAccountNumber)}
-                            </div>
-                            <div className="mt-1 text-xs text-zinc-500">
-                              출금명 {formatMaskedName(item.data.transactionName)}
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
+                              <div className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">To</div>
+                              <div className="mt-1 text-xs font-semibold text-zinc-900">
+                                {receiverBankName || "-"}
+                              </div>
+                              <div className="mt-1 text-[10px] text-zinc-500">
+                                {(receiverAccountHolder || "-") + " · " + (receiverAccountNumber || "-")}
+                              </div>
                             </div>
                           </div>
 
-                          <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-                            <div className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-500">
-                              Receiver
-                            </div>
-                            <div className="mt-1 text-sm font-semibold text-zinc-900">
-                              {[receiverBankName, formatMaskedName(receiverAccountHolder)].filter(Boolean).join(" ")}
-                            </div>
-                            <div className="mt-1 text-xs text-zinc-500">
-                              {formatMaskedAccountNumber(receiverAccountNumber)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                          <span className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-zinc-600">
-                            매칭 {item.data.match || "-"}
-                          </span>
-                          <span className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-zinc-600">
-                            TID {item.data.tradeId || "-"}
-                          </span>
-                          {item.data.errorMessage && (
-                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
-                              {item.data.errorMessage}
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px]">
+                            <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-zinc-600">
+                              TID {item.data.tradeId || "-"}
                             </span>
+                            <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-zinc-600">
+                              매칭 {item.data.match || "-"}
+                            </span>
+                            <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-zinc-600">
+                              {formatRealtimeRelative(publishedAt, withdrawalRealtimeNowMs)}
+                            </span>
+                          </div>
+
+                          {item.data.errorMessage && (
+                            <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-700">
+                              {item.data.errorMessage}
+                            </div>
                           )}
-                        </div>
-                      </article>
-                    );
-                  })}
+                        </article>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
