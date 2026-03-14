@@ -76,6 +76,7 @@ import { useSearchParams } from 'next/navigation';
 import { paymentUrl } from "../../../config/payment";
 
 import { version } from "../../../config/version";
+import CenterTopMenu from "@/components/center/CenterTopMenu";
 
 
 import {
@@ -3326,70 +3327,7 @@ export default function Index({ params }: any) {
           */}
 
 
-          <div className="w-full overflow-x-auto pb-1 mb-4">
-
-              <div className="min-w-max flex flex-row items-center gap-2 rounded-2xl border border-zinc-200 bg-white/90 p-2 shadow-sm">
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
-                  className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
-                  hover:bg-zinc-50 hover:text-zinc-900 transition
-                  ">
-                  회원관리
-              </button>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/buyorder')}
-                  className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
-                  hover:bg-zinc-50 hover:text-zinc-900 transition
-                  ">
-                  구매주문관리
-              </button>
-
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                  className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
-                  hover:bg-zinc-50 hover:text-zinc-900 transition
-                  ">
-                  P2P 거래내역
-              </button>
-
-
-              <div className='flex h-10 items-center justify-center gap-2
-                rounded-xl border border-emerald-600 bg-emerald-600 px-4 text-sm text-white'>
-                <Image
-                  src="/icon-clearance.png"
-                  alt="Trade"
-                  width={35}
-                  height={35}
-                  className="w-4 h-4"
-                />
-                <div className="text-sm font-semibold whitespace-nowrap">
-                  판매(거래소)
-                </div>
-              </div>
-
-
-              <button
-                onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
-                hover:bg-zinc-50 hover:text-zinc-900 transition
-                ">
-                  출금(회원)
-              </button>
-
-              <button
-                onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
-                className="flex h-10 whitespace-nowrap rounded-xl border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 items-center justify-center
-                hover:bg-zinc-50 hover:text-zinc-900 transition
-                ">
-                  통계(일별)
-              </button>
-
-              </div>
-
-          </div>
+          <CenterTopMenu lang={params.lang} center={params.center} activeKey="clearance-history" />
 
 
   

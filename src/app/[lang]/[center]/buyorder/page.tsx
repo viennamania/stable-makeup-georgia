@@ -81,6 +81,7 @@ import { useSearchParams } from 'next/navigation';
 import { paymentUrl } from "../../../config/payment";
 
 import { version } from "../../../config/version";
+import CenterTopMenu from "@/components/center/CenterTopMenu";
 
 
 
@@ -4746,56 +4747,7 @@ useEffect(() => {
           )*/}
 
 
-          <div className="mb-4 flex w-full items-center gap-2 overflow-x-auto pb-1">
-              <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
-                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
-                  회원관리
-              </button>
-
-              <div className="flex shrink-0 min-w-[8.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-[0_10px_20px_-12px_rgba(15,23,42,0.8)]">
-                <Image
-                  src="/icon-buyorder.png"
-                  alt="Trade"
-                  width={35}
-                  height={35}
-                  className="w-4 h-4"
-                />
-                <div className="text-sm font-semibold">
-                  구매주문관리
-                </div>
-              </div>
-
-              <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
-                  P2P 거래내역
-              </button>
-
-
-              {version !== 'bangbang' && (
-              <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
-                  className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
-                  판매(거래소)
-              </button>
-              )}
-
-              {version !== 'bangbang' && (
-              <button
-                onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
-                  출금(회원)
-              </button>
-              )}
-
-              <button
-                onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
-                className="flex shrink-0 min-w-[8.5rem] items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-[0_8px_18px_-12px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md">
-                  통계(일별)
-              </button>
-
-          </div>
+          <CenterTopMenu lang={params.lang} center={params.center} activeKey="buyorder" />
 
 
           <div className="flex items-start gap-3">

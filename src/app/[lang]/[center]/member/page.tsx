@@ -85,6 +85,7 @@ import { paymentUrl } from "../../../config/payment";
 
 import { version } from "../../../config/version";
 import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
+import CenterTopMenu from "@/components/center/CenterTopMenu";
 
 
 
@@ -2061,22 +2062,6 @@ export default function Index({ params }: any) {
 
   }
 
-  const topMenuButtonClassName = `
-    h-11 w-full min-w-0 px-4 rounded-xl border border-slate-200
-    bg-slate-50 text-slate-700 text-sm font-medium
-    hover:bg-slate-100 hover:border-slate-300 transition-colors
-    md:w-auto md:min-w-[120px]
-  `;
-
-
-
-
-
-
-
-
-
-
 
   return (
 
@@ -2586,57 +2571,7 @@ export default function Index({ params }: any) {
 
 
             <div className="mb-4 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
-              <div className="grid grid-cols-2 gap-2 md:flex md:flex-row md:flex-nowrap md:gap-2 md:overflow-x-auto">
-                <div className="col-span-2 md:col-span-1 h-11 flex items-center justify-center gap-2 px-4 rounded-xl border border-[#1f4f94] bg-[#1f4f94] text-sm font-semibold text-white shadow-sm md:w-auto md:min-w-[120px]">
-                  <Image
-                    src="/icon-user.png"
-                    alt="Member"
-                    width={16}
-                    height={16}
-                    className="w-4 h-4"
-                  />
-                  회원관리
-                </div>
-
-                <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/buyorder')}
-                  className={topMenuButtonClassName}
-                >
-                  구매주문관리
-                </button>
-
-                <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                  className={topMenuButtonClassName}
-                >
-                  P2P 거래내역
-                </button>
-
-                {version !== 'bangbang' && (
-                  <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
-                    className={topMenuButtonClassName}
-                  >
-                    판매(거래소)
-                  </button>
-                )}
-
-                {version !== 'bangbang' && (
-                  <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                    className={topMenuButtonClassName}
-                  >
-                    출금(회원)
-                  </button>
-                )}
-
-                <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/daily-close')}
-                  className={topMenuButtonClassName}
-                >
-                  통계(일별)
-                </button>
-              </div>
+              <CenterTopMenu lang={params.lang} center={params.center} activeKey="member" />
             </div>
 
 

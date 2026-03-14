@@ -80,6 +80,7 @@ import { get } from "http";
 import { useSearchParams } from 'next/navigation';
 
 import { version } from "../../../config/version";
+import CenterTopMenu from "@/components/center/CenterTopMenu";
 
 
 
@@ -1364,82 +1365,7 @@ export default function Index({ params }: any) {
 
 
 
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 mb-4">
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/member')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    회원관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/buyorder')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    구매주문관리
-                </button>
-
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/trade-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    P2P 거래내역
-                </button>
-
-                {version !== 'bangbang' && (
-                <button
-                    onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-history')}
-                    className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                    hover:bg-[#3167b4]/80
-                    hover:cursor-pointer
-                    hover:scale-105
-                    transition-transform duration-200 ease-in-out
-                    ">
-                    판매(거래소)
-                </button>
-                )}
-
-                {version !== 'bangbang' && (
-                <button
-                  onClick={() => router.push('/' + params.lang + '/' + params.center + '/clearance-request')}
-                  className="flex w-32 bg-[#3167b4] text-[#f3f4f6] text-sm rounded-lg p-2 items-center justify-center
-                  hover:bg-[#3167b4]/80
-                  hover:cursor-pointer
-                  hover:scale-105
-                  transition-transform duration-200 ease-in-out
-                  ">
-                    출금(회원)
-                </button>
-                )}
-
-                <div className='flex w-32 items-center justify-center gap-2
-                bg-yellow-500 text-[#3167b4] text-sm rounded-lg p-2'>
-                  <Image
-                    src="/icon-statistics.png"
-                    alt="Trade"
-                    width={35}
-                    height={35}
-                    className="w-4 h-4"
-                  />
-                  <div className="text-sm font-semibold">
-                    통계(일별)
-                  </div>
-                </div>
-
-            </div>
+            <CenterTopMenu lang={params.lang} center={params.center} activeKey="daily-close" />
 
 
             <div className='flex flex-row items-center space-x-4'>
@@ -2145,5 +2071,4 @@ const TradeDetail = (
       </div>
     );
   };
-
 
