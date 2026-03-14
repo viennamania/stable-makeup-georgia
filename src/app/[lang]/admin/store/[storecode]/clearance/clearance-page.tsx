@@ -66,6 +66,7 @@ import { getDictionary } from "../../../../../dictionaries";
 interface BuyOrder {
   _id: string;
   createdAt: string;
+  createdBy?: any;
   walletAddress: string;
   nickname: string;
   avatar: string;
@@ -157,6 +158,15 @@ const formatAdminActionDateTime = (value: string | null | undefined) => {
 const getDepositCompletedActorLabel = (buyer: any) => {
   const actor = buyer?.depositCompletedBy;
   return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
+};
+
+const getCreatedByActorLabel = (order: BuyOrder | any) => {
+  const actor = order?.createdBy;
+  return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
+};
+
+const getCreatedByDateTime = (order: BuyOrder | any) => {
+  return String(order?.createdBy?.requestedAt || order?.createdAt || "").trim();
 };
 
 interface ClearanceOrderPreview {
@@ -3646,6 +3656,23 @@ export default function Index({ params }: any) {
                                     ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
                                   )}
                               </span>
+                              {(getCreatedByActorLabel(item) || getCreatedByDateTime(item)) && (
+                                <div className="mt-1 w-full rounded-lg border border-sky-200 bg-sky-50 px-2 py-1 text-center">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+                                    매입신청
+                                  </div>
+                                  {getCreatedByActorLabel(item) && (
+                                    <div className="text-[11px] font-semibold text-sky-900">
+                                      신청자 {getCreatedByActorLabel(item)}
+                                    </div>
+                                  )}
+                                  {getCreatedByDateTime(item) && (
+                                    <div className="text-[10px] text-sky-700">
+                                      {formatAdminActionDateTime(getCreatedByDateTime(item))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </td>
 
@@ -4297,12 +4324,12 @@ export default function Index({ params }: any) {
                                     출금완료
                                   </span>
                                   {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
-                                    <div className="text-center text-[11px] leading-4 text-zinc-500">
+                                    <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-center text-[11px] leading-4 text-emerald-800">
                                       {getDepositCompletedActorLabel(item?.buyer) && (
                                         <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
                                       )}
                                       {item?.buyer?.depositCompletedAt && (
-                                        <div>{formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
+                                        <div>처리시각 {formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
                                       )}
                                     </div>
                                   )}

@@ -542,7 +542,11 @@ export async function POST(request: NextRequest) {
     mobile: normalizeOptionalString(requesterUser?.mobile),
     email: normalizeOptionalString(requesterUser?.email),
     avatar: normalizeOptionalString(requesterUser?.avatar),
+    publicIp: ip || null,
+    publicCountry: country || null,
+    signedAt: authResult.signedAtIso || null,
     requestedAt: new Date().toISOString(),
+    route: ROUTE,
     signatureVerified: true,
   };
 
