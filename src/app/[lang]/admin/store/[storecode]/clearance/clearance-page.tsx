@@ -4266,39 +4266,6 @@ export default function Index({ params }: any) {
                                   )}
                                 </div>
                               )}
-                              {isHistoryOnly && isWebhookGeneratedOrder && (
-                                <div className="mt-1 w-full rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-center">
-                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                    은행출금 생성
-                                  </div>
-                                  <div className="mt-0.5 text-[11px] text-amber-900">
-                                    webhook 출금 이벤트 기반 자동생성 주문
-                                  </div>
-                                  {canDeleteWebhookGeneratedOrder ? (
-                                    <button
-                                      type="button"
-                                      disabled={isDeletingWebhookOrder}
-                                      onClick={() => {
-                                        deleteWebhookGeneratedClearanceOrder(item);
-                                      }}
-                                      className={`
-                                        mt-2 inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-[11px] font-semibold transition
-                                        ${
-                                          isDeletingWebhookOrder
-                                            ? "cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400"
-                                            : "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
-                                        }
-                                      `}
-                                    >
-                                      {isDeletingWebhookOrder ? "삭제중..." : "청산주문 삭제"}
-                                    </button>
-                                  ) : (
-                                    <div className="mt-1 text-[10px] text-amber-700">
-                                      전송 queue 또는 TX가 없는 주문만 삭제할 수 있습니다.
-                                    </div>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           </td>
 
@@ -4322,6 +4289,40 @@ export default function Index({ params }: any) {
                                     수동 매입신청 주문
                                   </span>
                                 </>
+                              )}
+
+                              {isHistoryOnly && isWebhookGeneratedOrder && (
+                                <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-2 py-2 text-center">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                    은행출금 생성
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] leading-tight text-amber-900">
+                                    webhook 출금 이벤트 기반 자동생성 주문
+                                  </div>
+                                  {canDeleteWebhookGeneratedOrder ? (
+                                    <button
+                                      type="button"
+                                      disabled={isDeletingWebhookOrder}
+                                      onClick={() => {
+                                        deleteWebhookGeneratedClearanceOrder(item);
+                                      }}
+                                      className={`
+                                        mt-2 inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-[11px] font-semibold transition
+                                        ${
+                                          isDeletingWebhookOrder
+                                            ? "cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400"
+                                            : "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                        }
+                                      `}
+                                    >
+                                      {isDeletingWebhookOrder ? "삭제중..." : "청산주문 삭제"}
+                                    </button>
+                                  ) : (
+                                    <div className="mt-1 text-[10px] leading-tight text-amber-700">
+                                      전송 queue 또는 TX가 없는 주문만 삭제할 수 있습니다.
+                                    </div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </td>

@@ -248,6 +248,35 @@ async function getBuyOrderByTradeId(tradeId: string | null | undefined) {
   );
 }
 
+async function getAdminUserByWalletAddress(walletAddress: string | null | undefined) {
+  const normalizedWalletAddress = String(walletAddress || "").trim().toLowerCase();
+  if (!normalizedWalletAddress) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("users");
+  return collection.findOne<any>(
+    {
+      storecode: "admin",
+      $expr: {
+        $eq: [
+          { $toLower: "$walletAddress" },
+          normalizedWalletAddress,
+        ],
+      },
+    },
+    {
+      projection: {
+        nickname: 1,
+        mobile: 1,
+        avatar: 1,
+        walletAddress: 1,
+      },
+    },
+  );
+}
+
 // webhook
 // header
 /*
@@ -1133,6 +1162,8 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    const requesterUser = await getAdminUserByWalletAddress(requesterWalletAddress);
+
     const krwAmount = Number(amount || 0);
     if (!Number.isFinite(krwAmount) || krwAmount <= 0) {
       return {
@@ -1177,7 +1208,7 @@ export async function POST(request: NextRequest) {
       storecode: storeInfo?.storecode,
       walletAddress: requesterWalletAddress,
       sellerBankInfo,
-      nickname: toNullableString(transaction_name) || "",
+      nickname: toNullableString(requesterUser?.nickname) || "",
       usdtAmount,
       krwAmount,
       rate,
