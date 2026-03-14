@@ -30,6 +30,7 @@ import {
 import {
   isWithdrawalWebhookGeneratedClearanceOrder,
   isWithdrawalWebhookGeneratedClearanceOrderDeletable,
+  WITHDRAWAL_WEBHOOK_CLEARANCE_CREATED_BY_ROUTE,
   WITHDRAWAL_WEBHOOK_CLEARANCE_DUMMY_TRANSFER_REASON,
   WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
 } from "@/lib/clearance-webhook-order";
@@ -8801,6 +8802,15 @@ export async function getCollectOrdersForSeller(
 
   const collection = client.db(dbName).collection('buyorders');
   const clearanceStatuses = ['paymentConfirmed', 'paymentRequested'];
+  const webhookGeneratedClearanceExclusionMatch = {
+    $nor: [
+      { 'createdBy.route': WITHDRAWAL_WEBHOOK_CLEARANCE_CREATED_BY_ROUTE },
+      { 'createdBy.source': WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+      { 'clearanceSource.source': WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+      { source: WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+      { automationSource: WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
+    ],
+  };
 
 
   // status is not 'paymentConfirmed'
@@ -8871,6 +8881,7 @@ export async function getCollectOrdersForSeller(
           'buyer.depositName': { $eq: '' },
 
           createdAt: { $gte: fromDateValue, $lt: toDateValue },
+          ...webhookGeneratedClearanceExclusionMatch,
         }
       },
       {
@@ -8904,6 +8915,7 @@ export async function getCollectOrdersForSeller(
           privateSale: true,
           storecode: { $regex: storecode, $options: 'i' },
           createdAt: { $gte: fromDateValue, $lt: toDateValue },
+          ...webhookGeneratedClearanceExclusionMatch,
         }
       },
       {
@@ -8927,6 +8939,7 @@ export async function getCollectOrdersForSeller(
           privateSale: true,
           storecode: { $regex: storecode, $options: 'i' },
           createdAt: { $gte: fromDateValue, $lt: toDateValue },
+          ...webhookGeneratedClearanceExclusionMatch,
         }
       },
       {
