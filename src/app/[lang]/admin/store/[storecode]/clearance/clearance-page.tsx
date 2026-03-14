@@ -57,6 +57,11 @@ import {
 }from "next//navigation";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
+import {
+  isWithdrawalWebhookGeneratedClearanceOrder,
+  isWithdrawalWebhookGeneratedClearanceOrderDummyTransfer,
+  isWithdrawalWebhookGeneratedClearanceOrderDeletable,
+} from "@/lib/clearance-webhook-order";
 
 
 
@@ -98,6 +103,8 @@ interface BuyOrder {
 
   escrowTransactionHash: string;
   transactionHash: string;
+  transactionHashDummy?: boolean;
+  transactionHashDummyReason?: string | null;
   queueId?: string | null;
   minedAt?: string;
 
@@ -131,6 +138,7 @@ interface QueueCheckBanner {
 }
 
 const BUY_ORDER_DEPOSIT_COMPLETED_SIGNING_PREFIX = "admin-buyorder-deposit-completed-v1";
+const DELETE_WEBHOOK_CLEARANCE_ORDER_SIGNING_PREFIX = "admin-delete-webhook-clearance-order-v1";
 
 const formatShortWalletAddress = (value: string | null | undefined) => {
   const normalized = String(value || "").trim();
@@ -271,6 +279,7 @@ export default function Index({ params }: any) {
   const storecode = params?.storecode || params?.center || "";
   const normalizedStorecode = String(storecode || "").trim();
   const isEmbedded = Boolean(params?.embedded);
+  const isHistoryOnly = Boolean(params?.historyOnly);
 
   console.log("storecode", storecode);
 
@@ -749,6 +758,7 @@ export default function Index({ params }: any) {
 
     const [totalCount, setTotalCount] = useState(0);
     const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+    const [deletingWebhookOrderIds, setDeletingWebhookOrderIds] = useState<string[]>([]);
     const [buyOrdersReadMessage, setBuyOrdersReadMessage] = useState("");
     const [hasPrivilegedStoreRead, setHasPrivilegedStoreRead] = useState(false);
     const [storeReadMessage, setStoreReadMessage] = useState("");
@@ -809,6 +819,9 @@ export default function Index({ params }: any) {
       nextToDate?: string;
     }) => {
       const nextParams = new URLSearchParams(searchParams?.toString() || '');
+      const basePath = isHistoryOnly
+        ? `/${params.lang}/admin/clearance-management`
+        : `/${params.lang}/admin/store/clearance-management`;
 
       nextParams.set('limit', String(nextLimit));
       nextParams.set('page', String(nextPage));
@@ -827,7 +840,7 @@ export default function Index({ params }: any) {
       }
 
       nextParams.set('storecode', storecode);
-      router.push(`/${params.lang}/admin/store/clearance-management?${nextParams.toString()}`);
+      router.push(`${basePath}?${nextParams.toString()}`);
     };
 
     const moveToPage = (targetPage: number, nextLimit = currentLimit) => {
@@ -1955,6 +1968,69 @@ export default function Index({ params }: any) {
 
   }
 
+  const deleteWebhookGeneratedClearanceOrder = async (order: BuyOrder) => {
+    const orderId = String(order?._id || "").trim();
+    if (!orderId) {
+      return false;
+    }
+
+    if (!activeAccount || !address) {
+      toast.error("관리자 지갑을 연결해주세요.");
+      return false;
+    }
+
+    if (!isAdminUser) {
+      toast.error("관리자 권한(role=admin)에서만 삭제할 수 있습니다.");
+      return false;
+    }
+
+    if (!isWithdrawalWebhookGeneratedClearanceOrderDeletable(order)) {
+      toast.error("이 주문은 더 이상 삭제 가능한 상태가 아닙니다.");
+      return false;
+    }
+
+    const confirmed = window.confirm(
+      `은행출금 webhook 생성 청산주문 #${order.tradeId || orderId} 을(를) 삭제하시겠습니까?\n\n삭제 후 복구할 수 없습니다.`,
+    );
+
+    if (!confirmed) {
+      return false;
+    }
+
+    setDeletingWebhookOrderIds((prev) => Array.from(new Set([...prev, orderId])));
+
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: "/api/order/deleteWebhookGeneratedClearanceOrder",
+        signingPrefix: DELETE_WEBHOOK_CLEARANCE_ORDER_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
+          orderId,
+          deleteReason: "not_a_clearance_withdrawal",
+        },
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        toast.error(data?.error || "청산주문 삭제에 실패했습니다.");
+        return false;
+      }
+
+      toast.success(`청산주문 #${order.tradeId || orderId} 삭제 완료`);
+      await fetchBuyOrders();
+      return true;
+    } catch (error) {
+      console.error("deleteWebhookGeneratedClearanceOrder error", error);
+      toast.error("청산주문 삭제 중 오류가 발생했습니다.");
+      return false;
+    } finally {
+      setDeletingWebhookOrderIds((prev) =>
+        prev.filter((item) => item !== orderId),
+      );
+    }
+  };
+
 
   const openWithdrawConfirmModal = (index: number, order: BuyOrder) => {
     if (loadingDeposit[index]) {
@@ -2199,7 +2275,7 @@ export default function Index({ params }: any) {
     useEffect(() => {
       let mounted = true;
 
-      if (!sellersBalanceStorecode) {
+      if (isHistoryOnly || !sellersBalanceStorecode) {
         setSellersBalance([]);
         setLoadingSellersBalance(false);
         setRefreshingSellersBalance(false);
@@ -2277,7 +2353,7 @@ export default function Index({ params }: any) {
         mounted = false;
         clearInterval(interval);
       };
-    }, [sellersBalanceStorecode]);
+    }, [sellersBalanceStorecode, isHistoryOnly]);
 
     const buyerBankOptions = [
       store?.bankInfo,
@@ -2409,9 +2485,8 @@ export default function Index({ params }: any) {
             )}
 
 
-
-
-
+                  {!isHistoryOnly && (
+                  <>
                   <div className={`${isEmbedded ? 'mt-0' : 'mt-5'} mb-4 w-full grid gap-3 xl:grid-cols-2 xl:items-start`}>
                   {/* 구매자 계좌 */}
                   {/*
@@ -3235,6 +3310,7 @@ export default function Index({ params }: any) {
 
 
                   </div>
+                  </>)}
 
                   <div className="w-full flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm">
 
@@ -3439,9 +3515,7 @@ export default function Index({ params }: any) {
                 </div>
 
 
-
-   
-
+                {!isHistoryOnly && (
                 <div className="mt-4 w-full rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm">
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-700">
                     <span>판매자 지갑 잔고 현황</span>
@@ -3558,6 +3632,13 @@ export default function Index({ params }: any) {
                   )}
 
                 </div>
+                )}
+
+                {isHistoryOnly && (
+                  <div className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    관리자 전용 청산관리 화면입니다. 은행출금 webhook 기반으로 자동 생성된 청산주문만 삭제할 수 있습니다.
+                  </div>
+                )}
 
                 {buyOrdersReadMessage && (
                   <div className="mt-4 w-full rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
@@ -3617,7 +3698,19 @@ export default function Index({ params }: any) {
                       </tr>
                   </thead>
                   <tbody>
-                      {buyOrders.map((item, index) => (
+                      {buyOrders.map((item, index) => {
+                        const isWebhookGeneratedOrder =
+                          isWithdrawalWebhookGeneratedClearanceOrder(item);
+                        const canDeleteWebhookGeneratedOrder =
+                          isHistoryOnly
+                          && isAdminUser
+                          && isWebhookGeneratedOrder
+                          && isWithdrawalWebhookGeneratedClearanceOrderDeletable(item);
+                        const isDeletingWebhookOrder = deletingWebhookOrderIds.includes(
+                          String(item?._id || "").trim(),
+                        );
+
+                        return (
                         <tr key={index} className={`
                           ${
                             index % 2 === 0 ? 'bg-white' : 'bg-zinc-50/70'
@@ -3669,6 +3762,39 @@ export default function Index({ params }: any) {
                                   {getCreatedByDateTime(item) && (
                                     <div className="text-[10px] text-sky-700">
                                       {formatAdminActionDateTime(getCreatedByDateTime(item))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {isHistoryOnly && isWebhookGeneratedOrder && (
+                                <div className="mt-1 w-full rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-center">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                    은행출금 생성
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] text-amber-900">
+                                    webhook 출금 이벤트 기반 자동생성 주문
+                                  </div>
+                                  {canDeleteWebhookGeneratedOrder ? (
+                                    <button
+                                      type="button"
+                                      disabled={isDeletingWebhookOrder}
+                                      onClick={() => {
+                                        deleteWebhookGeneratedClearanceOrder(item);
+                                      }}
+                                      className={`
+                                        mt-2 inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-[11px] font-semibold transition
+                                        ${
+                                          isDeletingWebhookOrder
+                                            ? "cursor-not-allowed border-zinc-200 bg-zinc-100 text-zinc-400"
+                                            : "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                        }
+                                      `}
+                                    >
+                                      {isDeletingWebhookOrder ? "삭제중..." : "청산주문 삭제"}
+                                    </button>
+                                  ) : (
+                                    <div className="mt-1 text-[10px] text-amber-700">
+                                      전송 queue 또는 TX가 없는 주문만 삭제할 수 있습니다.
                                     </div>
                                   )}
                                 </div>
@@ -3992,6 +4118,14 @@ export default function Index({ params }: any) {
                                 </span>
 
                                 {item.transactionHash && item.transactionHash !== '0x' ? (
+                                isWithdrawalWebhookGeneratedClearanceOrderDummyTransfer(item) ? (
+                                <div className="w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-center">
+                                  <div className="text-xs font-semibold text-amber-700">더미 전송 처리</div>
+                                  <div className="mt-1 break-all font-mono text-[11px] text-amber-800">
+                                    {item.transactionHash}
+                                  </div>
+                                </div>
+                                ) : (
                                 <button
                                   className="text-sm text-blue-600 font-semibold
                                     border border-blue-600 rounded-lg p-2
@@ -4036,6 +4170,7 @@ export default function Index({ params }: any) {
                                     </span>
                                   </div>
                                 </button>
+                                )
                                 ) : (
                                 <div className="flex flex-col items-center justify-center gap-1">
                                   <div className="text-sm text-green-600 font-semibold border border-green-600 rounded-lg p-2">
@@ -4344,7 +4479,8 @@ export default function Index({ params }: any) {
                           </td>
 
                           </tr>
-                      ))}
+                        );
+                      })}
                   </tbody>
                   </table>
 

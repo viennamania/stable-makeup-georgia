@@ -21,10 +21,13 @@ const AppBarComponent = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const pathLang = pathname?.split("/").at(1) || "en";
   const adminClearanceHistoryPath = `/${pathLang}/admin/clearance-history`;
+  const adminOrderClearanceManagementPath = `/${pathLang}/admin/clearance-management`;
   const adminClearanceManagementPath = `/${pathLang}/admin/store/clearance-management`;
   const isAdminPath = pathname?.startsWith(`/${pathLang}/admin`) || false;
   const isAdminClearanceHistoryPath =
     pathname?.startsWith(adminClearanceHistoryPath) || false;
+  const isAdminOrderClearanceManagementPath =
+    pathname?.startsWith(adminOrderClearanceManagementPath) || false;
   const isAdminClearanceManagementPath =
     pathname?.startsWith(adminClearanceManagementPath) || false;
 
@@ -163,6 +166,32 @@ const AppBarComponent = () => {
                 variant="outlined"
               >
                 청산내역
+              </Button>
+
+              <Button
+                size="small"
+                onClick={() => router.push(adminOrderClearanceManagementPath)}
+                sx={{
+                  color: "#fff",
+                  borderColor: isAdminOrderClearanceManagementPath
+                    ? "rgba(255,255,255,0.8)"
+                    : "rgba(255,255,255,0.35)",
+                  backgroundColor: isAdminOrderClearanceManagementPath
+                    ? "rgba(255,255,255,0.18)"
+                    : "transparent",
+                  borderRadius: "9999px",
+                  px: 1.75,
+                  py: 0.5,
+                  whiteSpace: "nowrap",
+                  minWidth: "fit-content",
+                  "&:hover": {
+                    borderColor: "rgba(255,255,255,0.75)",
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                  },
+                }}
+                variant="outlined"
+              >
+                청산관리
               </Button>
 
               <Button

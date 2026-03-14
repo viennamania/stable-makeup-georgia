@@ -1384,8 +1384,8 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
     })
     .toArray();
 
-  let wallets: RealtimeBuyerWalletBalanceItem[] = groupedWallets
-    .map((item: any) => {
+  const walletCandidates = groupedWallets
+    .map((item: any): RealtimeBuyerWalletBalanceItem | null => {
       const walletAddress = toNullableText(item?.walletAddress);
       if (!walletAddress) {
         return null;
@@ -1403,9 +1403,11 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
         totalAmountUsdt: toSafeNumber(item?.totalAmountUsdt),
         latestPaymentConfirmedAt: toIsoString(item?.latestPaymentConfirmedAt),
         currentUsdtBalance: 0,
-      } satisfies RealtimeBuyerWalletBalanceItem;
-    })
-    .filter((item): item is RealtimeBuyerWalletBalanceItem => Boolean(item));
+      };
+    });
+  let wallets: RealtimeBuyerWalletBalanceItem[] = walletCandidates.filter(
+    (item): item is RealtimeBuyerWalletBalanceItem => item !== null,
+  );
 
   if (wallets.length === 0) {
     return {

@@ -90,6 +90,7 @@ export default function ClearanceManagementPage({ params }: any) {
   const searchParams = useSearchParams();
   const activeAccount = useActiveAccount();
   const address = activeAccount?.address;
+  const isHistoryOnly = Boolean(params?.historyOnly);
 
   const searchParamsString = searchParams?.toString() || "";
   const selectedStorecodeFromQuery =
@@ -199,8 +200,11 @@ export default function ClearanceManagementPage({ params }: any) {
     if (!nextParams.get("toDate")) {
       nextParams.set("toDate", todayDate);
     }
-    router.replace(`/${params.lang}/admin/store/clearance-management?${nextParams.toString()}`);
-  }, [selectedStorecode, selectedStorecodeFromQuery, searchParamsString, router, params.lang]);
+    const targetPath = isHistoryOnly
+      ? `/${params.lang}/admin/clearance-management`
+      : `/${params.lang}/admin/store/clearance-management`;
+    router.replace(`${targetPath}?${nextParams.toString()}`);
+  }, [selectedStorecode, selectedStorecodeFromQuery, searchParamsString, router, params.lang, isHistoryOnly]);
 
   const sortedStores = useMemo(() => {
     return [...stores].sort(compareStoresForSidebar);
@@ -398,10 +402,25 @@ export default function ClearanceManagementPage({ params }: any) {
             </button>
           )}
           {version !== 'bangbang' && (
-            <div className="flex w-40 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)]">
+            <button
+              onClick={() => router.push('/' + params.lang + '/admin/clearance-management')}
+              className={isHistoryOnly ? "flex w-32 shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-2 text-sm font-semibold text-slate-900 shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)]" : menuButtonBase}
+            >
+              청산관리
+            </button>
+          )}
+          {version !== 'bangbang' && (
+            <button
+              onClick={() => router.push('/' + params.lang + '/admin/store/clearance-management')}
+              className={`flex ${isHistoryOnly ? 'w-44' : 'w-40'} shrink-0 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold shadow-[0_10px_20px_-14px_rgba(0,0,0,0.45)] ${
+                isHistoryOnly
+                  ? "border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 text-slate-700"
+                  : "border-amber-300 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900"
+              }`}
+            >
               <Image src="/icon-store.png" alt="Store" width={35} height={35} className="h-4 w-4" />
               <div className="text-sm font-semibold drop-shadow-sm">가맹점 청산관리</div>
-            </div>
+            </button>
           )}
           <button onClick={() => router.push('/' + params.lang + '/admin/trade-history-daily')} className={menuButtonBase}>
             P2P통계(가맹)
@@ -420,7 +439,7 @@ export default function ClearanceManagementPage({ params }: any) {
         <aside className="w-full self-start rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-4 py-3">
             <h1 className="text-lg font-semibold text-slate-900">
-              청산관리
+              {isHistoryOnly ? "청산관리" : "청산관리"}
             </h1>
           </div>
 
@@ -671,6 +690,7 @@ export default function ClearanceManagementPage({ params }: any) {
                     ...params,
                     storecode: String(selectedStore.storecode || "").trim(),
                     embedded: true,
+                    historyOnly: isHistoryOnly,
                   }}
                 />
               </div>

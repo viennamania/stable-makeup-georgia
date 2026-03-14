@@ -27,6 +27,12 @@ import {
   resolveConfiguredClearanceBuyer,
   resolveConfiguredClearanceSellerBankInfo,
 } from "@/lib/server/clearance-order-security";
+import {
+  isWithdrawalWebhookGeneratedClearanceOrder,
+  isWithdrawalWebhookGeneratedClearanceOrderDeletable,
+  WITHDRAWAL_WEBHOOK_CLEARANCE_DUMMY_TRANSFER_REASON,
+  WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
+} from "@/lib/clearance-webhook-order";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 import { chain as configuredChain } from "@/app/config/contractAddresses";
 
@@ -266,6 +272,30 @@ function toNormalizedHash(value: unknown): string | null {
     return null;
   }
   return raw;
+}
+
+function buildWithdrawalWebhookDummyTransactionHash({
+  tradeId,
+  storecode,
+  walletAddress,
+  createdAt,
+}: {
+  tradeId: string;
+  storecode: string;
+  walletAddress: string;
+  createdAt: string;
+}) {
+  return `0x${createHash("sha256")
+    .update(
+      [
+        "withdrawal-webhook-clearance-dummy-transfer",
+        String(tradeId || "").trim(),
+        String(storecode || "").trim().toLowerCase(),
+        String(walletAddress || "").trim().toLowerCase(),
+        String(createdAt || "").trim(),
+      ].join("|"),
+    )
+    .digest("hex")}`;
 }
 
 const BUYORDER_READ_INDEX_STORE_PRIVATE_STATUS_CREATED =
@@ -2654,7 +2684,28 @@ export async function insertBuyOrderForClearance(data: any) {
     sellerData.signerAddress = sellerSignerAddress;
   }
 
-
+  const createdAt = new Date().toISOString();
+  const isWithdrawalWebhookGeneratedOrder = isWithdrawalWebhookGeneratedClearanceOrder({
+    createdBy: data.createdBy,
+    source: data.source,
+    automationSource: data.automationSource,
+    clearanceSource: data.clearanceSource,
+  });
+  const shouldStubWithdrawalWebhookTransfer =
+    isWithdrawalWebhookGeneratedOrder
+    && !toNormalizedHash(data.transactionHash)
+    && !toNullableText(data.queueId);
+  const transactionHash = shouldStubWithdrawalWebhookTransfer
+    ? buildWithdrawalWebhookDummyTransactionHash({
+        tradeId,
+        storecode: data.storecode,
+        walletAddress: normalizedRequesterWalletAddress,
+        createdAt,
+      })
+    : toNormalizedHash(data.transactionHash) || "0x";
+  const queueId = shouldStubWithdrawalWebhookTransfer
+    ? null
+    : toNullableText(data.queueId);
 
   const result = await collection.insertOne(
 
@@ -2676,11 +2727,11 @@ export async function insertBuyOrderForClearance(data: any) {
       usdtAmount: data.usdtAmount,
       krwAmount: data.krwAmount,
       rate: data.rate,
-      createdAt: new Date().toISOString(),
+      createdAt,
       
       status: 'paymentRequested',
-      acceptedAt: new Date().toISOString(),
-      paymentRequestedAt: new Date().toISOString(),
+      acceptedAt: createdAt,
+      paymentRequestedAt: createdAt,
 
       privateSale: true,
 
@@ -2693,8 +2744,13 @@ export async function insertBuyOrderForClearance(data: any) {
 
       tradeId: tradeId,
 
-      transactionHash: '0x',
-      queueId: null,
+      transactionHash,
+      queueId,
+      transactionHashDummy: shouldStubWithdrawalWebhookTransfer || undefined,
+      transactionHashDummyReason: shouldStubWithdrawalWebhookTransfer
+        ? WITHDRAWAL_WEBHOOK_CLEARANCE_DUMMY_TRANSFER_REASON
+        : undefined,
+      transactionHashDummyAt: shouldStubWithdrawalWebhookTransfer ? createdAt : undefined,
       createdBy: data.createdBy || null,
     }
   );
@@ -4509,6 +4565,130 @@ export async function deleteBuyOrder(
   }
 
 
+}
+
+export async function deleteWebhookGeneratedClearanceOrderByAdmin({
+  orderId,
+  actor,
+  deleteReason,
+}: {
+  orderId: string;
+  actor: {
+    walletAddress: string | null;
+    nickname?: string | null;
+    storecode?: string | null;
+    role?: string | null;
+    publicIp?: string | null;
+    signedAt?: string | null;
+  };
+  deleteReason?: string | null;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  error?: string;
+  deletedOrderId?: string;
+  tradeId?: string | null;
+}> {
+  if (!ObjectId.isValid(orderId)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Invalid orderId",
+    };
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const historyCollection = client
+    .db(dbName)
+    .collection("clearanceWebhookOrderDeletionHistory");
+
+  const existingOrder = await collection.findOne<any>({
+    _id: new ObjectId(orderId),
+  });
+
+  if (!existingOrder) {
+    return {
+      ok: false,
+      status: 404,
+      error: "Order not found",
+    };
+  }
+
+  if (existingOrder?.privateSale !== true) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Only privateSale clearance orders can be deleted here",
+    };
+  }
+
+  if (!isWithdrawalWebhookGeneratedClearanceOrder(existingOrder)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Only withdrawal-webhook generated clearance orders can be deleted",
+    };
+  }
+
+  if (!isWithdrawalWebhookGeneratedClearanceOrderDeletable(existingOrder)) {
+    return {
+      ok: false,
+      status: 409,
+      error: "This withdrawal-webhook clearance order can no longer be deleted",
+    };
+  }
+
+  const deletionTimestamp = new Date().toISOString();
+  const result = await collection.deleteOne({
+    _id: new ObjectId(orderId),
+  });
+
+  if (result.deletedCount !== 1) {
+    return {
+      ok: false,
+      status: 500,
+      error: "Failed to delete clearance order",
+    };
+  }
+
+  await historyCollection.insertOne({
+    orderId,
+    tradeId: existingOrder?.tradeId || null,
+    storecode: existingOrder?.storecode || null,
+    walletAddress: existingOrder?.walletAddress || null,
+    createdBySource:
+      existingOrder?.createdBy?.source || WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE,
+    deleteReason: String(deleteReason || "").trim() || "not_a_clearance_withdrawal",
+    deletedAt: deletionTimestamp,
+    deletedBy: {
+      walletAddress: actor?.walletAddress || null,
+      nickname: actor?.nickname || null,
+      storecode: actor?.storecode || null,
+      role: actor?.role || null,
+      publicIp: actor?.publicIp || null,
+      signedAt: actor?.signedAt || null,
+    },
+    orderSnapshot: existingOrder,
+  });
+
+  clearBuyOrderReadCache();
+
+  if (existingOrder?.storecode && existingOrder?.walletAddress) {
+    await syncUserBuyOrderStateByWalletAndStorecode({
+      client,
+      buyOrderCollection: collection,
+      storecode: String(existingOrder.storecode || ""),
+      walletAddress: String(existingOrder.walletAddress || ""),
+    });
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    deletedOrderId: orderId,
+    tradeId: existingOrder?.tradeId || null,
+  };
 }
 
 
