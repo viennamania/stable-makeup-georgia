@@ -261,6 +261,7 @@ export type RealtimeNicknameSellerWalletBalanceResult = {
 
 export type RealtimeBuyerWalletBalanceItem = {
   walletAddress: string;
+  signerAddress: string | null;
   nickname: string | null;
   avatar: string | null;
   storecode: string | null;
@@ -1253,6 +1254,7 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
   const client = await clientPromise;
   const collection = client.db(dbName).collection("buyorders");
   const storeCollection = client.db(dbName).collection("stores");
+  const userCollection = client.db(dbName).collection("users");
   const safeLimit = Math.min(Math.max(Number(limit) || 120, 1), 1000);
   const safeFromDate = String(fromDate || "").trim();
   const safeToDate = String(toDate || "").trim();
@@ -1391,6 +1393,7 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
 
       return {
         walletAddress,
+        signerAddress: null,
         nickname: toNullableText(item?.nickname),
         avatar: toNullableText(item?.avatar),
         storecode: toNullableText(item?.storecode),
@@ -1466,6 +1469,69 @@ export async function getRealtimeBuyOrderBuyerWalletBalances({
         ...item,
         storeName: storeInfo?.storeName ?? item.storeName ?? null,
         storeLogo: storeInfo?.storeLogo ?? item.storeLogo ?? null,
+      };
+    });
+  }
+
+  const walletAddressSet = new Set<string>();
+  for (const item of wallets) {
+    const walletAddress = toNullableText(item.walletAddress)?.toLowerCase();
+    if (walletAddress) {
+      walletAddressSet.add(walletAddress);
+    }
+  }
+
+  if (walletAddressSet.size > 0) {
+    const walletQueryConditions = Array.from(walletAddressSet).map((walletAddress) => ({
+      walletAddress: new RegExp(`^${escapeRegex(walletAddress)}$`, "i"),
+    }));
+
+    const matchedUsers = await userCollection
+      .find(
+        {
+          $or: walletQueryConditions,
+        },
+        {
+          projection: {
+            _id: 0,
+            walletAddress: 1,
+            signerAddress: 1,
+            storecode: 1,
+            updatedAt: 1,
+          },
+          sort: {
+            updatedAt: -1,
+            _id: -1,
+          },
+          maxTimeMS: REALTIME_BUYORDER_QUERY_MAX_TIME_MS,
+        },
+      )
+      .toArray();
+
+    const userByWalletKey = new Map<string, { signerAddress: string | null; storecode: string | null }>();
+    for (const user of matchedUsers) {
+      const walletAddress = toNullableText(user?.walletAddress)?.toLowerCase();
+      if (!walletAddress || userByWalletKey.has(walletAddress)) {
+        continue;
+      }
+
+      userByWalletKey.set(walletAddress, {
+        signerAddress: toNullableText(user?.signerAddress),
+        storecode: toNullableText(user?.storecode)?.toLowerCase() || null,
+      });
+    }
+
+    wallets = wallets.map((item) => {
+      const walletKey = String(item.walletAddress || "").toLowerCase();
+      const matchedUser = userByWalletKey.get(walletKey);
+
+      if (!matchedUser) {
+        return item;
+      }
+
+      return {
+        ...item,
+        signerAddress: matchedUser.signerAddress,
       };
     });
   }

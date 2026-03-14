@@ -367,6 +367,7 @@ type SellerWalletBalanceItem = {
 
 type BuyerWalletBalanceItem = {
   walletAddress: string;
+  signerAddress?: string | null;
   nickname?: string | null;
   avatar?: string | null;
   storecode?: string | null;
@@ -6423,11 +6424,18 @@ const fetchBuyOrders = async () => {
                         return (
                           <div
                             key={`${seller.walletAddress}-${index}`}
-                            className={`rounded-lg border border-zinc-200 px-3 py-2 bg-white
+                            className={`relative rounded-lg border border-zinc-200 bg-white px-3 ${
+                    smartSellerWallet ? 'pb-2 pt-8' : 'py-2'
+                  }
                     ${currentUsdtBalanceArray && currentUsdtBalanceArray[index] !== undefined && currentUsdtBalanceArray[index] !== seller.currentUsdtBalance
                       ? 'ring-1 ring-emerald-200'
                       : ''}`}
                           >
+                            {smartSellerWallet ? (
+                              <span className="absolute left-0 top-0 inline-flex items-center rounded-br-xl rounded-tl-lg border-b border-r border-sky-200 bg-gradient-to-r from-sky-100 via-cyan-50 to-white px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] text-sky-700 shadow-sm">
+                                스마트 지갑
+                              </span>
+                            ) : null}
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
                                 <button
@@ -6441,11 +6449,6 @@ const fetchBuyOrders = async () => {
                                   {seller.walletAddress.substring(0, 6)}...{seller.walletAddress.substring(seller.walletAddress.length - 4)}
                                 </button>
                                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                  {smartSellerWallet ? (
-                                    <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
-                                      스마트 지갑
-                                    </span>
-                                  ) : null}
                                   <div className="flex min-w-0 items-center gap-1.5">
                                     <Image
                                       src={seller.storeLogo || '/icon-store.png'}
@@ -6532,14 +6535,24 @@ const fetchBuyOrders = async () => {
                 <>
                   {buyersBalance.length > 0 ? (
                     <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-3 max-h-52 overflow-y-auto pr-0.5">
-                      {buyersBalance.map((buyer, index) => (
+                      {buyersBalance.map((buyer, index) => {
+                        const smartBuyerWallet = isSmartAccountSellerWallet(buyer as any);
+
+                        return (
                         <div
                           key={`${buyer.walletAddress}-${index}`}
-                          className={`rounded-lg border border-zinc-200 px-3 py-2 bg-white
+                          className={`relative rounded-lg border border-zinc-200 bg-white px-3 ${
+                    smartBuyerWallet ? 'pb-2 pt-8' : 'py-2'
+                  }
                     ${currentBuyerUsdtBalanceArray && currentBuyerUsdtBalanceArray[index] !== undefined && currentBuyerUsdtBalanceArray[index] !== buyer.currentUsdtBalance
                       ? 'ring-1 ring-sky-200'
                       : ''}`}
                         >
+                          {smartBuyerWallet ? (
+                            <span className="absolute left-0 top-0 inline-flex items-center rounded-br-xl rounded-tl-lg border-b border-r border-sky-200 bg-gradient-to-r from-sky-100 via-cyan-50 to-white px-2.5 py-1 text-[10px] font-bold tracking-[0.08em] text-sky-700 shadow-sm">
+                              스마트 지갑
+                            </span>
+                          ) : null}
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0 flex-1">
                               <button
@@ -6599,7 +6612,8 @@ const fetchBuyOrders = async () => {
                             </span>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="mt-2 text-xs text-zinc-500">미정산 구매자 지갑이 없습니다.</div>
