@@ -19,6 +19,8 @@ type GetLatestTransactionHashLogEventsParams = {
   address?: string | null;
 };
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const normalizeText = (value: unknown): string | null => {
   if (typeof value === "string") {
     const normalized = value.trim();
@@ -201,6 +203,32 @@ export async function getLatestTransactionHashLogEvents({
       }
       return item.fromWalletAddress === normalizedAddress || item.toWalletAddress === normalizedAddress;
     });
+}
+
+export async function getTransactionHashLogEventByHash(
+  transactionHash: string | null | undefined,
+): Promise<UsdtTransactionHashRealtimeEvent | null> {
+  const normalizedTransactionHash = normalizeText(transactionHash);
+  if (!normalizedTransactionHash) {
+    return null;
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('transactionHashLogs');
+
+  const document = await collection.findOne(
+    {
+      transactionHash: {
+        $regex: `^${escapeRegex(normalizedTransactionHash)}$`,
+        $options: "i",
+      },
+    },
+    {
+      sort: { createdAt: -1, _id: -1 },
+    },
+  );
+
+  return document ? normalizeTransactionHashLogDocument(document) : null;
 }
 
 export async function saveTransactionHashLogEvent(
