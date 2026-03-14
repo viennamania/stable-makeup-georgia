@@ -4032,6 +4032,24 @@ export default function Index({ params }: any) {
                                 const event = item.data;
                                 const eventAccountNumber = normalizeAccountNumber(event?.bankAccountNumber);
                                 const storeAccountNumber = normalizeAccountNumber(store?.bankInfo?.accountNumber);
+                                const linkedOrder = buyOrders.find(
+                                  (order) => String(order?.tradeId || "").trim() === String(event?.tradeId || "").trim(),
+                                );
+                                const receiverBankName = String(
+                                  event?.receiver?.bankName
+                                  || linkedOrder?.seller?.bankInfo?.bankName
+                                  || "",
+                                ).trim();
+                                const receiverAccountHolder = String(
+                                  event?.receiver?.accountHolder
+                                  || linkedOrder?.seller?.bankInfo?.accountHolder
+                                  || "",
+                                ).trim();
+                                const receiverAccountNumber = String(
+                                  event?.receiver?.accountNumber
+                                  || linkedOrder?.seller?.bankInfo?.accountNumber
+                                  || "",
+                                ).trim();
                                 const isPrimaryAccount = Boolean(
                                   eventAccountNumber
                                   && storeAccountNumber
@@ -4088,6 +4106,20 @@ export default function Index({ params }: any) {
                                           {event?.bankAccountNumber || "-"}
                                         </span>
                                       </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-10 shrink-0 text-zinc-400">TO</span>
+                                        <span className="truncate font-medium text-zinc-800">
+                                          {receiverAccountHolder || "알 수 없음"}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-10 shrink-0 text-zinc-400">계좌</span>
+                                        <span className="truncate font-mono text-zinc-700">
+                                          {receiverBankName || receiverAccountNumber
+                                            ? `${receiverBankName || "-"} ${receiverAccountNumber || "-"}`
+                                            : "알 수 없음"}
+                                        </span>
+                                      </div>
                                       {event?.tradeId && (
                                         <div className="flex items-center gap-2">
                                           <span className="w-10 shrink-0 text-zinc-400">trade</span>
@@ -4139,6 +4171,8 @@ export default function Index({ params }: any) {
                             <span>신청시간</span>
                           </div>
                         </th>
+
+                        <th className="w-[130px] text-center">주문유형</th>
 
                         <th className="w-[200px] text-left">구매자정보</th>
 
@@ -4268,10 +4302,40 @@ export default function Index({ params }: any) {
                             </div>
                           </td>
 
+                          <td className="p-2 text-center">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              {isWebhookGeneratedOrder ? (
+                                <>
+                                  <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700">
+                                    webhook 자동생성
+                                  </span>
+                                  <span className="text-[11px] leading-tight text-zinc-500">
+                                    결제통장 출금 이벤트
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700">
+                                    관리자 생성
+                                  </span>
+                                  <span className="text-[11px] leading-tight text-zinc-500">
+                                    수동 매입신청 주문
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </td>
+
                       
 
                           <td className="p-2">
                             <div className="flex flex-col items-start justify-center gap-1">
+
+                              {isWebhookGeneratedOrder && (
+                                <div className="mb-1 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                  webhook 출금 자동생성
+                                </div>
+                              )}
 
                               <div className="flex flex-row items-center gap-1">
                                 <Image
