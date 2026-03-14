@@ -76,6 +76,7 @@ import {
   type BankTransferDashboardEvent,
 } from "@lib/ably/constants";
 import {
+  isWithdrawalWebhookGeneratedClearanceOrder,
   isWithdrawalWebhookGeneratedClearanceOrderDummyTransfer,
 } from "@/lib/clearance-webhook-order";
 
@@ -117,6 +118,7 @@ interface BuyOrder {
   transactionHash: string;
   transactionHashDummy?: boolean;
   transactionHashDummyReason?: string | null;
+  createdBy?: any;
 
   storecode: string;
   store: any;
@@ -227,6 +229,20 @@ const formatAdminActionDateTime = (value: string | null | undefined) => {
     return normalized;
   }
   return date.toLocaleString("ko-KR");
+};
+
+const getClearanceOrderCreationMeta = (order: BuyOrder) => {
+  if (isWithdrawalWebhookGeneratedClearanceOrder(order)) {
+    return {
+      label: "시스템 생성",
+      className: "border-amber-300 bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    label: "관리자 생성",
+    className: "border-sky-300 bg-sky-50 text-sky-700",
+  };
 };
 
 const normalizeStoreBankAccountNumber = (value: string | null | undefined) =>
@@ -4678,6 +4694,9 @@ export default function Index({ params, isYear2025 = false }: any) {
                     
 
                       <td className="p-2">
+                        {(() => {
+                          const creationMeta = getClearanceOrderCreationMeta(item);
+                          return (
 
                         <div className="
                           w-48
@@ -4746,6 +4765,11 @@ export default function Index({ params, isYear2025 = false }: any) {
                             {
                               "#" + item.tradeId
                             }
+                            </span>
+                            <span
+                              className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${creationMeta.className}`}
+                            >
+                              {creationMeta.label}
                             </span>
                           </div>
 
@@ -4846,6 +4870,8 @@ export default function Index({ params, isYear2025 = false }: any) {
                           </div>
 
                         </div>
+                          );
+                        })()}
 
                       </td>
 
@@ -5845,6 +5871,16 @@ export default function Index({ params, isYear2025 = false }: any) {
                           p-4 rounded-md border bg-black bg-opacity-50
                       `}
                     >
+                      {(() => {
+                        const creationMeta = getClearanceOrderCreationMeta(item);
+                        return (
+                          <div
+                            className={`absolute right-3 top-3 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${creationMeta.className}`}
+                          >
+                            {creationMeta.label}
+                          </div>
+                        );
+                      })()}
 
                       {item.status === 'ordered' && (
 
