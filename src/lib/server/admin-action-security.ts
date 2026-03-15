@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 
-import { getOneByWalletAddress } from "@lib/api/user";
+import {
+  getOneByWalletAddress,
+  getOneByWalletAddressAcrossStores,
+} from "@lib/api/user";
 import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
 import clientPromise, { dbName } from "@/lib/mongodb";
 import {
@@ -43,6 +46,8 @@ export type VerifyAdminSignedActionParams = {
   nonceRaw: unknown;
   actionFields: Record<string, unknown>;
   requestLogActionFields?: Record<string, unknown>;
+  allowedRoles?: string[];
+  requireAdminStorecode?: boolean;
 };
 
 export type VerifyAdminSignedActionResult =
@@ -66,6 +71,66 @@ const normalizeString = (value: unknown) => {
     return "";
   }
   return value.trim();
+};
+
+const normalizeRole = (value: unknown) => normalizeString(value).toLowerCase();
+
+const getRequesterRoleLower = (user: any) => {
+  return normalizeRole(user?.role || user?.rold);
+};
+
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getAuthorizedRequesterAcrossStores = async ({
+  walletAddress,
+  allowedRoles,
+}: {
+  walletAddress: string;
+  allowedRoles: string[];
+}) => {
+  const walletAddressRaw = normalizeString(walletAddress);
+  if (!walletAddressRaw) {
+    return null;
+  }
+
+  const rolePatterns = allowedRoles
+    .map((value) => normalizeRole(value))
+    .filter(Boolean)
+    .map((value) => new RegExp(`^${escapeRegex(value)}$`, "i"));
+
+  if (rolePatterns.length === 0) {
+    return getOneByWalletAddressAcrossStores(walletAddressRaw);
+  }
+
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+
+  const dbClient = await clientPromise;
+  const collection = dbClient.db(dbName).collection("users");
+
+  const roleQuery = {
+    $or: [
+      { role: { $in: rolePatterns } },
+      { rold: { $in: rolePatterns } },
+    ],
+  };
+
+  const directMatch = await collection.findOne({
+    walletAddress: { $in: walletAddressCandidates },
+    ...roleQuery,
+  });
+
+  if (directMatch) {
+    return directMatch;
+  }
+
+  const walletAddressRegex = new RegExp(`^${escapeRegex(walletAddressRaw)}$`, "i");
+
+  return collection.findOne({
+    walletAddress: walletAddressRegex,
+    ...roleQuery,
+  });
 };
 
 const normalizeActionFieldValue = (value: unknown): string => {
@@ -190,6 +255,8 @@ export const verifyAdminSignedAction = async ({
   nonceRaw,
   actionFields,
   requestLogActionFields,
+  allowedRoles,
+  requireAdminStorecode = true,
 }: VerifyAdminSignedActionParams): Promise<VerifyAdminSignedActionResult> => {
   const requesterStorecode = normalizeString(requesterStorecodeRaw || "admin") || "admin";
   const requesterWalletAddress = normalizeWalletAddress(requesterWalletAddressRaw);
@@ -198,6 +265,13 @@ export const verifyAdminSignedAction = async ({
   const nonce = normalizeString(nonceRaw);
   const ip = getRequestIp(request);
   const country = getRequestCountry(request);
+  const normalizedAllowedRoles = Array.from(
+    new Set(
+      (allowedRoles || ["admin"])
+        .map((value) => normalizeRole(value))
+        .filter(Boolean),
+    ),
+  );
 
   const writeAdminApiCallLog = async ({
     status,
@@ -225,6 +299,8 @@ export const verifyAdminSignedAction = async ({
       meta: {
         requesterStorecode,
         signingPrefix,
+        allowedRoles: normalizedAllowedRoles,
+        requireAdminStorecode,
         ...meta,
       },
     });
@@ -246,6 +322,7 @@ export const verifyAdminSignedAction = async ({
       rateLimited: false,
       extra: {
         requesterStorecode,
+        allowedRoles: normalizedAllowedRoles,
       },
     });
 
@@ -278,6 +355,7 @@ export const verifyAdminSignedAction = async ({
       rateLimited: true,
       extra: {
         requesterStorecode,
+        allowedRoles: normalizedAllowedRoles,
       },
     });
 
@@ -331,25 +409,34 @@ export const verifyAdminSignedAction = async ({
     };
   }
 
-  const requesterUser = await getOneByWalletAddress(requesterStorecode, requesterWalletAddress);
+  const requesterUser = requireAdminStorecode
+    ? await getOneByWalletAddress(requesterStorecode, requesterWalletAddress)
+    : await getAuthorizedRequesterAcrossStores({
+        walletAddress: requesterWalletAddress,
+        allowedRoles: normalizedAllowedRoles,
+      });
   const requesterStorecodeLower = String(requesterUser?.storecode || "").trim().toLowerCase();
-  const requesterRoleLower = String(requesterUser?.role || "").trim().toLowerCase();
-  const requesterIsAdmin = requesterStorecodeLower === "admin" && requesterRoleLower === "admin";
+  const requesterRoleLower = getRequesterRoleLower(requesterUser);
+  const requesterHasAllowedRole = normalizedAllowedRoles.includes(requesterRoleLower);
+  const requesterMatchesStorecode = requireAdminStorecode ? requesterStorecodeLower === "admin" : true;
+  const requesterIsAuthorized = requesterHasAllowedRole && requesterMatchesStorecode;
 
-  if (!requesterIsAdmin) {
+  if (!requesterIsAuthorized) {
     await writeAdminApiCallLog({
       status: "blocked",
-      reason: "forbidden_not_admin",
+      reason: "forbidden_not_authorized_role",
       requesterUser,
       meta: {
         requesterStorecode: requesterUser?.storecode || requesterStorecode,
-        requesterRole: requesterUser?.role || null,
+        requesterRole: requesterRoleLower || null,
+        allowedRoles: normalizedAllowedRoles,
+        requireAdminStorecode,
       },
     });
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
-      reason: "forbidden_not_admin",
+      reason: "forbidden_not_authorized_role",
       ip,
       requesterWalletAddress,
       signatureProvided: true,
@@ -357,7 +444,9 @@ export const verifyAdminSignedAction = async ({
       rateLimited: false,
       extra: {
         requesterStorecode: requesterUser?.storecode || requesterStorecode,
-        requesterRole: requesterUser?.role || null,
+        requesterRole: requesterRoleLower || null,
+        allowedRoles: normalizedAllowedRoles,
+        requireAdminStorecode,
       },
     });
 
@@ -392,6 +481,7 @@ export const verifyAdminSignedAction = async ({
       rateLimited: false,
       extra: {
         requesterStorecode,
+        allowedRoles: normalizedAllowedRoles,
       },
     });
 
@@ -416,11 +506,13 @@ export const verifyAdminSignedAction = async ({
     signatureProvided: true,
     signatureVerified: true,
     rateLimited: false,
-    extra: {
-      requesterStorecode,
-      action: signingPrefix,
-    },
-  });
+      extra: {
+        requesterStorecode,
+        action: signingPrefix,
+        allowedRoles: normalizedAllowedRoles,
+        requireAdminStorecode,
+      },
+    });
 
   return {
     ok: true,
