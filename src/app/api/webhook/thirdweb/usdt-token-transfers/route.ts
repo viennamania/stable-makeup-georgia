@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
         verified: true,
         route: ROUTE_PATH,
         webhookId,
+        isTestWebhook: Boolean(verified.isTestWebhook),
         topic: extracted.topic,
         sentAt: ageValidation.sentAtIso,
         receivedCount: extracted.receivedCount,
