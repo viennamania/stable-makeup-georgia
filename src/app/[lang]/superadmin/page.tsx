@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
 import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { inAppWallet } from "thirdweb/wallets";
 
 import { client } from "@/app/client";
-import { chain } from "@/app/config/contractAddresses";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import { useSuperadminSession } from "@/lib/client/use-superadmin-session";
 
@@ -406,19 +404,6 @@ export default function SuperadminHomePage() {
                 client={client}
                 wallets={wallets}
                 showAllWallets={false}
-                accountAbstraction={{
-                  chain:
-                    chain === "ethereum"
-                      ? ethereum
-                      : chain === "polygon"
-                        ? polygon
-                        : chain === "arbitrum"
-                          ? arbitrum
-                          : chain === "bsc"
-                            ? bsc
-                            : arbitrum,
-                  sponsorGas: true,
-                }}
                 theme="dark"
                 connectButton={{
                   label: "지갑 연결",
