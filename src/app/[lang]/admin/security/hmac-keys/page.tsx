@@ -36,7 +36,9 @@ const SIGNING_CREATE = "stable-georgia:hmac-keys:create:v1";
 const SIGNING_UPDATE = "stable-georgia:hmac-keys:update:v1";
 const SIGNING_ROTATE = "stable-georgia:hmac-keys:rotate:v1";
 
-const DEFAULT_ALLOWED_ROUTE = "/api/order/buyOrderSettlement";
+const BUY_ORDER_SETTLEMENT_ALLOWED_ROUTE = "/api/order/buyOrderSettlement";
+const SCAN_INGEST_ALLOWED_ROUTE = "/api/realtime/scan/usdt-token-transfers/ingest";
+const DEFAULT_ALLOWED_ROUTE = BUY_ORDER_SETTLEMENT_ALLOWED_ROUTE;
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") return "";
@@ -73,6 +75,7 @@ export default function HmacKeyManagementPage() {
   const [newDescription, setNewDescription] = useState("");
   const [newAllowedStorecodesText, setNewAllowedStorecodesText] = useState("");
   const [newAllowedRoutesText, setNewAllowedRoutesText] = useState(DEFAULT_ALLOWED_ROUTE);
+  const [routeFilterText, setRouteFilterText] = useState("");
 
   const [revealedSecret, setRevealedSecret] = useState<{
     keyId: string;
@@ -118,7 +121,7 @@ export default function HmacKeyManagementPage() {
         route: ROUTE_GET_LIST,
         signingPrefix: SIGNING_GET_LIST,
         body: {
-          routeFilter: DEFAULT_ALLOWED_ROUTE,
+          routeFilter: normalizeString(routeFilterText) || undefined,
         },
       });
       const data = await response.json();
@@ -285,11 +288,13 @@ export default function HmacKeyManagementPage() {
     const timer = setInterval(fetchKeys, 20_000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeAccount]);
+  }, [activeAccount, routeFilterText]);
 
   const activeCount = useMemo(() => {
     return keys.filter((item) => item.status === "active").length;
   }, [keys]);
+
+  const normalizedRouteFilter = useMemo(() => normalizeString(routeFilterText), [routeFilterText]);
 
   return (
     <main className="w-full px-3 sm:px-4 md:px-6 lg:px-10 pb-10">
@@ -298,7 +303,7 @@ export default function HmacKeyManagementPage() {
           <div className="text-xs uppercase tracking-[0.14em] text-cyan-200">Security Keys</div>
           <div className="text-xl font-bold">HMAC API 키 관리</div>
           <div className="text-xs text-slate-300 mt-1">
-            대상 라우트: <span className="font-mono">{DEFAULT_ALLOWED_ROUTE}</span>
+            목록 필터: <span className="font-mono">{normalizedRouteFilter || "all routes"}</span>
           </div>
           <div className="mt-2 text-xs text-slate-300">
             전체 {keys.length}개 / 활성 {activeCount}개 / 업데이트 {fetchedAt ? formatDateTime(fetchedAt) : "-"}
@@ -346,6 +351,50 @@ export default function HmacKeyManagementPage() {
             )}
 
             <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <div className="text-sm font-bold text-zinc-800">목록 필터</div>
+              <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center">
+                <input
+                  value={routeFilterText}
+                  onChange={(event) => setRouteFilterText(event.target.value)}
+                  placeholder="목록 route 필터 (비우면 전체)"
+                  className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-mono lg:max-w-[520px]"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRouteFilterText("")}
+                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    전체
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRouteFilterText(BUY_ORDER_SETTLEMENT_ALLOWED_ROUTE)}
+                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    settlement
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRouteFilterText(SCAN_INGEST_ALLOWED_ROUTE)}
+                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    scan ingest
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void fetchKeys();
+                    }}
+                    className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
+                  >
+                    새로고침
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
               <div className="text-sm font-bold text-zinc-800">새 HMAC 키 생성</div>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
@@ -372,6 +421,22 @@ export default function HmacKeyManagementPage() {
                   placeholder="허용 route 목록 (쉼표구분)"
                   className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                 />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewAllowedRoutesText(BUY_ORDER_SETTLEMENT_ALLOWED_ROUTE)}
+                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                >
+                  settlement route 채우기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewAllowedRoutesText(SCAN_INGEST_ALLOWED_ROUTE)}
+                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                >
+                  scan ingest route 채우기
+                </button>
               </div>
               <div className="mt-3">
                 <button
@@ -545,4 +610,3 @@ export default function HmacKeyManagementPage() {
     </main>
   );
 }
-
