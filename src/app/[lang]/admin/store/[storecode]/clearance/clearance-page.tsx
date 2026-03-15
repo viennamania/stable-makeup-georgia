@@ -276,10 +276,6 @@ const getCreatedByActorLabel = (order: BuyOrder | any) => {
   return actor?.nickname || formatShortWalletAddress(actor?.walletAddress);
 };
 
-const getCreatedByDateTime = (order: BuyOrder | any) => {
-  return String(order?.createdBy?.requestedAt || order?.createdAt || "").trim();
-};
-
 interface ClearanceOrderPreview {
   storecode: string;
   requesterWalletAddress: string;
@@ -364,6 +360,12 @@ const formatKrwDisplay = (value: unknown) => {
 const formatUsdtDisplay = (value: unknown) => {
   return Number(value || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
+
+const clearanceTableCardClass =
+  "rounded-2xl border border-zinc-200/80 bg-white/90 px-3 py-3 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.52)] backdrop-blur-sm";
+
+const clearanceTableStatusCardClass =
+  "w-full rounded-2xl border border-zinc-200/80 bg-white/95 px-3 py-3 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.5)] backdrop-blur-sm";
 
 
 export default function Index({ params }: any) {
@@ -4170,23 +4172,21 @@ export default function Index({ params }: any) {
 
 
 
-                <div className="w-full overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
-          
+                <div className="w-full overflow-x-auto rounded-[28px] border border-zinc-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(244,244,245,0.96))] shadow-[0_24px_60px_-32px_rgba(15,23,42,0.32)]">
                   <table className="
-                    clearance-compact-table min-w-[1280px] w-full table-auto border-collapse
-                    [&_th]:px-2 [&_th]:py-2 [&_th]:text-[11px] [&_th]:font-semibold [&_th]:tracking-wide
-                    [&_td]:px-2 [&_td]:py-2 [&_td]:align-top [&_td]:text-[13px]
+                    clearance-compact-table min-w-[1320px] w-full table-auto border-collapse
+                    [&_th]:px-3 [&_th]:py-3 [&_th]:text-[11px] [&_th]:font-semibold [&_th]:tracking-[0.14em]
+                    [&_td]:px-3 [&_td]:py-3 [&_td]:align-top [&_td]:text-[13px]
                   ">
 
                     <thead
-                      className="sticky top-0 z-10 bg-zinc-900/95 text-zinc-100 text-xs font-semibold backdrop-blur-sm"
+                      className="sticky top-0 z-10 bg-zinc-950/95 text-zinc-100 text-xs font-semibold backdrop-blur-xl"
                     >
                       <tr>
 
                         <th className="w-[160px] whitespace-nowrap text-center">
-                          <div className="flex flex-col items-center justify-center gap-1">
+                          <div className="flex items-center justify-center">
                             <span>#신청번호</span>
-                            <span>신청시간</span>
                           </div>
                         </th>
 
@@ -4219,6 +4219,7 @@ export default function Index({ params }: any) {
                       {buyOrders.map((item, index) => {
                         const isWebhookGeneratedOrder =
                           isWithdrawalWebhookGeneratedClearanceOrder(item);
+                        const createdByActorLabel = getCreatedByActorLabel(item);
                         const canDeleteWebhookGeneratedOrder =
                           isHistoryOnly
                           && isAdminUser
@@ -4229,17 +4230,12 @@ export default function Index({ params }: any) {
                         );
 
                         return (
-                        <tr key={index} className={`
-                          ${
-                            index % 2 === 0 ? 'bg-white' : 'bg-zinc-50/70'
-                          }
-                          border-t border-zinc-200/80 hover:bg-zinc-50 transition-colors
-                        `}>
+                        <tr key={index} className="group border-t border-zinc-200/70 transition-colors duration-200 hover:bg-sky-50/35">
 
-                          <td className="p-2 text-center">
-                            <div className="flex flex-col items-center justify-center gap-1">
+                          <td className="p-3 text-center">
+                            <div className={`${clearanceTableCardClass} mx-auto flex max-w-[148px] flex-col items-center justify-center gap-2 text-center`}>
                               <button
-                                className="text-xs text-blue-600 font-semibold underline"
+                                className="inline-flex items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-slate-800"
                                 onClick={() => {
                                   // copy to clipboard
                                   navigator.clipboard.writeText(item.tradeId);
@@ -4248,47 +4244,21 @@ export default function Index({ params }: any) {
                               >
                                 #{item.tradeId}
                               </button>
-                              {/* year-month-date */}
-                              <span className="text-xs text-zinc-600">
-                                {new Date(item.createdAt).toLocaleDateString()}
-                              </span>
-                              {/* hours-minutes */}
-                              <span className="text-xs text-zinc-600">
-                                {new Date(item.createdAt).toLocaleTimeString()}
-                              </span>
-                              <span className="text-[11px] text-zinc-400">
-                                {
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) :
-                                  new Date().getTime() - new Date(item.createdAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )}
-                              </span>
-                              {(getCreatedByActorLabel(item) || getCreatedByDateTime(item)) && (
-                                <div className="mt-1 w-full rounded-lg border border-sky-200 bg-sky-50 px-2 py-1 text-center">
-                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-sky-700">
+                              {createdByActorLabel && (
+                                <div className="w-full rounded-xl border border-sky-200 bg-gradient-to-b from-sky-50 to-white px-2.5 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+                                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
                                     매입신청
                                   </div>
-                                  {getCreatedByActorLabel(item) && (
-                                    <div className="text-[11px] font-semibold text-sky-900">
-                                      신청자 {getCreatedByActorLabel(item)}
-                                    </div>
-                                  )}
-                                  {getCreatedByDateTime(item) && (
-                                    <div className="text-[10px] text-sky-700">
-                                      {formatAdminActionDateTime(getCreatedByDateTime(item))}
-                                    </div>
-                                  )}
+                                  <div className="mt-1 text-[11px] font-semibold text-sky-950">
+                                    신청자 {createdByActorLabel}
+                                  </div>
                                 </div>
                               )}
                             </div>
                           </td>
 
-                          <td className="p-2 text-center">
-                            <div className="flex flex-col items-center justify-center gap-2">
+                          <td className="p-3 text-center">
+                            <div className={`${clearanceTableCardClass} flex min-h-[112px] flex-col items-center justify-center gap-2 text-center`}>
                               {isWebhookGeneratedOrder ? (
                                 <>
                                   <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700">
@@ -4347,8 +4317,8 @@ export default function Index({ params }: any) {
 
                       
 
-                          <td className="p-2">
-                            <div className="flex flex-col items-start justify-center gap-1">
+                          <td className="p-3">
+                            <div className={`${clearanceTableCardClass} flex min-h-[112px] flex-col items-start justify-center gap-2`}>
 
                               {isWebhookGeneratedOrder && (
                                 <div className="mb-1 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
@@ -4419,8 +4389,8 @@ export default function Index({ params }: any) {
                           </td>
 
 
-                          <td className="p-2 text-right">
-                            <div className="flex flex-col items-end justify-center gap-1">
+                          <td className="p-3 text-right">
+                            <div className={`${clearanceTableCardClass} flex min-h-[112px] flex-col items-end justify-center gap-2`}>
 
                             
                               <div className="flex flex-row items-center gap-1">
@@ -4494,9 +4464,9 @@ export default function Index({ params }: any) {
 
 
                           {/*구매자 결제통장 정보*/}
-                          <td>
+                          <td className="p-3">
 
-                            <div className="w-32 flex flex-col items-start justify-center gap-1">
+                            <div className={`${clearanceTableCardClass} flex min-h-[112px] w-full flex-col items-start justify-center gap-1.5`}>
                               <span className="text-sm text-zinc-600">
                                 {item.seller?.bankInfo?.bankName}
                               </span>
@@ -4512,9 +4482,9 @@ export default function Index({ params }: any) {
 
 
                           {/* 판매자 정보 */}
-                          <td className="p-2 text-right">
+                          <td className="p-3 text-left">
                             {item?.seller?.walletAddress ? (
-                              <div className="w-32 flex flex-col items-start justify-center gap-1">
+                              <div className={`${clearanceTableCardClass} flex min-h-[112px] w-full flex-col items-start justify-center gap-2`}>
 
                                 <div className="flex flex-row items-center gap-1">
                                   <Image
@@ -4544,66 +4514,72 @@ export default function Index({ params }: any) {
 
                               </div>
                             ) : (
-                              <span className="text-sm text-zinc-600">
-                                판매자 확인중...
-                              </span>
+                              <div className={`${clearanceTableCardClass} flex min-h-[112px] items-center justify-center`}>
+                                <span className="text-sm text-zinc-600">
+                                  판매자 확인중...
+                                </span>
+                              </div>
                             )}
                           </td>
 
-                          <td className="p-2">
-                            
-                            {item.status === 'paymentConfirmed' && (
-                              <span className="text-sm text-yellow-600 font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              > 
-                                {Number(item.krwAmount)?.toLocaleString()}
-                              </span>
-                            )}
+                          <td className="p-3">
+                            <div className={`${clearanceTableCardClass} flex min-h-[112px] items-center justify-end`}>
+                              {item.status === 'paymentConfirmed' && (
+                                <span className="text-sm text-yellow-600 font-semibold"
+                                  style={{ fontFamily: 'monospace' }}
+                                > 
+                                  {Number(item.krwAmount)?.toLocaleString()}
+                                </span>
+                              )}
 
-                            {item.status === 'paymentRequested' && (
+                              {item.status === 'paymentRequested' && (
 
-                              <div className="flex flex-row justify-end gap-1">
-                                <input
-                                  disabled={true}
-                                  type="number"
-                                  className="w-28
-                                  px-2 py-1 border border-gray-300 rounded-md text-sm text-black"
-                                  placeholder="Amount"
-                                  value={paymentAmounts[index]}
-                                  onChange={(e) => {
-                                    // check number
-                                    e.target.value = e.target.value.replace(/[^0-9.]/g, '');
+                                <div className="flex flex-row justify-end gap-1">
+                                  <input
+                                    disabled={true}
+                                    type="number"
+                                    className="w-28 rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-1 text-sm text-black"
+                                    placeholder="Amount"
+                                    value={paymentAmounts[index]}
+                                    onChange={(e) => {
+                                      // check number
+                                      e.target.value = e.target.value.replace(/[^0-9.]/g, '');
 
 
-                                    parseFloat(e.target.value) < 0 ? setPaymentAmounts(
-                                      paymentAmounts.map((item, idx) => {
-                                        if (idx === index) {
-                                          return 0;
-                                        }
-                                        return item;
-                                      })
-                                    ) : setPaymentAmounts(
-                                      paymentAmounts.map((item, idx) => {
-                                        if (idx === index) {
-                                          return parseFloat(e.target.value);
-                                        }
-                                        return item;
-                                      })
-                                    );
+                                      parseFloat(e.target.value) < 0 ? setPaymentAmounts(
+                                        paymentAmounts.map((item, idx) => {
+                                          if (idx === index) {
+                                            return 0;
+                                          }
+                                          return item;
+                                        })
+                                      ) : setPaymentAmounts(
+                                        paymentAmounts.map((item, idx) => {
+                                          if (idx === index) {
+                                            return parseFloat(e.target.value);
+                                          }
+                                          return item;
+                                        })
+                                      );
 
+                                    }
                                   }
-                                }
-                                />
-                                  
-                              </div>
+                                  />
+                                    
+                                </div>
 
-                            )}
+                              )}
+
+                              {item.status !== 'paymentConfirmed' && item.status !== 'paymentRequested' && (
+                                <span className="text-sm font-medium text-zinc-300">-</span>
+                              )}
+                            </div>
                           </td>   
 
                           {/* 출금상태: buyer.depositCompleted */}
-                          <td className="p-2 w-36 text-center align-middle">
+                          <td className="p-3 w-36 text-center align-middle">
 
-                            <div className="w-full flex items-center justify-center">
+                            <div className={`${clearanceTableStatusCardClass} flex min-h-[112px] items-center justify-center`}>
 
                             {
                             item.transactionHash && item.transactionHash !== '0x' && (
@@ -4689,8 +4665,8 @@ export default function Index({ params }: any) {
                             </div>
                           </td>
 
-                          <td className="p-2">
-                            <div className="flex flex-col items-center justify-center gap-2">
+                          <td className="p-3">
+                            <div className={`${clearanceTableStatusCardClass} flex min-h-[112px] flex-col items-center justify-center gap-2`}>
                               <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700">
                                 전송량 {formatUsdtDisplay(item.usdtAmount)} USDT
                               </span>
@@ -5039,7 +5015,6 @@ export default function Index({ params }: any) {
                   </table>
 
                 </div>
-
 
             </div>
 
