@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { useActiveAccount } from "thirdweb/react";
+import { arbitrum, bsc, ethereum, polygon } from "thirdweb/chains";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { inAppWallet } from "thirdweb/wallets";
 
+import { client } from "@/app/client";
+import { chain } from "@/app/config/contractAddresses";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import { useSuperadminSession } from "@/lib/client/use-superadmin-session";
 
@@ -49,6 +53,13 @@ type DashboardOverview = {
 
 const DASHBOARD_ROUTE = "/api/superadmin/dashboard";
 const DASHBOARD_SIGNING_PREFIX = "stable-georgia:superadmin:dashboard:v1";
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: ["email", "google"],
+    },
+  }),
+];
 
 const truncateWallet = (value: unknown) => {
   const text = typeof value === "string" ? value.trim() : "";
@@ -341,7 +352,59 @@ export default function SuperadminHomePage() {
 
       {!activeAccount ? (
         <section className="rounded-[26px] border border-amber-400/20 bg-amber-500/10 px-5 py-5 text-sm text-amber-100">
-          슈퍼어드민 대시보드를 보려면 먼저 지갑을 연결해야 합니다.
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="font-medium text-amber-50">
+                슈퍼어드민 대시보드를 보려면 먼저 지갑을 연결해야 합니다.
+              </div>
+              <div className="mt-2 text-sm leading-6 text-amber-100/80">
+                연결 후 현재 지갑의 `role` 또는 `rold`가 `superadmin`인지 바로 확인합니다.
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              <ConnectButton
+                client={client}
+                wallets={wallets}
+                showAllWallets={false}
+                accountAbstraction={{
+                  chain:
+                    chain === "ethereum"
+                      ? ethereum
+                      : chain === "polygon"
+                        ? polygon
+                        : chain === "arbitrum"
+                          ? arbitrum
+                          : chain === "bsc"
+                            ? bsc
+                            : arbitrum,
+                  sponsorGas: true,
+                }}
+                theme="dark"
+                connectButton={{
+                  label: "지갑 연결",
+                  style: {
+                    background:
+                      "linear-gradient(135deg, rgba(34,211,238,0.92), rgba(14,165,233,0.92))",
+                    color: "#020617",
+                    borderRadius: "999px",
+                    padding: "0 18px",
+                    height: "44px",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    boxShadow: "0 14px 40px -18px rgba(34,211,238,0.8)",
+                  },
+                }}
+                connectModal={{
+                  size: "wide",
+                  title: "Superadmin Wallet Connect",
+                  titleIcon: "https://www.stable.makeup/logo.png",
+                  showThirdwebBranding: false,
+                }}
+                locale="ko_KR"
+              />
+            </div>
+          </div>
         </section>
       ) : null}
 
