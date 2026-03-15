@@ -36,6 +36,13 @@ export async function GET(request: NextRequest) {
         eventName: USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
         authUrl: "/api/realtime/ably-token?public=1&stream=usdt-txhash",
         snapshotUrl: "/api/realtime/scan/usdt-token-transfers",
+        ingestUrl: "/api/realtime/scan/usdt-token-transfers/ingest",
+        authHeaders: [
+          "x-api-key",
+          "x-signature",
+          "x-timestamp",
+          "x-nonce",
+        ],
         limit,
         address: address || null,
       },

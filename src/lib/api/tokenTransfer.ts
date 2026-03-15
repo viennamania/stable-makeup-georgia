@@ -1,7 +1,10 @@
+import { createHash } from "crypto";
+
 import clientPromise from '../mongodb';
 
 import { dbName } from '../mongodb';
 import type { UsdtTransactionHashRealtimeEvent } from "@lib/ably/constants";
+import { publishUsdtTransactionHashEvent } from "@lib/ably/server";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 
@@ -13,6 +16,13 @@ export interface TransactionHashLog {
   amount?: number;
   createdAt?: string | Date;
 }
+
+type RegisterUsdtTransactionHashRealtimeEventResult = {
+  event: UsdtTransactionHashRealtimeEvent;
+  isDuplicate: boolean;
+  wasUpdated: boolean;
+  wasPublished: boolean;
+};
 
 type GetLatestTransactionHashLogEventsParams = {
   limit?: number;
@@ -103,6 +113,152 @@ const extractLabel = (value: unknown, fallbackWalletAddress?: string | null): st
 
   return fallbackWalletAddress || null;
 };
+
+const normalizeStorePayload = (
+  value: unknown,
+  fallbackStorecode?: unknown,
+): UsdtTransactionHashRealtimeEvent["store"] => {
+  const fallbackCode = normalizeText(fallbackStorecode);
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const code = normalizeText(record.code) || fallbackCode;
+    const logo = normalizeText(record.logo);
+    const name = normalizeText(record.name);
+
+    if (!code && !logo && !name) {
+      return null;
+    }
+
+    return {
+      code,
+      logo,
+      name,
+    };
+  }
+
+  if (!fallbackCode) {
+    return null;
+  }
+
+  return {
+    code: fallbackCode,
+    logo: null,
+    name: null,
+  };
+};
+
+const buildDefaultIdempotencyKey = ({
+  source,
+  storecode,
+  orderId,
+  tradeId,
+  transactionHash,
+}: {
+  source: string;
+  storecode: string | null;
+  orderId: string | null;
+  tradeId: string | null;
+  transactionHash: string;
+}) => {
+  const baseKeySource = [
+    source,
+    storecode,
+    orderId,
+    tradeId,
+    transactionHash.toLowerCase(),
+  ]
+    .map((value) => String(value || "").trim())
+    .join("|");
+
+  return `usdt-tx:${createHash("sha256").update(baseKeySource).digest("hex")}`;
+};
+
+const buildDefaultEventId = (idempotencyKey: string) => {
+  return `usdt-tx-${createHash("sha256").update(idempotencyKey).digest("hex")}`;
+};
+
+const toComparableEvent = (event: UsdtTransactionHashRealtimeEvent) => {
+  return JSON.stringify({
+    source: event.source || null,
+    orderId: event.orderId || null,
+    tradeId: event.tradeId || null,
+    chain: event.chain || null,
+    tokenSymbol: event.tokenSymbol || null,
+    store: event.store || null,
+    amountUsdt: toSafeNumber(event.amountUsdt),
+    transactionHash: event.transactionHash || null,
+    fromWalletAddress: event.fromWalletAddress || null,
+    toWalletAddress: event.toWalletAddress || null,
+    fromLabel: event.fromLabel || null,
+    toLabel: event.toLabel || null,
+    status: event.status || null,
+    queueId: event.queueId || null,
+    minedAt: event.minedAt || null,
+    createdAt: toIsoString(event.createdAt),
+  });
+};
+
+export function createUsdtTransactionHashRealtimeEvent(
+  input: Record<string, unknown>,
+  options?: {
+    defaultSource?: string;
+    defaultStatus?: string;
+    defaultTokenSymbol?: string;
+  },
+): UsdtTransactionHashRealtimeEvent | null {
+  const transactionHash = normalizeText(input?.transactionHash);
+  if (!transactionHash) {
+    return null;
+  }
+
+  const store = normalizeStorePayload(input?.store, input?.storecode);
+  const source =
+    normalizeText(input?.source) ||
+    options?.defaultSource ||
+    "api.realtime.scan.usdt-token-transfers.ingest";
+  const orderId = normalizeText(input?.orderId);
+  const tradeId = normalizeText(input?.tradeId);
+  const idempotencyKey =
+    normalizeText(input?.idempotencyKey) ||
+    buildDefaultIdempotencyKey({
+      source,
+      storecode: store?.code || null,
+      orderId,
+      tradeId,
+      transactionHash,
+    });
+  const createdAt = toIsoString(input?.createdAt);
+
+  const fromWalletAddress =
+    normalizeWalletAddress(input?.fromWalletAddress) ||
+    extractWalletAddress(input?.from);
+  const toWalletAddress =
+    normalizeWalletAddress(input?.toWalletAddress) ||
+    extractWalletAddress(input?.to);
+
+  return {
+    eventId: normalizeText(input?.eventId) || buildDefaultEventId(idempotencyKey),
+    idempotencyKey,
+    source,
+    orderId,
+    tradeId,
+    chain: normalizeText(input?.chain),
+    tokenSymbol: normalizeText(input?.tokenSymbol) || options?.defaultTokenSymbol || "USDT",
+    store,
+    amountUsdt: toSafeNumber(input?.amountUsdt ?? input?.usdtAmount ?? input?.amount),
+    transactionHash,
+    fromWalletAddress,
+    toWalletAddress,
+    fromLabel: normalizeText(input?.fromLabel) || extractLabel(input?.from, fromWalletAddress),
+    toLabel: normalizeText(input?.toLabel) || extractLabel(input?.to, toWalletAddress),
+    status: normalizeText(input?.status) || options?.defaultStatus || null,
+    queueId: normalizeText(input?.queueId),
+    minedAt: normalizeText(input?.minedAt),
+    createdAt,
+    publishedAt: toIsoString(input?.publishedAt),
+  };
+}
 
 export function normalizeTransactionHashLogDocument(document: any): UsdtTransactionHashRealtimeEvent {
   const transactionHash = normalizeText(document?.transactionHash) || "";
@@ -259,5 +415,95 @@ export async function saveTransactionHashLogEvent(
   return {
     event: normalizeTransactionHashLogDocument(payload),
     isDuplicate: false,
+  };
+}
+
+async function upsertTransactionHashLogEvent(
+  event: UsdtTransactionHashRealtimeEvent,
+): Promise<{ event: UsdtTransactionHashRealtimeEvent; isDuplicate: boolean; wasUpdated: boolean }> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('transactionHashLogs');
+  const idempotencyKey = normalizeText(event.idempotencyKey);
+
+  if (!idempotencyKey) {
+    const payload = {
+      ...event,
+      createdAt: toIsoString(event.createdAt),
+      publishedAt: toIsoString(event.publishedAt),
+    };
+
+    await collection.insertOne(payload);
+
+    return {
+      event: normalizeTransactionHashLogDocument(payload),
+      isDuplicate: false,
+      wasUpdated: false,
+    };
+  }
+
+  const existing = await collection.findOne({ idempotencyKey });
+  if (!existing) {
+    const payload = {
+      ...event,
+      createdAt: toIsoString(event.createdAt),
+      publishedAt: toIsoString(event.publishedAt),
+    };
+
+    await collection.insertOne(payload);
+
+    return {
+      event: normalizeTransactionHashLogDocument(payload),
+      isDuplicate: false,
+      wasUpdated: false,
+    };
+  }
+
+  const existingEvent = normalizeTransactionHashLogDocument(existing);
+  const mergedEvent: UsdtTransactionHashRealtimeEvent = {
+    ...existingEvent,
+    ...event,
+    eventId: existingEvent.eventId || event.eventId,
+    idempotencyKey: existingEvent.idempotencyKey || event.idempotencyKey,
+    createdAt: toIsoString(existingEvent.createdAt || event.createdAt),
+    publishedAt: toIsoString(event.publishedAt || existingEvent.publishedAt),
+  };
+
+  if (toComparableEvent(existingEvent) === toComparableEvent(mergedEvent)) {
+    return {
+      event: existingEvent,
+      isDuplicate: true,
+      wasUpdated: false,
+    };
+  }
+
+  await collection.updateOne(
+    { _id: existing._id },
+    {
+      $set: {
+        ...mergedEvent,
+      },
+    },
+  );
+
+  return {
+    event: mergedEvent,
+    isDuplicate: true,
+    wasUpdated: true,
+  };
+}
+
+export async function registerUsdtTransactionHashRealtimeEvent(
+  event: UsdtTransactionHashRealtimeEvent,
+): Promise<RegisterUsdtTransactionHashRealtimeEventResult> {
+  const saved = await upsertTransactionHashLogEvent(event);
+  const shouldPublish = !saved.isDuplicate || saved.wasUpdated;
+
+  if (shouldPublish) {
+    await publishUsdtTransactionHashEvent(saved.event);
+  }
+
+  return {
+    ...saved,
+    wasPublished: shouldPublish,
   };
 }

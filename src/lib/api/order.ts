@@ -13,13 +13,12 @@ import {
 } from "@lib/ably/constants";
 import {
   publishBuyOrderStatusEvent,
-  publishUsdtTransactionHashEvent,
 } from "@lib/ably/server";
 import {
   saveBuyOrderStatusRealtimeEvent,
 } from "@lib/api/buyOrderStatusRealtimeEvent";
 import {
-  saveTransactionHashLogEvent,
+  registerUsdtTransactionHashRealtimeEvent,
 } from "@lib/api/tokenTransfer";
 import {
   getConfiguredClearanceSettlementWalletAddress,
@@ -762,12 +761,7 @@ async function emitUsdtTransactionHashRealtimeEvent({
   };
 
   try {
-    const saved = await saveTransactionHashLogEvent(event);
-    if (saved.isDuplicate) {
-      return;
-    }
-
-    await publishUsdtTransactionHashEvent(saved.event);
+    await registerUsdtTransactionHashRealtimeEvent(event);
   } catch (error) {
     console.error("Failed to publish usdt transaction hash realtime event:", error);
   }

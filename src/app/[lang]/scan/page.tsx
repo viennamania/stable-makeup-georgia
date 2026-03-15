@@ -19,6 +19,20 @@ type FeedItem = {
   highlightUntil: number;
 };
 
+type ScanFeedMeta = {
+  channel?: string;
+  eventName?: string;
+  authUrl?: string;
+  snapshotUrl?: string;
+  ingestUrl?: string;
+  authHeaders?: string[];
+};
+
+type ScanSnapshotResponse = {
+  result?: UsdtTransactionHashRealtimeEvent[];
+  meta?: ScanFeedMeta;
+};
+
 const MAX_EVENTS = 160;
 const RESYNC_LIMIT = 160;
 const RESYNC_INTERVAL_MS = 10_000;
@@ -129,9 +143,21 @@ export default function ScanHomePage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [searchQuery, setSearchQuery] = useState("");
+  const [feedMeta, setFeedMeta] = useState<ScanFeedMeta | null>(null);
 
   const clientId = useMemo(() => `scan-feed-${Math.random().toString(36).slice(2, 10)}`, []);
   const chainLabel = String(configuredChain || "bsc").toUpperCase();
+  const resolvedFeedMeta = useMemo<Required<ScanFeedMeta>>(() => ({
+    channel: feedMeta?.channel || USDT_TRANSACTION_HASH_ABLY_CHANNEL,
+    eventName: feedMeta?.eventName || USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
+    authUrl: feedMeta?.authUrl || "/api/realtime/ably-token?public=1&stream=usdt-txhash",
+    snapshotUrl: feedMeta?.snapshotUrl || "/api/realtime/scan/usdt-token-transfers",
+    ingestUrl: feedMeta?.ingestUrl || "/api/realtime/scan/usdt-token-transfers/ingest",
+    authHeaders:
+      Array.isArray(feedMeta?.authHeaders) && feedMeta?.authHeaders.length > 0
+        ? feedMeta.authHeaders
+        : ["x-api-key", "x-signature", "x-timestamp", "x-nonce"],
+  }), [feedMeta]);
 
   const upsertEvents = useCallback((incomingEvents: UsdtTransactionHashRealtimeEvent[], highlightNew = true) => {
     if (incomingEvents.length === 0) {
@@ -183,8 +209,9 @@ export default function ScanHomePage() {
         throw new Error(`snapshot request failed (${response.status})`);
       }
 
-      const data = (await response.json()) as { result?: UsdtTransactionHashRealtimeEvent[] };
+      const data = (await response.json()) as ScanSnapshotResponse;
       upsertEvents(Array.isArray(data.result) ? data.result : [], false);
+      setFeedMeta(data.meta || null);
       setSyncErrorMessage(null);
     } catch (error) {
       setSyncErrorMessage(error instanceof Error ? error.message : "failed to sync");
@@ -274,6 +301,8 @@ export default function ScanHomePage() {
         item.data.fromLabel,
         item.data.toLabel,
         item.data.source,
+        item.data.queueId,
+        item.data.status,
       ];
 
       return candidates.some((candidate) => String(candidate || "").toLowerCase().includes(normalizedQuery));
@@ -327,8 +356,8 @@ export default function ScanHomePage() {
                   Live USDT Transaction Explorer
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-slate-500">
-                  API에서 등록되는 모든 USDT transaction hash를 BscScan 홈처럼 한 번에 확인하고,
-                  거래 해시와 주소 상세 페이지로 바로 이동할 수 있습니다.
+                  원격 백엔드가 HMAC 보호 ingest API를 호출하면 이벤트가 Ably로 즉시 송출되고,
+                  이 화면에서 BscScan 스타일의 실시간 USDT 전송 내역으로 확인할 수 있습니다.
                 </p>
               </div>
 
@@ -352,7 +381,7 @@ export default function ScanHomePage() {
               <input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search by tx hash, address, tradeId, storecode"
+                placeholder="Search by tx hash, address, tradeId, queueId, storecode"
                 className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
               />
               <button
@@ -362,6 +391,30 @@ export default function ScanHomePage() {
                 Search / Open
               </button>
             </form>
+
+            <div className="mt-5 grid gap-3 lg:grid-cols-3">
+              <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Ingest API</div>
+                <div className="mt-2 break-all text-sm font-semibold text-slate-950">{resolvedFeedMeta.ingestUrl}</div>
+                <div className="mt-2 text-xs leading-5 text-slate-500">
+                  Required headers · {resolvedFeedMeta.authHeaders.join(" · ")}
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Snapshot API</div>
+                <div className="mt-2 break-all text-sm font-semibold text-slate-950">{resolvedFeedMeta.snapshotUrl}</div>
+                <div className="mt-2 text-xs leading-5 text-slate-500">
+                  10s resync keeps the feed aligned with stored transaction history.
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Ably Stream</div>
+                <div className="mt-2 break-all text-sm font-semibold text-slate-950">{resolvedFeedMeta.channel}</div>
+                <div className="mt-2 break-all text-xs leading-5 text-slate-500">
+                  Event · {resolvedFeedMeta.eventName}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-4 px-5 py-5 sm:px-7 lg:grid-cols-4">
@@ -388,7 +441,7 @@ export default function ScanHomePage() {
           <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Latest Token Transfers</div>
-              <h2 className="mt-1 text-lg font-semibold text-slate-950">All registered USDT transaction hashes</h2>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">Live registered USDT transfer feed</h2>
             </div>
             <div className="text-xs text-slate-500">
               {isSyncing ? "Snapshot syncing..." : "Realtime feed active"}
@@ -418,9 +471,9 @@ export default function ScanHomePage() {
                       표시할 transaction 이벤트가 없습니다.
                     </td>
                   </tr>
-                ) : (
-                  filteredEvents.map((item) => {
-                    const relativeTime = getRelativeTimeInfo(item.data.createdAt, nowMs);
+                        ) : (
+                          filteredEvents.map((item) => {
+                    const relativeTime = getRelativeTimeInfo(item.data.publishedAt || item.data.createdAt, nowMs);
                     const txExplorerUrl = getExplorerTxUrl(item.data.transactionHash);
                     const isHighlighted = item.highlightUntil > nowMs;
 
@@ -446,11 +499,16 @@ export default function ScanHomePage() {
                           </div>
                         </td>
                         <td className="px-4 py-4 align-top">
-                          <div
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}
-                            title={relativeTime.absoluteLabel}
-                          >
-                            {relativeTime.relativeLabel}
+                          <div className="flex flex-col gap-2">
+                            <div
+                              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}
+                              title={relativeTime.absoluteLabel}
+                            >
+                              {relativeTime.relativeLabel}
+                            </div>
+                            <div className="text-xs text-slate-500" title={relativeTime.absoluteLabel}>
+                              {relativeTime.absoluteLabel}
+                            </div>
                           </div>
                         </td>
                         <td className="px-4 py-4 align-top">
@@ -496,11 +554,20 @@ export default function ScanHomePage() {
                         <td className="px-4 py-4 align-top">
                           <div className="font-medium text-slate-900">{item.data.store?.code || "-"}</div>
                           <div className="mt-1 text-xs text-slate-500">{item.data.tradeId || "-"}</div>
+                          <div className="mt-1 text-xs text-slate-400">{item.data.source || "-"}</div>
                         </td>
                         <td className="px-4 py-4 align-top">
-                          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
-                            {item.data.status || "registered"}
-                          </span>
+                          <div className="flex max-w-[220px] flex-col gap-2">
+                            <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
+                              {item.data.status || "registered"}
+                            </span>
+                            <div className="text-xs text-slate-500">
+                              {item.data.queueId ? `queue ${item.data.queueId}` : "queue -"}
+                            </div>
+                            <div className="text-xs text-slate-400">
+                              {item.data.minedAt ? `mined ${item.data.minedAt}` : "mined pending"}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-4 py-4 text-right align-top">
                           <Link
