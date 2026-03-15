@@ -4209,8 +4209,8 @@ export default function Index({ params }: any) {
                         <th className="w-[160px] text-left">판매자 정보</th>
                         <th className="w-[120px] text-right">결제금액(원)</th>
                         
-                        <th className="w-[220px] text-center">거래상태</th>
                         <th className="w-[170px] text-center">출금상태</th>
+                        <th className="w-[220px] text-center">USDT 전송상태</th>
 
                           
                       </tr>
@@ -4600,8 +4600,100 @@ export default function Index({ params }: any) {
                             )}
                           </td>   
 
+                          {/* 출금상태: buyer.depositCompleted */}
+                          <td className="p-2 w-36 text-center align-middle">
+
+                            <div className="w-full flex items-center justify-center">
+
+                            {
+                            item.transactionHash && item.transactionHash !== '0x' && (
+                              <>
+
+                              {item?.buyer?.depositCompleted !== true
+                              ? (
+                                <div className="w-full flex flex-col items-center justify-center gap-1">
+                                  <div className="w-full flex flex-row items-center justify-center gap-2">                                   
+                                    <span className="text-sm text-red-600
+                                      border border-red-600
+                                      rounded-md px-2 py-1">
+                                      출금대기중
+                                    </span>
+                                  </div>
+                                  {/* 출금완료 버튼 */}
+                                  <button
+                                    disabled={loadingDeposit[index]}
+                                    className={`
+                                      group w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-lg border px-2
+                                      text-xs font-semibold transition-all duration-200 ease-out
+                                      ${
+                                        loadingDeposit[index]
+                                          ? 'cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500'
+                                          : 'border-emerald-300 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_8px_16px_-10px_rgba(5,150,105,0.72)] hover:-translate-y-0.5 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-[0_12px_22px_-12px_rgba(5,150,105,0.85)] active:translate-y-0'
+                                      }
+                                    `}
+
+                                    onClick={() => {
+                                      openWithdrawConfirmModal(index, item);
+                                    }}
+                                  >
+                                    {loadingDeposit[index] && (
+                                      <Image
+                                        src="/loading.png"
+                                        alt="Loading"
+                                        width={20}
+                                        height={20}
+                                        className="h-4 w-4 animate-spin"
+                                      />
+                                    )}
+                                    {!loadingDeposit[index] && (
+                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-white/40 bg-white/20 text-[10px] leading-none">
+                                        ✓
+                                      </span>
+                                    )}
+                                    <span>출금완료하기</span>
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <span className="text-sm text-[#409192]
+                                    border border-green-600
+                                    rounded-md px-2 py-1">
+                                    출금완료
+                                  </span>
+                                  {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
+                                    <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-center text-[11px] leading-4 text-emerald-800">
+                                      {getDepositCompletedActorMeta(item?.buyer) && (
+                                        <div className="mb-1">
+                                          <span
+                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
+                                          >
+                                            {getDepositCompletedActorMeta(item?.buyer)?.label}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {getDepositCompletedActorLabel(item?.buyer) && (
+                                        <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
+                                      )}
+                                      {item?.buyer?.depositCompletedAt && (
+                                        <div>처리시각 {formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              </>
+
+                            )}
+
+                            </div>
+                          </td>
+
                           <td className="p-2">
                             <div className="flex flex-col items-center justify-center gap-2">
+                              <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700">
+                                전송량 {formatUsdtDisplay(item.usdtAmount)} USDT
+                              </span>
 
                             {(item.status === 'ordered'
                               || item.status === 'accepted'
@@ -4652,7 +4744,7 @@ export default function Index({ params }: any) {
                               <div className="flex flex-col items-center justify-center gap-2">
 
                                 <span className="text-sm font-semibold text-[#409192]">
-                                  {Completed}
+                                  USDT 전송완료
                                 </span>
                                 <span className="text-sm">
                                   {
@@ -4938,96 +5030,6 @@ export default function Index({ params }: any) {
 
                             </div>
 
-                          </td>
-
-
-                          {/* 출금상태: buyer.depositCompleted */}
-                          <td className="p-2 w-36 text-center align-middle">
-
-                            <div className="w-full flex items-center justify-center">
-
-                            {
-                            item.transactionHash && item.transactionHash !== '0x' && (
-                              <>
-
-                              {item?.buyer?.depositCompleted !== true
-                              ? (
-                                <div className="w-full flex flex-col items-center justify-center gap-1">
-                                  <div className="w-full flex flex-row items-center justify-center gap-2">                                   
-                                    <span className="text-sm text-red-600
-                                      border border-red-600
-                                      rounded-md px-2 py-1">
-                                      출금대기중
-                                    </span>
-                                  </div>
-                                  {/* 출금완료 버튼 */}
-                                  <button
-                                    disabled={loadingDeposit[index]}
-                                    className={`
-                                      group w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-lg border px-2
-                                      text-xs font-semibold transition-all duration-200 ease-out
-                                      ${
-                                        loadingDeposit[index]
-                                          ? 'cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500'
-                                          : 'border-emerald-300 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-[0_8px_16px_-10px_rgba(5,150,105,0.72)] hover:-translate-y-0.5 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-[0_12px_22px_-12px_rgba(5,150,105,0.85)] active:translate-y-0'
-                                      }
-                                    `}
-
-                                    onClick={() => {
-                                      openWithdrawConfirmModal(index, item);
-                                    }}
-                                  >
-                                    {loadingDeposit[index] && (
-                                      <Image
-                                        src="/loading.png"
-                                        alt="Loading"
-                                        width={20}
-                                        height={20}
-                                        className="h-4 w-4 animate-spin"
-                                      />
-                                    )}
-                                    {!loadingDeposit[index] && (
-                                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-white/40 bg-white/20 text-[10px] leading-none">
-                                        ✓
-                                      </span>
-                                    )}
-                                    <span>출금완료하기</span>
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                  <span className="text-sm text-[#409192]
-                                    border border-green-600
-                                    rounded-md px-2 py-1">
-                                    출금완료
-                                  </span>
-                                  {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
-                                    <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-center text-[11px] leading-4 text-emerald-800">
-                                      {getDepositCompletedActorMeta(item?.buyer) && (
-                                        <div className="mb-1">
-                                          <span
-                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
-                                          >
-                                            {getDepositCompletedActorMeta(item?.buyer)?.label}
-                                          </span>
-                                        </div>
-                                      )}
-                                      {getDepositCompletedActorLabel(item?.buyer) && (
-                                        <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
-                                      )}
-                                      {item?.buyer?.depositCompletedAt && (
-                                        <div>처리시각 {formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              </>
-
-                            )}
-
-                            </div>
                           </td>
 
                           </tr>
