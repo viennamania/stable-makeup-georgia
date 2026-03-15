@@ -29,6 +29,12 @@ type GetLatestTransactionHashLogEventsParams = {
   address?: string | null;
 };
 
+const PUBLIC_SCAN_EVENT_SOURCES = [
+  "api.realtime.scan.usdt-token-transfers.ingest",
+  "thirdweb.insight.webhook",
+] as const;
+const PUBLIC_SCAN_EVENT_SOURCE_SET = new Set<string>(PUBLIC_SCAN_EVENT_SOURCES);
+
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const normalizeText = (value: unknown): string | null => {
@@ -112,6 +118,40 @@ const extractLabel = (value: unknown, fallbackWalletAddress?: string | null): st
   }
 
   return fallbackWalletAddress || null;
+};
+
+const isPublicScanTransactionHashEvent = (value: unknown): boolean => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const source = normalizeText((value as { source?: unknown }).source);
+  return Boolean(source && PUBLIC_SCAN_EVENT_SOURCE_SET.has(source));
+};
+
+const buildPublicScanTransactionHashLogQuery = (normalizedAddress: string | null) => {
+  const filters: Record<string, unknown>[] = [
+    {
+      source: {
+        $in: [...PUBLIC_SCAN_EVENT_SOURCES],
+      },
+    },
+  ];
+
+  if (normalizedAddress) {
+    filters.push({
+      $or: [
+        { fromWalletAddress: normalizedAddress },
+        { toWalletAddress: normalizedAddress },
+        { "from.walletAddress": normalizedAddress },
+        { "to.walletAddress": normalizedAddress },
+        { from: normalizedAddress },
+        { to: normalizedAddress },
+      ],
+    });
+  }
+
+  return filters.length === 1 ? filters[0] : { $and: filters };
 };
 
 const normalizeStorePayload = (
@@ -332,18 +372,7 @@ export async function getLatestTransactionHashLogEvents({
 
   const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
   const normalizedAddress = normalizeWalletAddress(address);
-  const query = normalizedAddress
-    ? {
-        $or: [
-          { fromWalletAddress: normalizedAddress },
-          { toWalletAddress: normalizedAddress },
-          { "from.walletAddress": normalizedAddress },
-          { "to.walletAddress": normalizedAddress },
-          { from: normalizedAddress },
-          { to: normalizedAddress },
-        ],
-      }
-    : {};
+  const query = buildPublicScanTransactionHashLogQuery(normalizedAddress);
 
   const logs = await collection
     .find<any>(query)
@@ -354,6 +383,9 @@ export async function getLatestTransactionHashLogEvents({
   return logs
     .map((document) => normalizeTransactionHashLogDocument(document))
     .filter((item) => {
+      if (!isPublicScanTransactionHashEvent(item)) {
+        return false;
+      }
       if (!normalizedAddress) {
         return true;
       }
@@ -374,17 +406,26 @@ export async function getTransactionHashLogEventByHash(
 
   const document = await collection.findOne(
     {
-      transactionHash: {
-        $regex: `^${escapeRegex(normalizedTransactionHash)}$`,
-        $options: "i",
-      },
+      $and: [
+        {
+          transactionHash: {
+            $regex: `^${escapeRegex(normalizedTransactionHash)}$`,
+            $options: "i",
+          },
+        },
+        buildPublicScanTransactionHashLogQuery(null),
+      ],
     },
     {
       sort: { createdAt: -1, _id: -1 },
     },
   );
 
-  return document ? normalizeTransactionHashLogDocument(document) : null;
+  if (!document || !isPublicScanTransactionHashEvent(document)) {
+    return null;
+  }
+
+  return normalizeTransactionHashLogDocument(document);
 }
 
 export async function saveTransactionHashLogEvent(
