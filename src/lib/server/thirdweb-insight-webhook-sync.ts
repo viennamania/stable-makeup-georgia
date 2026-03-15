@@ -16,6 +16,10 @@ const DEFAULT_THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE = Math.max(
   Number.parseInt(process.env.THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE || "", 10) || 25,
   1,
 );
+const THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS || "", 10) || 30 * 1000,
+  5 * 1000,
+);
 const ERC20_TRANSFER_EVENT_ABI = JSON.stringify({
   anonymous: false,
   inputs: [
@@ -59,6 +63,55 @@ export type SyncThirdwebSellerUsdtWebhooksResult = {
   managedWebhookIds: string[];
 };
 
+export type ThirdwebSellerUsdtWebhookStatusRecord = {
+  id: string;
+  name: string | null;
+  webhookUrl: string;
+  disabled: boolean;
+  urlMatchesExpected: boolean;
+  walletCount: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type ThirdwebSellerUsdtWebhookStatus =
+  | {
+      ok: true;
+      fetchedAt: string;
+      receiverUrl: string | null;
+      expectedWalletCount: number;
+      expectedWebhookCount: number;
+      managedWebhookCount: number;
+      activeWebhookCount: number;
+      disabledWebhookCount: number;
+      urlMismatchCount: number;
+      webhooks: ThirdwebSellerUsdtWebhookStatusRecord[];
+    }
+  | {
+      ok: false;
+      fetchedAt: string;
+      receiverUrl: string | null;
+      expectedWalletCount: number;
+      expectedWebhookCount: number;
+      managedWebhookCount: number;
+      activeWebhookCount: number;
+      disabledWebhookCount: number;
+      urlMismatchCount: number;
+      webhooks: ThirdwebSellerUsdtWebhookStatusRecord[];
+      error: string;
+    };
+
+const globalThirdwebWebhookSyncState = globalThis as typeof globalThis & {
+  __thirdwebWebhookStatusCache?: Map<
+    string,
+    {
+      expiresAt: number;
+      value: ThirdwebSellerUsdtWebhookStatus;
+    }
+  >;
+  __thirdwebWebhookStatusPromiseCache?: Map<string, Promise<ThirdwebSellerUsdtWebhookStatus>>;
+};
+
 const normalizeText = (value: unknown): string => {
   if (typeof value === "string") {
     return value.trim();
@@ -95,6 +148,10 @@ const normalizeBaseUrl = (value: unknown): string => {
   return `https://${normalized}`;
 };
 
+const normalizeComparableUrl = (value: unknown): string => {
+  return normalizeBaseUrl(value).toLowerCase();
+};
+
 const resolveThirdwebWebhookBaseUrl = (baseUrlRaw?: string | null): string => {
   const candidates = [
     baseUrlRaw,
@@ -120,6 +177,25 @@ const buildThirdwebWebhookReceiverUrl = (baseUrlRaw?: string | null): string => 
     return "";
   }
   return `${baseUrl}${THIRDWEB_WEBHOOK_RECEIVER_PATH}`;
+};
+
+const getWebhookStatusCacheStore = () => {
+  if (!globalThirdwebWebhookSyncState.__thirdwebWebhookStatusCache) {
+    globalThirdwebWebhookSyncState.__thirdwebWebhookStatusCache = new Map();
+  }
+  return globalThirdwebWebhookSyncState.__thirdwebWebhookStatusCache;
+};
+
+const getWebhookStatusPromiseStore = () => {
+  if (!globalThirdwebWebhookSyncState.__thirdwebWebhookStatusPromiseCache) {
+    globalThirdwebWebhookSyncState.__thirdwebWebhookStatusPromiseCache = new Map();
+  }
+  return globalThirdwebWebhookSyncState.__thirdwebWebhookStatusPromiseCache;
+};
+
+const clearThirdwebWebhookStatusCache = () => {
+  getWebhookStatusCacheStore().clear();
+  getWebhookStatusPromiseStore().clear();
 };
 
 const getThirdwebInsightWebhookApiBaseUrl = (): string => {
@@ -426,6 +502,107 @@ const extractWalletAddressesFromFilters = (filters: Record<string, unknown>): st
   return [...uniqueWalletAddresses].sort((left, right) => left.localeCompare(right));
 };
 
+const buildThirdwebSellerUsdtWebhookStatus = async ({
+  baseUrl,
+}: {
+  baseUrl?: string | null;
+} = {}): Promise<ThirdwebSellerUsdtWebhookStatus> => {
+  const fetchedAt = new Date().toISOString();
+  const receiverUrl = buildThirdwebWebhookReceiverUrl(baseUrl) || null;
+  const walletAddresses = (await getThirdwebSellerWalletRecords()).map((item) => item.walletAddress);
+  const expectedWalletCount = walletAddresses.length;
+  const expectedWebhookCount = chunk(
+    [...walletAddresses].sort((left, right) => left.localeCompare(right)),
+    DEFAULT_THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE,
+  ).length;
+
+  try {
+    const managedWebhooks = filterManagedThirdwebWebhooks(await listThirdwebWebhooks());
+    const expectedComparableUrl = normalizeComparableUrl(receiverUrl);
+    const webhooks = managedWebhooks.map<ThirdwebSellerUsdtWebhookStatusRecord>((record) => {
+      const urlMatchesExpected = Boolean(
+        expectedComparableUrl && normalizeComparableUrl(record.webhookUrl) === expectedComparableUrl,
+      );
+
+      return {
+        id: record.id,
+        name: record.name,
+        webhookUrl: record.webhookUrl,
+        disabled: record.disabled,
+        urlMatchesExpected,
+        walletCount: extractWalletAddressesFromFilters(record.filters).length,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+      };
+    });
+
+    const disabledWebhookCount = webhooks.filter((item) => item.disabled).length;
+    const activeWebhookCount = webhooks.length - disabledWebhookCount;
+    const urlMismatchCount = webhooks.filter((item) => !item.urlMatchesExpected).length;
+
+    return {
+      ok: true,
+      fetchedAt,
+      receiverUrl,
+      expectedWalletCount,
+      expectedWebhookCount,
+      managedWebhookCount: webhooks.length,
+      activeWebhookCount,
+      disabledWebhookCount,
+      urlMismatchCount,
+      webhooks,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      fetchedAt,
+      receiverUrl,
+      expectedWalletCount,
+      expectedWebhookCount,
+      managedWebhookCount: 0,
+      activeWebhookCount: 0,
+      disabledWebhookCount: 0,
+      urlMismatchCount: 0,
+      webhooks: [],
+      error: error instanceof Error ? error.message : "Failed to load thirdweb webhook status",
+    };
+  }
+};
+
+export const getThirdwebSellerUsdtWebhookStatus = async ({
+  baseUrl,
+}: {
+  baseUrl?: string | null;
+} = {}): Promise<ThirdwebSellerUsdtWebhookStatus> => {
+  const receiverUrl = buildThirdwebWebhookReceiverUrl(baseUrl) || "__default__";
+  const cacheStore = getWebhookStatusCacheStore();
+  const cached = cacheStore.get(receiverUrl);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const promiseStore = getWebhookStatusPromiseStore();
+  const existingPromise = promiseStore.get(receiverUrl);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const nextPromise = buildThirdwebSellerUsdtWebhookStatus({ baseUrl })
+    .then((value) => {
+      cacheStore.set(receiverUrl, {
+        expiresAt: Date.now() + THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS,
+        value,
+      });
+      return value;
+    })
+    .finally(() => {
+      promiseStore.delete(receiverUrl);
+    });
+
+  promiseStore.set(receiverUrl, nextPromise);
+  return nextPromise;
+};
+
 const persistManagedWebhookRecords = async (records: ThirdwebWebhookApiRecord[]) => {
   const managedPrefix = buildManagedWebhookNamePrefix();
   const syncedAt = new Date().toISOString();
@@ -531,6 +708,7 @@ export const syncThirdwebSellerUsdtWebhooks = async ({
 
   const finalManagedWebhooks = filterManagedThirdwebWebhooks(await listThirdwebWebhooks());
   await persistManagedWebhookRecords(finalManagedWebhooks);
+  clearThirdwebWebhookStatusCache();
 
   return {
     ok: true,

@@ -19,6 +19,44 @@ type FeedItem = {
   highlightUntil: number;
 };
 
+type ScanThirdwebWebhookStatusRecord = {
+  id?: string;
+  name?: string | null;
+  webhookUrl?: string;
+  disabled?: boolean;
+  urlMatchesExpected?: boolean;
+  walletCount?: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+type ScanThirdwebWebhookStatus =
+  | {
+      ok: true;
+      fetchedAt?: string;
+      receiverUrl?: string | null;
+      expectedWalletCount?: number;
+      expectedWebhookCount?: number;
+      managedWebhookCount?: number;
+      activeWebhookCount?: number;
+      disabledWebhookCount?: number;
+      urlMismatchCount?: number;
+      webhooks?: ScanThirdwebWebhookStatusRecord[];
+    }
+  | {
+      ok: false;
+      fetchedAt?: string;
+      receiverUrl?: string | null;
+      expectedWalletCount?: number;
+      expectedWebhookCount?: number;
+      managedWebhookCount?: number;
+      activeWebhookCount?: number;
+      disabledWebhookCount?: number;
+      urlMismatchCount?: number;
+      webhooks?: ScanThirdwebWebhookStatusRecord[];
+      error?: string;
+    };
+
 type ScanFeedMeta = {
   channel?: string;
   eventName?: string;
@@ -32,12 +70,15 @@ type ScanFeedMeta = {
   thirdwebWebhookContractAddress?: string;
   thirdwebWebhookSigHash?: string;
   thirdwebWebhookFilterHint?: string;
+  thirdwebWebhookStatus?: ScanThirdwebWebhookStatus;
 };
 
 type ScanSnapshotResponse = {
   result?: UsdtTransactionHashRealtimeEvent[];
   meta?: ScanFeedMeta;
 };
+
+type ResolvedScanFeedMeta = Required<Omit<ScanFeedMeta, "thirdwebWebhookStatus">>;
 
 const MAX_EVENTS = 160;
 const RESYNC_LIMIT = 160;
@@ -61,6 +102,26 @@ function formatUsdt(value: number): string {
   return Number(value || 0).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 3,
+  });
+}
+
+function formatDateTime(value: string | null | undefined): string {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "-";
+  }
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) {
+    return text;
+  }
+  return date.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 }
 
@@ -153,7 +214,7 @@ export default function ScanHomePage() {
 
   const clientId = useMemo(() => `scan-feed-${Math.random().toString(36).slice(2, 10)}`, []);
   const chainLabel = String(configuredChain || "bsc").toUpperCase();
-  const resolvedFeedMeta = useMemo<Required<ScanFeedMeta>>(() => ({
+  const resolvedFeedMeta = useMemo<ResolvedScanFeedMeta>(() => ({
     channel: feedMeta?.channel || USDT_TRANSACTION_HASH_ABLY_CHANNEL,
     eventName: feedMeta?.eventName || USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
     authUrl: feedMeta?.authUrl || "/api/realtime/ably-token?public=1&stream=usdt-txhash",
@@ -175,6 +236,7 @@ export default function ScanHomePage() {
         ? feedMeta.authHeaders
         : ["x-api-key", "x-signature", "x-timestamp", "x-nonce"],
   }), [feedMeta]);
+  const thirdwebWebhookStatus = feedMeta?.thirdwebWebhookStatus || null;
 
   const upsertEvents = useCallback((incomingEvents: UsdtTransactionHashRealtimeEvent[], highlightNew = true) => {
     if (incomingEvents.length === 0) {
@@ -427,6 +489,85 @@ export default function ScanHomePage() {
                 <div className="mt-2 text-[11px] leading-5 text-slate-400">
                   Headers · {resolvedFeedMeta.thirdwebWebhookHeaders.join(" · ")}
                 </div>
+                {thirdwebWebhookStatus ? (
+                  <>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                          thirdwebWebhookStatus.ok
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-rose-200 bg-rose-50 text-rose-700"
+                        }`}
+                      >
+                        {thirdwebWebhookStatus.ok ? "live status ok" : "live status error"}
+                      </span>
+                      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                        active {Number(thirdwebWebhookStatus.activeWebhookCount || 0)} / expected {Number(thirdwebWebhookStatus.expectedWebhookCount || 0)}
+                      </span>
+                      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                        wallets {Number(thirdwebWebhookStatus.expectedWalletCount || 0)}
+                      </span>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                          Number(thirdwebWebhookStatus.urlMismatchCount || 0) > 0
+                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                            : "border-slate-200 bg-slate-50 text-slate-600"
+                        }`}
+                      >
+                        url mismatch {Number(thirdwebWebhookStatus.urlMismatchCount || 0)}
+                      </span>
+                    </div>
+                    <div className="mt-3 text-[11px] leading-5 text-slate-400">
+                      Expected receiver · {thirdwebWebhookStatus.receiverUrl || resolvedFeedMeta.thirdwebWebhookUrl}
+                    </div>
+                    <div className="mt-1 text-[11px] leading-5 text-slate-400">
+                      Fetched · {formatDateTime(thirdwebWebhookStatus.fetchedAt)}
+                    </div>
+                    {!thirdwebWebhookStatus.ok && "error" in thirdwebWebhookStatus ? (
+                      <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-700">
+                        {thirdwebWebhookStatus.error || "Failed to load thirdweb webhook status"}
+                      </div>
+                    ) : null}
+                    {Array.isArray(thirdwebWebhookStatus.webhooks) && thirdwebWebhookStatus.webhooks.length > 0 ? (
+                      <div className="mt-3 space-y-2">
+                        {thirdwebWebhookStatus.webhooks.map((item) => (
+                          <div key={item.id || item.name || item.webhookUrl} className="rounded-2xl border border-slate-200 bg-slate-50/90 px-3 py-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-700">{item.name || item.id || "managed webhook"}</span>
+                              <span
+                                className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                  item.disabled
+                                    ? "border-rose-200 bg-rose-50 text-rose-700"
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                }`}
+                              >
+                                {item.disabled ? "disabled" : "active"}
+                              </span>
+                              <span
+                                className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                                  item.urlMatchesExpected
+                                    ? "border-slate-200 bg-white text-slate-600"
+                                    : "border-amber-200 bg-amber-50 text-amber-700"
+                                }`}
+                              >
+                                {item.urlMatchesExpected ? "url ok" : "url mismatch"}
+                              </span>
+                              <span className="inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                {Number(item.walletCount || 0)} wallets
+                              </span>
+                            </div>
+                            <div className="mt-1 break-all text-[11px] leading-5 text-slate-500">
+                              {item.webhookUrl || "-"}
+                            </div>
+                            <div className="mt-1 text-[10px] leading-5 text-slate-400">
+                              Updated · {formatDateTime(item.updatedAt)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
               </div>
               <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Snapshot API</div>

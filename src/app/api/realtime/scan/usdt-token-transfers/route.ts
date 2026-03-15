@@ -17,6 +17,7 @@ import {
   THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER,
   THIRDWEB_INSIGHT_WEBHOOK_SIGNATURE_HEADER,
 } from "@/lib/server/thirdweb-insight-webhook";
+import { getThirdwebSellerUsdtWebhookStatus } from "@/lib/server/thirdweb-insight-webhook-sync";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,9 @@ export async function GET(request: NextRequest) {
   const events = await getLatestTransactionHashLogEvents({
     limit,
     address,
+  });
+  const thirdwebWebhookStatus = await getThirdwebSellerUsdtWebhookStatus({
+    baseUrl: request.nextUrl.origin,
   });
 
   return jsonWithPublicRealtimeCors(
@@ -54,6 +58,7 @@ export async function GET(request: NextRequest) {
         thirdwebWebhookContractAddress: getThirdwebInsightUsdtContractAddress(),
         thirdwebWebhookSigHash: THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
         thirdwebWebhookFilterHint: THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT,
+        thirdwebWebhookStatus,
         authHeaders: [
           "x-api-key",
           "x-signature",
