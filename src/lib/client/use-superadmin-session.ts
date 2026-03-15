@@ -9,6 +9,7 @@ type SuperadminSessionState = {
   user: any | null;
   role: string;
   isSuperadmin: boolean;
+  requesterWalletAddress: string;
   loading: boolean;
   error: string;
   refresh: () => Promise<void>;
@@ -30,6 +31,7 @@ export const useSuperadminSession = (
   const [user, setUser] = useState<any | null>(null);
   const [role, setRole] = useState("");
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [requesterWalletAddress, setRequesterWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,6 +40,7 @@ export const useSuperadminSession = (
       setUser(null);
       setRole("");
       setIsSuperadmin(false);
+      setRequesterWalletAddress("");
       setError("");
       setLoading(false);
       return;
@@ -62,11 +65,13 @@ export const useSuperadminSession = (
       setUser(data?.result?.user || null);
       setRole(nextRole);
       setIsSuperadmin(Boolean(data?.result?.isSuperadmin));
+      setRequesterWalletAddress(normalizeString(data?.result?.requesterWalletAddress).toLowerCase());
       setError("");
     } catch (nextError) {
       setUser(null);
       setRole("");
       setIsSuperadmin(false);
+      setRequesterWalletAddress("");
       setError(nextError instanceof Error ? nextError.message : "슈퍼어드민 권한 확인에 실패했습니다.");
     } finally {
       setLoading(false);
@@ -81,6 +86,7 @@ export const useSuperadminSession = (
     user,
     role,
     isSuperadmin,
+    requesterWalletAddress,
     loading,
     error,
     refresh,

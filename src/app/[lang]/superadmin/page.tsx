@@ -72,6 +72,10 @@ const truncateWallet = (value: unknown) => {
   return `${text.slice(0, 8)}...${text.slice(-6)}`;
 };
 
+const normalizeWalletText = (value: unknown) => {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+};
+
 const formatCount = (value: unknown) => {
   const numeric = typeof value === "number" ? value : Number.parseInt(String(value || "0"), 10);
   return Number.isFinite(numeric) ? numeric.toLocaleString("ko-KR") : "0";
@@ -165,11 +169,19 @@ function WalletStatusPill({
 export default function SuperadminHomePage() {
   const params = useParams<{ lang: string }>();
   const activeAccount = useActiveAccount();
-  const { user, role, isSuperadmin, loading, error } = useSuperadminSession(activeAccount);
+  const { user, role, isSuperadmin, requesterWalletAddress, loading, error } =
+    useSuperadminSession(activeAccount);
   const [dashboard, setDashboard] = useState<DashboardOverview | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError, setDashboardError] = useState("");
   const lang = params?.lang || "ko";
+  const connectedWalletAddress = normalizeWalletText(activeAccount?.address);
+  const authorizedWalletAddress = normalizeWalletText(requesterWalletAddress);
+  const walletAddressMismatch = Boolean(
+    connectedWalletAddress &&
+      authorizedWalletAddress &&
+      connectedWalletAddress !== authorizedWalletAddress,
+  );
 
   const statusText = !activeAccount
     ? "지갑 연결 필요"
@@ -318,14 +330,34 @@ export default function SuperadminHomePage() {
 
             <div className="mt-5 grid gap-3 text-sm text-slate-300/82">
               <div className="rounded-2xl border border-white/10 bg-[#0d1322] px-4 py-3">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Wallet</div>
-                <div className="mt-2 font-semibold text-white">{truncateWallet(activeAccount?.address)}</div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                  Connected Wallet
+                </div>
+                <div className="mt-2 font-semibold text-white">
+                  {truncateWallet(activeAccount?.address)}
+                </div>
+                <div className="mt-1 break-all text-xs text-slate-500">
+                  {connectedWalletAddress || "-"}
+                </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-[#0d1322] px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                    Auth Wallet
+                  </div>
+                  <div className="mt-2 font-semibold text-white">
+                    {truncateWallet(requesterWalletAddress)}
+                  </div>
+                  <div className="mt-1 break-all text-xs text-slate-500">
+                    {authorizedWalletAddress || "권한 확인 전"}
+                  </div>
+                </div>
                 <div className="rounded-2xl border border-white/10 bg-[#0d1322] px-4 py-3">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Role</div>
                   <div className="mt-2 font-semibold text-white">{role || "-"}</div>
                 </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-white/10 bg-[#0d1322] px-4 py-3">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Operator</div>
                   <div className="mt-2 font-semibold text-white">
@@ -339,6 +371,13 @@ export default function SuperadminHomePage() {
                   {dashboard ? formatDateTime(dashboard.generatedAt) : "-"}
                 </div>
               </div>
+
+              {walletAddressMismatch ? (
+                <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-xs leading-6 text-amber-100">
+                  연결된 지갑 주소와 서버가 권한 검증에 사용한 주소가 다릅니다. thirdweb active
+                  account 또는 연결 세션을 다시 확인해야 합니다.
+                </div>
+              ) : null}
             </div>
 
             {error ? (
@@ -417,6 +456,12 @@ export default function SuperadminHomePage() {
       {activeAccount && !loading && !isSuperadmin ? (
         <section className="rounded-[26px] border border-rose-400/20 bg-rose-500/10 px-5 py-5 text-sm text-rose-100">
           현재 지갑에는 `role` 또는 `rold` 기준 `superadmin` 권한이 없습니다.
+          <div className="mt-3 text-xs leading-6 text-rose-100/80">
+            Connected: {connectedWalletAddress || "-"}
+          </div>
+          <div className="text-xs leading-6 text-rose-100/80">
+            Auth checked: {authorizedWalletAddress || "권한 확인 실패"}
+          </div>
         </section>
       ) : null}
 
