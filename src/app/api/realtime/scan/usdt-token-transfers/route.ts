@@ -9,6 +9,14 @@ import {
   jsonWithPublicRealtimeCors,
 } from "@lib/realtime/publicCors";
 import { getLatestTransactionHashLogEvents } from "@lib/api/tokenTransfer";
+import {
+  getThirdwebInsightUsdtContractAddress,
+  THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
+  THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT,
+  THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC,
+  THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER,
+  THIRDWEB_INSIGHT_WEBHOOK_SIGNATURE_HEADER,
+} from "@/lib/server/thirdweb-insight-webhook";
 
 export const runtime = "nodejs";
 
@@ -37,6 +45,15 @@ export async function GET(request: NextRequest) {
         authUrl: "/api/realtime/ably-token?public=1&stream=usdt-txhash",
         snapshotUrl: "/api/realtime/scan/usdt-token-transfers",
         ingestUrl: "/api/realtime/scan/usdt-token-transfers/ingest",
+        thirdwebWebhookUrl: "/api/webhook/thirdweb/usdt-token-transfers",
+        thirdwebWebhookHeaders: [
+          THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER,
+          THIRDWEB_INSIGHT_WEBHOOK_SIGNATURE_HEADER,
+        ],
+        thirdwebWebhookTopic: THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC,
+        thirdwebWebhookContractAddress: getThirdwebInsightUsdtContractAddress(),
+        thirdwebWebhookSigHash: THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
+        thirdwebWebhookFilterHint: THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT,
         authHeaders: [
           "x-api-key",
           "x-signature",

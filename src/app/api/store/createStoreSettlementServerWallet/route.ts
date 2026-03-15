@@ -11,6 +11,7 @@ import {
 } from "@lib/api/user";
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
+import { syncThirdwebSellerUsdtWebhooks } from "@/lib/server/thirdweb-insight-webhook-sync";
 import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
 import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
@@ -77,6 +78,20 @@ const findServerWalletByLabel = async ({
     }
 
     page = currentPage + 1;
+  }
+};
+
+const syncThirdwebWebhookState = async (request: NextRequest) => {
+  try {
+    return await syncThirdwebSellerUsdtWebhooks({
+      baseUrl: new URL(request.url).origin,
+    });
+  } catch (error) {
+    console.error("Failed to sync thirdweb store wallet webhooks after settlement server wallet create:", error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to sync thirdweb store wallet webhooks",
+    };
   }
 };
 
@@ -185,6 +200,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const thirdwebWebhookSync = await syncThirdwebWebhookState(request);
+
     return NextResponse.json({
       result: {
         created: false,
@@ -192,6 +209,7 @@ export async function POST(request: NextRequest) {
         settlementWalletAddress: existingWalletAddress,
         signerAddress: normalizeWalletAddress(existingUser?.signerAddress),
         user: serializeUser(existingUser),
+        thirdwebWebhookSync,
       },
     });
   }
@@ -278,6 +296,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const thirdwebWebhookSync = await syncThirdwebWebhookState(request);
+
     return NextResponse.json({
       result: {
         created: true,
@@ -285,6 +305,7 @@ export async function POST(request: NextRequest) {
         settlementWalletAddress: smartAccountAddress,
         signerAddress,
         user: serializeUser(user),
+        thirdwebWebhookSync,
       },
     });
   } catch (error) {

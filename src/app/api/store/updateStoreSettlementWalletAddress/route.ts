@@ -8,6 +8,7 @@ import {
 } from '@lib/api/user';
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
+import { syncThirdwebSellerUsdtWebhooks } from "@/lib/server/thirdweb-insight-webhook-sync";
 import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
 import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
@@ -112,11 +113,25 @@ export async function POST(request: NextRequest) {
     }, { status: 404 });
   }
 
+  let thirdwebWebhookSync: Record<string, unknown> = { ok: false, skipped: true };
+  try {
+    thirdwebWebhookSync = await syncThirdwebSellerUsdtWebhooks({
+      baseUrl: new URL(request.url).origin,
+    });
+  } catch (error) {
+    console.error("Failed to sync thirdweb store wallet webhooks after settlement wallet update:", error);
+    thirdwebWebhookSync = {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to sync thirdweb store wallet webhooks",
+    };
+  }
+
   return NextResponse.json({
 
     result: true,
     storecode,
     settlementWalletAddress: normalizedSettlementWalletAddress,
+    thirdwebWebhookSync,
     
   });
   

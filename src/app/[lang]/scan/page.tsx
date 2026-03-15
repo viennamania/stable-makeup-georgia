@@ -26,6 +26,12 @@ type ScanFeedMeta = {
   snapshotUrl?: string;
   ingestUrl?: string;
   authHeaders?: string[];
+  thirdwebWebhookUrl?: string;
+  thirdwebWebhookHeaders?: string[];
+  thirdwebWebhookTopic?: string;
+  thirdwebWebhookContractAddress?: string;
+  thirdwebWebhookSigHash?: string;
+  thirdwebWebhookFilterHint?: string;
 };
 
 type ScanSnapshotResponse = {
@@ -153,6 +159,17 @@ export default function ScanHomePage() {
     authUrl: feedMeta?.authUrl || "/api/realtime/ably-token?public=1&stream=usdt-txhash",
     snapshotUrl: feedMeta?.snapshotUrl || "/api/realtime/scan/usdt-token-transfers",
     ingestUrl: feedMeta?.ingestUrl || "/api/realtime/scan/usdt-token-transfers/ingest",
+    thirdwebWebhookUrl: feedMeta?.thirdwebWebhookUrl || "/api/webhook/thirdweb/usdt-token-transfers",
+    thirdwebWebhookHeaders:
+      Array.isArray(feedMeta?.thirdwebWebhookHeaders) && feedMeta?.thirdwebWebhookHeaders.length > 0
+        ? feedMeta.thirdwebWebhookHeaders
+        : ["x-webhook-id", "x-webhook-signature"],
+    thirdwebWebhookTopic: feedMeta?.thirdwebWebhookTopic || "v1.events",
+    thirdwebWebhookContractAddress: feedMeta?.thirdwebWebhookContractAddress || "",
+    thirdwebWebhookSigHash: feedMeta?.thirdwebWebhookSigHash || "",
+    thirdwebWebhookFilterHint:
+      feedMeta?.thirdwebWebhookFilterHint
+      || "v1.events · USDT Transfer(address,address,uint256) · store-configured server wallets only",
     authHeaders:
       Array.isArray(feedMeta?.authHeaders) && feedMeta?.authHeaders.length > 0
         ? feedMeta.authHeaders
@@ -356,8 +373,9 @@ export default function ScanHomePage() {
                   Live USDT Transaction Explorer
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-slate-500">
-                  원격 백엔드가 HMAC 보호 ingest API를 호출하면 이벤트가 Ably로 즉시 송출되고,
-                  이 화면에서 BscScan 스타일의 실시간 USDT 전송 내역으로 확인할 수 있습니다.
+                  원격 백엔드는 HMAC ingest API를 직접 호출할 수 있고, thirdweb Insight webhook도
+                  store-configured server wallet USDT Transfer 이벤트만 이 화면의 scan 파이프라인으로
+                  연결할 수 있습니다.
                 </p>
               </div>
 
@@ -392,12 +410,22 @@ export default function ScanHomePage() {
               </button>
             </form>
 
-            <div className="mt-5 grid gap-3 lg:grid-cols-3">
+            <div className="mt-5 grid gap-3 lg:grid-cols-4">
               <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Ingest API</div>
                 <div className="mt-2 break-all text-sm font-semibold text-slate-950">{resolvedFeedMeta.ingestUrl}</div>
                 <div className="mt-2 text-xs leading-5 text-slate-500">
-                  Required headers · {resolvedFeedMeta.authHeaders.join(" · ")}
+                  For internal workers · {resolvedFeedMeta.authHeaders.join(" · ")}
+                </div>
+              </div>
+              <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">thirdweb Webhook</div>
+                <div className="mt-2 break-all text-sm font-semibold text-slate-950">{resolvedFeedMeta.thirdwebWebhookUrl}</div>
+                <div className="mt-2 text-xs leading-5 text-slate-500">
+                  {resolvedFeedMeta.thirdwebWebhookFilterHint}
+                </div>
+                <div className="mt-2 text-[11px] leading-5 text-slate-400">
+                  Headers · {resolvedFeedMeta.thirdwebWebhookHeaders.join(" · ")}
                 </div>
               </div>
               <div className="rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 shadow-sm backdrop-blur">
@@ -412,6 +440,9 @@ export default function ScanHomePage() {
                 <div className="mt-2 break-all text-sm font-semibold text-slate-950">{resolvedFeedMeta.channel}</div>
                 <div className="mt-2 break-all text-xs leading-5 text-slate-500">
                   Event · {resolvedFeedMeta.eventName}
+                </div>
+                <div className="mt-2 break-all text-[11px] leading-5 text-slate-400">
+                  {resolvedFeedMeta.thirdwebWebhookTopic} · {resolvedFeedMeta.thirdwebWebhookContractAddress}
                 </div>
               </div>
             </div>
