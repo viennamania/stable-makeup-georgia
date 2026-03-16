@@ -4685,10 +4685,10 @@ export default function Index({ params, isYear2025 = false }: any) {
                     </th>
 
                     <th className="px-3 py-3">입금액(원)</th>
-                    <th className="px-3 py-3">{Status}</th>
-
-
                     <th className="px-3 py-3">출금상태</th>
+
+
+                    <th className="px-3 py-3">USDT 전송상태</th>
 
                     <th className="px-3 py-3">
                       상세
@@ -5146,281 +5146,75 @@ export default function Index({ params, isYear2025 = false }: any) {
                       </td>
 
                       <td className="p-2">
-
-                        <div className="
-                        w-56  
-                        flex flex-col gap-2 items-center justify-center">
-
-                          <div className="flex flex-row items-center gap-2">
-                            {/* status */}
-                            {item.status === 'ordered' && (
-                              <div className="text-sm text-yellow-600 font-semibold">
-                                {Buy_Order_Opened}
-                              </div>
-                            )}
-
-
-                            {item.status === 'accepted' && (
-
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                <div className="text-sm text-green-600">
-                                  {Trade_Started}
-                                </div>
-                                {/*
-                                <div className="text-sm text-white">
-                                  {item?.seller?.nickname}
-                                </div>
-                                */}
-                                <div className="text-sm text-zinc-600">
-
-                                  {params.lang === 'ko' ? (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }</p>
-                                  ) : (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }</p>
+                        <div className="flex min-h-[120px] w-40 flex-col items-center justify-center gap-1">
+                          {item?.buyer?.depositCompleted === true ? (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="text-sm text-[#409192] border border-green-600 rounded-md px-2 py-1">
+                                출금완료
+                              </span>
+                              {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
+                                <div className="text-center text-[11px] leading-4 text-zinc-500">
+                                  {getDepositCompletedActorMeta(item?.buyer) && (
+                                    <div className="mb-1">
+                                      <span
+                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
+                                      >
+                                        {getDepositCompletedActorMeta(item?.buyer)?.label}
+                                      </span>
+                                    </div>
                                   )}
-
+                                  {getDepositCompletedActorLabel(item?.buyer) && (
+                                    <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
+                                  )}
+                                  {item?.buyer?.depositCompletedAt && (
+                                    <div>{formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
+                                  )}
                                 </div>
+                              )}
+                            </div>
+                          ) : item.status === 'cancelled' ? (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="text-sm text-zinc-500 border border-zinc-400 rounded-md px-2 py-1">
+                                출금미처리
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="text-sm text-red-600 border border-red-600 rounded-md px-2 py-1">
+                                출금대기중
+                              </span>
 
-
-                              </div>
-                            )}
-
-                            {item.status === 'paymentRequested' && (
-                              <div className="flex flex-row gap-1 items-start justify-start">
-                                <div className="text-sm text-green-600">
-                                  {/*Waiting_for_seller_to_deposit*/}
-
-                                  {Escrow_Completed}
-
-
-                                </div>
-
-                                {/*
-                                <div className="text-sm text-white">
-                                  {item?.seller?.nickname}
-                                </div>
-                                */}
-
-                                <div className="text-sm text-zinc-600">
-                                  {/* from now */}
-                                  {
-                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) : new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
+                              <button
+                                disabled={loadingDeposit[index]}
+                                className={`
+                                  w-36 h-8
+                                  flex flex-row gap-1 items-center justify-center
+                                  text-sm text-white px-2 py-1 rounded-md
+                                  bg-green-500 hover:bg-green-600
+                                  transition-all duration-200 ease-in-out
+                                  ${loadingDeposit[index] ? 'opacity-50 cursor-not-allowed' : ''}
+                                `}
+                                onClick={async () => {
+                                  if ( !confirm('정말로 출금을 완료하시겠습니까?')) {
+                                    return;
                                   }
-                                </div>
 
-
-                              </div>
-                            )}
-
-                            {item.status === 'cancelled' && (
-                              <div className="flex flex-row gap-1 items-start justify-start">
-
-                                  <div className="text-sm text-red-600">
-                                    {
-                                      Cancelled_at
-                                    }
-                                  </div>
-                                  {/*
-                                  <span className="text-sm text-white">
-                                    {item?.seller?.nickname}
-                                  </span>
-                                  */}
-
-                                  <div className="text-sm text-zinc-600">
-                                    {
-                                      // from now
-                                      new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) : new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }
-                                  </div>
-
-                              </div>
-                            )}
-
-
-                            {/* if status is accepted, show payment request button */}
-                            {item.status === 'paymentConfirmed' && (
-                              <div className="flex flex-row gap-1 items-start justify-start">
-
-                                <span className="text-sm font-semibold text-green-600">
-                                  {Completed}
-                                </span>
-                                {/*
-                                <span className="text-sm font-semibold text-white">
-                                  {item?.seller?.nickname}
-                                </span>
-                                */}
-
-                                <span
-                                  className="text-sm text-zinc-600"
-                                >{
-                                  //item.paymentConfirmedAt && new Date(item.paymentConfirmedAt)?.toLocaleString()
-                                  // from now
-                                  new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )
-
-                                }</span>
-                              </div>
-                            )}
-
-
-
-                            {item.status === 'completed' && (
-                              <div className="text-sm text-green-600">
-                                {Completed_at}
-                              </div>
-                            )}
-
-                          </div>
-
-                          {/* scan */}
-                          {item?.transactionHash
-                          && item?.transactionHash !== '0x'
-                          && (
-                            isWithdrawalWebhookGeneratedClearanceOrderDummyTransfer(item) ? (
-                              <div
-                                className="
-                                  w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-left
-                                  text-xs font-semibold text-amber-800
-                                "
+                                  buyOrderDepositCompleted(index, item._id);
+                                }}
                               >
-                                <div>더미 전송 처리</div>
-                                <div className="mt-1 break-all font-mono text-[11px] font-medium text-amber-700">
-                                  {item.transactionHash}
-                                </div>
-                              </div>
-                            ) : (
-                            <button
-                              className="
-                                w-full flex flex-row gap-2 items-start justify-start
-                                text-sm text-blue-600 font-semibold
-                                border border-blue-600 rounded-lg p-2
-                                bg-blue-100
-                                text-center
-                                hover:bg-blue-200
-                                cursor-pointer
-                                transition-all duration-200 ease-in-out
-                                hover:scale-105
-                                hover:shadow-lg
-                                hover:shadow-blue-500/50
-                              "
-                                  onClick={() => {
-                                    let url = '';
-                                    if (chain === "ethereum") {
-                                      url = `https://etherscan.io/tx/${item.transactionHash}`;
-                                    } else if (chain === "polygon") {
-                                      url = `https://polygonscan.com/tx/${item.transactionHash}`;
-                                    } else if (chain === "arbitrum") {
-                                      url = `https://arbiscan.io/tx/${item.transactionHash}`;
-                                    } else if (chain === "bsc") {
-                                      url = `https://bscscan.com/tx/${item.transactionHash}`;
-                                    } else {
-                                      url = `https://arbiscan.io/tx/${item.transactionHash}`;
-                                    }
-                                    window.open(url, '_blank');
-
-                                  }}
-                            >
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                <Image
-                                  src={`/logo-chain-${chain}.png`}
-                                  alt="chain logo"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm">
-                                  구매자에게 USDT 전송한 내역
-                                </span>
-                              </div>
-                            </button>
-                            )
+                                {loadingDeposit[index] && (
+                                  <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                  />
+                                )}
+                                {loadingDeposit[index] ? "처리중..." : "출금완료하기"}
+                              </button>
+                            </div>
                           )}
-
-
-
-                          {item?.settlement
-                          && item?.settlement?.txid
-                          && item?.settlement?.txid !== '0x'
-                          && (
-                            <button
-                              className="w-full flex flex-row gap-2 items-start justify-start
-                                text-sm text-blue-600 font-semibold
-                                border border-blue-600 rounded-lg p-2
-                                bg-blue-100
-                                text-center
-                                hover:bg-blue-200
-                                cursor-pointer
-                                transition-all duration-200 ease-in-out
-                                hover:scale-105
-                                hover:shadow-lg
-                                hover:shadow-blue-500/50
-                              "
-                              onClick={() => {
-                                window.open(
-                                  chain === "ethereum" ? `https://etherscan.io/tx/${item.settlement.txid}` :
-                                  chain === "polygon" ? `https://polygonscan.com/tx/${item.settlement.txid}` :
-                                  chain === "arbitrum" ? `https://arbiscan.io/tx/${item.settlement.txid}` :
-                                  chain === "bsc" ? `https://bscscan.com/tx/${item.settlement.txid}` :
-                                  `https://arbiscan.io/tx/${item.settlement.txid}`,
-
-
-                                  '_blank'
-                                );
-                              }}
-                            >
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                <Image
-                                  src={`/logo-chain-${chain}.png`}
-                                  alt="chain logo"
-                                  width={20}
-                                  height={20}
-                                  className="w-5 h-5"
-                                />
-                                <span className="text-sm text-blue-600 font-semibold">
-                                  구매자가 USDT 전송한 내역
-                                </span>
-                              </div>
-                            </button>
-                          )}
-
-
-
-
                         </div>
                       </td>
 
@@ -5699,117 +5493,245 @@ export default function Index({ params, isYear2025 = false }: any) {
                       */}
 
 
-                      {/* 출금상태: buyer.depositCompleted */}
-                      <td className="p-2
-                        flex items-center justify-center
-                        text-center
-                        w-40
-                        ">
+                      {/* USDT 전송상태 */}
+                      <td className="p-2">
 
-                        {
-                        item.transactionHash && item.transactionHash !== '0x' && (
-                          <>
+                        <div className="
+                        w-56  
+                        flex flex-col gap-2 items-center justify-center">
 
-                          {item?.buyer?.depositCompleted !== true
-                          ? (
-                            <div className="flex flex-col items-center justify-center gap-1">
-                              <span className="text-sm text-red-600
-                                border border-red-600
-                                rounded-md px-2 py-1">
-                                출금대기중
-                              </span>
-
-                              {/* 출금계좌번호 */}
-                              {/*
-                              <span className="text-sm text-zinc-500">
-                                {item?.buyer?.nickname ?
-                                <>
-                                {item?.buyer?.depositName}
-                                <br />{item?.buyer?.depositBankAccountNumber}
-                                <br />{item?.buyer?.depositBankName}
-                                </> :
-                                <>
-                                {item.store?.bankInfo?.accountHolder}
-                                <br /> {item.store?.bankInfo?.accountNumber}
-                                <br /> {item.store?.bankInfo?.bankName}
-                                </>
-                                }
-                              </span>
-                              */}
+                          <div className="flex flex-row items-center gap-2">
+                            {item.status === 'ordered' && (
+                              <div className="text-sm text-yellow-600 font-semibold">
+                                {Buy_Order_Opened}
+                              </div>
+                            )}
 
 
+                            {item.status === 'accepted' && (
 
-                              {/* 출금완료 버튼 */}
-                              <button
-                                disabled={loadingDeposit[index]}
-                                className={`
-                                  w-36 h-8
-                                  flex flex-row gap-1 items-center justify-center
-                                  text-sm text-white px-2 py-1 rounded-md
-                                  bg-green-500 hover:bg-green-600
-                                  transition-all duration-200 ease-in-out
-                                  ${loadingDeposit[index] ? 'opacity-50 cursor-not-allowed' : ''}
-                                `}
-
-                                onClick={async () => {
-
-                                  if ( !confirm('정말로 출금을 완료하시겠습니까?')) {
-                                    return;
-                                  }    
-
-                                  // buyOrderDepositCompleted
-                                  buyOrderDepositCompleted(index, item._id)
-
-                                  
-                                }}
-                              >
-                                {loadingDeposit[index] && (
-                                  <Image
-                                    src="/loading.png"
-                                    alt="Loading"
-                                    width={20}
-                                    height={20}
-                                    className="animate-spin"
-                                  />
-                                )}
-                                {loadingDeposit[index] ? "처리중..." : "출금완료하기"}
-                              </button>
-
-
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center gap-1">
-                              <span className="text-sm text-[#409192]
-                                border border-green-600
-                                rounded-md px-2 py-1">
-                                출금완료
-                              </span>
-                              {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
-                                <div className="text-center text-[11px] leading-4 text-zinc-500">
-                                  {getDepositCompletedActorMeta(item?.buyer) && (
-                                    <div className="mb-1">
-                                      <span
-                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
-                                      >
-                                        {getDepositCompletedActorMeta(item?.buyer)?.label}
-                                      </span>
-                                    </div>
-                                  )}
-                                  {getDepositCompletedActorLabel(item?.buyer) && (
-                                    <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
-                                  )}
-                                  {item?.buyer?.depositCompletedAt && (
-                                    <div>{formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
-                                  )}
+                              <div className="flex flex-row gap-2 items-center justify-center">
+                                <div className="text-sm text-green-600">
+                                  {Trade_Started}
                                 </div>
-                              )}
-                            </div>
+                                <div className="text-sm text-zinc-600">
+
+                                  {params.lang === 'ko' ? (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }</p>
+                                  ) : (
+                                    <p>{
+                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) :
+                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }</p>
+                                  )}
+
+                                </div>
+
+
+                              </div>
+                            )}
+
+                            {item.status === 'paymentRequested' && (
+                              <div className="flex flex-row gap-1 items-start justify-start">
+                                <div className="text-sm text-green-600">
+                                  {Escrow_Completed}
+                                </div>
+
+                                <div className="text-sm text-zinc-600">
+                                  {
+                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                    ) : new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                    ) : (
+                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                    )
+                                  }
+                                </div>
+
+
+                              </div>
+                            )}
+
+                            {item.status === 'cancelled' && (
+                              <div className="flex flex-row gap-1 items-start justify-start">
+
+                                  <div className="text-sm text-red-600">
+                                    {Cancelled_at}
+                                  </div>
+
+                                  <div className="text-sm text-zinc-600">
+                                    {
+                                      new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000) + ' ' + seconds_ago
+                                      ) : new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 * 60 ? (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                      ) : (
+                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                      )
+                                    }
+                                  </div>
+
+                              </div>
+                            )}
+
+
+                            {item.status === 'paymentConfirmed' && (
+                              <div className="flex flex-row gap-1 items-start justify-start">
+
+                                <span className="text-sm font-semibold text-green-600">
+                                  USDT 전송완료
+                                </span>
+
+                                <span
+                                  className="text-sm text-zinc-600"
+                                >{
+                                  new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
+                                  ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
+                                  ) : (
+                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
+                                  )
+
+                                }</span>
+                              </div>
+                            )}
+
+
+
+                            {item.status === 'completed' && (
+                              <div className="text-sm text-green-600">
+                                {Completed_at}
+                              </div>
+                            )}
+
+                          </div>
+
+                          {item?.transactionHash
+                          && item?.transactionHash !== '0x'
+                          && (
+                            isWithdrawalWebhookGeneratedClearanceOrderDummyTransfer(item) ? (
+                              <div
+                                className="
+                                  w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-left
+                                  text-xs font-semibold text-amber-800
+                                "
+                              >
+                                <div>더미 전송 처리</div>
+                                <div className="mt-1 break-all font-mono text-[11px] font-medium text-amber-700">
+                                  {item.transactionHash}
+                                </div>
+                              </div>
+                            ) : (
+                            <button
+                              className="
+                                w-full flex flex-row gap-2 items-start justify-start
+                                text-sm text-blue-600 font-semibold
+                                border border-blue-600 rounded-lg p-2
+                                bg-blue-100
+                                text-center
+                                hover:bg-blue-200
+                                cursor-pointer
+                                transition-all duration-200 ease-in-out
+                                hover:scale-105
+                                hover:shadow-lg
+                                hover:shadow-blue-500/50
+                              "
+                                  onClick={() => {
+                                    let url = '';
+                                    if (chain === "ethereum") {
+                                      url = `https://etherscan.io/tx/${item.transactionHash}`;
+                                    } else if (chain === "polygon") {
+                                      url = `https://polygonscan.com/tx/${item.transactionHash}`;
+                                    } else if (chain === "arbitrum") {
+                                      url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                    } else if (chain === "bsc") {
+                                      url = `https://bscscan.com/tx/${item.transactionHash}`;
+                                    } else {
+                                      url = `https://arbiscan.io/tx/${item.transactionHash}`;
+                                    }
+                                    window.open(url, '_blank');
+
+                                  }}
+                            >
+                              <div className="flex flex-row gap-2 items-center justify-center">
+                                <Image
+                                  src={`/logo-chain-${chain}.png`}
+                                  alt="chain logo"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <span className="text-sm">
+                                  구매자에게 USDT 전송한 내역
+                                </span>
+                              </div>
+                            </button>
+                            )
                           )}
 
-                          </>
 
-                        )}
-                      
+
+                          {item?.settlement
+                          && item?.settlement?.txid
+                          && item?.settlement?.txid !== '0x'
+                          && (
+                            <button
+                              className="w-full flex flex-row gap-2 items-start justify-start
+                                text-sm text-blue-600 font-semibold
+                                border border-blue-600 rounded-lg p-2
+                                bg-blue-100
+                                text-center
+                                hover:bg-blue-200
+                                cursor-pointer
+                                transition-all duration-200 ease-in-out
+                                hover:scale-105
+                                hover:shadow-lg
+                                hover:shadow-blue-500/50
+                              "
+                              onClick={() => {
+                                window.open(
+                                  chain === "ethereum" ? `https://etherscan.io/tx/${item.settlement.txid}` :
+                                  chain === "polygon" ? `https://polygonscan.com/tx/${item.settlement.txid}` :
+                                  chain === "arbitrum" ? `https://arbiscan.io/tx/${item.settlement.txid}` :
+                                  chain === "bsc" ? `https://bscscan.com/tx/${item.settlement.txid}` :
+                                  `https://arbiscan.io/tx/${item.settlement.txid}`,
+                                  '_blank'
+                                );
+                              }}
+                            >
+                              <div className="flex flex-row gap-2 items-center justify-center">
+                                <Image
+                                  src={`/logo-chain-${chain}.png`}
+                                  alt="chain logo"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                                <span className="text-sm text-blue-600 font-semibold">
+                                  구매자가 USDT 전송한 내역
+                                </span>
+                              </div>
+                            </button>
+                          )}
+
+                        </div>
                       </td>
 
 
