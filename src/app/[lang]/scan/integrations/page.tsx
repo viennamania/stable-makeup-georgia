@@ -49,7 +49,7 @@ export default function ScanIntegrationsPage() {
 
   const loadMeta = useCallback(async () => {
     try {
-      const response = await fetch("/api/realtime/scan/usdt-token-transfers?public=1&limit=1", {
+      const response = await fetch("/api/realtime/scan/usdt-token-transfers?public=1&limit=1&metaOnly=1&includeThirdwebStatus=1", {
         cache: "no-store",
       });
 
@@ -157,8 +157,20 @@ export default function ScanIntegrationsPage() {
               <h2 className="mt-2 text-xl font-semibold text-[#1f2b46]">Managed USDT transfer filters</h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              <StatusPill tone={thirdwebWebhookStatus?.ok ? "good" : "bad"}>
-                {thirdwebWebhookStatus?.ok ? "live status ok" : "live status error"}
+              <StatusPill
+                tone={
+                  thirdwebWebhookStatus?.mode === "persisted-fallback"
+                    ? "warn"
+                    : thirdwebWebhookStatus?.ok
+                      ? "good"
+                      : "bad"
+                }
+              >
+                {thirdwebWebhookStatus?.mode === "persisted-fallback"
+                  ? "cached fallback"
+                  : thirdwebWebhookStatus?.ok
+                    ? "live status ok"
+                    : "live status error"}
               </StatusPill>
               <StatusPill tone="neutral">
                 active {Number(thirdwebWebhookStatus?.activeWebhookCount || 0)} / expected {Number(thirdwebWebhookStatus?.expectedWebhookCount || 0)}
@@ -205,6 +217,9 @@ export default function ScanIntegrationsPage() {
               </div>
               <div className="mt-3 text-sm text-slate-500">
                 Receiver · {thirdwebWebhookStatus?.receiverUrl || resolvedFeedMeta.thirdwebWebhookUrl}
+              </div>
+              <div className="mt-1 text-sm text-slate-500">
+                Source · {thirdwebWebhookStatus?.mode === "persisted-fallback" ? "persisted managed webhook records" : "live thirdweb api"}
               </div>
               <div className="mt-1 text-sm text-slate-500">Fetched · {formatDateTime(thirdwebWebhookStatus?.fetchedAt)}</div>
               {thirdwebError ? (

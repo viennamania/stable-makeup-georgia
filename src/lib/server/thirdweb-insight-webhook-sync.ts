@@ -21,6 +21,10 @@ const THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS || "", 10) || 30 * 1000,
   5 * 1000,
 );
+const THIRDWEB_WEBHOOK_STATUS_LIVE_TIMEOUT_MS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_STATUS_LIVE_TIMEOUT_MS || "", 10) || 1500,
+  250,
+);
 const THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS = Math.max(
   Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS || "", 10) || 30 * 1000,
   5 * 1000,
@@ -82,6 +86,7 @@ export type ThirdwebSellerUsdtWebhookStatusRecord = {
 export type ThirdwebSellerUsdtWebhookStatus =
   | {
       ok: true;
+      mode?: "live" | "persisted-fallback";
       fetchedAt: string;
       receiverUrl: string | null;
       expectedWalletCount: number;
@@ -94,6 +99,7 @@ export type ThirdwebSellerUsdtWebhookStatus =
     }
   | {
       ok: false;
+      mode?: "live" | "persisted-fallback";
       fetchedAt: string;
       receiverUrl: string | null;
       expectedWalletCount: number;
@@ -163,6 +169,28 @@ const normalizeBaseUrl = (value: unknown): string => {
 
 const normalizeComparableUrl = (value: unknown): string => {
   return normalizeBaseUrl(value).toLowerCase();
+};
+
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+): Promise<T> => {
+  const safeTimeoutMs = Math.max(100, timeoutMs);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error(timeoutMessage)), safeTimeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
 };
 
 const resolveThirdwebWebhookBaseUrl = (baseUrlRaw?: string | null): string => {
@@ -579,6 +607,7 @@ const buildThirdwebSellerUsdtWebhookStatus = async ({
 
     return {
       ok: true,
+      mode: "live",
       fetchedAt,
       receiverUrl,
       expectedWalletCount,
@@ -592,6 +621,7 @@ const buildThirdwebSellerUsdtWebhookStatus = async ({
   } catch (error) {
     return {
       ok: false,
+      mode: "live",
       fetchedAt,
       receiverUrl,
       expectedWalletCount,
@@ -602,6 +632,104 @@ const buildThirdwebSellerUsdtWebhookStatus = async ({
       urlMismatchCount: 0,
       webhooks: [],
       error: error instanceof Error ? error.message : "Failed to load thirdweb webhook status",
+    };
+  }
+};
+
+const buildPersistedThirdwebSellerUsdtWebhookStatus = async ({
+  baseUrl,
+  errorMessage,
+}: {
+  baseUrl?: string | null;
+  errorMessage: string;
+}): Promise<ThirdwebSellerUsdtWebhookStatus> => {
+  const fetchedAt = new Date().toISOString();
+  const receiverUrl = buildThirdwebWebhookReceiverUrl(baseUrl) || null;
+  const walletAddresses = (await getThirdwebMonitoredWalletRecords()).map((item) => item.walletAddress);
+  const expectedWalletCount = walletAddresses.length;
+  const expectedWebhookCount = chunk(
+    [...walletAddresses].sort((left, right) => left.localeCompare(right)),
+    DEFAULT_THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE,
+  ).length;
+
+  try {
+    const client = await clientPromise;
+    const database = client.db(dbName);
+    const collection = database.collection(THIRDWEB_INSIGHT_MANAGED_WEBHOOK_COLLECTION);
+    const managedPrefix = buildManagedWebhookNamePrefix();
+    const records = await collection
+      .find(
+        { managedPrefix },
+        {
+          projection: {
+            _id: 0,
+            webhookId: 1,
+            name: 1,
+            webhookUrl: 1,
+            disabled: 1,
+            walletCount: 1,
+            thirdwebCreatedAt: 1,
+            thirdwebUpdatedAt: 1,
+          },
+        },
+      )
+      .sort({ name: 1, webhookId: 1 })
+      .toArray();
+
+    const expectedComparableUrl = normalizeComparableUrl(receiverUrl);
+    const webhooks = records.map<ThirdwebSellerUsdtWebhookStatusRecord>((record: any) => {
+      const webhookUrl = toNullableText(record?.webhookUrl) || "";
+      const urlMatchesExpected = Boolean(
+        expectedComparableUrl && normalizeComparableUrl(webhookUrl) === expectedComparableUrl,
+      );
+
+      return {
+        id: toNullableText(record?.webhookId) || undefined,
+        name: toNullableText(record?.name),
+        webhookUrl,
+        disabled: Boolean(record?.disabled),
+        urlMatchesExpected,
+        walletCount: Number(record?.walletCount || 0),
+        createdAt: toNullableText(record?.thirdwebCreatedAt),
+        updatedAt: toNullableText(record?.thirdwebUpdatedAt),
+      };
+    });
+
+    const disabledWebhookCount = webhooks.filter((item) => item.disabled).length;
+    const activeWebhookCount = webhooks.length - disabledWebhookCount;
+    const urlMismatchCount = webhooks.filter((item) => !item.urlMatchesExpected).length;
+
+    return {
+      ok: false,
+      mode: "persisted-fallback",
+      fetchedAt,
+      receiverUrl,
+      expectedWalletCount,
+      expectedWebhookCount,
+      managedWebhookCount: webhooks.length,
+      activeWebhookCount,
+      disabledWebhookCount,
+      urlMismatchCount,
+      webhooks,
+      error: errorMessage,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      mode: "persisted-fallback",
+      fetchedAt,
+      receiverUrl,
+      expectedWalletCount,
+      expectedWebhookCount,
+      managedWebhookCount: 0,
+      activeWebhookCount: 0,
+      disabledWebhookCount: 0,
+      urlMismatchCount: 0,
+      webhooks: [],
+      error:
+        error instanceof Error
+          ? `${errorMessage}; persisted fallback failed: ${error.message}`
+          : `${errorMessage}; persisted fallback failed`,
     };
   }
 };
@@ -624,7 +752,18 @@ export const getThirdwebSellerUsdtWebhookStatus = async ({
     return existingPromise;
   }
 
-  const nextPromise = buildThirdwebSellerUsdtWebhookStatus({ baseUrl })
+  const nextPromise = withTimeout(
+    buildThirdwebSellerUsdtWebhookStatus({ baseUrl }),
+    THIRDWEB_WEBHOOK_STATUS_LIVE_TIMEOUT_MS,
+    `thirdweb webhook status timed out after ${THIRDWEB_WEBHOOK_STATUS_LIVE_TIMEOUT_MS}ms`,
+  )
+    .catch((error) =>
+      buildPersistedThirdwebSellerUsdtWebhookStatus({
+        baseUrl,
+        errorMessage:
+          error instanceof Error ? error.message : "Failed to load thirdweb webhook status",
+      }),
+    )
     .then((value) => {
       cacheStore.set(receiverUrl, {
         expiresAt: Date.now() + THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS,

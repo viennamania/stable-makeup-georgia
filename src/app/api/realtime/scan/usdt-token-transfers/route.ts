@@ -31,14 +31,22 @@ export async function GET(request: NextRequest) {
     200,
   );
   const address = request.nextUrl.searchParams.get("address");
+  const metaOnly = request.nextUrl.searchParams.get("metaOnly") === "1";
+  const includeThirdwebStatus = request.nextUrl.searchParams.get("includeThirdwebStatus") === "1";
 
-  const events = await getPublicScanTransactionHashLogEvents({
-    limit,
-    address,
-  });
-  const thirdwebWebhookStatus = await getThirdwebSellerUsdtWebhookStatus({
-    baseUrl: request.nextUrl.origin,
-  });
+  const [events, thirdwebWebhookStatus] = await Promise.all([
+    metaOnly
+      ? Promise.resolve([])
+      : getPublicScanTransactionHashLogEvents({
+          limit,
+          address,
+        }),
+    includeThirdwebStatus
+      ? getThirdwebSellerUsdtWebhookStatus({
+          baseUrl: request.nextUrl.origin,
+        })
+      : Promise.resolve(undefined),
+  ]);
 
   return jsonWithPublicRealtimeCors(
     {

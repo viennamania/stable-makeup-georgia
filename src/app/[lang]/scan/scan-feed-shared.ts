@@ -18,6 +18,7 @@ export type ScanThirdwebWebhookStatusRecord = {
 export type ScanThirdwebWebhookStatus =
   | {
       ok: true;
+      mode?: "live" | "persisted-fallback";
       fetchedAt?: string;
       receiverUrl?: string | null;
       expectedWalletCount?: number;
@@ -30,6 +31,7 @@ export type ScanThirdwebWebhookStatus =
     }
   | {
       ok: false;
+      mode?: "live" | "persisted-fallback";
       fetchedAt?: string;
       receiverUrl?: string | null;
       expectedWalletCount?: number;
