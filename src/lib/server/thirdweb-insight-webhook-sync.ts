@@ -459,6 +459,11 @@ const extractThirdwebErrorMessage = (payload: unknown, fallback: string): string
   return fallback;
 };
 
+const isThirdwebWebhookNotFoundError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return /webhook not found/i.test(message);
+};
+
 const requestThirdwebWebhookApi = async ({
   method,
   path = "",
@@ -570,10 +575,17 @@ const updateThirdwebWebhook = async ({
 };
 
 const deleteThirdwebWebhook = async (webhookId: string): Promise<void> => {
-  await requestThirdwebWebhookApi({
-    method: "DELETE",
-    path: `/${encodeURIComponent(webhookId)}`,
-  });
+  try {
+    await requestThirdwebWebhookApi({
+      method: "DELETE",
+      path: `/${encodeURIComponent(webhookId)}`,
+    });
+  } catch (error) {
+    if (isThirdwebWebhookNotFoundError(error)) {
+      return;
+    }
+    throw error;
+  }
 };
 
 const buildDesiredThirdwebWebhooks = ({
