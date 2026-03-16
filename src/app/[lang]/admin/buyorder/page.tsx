@@ -6016,9 +6016,6 @@ const fetchBuyOrders = async () => {
           /ko/admin/withdraw-vault?walletAddress=0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3
           */}
 
-          {SHOW_BUYORDER_WATCH_PANELS ? (
-          <>
-
           {/* buyOrderStats.totalByBuyerDepositName */}
           {/*
           <div className="w-full
@@ -6371,6 +6368,8 @@ const fetchBuyOrders = async () => {
           </div>
           
 
+          {SHOW_BUYORDER_WATCH_PANELS ? (
+          <>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:items-start">
             {/* nickname=seller 지갑 잔고 카드 (10초 주기) */}
             <div className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 shadow-sm">
