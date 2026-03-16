@@ -860,7 +860,7 @@ async function loadStoredTransactionHashLogEvents({
 
 async function getScanWalletUserRecordMap(
   walletAddresses: string[],
-): Promise<Map<string, ScanWalletUserRecord>> {
+): Promise<Map<string, ScanWalletUserRecord[]>> {
   const normalizedWalletAddresses = Array.from(
     new Set(walletAddresses.map((walletAddress) => normalizeWalletAddress(walletAddress)).filter(Boolean)),
   );
@@ -968,25 +968,31 @@ async function getScanWalletUserRecordMap(
     },
   ]).toArray();
 
-  return new Map(
-    users.map((user) => [
-      normalizeWalletAddress(user.walletAddress) || String(user._id),
-      {
-        walletAddress: normalizeWalletAddress(user.walletAddress) || String(user._id),
-        nickname: normalizeText(user.nickname),
-        storecode: normalizeText(user.storecode),
-        userType: normalizeText(user.userType),
-        role: normalizeText(user.role),
-        buyerDepositName: normalizeText(user.buyerDepositName),
-        buyerBankName: normalizeText(user.buyerBankName),
-        buyerAccountNumber: normalizeText(user.buyerAccountNumber),
-        buyerAccountHolder: normalizeText(user.buyerAccountHolder),
-        sellerBankName: normalizeText(user.sellerBankName),
-        sellerAccountNumber: normalizeText(user.sellerAccountNumber),
-        sellerAccountHolder: normalizeText(user.sellerAccountHolder),
-      } satisfies ScanWalletUserRecord,
-    ]),
-  );
+  const recordMap = new Map<string, ScanWalletUserRecord[]>();
+
+  for (const user of users) {
+    const normalizedWalletAddress = normalizeWalletAddress(user.walletAddress) || String(user._id);
+    const nextRecord = {
+      walletAddress: normalizedWalletAddress,
+      nickname: normalizeText(user.nickname),
+      storecode: normalizeText(user.storecode),
+      userType: normalizeText(user.userType),
+      role: normalizeText(user.role),
+      buyerDepositName: normalizeText(user.buyerDepositName),
+      buyerBankName: normalizeText(user.buyerBankName),
+      buyerAccountNumber: normalizeText(user.buyerAccountNumber),
+      buyerAccountHolder: normalizeText(user.buyerAccountHolder),
+      sellerBankName: normalizeText(user.sellerBankName),
+      sellerAccountNumber: normalizeText(user.sellerAccountNumber),
+      sellerAccountHolder: normalizeText(user.sellerAccountHolder),
+    } satisfies ScanWalletUserRecord;
+
+    const currentRecords = recordMap.get(normalizedWalletAddress) || [];
+    currentRecords.push(nextRecord);
+    recordMap.set(normalizedWalletAddress, currentRecords);
+  }
+
+  return recordMap;
 }
 
 async function getScanStoreBrandingMap(
@@ -1114,10 +1120,12 @@ const buildScanWalletIdentity = ({
   user,
   isActiveBuyer,
   storeBranding,
+  preferStoreWallet = false,
 }: {
   user: ScanWalletUserRecord;
   isActiveBuyer: boolean;
   storeBranding?: ScanStoreBrandingRecord | null;
+  preferStoreWallet?: boolean;
 }): ScanUserWalletIdentity => {
   const nickname = normalizeText(user.nickname);
   const storecode = normalizeText(user.storecode);
@@ -1136,15 +1144,17 @@ const buildScanWalletIdentity = ({
   const normalizedRole = (role || "").toLowerCase();
   const normalizedUserType = (userType || "").toLowerCase();
 
-  let badgeLabel = "Member Wallet";
-  if (isActiveBuyer) {
-    badgeLabel = "Buyer Wallet";
-  } else if (
-    normalizedUserType === "server-wallet"
+  const isStoreWallet =
+    preferStoreWallet
+    || normalizedUserType === "server-wallet"
     || normalizedRole === "seller"
-    || normalizedNickname === "seller"
-  ) {
+    || normalizedNickname === "seller";
+
+  let badgeLabel = "Member Wallet";
+  if (isStoreWallet) {
     badgeLabel = "Store Wallet";
+  } else if (isActiveBuyer) {
+    badgeLabel = "Buyer Wallet";
   }
 
   const bankName = buyerBankName || sellerBankName || null;
@@ -1163,6 +1173,61 @@ const buildScanWalletIdentity = ({
     bankName,
     accountNumber,
     accountHolder,
+  };
+};
+
+const normalizeStorecodeKey = (value: unknown): string => {
+  return (normalizeText(value) || "").toLowerCase();
+};
+
+const selectScanWalletUserRecordForEvent = ({
+  userRecords,
+  eventStorecode,
+}: {
+  userRecords: ScanWalletUserRecord[];
+  eventStorecode: string;
+}): ScanWalletUserRecord | null => {
+  if (userRecords.length === 0) {
+    return null;
+  }
+
+  if (userRecords.length === 1) {
+    return userRecords[0] || null;
+  }
+
+  if (!eventStorecode) {
+    return null;
+  }
+
+  return (
+    userRecords.find(
+      (userRecord) => normalizeStorecodeKey(userRecord.storecode) === eventStorecode,
+    ) || null
+  );
+};
+
+const buildEventStoreWalletIdentity = (
+  eventStore: UsdtTransactionHashRealtimeEvent["store"] | null | undefined,
+): ScanUserWalletIdentity | null => {
+  const storecode = normalizeText(eventStore?.code);
+  const storeName = normalizeText(eventStore?.name);
+  const storeLogo = normalizeText(eventStore?.logo);
+
+  if (!storecode && !storeName && !storeLogo) {
+    return null;
+  }
+
+  return {
+    badgeLabel: "Store Wallet",
+    nickname: storeName || storecode || null,
+    storecode: storecode || null,
+    storeName: storeName || null,
+    storeLogo: storeLogo || null,
+    userType: "server-wallet",
+    role: "seller",
+    bankName: null,
+    accountNumber: null,
+    accountHolder: null,
   };
 };
 
@@ -1186,43 +1251,89 @@ async function hydrateUsdtTransactionHashRealtimeEvents(
     return events;
   }
 
-  const [userRecordMap, activeBuyerWalletSet] = await Promise.all([
+  const [userRecordMap, activeBuyerWalletSet, monitoredWalletRecords] = await Promise.all([
     getScanWalletUserRecordMap(walletAddresses),
     getActiveBuyerWalletAddressSet(walletAddresses),
+    getThirdwebMonitoredWalletRecords(),
   ]);
+  const monitoredWalletRecordMap = new Map(
+    monitoredWalletRecords.map((walletRecord) => [
+      normalizeWalletAddress(walletRecord.walletAddress) || walletRecord.walletAddress,
+      walletRecord,
+    ]),
+  );
   const storeBrandingMap = await getScanStoreBrandingMap(
-    Array.from(userRecordMap.values()).map((user) => user.storecode || ""),
+    Array.from(userRecordMap.values()).flatMap((users) => users.map((user) => user.storecode || "")),
   );
 
   return events.map((event) => {
     const fromWalletAddress = normalizeWalletAddress(event.fromWalletAddress);
     const toWalletAddress = normalizeWalletAddress(event.toWalletAddress);
-    const fromUser = fromWalletAddress ? userRecordMap.get(fromWalletAddress) || null : null;
-    const toUser = toWalletAddress ? userRecordMap.get(toWalletAddress) || null : null;
-    const fromIdentity = mergePartyIdentity(
-      event.fromIdentity,
-      fromUser
-        ? buildScanWalletIdentity({
-            user: fromUser,
-            isActiveBuyer: activeBuyerWalletSet.has(fromUser.walletAddress),
-            storeBranding: fromUser.storecode
-              ? storeBrandingMap.get((normalizeText(fromUser.storecode) || "").toLowerCase()) || null
-              : null,
-          })
-        : null,
+    const eventStorecode = normalizeStorecodeKey(event.store?.code);
+    const fromUsers = fromWalletAddress ? userRecordMap.get(fromWalletAddress) || [] : [];
+    const toUsers = toWalletAddress ? userRecordMap.get(toWalletAddress) || [] : [];
+    const fromUser = selectScanWalletUserRecordForEvent({
+      userRecords: fromUsers,
+      eventStorecode,
+    });
+    const toUser = selectScanWalletUserRecordForEvent({
+      userRecords: toUsers,
+      eventStorecode,
+    });
+    const fromMonitoredWallet = fromWalletAddress ? monitoredWalletRecordMap.get(fromWalletAddress) || null : null;
+    const toMonitoredWallet = toWalletAddress ? monitoredWalletRecordMap.get(toWalletAddress) || null : null;
+    const fromIsStoreScopedWallet = Boolean(
+      eventStorecode
+      && fromMonitoredWallet
+      && fromMonitoredWallet.walletKinds.some((walletKind) => walletKind !== "buyer")
+      && fromMonitoredWallet.storecodes.some((storecode) => normalizeStorecodeKey(storecode) === eventStorecode),
     );
-    const toIdentity = mergePartyIdentity(
-      event.toIdentity,
-      toUser
-        ? buildScanWalletIdentity({
-            user: toUser,
-            isActiveBuyer: activeBuyerWalletSet.has(toUser.walletAddress),
-            storeBranding: toUser.storecode
-              ? storeBrandingMap.get((normalizeText(toUser.storecode) || "").toLowerCase()) || null
-              : null,
-          })
-        : null,
+    const toIsStoreScopedWallet = Boolean(
+      eventStorecode
+      && toMonitoredWallet
+      && toMonitoredWallet.walletKinds.some((walletKind) => walletKind !== "buyer")
+      && toMonitoredWallet.storecodes.some((storecode) => normalizeStorecodeKey(storecode) === eventStorecode),
     );
+
+    const fromCandidateIdentity = fromUser
+      ? buildScanWalletIdentity({
+          user: fromUser,
+          isActiveBuyer: activeBuyerWalletSet.has(fromUser.walletAddress),
+          storeBranding:
+            (eventStorecode
+              ? storeBrandingMap.get(eventStorecode) || null
+              : null)
+            || (fromUser.storecode
+              ? storeBrandingMap.get(normalizeStorecodeKey(fromUser.storecode)) || null
+              : null),
+          preferStoreWallet: fromIsStoreScopedWallet,
+        })
+      : fromIsStoreScopedWallet
+        ? buildEventStoreWalletIdentity(event.store)
+        : null;
+    const toCandidateIdentity = toUser
+      ? buildScanWalletIdentity({
+          user: toUser,
+          isActiveBuyer: activeBuyerWalletSet.has(toUser.walletAddress),
+          storeBranding:
+            (eventStorecode
+              ? storeBrandingMap.get(eventStorecode) || null
+              : null)
+            || (toUser.storecode
+              ? storeBrandingMap.get(normalizeStorecodeKey(toUser.storecode)) || null
+              : null),
+          preferStoreWallet: toIsStoreScopedWallet,
+        })
+      : toIsStoreScopedWallet
+        ? buildEventStoreWalletIdentity(event.store)
+        : null;
+
+    const fromIdentity = fromIsStoreScopedWallet && fromCandidateIdentity
+      ? fromCandidateIdentity
+      : mergePartyIdentity(event.fromIdentity, fromCandidateIdentity);
+    const toIdentity = toIsStoreScopedWallet && toCandidateIdentity
+      ? toCandidateIdentity
+      : mergePartyIdentity(event.toIdentity, toCandidateIdentity);
     const nextFromLabel = shouldReplacePartyLabelWithIdentity({
       currentLabel: event.fromLabel,
       walletAddress: fromWalletAddress,
