@@ -865,6 +865,11 @@ export default function ScanHomeClientPage({
     };
   }, [filteredRows]);
 
+  const isInitialFeedLoading = useMemo(
+    () => events.length === 0 && (isSyncing || connectionState === "initialized" || connectionState === "connecting") && !syncErrorMessage,
+    [connectionState, events.length, isSyncing, syncErrorMessage],
+  );
+
   const handleSearchSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -1079,7 +1084,13 @@ export default function ScanHomeClientPage({
                     Showing {paginationRange.from}-{paginationRange.to} of {filteredRows.length.toLocaleString()}
                   </span>
                 ) : null}
-                <span>{isSyncing ? "Snapshot syncing..." : "Realtime feed active"}</span>
+                <span>
+                  {isInitialFeedLoading
+                    ? "Initial snapshot loading..."
+                    : isSyncing
+                      ? "Snapshot syncing..."
+                      : "Realtime feed active"}
+                </span>
                 {connectionErrorMessage ? <span>· {connectionErrorMessage}</span> : null}
                 {syncErrorMessage ? <span>· {syncErrorMessage}</span> : null}
               </div>
@@ -1253,6 +1264,22 @@ export default function ScanHomeClientPage({
                 </div>
               </div>
             </div>
+          ) : isInitialFeedLoading ? (
+            <div className="px-5 py-16 text-center sm:px-7">
+              <div className="mx-auto max-w-xl rounded-[24px] border border-[#ece4d2] bg-[#fffdfa] px-6 py-8 shadow-sm">
+                <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[#eadcb6] bg-[#fff6da]">
+                  <span className="scan-loading-dot h-2.5 w-2.5 rounded-full bg-[#946400]" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-[#18181b]">초기 전송내역을 불러오는 중입니다</h3>
+                <p className="mt-2 text-sm leading-6 text-[#71717a]">
+                  첫 로딩에서는 스냅샷과 실시간 채널을 함께 동기화합니다. 몇 초 정도 기다리면 최신
+                  거래 내역이 표시됩니다.
+                </p>
+                <div className="mt-4 inline-flex items-center rounded-full border border-[#e4e4e7] bg-white px-3 py-1.5 text-xs font-semibold text-[#52525b]">
+                  {connectionState === "connected" ? "Realtime connected" : "Preparing realtime feed"}
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="px-5 py-16 text-center text-sm text-[#7c8495] sm:px-7">
               No matching transactions yet.
@@ -1305,6 +1332,18 @@ export default function ScanHomeClientPage({
           }
         }
 
+        @keyframes scanLoadingPulse {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.35);
+            opacity: 0.5;
+          }
+        }
+
         .scan-live-row {
           position: relative;
           isolation: isolate;
@@ -1333,6 +1372,10 @@ export default function ScanHomeClientPage({
 
         .scan-live-dot {
           animation: scanDotPulse 1600ms ease-in-out infinite;
+        }
+
+        .scan-loading-dot {
+          animation: scanLoadingPulse 1400ms ease-in-out infinite;
         }
       `}</style>
     </div>
