@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as Ably from "ably";
@@ -46,6 +47,28 @@ function formatUsdt(value: number): string {
   });
 }
 
+function formatDateTime(value: string | null | undefined): string {
+  const text = String(value || "").trim();
+  if (!text) {
+    return "-";
+  }
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) {
+    return text;
+  }
+
+  return date.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
 function formatShortHash(value: string | null | undefined): string {
   const hash = String(value || "").trim();
   if (!hash) {
@@ -81,6 +104,32 @@ function getExplorerBaseUrl(): string {
   return "https://arbiscan.io";
 }
 
+function getChainLogoSrc(): string {
+  if (configuredChain === "ethereum") {
+    return "/logo-chain-ethereum.png";
+  }
+  if (configuredChain === "polygon") {
+    return "/logo-chain-polygon.png";
+  }
+  if (configuredChain === "arbitrum") {
+    return "/logo-chain-arbitrum.png";
+  }
+  return "/logo-chain-bsc.png";
+}
+
+function getChainMarketLabel(): string {
+  if (configuredChain === "ethereum") {
+    return "Ethereum Mainnet";
+  }
+  if (configuredChain === "polygon") {
+    return "Polygon PoS";
+  }
+  if (configuredChain === "arbitrum") {
+    return "Arbitrum One";
+  }
+  return "BNB Smart Chain";
+}
+
 function getExplorerAddressUrl(address: string | null | undefined): string {
   const normalized = String(address || "").trim();
   if (!normalized) {
@@ -100,30 +149,30 @@ function getExplorerTxUrl(hash: string | null | undefined): string {
 function getConnectionClassName(state: Ably.ConnectionState): string {
   switch (state) {
     case "connected":
-      return "border-emerald-300 bg-emerald-50 text-emerald-700";
+      return "border-[#ccebd6] bg-[#eefaf2] text-[#0f7a4b]";
     case "connecting":
     case "initialized":
-      return "border-amber-300 bg-amber-50 text-amber-700";
+      return "border-[#f2d996] bg-[#fff8e1] text-[#9a6b00]";
     case "disconnected":
     case "suspended":
-      return "border-rose-300 bg-rose-50 text-rose-700";
+      return "border-[#f4c7c3] bg-[#fff3f2] text-[#b5473c]";
     default:
-      return "border-slate-300 bg-slate-100 text-slate-600";
+      return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
   }
 }
 
 function getRelativeTimeClassName(tone: RelativeTimeTone): string {
   switch (tone) {
     case "live":
-      return "border-emerald-300 bg-emerald-50 text-emerald-700";
+      return "border-[#ccebd6] bg-[#eefaf2] text-[#0f7a4b]";
     case "fresh":
-      return "border-sky-300 bg-sky-50 text-sky-700";
+      return "border-[#f2d996] bg-[#fff8e1] text-[#9a6b00]";
     case "recent":
-      return "border-cyan-200 bg-cyan-50 text-cyan-700";
+      return "border-[#e8dcba] bg-[#fdf7e8] text-[#8a6a18]";
     case "normal":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
     default:
-      return "border-slate-200 bg-white text-slate-500";
+      return "border-[#e1e6ef] bg-white text-[#69758c]";
   }
 }
 
@@ -154,12 +203,23 @@ function getDirection(event: UsdtTransactionHashRealtimeEvent, normalizedAddress
 
 function getDirectionClassName(direction: "OUT" | "IN" | "WATCH"): string {
   if (direction === "OUT") {
-    return "border-rose-200 bg-rose-50 text-rose-700";
+    return "border-[#f4c7c3] bg-[#fff3f2] text-[#b5473c]";
   }
   if (direction === "IN") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    return "border-[#ccebd6] bg-[#eefaf2] text-[#0f7a4b]";
   }
-  return "border-slate-200 bg-slate-100 text-slate-600";
+  return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
+}
+
+function maskAccountNumber(value: string | null | undefined): string | null {
+  const accountNumber = String(value || "").replace(/\s+/g, "").trim();
+  if (!accountNumber) {
+    return null;
+  }
+  if (accountNumber.length <= 8) {
+    return accountNumber;
+  }
+  return `${accountNumber.slice(0, 3)}-${accountNumber.slice(-4)}`;
 }
 
 function buildIdentityTags(identity: PartyIdentity | null | undefined): string[] {
@@ -170,13 +230,25 @@ function buildIdentityTags(identity: PartyIdentity | null | undefined): string[]
   return [
     identity.badgeLabel,
     identity.nickname,
+    identity.storeName,
     identity.storecode ? `store:${identity.storecode}` : null,
     identity.userType ? `type:${identity.userType}` : null,
+    identity.bankName && maskAccountNumber(identity.accountNumber)
+      ? `${identity.bankName} ${maskAccountNumber(identity.accountNumber)}`
+      : null,
   ].filter((value): value is string => Boolean(value));
 }
 
 function isExternalOnlyInsightEvent(event: UsdtTransactionHashRealtimeEvent): boolean {
   return event.source === "thirdweb.insight.tokens.transfers";
+}
+
+function getEventDisplayTimeValue(event: UsdtTransactionHashRealtimeEvent): string | null {
+  return event.publishedAt || event.minedAt || event.createdAt || null;
+}
+
+function getEventChainTimeValue(event: UsdtTransactionHashRealtimeEvent): string | null {
+  return event.minedAt || event.createdAt || null;
 }
 
 export default function ScanAddressTokenTransactionsPage() {
@@ -228,8 +300,14 @@ export default function ScanAddressTokenTransactionsPage() {
 
       return Array.from(map.values())
         .sort((left, right) => {
-          const rightTs = Math.max(toTimestamp(right.data.createdAt), toTimestamp(right.data.publishedAt));
-          const leftTs = Math.max(toTimestamp(left.data.createdAt), toTimestamp(left.data.publishedAt));
+          const rightTs = Math.max(
+            toTimestamp(getEventDisplayTimeValue(right.data)),
+            toTimestamp(getEventChainTimeValue(right.data)),
+          );
+          const leftTs = Math.max(
+            toTimestamp(getEventDisplayTimeValue(left.data)),
+            toTimestamp(getEventChainTimeValue(left.data)),
+          );
           return rightTs - leftTs;
         })
         .slice(0, MAX_EVENTS);
@@ -349,66 +427,92 @@ export default function ScanAddressTokenTransactionsPage() {
       incomingCount,
       outgoingCount,
       totalUsdt,
-      latestCreatedAt: events[0]?.data?.createdAt || null,
+      latestDetectedAt: getEventDisplayTimeValue(events[0]?.data) || null,
     };
   }, [events, normalizedAddress]);
 
   const addressExplorerUrl = getExplorerAddressUrl(addressParam);
   const chainLabel = String(configuredChain || "bsc").toUpperCase();
+  const chainLogoSrc = getChainLogoSrc();
+  const chainMarketLabel = getChainMarketLabel();
 
   return (
-    <div className="min-h-screen bg-[#f4f7fb] text-slate-900">
+    <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
       <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_-48px_rgba(15,23,42,0.35)]">
-          <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_42%),linear-gradient(135deg,_#ffffff,_#f8fbff)] px-5 py-5 sm:px-7">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-700">
-                  Scan / Token Txns
+        <section className="overflow-hidden rounded-[28px] border border-[#d8d2c4] bg-white shadow-[0_30px_90px_-54px_rgba(64,45,0,0.32)]">
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
+            <div className="bg-[#111827] px-5 py-5 sm:px-7">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-white/10 bg-white/5">
+                    <Image src={chainLogoSrc} alt={chainMarketLabel} width={42} height={42} className="h-10 w-10 object-contain" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f8d561]">
+                      Scan / Token Txns
+                    </div>
+                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[30px]">
+                      Address Token Transfers
+                    </h1>
+                    <p className="mt-2 max-w-3xl text-sm leading-6 text-[#c9d1de]">
+                      Stored scan events and address-scoped insight lookups are merged into a BscScan-style token transfer view.
+                    </p>
+                  </div>
                 </div>
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[30px]">
-                  USDT Transaction Hash Live Feed
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                  저장된 scan 이벤트와 사용자 지갑 전용 thirdweb Insight owner query를 합쳐 주소 기준으로 보여줍니다.
-                  BscScan의 token transfers 화면처럼 최근 USDT 흐름을 즉시 확인할 수 있습니다.
-                </p>
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${getConnectionClassName(connectionState)}`}>
-                  <span className="h-2 w-2 rounded-full bg-current" />
-                  {connectionState}
-                </span>
-                <Link
-                  href={`/${lang}/scan`}
-                  className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                >
-                  All Transactions
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(addressParam);
-                  }}
-                  className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-                >
-                  주소 복사
-                </button>
-                <a
-                  href={addressExplorerUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100"
-                >
-                  Explorer 열기
-                </a>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold ${getConnectionClassName(connectionState)}`}>
+                    <span className="h-2 w-2 rounded-full bg-current" />
+                    {connectionState}
+                  </span>
+                  <Link
+                    href={`/${lang}/scan`}
+                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                  >
+                    All Transactions
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(addressParam);
+                    }}
+                    className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Copy Address
+                  </button>
+                  <a
+                    href={addressExplorerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-[#f0b90b] px-3 py-1.5 text-xs font-semibold text-[#1d1f24] transition hover:bg-[#e0aa05]"
+                  >
+                    Open in BscScan
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-5 py-5 sm:px-7 lg:border-l lg:border-t-0">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Network</div>
+                  <div className="mt-2 text-lg font-semibold text-[#1d1f24]">{chainMarketLabel}</div>
+                  <div className="mt-1 text-sm text-[#6c7483]">{chainLabel} · USDT token transfers</div>
+                </div>
+                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Address</div>
+                  <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{addressParam}</div>
+                </div>
               </div>
             </div>
           </div>
 
+          <div className="border-t border-[#f0e5c4] bg-[#fff8e5] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b6a39] sm:px-7">
+            Token transfer history for a single wallet view
+          </div>
+
           <div className="grid gap-4 px-5 py-5 sm:px-7 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.9fr)]">
-            <div className="rounded-[24px] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-5 text-white shadow-[0_26px_70px_-45px_rgba(15,23,42,0.9)]">
+            <div className="rounded-[24px] border border-[#111827] bg-gradient-to-br from-[#111827] via-[#1a2438] to-[#1d293f] p-5 text-white shadow-[0_26px_70px_-45px_rgba(17,24,39,0.88)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-300">
@@ -441,28 +545,23 @@ export default function ScanAddressTokenTransactionsPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Observed USDT</div>
-                <div className="mt-2 text-[28px] font-semibold tracking-tight text-slate-950">
+              <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Observed USDT</div>
+                <div className="mt-2 text-[28px] font-semibold tracking-tight text-[#1d1f24]">
                   {formatUsdt(totals.totalUsdt)}
                 </div>
               </div>
-              <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Latest Seen</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">
-                  {totals.latestCreatedAt
-                    ? new Intl.DateTimeFormat(lang === "ko" ? "ko-KR" : "en-US", {
-                        dateStyle: "medium",
-                        timeStyle: "medium",
-                      }).format(new Date(totals.latestCreatedAt))
-                    : "-"}
+              <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Latest Detected</div>
+                <div className="mt-2 text-base font-semibold text-[#1d1f24]">
+                  {formatDateTime(totals.latestDetectedAt)}
                 </div>
               </div>
-              <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Realtime Status</div>
-                    <div className="mt-2 text-sm font-medium text-slate-700">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Realtime Status</div>
+                    <div className="mt-2 text-sm font-medium text-[#364152]">
                       {isSyncing ? "Snapshot syncing..." : "Ably live streaming"}
                     </div>
                   </div>
@@ -471,38 +570,38 @@ export default function ScanAddressTokenTransactionsPage() {
                     onClick={() => {
                       void syncFromApi();
                     }}
-                    className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+                    className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-3 py-1.5 text-xs font-semibold text-[#7b6a39] transition hover:border-[#dfc980] hover:bg-[#fff7db]"
                   >
                     Refresh
                   </button>
                 </div>
                 {connectionErrorMessage ? (
-                  <p className="mt-3 text-xs text-rose-600">{connectionErrorMessage}</p>
+                  <p className="mt-3 text-xs text-[#b5473c]">{connectionErrorMessage}</p>
                 ) : null}
                 {syncErrorMessage ? (
-                  <p className="mt-2 text-xs text-amber-600">{syncErrorMessage}</p>
+                  <p className="mt-2 text-xs text-[#9a6b00]">{syncErrorMessage}</p>
                 ) : null}
               </div>
             </div>
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_60px_-42px_rgba(15,23,42,0.32)]">
-          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <section className="overflow-hidden rounded-[28px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
+          <div className="flex flex-col gap-3 border-b border-[#f0e5c4] bg-[#fff8e5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7b6a39]">
                 Token Transfers
               </div>
-              <h2 className="mt-1 text-lg font-semibold text-slate-950">Latest USDT transaction hash registrations</h2>
+              <h2 className="mt-1 text-lg font-semibold text-[#1d1f24]">Latest USDT transaction hash registrations</h2>
             </div>
-            <div className="text-xs text-slate-500">
-              address filter: <span className="font-semibold text-slate-700">{formatShortAddress(addressParam)}</span>
+            <div className="text-xs text-[#5f6b85]">
+              address filter: <span className="font-semibold text-[#1d1f24]">{formatShortAddress(addressParam)}</span>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <thead className="bg-[#fff8e5] text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b6a39]">
                 <tr>
                   <th className="px-4 py-3 sm:px-6">Txn Hash</th>
                   <th className="px-4 py-3">Age</th>
@@ -517,14 +616,16 @@ export default function ScanAddressTokenTransactionsPage() {
               <tbody className="divide-y divide-slate-100 bg-white">
                 {events.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-16 text-center text-sm text-slate-500">
+                    <td colSpan={8} className="px-6 py-16 text-center text-sm text-[#5f6b85]">
                       아직 표시할 transaction hash 이벤트가 없습니다.
                     </td>
                   </tr>
                 ) : (
                   events.map((item) => {
                     const direction = getDirection(item.data, normalizedAddress);
-                    const relativeTime = getRelativeTimeInfo(item.data.createdAt, nowMs);
+                    const detectedTime = getEventDisplayTimeValue(item.data);
+                    const chainTime = getEventChainTimeValue(item.data);
+                    const relativeTime = getRelativeTimeInfo(detectedTime || item.data.createdAt, nowMs);
                     const txUrl = getExplorerTxUrl(item.data.transactionHash);
                     const fromUrl = getExplorerAddressUrl(item.data.fromWalletAddress);
                     const toUrl = getExplorerAddressUrl(item.data.toWalletAddress);
@@ -538,7 +639,7 @@ export default function ScanAddressTokenTransactionsPage() {
                     return (
                       <tr
                         key={item.id}
-                        className={`${isHighlighted ? "bg-sky-50/70" : "bg-white"} transition-colors`}
+                        className={`${isHighlighted ? "bg-[#fff8e5]" : "bg-white"} transition-colors`}
                       >
                         <td className="px-4 py-4 align-top sm:px-6">
                           <div className="flex flex-col gap-1">
@@ -546,19 +647,19 @@ export default function ScanAddressTokenTransactionsPage() {
                               href={txHref}
                               target={isExternalOnlyInsightEvent(item.data) ? "_blank" : undefined}
                               rel={isExternalOnlyInsightEvent(item.data) ? "noreferrer" : undefined}
-                              className="font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-800"
+                              className="font-semibold text-[#0784c3] underline decoration-[#7cc2e4] underline-offset-4 hover:text-[#05679d]"
                               title={item.data.transactionHash}
                             >
                               {formatShortHash(item.data.transactionHash)}
                             </a>
-                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <div className="flex items-center gap-2 text-xs text-[#5f6b85]">
                               <span>{item.data.chain || configuredChain} · {item.data.tokenSymbol}</span>
                               {isExternalOnlyInsightEvent(item.data) ? (
-                                <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                                <span className="rounded-full border border-[#d9deea] bg-[#f6f8fb] px-2 py-0.5 text-[10px] font-semibold text-[#5f6b85]">
                                   insight
                                 </span>
                               ) : null}
-                              <a href={txUrl} target="_blank" rel="noreferrer" className="hover:text-sky-700">
+                              <a href={txUrl} target="_blank" rel="noreferrer" className="hover:text-[#0784c3]">
                                 external
                               </a>
                             </div>
@@ -567,10 +668,14 @@ export default function ScanAddressTokenTransactionsPage() {
                         <td className="px-4 py-4 align-top">
                           <div
                             className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}
-                            title={relativeTime.absoluteLabel}
+                            title={formatDateTime(detectedTime)}
                           >
                             {relativeTime.relativeLabel}
                           </div>
+                          <div className="mt-2 text-[11px] text-[#5f6b85]">Detected {formatDateTime(detectedTime)}</div>
+                          {chainTime && chainTime !== detectedTime ? (
+                            <div className="mt-1 text-[11px] text-[#8d95a5]">On-chain {formatDateTime(chainTime)}</div>
+                          ) : null}
                         </td>
                         <td className="px-4 py-4 align-top">
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getDirectionClassName(direction)}`}>
@@ -582,15 +687,15 @@ export default function ScanAddressTokenTransactionsPage() {
                             {item.data.fromWalletAddress ? (
                               <Link
                                 href={`/${lang}/scan/address/${item.data.fromWalletAddress}/tokentxns`}
-                                className="font-medium text-slate-900 hover:text-sky-700"
+                                className="font-medium text-[#1d1f24] hover:text-[#0784c3]"
                                 title={item.data.fromWalletAddress}
                               >
                                 {formatShortAddress(item.data.fromWalletAddress)}
                               </Link>
                             ) : (
-                              <span className="font-medium text-slate-900">-</span>
+                              <span className="font-medium text-[#1d1f24]">-</span>
                             )}
-                            <div className="truncate text-xs text-slate-500" title={item.data.fromLabel || ""}>
+                            <div className="truncate text-xs text-[#5f6b85]" title={item.data.fromLabel || ""}>
                               {item.data.fromLabel || "-"}
                             </div>
                             {fromIdentityTags.length > 0 ? (
@@ -598,14 +703,14 @@ export default function ScanAddressTokenTransactionsPage() {
                                 {fromIdentityTags.map((tag) => (
                                   <span
                                     key={`${item.id}-from-${tag}`}
-                                    className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                                    className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-2 py-0.5 text-[10px] font-medium text-[#7b6a39]"
                                   >
                                     {tag}
                                   </span>
                                 ))}
                               </div>
                             ) : null}
-                            <a href={fromUrl} target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-sky-700">
+                            <a href={fromUrl} target="_blank" rel="noreferrer" className="text-[11px] text-[#8d95a5] hover:text-[#0784c3]">
                               external explorer
                             </a>
                           </div>
@@ -615,15 +720,15 @@ export default function ScanAddressTokenTransactionsPage() {
                             {item.data.toWalletAddress ? (
                               <Link
                                 href={`/${lang}/scan/address/${item.data.toWalletAddress}/tokentxns`}
-                                className="font-medium text-slate-900 hover:text-sky-700"
+                                className="font-medium text-[#1d1f24] hover:text-[#0784c3]"
                                 title={item.data.toWalletAddress}
                               >
                                 {formatShortAddress(item.data.toWalletAddress)}
                               </Link>
                             ) : (
-                              <span className="font-medium text-slate-900">-</span>
+                              <span className="font-medium text-[#1d1f24]">-</span>
                             )}
-                            <div className="truncate text-xs text-slate-500" title={item.data.toLabel || ""}>
+                            <div className="truncate text-xs text-[#5f6b85]" title={item.data.toLabel || ""}>
                               {item.data.toLabel || "-"}
                             </div>
                             {toIdentityTags.length > 0 ? (
@@ -631,33 +736,33 @@ export default function ScanAddressTokenTransactionsPage() {
                                 {toIdentityTags.map((tag) => (
                                   <span
                                     key={`${item.id}-to-${tag}`}
-                                    className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                                    className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-2 py-0.5 text-[10px] font-medium text-[#7b6a39]"
                                   >
                                     {tag}
                                   </span>
                                 ))}
                               </div>
                             ) : null}
-                            <a href={toUrl} target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-sky-700">
+                            <a href={toUrl} target="_blank" rel="noreferrer" className="text-[11px] text-[#8d95a5] hover:text-[#0784c3]">
                               external explorer
                             </a>
                           </div>
                         </td>
                         <td className="px-4 py-4 text-right align-top">
-                          <div className="font-semibold text-emerald-600">{formatUsdt(item.data.amountUsdt)}</div>
-                          <div className="mt-1 text-xs text-slate-500">USDT</div>
+                          <div className="font-semibold text-[#0f7a4b]">{formatUsdt(item.data.amountUsdt)}</div>
+                          <div className="mt-1 text-xs text-[#5f6b85]">USDT</div>
                         </td>
                         <td className="px-4 py-4 align-top">
-                          <div className="font-medium text-slate-900">{item.data.tradeId || "-"}</div>
-                          <div className="mt-1 text-xs text-slate-500">{item.data.orderId || "-"}</div>
+                          <div className="font-medium text-[#1d1f24]">{item.data.tradeId || "-"}</div>
+                          <div className="mt-1 text-xs text-[#5f6b85]">{item.data.orderId || "-"}</div>
                         </td>
                         <td className="px-4 py-4 align-top">
                           <div className="flex flex-col gap-1">
-                            <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600">
+                            <span className="inline-flex w-fit rounded-full border border-[#d9deea] bg-[#f6f8fb] px-2 py-1 text-xs font-medium text-[#5f6b85]">
                               {item.data.status || "registered"}
                             </span>
-                            <div className="text-xs text-slate-500">{item.data.store?.code || "-"}</div>
-                            <div className="truncate text-xs text-slate-400" title={item.data.source}>
+                            <div className="text-xs text-[#5f6b85]">{item.data.store?.code || "-"}</div>
+                            <div className="truncate text-xs text-[#8d95a5]" title={item.data.source}>
                               {item.data.source}
                             </div>
                           </div>

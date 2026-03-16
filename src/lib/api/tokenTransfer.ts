@@ -74,6 +74,19 @@ type ScanWalletUserRecord = {
   storecode: string | null;
   userType: string | null;
   role: string | null;
+  buyerDepositName: string | null;
+  buyerBankName: string | null;
+  buyerAccountNumber: string | null;
+  buyerAccountHolder: string | null;
+  sellerBankName: string | null;
+  sellerAccountNumber: string | null;
+  sellerAccountHolder: string | null;
+};
+
+type ScanStoreBrandingRecord = {
+  code: string;
+  name: string | null;
+  logo: string | null;
 };
 
 type ThirdwebInsightTokenTransferItem = {
@@ -292,10 +305,26 @@ const normalizePartyIdentity = (value: unknown): ScanUserWalletIdentity | null =
   const badgeLabel = normalizeText(record.badgeLabel);
   const nickname = normalizeText(record.nickname);
   const storecode = normalizeText(record.storecode);
+  const storeName = normalizeText(record.storeName);
+  const storeLogo = normalizeText(record.storeLogo);
   const userType = normalizeText(record.userType);
   const role = normalizeText(record.role);
+  const bankName = normalizeText(record.bankName);
+  const accountNumber = normalizeText(record.accountNumber);
+  const accountHolder = normalizeText(record.accountHolder);
 
-  if (!badgeLabel && !nickname && !storecode && !userType && !role) {
+  if (
+    !badgeLabel
+    && !nickname
+    && !storecode
+    && !storeName
+    && !storeLogo
+    && !userType
+    && !role
+    && !bankName
+    && !accountNumber
+    && !accountHolder
+  ) {
     return null;
   }
 
@@ -303,8 +332,13 @@ const normalizePartyIdentity = (value: unknown): ScanUserWalletIdentity | null =
     badgeLabel,
     nickname,
     storecode,
+    storeName,
+    storeLogo,
     userType,
     role,
+    bankName,
+    accountNumber,
+    accountHolder,
   };
 };
 
@@ -326,8 +360,13 @@ const mergePartyIdentity = (
     badgeLabel: normalizedExisting.badgeLabel || normalizedIncoming.badgeLabel,
     nickname: normalizedExisting.nickname || normalizedIncoming.nickname,
     storecode: normalizedExisting.storecode || normalizedIncoming.storecode,
+    storeName: normalizedExisting.storeName || normalizedIncoming.storeName,
+    storeLogo: normalizedExisting.storeLogo || normalizedIncoming.storeLogo,
     userType: normalizedExisting.userType || normalizedIncoming.userType,
     role: normalizedExisting.role || normalizedIncoming.role,
+    bankName: normalizedExisting.bankName || normalizedIncoming.bankName,
+    accountNumber: normalizedExisting.accountNumber || normalizedIncoming.accountNumber,
+    accountHolder: normalizedExisting.accountHolder || normalizedIncoming.accountHolder,
   };
 };
 
@@ -377,6 +416,16 @@ const shouldReplacePartyLabelWithIdentity = ({
 
   if (identity.badgeLabel === "Member Wallet") {
     return normalizedLabel === "member wallet" || normalizedLabel === "wallet";
+  }
+
+  if (identity.badgeLabel === "Store Wallet") {
+    return (
+      normalizedLabel === "store wallet"
+      || normalizedLabel === "tagged wallet"
+      || normalizedLabel === "settlement wallet"
+      || normalizedLabel === "seller wallet"
+      || normalizedLabel.endsWith("wallet")
+    );
   }
 
   return false;
@@ -511,7 +560,7 @@ const buildEventMergeKey = (event: UsdtTransactionHashRealtimeEvent): string => 
 };
 
 const getEventTimestamp = (event: UsdtTransactionHashRealtimeEvent): number => {
-  const candidates = [event.minedAt, event.createdAt, event.publishedAt];
+  const candidates = [event.publishedAt, event.minedAt, event.createdAt];
   for (const candidate of candidates) {
     const timestamp = Date.parse(String(candidate || ""));
     if (!Number.isNaN(timestamp)) {
@@ -670,7 +719,7 @@ async function loadStoredTransactionHashLogEvents({
 
   const logs = await collection
     .find<StoredTransactionHashLogDocument>(query)
-    .sort({ createdAt: -1, _id: -1 })
+    .sort({ publishedAt: -1, createdAt: -1, _id: -1 })
     .limit(safeLimit)
     .toArray();
 
@@ -707,6 +756,13 @@ async function getScanWalletUserRecordMap(
     storecode?: string;
     userType?: string;
     role?: string;
+    buyerDepositName?: string;
+    buyerBankName?: string;
+    buyerAccountNumber?: string;
+    buyerAccountHolder?: string;
+    sellerBankName?: string;
+    sellerAccountNumber?: string;
+    sellerAccountHolder?: string;
   }>([
     {
       $match: {
@@ -721,6 +777,42 @@ async function getScanWalletUserRecordMap(
               input: { $ifNull: ["$walletAddress", ""] },
             },
           },
+        },
+        buyerDepositNameSource: {
+          $ifNull: ["$buyer.depositName", null],
+        },
+        buyerBankNameSource: {
+          $ifNull: [
+            "$buyer.bankInfo.bankName",
+            {
+              $ifNull: ["$buyer.depositBankName", "$seller.bankInfo.bankName"],
+            },
+          ],
+        },
+        buyerAccountNumberSource: {
+          $ifNull: [
+            "$buyer.bankInfo.accountNumber",
+            {
+              $ifNull: ["$buyer.depositBankAccountNumber", "$seller.bankInfo.accountNumber"],
+            },
+          ],
+        },
+        buyerAccountHolderSource: {
+          $ifNull: [
+            "$buyer.bankInfo.accountHolder",
+            {
+              $ifNull: ["$buyer.depositName", "$seller.bankInfo.accountHolder"],
+            },
+          ],
+        },
+        sellerBankNameSource: {
+          $ifNull: ["$seller.bankInfo.bankName", null],
+        },
+        sellerAccountNumberSource: {
+          $ifNull: ["$seller.bankInfo.accountNumber", null],
+        },
+        sellerAccountHolderSource: {
+          $ifNull: ["$seller.bankInfo.accountHolder", null],
         },
       },
     },
@@ -743,6 +835,13 @@ async function getScanWalletUserRecordMap(
         storecode: { $first: "$storecode" },
         userType: { $first: "$userType" },
         role: { $first: "$role" },
+        buyerDepositName: { $first: "$buyerDepositNameSource" },
+        buyerBankName: { $first: "$buyerBankNameSource" },
+        buyerAccountNumber: { $first: "$buyerAccountNumberSource" },
+        buyerAccountHolder: { $first: "$buyerAccountHolderSource" },
+        sellerBankName: { $first: "$sellerBankNameSource" },
+        sellerAccountNumber: { $first: "$sellerAccountNumberSource" },
+        sellerAccountHolder: { $first: "$sellerAccountHolderSource" },
       },
     },
   ]).toArray();
@@ -756,7 +855,82 @@ async function getScanWalletUserRecordMap(
         storecode: normalizeText(user.storecode),
         userType: normalizeText(user.userType),
         role: normalizeText(user.role),
+        buyerDepositName: normalizeText(user.buyerDepositName),
+        buyerBankName: normalizeText(user.buyerBankName),
+        buyerAccountNumber: normalizeText(user.buyerAccountNumber),
+        buyerAccountHolder: normalizeText(user.buyerAccountHolder),
+        sellerBankName: normalizeText(user.sellerBankName),
+        sellerAccountNumber: normalizeText(user.sellerAccountNumber),
+        sellerAccountHolder: normalizeText(user.sellerAccountHolder),
       } satisfies ScanWalletUserRecord,
+    ]),
+  );
+}
+
+async function getScanStoreBrandingMap(
+  storecodes: string[],
+): Promise<Map<string, ScanStoreBrandingRecord>> {
+  const normalizedStorecodes = Array.from(
+    new Set(storecodes.map((storecode) => normalizeText(storecode)?.toLowerCase() || "").filter(Boolean)),
+  );
+
+  if (normalizedStorecodes.length === 0) {
+    return new Map();
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("stores");
+  const stores = await collection.aggregate<{
+    _id: string;
+    storecode: string;
+    storeName?: string;
+    storeLogo?: string;
+  }>([
+    {
+      $match: {
+        storecode: { $type: "string", $ne: "" },
+      },
+    },
+    {
+      $addFields: {
+        normalizedStorecode: {
+          $toLower: {
+            $trim: {
+              input: { $ifNull: ["$storecode", ""] },
+            },
+          },
+        },
+      },
+    },
+    {
+      $match: {
+        normalizedStorecode: { $in: normalizedStorecodes },
+      },
+    },
+    {
+      $sort: {
+        updatedAt: -1,
+        _id: -1,
+      },
+    },
+    {
+      $group: {
+        _id: "$normalizedStorecode",
+        storecode: { $first: "$storecode" },
+        storeName: { $first: "$storeName" },
+        storeLogo: { $first: "$storeLogo" },
+      },
+    },
+  ]).toArray();
+
+  return new Map(
+    stores.map((store) => [
+      normalizeText(store.storecode)?.toLowerCase() || String(store._id),
+      {
+        code: normalizeText(store.storecode) || String(store._id),
+        name: normalizeText(store.storeName),
+        logo: normalizeText(store.storeLogo),
+      } satisfies ScanStoreBrandingRecord,
     ]),
   );
 }
@@ -817,14 +991,25 @@ async function getActiveBuyerWalletAddressSet(walletAddresses: string[]): Promis
 const buildScanWalletIdentity = ({
   user,
   isActiveBuyer,
+  storeBranding,
 }: {
   user: ScanWalletUserRecord;
   isActiveBuyer: boolean;
+  storeBranding?: ScanStoreBrandingRecord | null;
 }): ScanUserWalletIdentity => {
   const nickname = normalizeText(user.nickname);
   const storecode = normalizeText(user.storecode);
+  const storeName = normalizeText(storeBranding?.name);
+  const storeLogo = normalizeText(storeBranding?.logo);
   const userType = normalizeText(user.userType);
   const role = normalizeText(user.role);
+  const buyerDepositName = normalizeText(user.buyerDepositName);
+  const buyerBankName = normalizeText(user.buyerBankName);
+  const buyerAccountNumber = normalizeText(user.buyerAccountNumber);
+  const buyerAccountHolder = normalizeText(user.buyerAccountHolder);
+  const sellerBankName = normalizeText(user.sellerBankName);
+  const sellerAccountNumber = normalizeText(user.sellerAccountNumber);
+  const sellerAccountHolder = normalizeText(user.sellerAccountHolder);
   const normalizedNickname = (nickname || "").toLowerCase();
   const normalizedRole = (role || "").toLowerCase();
   const normalizedUserType = (userType || "").toLowerCase();
@@ -840,12 +1025,22 @@ const buildScanWalletIdentity = ({
     badgeLabel = "Store Wallet";
   }
 
+  const bankName = buyerBankName || sellerBankName || null;
+  const accountNumber = buyerAccountNumber || sellerAccountNumber || null;
+  const accountHolder = buyerAccountHolder || buyerDepositName || sellerAccountHolder || nickname || null;
+  const resolvedNickname = nickname || buyerDepositName || accountHolder || null;
+
   return {
     badgeLabel,
-    nickname: nickname || null,
+    nickname: resolvedNickname,
     storecode: storecode || null,
+    storeName: storeName || null,
+    storeLogo: storeLogo || null,
     userType: userType || null,
     role: role || null,
+    bankName,
+    accountNumber,
+    accountHolder,
   };
 };
 
@@ -873,6 +1068,9 @@ async function hydrateUsdtTransactionHashRealtimeEvents(
     getScanWalletUserRecordMap(walletAddresses),
     getActiveBuyerWalletAddressSet(walletAddresses),
   ]);
+  const storeBrandingMap = await getScanStoreBrandingMap(
+    Array.from(userRecordMap.values()).map((user) => user.storecode || ""),
+  );
 
   return events.map((event) => {
     const fromWalletAddress = normalizeWalletAddress(event.fromWalletAddress);
@@ -885,6 +1083,9 @@ async function hydrateUsdtTransactionHashRealtimeEvents(
         ? buildScanWalletIdentity({
             user: fromUser,
             isActiveBuyer: activeBuyerWalletSet.has(fromUser.walletAddress),
+            storeBranding: fromUser.storecode
+              ? storeBrandingMap.get((normalizeText(fromUser.storecode) || "").toLowerCase()) || null
+              : null,
           })
         : null,
     );
@@ -894,6 +1095,9 @@ async function hydrateUsdtTransactionHashRealtimeEvents(
         ? buildScanWalletIdentity({
             user: toUser,
             isActiveBuyer: activeBuyerWalletSet.has(toUser.walletAddress),
+            storeBranding: toUser.storecode
+              ? storeBrandingMap.get((normalizeText(toUser.storecode) || "").toLowerCase()) || null
+              : null,
           })
         : null,
     );
@@ -1105,7 +1309,7 @@ export async function getLatestTransactionHashLogs(limit = 10): Promise<Transact
 
   const logs = await collection
     .find<TransactionHashLog>({})
-    .sort({ createdAt: -1, _id: -1 })
+    .sort({ publishedAt: -1, createdAt: -1, _id: -1 })
     .limit(safeLimit)
     .toArray();
 
@@ -1149,7 +1353,7 @@ export async function getTransactionHashLogEventByHash(
       ],
     },
     {
-      sort: { createdAt: -1, _id: -1 },
+      sort: { publishedAt: -1, createdAt: -1, _id: -1 },
     },
   );
 

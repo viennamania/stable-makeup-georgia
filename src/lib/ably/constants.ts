@@ -132,15 +132,25 @@ export type UsdtTransactionHashRealtimeEvent = {
     badgeLabel: string | null;
     nickname: string | null;
     storecode: string | null;
+    storeName: string | null;
+    storeLogo: string | null;
     userType: string | null;
     role: string | null;
+    bankName: string | null;
+    accountNumber: string | null;
+    accountHolder: string | null;
   } | null;
   toIdentity?: {
     badgeLabel: string | null;
     nickname: string | null;
     storecode: string | null;
+    storeName: string | null;
+    storeLogo: string | null;
     userType: string | null;
     role: string | null;
+    bankName: string | null;
+    accountNumber: string | null;
+    accountHolder: string | null;
   } | null;
   status: string | null;
   queueId: string | null;

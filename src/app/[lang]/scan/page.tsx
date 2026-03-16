@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -40,9 +41,12 @@ type FeedItem = {
 
 type PartySummary = {
   headline: string;
+  title: string | null;
   subline: string;
+  bankLine: string | null;
   href: string | null;
   addresses: string[];
+  identity: PartyIdentity | null;
 };
 
 type PartyIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"]>;
@@ -58,6 +62,7 @@ type TransactionRow = {
   toSummary: PartySummary;
   latestTimestamp: number;
   timeValue: string | null;
+  chainTimeValue: string | null;
   highlightUntil: number;
   methodLabel: string;
   addresses: string[];
@@ -91,33 +96,49 @@ function getEventKey(event: UsdtTransactionHashRealtimeEvent, fallbackId = ""): 
   );
 }
 
+function getEventDisplayTimestamp(event: UsdtTransactionHashRealtimeEvent): number {
+  return Math.max(
+    toTimestamp(event.publishedAt),
+    toTimestamp(event.minedAt),
+    toTimestamp(event.createdAt),
+  );
+}
+
+function getEventDisplayTimeValue(event: UsdtTransactionHashRealtimeEvent): string | null {
+  return event.publishedAt || event.minedAt || event.createdAt || null;
+}
+
+function getEventChainTimeValue(event: UsdtTransactionHashRealtimeEvent): string | null {
+  return event.minedAt || event.createdAt || null;
+}
+
 function getConnectionClassName(state: Ably.ConnectionState): string {
   switch (state) {
     case "connected":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-[#ccebd6] bg-[#eefaf2] text-[#0f7a4b]";
     case "connecting":
     case "initialized":
-      return "border-amber-200 bg-amber-50 text-amber-700";
+      return "border-[#f2d996] bg-[#fff8e1] text-[#9a6b00]";
     case "disconnected":
     case "suspended":
-      return "border-rose-200 bg-rose-50 text-rose-700";
+      return "border-[#f4c7c3] bg-[#fff3f2] text-[#b5473c]";
     default:
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
   }
 }
 
 function getRelativeTimeClassName(tone: RelativeTimeTone): string {
   switch (tone) {
     case "live":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+      return "border-[#ccebd6] bg-[#eefaf2] text-[#0f7a4b]";
     case "fresh":
-      return "border-sky-200 bg-sky-50 text-sky-700";
+      return "border-[#f2d996] bg-[#fff8e1] text-[#9a6b00]";
     case "recent":
-      return "border-indigo-200 bg-indigo-50 text-indigo-700";
+      return "border-[#e8dcba] bg-[#fdf7e8] text-[#8a6a18]";
     case "normal":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
     default:
-      return "border-slate-200 bg-white text-slate-500";
+      return "border-[#e1e6ef] bg-white text-[#69758c]";
   }
 }
 
@@ -133,22 +154,126 @@ function getStatusLabel(status: string | null | undefined): string {
 
 function getStatusTone(status: string | null | undefined): string {
   if (status === "confirmed") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    return "border-[#ccebd6] bg-[#eefaf2] text-[#0f7a4b]";
   }
   if (status === "pending") {
-    return "border-amber-200 bg-amber-50 text-amber-700";
+    return "border-[#f2d996] bg-[#fff8e1] text-[#9a6b00]";
   }
-  return "border-slate-200 bg-slate-100 text-slate-600";
+  return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
+}
+
+function getChainLogoSrc(): string {
+  if (configuredChain === "ethereum") {
+    return "/logo-chain-ethereum.png";
+  }
+  if (configuredChain === "polygon") {
+    return "/logo-chain-polygon.png";
+  }
+  if (configuredChain === "arbitrum") {
+    return "/logo-chain-arbitrum.png";
+  }
+  return "/logo-chain-bsc.png";
+}
+
+function getChainMarketLabel(): string {
+  if (configuredChain === "ethereum") {
+    return "ETH Mainnet";
+  }
+  if (configuredChain === "polygon") {
+    return "Polygon PoS";
+  }
+  if (configuredChain === "arbitrum") {
+    return "Arbitrum One";
+  }
+  return "BNB Smart Chain";
+}
+
+function maskAccountNumber(value: string | null | undefined): string | null {
+  const accountNumber = String(value || "").replace(/\s+/g, "").trim();
+  if (!accountNumber) {
+    return null;
+  }
+  if (accountNumber.length <= 8) {
+    return accountNumber;
+  }
+  return `${accountNumber.slice(0, 3)}-${accountNumber.slice(-4)}`;
+}
+
+function getIdentityBadgeClassName(identity: PartyIdentity | null | undefined): string {
+  const badgeLabel = String(identity?.badgeLabel || "").trim();
+  if (badgeLabel === "Buyer Wallet") {
+    return "border-[#d8ebde] bg-[#f1fbf4] text-[#1f7a4d]";
+  }
+  if (badgeLabel === "Store Wallet") {
+    return "border-[#f0d98f] bg-[#fff7db] text-[#946400]";
+  }
+  return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
+}
+
+function getIdentityPanelClassName(identity: PartyIdentity | null | undefined): string {
+  const badgeLabel = String(identity?.badgeLabel || "").trim();
+  if (badgeLabel === "Buyer Wallet") {
+    return "border-[#dbe9df] bg-[linear-gradient(135deg,_rgba(244,251,246,0.98),_rgba(255,255,255,0.95))]";
+  }
+  if (badgeLabel === "Store Wallet") {
+    return "border-[#f1e1aa] bg-[linear-gradient(135deg,_rgba(255,249,229,0.98),_rgba(255,255,255,0.95))]";
+  }
+  return "border-[#ebe4d6] bg-[linear-gradient(135deg,_rgba(252,250,244,0.98),_rgba(255,255,255,0.95))]";
 }
 
 function buildIdentitySubline(identity: PartyIdentity | null | undefined): string | null {
   if (!identity) {
     return null;
   }
+
+  const brandLine = identity.storeName || (identity.storecode ? `@${identity.storecode}` : null);
+  if (identity.badgeLabel && brandLine) {
+    return `${identity.badgeLabel} · ${brandLine}`;
+  }
   if (identity.badgeLabel && identity.nickname) {
     return `${identity.badgeLabel} · ${identity.nickname}`;
   }
-  return identity.nickname || identity.badgeLabel || null;
+  return brandLine || identity.nickname || identity.badgeLabel || null;
+}
+
+function buildIdentityTitle(identity: PartyIdentity | null | undefined, fallbackLabel: string | null): string | null {
+  if (!identity) {
+    return fallbackLabel;
+  }
+
+  return (
+    identity.nickname
+    || identity.accountHolder
+    || identity.storeName
+    || (identity.storecode ? `@${identity.storecode}` : null)
+    || fallbackLabel
+  );
+}
+
+function buildIdentityBankLine(identity: PartyIdentity | null | undefined): string | null {
+  if (!identity) {
+    return null;
+  }
+
+  const maskedAccount = maskAccountNumber(identity.accountNumber);
+  const parts = [
+    identity.bankName,
+    maskedAccount,
+    identity.accountHolder && identity.accountHolder !== identity.nickname ? identity.accountHolder : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function getIdentityAvatarText(identity: PartyIdentity | null | undefined, fallback: string): string {
+  const source =
+    identity?.storeName
+    || identity?.nickname
+    || identity?.accountHolder
+    || identity?.storecode
+    || fallback;
+  const normalized = String(source || "").trim();
+  return normalized ? normalized.slice(0, 2).toUpperCase() : "WL";
 }
 
 function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: string): PartySummary {
@@ -183,9 +308,12 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
   if (addresses.length === 0) {
     return {
       headline: "-",
+      title: null,
       subline: side === "from" ? "Unknown sender" : "Unknown recipient",
+      bankLine: null,
       href: null,
       addresses: [],
+      identity: null,
     };
   }
 
@@ -193,21 +321,110 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
     const [address] = addresses;
     const entry = addressMap.get(address);
     const label = entry?.label || "Tagged wallet";
-    const subline = buildIdentitySubline(entry?.identity) || label;
+    const identity = entry?.identity || null;
+    const subline = buildIdentitySubline(identity) || label;
     return {
       headline: formatShortAddress(address),
+      title: buildIdentityTitle(identity, label),
       subline,
+      bankLine: buildIdentityBankLine(identity),
       href: `/${lang}/scan/address/${address}/tokentxns`,
       addresses,
+      identity,
     };
   }
 
   return {
     headline: side === "from" ? "Multiple senders" : "Multiple recipients",
+    title: null,
     subline: `${addresses.length} monitored wallets`,
+    bankLine: null,
     href: null,
     addresses,
+    identity: null,
   };
+}
+
+function PartyIdentityCard({ summary }: { summary: PartySummary }) {
+  const identity = summary.identity;
+  const hasIdentity = Boolean(
+    identity
+    && (
+      summary.title
+      || identity.badgeLabel
+      || identity.storeName
+      || identity.storecode
+      || summary.bankLine
+    ),
+  );
+
+  if (!hasIdentity) {
+    return (
+      <div className="mt-2 text-xs leading-5 text-slate-500">
+        {summary.subline}
+      </div>
+    );
+  }
+
+  const brandChipText = [
+    identity?.storeName,
+    identity?.storecode ? `@${identity.storecode}` : null,
+  ].filter((value): value is string => Boolean(value)).join(" · ");
+
+  return (
+    <div className={`mt-3 overflow-hidden rounded-[20px] border p-3 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.28)] ${getIdentityPanelClassName(identity)}`}>
+      <div className="flex items-start gap-3">
+        <div className="relative flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-[16px] border border-white/70 bg-[#fff6da] text-[11px] font-semibold text-[#946400] shadow-sm">
+          <span>{getIdentityAvatarText(identity, summary.headline)}</span>
+          {identity?.storeLogo ? (
+            <img
+              src={identity.storeLogo}
+              alt={identity.storeName || summary.title || "wallet"}
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          ) : null}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {identity?.badgeLabel ? (
+              <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${getIdentityBadgeClassName(identity)}`}>
+                {identity.badgeLabel}
+              </span>
+            ) : null}
+          </div>
+
+          {summary.title ? (
+            <div className="mt-2 truncate text-sm font-semibold text-[#202939]">
+              {summary.title}
+            </div>
+          ) : null}
+
+          <div className="mt-1 text-[11px] leading-5 text-[#6f7685]">
+            {summary.subline}
+          </div>
+
+          {(brandChipText || summary.bankLine) ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {brandChipText ? (
+                <span className="inline-flex rounded-full border border-[#e7dcc3] bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#8b6c1f]">
+                  {brandChipText}
+                </span>
+              ) : null}
+              {summary.bankLine ? (
+                <span className="inline-flex rounded-full border border-[#e4e6ee] bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#5f6b85]">
+                  {summary.bankLine}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function ScanHomePage() {
@@ -227,6 +444,8 @@ export default function ScanHomePage() {
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const clientId = useMemo(() => `scan-feed-${Math.random().toString(36).slice(2, 10)}`, []);
   const chainLabel = configuredChain === "bsc" ? "BNB Smart Chain" : String(configuredChain || "bsc").toUpperCase();
+  const chainMarketLabel = getChainMarketLabel();
+  const chainLogoSrc = getChainLogoSrc();
   const explorerHost = getExplorerBaseUrl().replace("https://", "");
 
   const resolvedFeedMeta = useMemo(() => resolveScanFeedMeta(feedMeta), [feedMeta]);
@@ -266,16 +485,8 @@ export default function ScanHomePage() {
 
       return Array.from(map.values())
         .sort((left, right) => {
-          const rightTs = Math.max(
-            toTimestamp(right.data.minedAt),
-            toTimestamp(right.data.createdAt),
-            toTimestamp(right.data.publishedAt),
-          );
-          const leftTs = Math.max(
-            toTimestamp(left.data.minedAt),
-            toTimestamp(left.data.createdAt),
-            toTimestamp(left.data.publishedAt),
-          );
+          const rightTs = getEventDisplayTimestamp(right.data);
+          const leftTs = getEventDisplayTimestamp(left.data);
           return rightTs - leftTs;
         })
         .slice(0, MAX_EVENTS);
@@ -389,6 +600,7 @@ export default function ScanHomePage() {
         entries: FeedItem[];
         latestTimestamp: number;
         timeValue: string | null;
+        chainTimeValue: string | null;
         highlightUntil: number;
       }
     >();
@@ -399,12 +611,9 @@ export default function ScanHomePage() {
         continue;
       }
 
-      const nextTimestamp = Math.max(
-        toTimestamp(item.data.minedAt),
-        toTimestamp(item.data.createdAt),
-        toTimestamp(item.data.publishedAt),
-      );
-      const nextTimeValue = item.data.minedAt || item.data.createdAt || item.data.publishedAt || null;
+      const nextTimestamp = getEventDisplayTimestamp(item.data);
+      const nextTimeValue = getEventDisplayTimeValue(item.data);
+      const nextChainTimeValue = getEventChainTimeValue(item.data);
       const existing = grouped.get(transactionHash);
 
       if (!existing) {
@@ -416,6 +625,7 @@ export default function ScanHomePage() {
           entries: [item],
           latestTimestamp: nextTimestamp,
           timeValue: nextTimeValue,
+          chainTimeValue: nextChainTimeValue,
           highlightUntil: item.highlightUntil,
         });
         continue;
@@ -430,6 +640,7 @@ export default function ScanHomePage() {
       if (nextTimestamp > existing.latestTimestamp) {
         existing.latestTimestamp = nextTimestamp;
         existing.timeValue = nextTimeValue;
+        existing.chainTimeValue = nextChainTimeValue;
       }
     }
 
@@ -441,18 +652,7 @@ export default function ScanHomePage() {
           if (rightAmount !== leftAmount) {
             return rightAmount - leftAmount;
           }
-          return (
-            Math.max(
-              toTimestamp(right.data.minedAt),
-              toTimestamp(right.data.createdAt),
-              toTimestamp(right.data.publishedAt),
-            )
-            - Math.max(
-              toTimestamp(left.data.minedAt),
-              toTimestamp(left.data.createdAt),
-              toTimestamp(left.data.publishedAt),
-            )
-          );
+          return getEventDisplayTimestamp(right.data) - getEventDisplayTimestamp(left.data);
         });
         const fromSummary = buildPartySummary(orderedEntries, "from", lang);
         const toSummary = buildPartySummary(orderedEntries, "to", lang);
@@ -469,6 +669,7 @@ export default function ScanHomePage() {
           toSummary,
           latestTimestamp: group.latestTimestamp,
           timeValue: group.timeValue,
+          chainTimeValue: group.chainTimeValue,
           highlightUntil: group.highlightUntil,
           methodLabel,
           addresses: Array.from(new Set([...fromSummary.addresses, ...toSummary.addresses])),
@@ -489,9 +690,19 @@ export default function ScanHomePage() {
         row.methodLabel,
         row.status,
         row.fromSummary.headline,
+        row.fromSummary.title,
         row.fromSummary.subline,
+        row.fromSummary.bankLine,
+        row.fromSummary.identity?.storeName,
+        row.fromSummary.identity?.storecode,
+        row.fromSummary.identity?.nickname,
         row.toSummary.headline,
+        row.toSummary.title,
         row.toSummary.subline,
+        row.toSummary.bankLine,
+        row.toSummary.identity?.storeName,
+        row.toSummary.identity?.storecode,
+        row.toSummary.identity?.nickname,
         ...row.addresses,
       ];
 
@@ -554,22 +765,76 @@ export default function ScanHomePage() {
     },
   ];
 
+  const topMetrics = [
+    {
+      id: "chain",
+      label: "Chain",
+      value: chainMarketLabel,
+    },
+    {
+      id: "feed",
+      label: "Feed",
+      value: connectionState === "connected" ? "Realtime Active" : "Snapshot Mode",
+    },
+    {
+      id: "latest",
+      label: "Last Detected",
+      value: formatDateTime(totals.latestRecordAt),
+    },
+    {
+      id: "wallets",
+      label: "Wallet Scope",
+      value: `${totals.activeWallets.toLocaleString()} tracked`,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f5f7fb] text-[#1f2b46]">
-      <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-[#d7e3f5] bg-white shadow-[0_32px_96px_-60px_rgba(29,78,216,0.45)]">
-          <div className="border-b border-[#e5edf8] bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_42%),linear-gradient(180deg,_#ffffff_0%,_#f8fbff_100%)] px-5 py-6 sm:px-7">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-              <div className="max-w-3xl">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.36em] text-[#5f84c6]">
-                  {chainLabel} Explorer
+    <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+        <section className="overflow-hidden rounded-[26px] border border-[#2a3140] bg-[#111827] text-white shadow-[0_30px_80px_-52px_rgba(15,23,42,0.9)]">
+          <div className="grid gap-3 px-5 py-3 sm:px-6 lg:grid-cols-4">
+            {topMetrics.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 backdrop-blur"
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#c7d0e0]">
+                  {item.label}
                 </div>
-                <h1 className="mt-3 text-[2rem] font-semibold tracking-tight text-[#1f2b46] sm:text-[2.45rem]">
-                  Live USDT Transactions
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-                  BscScan-inspired transaction feed for verified USDT transfers detected on monitored smart accounts.
-                  Infrastructure details have been moved to a dedicated integrations page.
+                <div className="mt-1 text-sm font-semibold text-white">
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-[28px] border border-[#e9e2d2] bg-white shadow-[0_28px_72px_-54px_rgba(15,23,42,0.28)]">
+          <div className="border-b border-[#efe6d4] bg-[linear-gradient(180deg,_#fffdf7_0%,_#fbf7eb_100%)] px-5 py-6 sm:px-7">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+              <div className="max-w-3xl">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#f0ddb0] bg-[#fff7df] shadow-[0_14px_34px_-26px_rgba(180,129,0,0.55)]">
+                    <Image
+                      src={chainLogoSrc}
+                      alt={chainLabel}
+                      width={42}
+                      height={42}
+                      className="h-10 w-10 object-contain"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#9a7610]">
+                      {chainMarketLabel} Explorer
+                    </div>
+                    <h1 className="mt-2 text-[2rem] font-semibold tracking-tight text-[#202939] sm:text-[2.6rem]">
+                      Latest BEP-20 USDT Transfers
+                    </h1>
+                  </div>
+                </div>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-[#5f6675]">
+                  BscScan-style explorer surface for monitored wallet activity. Live transfers stay blockchain-first,
+                  while store and buyer labels make monitored addresses behave like white-labeled identities.
                 </p>
               </div>
 
@@ -580,92 +845,94 @@ export default function ScanHomePage() {
                 </span>
                 <Link
                   href={`/${lang}/scan/integrations`}
-                  className="rounded-full border border-[#cfe0fa] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#2354a8] transition hover:border-[#b8cff6] hover:bg-white"
+                  className="rounded-full border border-[#e6dcc5] bg-white px-4 py-2 text-sm font-semibold text-[#4a5568] transition hover:border-[#d8c9a3] hover:text-[#946400]"
                 >
-                  Infrastructure Details
+                  Infrastructure
                 </Link>
                 <a
                   href={getExplorerBaseUrl()}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-[#d7e3f5] bg-white px-4 py-2 text-sm font-semibold text-[#1f2b46] transition hover:border-[#bfd2f4] hover:text-[#2354a8]"
+                  className="rounded-full border border-[#f0ddb0] bg-[#fff6da] px-4 py-2 text-sm font-semibold text-[#946400] transition hover:border-[#e7cc80] hover:bg-[#fff2c7]"
                 >
                   Open {explorerHost}
                 </a>
               </div>
             </div>
 
-            <form onSubmit={handleSearchSubmit} className="mt-6 rounded-[24px] border border-[#d7e3f5] bg-white p-3 shadow-[0_18px_45px_-38px_rgba(15,23,42,0.35)]">
-              <div className="flex flex-col gap-3 md:flex-row">
+            <div className="mt-6 rounded-[26px] border border-[#1e2633] bg-[#151d29] p-4 shadow-[0_22px_48px_-34px_rgba(15,23,42,0.75)]">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Search by transaction hash or address</div>
-                  <input
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="0x..."
-                    className="mt-2 h-12 w-full rounded-2xl border border-transparent bg-[#f8fbff] px-4 text-sm text-[#1f2b46] outline-none transition focus:border-[#b8cff6] focus:bg-white focus:ring-4 focus:ring-[#e8f1ff]"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="h-12 rounded-2xl bg-[#1f4fa8] px-5 text-sm font-semibold text-white transition hover:bg-[#183f88] md:self-end"
-                >
-                  Search Explorer
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {integrationLinks.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/${lang}/scan/integrations#${item.id}`}
-                  className="group rounded-[22px] border border-[#d7e3f5] bg-white px-4 py-4 transition hover:-translate-y-0.5 hover:border-[#b7cef6] hover:shadow-[0_18px_38px_-32px_rgba(29,78,216,0.45)]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-[#1f2b46]">{item.title}</div>
-                      <div className="mt-1 text-xs text-slate-500">{item.description}</div>
-                    </div>
-                    <span className="rounded-full border border-[#d7e3f5] bg-[#f8fbff] px-2.5 py-1 text-[11px] font-semibold text-[#2354a8] transition group-hover:border-[#bfd2f4]">
-                      Open
-                    </span>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#f2d996]">
+                    Search explorer
                   </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+                  <form onSubmit={handleSearchSubmit} className="mt-3 flex flex-col gap-3 md:flex-row">
+                    <div className="relative min-w-0 flex-1">
+                      <input
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder="Search by address / transaction hash / store label"
+                        className="h-14 w-full rounded-2xl border border-white/10 bg-white px-5 text-sm text-[#202939] outline-none transition focus:border-[#f2d996] focus:ring-4 focus:ring-[#f8edc6]"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="h-14 rounded-2xl bg-[#f0b90b] px-6 text-sm font-semibold text-[#1d1f24] transition hover:bg-[#e0aa05]"
+                    >
+                      Search
+                    </button>
+                  </form>
+                </div>
 
-          <div className="grid gap-4 px-5 py-5 sm:px-7 lg:grid-cols-4">
-            <div className="rounded-[24px] border border-[#dfe8f7] bg-[#fbfdff] px-5 py-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Transactions</div>
-              <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#1f2b46]">{totals.transactions.toLocaleString()}</div>
+                <div className="grid gap-2 sm:grid-cols-2 xl:w-[360px]">
+                  {integrationLinks.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/${lang}/scan/integrations#${item.id}`}
+                      className="group rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm transition hover:border-[#f0ddb0] hover:bg-white/10"
+                    >
+                      <div className="font-semibold text-white">{item.title}</div>
+                      <div className="mt-1 text-xs text-[#c7d0e0]">{item.description}</div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="rounded-[24px] border border-[#dfe8f7] bg-[#fbfdff] px-5 py-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Transfer Logs</div>
-              <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#1f2b46]">{totals.transferLogs.toLocaleString()}</div>
-            </div>
-            <div className="rounded-[24px] border border-[#dfe8f7] bg-[#fbfdff] px-5 py-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Observed USDT</div>
-              <div className="mt-2 text-[30px] font-semibold tracking-tight text-emerald-600">{formatUsdt(totals.totalUsdt)}</div>
-            </div>
-            <div className="rounded-[24px] border border-[#dfe8f7] bg-[#fbfdff] px-5 py-4 shadow-sm">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">Active Wallets</div>
-              <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#1f2b46]">{totals.activeWallets.toLocaleString()}</div>
-              <div className="mt-2 text-xs text-slate-500">Latest {formatDateTime(totals.latestRecordAt)}</div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Transactions</div>
+                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transactions.toLocaleString()}</div>
+                <div className="mt-1 text-xs text-[#7c8495]">Unique transaction hashes in feed</div>
+              </div>
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Token Transfers</div>
+                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transferLogs.toLocaleString()}</div>
+                <div className="mt-1 text-xs text-[#7c8495]">Individual monitored transfer logs</div>
+              </div>
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Observed Value</div>
+                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#0f7a4b]">{formatUsdt(totals.totalUsdt)}</div>
+                <div className="mt-1 text-xs text-[#7c8495]">USDT aggregated from current feed</div>
+              </div>
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Wallet Labels</div>
+                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.activeWallets.toLocaleString()}</div>
+                <div className="mt-1 text-xs text-[#7c8495]">Last detected {formatDateTime(totals.latestRecordAt)}</div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-[#d7e3f5] bg-white shadow-[0_22px_70px_-48px_rgba(15,23,42,0.24)]">
-          <div className="border-b border-[#e5edf8] px-5 py-5 sm:px-7">
+        <section className="overflow-hidden rounded-[28px] border border-[#e9e2d2] bg-white shadow-[0_22px_70px_-50px_rgba(15,23,42,0.18)]">
+          <div className="border-b border-[#eee5d3] px-5 py-5 sm:px-7">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#5f84c6]">Latest Transactions</div>
-                <h2 className="mt-2 text-xl font-semibold text-[#1f2b46]">Verified USDT transfers on monitored wallets</h2>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#9a7610]">Latest Token Transfers</div>
+                <h2 className="mt-2 text-xl font-semibold text-[#202939]">Verified monitored transfers</h2>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#7c8495]">
                 <span>{isSyncing ? "Snapshot syncing..." : "Realtime feed active"}</span>
                 {connectionErrorMessage ? <span>· {connectionErrorMessage}</span> : null}
                 {syncErrorMessage ? <span>· {syncErrorMessage}</span> : null}
@@ -673,17 +940,17 @@ export default function ScanHomePage() {
             </div>
           </div>
 
-          <div className="hidden border-b border-[#e5edf8] bg-[#f8fbff] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-7">
+          <div className="hidden border-b border-[#f0e5c4] bg-[#fff8e5] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b6a39] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-7">
             <div>Txn Hash</div>
             <div>Method</div>
             <div>Age</div>
             <div>From</div>
             <div>To</div>
-            <div>Amount</div>
+            <div>Value</div>
           </div>
 
           {filteredRows.length > 0 ? (
-            <div className="divide-y divide-[#edf2fb]">
+            <div className="divide-y divide-[#f1eadb]">
               {filteredRows.map((row) => {
                 const isHighlighted = row.highlightUntil > nowMs;
                 const relativeTime = getRelativeTimeInfo(row.timeValue, nowMs);
@@ -695,16 +962,16 @@ export default function ScanHomePage() {
                   >
                     <div className="grid gap-4 md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr]">
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 md:hidden">Txn Hash</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Txn Hash</div>
                         <div className="mt-1 flex items-start gap-3">
-                          <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-2xl border border-[#d7e3f5] bg-[#f8fbff] text-xs font-semibold text-[#2354a8]">
-                            {row.transferCount > 1 ? "B" : "T"}
+                          <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-2xl border border-[#efdba1] bg-[#fff4d0] text-[11px] font-semibold text-[#8f6300]">
+                            {row.transferCount > 1 ? "BEP" : "TXN"}
                           </span>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <Link
                                 href={`/${lang}/scan/tx/${row.transactionHash}`}
-                                className="text-sm font-semibold text-[#2354a8] transition hover:text-[#183f88]"
+                                className="text-sm font-semibold text-[#0784c3] transition hover:text-[#05689a]"
                                 title={row.transactionHash}
                               >
                                 {formatShortHash(row.transactionHash)}
@@ -713,12 +980,12 @@ export default function ScanHomePage() {
                                 {getStatusLabel(row.status)}
                               </span>
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[#7c8495]">
                               <a
                                 href={getExplorerTxUrl(row.transactionHash)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="font-medium text-slate-400 transition hover:text-slate-600"
+                                className="font-medium text-[#0784c3] transition hover:text-[#05689a]"
                               >
                                 View on {explorerHost}
                               </a>
@@ -729,66 +996,69 @@ export default function ScanHomePage() {
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 md:hidden">Method</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Method</div>
                         <div className="mt-1">
-                          <span className="inline-flex rounded-full border border-[#cfe0fa] bg-[#eef5ff] px-3 py-1 text-xs font-semibold text-[#2354a8]">
+                          <span className="inline-flex rounded-full border border-[#e5e7ef] bg-[#f8f9fb] px-3 py-1 text-xs font-semibold text-[#4b5568]">
                             {row.methodLabel}
                           </span>
-                          <div className="mt-2 text-sm text-slate-500">{(row.chain || configuredChain || "bsc").toUpperCase()}</div>
+                          <div className="mt-2 text-sm text-[#7c8495]">{(row.chain || configuredChain || "bsc").toUpperCase()}</div>
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 md:hidden">Age</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Age</div>
                         <div className="mt-1">
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
                             {relativeTime.relativeLabel}
                           </span>
-                          <div className="mt-2 text-sm text-slate-500">{formatDateTime(row.timeValue)}</div>
+                          <div className="mt-2 text-sm text-[#7c8495]">Detected {formatDateTime(row.timeValue)}</div>
+                          {row.chainTimeValue && row.chainTimeValue !== row.timeValue ? (
+                            <div className="mt-1 text-xs text-[#9ca3af]">On-chain {formatDateTime(row.chainTimeValue)}</div>
+                          ) : null}
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 md:hidden">From</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">From</div>
                         <div className="mt-1">
                           {row.fromSummary.href ? (
                             <Link
                               href={row.fromSummary.href}
-                              className="text-sm font-semibold text-[#1f2b46] transition hover:text-[#2354a8]"
+                              className="text-sm font-semibold text-[#0784c3] transition hover:text-[#05689a]"
                               title={row.fromSummary.addresses[0]}
                             >
                               {row.fromSummary.headline}
                             </Link>
                           ) : (
-                            <div className="text-sm font-semibold text-[#1f2b46]">{row.fromSummary.headline}</div>
+                            <div className="text-sm font-semibold text-[#202939]">{row.fromSummary.headline}</div>
                           )}
-                          <div className="mt-2 text-xs leading-5 text-slate-500">{row.fromSummary.subline}</div>
+                          <PartyIdentityCard summary={row.fromSummary} />
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 md:hidden">To</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">To</div>
                         <div className="mt-1">
                           {row.toSummary.href ? (
                             <Link
                               href={row.toSummary.href}
-                              className="text-sm font-semibold text-[#1f2b46] transition hover:text-[#2354a8]"
+                              className="text-sm font-semibold text-[#0784c3] transition hover:text-[#05689a]"
                               title={row.toSummary.addresses[0]}
                             >
                               {row.toSummary.headline}
                             </Link>
                           ) : (
-                            <div className="text-sm font-semibold text-[#1f2b46]">{row.toSummary.headline}</div>
+                            <div className="text-sm font-semibold text-[#202939]">{row.toSummary.headline}</div>
                           )}
-                          <div className="mt-2 text-xs leading-5 text-slate-500">{row.toSummary.subline}</div>
+                          <PartyIdentityCard summary={row.toSummary} />
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 md:hidden">Amount</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Value</div>
                         <div className="mt-1">
-                          <div className="text-sm font-semibold text-[#1f2b46]">{formatUsdt(row.totalUsdt)} USDT</div>
-                          <div className="mt-2 text-xs text-slate-500">{row.transferCount > 1 ? "Aggregated batch value" : "Single transfer value"}</div>
+                          <div className="text-sm font-semibold text-[#202939]">{formatUsdt(row.totalUsdt)} USDT</div>
+                          <div className="mt-2 text-xs text-[#7c8495]">{row.transferCount > 1 ? "Aggregated batch value" : "Single transfer value"}</div>
                         </div>
                       </div>
                     </div>
@@ -797,7 +1067,7 @@ export default function ScanHomePage() {
               })}
             </div>
           ) : (
-            <div className="px-5 py-16 text-center text-sm text-slate-500 sm:px-7">
+            <div className="px-5 py-16 text-center text-sm text-[#7c8495] sm:px-7">
               No matching transactions yet.
             </div>
           )}
@@ -826,13 +1096,13 @@ export default function ScanHomePage() {
         @keyframes scanRowGlow {
           0% {
             box-shadow:
-              inset 0 0 0 1px rgba(96, 165, 250, 0.42),
-              0 18px 42px -34px rgba(37, 99, 235, 0.38);
+              inset 0 0 0 1px rgba(240, 185, 11, 0.34),
+              0 18px 42px -34px rgba(180, 129, 0, 0.32);
           }
           100% {
             box-shadow:
-              inset 0 0 0 1px rgba(96, 165, 250, 0),
-              0 0 0 0 rgba(37, 99, 235, 0);
+              inset 0 0 0 1px rgba(240, 185, 11, 0),
+              0 0 0 0 rgba(180, 129, 0, 0);
           }
         }
 
@@ -859,7 +1129,7 @@ export default function ScanHomePage() {
             scanRowEnter 880ms cubic-bezier(0.18, 0.84, 0.2, 1),
             scanRowGlow 2500ms ease-out;
           background:
-            linear-gradient(90deg, rgba(235, 244, 255, 0.95) 0%, rgba(255, 255, 255, 1) 18%, rgba(247, 251, 255, 0.96) 100%);
+            linear-gradient(90deg, rgba(255, 248, 225, 0.98) 0%, rgba(255, 255, 255, 1) 18%, rgba(255, 252, 241, 0.98) 100%);
         }
 
         .scan-live-row--highlight::before {
@@ -870,8 +1140,8 @@ export default function ScanHomePage() {
           bottom: 14px;
           width: 4px;
           border-radius: 999px;
-          background: linear-gradient(180deg, #2563eb 0%, #60a5fa 100%);
-          box-shadow: 0 0 18px rgba(59, 130, 246, 0.4);
+          background: linear-gradient(180deg, #f0b90b 0%, #f8d561 100%);
+          box-shadow: 0 0 18px rgba(240, 185, 11, 0.35);
         }
 
         .scan-live-dot {
