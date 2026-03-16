@@ -481,12 +481,7 @@ function PartyIdentityCardItem({
           identity?.storeName,
           identity?.storecode ? `@${identity.storecode}` : null,
         ].filter((value): value is string => Boolean(value)).join(" · ")
-      : (
-          item.bankLine
-          || maskIdentityText(identity?.nickname)
-          || maskIdentityText(identity?.accountHolder)
-          || item.subline
-        );
+      : null;
 
   const compactTitle = isStoreIdentity
     ? item.title
@@ -494,6 +489,7 @@ function PartyIdentityCardItem({
         maskIdentityText(item.title)
         || maskIdentityText(identity?.nickname)
         || maskIdentityText(identity?.accountHolder)
+        || "Monitored wallet"
       );
 
   return (
@@ -531,11 +527,11 @@ function PartyIdentityCardItem({
             <div className="mt-1 truncate text-[11px] leading-4 text-[#71717a]">
               {compactMeta}
             </div>
-          ) : (
+          ) : isStoreIdentity ? (
             <div className="mt-1 truncate text-[11px] leading-4 text-[#71717a]">
               {item.subline}
             </div>
-          )}
+          ) : null}
 
           {showAddress && item.href ? (
             <Link href={item.href} className="mt-1 block truncate text-[11px] font-semibold text-[#27272a] transition hover:text-[#52525b]">
@@ -584,6 +580,43 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
       ) : null}
     </div>
   );
+}
+
+function DesktopPartyCell({
+  summary,
+  itemIndex,
+  repeatedLabel,
+}: {
+  summary: PartySummary;
+  itemIndex: number;
+  repeatedLabel: string;
+}) {
+  if (summary.items.length === 0) {
+    return itemIndex === 0 ? (
+      <div className="mt-1 text-[11px] leading-5 text-[#71717a]">
+        {summary.subline}
+      </div>
+    ) : null;
+  }
+
+  const item = summary.items[itemIndex];
+  if (item) {
+    return (
+      <div className="mt-1">
+        <PartyIdentityCardItem item={item} showAddress />
+      </div>
+    );
+  }
+
+  if (summary.items.length === 1 && itemIndex > 0) {
+    return (
+      <div className="mt-3 inline-flex rounded-full border border-[#e4e4e7] bg-[#fafafa] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717a]">
+        {repeatedLabel}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function getCompactLinkClassName() {
@@ -1213,6 +1246,15 @@ export default function ScanHomeClientPage({
                 const isHighlighted = row.highlightUntil > nowMs;
                 const relativeTime = getRelativeTimeInfo(row.timeValue, nowMs);
                 const chainDisplayLabel = (row.chain || configuredChain || "bsc").toUpperCase();
+                const desktopRowCount = Math.max(
+                  1,
+                  row.fromSummary.items.length,
+                  row.toSummary.items.length,
+                );
+                const desktopRowIndexes = Array.from(
+                  { length: desktopRowCount },
+                  (_, index) => index,
+                );
 
                 return (
                   <div
@@ -1337,101 +1379,106 @@ export default function ScanHomeClientPage({
                       </div>
                     </div>
 
-                    <div className="hidden gap-3 md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr]">
-                      <div className="min-w-0">
-                        <div className="mt-1 flex items-start gap-2.5">
-                          <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-[#d4d4d8] bg-[#fafafa] text-[10px] font-semibold text-[#18181b]">
-                            {row.transferCount > 1 ? "BEP" : "TXN"}
-                          </span>
+                    <div className="hidden md:block">
+                      {desktopRowIndexes.map((desktopRowIndex) => (
+                        <div
+                          key={`${row.id}:desktop:${desktopRowIndex}`}
+                          className={`grid gap-3 md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] ${
+                            desktopRowIndex > 0
+                              ? "mt-3 border-t border-[#f0f0f0] pt-3"
+                              : ""
+                          }`}
+                        >
                           <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Link
-                                href={`/${lang}/scan/tx/${row.transactionHash}`}
-                                className={getCompactLinkClassName()}
-                                title={row.transactionHash}
-                              >
-                                {formatShortHash(row.transactionHash)}
-                              </Link>
-                              <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getTableStatusTone(row.status)}`}>
-                                {getStatusLabel(row.status)}
-                              </span>
-                            </div>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-[#71717a]">
-                              <a
-                                href={getExplorerTxUrl(row.transactionHash)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-medium text-[#3f3f46] transition hover:text-[#18181b]"
-                              >
-                                View on {explorerHost}
-                              </a>
-                              <span>{row.transferCount} transfer logs</span>
-                            </div>
+                            {desktopRowIndex === 0 ? (
+                              <div className="mt-1 flex items-start gap-2.5">
+                                <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-[#d4d4d8] bg-[#fafafa] text-[10px] font-semibold text-[#18181b]">
+                                  {row.transferCount > 1 ? "BEP" : "TXN"}
+                                </span>
+                                <div className="min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Link
+                                      href={`/${lang}/scan/tx/${row.transactionHash}`}
+                                      className={getCompactLinkClassName()}
+                                      title={row.transactionHash}
+                                    >
+                                      {formatShortHash(row.transactionHash)}
+                                    </Link>
+                                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getTableStatusTone(row.status)}`}>
+                                      {getStatusLabel(row.status)}
+                                    </span>
+                                  </div>
+                                  <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-[#71717a]">
+                                    <a
+                                      href={getExplorerTxUrl(row.transactionHash)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="font-medium text-[#3f3f46] transition hover:text-[#18181b]"
+                                    >
+                                      View on {explorerHost}
+                                    </a>
+                                    <span>{row.transferCount} transfer logs</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-3 inline-flex rounded-full border border-[#e4e4e7] bg-[#fafafa] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#71717a]">
+                                Recipient {desktopRowIndex + 1}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            {desktopRowIndex === 0 ? (
+                              <div className="mt-1">
+                                <span className="inline-flex rounded-full border border-[#d4d4d8] bg-[#fafafa] px-2.5 py-1 text-[11px] font-semibold text-[#27272a]">
+                                  {row.methodLabel}
+                                </span>
+                                <div className="mt-1.5 text-[12px] text-[#71717a]">{chainDisplayLabel}</div>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="min-w-0">
+                            {desktopRowIndex === 0 ? (
+                              <div className="mt-1">
+                                <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
+                                  {relativeTime.relativeLabel}
+                                </span>
+                                <div className="mt-1.5 text-[12px] text-[#52525b]">Detected {formatDateTime(row.timeValue)}</div>
+                                {row.chainTimeValue && row.chainTimeValue !== row.timeValue ? (
+                                  <div className="mt-1 text-[11px] text-[#a1a1aa]">On-chain {formatDateTime(row.chainTimeValue)}</div>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="min-w-0">
+                            <DesktopPartyCell
+                              summary={row.fromSummary}
+                              itemIndex={desktopRowIndex}
+                              repeatedLabel="Same sender"
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            <DesktopPartyCell
+                              summary={row.toSummary}
+                              itemIndex={desktopRowIndex}
+                              repeatedLabel="Same recipient"
+                            />
+                          </div>
+
+                          <div className="min-w-0">
+                            {desktopRowIndex === 0 ? (
+                              <div className="mt-1">
+                                <div className="text-sm font-semibold text-[#18181b]">{formatUsdt(row.totalUsdt)} USDT</div>
+                                <div className="mt-1.5 text-[11px] text-[#71717a]">{row.transferCount > 1 ? "Batch total" : "Single transfer"}</div>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="mt-1">
-                          <span className="inline-flex rounded-full border border-[#d4d4d8] bg-[#fafafa] px-2.5 py-1 text-[11px] font-semibold text-[#27272a]">
-                            {row.methodLabel}
-                          </span>
-                          <div className="mt-1.5 text-[12px] text-[#71717a]">{chainDisplayLabel}</div>
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="mt-1">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
-                            {relativeTime.relativeLabel}
-                          </span>
-                          <div className="mt-1.5 text-[12px] text-[#52525b]">Detected {formatDateTime(row.timeValue)}</div>
-                          {row.chainTimeValue && row.chainTimeValue !== row.timeValue ? (
-                            <div className="mt-1 text-[11px] text-[#a1a1aa]">On-chain {formatDateTime(row.chainTimeValue)}</div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="mt-1">
-                          {row.fromSummary.href ? (
-                            <Link
-                              href={row.fromSummary.href}
-                              className={getCompactLinkClassName()}
-                              title={row.fromSummary.addresses[0]}
-                            >
-                              {row.fromSummary.headline}
-                            </Link>
-                          ) : (
-                            <div className="text-sm font-semibold text-[#18181b]">{row.fromSummary.headline}</div>
-                          )}
-                          <PartyIdentityCard summary={row.fromSummary} />
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="mt-1">
-                          {row.toSummary.href ? (
-                            <Link
-                              href={row.toSummary.href}
-                              className={getCompactLinkClassName()}
-                              title={row.toSummary.addresses[0]}
-                            >
-                              {row.toSummary.headline}
-                            </Link>
-                          ) : (
-                            <div className="text-sm font-semibold text-[#18181b]">{row.toSummary.headline}</div>
-                          )}
-                          <PartyIdentityCard summary={row.toSummary} />
-                        </div>
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="mt-1">
-                          <div className="text-sm font-semibold text-[#18181b]">{formatUsdt(row.totalUsdt)} USDT</div>
-                          <div className="mt-1.5 text-[11px] text-[#71717a]">{row.transferCount > 1 ? "Batch total" : "Single transfer"}</div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 );
