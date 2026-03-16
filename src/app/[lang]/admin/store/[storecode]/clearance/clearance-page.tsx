@@ -4606,7 +4606,7 @@ export default function Index({ params }: any) {
                             <div className="w-full flex items-center justify-center">
 
                             {
-                            item.transactionHash && item.transactionHash !== '0x' && (
+                            item.status !== 'cancelled' && (
                               <>
 
                               {item?.buyer?.depositCompleted !== true
