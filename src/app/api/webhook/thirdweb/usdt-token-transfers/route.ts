@@ -7,6 +7,7 @@ import {
 import { registerUsdtTransactionHashRealtimeEvent } from "@lib/api/tokenTransfer";
 import {
   extractThirdwebSellerUsdtTransferEvents,
+  insertThirdwebInsightWebhookIngressLog,
   parseThirdwebInsightWebhookEnvelope,
   THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC,
   THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER,
@@ -18,6 +19,18 @@ import {
 export const runtime = "nodejs";
 
 const ROUTE_PATH = "/api/webhook/thirdweb/usdt-token-transfers";
+
+const getRequestIp = (request: NextRequest) => {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    const firstIp = forwardedFor.split(",")[0]?.trim();
+    if (firstIp) {
+      return firstIp;
+    }
+  }
+
+  return request.headers.get("x-real-ip");
+};
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -32,6 +45,9 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text();
   const webhookId = request.headers.get(THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER);
   const signature = request.headers.get(THIRDWEB_INSIGHT_WEBHOOK_SIGNATURE_HEADER);
+  const remoteIp = getRequestIp(request);
+  const userAgent = request.headers.get("user-agent");
+  const vercelRequestId = request.headers.get("x-vercel-id");
 
   const verified = await verifyThirdwebInsightWebhook({
     rawBody,
@@ -39,6 +55,21 @@ export async function POST(request: NextRequest) {
     signatureRaw: signature,
   });
   if (!verified.ok) {
+    await insertThirdwebInsightWebhookIngressLog({
+      route: ROUTE_PATH,
+      outcome: "rejected_signature",
+      statusCode: verified.status,
+      rawBody,
+      webhookId,
+      verified: false,
+      error: verified.error,
+      remoteIp,
+      userAgent,
+      vercelRequestId,
+      signaturePresent: Boolean(signature),
+      signatureLength: signature?.length || 0,
+    });
+
     return NextResponse.json(
       {
         error: verified.error,
@@ -52,6 +83,23 @@ export async function POST(request: NextRequest) {
   try {
     envelope = parseThirdwebInsightWebhookEnvelope(rawBody);
   } catch {
+    await insertThirdwebInsightWebhookIngressLog({
+      route: ROUTE_PATH,
+      outcome: "rejected_payload",
+      statusCode: 400,
+      rawBody,
+      webhookId,
+      verified: true,
+      isTestWebhook: Boolean(verified.isTestWebhook),
+      secretName: verified.secretName,
+      error: "Invalid thirdweb webhook payload",
+      remoteIp,
+      userAgent,
+      vercelRequestId,
+      signaturePresent: Boolean(signature),
+      signatureLength: signature?.length || 0,
+    });
+
     return NextResponse.json(
       {
         error: "Invalid thirdweb webhook payload",
@@ -63,6 +111,24 @@ export async function POST(request: NextRequest) {
 
   const ageValidation = validateThirdwebInsightWebhookAge(envelope.timestamp);
   if (!ageValidation.ok) {
+    await insertThirdwebInsightWebhookIngressLog({
+      route: ROUTE_PATH,
+      outcome: "rejected_age",
+      statusCode: ageValidation.status,
+      rawBody,
+      webhookId,
+      verified: true,
+      isTestWebhook: Boolean(verified.isTestWebhook),
+      secretName: verified.secretName,
+      error: ageValidation.error,
+      topic: typeof envelope.topic === "string" ? envelope.topic : null,
+      remoteIp,
+      userAgent,
+      vercelRequestId,
+      signaturePresent: Boolean(signature),
+      signatureLength: signature?.length || 0,
+    });
+
     return NextResponse.json(
       {
         error: ageValidation.error,
@@ -74,6 +140,29 @@ export async function POST(request: NextRequest) {
 
   const extracted = await extractThirdwebSellerUsdtTransferEvents(envelope);
   if (extracted.topic !== THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC) {
+    await insertThirdwebInsightWebhookIngressLog({
+      route: ROUTE_PATH,
+      outcome: "rejected_topic",
+      statusCode: 400,
+      rawBody,
+      webhookId,
+      verified: true,
+      isTestWebhook: Boolean(verified.isTestWebhook),
+      secretName: verified.secretName,
+      error: `Unsupported thirdweb webhook topic: ${extracted.topic || "-"}`,
+      topic: extracted.topic,
+      sentAtIso: ageValidation.sentAtIso,
+      remoteIp,
+      userAgent,
+      vercelRequestId,
+      signaturePresent: Boolean(signature),
+      signatureLength: signature?.length || 0,
+      receivedCount: extracted.receivedCount,
+      acceptedCount: extracted.acceptedCount,
+      skippedCount: extracted.skippedCount,
+      skippedReasons: extracted.skippedReasons,
+    });
+
     return NextResponse.json(
       {
         error: `Unsupported thirdweb webhook topic: ${extracted.topic || "-"}`,
@@ -90,6 +179,40 @@ export async function POST(request: NextRequest) {
   const duplicateCount = results.filter((item) => item.isDuplicate).length;
   const updatedCount = results.filter((item) => item.wasUpdated).length;
   const publishedCount = results.filter((item) => item.wasPublished).length;
+  const outcome =
+    extracted.acceptedCount > 0
+      ? "accepted"
+      : extracted.skippedReasons?.seller_wallet_not_matched
+        ? "seller_mismatch"
+        : "processed_no_match";
+
+  await insertThirdwebInsightWebhookIngressLog({
+    route: ROUTE_PATH,
+    outcome,
+    statusCode: 200,
+    rawBody,
+    webhookId,
+    verified: true,
+    isTestWebhook: Boolean(verified.isTestWebhook),
+    secretName: verified.secretName,
+    topic: extracted.topic,
+    sentAtIso: ageValidation.sentAtIso,
+    remoteIp,
+    userAgent,
+    vercelRequestId,
+    signaturePresent: Boolean(signature),
+    signatureLength: signature?.length || 0,
+    receivedCount: extracted.receivedCount,
+    acceptedCount: extracted.acceptedCount,
+    skippedCount: extracted.skippedCount,
+    skippedReasons: extracted.skippedReasons,
+    duplicateCount,
+    updatedCount,
+    publishedCount,
+    transactionHashes: extracted.events.map((event) => event.transactionHash).filter(Boolean),
+    queueIds: extracted.events.map((event) => event.queueId).filter(Boolean) as string[],
+    storecodes: extracted.events.map((event) => event.store?.code).filter(Boolean) as string[],
+  });
 
   return NextResponse.json(
     {

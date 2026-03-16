@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 
 import {
   arbitrumContractAddressUSDT,
@@ -20,6 +20,7 @@ export const THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH =
 export const THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT =
   "v1.events · USDT Transfer(address,address,uint256) · store-configured server wallets only";
 export const THIRDWEB_INSIGHT_MANAGED_WEBHOOK_COLLECTION = "thirdwebInsightManagedWebhooks";
+export const THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_COLLECTION = "thirdwebInsightWebhookIngressLogs";
 export const THIRDWEB_INSIGHT_MANAGED_WEBHOOK_NAME_PREFIX =
   "stable-georgia:store-wallet-usdt-scan";
 const THIRDWEB_INSIGHT_TEST_WEBHOOK_SECRET = "test123";
@@ -76,6 +77,42 @@ type ManagedWebhookSecretRecord = {
   name: string | null;
 };
 
+type ThirdwebInsightWebhookIngressLogInput = {
+  route: string;
+  outcome:
+    | "accepted"
+    | "processed_no_match"
+    | "seller_mismatch"
+    | "rejected_signature"
+    | "rejected_payload"
+    | "rejected_age"
+    | "rejected_topic";
+  statusCode: number;
+  rawBody: string;
+  webhookId?: string | null;
+  verified?: boolean;
+  isTestWebhook?: boolean;
+  secretName?: string | null;
+  error?: string | null;
+  topic?: string | null;
+  sentAtIso?: string | null;
+  remoteIp?: string | null;
+  userAgent?: string | null;
+  vercelRequestId?: string | null;
+  signaturePresent?: boolean;
+  signatureLength?: number;
+  receivedCount?: number;
+  acceptedCount?: number;
+  skippedCount?: number;
+  skippedReasons?: Record<string, number>;
+  duplicateCount?: number;
+  updatedCount?: number;
+  publishedCount?: number;
+  transactionHashes?: string[];
+  queueIds?: string[];
+  storecodes?: string[];
+};
+
 const DEFAULT_THIRDWEB_WEBHOOK_MAX_AGE_SECONDS = Math.max(
   Number.parseInt(process.env.THIRDWEB_INSIGHT_WEBHOOK_MAX_AGE_SECONDS || "", 10) || 15 * 60,
   30,
@@ -87,6 +124,10 @@ const SELLER_WALLET_CACHE_TTL_MS = Math.max(
 const MANAGED_WEBHOOK_SECRET_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.THIRDWEB_MANAGED_WEBHOOK_SECRET_CACHE_TTL_MS || "", 10) || 30 * 1000,
   5 * 1000,
+);
+const THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_TTL_DAYS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_TTL_DAYS || "", 10) || 30,
+  1,
 );
 
 const globalThirdwebInsightWebhookState = globalThis as typeof globalThis & {
@@ -102,6 +143,7 @@ const globalThirdwebInsightWebhookState = globalThis as typeof globalThis & {
       value: ManagedWebhookSecretRecord | null;
     }
   >;
+  __thirdwebWebhookIngressIndexPromise?: Promise<void>;
 };
 
 const normalizeText = (value: unknown): string => {
@@ -129,6 +171,19 @@ const toRecord = (value: unknown): Record<string, unknown> | null => {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+};
+
+const toFiniteNumberOrNull = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value.trim(), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 };
 
 const getConfiguredUsdtContractAddress = (): string => {
@@ -235,6 +290,13 @@ const getWebhookSecret = (): { name: string; value: string } | null => {
   return null;
 };
 
+const getWebhookIngressIndexPromise = () =>
+  globalThirdwebInsightWebhookState.__thirdwebWebhookIngressIndexPromise || null;
+
+const setWebhookIngressIndexPromise = (promise: Promise<void> | null) => {
+  globalThirdwebInsightWebhookState.__thirdwebWebhookIngressIndexPromise = promise || undefined;
+};
+
 const getSellerWalletCache = () => globalThirdwebInsightWebhookState.__thirdwebSellerWalletCache || null;
 
 const setSellerWalletCache = (value: Map<string, ThirdwebSellerWalletRecord>) => {
@@ -287,6 +349,144 @@ export const clearThirdwebManagedWebhookSecretCache = () => {
 export const clearThirdwebSellerWalletCache = () => {
   delete globalThirdwebInsightWebhookState.__thirdwebSellerWalletCache;
   delete globalThirdwebInsightWebhookState.__thirdwebSellerWalletPromise;
+};
+
+const ensureThirdwebWebhookIngressLogIndexes = async () => {
+  const existingPromise = getWebhookIngressIndexPromise();
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const nextPromise = (async () => {
+    const client = await clientPromise;
+    const database = client.db(dbName);
+    const collection = database.collection(THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_COLLECTION);
+    await Promise.all([
+      collection.createIndex({ createdAt: -1 }),
+      collection.createIndex({ outcome: 1, createdAt: -1 }),
+      collection.createIndex({ webhookId: 1, createdAt: -1 }),
+      collection.createIndex({ verified: 1, createdAt: -1 }),
+      collection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+    ]);
+  })()
+    .catch((error) => {
+      setWebhookIngressIndexPromise(null);
+      throw error;
+    });
+
+  setWebhookIngressIndexPromise(nextPromise);
+  return nextPromise;
+};
+
+const safeUniqueLimitedStrings = (values: unknown[], limit = 20): string[] => {
+  const unique = new Set<string>();
+
+  for (const value of values) {
+    const normalized = toNullableText(value);
+    if (!normalized) {
+      continue;
+    }
+
+    unique.add(normalized);
+    if (unique.size >= limit) {
+      break;
+    }
+  }
+
+  return [...unique];
+};
+
+const summarizeThirdwebWebhookEnvelope = (rawBody: string) => {
+  try {
+    const envelope = parseThirdwebInsightWebhookEnvelope(rawBody);
+    const items = toArray<ThirdwebInsightWebhookItem>(envelope.data);
+    const transactionHashes = safeUniqueLimitedStrings(
+      items.map((item) => {
+        const payload = toRecord(item?.data);
+        return payload?.transaction_hash || payload?.transactionHash || null;
+      }),
+    );
+    const itemIds = safeUniqueLimitedStrings(items.map((item) => item?.id));
+    const envelopeTimestamp = toFiniteNumberOrNull(envelope.timestamp);
+
+    return {
+      topic: toNullableText(envelope.topic),
+      envelopeTimestamp: envelopeTimestamp ? new Date(envelopeTimestamp * 1000).toISOString() : null,
+      receivedCount: items.length,
+      transactionHashes,
+      itemIds,
+    };
+  } catch {
+    return {
+      topic: null,
+      envelopeTimestamp: null,
+      receivedCount: 0,
+      transactionHashes: [],
+      itemIds: [],
+    };
+  }
+};
+
+export const insertThirdwebInsightWebhookIngressLog = async (
+  input: ThirdwebInsightWebhookIngressLogInput,
+) => {
+  try {
+    const envelopeSummary = summarizeThirdwebWebhookEnvelope(input.rawBody);
+    const bodyBytes = Buffer.byteLength(input.rawBody, "utf8");
+    const bodySha256 = createHash("sha256").update(input.rawBody).digest("hex");
+    const createdAt = new Date();
+    const expiresAt = new Date(
+      createdAt.getTime() + THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_TTL_DAYS * 24 * 60 * 60 * 1000,
+    );
+
+    await ensureThirdwebWebhookIngressLogIndexes();
+
+    const client = await clientPromise;
+    const database = client.db(dbName);
+    const collection = database.collection(THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_COLLECTION);
+
+    await collection.insertOne({
+      route: toNullableText(input.route),
+      outcome: input.outcome,
+      statusCode: input.statusCode,
+      verified: Boolean(input.verified),
+      isTestWebhook: Boolean(input.isTestWebhook),
+      secretName: toNullableText(input.secretName),
+      error: toNullableText(input.error),
+      webhookId: toNullableText(input.webhookId),
+      topic: toNullableText(input.topic) || envelopeSummary.topic,
+      sentAt: toNullableText(input.sentAtIso),
+      envelopeTimestamp: envelopeSummary.envelopeTimestamp,
+      remoteIp: toNullableText(input.remoteIp),
+      userAgent: toNullableText(input.userAgent),
+      vercelRequestId: toNullableText(input.vercelRequestId),
+      signaturePresent: Boolean(input.signaturePresent),
+      signatureLength: Math.max(Number(input.signatureLength) || 0, 0),
+      bodyBytes,
+      bodySha256,
+      receivedCount:
+        typeof input.receivedCount === "number"
+          ? input.receivedCount
+          : envelopeSummary.receivedCount,
+      acceptedCount: Math.max(Number(input.acceptedCount) || 0, 0),
+      skippedCount: Math.max(Number(input.skippedCount) || 0, 0),
+      skippedReasons: toRecord(input.skippedReasons) || {},
+      duplicateCount: Math.max(Number(input.duplicateCount) || 0, 0),
+      updatedCount: Math.max(Number(input.updatedCount) || 0, 0),
+      publishedCount: Math.max(Number(input.publishedCount) || 0, 0),
+      transactionHashes: safeUniqueLimitedStrings([
+        ...envelopeSummary.transactionHashes,
+        ...(Array.isArray(input.transactionHashes) ? input.transactionHashes : []),
+      ]),
+      itemIds: envelopeSummary.itemIds,
+      queueIds: safeUniqueLimitedStrings(Array.isArray(input.queueIds) ? input.queueIds : []),
+      storecodes: safeUniqueLimitedStrings(Array.isArray(input.storecodes) ? input.storecodes : []),
+      createdAt,
+      expiresAt,
+    });
+  } catch (error) {
+    console.error("Failed to insert thirdweb webhook ingress log:", error);
+  }
 };
 
 const loadManagedWebhookSecretRecord = async (
