@@ -1201,7 +1201,7 @@ export default function ScanHomeClientPage({
                 <div className="mt-1 text-xs text-[#7c8495]">USDT aggregated from current feed</div>
               </div>
               <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Wallet Labels</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Tracked Wallets</div>
                 <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.activeWallets.toLocaleString()}</div>
                 <div className="mt-1 text-xs text-[#7c8495]">Last detected {formatDateTime(totals.latestRecordAt)}</div>
               </div>
