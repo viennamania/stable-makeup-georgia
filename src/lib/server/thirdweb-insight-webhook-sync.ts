@@ -13,7 +13,7 @@ import {
 
 const THIRDWEB_WEBHOOK_RECEIVER_PATH = "/api/webhook/thirdweb/usdt-token-transfers";
 const DEFAULT_THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE = Math.max(
-  Number.parseInt(process.env.THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE || "", 10) || 25,
+  Number.parseInt(process.env.THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE || "", 10) || 1,
   1,
 );
 const THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS = Math.max(
