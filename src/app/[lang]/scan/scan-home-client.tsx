@@ -268,12 +268,35 @@ function buildIdentityBankLine(identity: PartyIdentity | null | undefined): stri
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+function isStoreWalletIdentity(identity: PartyIdentity | null | undefined): boolean {
+  return String(identity?.badgeLabel || "").trim() === "Store Wallet";
+}
+
 function getIdentityAvatarText(identity: PartyIdentity | null | undefined, fallback: string): string {
+  if (!identity) {
+    const normalizedFallback = String(fallback || "").trim();
+    return normalizedFallback ? normalizedFallback.slice(0, 2).toUpperCase() : "WL";
+  }
+
+  if (!isStoreWalletIdentity(identity)) {
+    const badgeLabel = String(identity.badgeLabel || "").trim();
+    if (badgeLabel) {
+      const initials = badgeLabel
+        .split(/\s+/)
+        .map((part) => part.slice(0, 1))
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+      if (initials) {
+        return initials;
+      }
+    }
+    return "WL";
+  }
+
   const source =
-    identity?.storeName
-    || identity?.nickname
-    || identity?.accountHolder
-    || identity?.storecode
+    identity.storeName
+    || identity.storecode
     || fallback;
   const normalized = String(source || "").trim();
   return normalized ? normalized.slice(0, 2).toUpperCase() : "WL";
@@ -350,6 +373,7 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
 
 function PartyIdentityCard({ summary }: { summary: PartySummary }) {
   const identity = summary.identity;
+  const isStoreIdentity = isStoreWalletIdentity(identity);
   const hasIdentity = Boolean(
     identity
     && (
@@ -370,12 +394,14 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
   }
 
   const compactMeta =
-    identity?.badgeLabel === "Store Wallet"
+    isStoreIdentity
       ? [
           identity?.storeName,
           identity?.storecode ? `@${identity.storecode}` : null,
         ].filter((value): value is string => Boolean(value)).join(" · ")
-      : summary.bankLine || summary.subline;
+      : "Private details hidden";
+
+  const compactTitle = isStoreIdentity ? summary.title : null;
 
   return (
     <div className={`mt-2 overflow-hidden rounded-[16px] border px-2.5 py-2 ${getIdentityPanelClassName(identity)}`}>
@@ -401,9 +427,9 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
                 {identity.badgeLabel}
               </span>
             ) : null}
-            {summary.title ? (
+            {compactTitle ? (
               <div className="min-w-0 truncate text-[12px] font-semibold text-[#18181b]">
-                {summary.title}
+                {compactTitle}
               </div>
             ) : null}
           </div>
