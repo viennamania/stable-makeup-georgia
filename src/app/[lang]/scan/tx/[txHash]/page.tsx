@@ -5,9 +5,19 @@ import { notFound } from "next/navigation";
 import { chain as configuredChain } from "@/app/config/contractAddresses";
 import {
   getLatestTransactionHashLogEvents,
-  getTransactionHashLogEventByHash,
+  getTransactionHashLogEventsByHash,
 } from "@lib/api/tokenTransfer";
+import { type UsdtTransactionHashRealtimeEvent } from "@lib/ably/constants";
 import { getRelativeTimeInfo } from "@lib/realtime/timeAgo";
+
+type PartyIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"]>;
+type TransactionPartyGroup = {
+  address: string | null;
+  label: string;
+  identity: PartyIdentity | null;
+  totalUsdt: number;
+  tags: string[];
+};
 
 function maskAccountNumber(value: string | null | undefined): string | null {
   const accountNumber = String(value || "").replace(/\s+/g, "").trim();
@@ -21,7 +31,7 @@ function maskAccountNumber(value: string | null | undefined): string | null {
 }
 
 function buildIdentityTags(
-  identity: NonNullable<Awaited<ReturnType<typeof getTransactionHashLogEventByHash>>>["fromIdentity"] | null | undefined,
+  identity: PartyIdentity | null | undefined,
 ): string[] {
   if (!identity) {
     return [];
@@ -79,6 +89,38 @@ function formatShortAddress(value: string | null | undefined): string {
   return `${address.slice(0, 8)}...${address.slice(-6)}`;
 }
 
+function groupTransactionParties(
+  events: UsdtTransactionHashRealtimeEvent[],
+  side: "from" | "to",
+): TransactionPartyGroup[] {
+  const groups = new Map<string, TransactionPartyGroup>();
+
+  for (const event of events) {
+    const address = String(
+      side === "from" ? event.fromWalletAddress || "" : event.toWalletAddress || "",
+    ).trim();
+    const identity = side === "from" ? (event.fromIdentity || null) : (event.toIdentity || null);
+    const label = String(side === "from" ? event.fromLabel || "" : event.toLabel || "").trim() || "Tagged wallet";
+    const key = address.toLowerCase() || `${side}:${label}`;
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, {
+        address: address || null,
+        label,
+        identity,
+        totalUsdt: Number(event.amountUsdt || 0),
+        tags: buildIdentityTags(identity),
+      });
+      continue;
+    }
+
+    existing.totalUsdt += Number(event.amountUsdt || 0);
+  }
+
+  return Array.from(groups.values()).sort((left, right) => right.totalUsdt - left.totalUsdt);
+}
+
 function getExplorerBaseUrl(): string {
   if (configuredChain === "ethereum") {
     return "https://etherscan.io";
@@ -126,7 +168,8 @@ export default async function ScanTransactionDetailPage({
   const lang = params.lang || "ko";
   const txHash = String(params.txHash || "").trim();
 
-  const event = await getTransactionHashLogEventByHash(txHash);
+  const events = await getTransactionHashLogEventsByHash(txHash, 40);
+  const event = events[0] || null;
   if (!event) {
     notFound();
   }
@@ -146,8 +189,10 @@ export default async function ScanTransactionDetailPage({
   const detectedAt = event.publishedAt || event.minedAt || event.createdAt || null;
   const onChainAt = event.minedAt || event.createdAt || null;
   const detectedRelativeTime = getRelativeTimeInfo(detectedAt || event.createdAt);
-  const fromIdentityTags = buildIdentityTags(event.fromIdentity || null);
-  const toIdentityTags = buildIdentityTags(event.toIdentity || null);
+  const totalUsdt = events.reduce((sum, item) => sum + Number(item.amountUsdt || 0), 0);
+  const transferCount = events.length;
+  const fromGroups = groupTransactionParties(events, "from");
+  const toGroups = groupTransactionParties(events, "to");
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
@@ -202,8 +247,9 @@ export default async function ScanTransactionDetailPage({
                 <div className="rounded-[20px] border border-[#ecdca6] bg-white/80 px-3.5 py-3.5 sm:px-4 sm:py-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Amount</div>
                   <div className="mt-2 text-[28px] font-semibold tracking-tight text-[#0f7a4b]">
-                    {formatUsdt(event.amountUsdt)} USDT
+                    {formatUsdt(totalUsdt)} USDT
                   </div>
+                  <div className="mt-1 text-sm text-[#6c7483]">{transferCount} transfer logs</div>
                 </div>
               </div>
             </div>
@@ -238,7 +284,11 @@ export default async function ScanTransactionDetailPage({
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Amount</div>
-                  <div className="mt-2 text-base font-semibold text-[#0f7a4b]">{formatUsdt(event.amountUsdt)} USDT</div>
+                  <div className="mt-2 text-base font-semibold text-[#0f7a4b]">{formatUsdt(totalUsdt)} USDT</div>
+                </div>
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Transfer Logs</div>
+                  <div className="mt-2 text-base font-semibold text-[#1d1f24]">{transferCount}</div>
                 </div>
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Trade ID</div>
@@ -262,55 +312,75 @@ export default async function ScanTransactionDetailPage({
             <div className="grid gap-2.5">
               <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">From</div>
-                {event.fromWalletAddress ? (
-                  <Link
-                    href={`/${lang}/scan/address/${event.fromWalletAddress}/tokentxns`}
-                    className="mt-2 block break-all text-sm font-semibold text-[#0784c3] hover:text-[#05679d]"
-                  >
-                    {event.fromWalletAddress}
-                  </Link>
-                ) : (
-                  <div className="mt-2 text-sm font-semibold text-[#1d1f24]">-</div>
-                )}
-                <div className="mt-1 text-sm text-[#5f6b85]">{event.fromLabel || "-"}</div>
-                {fromIdentityTags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {fromIdentityTags.map((tag) => (
-                      <span
-                        key={`from-${tag}`}
-                        className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-2 py-1 text-[11px] font-medium text-[#7b6a39]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="mt-2 space-y-3">
+                  {fromGroups.map((group, index) => (
+                    <div
+                      key={`from-${group.address || group.label}-${index}`}
+                      className="rounded-[18px] border border-[#efe3c0] bg-white px-3 py-3"
+                    >
+                      {group.address ? (
+                        <Link
+                          href={`/${lang}/scan/address/${group.address}/tokentxns`}
+                          className="block break-all text-sm font-semibold text-[#0784c3] hover:text-[#05679d]"
+                        >
+                          {group.address}
+                        </Link>
+                      ) : (
+                        <div className="text-sm font-semibold text-[#1d1f24]">-</div>
+                      )}
+                      <div className="mt-1 text-sm text-[#5f6b85]">{group.label || "-"}</div>
+                      <div className="mt-2 text-sm font-semibold text-[#0f7a4b]">{formatUsdt(group.totalUsdt)} USDT</div>
+                      {group.tags.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {group.tags.map((tag) => (
+                            <span
+                              key={`from-${group.address || group.label}-${tag}`}
+                              className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-2 py-1 text-[11px] font-medium text-[#7b6a39]"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">To</div>
-                {event.toWalletAddress ? (
-                  <Link
-                    href={`/${lang}/scan/address/${event.toWalletAddress}/tokentxns`}
-                    className="mt-2 block break-all text-sm font-semibold text-[#0784c3] hover:text-[#05679d]"
-                  >
-                    {event.toWalletAddress}
-                  </Link>
-                ) : (
-                  <div className="mt-2 text-sm font-semibold text-[#1d1f24]">-</div>
-                )}
-                <div className="mt-1 text-sm text-[#5f6b85]">{event.toLabel || "-"}</div>
-                {toIdentityTags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {toIdentityTags.map((tag) => (
-                      <span
-                        key={`to-${tag}`}
-                        className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-2 py-1 text-[11px] font-medium text-[#7b6a39]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="mt-2 space-y-3">
+                  {toGroups.map((group, index) => (
+                    <div
+                      key={`to-${group.address || group.label}-${index}`}
+                      className="rounded-[18px] border border-[#efe3c0] bg-white px-3 py-3"
+                    >
+                      {group.address ? (
+                        <Link
+                          href={`/${lang}/scan/address/${group.address}/tokentxns`}
+                          className="block break-all text-sm font-semibold text-[#0784c3] hover:text-[#05679d]"
+                        >
+                          {group.address}
+                        </Link>
+                      ) : (
+                        <div className="text-sm font-semibold text-[#1d1f24]">-</div>
+                      )}
+                      <div className="mt-1 text-sm text-[#5f6b85]">{group.label || "-"}</div>
+                      <div className="mt-2 text-sm font-semibold text-[#0f7a4b]">{formatUsdt(group.totalUsdt)} USDT</div>
+                      {group.tags.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {group.tags.map((tag) => (
+                            <span
+                              key={`to-${group.address || group.label}-${tag}`}
+                              className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-2 py-1 text-[11px] font-medium text-[#7b6a39]"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Store</div>

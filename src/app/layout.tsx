@@ -109,13 +109,15 @@ export default function RootLayout({
 
   const [showCenter, setShowCenter] = useState(false);
   const isPromotionPage = pathname?.endsWith("/promotion");
+  const isScanPage = /^\/[^/]+\/scan(?:\/.*)?$/.test(String(pathname || ""));
   const hideFixedChrome =
     isPromotionPage ||
+    isScanPage ||
     pathname?.endsWith("/realtime-banktransfer") ||
     pathname?.endsWith("/realtime-buyorder") ||
     pathname?.endsWith("/realtime-settlement");
 
-  const appShellClassName = isPromotionPage
+  const appShellClassName = isPromotionPage || isScanPage
     ? "w-full"
     : "flex flex-col items-center justify-center p-4 bg-gray-100 rounded-lg shadow-md mb-4";
 

@@ -46,9 +46,20 @@ type PartySummary = {
   href: string | null;
   addresses: string[];
   identity: PartyIdentity | null;
+  items: PartySummaryItem[];
 };
 
 type PartyIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"]>;
+
+type PartySummaryItem = {
+  address: string;
+  headline: string;
+  title: string | null;
+  subline: string;
+  bankLine: string | null;
+  href: string | null;
+  identity: PartyIdentity | null;
+};
 
 type TransactionRow = {
   id: string;
@@ -327,6 +338,31 @@ function getIdentityAvatarText(identity: PartyIdentity | null | undefined, fallb
   return normalized ? normalized.slice(0, 2).toUpperCase() : "WL";
 }
 
+function buildPartySummaryItem({
+  address,
+  label,
+  identity,
+  lang,
+}: {
+  address: string;
+  label: string | null;
+  identity: PartyIdentity | null;
+  lang: string;
+}): PartySummaryItem {
+  const fallbackLabel = label || "Tagged wallet";
+  const subline = buildIdentitySubline(identity) || fallbackLabel;
+
+  return {
+    address,
+    headline: formatShortAddress(address),
+    title: buildIdentityTitle(identity, fallbackLabel),
+    subline,
+    bankLine: buildIdentityBankLine(identity),
+    href: `/${lang}/scan/address/${address}/tokentxns`,
+    identity,
+  };
+}
+
 function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: string): PartySummary {
   const addressMap = new Map<string, { label: string; identity: PartyIdentity | null }>();
 
@@ -365,23 +401,32 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
       href: null,
       addresses: [],
       identity: null,
+      items: [],
     };
   }
 
+  const items = addresses
+    .map((address) => {
+      const entry = addressMap.get(address);
+      return buildPartySummaryItem({
+        address,
+        label: entry?.label || null,
+        identity: entry?.identity || null,
+        lang,
+      });
+    });
+
   if (addresses.length === 1) {
-    const [address] = addresses;
-    const entry = addressMap.get(address);
-    const label = entry?.label || "Tagged wallet";
-    const identity = entry?.identity || null;
-    const subline = buildIdentitySubline(identity) || label;
+    const [item] = items;
     return {
-      headline: formatShortAddress(address),
-      title: buildIdentityTitle(identity, label),
-      subline,
-      bankLine: buildIdentityBankLine(identity),
-      href: `/${lang}/scan/address/${address}/tokentxns`,
+      headline: item.headline,
+      title: item.title,
+      subline: item.subline,
+      bankLine: item.bankLine,
+      href: item.href,
       addresses,
-      identity,
+      identity: item.identity,
+      items,
     };
   }
 
@@ -393,27 +438,39 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
     href: null,
     addresses,
     identity: null,
+    items,
   };
 }
 
-function PartyIdentityCard({ summary }: { summary: PartySummary }) {
-  const identity = summary.identity;
+function PartyIdentityCardItem({
+  item,
+  showAddress = false,
+}: {
+  item: PartySummaryItem;
+  showAddress?: boolean;
+}) {
+  const identity = item.identity;
   const isStoreIdentity = isStoreWalletIdentity(identity);
   const hasIdentity = Boolean(
     identity
     && (
-      summary.title
+      item.title
       || identity.badgeLabel
       || identity.storeName
       || identity.storecode
-      || summary.bankLine
+      || item.bankLine
     ),
   );
 
   if (!hasIdentity) {
     return (
-      <div className="mt-1.5 text-[11px] leading-4 text-[#71717a]">
-        {summary.subline}
+      <div className="rounded-[16px] border border-[#e4e4e7] bg-white px-3 py-2 text-[11px] leading-4 text-[#71717a]">
+        {showAddress && item.href ? (
+          <Link href={item.href} className="block font-semibold text-[#27272a] transition hover:text-[#52525b]">
+            {item.headline}
+          </Link>
+        ) : null}
+        <div className={showAddress && item.href ? "mt-1" : ""}>{item.subline}</div>
       </div>
     );
   }
@@ -425,29 +482,29 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
           identity?.storecode ? `@${identity.storecode}` : null,
         ].filter((value): value is string => Boolean(value)).join(" · ")
       : (
-          summary.bankLine
+          item.bankLine
           || maskIdentityText(identity?.nickname)
           || maskIdentityText(identity?.accountHolder)
-          || summary.subline
+          || item.subline
         );
 
   const compactTitle = isStoreIdentity
-    ? summary.title
+    ? item.title
     : (
-        maskIdentityText(summary.title)
+        maskIdentityText(item.title)
         || maskIdentityText(identity?.nickname)
         || maskIdentityText(identity?.accountHolder)
       );
 
   return (
-    <div className={`mt-2 overflow-hidden rounded-[16px] border px-2.5 py-2 ${getIdentityPanelClassName(identity)}`}>
+    <div className={`overflow-hidden rounded-[16px] border px-2.5 py-2 ${getIdentityPanelClassName(identity)}`}>
       <div className="flex items-center gap-2.5">
         <div className="relative flex h-8 w-8 flex-none items-center justify-center overflow-hidden rounded-[12px] border border-[#e4e4e7] bg-white text-[10px] font-semibold text-[#27272a]">
-          <span>{getIdentityAvatarText(identity, summary.headline)}</span>
+          <span>{getIdentityAvatarText(identity, item.headline)}</span>
           {identity?.storeLogo ? (
             <img
               src={identity.storeLogo}
-              alt={identity.storeName || summary.title || "wallet"}
+              alt={identity.storeName || item.title || "wallet"}
               className="absolute inset-0 h-full w-full object-cover"
               onError={(event) => {
                 event.currentTarget.style.display = "none";
@@ -476,11 +533,55 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
             </div>
           ) : (
             <div className="mt-1 truncate text-[11px] leading-4 text-[#71717a]">
-              {summary.subline}
+              {item.subline}
             </div>
           )}
+
+          {showAddress && item.href ? (
+            <Link href={item.href} className="mt-1 block truncate text-[11px] font-semibold text-[#27272a] transition hover:text-[#52525b]">
+              {item.headline}
+            </Link>
+          ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function PartyIdentityCard({ summary }: { summary: PartySummary }) {
+  if (summary.items.length === 0) {
+    return (
+      <div className="mt-1.5 text-[11px] leading-4 text-[#71717a]">
+        {summary.subline}
+      </div>
+    );
+  }
+
+  if (summary.items.length === 1) {
+    return (
+      <div className="mt-2">
+        <PartyIdentityCardItem item={summary.items[0]} />
+      </div>
+    );
+  }
+
+  const visibleItems = summary.items.slice(0, 3);
+  const hiddenCount = Math.max(0, summary.items.length - visibleItems.length);
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      {visibleItems.map((item) => (
+        <PartyIdentityCardItem
+          key={`${item.address}:${item.title || item.subline}`}
+          item={item}
+          showAddress
+        />
+      ))}
+      {hiddenCount > 0 ? (
+        <div className="px-1 text-[11px] font-medium text-[#71717a]">
+          +{hiddenCount} more wallet{hiddenCount > 1 ? "s" : ""}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -936,9 +1037,9 @@ export default function ScanHomeClientPage({
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-2.5 py-4 sm:gap-5 sm:px-5 sm:py-5 lg:px-8">
         <section className="overflow-hidden rounded-[26px] border border-[#2a3140] bg-[#111827] text-white shadow-[0_30px_80px_-52px_rgba(15,23,42,0.9)]">
-          <div className="grid gap-3 px-5 py-3 sm:px-6 lg:grid-cols-4">
+          <div className="grid gap-3 px-3.5 py-3 sm:px-6 lg:grid-cols-4">
             {topMetrics.map((item) => (
               <div
                 key={item.id}
@@ -956,7 +1057,7 @@ export default function ScanHomeClientPage({
         </section>
 
         <section className="overflow-hidden rounded-[28px] border border-[#e9e2d2] bg-white shadow-[0_28px_72px_-54px_rgba(15,23,42,0.28)]">
-          <div className="border-b border-[#efe6d4] bg-[linear-gradient(180deg,_#fffdf7_0%,_#fbf7eb_100%)] px-5 py-6 sm:px-7">
+          <div className="border-b border-[#efe6d4] bg-[linear-gradient(180deg,_#fffdf7_0%,_#fbf7eb_100%)] px-3.5 py-5 sm:px-6 sm:py-6">
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
               <div className="max-w-3xl">
                 <div className="flex items-center gap-4">
@@ -1006,7 +1107,7 @@ export default function ScanHomeClientPage({
               </div>
             </div>
 
-            <div className="mt-6 rounded-[26px] border border-[#1e2633] bg-[#151d29] p-4 shadow-[0_22px_48px_-34px_rgba(15,23,42,0.75)]">
+            <div className="mt-6 rounded-[26px] border border-[#1e2633] bg-[#151d29] p-3.5 shadow-[0_22px_48px_-34px_rgba(15,23,42,0.75)] sm:p-4">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#f2d996]">
@@ -1046,22 +1147,22 @@ export default function ScanHomeClientPage({
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Transactions</div>
                 <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transactions.toLocaleString()}</div>
                 <div className="mt-1 text-xs text-[#7c8495]">Unique transaction hashes in feed</div>
               </div>
-              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Token Transfers</div>
                 <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transferLogs.toLocaleString()}</div>
                 <div className="mt-1 text-xs text-[#7c8495]">Individual monitored transfer logs</div>
               </div>
-              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Observed Value</div>
                 <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#0f7a4b]">{formatUsdt(totals.totalUsdt)}</div>
                 <div className="mt-1 text-xs text-[#7c8495]">USDT aggregated from current feed</div>
               </div>
-              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-5 py-4 shadow-sm">
+              <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Wallet Labels</div>
                 <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.activeWallets.toLocaleString()}</div>
                 <div className="mt-1 text-xs text-[#7c8495]">Last detected {formatDateTime(totals.latestRecordAt)}</div>
@@ -1071,7 +1172,7 @@ export default function ScanHomeClientPage({
         </section>
 
         <section className="overflow-hidden rounded-[28px] border border-[#e4e4e7] bg-white shadow-[0_22px_70px_-56px_rgba(0,0,0,0.18)]">
-          <div className="border-b border-[#e4e4e7] px-5 py-5 sm:px-7">
+          <div className="border-b border-[#e4e4e7] px-4 py-5 sm:px-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#71717a]">Latest Token Transfers</div>
@@ -1097,7 +1198,7 @@ export default function ScanHomeClientPage({
             </div>
           </div>
 
-          <div className="hidden border-b border-[#e4e4e7] bg-[#fafafa] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#71717a] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-7">
+          <div className="hidden border-b border-[#e4e4e7] bg-[#fafafa] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#71717a] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-6">
             <div>Txn Hash</div>
             <div>Method</div>
             <div>Age</div>
@@ -1111,15 +1212,133 @@ export default function ScanHomeClientPage({
               {paginatedRows.map((row) => {
                 const isHighlighted = row.highlightUntil > nowMs;
                 const relativeTime = getRelativeTimeInfo(row.timeValue, nowMs);
+                const chainDisplayLabel = (row.chain || configuredChain || "bsc").toUpperCase();
 
                 return (
                   <div
                     key={row.id}
-                    className={`scan-live-row px-5 py-4 sm:px-7 ${isHighlighted ? "scan-live-row--highlight" : "bg-white"}`}
+                    className={`scan-live-row px-2.5 py-3 sm:px-4 md:px-7 md:py-4 ${isHighlighted ? "scan-live-row--highlight" : "bg-white"}`}
                   >
-                    <div className="grid gap-3 md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr]">
+                    <div
+                      className={`md:hidden overflow-hidden rounded-[24px] border bg-[linear-gradient(180deg,_#ffffff_0%,_#fcfcfc_100%)] shadow-[0_18px_34px_-28px_rgba(24,24,27,0.28)] ${
+                        isHighlighted ? "border-[#d4d4d8]" : "border-[#e4e4e7]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3 border-b border-[#ececec] px-3.5 py-3.5">
+                        <div className="min-w-0 flex items-start gap-3">
+                          <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-[14px] border border-[#d4d4d8] bg-[#fafafa] text-[10px] font-semibold text-[#18181b]">
+                            {row.transferCount > 1 ? "BEP" : "TXN"}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Link
+                                href={`/${lang}/scan/tx/${row.transactionHash}`}
+                                className="min-w-0 truncate text-[15px] font-semibold text-[#18181b] transition hover:text-[#3f3f46]"
+                                title={row.transactionHash}
+                              >
+                                {formatShortHash(row.transactionHash)}
+                              </Link>
+                              <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getTableStatusTone(row.status)}`}>
+                                {getStatusLabel(row.status)}
+                              </span>
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-[#71717a]">
+                              <a
+                                href={getExplorerTxUrl(row.transactionHash)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-medium text-[#3f3f46] transition hover:text-[#18181b]"
+                              >
+                                View on {explorerHost}
+                              </a>
+                              <span className="text-[#d4d4d8]">•</span>
+                              <span>{row.transferCount} transfer logs</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#71717a]">Value</div>
+                          <div className="mt-1 text-[18px] font-semibold tracking-tight text-[#18181b]">
+                            {formatUsdt(row.totalUsdt)} USDT
+                          </div>
+                          <div className="mt-1 text-[11px] text-[#71717a]">
+                            {row.transferCount > 1 ? "Batch total" : "Single transfer"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-b border-[#f0f0f0] px-3.5 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <span className="inline-flex rounded-full border border-[#d4d4d8] bg-[#fafafa] px-2.5 py-1 text-[11px] font-semibold text-[#27272a]">
+                            {row.methodLabel}
+                          </span>
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
+                            {relativeTime.relativeLabel}
+                          </span>
+                          <span className="inline-flex rounded-full border border-[#e4e4e7] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#52525b]">
+                            {chainDisplayLabel}
+                          </span>
+                        </div>
+                        <div className="mt-2 space-y-1 text-[11px] leading-4 text-[#71717a]">
+                          <div>Detected {formatDateTime(row.timeValue)}</div>
+                          {row.chainTimeValue && row.chainTimeValue !== row.timeValue ? (
+                            <div>On-chain {formatDateTime(row.chainTimeValue)}</div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="grid gap-2.5 px-3.5 py-3.5">
+                        <div className="rounded-[18px] border border-[#ececec] bg-white px-3 py-3 shadow-[0_8px_18px_-16px_rgba(24,24,27,0.18)]">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#71717a]">From</div>
+                            {row.fromSummary.items.length > 1 ? (
+                              <div className="text-[10px] font-medium text-[#a1a1aa]">
+                                {row.fromSummary.items.length} wallets
+                              </div>
+                            ) : null}
+                          </div>
+                          {row.fromSummary.href ? (
+                            <Link
+                              href={row.fromSummary.href}
+                              className="mt-1.5 block text-sm font-semibold text-[#18181b] transition hover:text-[#3f3f46]"
+                              title={row.fromSummary.addresses[0]}
+                            >
+                              {row.fromSummary.headline}
+                            </Link>
+                          ) : (
+                            <div className="mt-1.5 text-sm font-semibold text-[#18181b]">{row.fromSummary.headline}</div>
+                          )}
+                          <PartyIdentityCard summary={row.fromSummary} />
+                        </div>
+
+                        <div className="rounded-[18px] border border-[#ececec] bg-white px-3 py-3 shadow-[0_8px_18px_-16px_rgba(24,24,27,0.18)]">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#71717a]">To</div>
+                            {row.toSummary.items.length > 1 ? (
+                              <div className="text-[10px] font-medium text-[#a1a1aa]">
+                                {row.toSummary.items.length} wallets
+                              </div>
+                            ) : null}
+                          </div>
+                          {row.toSummary.href ? (
+                            <Link
+                              href={row.toSummary.href}
+                              className="mt-1.5 block text-sm font-semibold text-[#18181b] transition hover:text-[#3f3f46]"
+                              title={row.toSummary.addresses[0]}
+                            >
+                              {row.toSummary.headline}
+                            </Link>
+                          ) : (
+                            <div className="mt-1.5 text-sm font-semibold text-[#18181b]">{row.toSummary.headline}</div>
+                          )}
+                          <PartyIdentityCard summary={row.toSummary} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="hidden gap-3 md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr]">
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Txn Hash</div>
                         <div className="mt-1 flex items-start gap-2.5">
                           <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-[#d4d4d8] bg-[#fafafa] text-[10px] font-semibold text-[#18181b]">
                             {row.transferCount > 1 ? "BEP" : "TXN"}
@@ -1153,17 +1372,15 @@ export default function ScanHomeClientPage({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Method</div>
                         <div className="mt-1">
                           <span className="inline-flex rounded-full border border-[#d4d4d8] bg-[#fafafa] px-2.5 py-1 text-[11px] font-semibold text-[#27272a]">
                             {row.methodLabel}
                           </span>
-                          <div className="mt-1.5 text-[12px] text-[#71717a]">{(row.chain || configuredChain || "bsc").toUpperCase()}</div>
+                          <div className="mt-1.5 text-[12px] text-[#71717a]">{chainDisplayLabel}</div>
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Age</div>
                         <div className="mt-1">
                           <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
                             {relativeTime.relativeLabel}
@@ -1176,7 +1393,6 @@ export default function ScanHomeClientPage({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">From</div>
                         <div className="mt-1">
                           {row.fromSummary.href ? (
                             <Link
@@ -1194,7 +1410,6 @@ export default function ScanHomeClientPage({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">To</div>
                         <div className="mt-1">
                           {row.toSummary.href ? (
                             <Link
@@ -1212,7 +1427,6 @@ export default function ScanHomeClientPage({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Value</div>
                         <div className="mt-1">
                           <div className="text-sm font-semibold text-[#18181b]">{formatUsdt(row.totalUsdt)} USDT</div>
                           <div className="mt-1.5 text-[11px] text-[#71717a]">{row.transferCount > 1 ? "Batch total" : "Single transfer"}</div>
@@ -1223,7 +1437,7 @@ export default function ScanHomeClientPage({
                 );
               })}
 
-              <div className="flex flex-col gap-3 border-t border-[#e4e4e7] bg-[#fafafa] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+              <div className="flex flex-col gap-3 border-t border-[#e4e4e7] bg-[#fafafa] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                 <div className="text-xs text-[#71717a]">
                   Page {currentPage} of {totalPages} · {filteredRows.length.toLocaleString()} transactions
                 </div>
@@ -1265,7 +1479,7 @@ export default function ScanHomeClientPage({
               </div>
             </div>
           ) : isInitialFeedLoading ? (
-            <div className="px-5 py-16 text-center sm:px-7">
+            <div className="px-4 py-16 text-center sm:px-6">
               <div className="mx-auto max-w-xl rounded-[24px] border border-[#ece4d2] bg-[#fffdfa] px-6 py-8 shadow-sm">
                 <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[#eadcb6] bg-[#fff6da]">
                   <span className="scan-loading-dot h-2.5 w-2.5 rounded-full bg-[#946400]" />
@@ -1281,7 +1495,7 @@ export default function ScanHomeClientPage({
               </div>
             </div>
           ) : (
-            <div className="px-5 py-16 text-center text-sm text-[#7c8495] sm:px-7">
+            <div className="px-4 py-16 text-center text-sm text-[#7c8495] sm:px-6">
               No matching transactions yet.
             </div>
           )}

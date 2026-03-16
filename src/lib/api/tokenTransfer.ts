@@ -1451,19 +1451,21 @@ export async function getLatestTransactionHashLogEvents({
   return hydrateUsdtTransactionHashRealtimeEvents(storedEvents);
 }
 
-export async function getTransactionHashLogEventByHash(
+export async function getTransactionHashLogEventsByHash(
   transactionHash: string | null | undefined,
-): Promise<UsdtTransactionHashRealtimeEvent | null> {
+  limit = 50,
+): Promise<UsdtTransactionHashRealtimeEvent[]> {
   const normalizedTransactionHash = normalizeText(transactionHash);
   if (!normalizedTransactionHash) {
-    return null;
+    return [];
   }
 
   const client = await clientPromise;
   const collection = client.db(dbName).collection('transactionHashLogs');
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
 
-  const document = await collection.findOne(
-    {
+  const documents = await collection
+    .find<StoredTransactionHashLogDocument>({
       $and: [
         {
           transactionHash: {
@@ -1473,19 +1475,24 @@ export async function getTransactionHashLogEventByHash(
         },
         buildPublicScanTransactionHashLogQuery(null),
       ],
-    },
-    {
-      sort: { publishedAt: -1, createdAt: -1, _id: -1 },
-    },
+    })
+    .sort({ publishedAt: -1, createdAt: -1, _id: -1 })
+    .limit(safeLimit)
+    .toArray();
+
+  const hydratedEvents = await hydrateUsdtTransactionHashRealtimeEvents(
+    documents
+      .map((document) => normalizeTransactionHashLogDocument(document))
+      .filter((item) => isPublicScanTransactionHashEvent(item)),
   );
 
-  if (!document || !isPublicScanTransactionHashEvent(document)) {
-    return null;
-  }
+  return hydratedEvents.sort((left, right) => getEventTimestamp(right) - getEventTimestamp(left));
+}
 
-  const [event] = await hydrateUsdtTransactionHashRealtimeEvents([
-    normalizeTransactionHashLogDocument(document),
-  ]);
+export async function getTransactionHashLogEventByHash(
+  transactionHash: string | null | undefined,
+): Promise<UsdtTransactionHashRealtimeEvent | null> {
+  const [event] = await getTransactionHashLogEventsByHash(transactionHash, 1);
   return event || null;
 }
 
