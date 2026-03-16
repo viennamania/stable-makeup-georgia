@@ -17,7 +17,7 @@ import ScanHomeClientPage from "./scan-home-client";
 
 export const dynamic = "force-dynamic";
 
-const INITIAL_SCAN_LIMIT = 60;
+const INITIAL_SCAN_LIMIT = 20;
 const INITIAL_SCAN_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.PUBLIC_SCAN_INITIAL_SNAPSHOT_CACHE_TTL_MS || "", 10) || 5_000,
   1_000,
