@@ -451,6 +451,7 @@ const BLOCKED_BUY_ORDERS_POLLING_MS = 15_000;
 const BLOCKED_BUY_ORDERS_LOOKBACK_HOURS = 24 * 14;
 const SELLER_EXCLUDED_STORECODE = "";
 const SELLER_WALLET_MIN_USDT_BALANCE = 0.1;
+const SHOW_BUYORDER_WATCH_PANELS = false;
 
 const isDocumentHidden = () => {
   if (typeof document === "undefined") {
@@ -4616,7 +4617,7 @@ const fetchBuyOrders = async () => {
     }
   };
   useEffect(() => {
-    if (!address) {
+    if (!SHOW_BUYORDER_WATCH_PANELS || !address) {
       setSellersBalance([]);
       setSellersBalanceTotalUsdt(0);
       setSellersBalanceUpdatedAt('');
@@ -4634,7 +4635,7 @@ const fetchBuyOrders = async () => {
     return () => clearInterval(interval);
   }, [address]);
   useEffect(() => {
-    if (!address) {
+    if (!SHOW_BUYORDER_WATCH_PANELS || !address) {
       setBuyersBalance([]);
       setBuyersBalanceTotalUsdt(0);
       setBuyersBalanceUpdatedAt('');
@@ -4651,7 +4652,7 @@ const fetchBuyOrders = async () => {
     return () => clearInterval(interval);
   }, [address]);
   useEffect(() => {
-    if (!address) {
+    if (!SHOW_BUYORDER_WATCH_PANELS || !address) {
       setBlockedBuyOrders([]);
       setBlockedBuyOrdersUpdatedAt('');
       setBlockedBuyOrdersCriticalCount(0);
@@ -6015,6 +6016,8 @@ const fetchBuyOrders = async () => {
           /ko/admin/withdraw-vault?walletAddress=0x7F3362c7443AE1Eb1790d0A2d4D84EB306fE0bd3
           */}
 
+          {SHOW_BUYORDER_WATCH_PANELS ? (
+          <>
 
           {/* buyOrderStats.totalByBuyerDepositName */}
           {/*
@@ -6797,6 +6800,8 @@ const fetchBuyOrders = async () => {
               <div className="mt-2 text-xs text-zinc-500">모니터가 접혀 있습니다.</div>
             )}
           </div>
+          </>
+          ) : null}
 
           {/* 처리안한주문 먼저보기 (주문 테이블 상단) */}
           <div className="w-full flex items-start justify-start mb-2">
@@ -10448,6 +10453,7 @@ const fetchBuyOrders = async () => {
           </div>
         </Modal>
 
+        {SHOW_BUYORDER_WATCH_PANELS ? (
         <div
           className={`fixed inset-0 z-50 transition-all duration-300 ${
             blockedOrderPanelOpen ? 'pointer-events-auto' : 'pointer-events-none'
@@ -10784,6 +10790,7 @@ const fetchBuyOrders = async () => {
             </div>
           </div>
         </div>
+        ) : null}
 
         {/* 사용계좌 이력 패널 (좌측 슬라이드) */}
         <div
