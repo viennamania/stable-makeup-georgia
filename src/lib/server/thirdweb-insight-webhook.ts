@@ -1271,6 +1271,7 @@ export const extractThirdwebSellerUsdtTransferEvents = async (
           rawAmount,
         });
     const chainId = toNullableText(payload.chain_id) || getConfiguredChainId();
+    const logIndex = toNullableText(payload.log_index) || toNullableText(payload.logIndex);
     const minedAt = toIsoFromUnixSeconds(payload.block_timestamp) || toIsoFromUnixSeconds(envelope.timestamp);
     const event = createUsdtTransactionHashRealtimeEvent(
       {
@@ -1289,6 +1290,7 @@ export const extractThirdwebSellerUsdtTransferEvents = async (
           : null,
         amountUsdt: formatUnitsToNumber(rawAmount, getUsdtDecimalsForChainId(chainId)),
         transactionHash,
+        logIndex,
         fromWalletAddress,
         toWalletAddress,
         fromLabel: fromMonitored ? buildMonitoredWalletLabel(fromMonitored) : null,

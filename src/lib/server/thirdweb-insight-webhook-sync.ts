@@ -1,3 +1,5 @@
+import { createHash, randomUUID } from "crypto";
+
 import clientPromise, { dbName } from "@/lib/mongodb";
 import {
   THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
@@ -29,6 +31,20 @@ const THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS = Math.max(
   Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS || "", 10) || 30 * 1000,
   5 * 1000,
 );
+const THIRDWEB_WEBHOOK_SYNC_LOCK_TTL_MS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_LOCK_TTL_MS || "", 10) || 2 * 60 * 1000,
+  15 * 1000,
+);
+const THIRDWEB_WEBHOOK_SYNC_LOCK_POLL_MS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_LOCK_POLL_MS || "", 10) || 250,
+  100,
+);
+const THIRDWEB_WEBHOOK_SYNC_LOCK_WAIT_MS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_LOCK_WAIT_MS || "", 10) || 5 * 1000,
+  THIRDWEB_WEBHOOK_SYNC_LOCK_POLL_MS,
+);
+const THIRDWEB_INSIGHT_WEBHOOK_SYNC_STATE_COLLECTION = "thirdwebInsightWebhookSyncState";
+const THIRDWEB_INSIGHT_WEBHOOK_SYNC_LOCK_COLLECTION = "thirdwebInsightWebhookSyncLocks";
 const ERC20_TRANSFER_EVENT_ABI = JSON.stringify({
   anonymous: false,
   inputs: [
@@ -81,6 +97,15 @@ export type ThirdwebSellerUsdtWebhookStatusRecord = {
   walletCount: number;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+type ThirdwebWebhookSyncStateRecord = {
+  _id: string;
+  desiredFingerprint: string;
+  receiverUrl: string;
+  cooldownUntil: string;
+  syncedAt: string;
+  result: SyncThirdwebSellerUsdtWebhooksResult;
 };
 
 export type ThirdwebSellerUsdtWebhookStatus =
@@ -284,6 +309,9 @@ const buildManagedWebhookName = (index: number): string => {
   return `${buildManagedWebhookNamePrefix()}:${String(index + 1).padStart(3, "0")}`;
 };
 
+const buildThirdwebWebhookSyncCacheKey = (receiverUrl: string) =>
+  `${buildManagedWebhookNamePrefix()}:${normalizeComparableUrl(receiverUrl)}`;
+
 const chunk = <T>(items: T[], chunkSize: number): T[][] => {
   if (items.length === 0) {
     return [];
@@ -329,6 +357,11 @@ const canonicalize = (value: unknown): unknown => {
 
 const stableStringify = (value: unknown): string => JSON.stringify(canonicalize(value));
 
+const wait = (timeoutMs: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, Math.max(0, timeoutMs));
+  });
+
 const normalizeWebhookFiltersForComparison = (filters: Record<string, unknown>) => {
   const eventFilter = toRecord(filters?.[THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC]);
   if (!eventFilter) {
@@ -354,6 +387,28 @@ const normalizeWebhookFiltersForComparison = (filters: Record<string, unknown>) 
     ...filters,
     [THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC]: normalizedEventFilter,
   };
+};
+
+const buildDesiredWebhookFingerprint = ({
+  receiverUrl,
+  desiredWebhooks,
+}: {
+  receiverUrl: string;
+  desiredWebhooks: DesiredThirdwebWebhook[];
+}) => {
+  return createHash("sha256")
+    .update(
+      stableStringify({
+        receiverUrl: normalizeComparableUrl(receiverUrl),
+        desiredWebhooks: desiredWebhooks.map((item) => ({
+          name: item.name,
+          webhook_url: normalizeComparableUrl(item.webhook_url),
+          disabled: item.disabled,
+          filters: normalizeWebhookFiltersForComparison(item.filters),
+        })),
+      }),
+    )
+    .digest("hex");
 };
 
 const normalizeThirdwebWebhookApiRecord = (
@@ -461,6 +516,26 @@ const filterManagedThirdwebWebhooks = (records: ThirdwebWebhookApiRecord[]) => {
     .sort((left, right) => String(left.name || "").localeCompare(String(right.name || "")));
 };
 
+const sortWebhookCandidates = (records: ThirdwebWebhookApiRecord[]) => {
+  return [...records].sort((left, right) => {
+    const leftUpdated = Date.parse(String(left.updatedAt || left.createdAt || ""));
+    const rightUpdated = Date.parse(String(right.updatedAt || right.createdAt || ""));
+
+    if (!Number.isNaN(leftUpdated) && !Number.isNaN(rightUpdated) && leftUpdated !== rightUpdated) {
+      return leftUpdated - rightUpdated;
+    }
+
+    const leftCreated = Date.parse(String(left.createdAt || ""));
+    const rightCreated = Date.parse(String(right.createdAt || ""));
+
+    if (!Number.isNaN(leftCreated) && !Number.isNaN(rightCreated) && leftCreated !== rightCreated) {
+      return leftCreated - rightCreated;
+    }
+
+    return left.id.localeCompare(right.id);
+  });
+};
+
 const createThirdwebWebhook = async (
   body: DesiredThirdwebWebhook,
 ): Promise<ThirdwebWebhookApiRecord> => {
@@ -565,6 +640,173 @@ const extractWalletAddressesFromFilters = (filters: Record<string, unknown>): st
   }
 
   return [...uniqueWalletAddresses].sort((left, right) => left.localeCompare(right));
+};
+
+const getWebhookSyncStateCollection = async () => {
+  const client = await clientPromise;
+  return client.db(dbName).collection<ThirdwebWebhookSyncStateRecord>(
+    THIRDWEB_INSIGHT_WEBHOOK_SYNC_STATE_COLLECTION,
+  );
+};
+
+const getWebhookSyncLockCollection = async () => {
+  const client = await clientPromise;
+  return client.db(dbName).collection<{
+    _id: string;
+    lockToken?: string;
+    lockUntil?: Date;
+    createdAt?: string;
+    updatedAt?: string;
+  }>(THIRDWEB_INSIGHT_WEBHOOK_SYNC_LOCK_COLLECTION);
+};
+
+const getPersistedThirdwebWebhookSyncResult = async ({
+  cacheKey,
+  desiredFingerprint,
+}: {
+  cacheKey: string;
+  desiredFingerprint: string;
+}): Promise<SyncThirdwebSellerUsdtWebhooksResult | null> => {
+  const collection = await getWebhookSyncStateCollection();
+  const state = await collection.findOne(
+    {
+      _id: cacheKey,
+      desiredFingerprint,
+    },
+    {
+      projection: {
+        result: 1,
+        cooldownUntil: 1,
+      },
+    },
+  );
+
+  if (!state?.result) {
+    return null;
+  }
+
+  const cooldownUntilMs = Date.parse(String(state.cooldownUntil || ""));
+  if (Number.isNaN(cooldownUntilMs) || cooldownUntilMs <= Date.now()) {
+    return null;
+  }
+
+  return state.result;
+};
+
+const persistThirdwebWebhookSyncResult = async ({
+  cacheKey,
+  desiredFingerprint,
+  receiverUrl,
+  result,
+}: {
+  cacheKey: string;
+  desiredFingerprint: string;
+  receiverUrl: string;
+  result: SyncThirdwebSellerUsdtWebhooksResult;
+}) => {
+  const collection = await getWebhookSyncStateCollection();
+  const syncedAt = new Date().toISOString();
+  const cooldownUntil = new Date(Date.now() + THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS).toISOString();
+
+  await collection.updateOne(
+    { _id: cacheKey },
+    {
+      $set: {
+        desiredFingerprint,
+        receiverUrl,
+        cooldownUntil,
+        syncedAt,
+        result,
+      },
+      $setOnInsert: {
+        createdAt: syncedAt,
+      },
+    },
+    { upsert: true },
+  );
+};
+
+const acquireThirdwebWebhookSyncLock = async (cacheKey: string): Promise<string | null> => {
+  const collection = await getWebhookSyncLockCollection();
+  const now = new Date();
+  const token = randomUUID();
+  const lockUntil = new Date(now.getTime() + THIRDWEB_WEBHOOK_SYNC_LOCK_TTL_MS);
+
+  try {
+    const result = await collection.updateOne(
+      {
+        _id: cacheKey,
+        $or: [
+          { lockUntil: { $exists: false } },
+          { lockUntil: { $lte: now } },
+        ],
+      },
+      {
+        $set: {
+          lockToken: token,
+          lockUntil,
+          updatedAt: now.toISOString(),
+        },
+        $setOnInsert: {
+          createdAt: now.toISOString(),
+        },
+      },
+      { upsert: true },
+    );
+
+    if (result.matchedCount > 0 || result.modifiedCount > 0 || result.upsertedCount > 0) {
+      return token;
+    }
+
+    return null;
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+const releaseThirdwebWebhookSyncLock = async (cacheKey: string, token: string) => {
+  const collection = await getWebhookSyncLockCollection();
+  await collection.updateOne(
+    {
+      _id: cacheKey,
+      lockToken: token,
+    },
+    {
+      $unset: {
+        lockToken: "",
+      },
+      $set: {
+        lockUntil: new Date(0),
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+};
+
+const waitForThirdwebWebhookSyncResult = async ({
+  cacheKey,
+  desiredFingerprint,
+}: {
+  cacheKey: string;
+  desiredFingerprint: string;
+}): Promise<SyncThirdwebSellerUsdtWebhooksResult | null> => {
+  const deadline = Date.now() + THIRDWEB_WEBHOOK_SYNC_LOCK_WAIT_MS;
+
+  while (Date.now() < deadline) {
+    const persisted = await getPersistedThirdwebWebhookSyncResult({
+      cacheKey,
+      desiredFingerprint,
+    });
+    if (persisted) {
+      return persisted;
+    }
+    await wait(THIRDWEB_WEBHOOK_SYNC_LOCK_POLL_MS);
+  }
+
+  return null;
 };
 
 const buildThirdwebSellerUsdtWebhookStatus = async ({
@@ -856,56 +1098,127 @@ export const syncThirdwebSellerUsdtWebhooks = async ({
     receiverUrl,
     walletAddresses,
   });
-
-  const existingManagedWebhooks = filterManagedThirdwebWebhooks(await listThirdwebWebhooks());
-
-  let createdCount = 0;
-  let updatedCount = 0;
-  let deletedCount = 0;
-
-  for (let index = 0; index < desiredWebhooks.length; index += 1) {
-    const desiredWebhook = desiredWebhooks[index];
-    const existingWebhook = existingManagedWebhooks[index];
-    if (!existingWebhook) {
-      await createThirdwebWebhook(desiredWebhook);
-      createdCount += 1;
-      continue;
-    }
-
-    if (isEquivalentWebhookConfig({ existing: existingWebhook, desired: desiredWebhook })) {
-      continue;
-    }
-
-    await updateThirdwebWebhook({
-      webhookId: existingWebhook.id,
-      body: desiredWebhook,
-    });
-    updatedCount += 1;
-  }
-
-  for (let index = desiredWebhooks.length; index < existingManagedWebhooks.length; index += 1) {
-    await deleteThirdwebWebhook(existingManagedWebhooks[index].id);
-    deletedCount += 1;
-  }
-
-  const finalManagedWebhooks = filterManagedThirdwebWebhooks(await listThirdwebWebhooks());
-  await persistManagedWebhookRecords(finalManagedWebhooks);
-  clearThirdwebWebhookStatusCache();
-
-  const result: SyncThirdwebSellerUsdtWebhooksResult = {
-    ok: true,
+  const cacheKey = buildThirdwebWebhookSyncCacheKey(receiverUrl);
+  const desiredFingerprint = buildDesiredWebhookFingerprint({
     receiverUrl,
-    walletCount: walletAddresses.length,
-    desiredWebhookCount: desiredWebhooks.length,
-    activeWebhookCount: finalManagedWebhooks.length,
-    createdCount,
-    updatedCount,
-    deletedCount,
-    managedWebhookIds: finalManagedWebhooks.map((item) => item.id),
-  };
+    desiredWebhooks,
+  });
 
-  setThirdwebWebhookSyncCooldownResult(receiverUrl, result);
-  return result;
+  const persistedCooldownResult = await getPersistedThirdwebWebhookSyncResult({
+    cacheKey,
+    desiredFingerprint,
+  });
+  if (persistedCooldownResult) {
+    setThirdwebWebhookSyncCooldownResult(cacheKey, persistedCooldownResult);
+    return persistedCooldownResult;
+  }
+
+  const lockToken = await acquireThirdwebWebhookSyncLock(cacheKey);
+  if (!lockToken) {
+    const waitedResult = await waitForThirdwebWebhookSyncResult({
+      cacheKey,
+      desiredFingerprint,
+    });
+    if (waitedResult) {
+      setThirdwebWebhookSyncCooldownResult(cacheKey, waitedResult);
+      return waitedResult;
+    }
+
+    throw new Error("Another thirdweb webhook sync is already running");
+  }
+
+  try {
+    const existingManagedWebhooks = filterManagedThirdwebWebhooks(await listThirdwebWebhooks());
+    const existingByName = new Map<string, ThirdwebWebhookApiRecord[]>();
+
+    for (const record of existingManagedWebhooks) {
+      const name = String(record.name || "").trim();
+      if (!name) {
+        continue;
+      }
+      const records = existingByName.get(name) || [];
+      records.push(record);
+      existingByName.set(name, records);
+    }
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    let deletedCount = 0;
+
+    for (const desiredWebhook of desiredWebhooks) {
+      const candidates = sortWebhookCandidates(existingByName.get(desiredWebhook.name) || []);
+      existingByName.delete(desiredWebhook.name);
+
+      if (candidates.length === 0) {
+        await createThirdwebWebhook(desiredWebhook);
+        createdCount += 1;
+        continue;
+      }
+
+      let canonical =
+        candidates.find((candidate) =>
+          isEquivalentWebhookConfig({
+            existing: candidate,
+            desired: desiredWebhook,
+          }),
+        ) || candidates[0];
+
+      if (
+        !isEquivalentWebhookConfig({
+          existing: canonical,
+          desired: desiredWebhook,
+        })
+      ) {
+        canonical = await updateThirdwebWebhook({
+          webhookId: canonical.id,
+          body: desiredWebhook,
+        });
+        updatedCount += 1;
+      }
+
+      for (const duplicate of candidates) {
+        if (duplicate.id === canonical.id) {
+          continue;
+        }
+        await deleteThirdwebWebhook(duplicate.id);
+        deletedCount += 1;
+      }
+    }
+
+    for (const staleRecords of existingByName.values()) {
+      for (const staleRecord of staleRecords) {
+        await deleteThirdwebWebhook(staleRecord.id);
+        deletedCount += 1;
+      }
+    }
+
+    const finalManagedWebhooks = filterManagedThirdwebWebhooks(await listThirdwebWebhooks());
+    await persistManagedWebhookRecords(finalManagedWebhooks);
+    clearThirdwebWebhookStatusCache();
+
+    const result: SyncThirdwebSellerUsdtWebhooksResult = {
+      ok: true,
+      receiverUrl,
+      walletCount: walletAddresses.length,
+      desiredWebhookCount: desiredWebhooks.length,
+      activeWebhookCount: finalManagedWebhooks.length,
+      createdCount,
+      updatedCount,
+      deletedCount,
+      managedWebhookIds: finalManagedWebhooks.map((item) => item.id),
+    };
+
+    await persistThirdwebWebhookSyncResult({
+      cacheKey,
+      desiredFingerprint,
+      receiverUrl,
+      result,
+    });
+    setThirdwebWebhookSyncCooldownResult(cacheKey, result);
+    return result;
+  } finally {
+    await releaseThirdwebWebhookSyncLock(cacheKey, lockToken);
+  }
 };
 
 export const syncThirdwebSellerUsdtWebhooksIfStale = async ({

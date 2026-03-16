@@ -16,6 +16,7 @@ import {
 import {
   saveBuyOrderStatusRealtimeEvent,
 } from "@lib/api/buyOrderStatusRealtimeEvent";
+import { scheduleUsdtTransactionHashReceiptReconcile } from "@lib/api/tokenTransfer";
 import {
   getConfiguredClearanceSettlementWalletAddress,
   isConfiguredClearanceRequesterWallet,
@@ -329,6 +330,26 @@ const scheduleThirdwebBuyerWebhookSync = () => {
   void syncThirdwebSellerUsdtWebhooksIfStale().catch((error) => {
     console.error("Failed to sync thirdweb USDT webhooks after buyorder status change:", error);
   });
+};
+
+const getBuyOrderScanRelevantWalletAddresses = (order: any): string[] => {
+  return Array.from(
+    new Set(
+      [
+        normalizeWalletAddress(order?.walletAddress),
+        normalizeWalletAddress(order?.buyer?.walletAddress),
+        normalizeWalletAddress(order?.seller?.walletAddress),
+        normalizeWalletAddress(order?.store?.sellerWalletAddress),
+        normalizeWalletAddress(order?.store?.privateSellerWalletAddress),
+        normalizeWalletAddress(order?.store?.settlementWalletAddress),
+        normalizeWalletAddress(order?.store?.settlementFeeWalletAddress),
+        normalizeWalletAddress(order?.settlement?.settlementWalletAddress),
+        normalizeWalletAddress(order?.settlement?.feeWalletAddress),
+        normalizeWalletAddress(order?.escrowWallet?.address),
+        normalizeWalletAddress(order?.escrowWallet?.smartAccountAddress),
+      ].filter((walletAddress): walletAddress is string => Boolean(walletAddress)),
+    ),
+  );
 };
 
 const globalBuyOrderReadState = globalThis as typeof globalThis & {
@@ -695,7 +716,28 @@ async function emitBuyOrderStatusRealtimeEvent({
   }
 
   if (!shouldSyncThirdwebBuyerWebhookWatchlist) {
+    if (event.transactionHash) {
+      scheduleUsdtTransactionHashReceiptReconcile({
+        transactionHash: event.transactionHash,
+        orderId: event.orderId,
+        tradeId: event.tradeId,
+        queueId: event.queueId,
+        store: event.store,
+        relevantWalletAddresses: getBuyOrderScanRelevantWalletAddresses(order),
+      });
+    }
     return;
+  }
+
+  if (event.transactionHash) {
+    scheduleUsdtTransactionHashReceiptReconcile({
+      transactionHash: event.transactionHash,
+      orderId: event.orderId,
+      tradeId: event.tradeId,
+      queueId: event.queueId,
+      store: event.store,
+      relevantWalletAddresses: getBuyOrderScanRelevantWalletAddresses(order),
+    });
   }
 
   scheduleThirdwebBuyerWebhookSync();

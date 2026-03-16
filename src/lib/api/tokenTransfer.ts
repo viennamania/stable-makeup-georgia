@@ -13,6 +13,7 @@ import {
   polygonContractAddressUSDT,
   thirdwebClientId,
 } from "@/app/config/contractAddresses";
+import { getThirdwebMonitoredWalletRecords } from "@/lib/server/thirdweb-insight-webhook";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 
@@ -103,6 +104,7 @@ type ThirdwebInsightTokenTransferItem = {
 const PUBLIC_SCAN_EVENT_SOURCES = [
   "api.realtime.scan.usdt-token-transfers.ingest",
   "thirdweb.insight.webhook",
+  "order.transactionHash.reconcile",
 ] as const;
 const PUBLIC_SCAN_EVENT_SOURCE_SET = new Set<string>(PUBLIC_SCAN_EVENT_SOURCES);
 const ACTIVE_SCAN_BUYER_STATUSES = [
@@ -112,8 +114,56 @@ const ACTIVE_SCAN_BUYER_STATUSES = [
   "paymentConfirmed",
 ] as const;
 const THIRDWEB_OWNER_QUERY_SOURCE = "thirdweb.insight.tokens.transfers";
+const BUYORDER_TRANSACTION_HASH_RECONCILE_SOURCE = "order.transactionHash.reconcile";
+const SCAN_RECEIPT_RECONCILE_COOLDOWN_MS = Math.max(
+  Number.parseInt(process.env.SCAN_RECEIPT_RECONCILE_COOLDOWN_MS || "", 10) || 2 * 60 * 1000,
+  10 * 1000,
+);
+
+type ReconcileUsdtTransactionHashByReceiptParams = {
+  transactionHash: string | null | undefined;
+  orderId?: string | null;
+  tradeId?: string | null;
+  queueId?: string | null;
+  chain?: string | null;
+  store?: UsdtTransactionHashRealtimeEvent["store"] | null;
+  relevantWalletAddresses?: Array<string | null | undefined>;
+};
+
+type JsonRpcTransferLog = {
+  address?: unknown;
+  topics?: unknown;
+  data?: unknown;
+  logIndex?: unknown;
+  blockTimestamp?: unknown;
+  block_timestamp?: unknown;
+};
+
+type JsonRpcTransactionReceipt = {
+  status?: unknown;
+  logs?: unknown;
+};
+
+const globalScanReconcileState = globalThis as typeof globalThis & {
+  __scanReceiptReconcileCooldowns?: Map<string, number>;
+  __scanReceiptReconcilePromises?: Map<string, Promise<{ registeredCount: number; skippedReason: string | null }>>;
+};
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getScanReceiptReconcileCooldownStore = () => {
+  if (!globalScanReconcileState.__scanReceiptReconcileCooldowns) {
+    globalScanReconcileState.__scanReceiptReconcileCooldowns = new Map();
+  }
+  return globalScanReconcileState.__scanReceiptReconcileCooldowns;
+};
+
+const getScanReceiptReconcilePromiseStore = () => {
+  if (!globalScanReconcileState.__scanReceiptReconcilePromises) {
+    globalScanReconcileState.__scanReceiptReconcilePromises = new Map();
+  }
+  return globalScanReconcileState.__scanReceiptReconcilePromises;
+};
 
 const normalizeText = (value: unknown): string | null => {
   if (typeof value === "string") {
@@ -125,6 +175,14 @@ const normalizeText = (value: unknown): string | null => {
   }
   const normalized = String(value).trim();
   return normalized || null;
+};
+
+const normalizeHexText = (value: unknown): string | null => {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return null;
+  }
+  return normalized.toLowerCase();
 };
 
 const toIsoString = (value: unknown): string => {
@@ -143,6 +201,18 @@ const toIsoString = (value: unknown): string => {
 const toSafeNumber = (value: unknown): number => {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
+const toFiniteTimestamp = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return null;
+  }
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
 };
 
 const extractWalletAddress = (value: unknown): string | null => {
@@ -546,6 +616,58 @@ const buildThirdwebTransferEventKey = ({
     Number.isFinite(amountUsdt) ? amountUsdt.toFixed(8) : "0",
   ].join(":");
 };
+
+const getRpcUrlForConfiguredChain = (): string => {
+  const chain = String(configuredChain || "").trim().toLowerCase();
+  if (chain === "ethereum") {
+    return "https://eth.llamarpc.com";
+  }
+  if (chain === "polygon") {
+    return "https://polygon-rpc.com";
+  }
+  if (chain === "arbitrum") {
+    return "https://arb1.arbitrum.io/rpc";
+  }
+  return "https://bsc-dataseed.binance.org";
+};
+
+const decodeAddressTopic = (value: unknown): string | null => {
+  const normalized = normalizeHexText(value);
+  if (!normalized || !normalized.startsWith("0x") || normalized.length < 42) {
+    return null;
+  }
+  return normalizeWalletAddress(`0x${normalized.slice(-40)}`);
+};
+
+const toIsoFromUnixSeconds = (value: unknown): string | null => {
+  const numeric = toFiniteTimestamp(value);
+  if (!Number.isFinite(numeric) || Number(numeric) <= 0) {
+    return null;
+  }
+  return new Date(Number(numeric) * 1000).toISOString();
+};
+
+const buildReconcileIdempotencyKey = ({
+  transactionHash,
+  logIndex,
+  fromWalletAddress,
+  toWalletAddress,
+  amountUsdt,
+}: {
+  transactionHash: string;
+  logIndex: string | null;
+  fromWalletAddress: string | null;
+  toWalletAddress: string | null;
+  amountUsdt: number;
+}) =>
+  [
+    "scan-reconcile",
+    transactionHash.toLowerCase(),
+    logIndex || "",
+    fromWalletAddress || "",
+    toWalletAddress || "",
+    Number.isFinite(amountUsdt) ? amountUsdt.toFixed(8) : "0",
+  ].join(":");
 
 const buildEventMergeKey = (event: UsdtTransactionHashRealtimeEvent): string => {
   const transactionHash = (normalizeText(event.transactionHash) || "").toLowerCase();
@@ -1428,7 +1550,10 @@ async function upsertTransactionHashLogEvent(
     };
   }
 
-  const existing = await collection.findOne({ idempotencyKey });
+  let existing = await collection.findOne({ idempotencyKey });
+  if (!existing && PUBLIC_SCAN_EVENT_SOURCE_SET.has(nextEvent.source as (typeof PUBLIC_SCAN_EVENT_SOURCES)[number])) {
+    existing = await findExistingPublicTransferEventDocument(collection, nextEvent);
+  }
   if (!existing) {
     const payload = {
       ...nextEvent,
@@ -1481,6 +1606,280 @@ async function upsertTransactionHashLogEvent(
     wasUpdated: true,
   };
 }
+
+async function findExistingPublicTransferEventDocument(
+  collection: any,
+  event: UsdtTransactionHashRealtimeEvent,
+) {
+  const normalizedTransactionHash = normalizeText(event.transactionHash);
+  if (!normalizedTransactionHash) {
+    return null;
+  }
+
+  const filters: Record<string, unknown>[] = [
+    buildPublicScanTransactionHashLogQuery(null),
+    {
+      transactionHash: {
+        $regex: `^${escapeRegex(normalizedTransactionHash)}$`,
+        $options: "i",
+      },
+    },
+    {
+      amountUsdt: toSafeNumber(event.amountUsdt),
+    },
+  ];
+
+  const normalizedLogIndex = normalizeText(event.logIndex);
+  if (normalizedLogIndex) {
+    filters.push({ logIndex: normalizedLogIndex });
+  }
+
+  const normalizedFromWalletAddress = normalizeWalletAddress(event.fromWalletAddress);
+  if (normalizedFromWalletAddress) {
+    filters.push({ fromWalletAddress: normalizedFromWalletAddress });
+  }
+
+  const normalizedToWalletAddress = normalizeWalletAddress(event.toWalletAddress);
+  if (normalizedToWalletAddress) {
+    filters.push({ toWalletAddress: normalizedToWalletAddress });
+  }
+
+  return collection.findOne(
+    {
+      $and: filters,
+    },
+    {
+      sort: { publishedAt: -1, createdAt: -1, _id: -1 },
+    },
+  );
+}
+
+const fetchTransactionReceiptByHash = async (
+  transactionHash: string,
+): Promise<JsonRpcTransactionReceipt | null> => {
+  const response = await fetch(getRpcUrlForConfiguredChain(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "eth_getTransactionReceipt",
+      params: [transactionHash],
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`eth_getTransactionReceipt failed (${response.status})`);
+  }
+
+  const payload = (await response.json()) as { result?: JsonRpcTransactionReceipt | null };
+  return payload?.result || null;
+};
+
+export async function reconcileUsdtTransactionHashByReceipt(
+  params: ReconcileUsdtTransactionHashByReceiptParams,
+): Promise<{ registeredCount: number; skippedReason: string | null }> {
+  const transactionHash = normalizeText(params.transactionHash);
+  if (!transactionHash) {
+    return {
+      registeredCount: 0,
+      skippedReason: "missing_transaction_hash",
+    };
+  }
+
+  const receipt = await fetchTransactionReceiptByHash(transactionHash);
+  if (!receipt) {
+    return {
+      registeredCount: 0,
+      skippedReason: "receipt_not_found",
+    };
+  }
+
+  const receiptStatus = normalizeHexText(receipt.status);
+  if (receiptStatus && receiptStatus !== "0x1") {
+    return {
+      registeredCount: 0,
+      skippedReason: "receipt_not_success",
+    };
+  }
+
+  const logs = Array.isArray(receipt.logs) ? (receipt.logs as JsonRpcTransferLog[]) : [];
+  if (logs.length === 0) {
+    return {
+      registeredCount: 0,
+      skippedReason: "receipt_without_logs",
+    };
+  }
+
+  const monitoredWalletRecords = await getThirdwebMonitoredWalletRecords();
+  const monitoredWalletMap = new Map(
+    monitoredWalletRecords
+      .map((item) => [normalizeWalletAddress(item.walletAddress), item] as const)
+      .filter((entry): entry is [string, (typeof monitoredWalletRecords)[number]] => Boolean(entry[0])),
+  );
+  const relevantWalletSet = new Set<string>(
+    params.relevantWalletAddresses
+      ?.map((walletAddress) => normalizeWalletAddress(walletAddress))
+      .filter((walletAddress): walletAddress is string => Boolean(walletAddress)) || [],
+  );
+
+  for (const walletAddress of monitoredWalletMap.keys()) {
+    relevantWalletSet.add(walletAddress);
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("transactionHashLogs");
+  const chainId = normalizeText(params.chain) || buildChainIdForConfiguredChain();
+  const configuredUsdtContractAddress = getUsdtContractAddressForConfiguredChain();
+
+  let registeredCount = 0;
+
+  for (const log of logs) {
+    const contractAddress = normalizeWalletAddress(log.address);
+    if (contractAddress !== configuredUsdtContractAddress) {
+      continue;
+    }
+
+    const topics = Array.isArray(log.topics) ? log.topics : [];
+    if (topics.length < 3) {
+      continue;
+    }
+
+    if (normalizeHexText(topics[0]) !== "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef") {
+      continue;
+    }
+
+    const fromWalletAddress = decodeAddressTopic(topics[1]);
+    const toWalletAddress = decodeAddressTopic(topics[2]);
+
+    if (
+      !fromWalletAddress
+      || !toWalletAddress
+      || (!relevantWalletSet.has(fromWalletAddress) && !relevantWalletSet.has(toWalletAddress))
+    ) {
+      continue;
+    }
+
+    const amountRaw = normalizeHexText(log.data);
+    if (!amountRaw) {
+      continue;
+    }
+
+    const amountUsdt = formatUnitsToNumber(amountRaw, getUsdtDecimalsForChainId(chainId));
+    const logIndex = normalizeHexText(log.logIndex);
+    const minedAt = toIsoFromUnixSeconds(log.blockTimestamp || log.block_timestamp);
+    const primaryMonitored =
+      monitoredWalletMap.get(fromWalletAddress) || monitoredWalletMap.get(toWalletAddress) || null;
+    const event = createUsdtTransactionHashRealtimeEvent(
+      {
+        eventId: `buyorder-reconcile-${transactionHash.toLowerCase()}-${logIndex || "na"}`,
+        idempotencyKey: buildReconcileIdempotencyKey({
+          transactionHash,
+          logIndex,
+          fromWalletAddress,
+          toWalletAddress,
+          amountUsdt,
+        }),
+        source: BUYORDER_TRANSACTION_HASH_RECONCILE_SOURCE,
+        orderId: params.orderId,
+        tradeId: params.tradeId,
+        chain: resolveChainName(chainId),
+        tokenSymbol: "USDT",
+        store:
+          params.store || (primaryMonitored?.storecode
+            ? {
+                code: primaryMonitored.storecode,
+                name: primaryMonitored.storeName,
+                logo: primaryMonitored.storeLogo,
+              }
+            : null),
+        amountUsdt,
+        transactionHash,
+        logIndex,
+        fromWalletAddress,
+        toWalletAddress,
+        status: "confirmed",
+        queueId: params.queueId || null,
+        minedAt,
+        createdAt: minedAt || new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
+      },
+      {
+        defaultSource: BUYORDER_TRANSACTION_HASH_RECONCILE_SOURCE,
+        defaultStatus: "confirmed",
+        defaultTokenSymbol: "USDT",
+      },
+    );
+
+    if (!event) {
+      continue;
+    }
+
+    const existingTransfer = await findExistingPublicTransferEventDocument(collection, event);
+    if (existingTransfer) {
+      continue;
+    }
+
+    const registered = await registerUsdtTransactionHashRealtimeEvent(event);
+    if (!registered.isDuplicate || registered.wasUpdated) {
+      registeredCount += 1;
+    }
+  }
+
+  return {
+    registeredCount,
+    skippedReason: registeredCount > 0 ? null : "no_matching_usdt_transfer",
+  };
+}
+
+export const scheduleUsdtTransactionHashReceiptReconcile = (
+  params: ReconcileUsdtTransactionHashByReceiptParams,
+) => {
+  const transactionHash = normalizeText(params.transactionHash)?.toLowerCase();
+  if (!transactionHash) {
+    return;
+  }
+
+  const promiseStore = getScanReceiptReconcilePromiseStore();
+  const existingPromise = promiseStore.get(transactionHash);
+  if (existingPromise) {
+    return;
+  }
+
+  const cooldownStore = getScanReceiptReconcileCooldownStore();
+  const cooldownUntil = cooldownStore.get(transactionHash) || 0;
+  if (cooldownUntil > Date.now()) {
+    return;
+  }
+
+  const nextPromise = reconcileUsdtTransactionHashByReceipt(params)
+    .then((result) => {
+      const nextCooldownMs =
+        result.skippedReason === "receipt_not_found"
+          ? Math.min(15 * 1000, SCAN_RECEIPT_RECONCILE_COOLDOWN_MS)
+          : SCAN_RECEIPT_RECONCILE_COOLDOWN_MS;
+      cooldownStore.set(transactionHash, Date.now() + nextCooldownMs);
+      return result;
+    })
+    .catch((error) => {
+      console.error("Failed to reconcile transaction hash into scan feed:", error);
+      cooldownStore.set(transactionHash, Date.now() + 15 * 1000);
+      return {
+        registeredCount: 0,
+        skippedReason: "reconcile_failed",
+      };
+    })
+    .finally(() => {
+      promiseStore.delete(transactionHash);
+    });
+
+  promiseStore.set(transactionHash, nextPromise);
+  void nextPromise;
+};
 
 export async function registerUsdtTransactionHashRealtimeEvent(
   event: UsdtTransactionHashRealtimeEvent,
