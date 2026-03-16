@@ -475,14 +475,6 @@ function PartyIdentityCardItem({
     );
   }
 
-  const compactMeta =
-    isStoreIdentity
-      ? [
-          identity?.storeName,
-          identity?.storecode ? `@${identity.storecode}` : null,
-        ].filter((value): value is string => Boolean(value)).join(" · ")
-      : null;
-
   const compactTitle = isStoreIdentity
     ? item.title
     : (
@@ -491,6 +483,19 @@ function PartyIdentityCardItem({
         || maskIdentityText(identity?.accountHolder)
         || "Monitored wallet"
       );
+
+  const maskedAccountHolder = maskIdentityText(identity?.accountHolder);
+  const compactMeta =
+    isStoreIdentity
+      ? [
+          identity?.storeName,
+          identity?.storecode ? `@${identity.storecode}` : null,
+        ].filter((value): value is string => Boolean(value)).join(" · ")
+      : (
+          maskedAccountHolder && maskedAccountHolder !== compactTitle
+            ? maskedAccountHolder
+            : null
+        );
 
   return (
     <div className={`overflow-hidden rounded-[16px] border px-2.5 py-2 ${getIdentityPanelClassName(identity)}`}>
