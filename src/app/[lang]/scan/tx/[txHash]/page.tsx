@@ -8,6 +8,21 @@ import {
 } from "@lib/api/tokenTransfer";
 import { getRelativeTimeInfo } from "@lib/realtime/timeAgo";
 
+function buildIdentityTags(
+  identity: NonNullable<Awaited<ReturnType<typeof getTransactionHashLogEventByHash>>>["fromIdentity"] | null | undefined,
+): string[] {
+  if (!identity) {
+    return [];
+  }
+
+  return [
+    identity.badgeLabel,
+    identity.nickname,
+    identity.storecode ? `store:${identity.storecode}` : null,
+    identity.userType ? `type:${identity.userType}` : null,
+  ].filter((value): value is string => Boolean(value));
+}
+
 function formatUsdt(value: number): string {
   return Number(value || 0).toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -63,6 +78,8 @@ export default async function ScanTransactionDetailPage({
   const relativeTime = getRelativeTimeInfo(event.createdAt);
   const explorerTxUrl = `${getExplorerBaseUrl()}/tx/${event.transactionHash}`;
   const chainLabel = String(event.chain || configuredChain || "bsc").toUpperCase();
+  const fromIdentityTags = buildIdentityTags(event.fromIdentity || null);
+  const toIdentityTags = buildIdentityTags(event.toIdentity || null);
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] text-slate-900">
@@ -154,6 +171,18 @@ export default async function ScanTransactionDetailPage({
                   <div className="mt-2 text-sm font-semibold text-slate-900">-</div>
                 )}
                 <div className="mt-1 text-sm text-slate-500">{event.fromLabel || "-"}</div>
+                {fromIdentityTags.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {fromIdentityTags.map((tag) => (
+                      <span
+                        key={`from-${tag}`}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">To</div>
@@ -168,6 +197,18 @@ export default async function ScanTransactionDetailPage({
                   <div className="mt-2 text-sm font-semibold text-slate-900">-</div>
                 )}
                 <div className="mt-1 text-sm text-slate-500">{event.toLabel || "-"}</div>
+                {toIdentityTags.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {toIdentityTags.map((tag) => (
+                      <span
+                        key={`to-${tag}`}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-medium text-slate-600"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Store</div>

@@ -5,6 +5,14 @@ import clientPromise from '../mongodb';
 import { dbName } from '../mongodb';
 import type { UsdtTransactionHashRealtimeEvent } from "@lib/ably/constants";
 import { publishUsdtTransactionHashEvent } from "@lib/ably/server";
+import {
+  arbitrumContractAddressUSDT,
+  bscContractAddressUSDT,
+  chain as configuredChain,
+  ethereumContractAddressUSDT,
+  polygonContractAddressUSDT,
+  thirdwebClientId,
+} from "@/app/config/contractAddresses";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 
@@ -29,11 +37,68 @@ type GetLatestTransactionHashLogEventsParams = {
   address?: string | null;
 };
 
+type ScanUserWalletIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"]>;
+
+type StoredTransactionHashLogDocument = {
+  _id?: unknown;
+  eventId?: unknown;
+  idempotencyKey?: unknown;
+  source?: unknown;
+  orderId?: unknown;
+  tradeId?: unknown;
+  chain?: unknown;
+  tokenSymbol?: unknown;
+  store?: unknown;
+  amountUsdt?: unknown;
+  amount?: unknown;
+  transactionHash?: unknown;
+  logIndex?: unknown;
+  fromWalletAddress?: unknown;
+  toWalletAddress?: unknown;
+  fromLabel?: unknown;
+  toLabel?: unknown;
+  fromIdentity?: unknown;
+  toIdentity?: unknown;
+  status?: unknown;
+  queueId?: unknown;
+  minedAt?: unknown;
+  createdAt?: unknown;
+  publishedAt?: unknown;
+  from?: unknown;
+  to?: unknown;
+};
+
+type ScanWalletUserRecord = {
+  walletAddress: string;
+  nickname: string | null;
+  storecode: string | null;
+  userType: string | null;
+  role: string | null;
+};
+
+type ThirdwebInsightTokenTransferItem = {
+  transaction_hash?: unknown;
+  from_address?: unknown;
+  to_address?: unknown;
+  contract_address?: unknown;
+  block_timestamp?: unknown;
+  log_index?: unknown;
+  amount?: unknown;
+  chain_id?: unknown;
+};
+
 const PUBLIC_SCAN_EVENT_SOURCES = [
   "api.realtime.scan.usdt-token-transfers.ingest",
   "thirdweb.insight.webhook",
 ] as const;
 const PUBLIC_SCAN_EVENT_SOURCE_SET = new Set<string>(PUBLIC_SCAN_EVENT_SOURCES);
+const ACTIVE_SCAN_BUYER_STATUSES = [
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+] as const;
+const THIRDWEB_OWNER_QUERY_SOURCE = "thirdweb.insight.tokens.transfers";
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -218,6 +283,244 @@ const buildDefaultEventId = (idempotencyKey: string) => {
   return `usdt-tx-${createHash("sha256").update(idempotencyKey).digest("hex")}`;
 };
 
+const normalizePartyIdentity = (value: unknown): ScanUserWalletIdentity | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const badgeLabel = normalizeText(record.badgeLabel);
+  const nickname = normalizeText(record.nickname);
+  const storecode = normalizeText(record.storecode);
+  const userType = normalizeText(record.userType);
+  const role = normalizeText(record.role);
+
+  if (!badgeLabel && !nickname && !storecode && !userType && !role) {
+    return null;
+  }
+
+  return {
+    badgeLabel,
+    nickname,
+    storecode,
+    userType,
+    role,
+  };
+};
+
+const mergePartyIdentity = (
+  existing: ScanUserWalletIdentity | null | undefined,
+  incoming: ScanUserWalletIdentity | null | undefined,
+): ScanUserWalletIdentity | null => {
+  const normalizedExisting = normalizePartyIdentity(existing);
+  const normalizedIncoming = normalizePartyIdentity(incoming);
+
+  if (!normalizedExisting) {
+    return normalizedIncoming;
+  }
+  if (!normalizedIncoming) {
+    return normalizedExisting;
+  }
+
+  return {
+    badgeLabel: normalizedExisting.badgeLabel || normalizedIncoming.badgeLabel,
+    nickname: normalizedExisting.nickname || normalizedIncoming.nickname,
+    storecode: normalizedExisting.storecode || normalizedIncoming.storecode,
+    userType: normalizedExisting.userType || normalizedIncoming.userType,
+    role: normalizedExisting.role || normalizedIncoming.role,
+  };
+};
+
+const buildIdentityDisplayLabel = (identity: ScanUserWalletIdentity | null | undefined): string | null => {
+  const normalizedIdentity = normalizePartyIdentity(identity);
+  if (!normalizedIdentity) {
+    return null;
+  }
+
+  const baseLabel = normalizedIdentity.badgeLabel || null;
+  if (baseLabel && normalizedIdentity.nickname) {
+    return `${baseLabel} · ${normalizedIdentity.nickname}`;
+  }
+  return normalizedIdentity.nickname || baseLabel;
+};
+
+const shouldReplacePartyLabelWithIdentity = ({
+  currentLabel,
+  walletAddress,
+  identity,
+}: {
+  currentLabel: string | null;
+  walletAddress: string | null;
+  identity: ScanUserWalletIdentity | null;
+}) => {
+  if (!identity) {
+    return false;
+  }
+
+  const normalizedLabel = normalizeText(currentLabel)?.toLowerCase() || "";
+  if (!normalizedLabel) {
+    return true;
+  }
+
+  if (walletAddress && normalizedLabel === walletAddress.toLowerCase()) {
+    return true;
+  }
+
+  if (identity.badgeLabel === "Buyer Wallet") {
+    return (
+      normalizedLabel === "active buyer wallet"
+      || normalizedLabel === "buyer wallet"
+      || normalizedLabel.includes("buyer:")
+      || normalizedLabel.endsWith("buyer")
+    );
+  }
+
+  if (identity.badgeLabel === "Member Wallet") {
+    return normalizedLabel === "member wallet" || normalizedLabel === "wallet";
+  }
+
+  return false;
+};
+
+const buildChainIdForConfiguredChain = (): string => {
+  if (configuredChain === "ethereum") {
+    return "1";
+  }
+  if (configuredChain === "polygon") {
+    return "137";
+  }
+  if (configuredChain === "arbitrum") {
+    return "42161";
+  }
+  return "56";
+};
+
+const resolveChainName = (chainIdRaw: unknown): string => {
+  const chainId = normalizeText(chainIdRaw) || buildChainIdForConfiguredChain();
+  if (chainId === "1") {
+    return "ethereum";
+  }
+  if (chainId === "137") {
+    return "polygon";
+  }
+  if (chainId === "42161") {
+    return "arbitrum";
+  }
+  return "bsc";
+};
+
+const getUsdtContractAddressForConfiguredChain = (): string => {
+  if (configuredChain === "ethereum") {
+    return ethereumContractAddressUSDT.toLowerCase();
+  }
+  if (configuredChain === "polygon") {
+    return polygonContractAddressUSDT.toLowerCase();
+  }
+  if (configuredChain === "arbitrum") {
+    return arbitrumContractAddressUSDT.toLowerCase();
+  }
+  return bscContractAddressUSDT.toLowerCase();
+};
+
+const getUsdtDecimalsForChainId = (chainIdRaw: unknown): number => {
+  const chainId = normalizeText(chainIdRaw) || buildChainIdForConfiguredChain();
+  return chainId === "56" ? 18 : 6;
+};
+
+const formatUnitsToNumber = (rawValue: string, decimals: number): number => {
+  try {
+    const raw = BigInt(rawValue);
+    const base = 10n ** BigInt(decimals);
+    const integer = raw / base;
+    const fraction = raw % base;
+    const fractionText = fraction.toString().padStart(decimals, "0").replace(/0+$/, "");
+    const normalized = fractionText ? `${integer}.${fractionText}` : integer.toString();
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const getThirdwebInsightTokenTransferUrl = ({
+  ownerAddress,
+  limit,
+}: {
+  ownerAddress: string;
+  limit: number;
+}) => {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    owner_address: ownerAddress,
+    contract_address: getUsdtContractAddressForConfiguredChain(),
+  });
+
+  return `https://${buildChainIdForConfiguredChain()}.insight.thirdweb.com/v1/tokens/transfers?${params.toString()}`;
+};
+
+const getThirdwebInsightHeaders = () => {
+  const secretKey = normalizeText(process.env.THIRDWEB_SECRET_KEY);
+  const clientId =
+    normalizeText(process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID)
+    || normalizeText(process.env.THIRDWEB_CLIENT_ID)
+    || thirdwebClientId;
+
+  if (!secretKey || !clientId) {
+    return null;
+  }
+
+  return {
+    "x-client-id": clientId,
+    "x-secret-key": secretKey,
+    "user-agent": "stable-georgia-scan/1.0",
+  };
+};
+
+const buildThirdwebTransferEventKey = ({
+  transactionHash,
+  logIndex,
+  fromWalletAddress,
+  toWalletAddress,
+  amountUsdt,
+}: {
+  transactionHash: string;
+  logIndex: string | null;
+  fromWalletAddress: string | null;
+  toWalletAddress: string | null;
+  amountUsdt: number;
+}) => {
+  return [
+    transactionHash.toLowerCase(),
+    logIndex || "",
+    fromWalletAddress || "",
+    toWalletAddress || "",
+    Number.isFinite(amountUsdt) ? amountUsdt.toFixed(8) : "0",
+  ].join(":");
+};
+
+const buildEventMergeKey = (event: UsdtTransactionHashRealtimeEvent): string => {
+  const transactionHash = (normalizeText(event.transactionHash) || "").toLowerCase();
+  const logIndex = normalizeText(event.logIndex);
+  const fromWalletAddress = normalizeWalletAddress(event.fromWalletAddress) || "";
+  const toWalletAddress = normalizeWalletAddress(event.toWalletAddress) || "";
+  const amountUsdt = Number.isFinite(Number(event.amountUsdt))
+    ? Number(event.amountUsdt).toFixed(8)
+    : "0";
+
+  return [transactionHash, logIndex, fromWalletAddress, toWalletAddress, amountUsdt].join(":");
+};
+
+const getEventTimestamp = (event: UsdtTransactionHashRealtimeEvent): number => {
+  const candidates = [event.minedAt, event.createdAt, event.publishedAt];
+  for (const candidate of candidates) {
+    const timestamp = Date.parse(String(candidate || ""));
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+  return 0;
+};
+
 const toComparableEvent = (event: UsdtTransactionHashRealtimeEvent) => {
   return JSON.stringify({
     source: event.source || null,
@@ -228,10 +531,13 @@ const toComparableEvent = (event: UsdtTransactionHashRealtimeEvent) => {
     store: event.store || null,
     amountUsdt: toSafeNumber(event.amountUsdt),
     transactionHash: event.transactionHash || null,
+    logIndex: event.logIndex || null,
     fromWalletAddress: event.fromWalletAddress || null,
     toWalletAddress: event.toWalletAddress || null,
     fromLabel: event.fromLabel || null,
     toLabel: event.toLabel || null,
+    fromIdentity: event.fromIdentity || null,
+    toIdentity: event.toIdentity || null,
     status: event.status || null,
     queueId: event.queueId || null,
     minedAt: event.minedAt || null,
@@ -288,10 +594,13 @@ export function createUsdtTransactionHashRealtimeEvent(
     store,
     amountUsdt: toSafeNumber(input?.amountUsdt ?? input?.usdtAmount ?? input?.amount),
     transactionHash,
+    logIndex: normalizeText(input?.logIndex),
     fromWalletAddress,
     toWalletAddress,
     fromLabel: normalizeText(input?.fromLabel) || extractLabel(input?.from, fromWalletAddress),
     toLabel: normalizeText(input?.toLabel) || extractLabel(input?.to, toWalletAddress),
+    fromIdentity: normalizePartyIdentity(input?.fromIdentity),
+    toIdentity: normalizePartyIdentity(input?.toIdentity),
     status: normalizeText(input?.status) || options?.defaultStatus || null,
     queueId: normalizeText(input?.queueId),
     minedAt: normalizeText(input?.minedAt),
@@ -300,7 +609,7 @@ export function createUsdtTransactionHashRealtimeEvent(
   };
 }
 
-export function normalizeTransactionHashLogDocument(document: any): UsdtTransactionHashRealtimeEvent {
+export function normalizeTransactionHashLogDocument(document: StoredTransactionHashLogDocument): UsdtTransactionHashRealtimeEvent {
   const transactionHash = normalizeText(document?.transactionHash) || "";
   const fromWalletAddress =
     normalizeWalletAddress(document?.fromWalletAddress) ||
@@ -309,6 +618,10 @@ export function normalizeTransactionHashLogDocument(document: any): UsdtTransact
     normalizeWalletAddress(document?.toWalletAddress) ||
     extractWalletAddress(document?.to);
   const createdAt = toIsoString(document?.createdAt);
+  const storeRecord =
+    document?.store && typeof document.store === "object"
+      ? (document.store as Record<string, unknown>)
+      : null;
 
   return {
     eventId: normalizeText(document?.eventId) || `txhash-log-${String(document?._id || transactionHash || createdAt)}`,
@@ -320,25 +633,463 @@ export function normalizeTransactionHashLogDocument(document: any): UsdtTransact
     tradeId: normalizeText(document?.tradeId),
     chain: normalizeText(document?.chain),
     tokenSymbol: normalizeText(document?.tokenSymbol) || "USDT",
-    store: document?.store && typeof document.store === "object"
+    store: storeRecord
       ? {
-          code: normalizeText(document.store.code),
-          logo: normalizeText(document.store.logo),
-          name: normalizeText(document.store.name),
+          code: normalizeText(storeRecord.code),
+          logo: normalizeText(storeRecord.logo),
+          name: normalizeText(storeRecord.name),
         }
       : null,
     amountUsdt: toSafeNumber(document?.amountUsdt ?? document?.amount),
     transactionHash,
+    logIndex: normalizeText(document?.logIndex),
     fromWalletAddress,
     toWalletAddress,
     fromLabel: normalizeText(document?.fromLabel) || extractLabel(document?.from, fromWalletAddress),
     toLabel: normalizeText(document?.toLabel) || extractLabel(document?.to, toWalletAddress),
+    fromIdentity: normalizePartyIdentity(document?.fromIdentity),
+    toIdentity: normalizePartyIdentity(document?.toIdentity),
     status: normalizeText(document?.status),
     queueId: normalizeText(document?.queueId),
     minedAt: normalizeText(document?.minedAt),
     createdAt,
     publishedAt: toIsoString(document?.publishedAt || document?.createdAt),
   };
+}
+
+async function loadStoredTransactionHashLogEvents({
+  limit = 50,
+  address,
+}: GetLatestTransactionHashLogEventsParams = {}): Promise<UsdtTransactionHashRealtimeEvent[]> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('transactionHashLogs');
+
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
+  const normalizedAddress = normalizeWalletAddress(address);
+  const query = buildPublicScanTransactionHashLogQuery(normalizedAddress);
+
+  const logs = await collection
+    .find<StoredTransactionHashLogDocument>(query)
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(safeLimit)
+    .toArray();
+
+  return logs
+    .map((document) => normalizeTransactionHashLogDocument(document))
+    .filter((item) => {
+      if (!isPublicScanTransactionHashEvent(item)) {
+        return false;
+      }
+      if (!normalizedAddress) {
+        return true;
+      }
+      return item.fromWalletAddress === normalizedAddress || item.toWalletAddress === normalizedAddress;
+    });
+}
+
+async function getScanWalletUserRecordMap(
+  walletAddresses: string[],
+): Promise<Map<string, ScanWalletUserRecord>> {
+  const normalizedWalletAddresses = Array.from(
+    new Set(walletAddresses.map((walletAddress) => normalizeWalletAddress(walletAddress)).filter(Boolean)),
+  );
+
+  if (normalizedWalletAddresses.length === 0) {
+    return new Map();
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("users");
+  const users = await collection.aggregate<{
+    _id: string;
+    walletAddress: string;
+    nickname?: string;
+    storecode?: string;
+    userType?: string;
+    role?: string;
+  }>([
+    {
+      $match: {
+        walletAddress: { $type: "string", $ne: "" },
+      },
+    },
+    {
+      $addFields: {
+        normalizedWalletAddress: {
+          $toLower: {
+            $trim: {
+              input: { $ifNull: ["$walletAddress", ""] },
+            },
+          },
+        },
+      },
+    },
+    {
+      $match: {
+        normalizedWalletAddress: { $in: normalizedWalletAddresses },
+      },
+    },
+    {
+      $sort: {
+        updatedAt: -1,
+        _id: -1,
+      },
+    },
+    {
+      $group: {
+        _id: "$normalizedWalletAddress",
+        walletAddress: { $first: "$walletAddress" },
+        nickname: { $first: "$nickname" },
+        storecode: { $first: "$storecode" },
+        userType: { $first: "$userType" },
+        role: { $first: "$role" },
+      },
+    },
+  ]).toArray();
+
+  return new Map(
+    users.map((user) => [
+      normalizeWalletAddress(user.walletAddress) || String(user._id),
+      {
+        walletAddress: normalizeWalletAddress(user.walletAddress) || String(user._id),
+        nickname: normalizeText(user.nickname),
+        storecode: normalizeText(user.storecode),
+        userType: normalizeText(user.userType),
+        role: normalizeText(user.role),
+      } satisfies ScanWalletUserRecord,
+    ]),
+  );
+}
+
+async function getActiveBuyerWalletAddressSet(walletAddresses: string[]): Promise<Set<string>> {
+  const normalizedWalletAddresses = Array.from(
+    new Set(walletAddresses.map((walletAddress) => normalizeWalletAddress(walletAddress)).filter(Boolean)),
+  );
+
+  if (normalizedWalletAddresses.length === 0) {
+    return new Set();
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const activeWallets = await collection.aggregate<{ _id: string }>([
+    {
+      $match: {
+        status: { $in: [...ACTIVE_SCAN_BUYER_STATUSES] },
+        $or: [
+          { walletAddress: { $type: "string", $ne: "" } },
+          { "buyer.walletAddress": { $type: "string", $ne: "" } },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        normalizedWalletAddress: {
+          $toLower: {
+            $trim: {
+              input: {
+                $ifNull: ["$walletAddress", "$buyer.walletAddress"],
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      $match: {
+        normalizedWalletAddress: { $in: normalizedWalletAddresses },
+      },
+    },
+    {
+      $group: {
+        _id: "$normalizedWalletAddress",
+      },
+    },
+  ]).toArray();
+
+  return new Set(
+    activeWallets
+      .map((item) => normalizeWalletAddress(item._id))
+      .filter((value): value is string => Boolean(value)),
+  );
+}
+
+const buildScanWalletIdentity = ({
+  user,
+  isActiveBuyer,
+}: {
+  user: ScanWalletUserRecord;
+  isActiveBuyer: boolean;
+}): ScanUserWalletIdentity => {
+  const nickname = normalizeText(user.nickname);
+  const storecode = normalizeText(user.storecode);
+  const userType = normalizeText(user.userType);
+  const role = normalizeText(user.role);
+  const normalizedNickname = (nickname || "").toLowerCase();
+  const normalizedRole = (role || "").toLowerCase();
+  const normalizedUserType = (userType || "").toLowerCase();
+
+  let badgeLabel = "Member Wallet";
+  if (isActiveBuyer) {
+    badgeLabel = "Buyer Wallet";
+  } else if (
+    normalizedUserType === "server-wallet"
+    || normalizedRole === "seller"
+    || normalizedNickname === "seller"
+  ) {
+    badgeLabel = "Store Wallet";
+  }
+
+  return {
+    badgeLabel,
+    nickname: nickname || null,
+    storecode: storecode || null,
+    userType: userType || null,
+    role: role || null,
+  };
+};
+
+async function hydrateUsdtTransactionHashRealtimeEvents(
+  events: UsdtTransactionHashRealtimeEvent[],
+): Promise<UsdtTransactionHashRealtimeEvent[]> {
+  if (events.length === 0) {
+    return events;
+  }
+
+  const walletAddresses = Array.from(
+    new Set(
+      events.flatMap((event) => [
+        normalizeWalletAddress(event.fromWalletAddress),
+        normalizeWalletAddress(event.toWalletAddress),
+      ]).filter(Boolean),
+    ),
+  ) as string[];
+
+  if (walletAddresses.length === 0) {
+    return events;
+  }
+
+  const [userRecordMap, activeBuyerWalletSet] = await Promise.all([
+    getScanWalletUserRecordMap(walletAddresses),
+    getActiveBuyerWalletAddressSet(walletAddresses),
+  ]);
+
+  return events.map((event) => {
+    const fromWalletAddress = normalizeWalletAddress(event.fromWalletAddress);
+    const toWalletAddress = normalizeWalletAddress(event.toWalletAddress);
+    const fromUser = fromWalletAddress ? userRecordMap.get(fromWalletAddress) || null : null;
+    const toUser = toWalletAddress ? userRecordMap.get(toWalletAddress) || null : null;
+    const fromIdentity = mergePartyIdentity(
+      event.fromIdentity,
+      fromUser
+        ? buildScanWalletIdentity({
+            user: fromUser,
+            isActiveBuyer: activeBuyerWalletSet.has(fromUser.walletAddress),
+          })
+        : null,
+    );
+    const toIdentity = mergePartyIdentity(
+      event.toIdentity,
+      toUser
+        ? buildScanWalletIdentity({
+            user: toUser,
+            isActiveBuyer: activeBuyerWalletSet.has(toUser.walletAddress),
+          })
+        : null,
+    );
+    const nextFromLabel = shouldReplacePartyLabelWithIdentity({
+      currentLabel: event.fromLabel,
+      walletAddress: fromWalletAddress,
+      identity: fromIdentity,
+    })
+      ? buildIdentityDisplayLabel(fromIdentity) || event.fromLabel || fromWalletAddress
+      : event.fromLabel;
+    const nextToLabel = shouldReplacePartyLabelWithIdentity({
+      currentLabel: event.toLabel,
+      walletAddress: toWalletAddress,
+      identity: toIdentity,
+    })
+      ? buildIdentityDisplayLabel(toIdentity) || event.toLabel || toWalletAddress
+      : event.toLabel;
+
+    return {
+      ...event,
+      fromLabel: nextFromLabel || event.fromLabel || null,
+      toLabel: nextToLabel || event.toLabel || null,
+      fromIdentity,
+      toIdentity,
+    };
+  });
+}
+
+async function fetchThirdwebInsightUsdtTransferEventsByOwnerAddress({
+  ownerAddress,
+  limit,
+}: {
+  ownerAddress: string;
+  limit: number;
+}): Promise<UsdtTransactionHashRealtimeEvent[]> {
+  const normalizedOwnerAddress = normalizeWalletAddress(ownerAddress);
+  if (!normalizedOwnerAddress) {
+    return [];
+  }
+
+  const headers = getThirdwebInsightHeaders();
+  if (!headers) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      getThirdwebInsightTokenTransferUrl({
+        ownerAddress: normalizedOwnerAddress,
+        limit: Math.max(1, Math.min(limit, 120)),
+      }),
+      {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Failed to fetch thirdweb token transfers:", response.status);
+      return [];
+    }
+
+    const payload = (await response.json()) as { data?: ThirdwebInsightTokenTransferItem[] };
+    const transfers = Array.isArray(payload?.data) ? payload.data : [];
+
+    return transfers
+      .map((item) => {
+        const transactionHash = normalizeText(item.transaction_hash);
+        if (!transactionHash) {
+          return null;
+        }
+
+        const fromWalletAddress = normalizeWalletAddress(item.from_address);
+        const toWalletAddress = normalizeWalletAddress(item.to_address);
+        const logIndex = normalizeText(item.log_index) || null;
+        const chainId = normalizeText(item.chain_id) || buildChainIdForConfiguredChain();
+        const amountRaw = normalizeText(item.amount);
+        const amountUsdt = amountRaw ? formatUnitsToNumber(amountRaw, getUsdtDecimalsForChainId(chainId)) : 0;
+        const createdAt = normalizeText(item.block_timestamp) || new Date().toISOString();
+        const eventKey = buildThirdwebTransferEventKey({
+          transactionHash,
+          logIndex,
+          fromWalletAddress,
+          toWalletAddress,
+          amountUsdt,
+        });
+
+        return createUsdtTransactionHashRealtimeEvent(
+          {
+            eventId: `thirdweb-owner-transfer:${eventKey}`,
+            idempotencyKey: `thirdweb-owner-transfer:${eventKey}`,
+            source: THIRDWEB_OWNER_QUERY_SOURCE,
+            chain: resolveChainName(chainId),
+            tokenSymbol: "USDT",
+            transactionHash,
+            logIndex,
+            amountUsdt,
+            fromWalletAddress,
+            toWalletAddress,
+            status: "confirmed",
+            queueId: `thirdweb-owner:${transactionHash}:${logIndex || "na"}`,
+            minedAt: createdAt,
+            createdAt,
+            publishedAt: new Date().toISOString(),
+          },
+          {
+            defaultSource: THIRDWEB_OWNER_QUERY_SOURCE,
+            defaultStatus: "confirmed",
+            defaultTokenSymbol: "USDT",
+          },
+        );
+      })
+      .filter((event): event is UsdtTransactionHashRealtimeEvent => Boolean(event));
+  } catch (error) {
+    console.error("Failed to fetch thirdweb owner-address token transfers:", error);
+    return [];
+  }
+}
+
+const mergeUsdtTransactionHashRealtimeEvents = (
+  events: UsdtTransactionHashRealtimeEvent[],
+): UsdtTransactionHashRealtimeEvent[] => {
+  const mergedMap = new Map<string, UsdtTransactionHashRealtimeEvent>();
+
+  for (const event of events) {
+    const eventKey = buildEventMergeKey(event);
+    const existing = mergedMap.get(eventKey);
+
+    if (!existing) {
+      mergedMap.set(eventKey, event);
+      continue;
+    }
+
+    mergedMap.set(eventKey, {
+      ...event,
+      ...existing,
+      eventId: existing.eventId || event.eventId,
+      idempotencyKey: existing.idempotencyKey || event.idempotencyKey,
+      source: existing.source || event.source,
+      store: existing.store || event.store,
+      fromLabel: existing.fromLabel || event.fromLabel,
+      toLabel: existing.toLabel || event.toLabel,
+      fromIdentity: mergePartyIdentity(existing.fromIdentity, event.fromIdentity),
+      toIdentity: mergePartyIdentity(existing.toIdentity, event.toIdentity),
+      queueId: existing.queueId || event.queueId,
+      status: existing.status || event.status,
+      orderId: existing.orderId || event.orderId,
+      tradeId: existing.tradeId || event.tradeId,
+      publishedAt: existing.publishedAt || event.publishedAt,
+      createdAt: existing.createdAt || event.createdAt,
+      minedAt: existing.minedAt || event.minedAt,
+      logIndex: existing.logIndex || event.logIndex,
+    });
+  }
+
+  return Array.from(mergedMap.values());
+};
+
+export async function getPublicScanTransactionHashLogEvents({
+  limit = 50,
+  address,
+}: GetLatestTransactionHashLogEventsParams = {}): Promise<UsdtTransactionHashRealtimeEvent[]> {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
+  const normalizedAddress = normalizeWalletAddress(address);
+  const storedEvents = await loadStoredTransactionHashLogEvents({
+    limit: safeLimit,
+    address: normalizedAddress,
+  });
+
+  let combinedEvents = storedEvents;
+
+  if (normalizedAddress) {
+    const userRecordMap = await getScanWalletUserRecordMap([normalizedAddress]);
+    if (userRecordMap.has(normalizedAddress)) {
+      const externalEvents = await fetchThirdwebInsightUsdtTransferEventsByOwnerAddress({
+        ownerAddress: normalizedAddress,
+        limit: safeLimit,
+      });
+      combinedEvents = mergeUsdtTransactionHashRealtimeEvents([
+        ...storedEvents,
+        ...externalEvents,
+      ]);
+    }
+  }
+
+  const hydratedEvents = await hydrateUsdtTransactionHashRealtimeEvents(combinedEvents);
+  return hydratedEvents
+    .filter((item) => {
+      if (!normalizedAddress) {
+        return true;
+      }
+      return item.fromWalletAddress === normalizedAddress || item.toWalletAddress === normalizedAddress;
+    })
+    .sort((left, right) => getEventTimestamp(right) - getEventTimestamp(left))
+    .slice(0, safeLimit);
 }
 
 
@@ -367,30 +1118,11 @@ export async function getLatestTransactionHashLogEvents({
   limit = 50,
   address,
 }: GetLatestTransactionHashLogEventsParams = {}): Promise<UsdtTransactionHashRealtimeEvent[]> {
-  const client = await clientPromise;
-  const collection = client.db(dbName).collection('transactionHashLogs');
-
-  const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
-  const normalizedAddress = normalizeWalletAddress(address);
-  const query = buildPublicScanTransactionHashLogQuery(normalizedAddress);
-
-  const logs = await collection
-    .find<any>(query)
-    .sort({ createdAt: -1, _id: -1 })
-    .limit(safeLimit)
-    .toArray();
-
-  return logs
-    .map((document) => normalizeTransactionHashLogDocument(document))
-    .filter((item) => {
-      if (!isPublicScanTransactionHashEvent(item)) {
-        return false;
-      }
-      if (!normalizedAddress) {
-        return true;
-      }
-      return item.fromWalletAddress === normalizedAddress || item.toWalletAddress === normalizedAddress;
-    });
+  const storedEvents = await loadStoredTransactionHashLogEvents({
+    limit,
+    address,
+  });
+  return hydrateUsdtTransactionHashRealtimeEvents(storedEvents);
 }
 
 export async function getTransactionHashLogEventByHash(
@@ -425,7 +1157,10 @@ export async function getTransactionHashLogEventByHash(
     return null;
   }
 
-  return normalizeTransactionHashLogDocument(document);
+  const [event] = await hydrateUsdtTransactionHashRealtimeEvents([
+    normalizeTransactionHashLogDocument(document),
+  ]);
+  return event || null;
 }
 
 export async function saveTransactionHashLogEvent(
@@ -434,21 +1169,26 @@ export async function saveTransactionHashLogEvent(
   const client = await clientPromise;
   const collection = client.db(dbName).collection('transactionHashLogs');
   const idempotencyKey = normalizeText(event.idempotencyKey);
+  const [hydratedEvent] = await hydrateUsdtTransactionHashRealtimeEvents([event]);
+  const nextEvent = hydratedEvent || event;
 
   if (idempotencyKey) {
     const existing = await collection.findOne({ idempotencyKey });
     if (existing) {
+      const [existingEvent] = await hydrateUsdtTransactionHashRealtimeEvents([
+        normalizeTransactionHashLogDocument(existing),
+      ]);
       return {
-        event: normalizeTransactionHashLogDocument(existing),
+        event: existingEvent || normalizeTransactionHashLogDocument(existing),
         isDuplicate: true,
       };
     }
   }
 
   const payload = {
-    ...event,
-    createdAt: toIsoString(event.createdAt),
-    publishedAt: toIsoString(event.publishedAt),
+    ...nextEvent,
+    createdAt: toIsoString(nextEvent.createdAt),
+    publishedAt: toIsoString(nextEvent.publishedAt),
   };
 
   await collection.insertOne(payload);
@@ -464,13 +1204,15 @@ async function upsertTransactionHashLogEvent(
 ): Promise<{ event: UsdtTransactionHashRealtimeEvent; isDuplicate: boolean; wasUpdated: boolean }> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('transactionHashLogs');
-  const idempotencyKey = normalizeText(event.idempotencyKey);
+  const [hydratedEvent] = await hydrateUsdtTransactionHashRealtimeEvents([event]);
+  const nextEvent = hydratedEvent || event;
+  const idempotencyKey = normalizeText(nextEvent.idempotencyKey);
 
   if (!idempotencyKey) {
     const payload = {
-      ...event,
-      createdAt: toIsoString(event.createdAt),
-      publishedAt: toIsoString(event.publishedAt),
+      ...nextEvent,
+      createdAt: toIsoString(nextEvent.createdAt),
+      publishedAt: toIsoString(nextEvent.publishedAt),
     };
 
     await collection.insertOne(payload);
@@ -485,9 +1227,9 @@ async function upsertTransactionHashLogEvent(
   const existing = await collection.findOne({ idempotencyKey });
   if (!existing) {
     const payload = {
-      ...event,
-      createdAt: toIsoString(event.createdAt),
-      publishedAt: toIsoString(event.publishedAt),
+      ...nextEvent,
+      createdAt: toIsoString(nextEvent.createdAt),
+      publishedAt: toIsoString(nextEvent.publishedAt),
     };
 
     await collection.insertOne(payload);
@@ -502,16 +1244,19 @@ async function upsertTransactionHashLogEvent(
   const existingEvent = normalizeTransactionHashLogDocument(existing);
   const mergedEvent: UsdtTransactionHashRealtimeEvent = {
     ...existingEvent,
-    ...event,
-    eventId: existingEvent.eventId || event.eventId,
-    idempotencyKey: existingEvent.idempotencyKey || event.idempotencyKey,
-    createdAt: toIsoString(existingEvent.createdAt || event.createdAt),
-    publishedAt: toIsoString(event.publishedAt || existingEvent.publishedAt),
+    ...nextEvent,
+    eventId: existingEvent.eventId || nextEvent.eventId,
+    idempotencyKey: existingEvent.idempotencyKey || nextEvent.idempotencyKey,
+    fromIdentity: mergePartyIdentity(existingEvent.fromIdentity, nextEvent.fromIdentity),
+    toIdentity: mergePartyIdentity(existingEvent.toIdentity, nextEvent.toIdentity),
+    createdAt: toIsoString(existingEvent.createdAt || nextEvent.createdAt),
+    publishedAt: toIsoString(nextEvent.publishedAt || existingEvent.publishedAt),
   };
 
   if (toComparableEvent(existingEvent) === toComparableEvent(mergedEvent)) {
+    const [hydratedExistingEvent] = await hydrateUsdtTransactionHashRealtimeEvents([existingEvent]);
     return {
-      event: existingEvent,
+      event: hydratedExistingEvent || existingEvent,
       isDuplicate: true,
       wasUpdated: false,
     };

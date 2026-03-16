@@ -19,6 +19,8 @@ type FeedItem = {
   highlightUntil: number;
 };
 
+type PartyIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"]>;
+
 const MAX_EVENTS = 120;
 const RESYNC_LIMIT = 120;
 const RESYNC_INTERVAL_MS = 10_000;
@@ -158,6 +160,23 @@ function getDirectionClassName(direction: "OUT" | "IN" | "WATCH"): string {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
   return "border-slate-200 bg-slate-100 text-slate-600";
+}
+
+function buildIdentityTags(identity: PartyIdentity | null | undefined): string[] {
+  if (!identity) {
+    return [];
+  }
+
+  return [
+    identity.badgeLabel,
+    identity.nickname,
+    identity.storecode ? `store:${identity.storecode}` : null,
+    identity.userType ? `type:${identity.userType}` : null,
+  ].filter((value): value is string => Boolean(value));
+}
+
+function isExternalOnlyInsightEvent(event: UsdtTransactionHashRealtimeEvent): boolean {
+  return event.source === "thirdweb.insight.tokens.transfers";
 }
 
 export default function ScanAddressTokenTransactionsPage() {
@@ -351,8 +370,8 @@ export default function ScanAddressTokenTransactionsPage() {
                   USDT Transaction Hash Live Feed
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                  API에서 등록되는 USDT transaction hash를 실시간으로 수집해 주소 기준으로 보여줍니다.
-                  BscScan의 token transfers 화면처럼 최근 이벤트를 즉시 확인할 수 있습니다.
+                  저장된 scan 이벤트와 사용자 지갑 전용 thirdweb Insight owner query를 합쳐 주소 기준으로 보여줍니다.
+                  BscScan의 token transfers 화면처럼 최근 USDT 흐름을 즉시 확인할 수 있습니다.
                 </p>
               </div>
 
@@ -510,6 +529,11 @@ export default function ScanAddressTokenTransactionsPage() {
                     const fromUrl = getExplorerAddressUrl(item.data.fromWalletAddress);
                     const toUrl = getExplorerAddressUrl(item.data.toWalletAddress);
                     const isHighlighted = item.highlightUntil > nowMs;
+                    const fromIdentityTags = buildIdentityTags(item.data.fromIdentity || null);
+                    const toIdentityTags = buildIdentityTags(item.data.toIdentity || null);
+                    const txHref = isExternalOnlyInsightEvent(item.data)
+                      ? txUrl
+                      : `/${lang}/scan/tx/${item.data.transactionHash}`;
 
                     return (
                       <tr
@@ -518,15 +542,22 @@ export default function ScanAddressTokenTransactionsPage() {
                       >
                         <td className="px-4 py-4 align-top sm:px-6">
                           <div className="flex flex-col gap-1">
-                            <Link
-                              href={`/${lang}/scan/tx/${item.data.transactionHash}`}
+                            <a
+                              href={txHref}
+                              target={isExternalOnlyInsightEvent(item.data) ? "_blank" : undefined}
+                              rel={isExternalOnlyInsightEvent(item.data) ? "noreferrer" : undefined}
                               className="font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-800"
                               title={item.data.transactionHash}
                             >
                               {formatShortHash(item.data.transactionHash)}
-                            </Link>
+                            </a>
                             <div className="flex items-center gap-2 text-xs text-slate-500">
                               <span>{item.data.chain || configuredChain} · {item.data.tokenSymbol}</span>
+                              {isExternalOnlyInsightEvent(item.data) ? (
+                                <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                                  insight
+                                </span>
+                              ) : null}
                               <a href={txUrl} target="_blank" rel="noreferrer" className="hover:text-sky-700">
                                 external
                               </a>
@@ -562,6 +593,18 @@ export default function ScanAddressTokenTransactionsPage() {
                             <div className="truncate text-xs text-slate-500" title={item.data.fromLabel || ""}>
                               {item.data.fromLabel || "-"}
                             </div>
+                            {fromIdentityTags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {fromIdentityTags.map((tag) => (
+                                  <span
+                                    key={`${item.id}-from-${tag}`}
+                                    className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
                             <a href={fromUrl} target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-sky-700">
                               external explorer
                             </a>
@@ -583,6 +626,18 @@ export default function ScanAddressTokenTransactionsPage() {
                             <div className="truncate text-xs text-slate-500" title={item.data.toLabel || ""}>
                               {item.data.toLabel || "-"}
                             </div>
+                            {toIdentityTags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {toIdentityTags.map((tag) => (
+                                  <span
+                                    key={`${item.id}-to-${tag}`}
+                                    className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-600"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
                             <a href={toUrl} target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-sky-700">
                               external explorer
                             </a>

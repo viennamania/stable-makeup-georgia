@@ -8,7 +8,7 @@ import {
   createPublicRealtimePreflightResponse,
   jsonWithPublicRealtimeCors,
 } from "@lib/realtime/publicCors";
-import { getLatestTransactionHashLogEvents } from "@lib/api/tokenTransfer";
+import { getPublicScanTransactionHashLogEvents } from "@lib/api/tokenTransfer";
 import {
   getThirdwebInsightUsdtContractAddress,
   THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   );
   const address = request.nextUrl.searchParams.get("address");
 
-  const events = await getLatestTransactionHashLogEvents({
+  const events = await getPublicScanTransactionHashLogEvents({
     limit,
     address,
   });

@@ -123,10 +123,25 @@ export type UsdtTransactionHashRealtimeEvent = {
   store: BuyOrderRealtimeStore | null;
   amountUsdt: number;
   transactionHash: string;
+  logIndex?: string | null;
   fromWalletAddress: string | null;
   toWalletAddress: string | null;
   fromLabel: string | null;
   toLabel: string | null;
+  fromIdentity?: {
+    badgeLabel: string | null;
+    nickname: string | null;
+    storecode: string | null;
+    userType: string | null;
+    role: string | null;
+  } | null;
+  toIdentity?: {
+    badgeLabel: string | null;
+    nickname: string | null;
+    storecode: string | null;
+    userType: string | null;
+    role: string | null;
+  } | null;
   status: string | null;
   queueId: string | null;
   minedAt: string | null;

@@ -45,6 +45,8 @@ type PartySummary = {
   addresses: string[];
 };
 
+type PartyIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"]>;
+
 type TransactionRow = {
   id: string;
   transactionHash: string;
@@ -139,8 +141,18 @@ function getStatusTone(status: string | null | undefined): string {
   return "border-slate-200 bg-slate-100 text-slate-600";
 }
 
+function buildIdentitySubline(identity: PartyIdentity | null | undefined): string | null {
+  if (!identity) {
+    return null;
+  }
+  if (identity.badgeLabel && identity.nickname) {
+    return `${identity.badgeLabel} · ${identity.nickname}`;
+  }
+  return identity.nickname || identity.badgeLabel || null;
+}
+
 function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: string): PartySummary {
-  const addressMap = new Map<string, string>();
+  const addressMap = new Map<string, { label: string; identity: PartyIdentity | null }>();
 
   for (const entry of entries) {
     const address =
@@ -154,9 +166,16 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
     const label = String(
       side === "from" ? entry.data.fromLabel || "" : entry.data.toLabel || "",
     ).trim();
+    const identity =
+      side === "from"
+        ? (entry.data.fromIdentity || null)
+        : (entry.data.toIdentity || null);
 
     if (!addressMap.has(address)) {
-      addressMap.set(address, label);
+      addressMap.set(address, {
+        label,
+        identity,
+      });
     }
   }
 
@@ -172,10 +191,12 @@ function buildPartySummary(entries: FeedItem[], side: "from" | "to", lang: strin
 
   if (addresses.length === 1) {
     const [address] = addresses;
-    const label = addressMap.get(address) || "Tagged wallet";
+    const entry = addressMap.get(address);
+    const label = entry?.label || "Tagged wallet";
+    const subline = buildIdentitySubline(entry?.identity) || label;
     return {
       headline: formatShortAddress(address),
-      subline: label,
+      subline,
       href: `/${lang}/scan/address/${address}/tokentxns`,
       addresses,
     };
