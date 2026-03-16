@@ -677,14 +677,19 @@ const buildPersistedThirdwebSellerUsdtWebhookStatus = async ({
       .toArray();
 
     const expectedComparableUrl = normalizeComparableUrl(receiverUrl);
-    const webhooks = records.map<ThirdwebSellerUsdtWebhookStatusRecord>((record: any) => {
+    const webhooks = records.map<ThirdwebSellerUsdtWebhookStatusRecord>((record: any, index: number) => {
       const webhookUrl = toNullableText(record?.webhookUrl) || "";
+      const fallbackId =
+        toNullableText(record?.webhookId)
+        || webhookUrl
+        || toNullableText(record?.name)
+        || `${managedPrefix}:${String(index + 1).padStart(3, "0")}`;
       const urlMatchesExpected = Boolean(
         expectedComparableUrl && normalizeComparableUrl(webhookUrl) === expectedComparableUrl,
       );
 
       return {
-        id: toNullableText(record?.webhookId) || undefined,
+        id: fallbackId,
         name: toNullableText(record?.name),
         webhookUrl,
         disabled: Boolean(record?.disabled),
