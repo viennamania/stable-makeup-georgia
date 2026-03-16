@@ -32,8 +32,8 @@ const THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS = Math.max(
   5 * 1000,
 );
 const THIRDWEB_WEBHOOK_SYNC_LOCK_TTL_MS = Math.max(
-  Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_LOCK_TTL_MS || "", 10) || 2 * 60 * 1000,
-  15 * 1000,
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_LOCK_TTL_MS || "", 10) || 30 * 60 * 1000,
+  5 * 60 * 1000,
 );
 const THIRDWEB_WEBHOOK_SYNC_LOCK_POLL_MS = Math.max(
   Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_LOCK_POLL_MS || "", 10) || 250,
