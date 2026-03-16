@@ -4,11 +4,12 @@ import {
   THIRDWEB_INSIGHT_MANAGED_WEBHOOK_COLLECTION,
   THIRDWEB_INSIGHT_MANAGED_WEBHOOK_NAME_PREFIX,
   THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC,
+  clearThirdwebMonitoredWalletCache,
   clearThirdwebManagedWebhookSecretCache,
   clearThirdwebSellerWalletCache,
   getThirdwebInsightChainId,
+  getThirdwebMonitoredWalletRecords,
   getThirdwebInsightUsdtContractAddress,
-  getThirdwebSellerWalletRecords,
 } from "@/lib/server/thirdweb-insight-webhook";
 
 const THIRDWEB_WEBHOOK_RECEIVER_PATH = "/api/webhook/thirdweb/usdt-token-transfers";
@@ -18,6 +19,10 @@ const DEFAULT_THIRDWEB_INSIGHT_WEBHOOK_CHUNK_SIZE = Math.max(
 );
 const THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.THIRDWEB_WEBHOOK_STATUS_CACHE_TTL_MS || "", 10) || 30 * 1000,
+  5 * 1000,
+);
+const THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS = Math.max(
+  Number.parseInt(process.env.THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS || "", 10) || 30 * 1000,
   5 * 1000,
 );
 const ERC20_TRANSFER_EVENT_ABI = JSON.stringify({
@@ -110,6 +115,14 @@ const globalThirdwebWebhookSyncState = globalThis as typeof globalThis & {
     }
   >;
   __thirdwebWebhookStatusPromiseCache?: Map<string, Promise<ThirdwebSellerUsdtWebhookStatus>>;
+  __thirdwebWebhookSyncCooldownCache?: Map<
+    string,
+    {
+      expiresAt: number;
+      value: SyncThirdwebSellerUsdtWebhooksResult;
+    }
+  >;
+  __thirdwebWebhookSyncPromiseCache?: Map<string, Promise<SyncThirdwebSellerUsdtWebhooksResult>>;
 };
 
 const normalizeText = (value: unknown): string => {
@@ -193,9 +206,33 @@ const getWebhookStatusPromiseStore = () => {
   return globalThirdwebWebhookSyncState.__thirdwebWebhookStatusPromiseCache;
 };
 
+const getWebhookSyncCooldownStore = () => {
+  if (!globalThirdwebWebhookSyncState.__thirdwebWebhookSyncCooldownCache) {
+    globalThirdwebWebhookSyncState.__thirdwebWebhookSyncCooldownCache = new Map();
+  }
+  return globalThirdwebWebhookSyncState.__thirdwebWebhookSyncCooldownCache;
+};
+
+const getWebhookSyncPromiseStore = () => {
+  if (!globalThirdwebWebhookSyncState.__thirdwebWebhookSyncPromiseCache) {
+    globalThirdwebWebhookSyncState.__thirdwebWebhookSyncPromiseCache = new Map();
+  }
+  return globalThirdwebWebhookSyncState.__thirdwebWebhookSyncPromiseCache;
+};
+
 const clearThirdwebWebhookStatusCache = () => {
   getWebhookStatusCacheStore().clear();
   getWebhookStatusPromiseStore().clear();
+};
+
+const setThirdwebWebhookSyncCooldownResult = (
+  cacheKey: string,
+  value: SyncThirdwebSellerUsdtWebhooksResult,
+) => {
+  getWebhookSyncCooldownStore().set(cacheKey, {
+    expiresAt: Date.now() + THIRDWEB_WEBHOOK_SYNC_COOLDOWN_MS,
+    value,
+  });
 };
 
 const getThirdwebInsightWebhookApiBaseUrl = (): string => {
@@ -509,7 +546,7 @@ const buildThirdwebSellerUsdtWebhookStatus = async ({
 } = {}): Promise<ThirdwebSellerUsdtWebhookStatus> => {
   const fetchedAt = new Date().toISOString();
   const receiverUrl = buildThirdwebWebhookReceiverUrl(baseUrl) || null;
-  const walletAddresses = (await getThirdwebSellerWalletRecords()).map((item) => item.walletAddress);
+  const walletAddresses = (await getThirdwebMonitoredWalletRecords()).map((item) => item.walletAddress);
   const expectedWalletCount = walletAddresses.length;
   const expectedWebhookCount = chunk(
     [...walletAddresses].sort((left, right) => left.localeCompare(right)),
@@ -669,7 +706,8 @@ export const syncThirdwebSellerUsdtWebhooks = async ({
   }
 
   clearThirdwebSellerWalletCache();
-  const walletAddresses = (await getThirdwebSellerWalletRecords()).map((item) => item.walletAddress);
+  clearThirdwebMonitoredWalletCache();
+  const walletAddresses = (await getThirdwebMonitoredWalletRecords()).map((item) => item.walletAddress);
   const desiredWebhooks = buildDesiredThirdwebWebhooks({
     receiverUrl,
     walletAddresses,
@@ -710,7 +748,7 @@ export const syncThirdwebSellerUsdtWebhooks = async ({
   await persistManagedWebhookRecords(finalManagedWebhooks);
   clearThirdwebWebhookStatusCache();
 
-  return {
+  const result: SyncThirdwebSellerUsdtWebhooksResult = {
     ok: true,
     receiverUrl,
     walletCount: walletAddresses.length,
@@ -721,4 +759,38 @@ export const syncThirdwebSellerUsdtWebhooks = async ({
     deletedCount,
     managedWebhookIds: finalManagedWebhooks.map((item) => item.id),
   };
+
+  setThirdwebWebhookSyncCooldownResult(receiverUrl, result);
+  return result;
+};
+
+export const syncThirdwebSellerUsdtWebhooksIfStale = async ({
+  baseUrl,
+}: {
+  baseUrl?: string | null;
+} = {}): Promise<SyncThirdwebSellerUsdtWebhooksResult> => {
+  const cacheKey = buildThirdwebWebhookReceiverUrl(baseUrl) || resolveThirdwebWebhookBaseUrl(baseUrl) || "__default__";
+  const cooldownStore = getWebhookSyncCooldownStore();
+  const cached = cooldownStore.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const promiseStore = getWebhookSyncPromiseStore();
+  const existingPromise = promiseStore.get(cacheKey);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const nextPromise = syncThirdwebSellerUsdtWebhooks({ baseUrl })
+    .then((value) => {
+      setThirdwebWebhookSyncCooldownResult(cacheKey, value);
+      return value;
+    })
+    .finally(() => {
+      promiseStore.delete(cacheKey);
+    });
+
+  promiseStore.set(cacheKey, nextPromise);
+  return nextPromise;
 };

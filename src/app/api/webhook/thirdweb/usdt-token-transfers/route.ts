@@ -182,7 +182,8 @@ export async function POST(request: NextRequest) {
   const outcome =
     extracted.acceptedCount > 0
       ? "accepted"
-      : extracted.skippedReasons?.seller_wallet_not_matched
+      : extracted.skippedReasons?.seller_wallet_not_matched ||
+          extracted.skippedReasons?.monitored_wallet_not_matched
         ? "seller_mismatch"
         : "processed_no_match";
 

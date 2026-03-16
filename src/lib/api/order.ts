@@ -22,6 +22,7 @@ import {
   resolveConfiguredClearanceBuyer,
   resolveConfiguredClearanceSellerBankInfo,
 } from "@/lib/server/clearance-order-security";
+import { syncThirdwebSellerUsdtWebhooksIfStale } from "@/lib/server/thirdweb-insight-webhook-sync";
 import {
   isWithdrawalWebhookGeneratedClearanceOrder,
   isWithdrawalWebhookGeneratedClearanceOrderDeletable,
@@ -315,6 +316,14 @@ const USER_BUYORDER_SYNC_STATUSES = [
   "cancelled",
   "completed",
 ] as const;
+const THIRDWEB_BUYORDER_WEBHOOK_SYNC_TRIGGER_STATUSES = new Set([
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+  "paymentSettled",
+  "cancelled",
+]);
 
 const globalBuyOrderReadState = globalThis as typeof globalThis & {
   __buyOrderReadIndexesReady?: boolean;
@@ -662,6 +671,9 @@ async function emitBuyOrderStatusRealtimeEvent({
     publishedAt: new Date().toISOString(),
   };
 
+  const shouldSyncThirdwebBuyerWebhookWatchlist =
+    THIRDWEB_BUYORDER_WEBHOOK_SYNC_TRIGGER_STATUSES.has(statusTo);
+
   try {
     const saved = await saveBuyOrderStatusRealtimeEvent({
       eventId: event.eventId,
@@ -669,13 +681,21 @@ async function emitBuyOrderStatusRealtimeEvent({
       payload: event,
     });
 
-    if (saved.isDuplicate) {
-      return;
+    if (!saved.isDuplicate) {
+      await publishBuyOrderStatusEvent(saved.event);
     }
-
-    await publishBuyOrderStatusEvent(saved.event);
   } catch (error) {
     console.error("Failed to publish buyorder status realtime event:", error);
+  }
+
+  if (!shouldSyncThirdwebBuyerWebhookWatchlist) {
+    return;
+  }
+
+  try {
+    await syncThirdwebSellerUsdtWebhooksIfStale();
+  } catch (error) {
+    console.error("Failed to sync thirdweb USDT webhooks after buyorder status change:", error);
   }
 }
 

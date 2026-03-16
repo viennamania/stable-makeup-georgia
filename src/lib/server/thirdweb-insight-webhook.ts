@@ -18,12 +18,18 @@ export const THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC = "v1.events";
 export const THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH =
   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 export const THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT =
-  "v1.events · USDT Transfer(address,address,uint256) · store-configured server wallets only";
+  "v1.events · USDT Transfer(address,address,uint256) · store-configured server wallets + active buyer wallets";
 export const THIRDWEB_INSIGHT_MANAGED_WEBHOOK_COLLECTION = "thirdwebInsightManagedWebhooks";
 export const THIRDWEB_INSIGHT_WEBHOOK_INGRESS_LOG_COLLECTION = "thirdwebInsightWebhookIngressLogs";
 export const THIRDWEB_INSIGHT_MANAGED_WEBHOOK_NAME_PREFIX =
   "stable-georgia:store-wallet-usdt-scan";
 const THIRDWEB_INSIGHT_TEST_WEBHOOK_SECRET = "test123";
+const ACTIVE_BUYORDER_WATCH_STATUSES = [
+  "ordered",
+  "accepted",
+  "paymentRequested",
+  "paymentConfirmed",
+] as const;
 
 type ThirdwebInsightWebhookEnvelope = {
   topic?: unknown;
@@ -38,15 +44,19 @@ type ThirdwebInsightWebhookItem = {
   data?: unknown;
 };
 
-export type ThirdwebMonitoredWalletKind = "seller" | "privateSeller" | "settlement";
+export type ThirdwebMonitoredWalletKind = "seller" | "privateSeller" | "settlement" | "buyer";
 
-export type ThirdwebSellerWalletRecord = {
+type ThirdwebWalletRecord = {
   walletAddress: string;
   storecode: string | null;
   storeName: string | null;
   storeLogo: string | null;
+  storecodes: string[];
   walletKinds: ThirdwebMonitoredWalletKind[];
 };
+
+export type ThirdwebSellerWalletRecord = ThirdwebWalletRecord;
+export type ThirdwebMonitoredWalletRecord = ThirdwebWalletRecord;
 
 type ExtractThirdwebSellerUsdtTransferEventsResult = {
   topic: string;
@@ -136,6 +146,11 @@ const globalThirdwebInsightWebhookState = globalThis as typeof globalThis & {
     value: Map<string, ThirdwebSellerWalletRecord>;
   };
   __thirdwebSellerWalletPromise?: Promise<Map<string, ThirdwebSellerWalletRecord>>;
+  __thirdwebMonitoredWalletCache?: {
+    expiresAt: number;
+    value: Map<string, ThirdwebMonitoredWalletRecord>;
+  };
+  __thirdwebMonitoredWalletPromise?: Promise<Map<string, ThirdwebMonitoredWalletRecord>>;
   __thirdwebManagedWebhookSecretCache?: Map<
     string,
     {
@@ -312,6 +327,23 @@ const setSellerWalletPromise = (promise: Promise<Map<string, ThirdwebSellerWalle
   globalThirdwebInsightWebhookState.__thirdwebSellerWalletPromise = promise || undefined;
 };
 
+const getMonitoredWalletCache = () => globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletCache || null;
+
+const setMonitoredWalletCache = (value: Map<string, ThirdwebMonitoredWalletRecord>) => {
+  globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletCache = {
+    value,
+    expiresAt: Date.now() + SELLER_WALLET_CACHE_TTL_MS,
+  };
+};
+
+const getMonitoredWalletPromise = () => globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletPromise || null;
+
+const setMonitoredWalletPromise = (
+  promise: Promise<Map<string, ThirdwebMonitoredWalletRecord>> | null,
+) => {
+  globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletPromise = promise || undefined;
+};
+
 const getManagedWebhookSecretCache = () => {
   if (!globalThirdwebInsightWebhookState.__thirdwebManagedWebhookSecretCache) {
     globalThirdwebInsightWebhookState.__thirdwebManagedWebhookSecretCache = new Map();
@@ -349,6 +381,13 @@ export const clearThirdwebManagedWebhookSecretCache = () => {
 export const clearThirdwebSellerWalletCache = () => {
   delete globalThirdwebInsightWebhookState.__thirdwebSellerWalletCache;
   delete globalThirdwebInsightWebhookState.__thirdwebSellerWalletPromise;
+  delete globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletCache;
+  delete globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletPromise;
+};
+
+export const clearThirdwebMonitoredWalletCache = () => {
+  delete globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletCache;
+  delete globalThirdwebInsightWebhookState.__thirdwebMonitoredWalletPromise;
 };
 
 const ensureThirdwebWebhookIngressLogIndexes = async () => {
@@ -549,11 +588,63 @@ const mergeWalletKind = (
   return [...walletKinds, walletKind];
 };
 
+const mergeStorecodes = (storecodes: Array<string | null | undefined>): string[] => {
+  const uniqueStorecodes = new Set<string>();
+  for (const storecodeRaw of storecodes) {
+    const storecode = toLowerText(storecodeRaw);
+    if (storecode) {
+      uniqueStorecodes.add(storecode);
+    }
+  }
+  return [...uniqueStorecodes].sort((left, right) => left.localeCompare(right));
+};
+
+const resolvePrimaryStoreContext = ({
+  existing,
+  storecode,
+  storecodes: candidateStorecodes,
+  storeName,
+  storeLogo,
+}: {
+  existing?: ThirdwebWalletRecord | null;
+  storecode: string | null;
+  storecodes?: string[];
+  storeName: string | null;
+  storeLogo: string | null;
+}) => {
+  const storecodes = mergeStorecodes([
+    ...(existing?.storecodes || []),
+    existing?.storecode || null,
+    ...(candidateStorecodes || []),
+    storecode,
+  ]);
+
+  if (storecodes.length !== 1) {
+    return {
+      storecodes,
+      storecode: null,
+      storeName: null,
+      storeLogo: null,
+    };
+  }
+
+  const onlyStorecode = storecodes[0];
+  const shouldPreferExisting = existing?.storecode === onlyStorecode;
+
+  return {
+    storecodes,
+    storecode: onlyStorecode,
+    storeName: shouldPreferExisting ? existing?.storeName || storeName : storeName,
+    storeLogo: shouldPreferExisting ? existing?.storeLogo || storeLogo : storeLogo,
+  };
+};
+
 const upsertSellerWalletRecord = ({
   sellerMap,
   walletAddress,
   walletKind,
   storecode,
+  storecodes,
   storeName,
   storeLogo,
 }: {
@@ -561,16 +652,25 @@ const upsertSellerWalletRecord = ({
   walletAddress: string;
   walletKind: ThirdwebMonitoredWalletKind;
   storecode: string | null;
+  storecodes?: string[];
   storeName: string | null;
   storeLogo: string | null;
 }) => {
   const existing = sellerMap.get(walletAddress);
+  const primaryStoreContext = resolvePrimaryStoreContext({
+    existing,
+    storecode,
+    storecodes,
+    storeName,
+    storeLogo,
+  });
   if (existing) {
     sellerMap.set(walletAddress, {
       walletAddress,
-      storecode: existing.storecode || storecode,
-      storeName: existing.storeName || storeName,
-      storeLogo: existing.storeLogo || storeLogo,
+      storecode: primaryStoreContext.storecode,
+      storeName: primaryStoreContext.storeName,
+      storeLogo: primaryStoreContext.storeLogo,
+      storecodes: primaryStoreContext.storecodes,
       walletKinds: mergeWalletKind(existing.walletKinds, walletKind),
     });
     return;
@@ -578,9 +678,10 @@ const upsertSellerWalletRecord = ({
 
   sellerMap.set(walletAddress, {
     walletAddress,
-    storecode,
-    storeName,
-    storeLogo,
+    storecode: primaryStoreContext.storecode,
+    storeName: primaryStoreContext.storeName,
+    storeLogo: primaryStoreContext.storeLogo,
+    storecodes: primaryStoreContext.storecodes,
     walletKinds: [walletKind],
   });
 };
@@ -665,6 +766,129 @@ const loadSellerWalletRecords = async (): Promise<Map<string, ThirdwebSellerWall
   return sellerMap;
 };
 
+const getBuyOrderBuyerWalletAddress = (order: any): string | null => {
+  return normalizeWalletAddress(order?.walletAddress || order?.buyer?.walletAddress);
+};
+
+const loadActiveBuyerWalletRecords = async (): Promise<Map<string, ThirdwebMonitoredWalletRecord>> => {
+  const client = await clientPromise;
+  const database = client.db(dbName);
+  const buyOrderCollection = database.collection("buyorders");
+  const storeCollection = database.collection("stores");
+
+  const activeOrders = await buyOrderCollection
+    .find(
+      {
+        status: { $in: [...ACTIVE_BUYORDER_WATCH_STATUSES] },
+        $or: [
+          { walletAddress: { $type: "string", $ne: "" } },
+          { "buyer.walletAddress": { $type: "string", $ne: "" } },
+        ],
+      },
+      {
+        projection: {
+          _id: 0,
+          storecode: 1,
+          walletAddress: 1,
+          buyer: 1,
+          paymentConfirmedAt: 1,
+          paymentRequestedAt: 1,
+          acceptedAt: 1,
+          updatedAt: 1,
+          createdAt: 1,
+        },
+        sort: {
+          paymentConfirmedAt: -1,
+          paymentRequestedAt: -1,
+          acceptedAt: -1,
+          updatedAt: -1,
+          createdAt: -1,
+        },
+      },
+    )
+    .toArray();
+
+  const storecodes = new Set<string>();
+  for (const order of activeOrders) {
+    const storecode = toLowerText(order?.storecode);
+    if (storecode) {
+      storecodes.add(storecode);
+    }
+  }
+
+  const stores = storecodes.size > 0
+    ? await storeCollection
+        .find(
+          { storecode: { $in: [...storecodes] } },
+          {
+            projection: {
+              _id: 0,
+              storecode: 1,
+              storeName: 1,
+              storeLogo: 1,
+            },
+          },
+        )
+        .toArray()
+    : [];
+
+  const storeMap = new Map(
+    stores.map((store) => [
+      toLowerText(store?.storecode),
+      {
+        storeName: toNullableText(store?.storeName),
+        storeLogo: toNullableText(store?.storeLogo),
+      },
+    ]),
+  );
+
+  const buyerMap = new Map<string, ThirdwebMonitoredWalletRecord>();
+
+  for (const order of activeOrders) {
+    const walletAddress = getBuyOrderBuyerWalletAddress(order);
+    if (!walletAddress) {
+      continue;
+    }
+
+    const storecode = toLowerText(order?.storecode) || null;
+    const storeMeta = storecode ? storeMap.get(storecode) || null : null;
+
+    upsertSellerWalletRecord({
+      sellerMap: buyerMap,
+      walletAddress,
+      walletKind: "buyer",
+      storecode,
+      storeName: storeMeta?.storeName || null,
+      storeLogo: storeMeta?.storeLogo || null,
+    });
+  }
+
+  return buyerMap;
+};
+
+const loadThirdwebMonitoredWalletRecords = async (): Promise<Map<string, ThirdwebMonitoredWalletRecord>> => {
+  const [sellerMap, buyerMap] = await Promise.all([
+    loadSellerWalletRecords(),
+    loadActiveBuyerWalletRecords(),
+  ]);
+
+  const monitoredMap = new Map<string, ThirdwebMonitoredWalletRecord>(sellerMap);
+
+  for (const buyerRecord of buyerMap.values()) {
+    upsertSellerWalletRecord({
+      sellerMap: monitoredMap,
+      walletAddress: buyerRecord.walletAddress,
+      walletKind: "buyer",
+      storecode: buyerRecord.storecode,
+      storecodes: buyerRecord.storecodes,
+      storeName: buyerRecord.storeName,
+      storeLogo: buyerRecord.storeLogo,
+    });
+  }
+
+  return monitoredMap;
+};
+
 const getSellerWalletRecordsMap = async (): Promise<Map<string, ThirdwebSellerWalletRecord>> => {
   const cached = getSellerWalletCache();
   if (cached && cached.expiresAt > Date.now()) {
@@ -696,23 +920,86 @@ export const getThirdwebSellerWalletRecords = async (): Promise<ThirdwebSellerWa
   );
 };
 
+const getThirdwebMonitoredWalletRecordsMap = async (): Promise<Map<string, ThirdwebMonitoredWalletRecord>> => {
+  const cached = getMonitoredWalletCache();
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const existingPromise = getMonitoredWalletPromise();
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  const nextPromise = loadThirdwebMonitoredWalletRecords()
+    .then((value) => {
+      setMonitoredWalletCache(value);
+      return value;
+    })
+    .finally(() => {
+      setMonitoredWalletPromise(null);
+    });
+
+  setMonitoredWalletPromise(nextPromise);
+  return nextPromise;
+};
+
+export const getThirdwebMonitoredWalletRecords = async (): Promise<ThirdwebMonitoredWalletRecord[]> => {
+  const monitoredMap = await getThirdwebMonitoredWalletRecordsMap();
+  return Array.from(monitoredMap.values()).sort((left, right) =>
+    left.walletAddress.localeCompare(right.walletAddress),
+  );
+};
+
 const getWalletKindLabel = (walletKind: ThirdwebMonitoredWalletKind): string => {
   if (walletKind === "privateSeller") {
     return "private-seller";
   }
+  if (walletKind === "buyer") {
+    return "buyer";
+  }
   return walletKind;
 };
 
-const buildSellerLabel = (seller: ThirdwebSellerWalletRecord): string => {
-  const walletKindText = seller.walletKinds.length > 0
-    ? seller.walletKinds.map(getWalletKindLabel).join(",")
-    : "store-wallet";
+const buildMonitoredWalletLabel = (wallet: ThirdwebMonitoredWalletRecord): string => {
+  const walletKindText = wallet.walletKinds.length > 0
+    ? wallet.walletKinds.map(getWalletKindLabel).join(",")
+    : "monitored-wallet";
+  const scopedWalletKindText =
+    wallet.storecodes.length > 1
+      ? `${walletKindText}:${wallet.storecodes[0]}+${wallet.storecodes.length - 1}`
+      : wallet.storecode
+        ? `${walletKindText}:${wallet.storecode}`
+        : walletKindText;
   const parts = [
-    seller.storeName,
-    seller.storecode ? `${walletKindText}:${seller.storecode}` : walletKindText,
+    wallet.storecodes.length === 1 ? wallet.storeName : null,
+    scopedWalletKindText,
   ].filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" · ") : "store server wallet";
+  if (parts.length > 0) {
+    return parts.join(" · ");
+  }
+
+  return wallet.walletKinds.includes("buyer") ? "active buyer wallet" : "store server wallet";
+};
+
+const selectPrimaryMonitoredWallet = (
+  ...wallets: Array<ThirdwebMonitoredWalletRecord | null>
+): ThirdwebMonitoredWalletRecord | null => {
+  return (
+    wallets.find(
+      (wallet) =>
+        wallet &&
+        wallet.walletKinds.some((walletKind) => walletKind !== "buyer") &&
+        wallet.storecode,
+    ) ||
+    wallets.find(
+      (wallet) => wallet && wallet.walletKinds.some((walletKind) => walletKind !== "buyer"),
+    ) ||
+    wallets.find((wallet) => wallet && wallet.storecode) ||
+    wallets.find(Boolean) ||
+    null
+  );
 };
 
 const buildFallbackWebhookItemKey = ({
@@ -888,8 +1175,8 @@ export const extractThirdwebSellerUsdtTransferEvents = async (
 ): Promise<ExtractThirdwebSellerUsdtTransferEventsResult> => {
   const topic = normalizeText(envelope.topic);
   const items = toArray<ThirdwebInsightWebhookItem>(envelope.data);
-  const sellerWallets = new Map(
-    (await getThirdwebSellerWalletRecords()).map((item) => [item.walletAddress, item]),
+  const monitoredWallets = new Map(
+    (await getThirdwebMonitoredWalletRecords()).map((item) => [item.walletAddress, item]),
   );
   const configuredUsdtAddress = getConfiguredUsdtContractAddress();
   const skippedReasons: Record<string, number> = {};
@@ -941,11 +1228,11 @@ export const extractThirdwebSellerUsdtTransferEvents = async (
       toRecord(decoded?.non_indexed_params) || toRecord(decoded?.nonIndexedParams) || payloadParams;
     const fromWalletAddress = normalizeWalletAddress(indexedParams.from || payload.from);
     const toWalletAddress = normalizeWalletAddress(indexedParams.to || payload.to);
-    const fromSeller = fromWalletAddress ? sellerWallets.get(fromWalletAddress) || null : null;
-    const toSeller = toWalletAddress ? sellerWallets.get(toWalletAddress) || null : null;
+    const fromMonitored = fromWalletAddress ? monitoredWallets.get(fromWalletAddress) || null : null;
+    const toMonitored = toWalletAddress ? monitoredWallets.get(toWalletAddress) || null : null;
 
-    if (!fromSeller && !toSeller) {
-      incrementReason(skippedReasons, "seller_wallet_not_matched");
+    if (!fromMonitored && !toMonitored) {
+      incrementReason(skippedReasons, "monitored_wallet_not_matched");
       continue;
     }
 
@@ -968,9 +1255,9 @@ export const extractThirdwebSellerUsdtTransferEvents = async (
       continue;
     }
 
-    const primarySeller = fromSeller || toSeller;
-    if (!primarySeller) {
-      incrementReason(skippedReasons, "seller_wallet_not_matched");
+    const primaryMonitored = selectPrimaryMonitoredWallet(fromMonitored, toMonitored);
+    if (!primaryMonitored) {
+      incrementReason(skippedReasons, "monitored_wallet_not_matched");
       continue;
     }
 
@@ -992,20 +1279,20 @@ export const extractThirdwebSellerUsdtTransferEvents = async (
         source: "thirdweb.insight.webhook",
         chain: resolveChainName(chainId),
         tokenSymbol: "USDT",
-        storecode: primarySeller.storecode,
-        store: primarySeller.storecode
+        storecode: primaryMonitored.storecode,
+        store: primaryMonitored.storecode
           ? {
-              code: primarySeller.storecode,
-              name: primarySeller.storeName,
-              logo: primarySeller.storeLogo,
+              code: primaryMonitored.storecode,
+              name: primaryMonitored.storeName,
+              logo: primaryMonitored.storeLogo,
             }
           : null,
         amountUsdt: formatUnitsToNumber(rawAmount, getUsdtDecimalsForChainId(chainId)),
         transactionHash,
         fromWalletAddress,
         toWalletAddress,
-        fromLabel: fromSeller ? buildSellerLabel(fromSeller) : null,
-        toLabel: toSeller ? buildSellerLabel(toSeller) : null,
+        fromLabel: fromMonitored ? buildMonitoredWalletLabel(fromMonitored) : null,
+        toLabel: toMonitored ? buildMonitoredWalletLabel(toMonitored) : null,
         status: itemStatus === "reverted" ? "reverted" : "confirmed",
         queueId: itemId ? `thirdweb:${itemId}` : null,
         minedAt,
