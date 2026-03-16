@@ -205,23 +205,23 @@ function maskAccountNumber(value: string | null | undefined): string | null {
 function getIdentityBadgeClassName(identity: PartyIdentity | null | undefined): string {
   const badgeLabel = String(identity?.badgeLabel || "").trim();
   if (badgeLabel === "Buyer Wallet") {
-    return "border-[#d8ebde] bg-[#f1fbf4] text-[#1f7a4d]";
+    return "border-[#d4d4d8] bg-[#fafafa] text-[#3f3f46]";
   }
   if (badgeLabel === "Store Wallet") {
-    return "border-[#f0d98f] bg-[#fff7db] text-[#946400]";
+    return "border-[#111111] bg-[#111111] text-white";
   }
-  return "border-[#d9deea] bg-[#f6f8fb] text-[#5f6b85]";
+  return "border-[#d4d4d8] bg-white text-[#52525b]";
 }
 
 function getIdentityPanelClassName(identity: PartyIdentity | null | undefined): string {
   const badgeLabel = String(identity?.badgeLabel || "").trim();
   if (badgeLabel === "Buyer Wallet") {
-    return "border-[#dbe9df] bg-[linear-gradient(135deg,_rgba(244,251,246,0.98),_rgba(255,255,255,0.95))]";
+    return "border-[#e4e4e7] bg-[#fafafa]";
   }
   if (badgeLabel === "Store Wallet") {
-    return "border-[#f1e1aa] bg-[linear-gradient(135deg,_rgba(255,249,229,0.98),_rgba(255,255,255,0.95))]";
+    return "border-[#d4d4d8] bg-[#f5f5f5]";
   }
-  return "border-[#ebe4d6] bg-[linear-gradient(135deg,_rgba(252,250,244,0.98),_rgba(255,255,255,0.95))]";
+  return "border-[#e4e4e7] bg-white";
 }
 
 function buildIdentitySubline(identity: PartyIdentity | null | undefined): string | null {
@@ -363,21 +363,24 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
 
   if (!hasIdentity) {
     return (
-      <div className="mt-2 text-xs leading-5 text-slate-500">
+      <div className="mt-1.5 text-[11px] leading-4 text-[#71717a]">
         {summary.subline}
       </div>
     );
   }
 
-  const brandChipText = [
-    identity?.storeName,
-    identity?.storecode ? `@${identity.storecode}` : null,
-  ].filter((value): value is string => Boolean(value)).join(" · ");
+  const compactMeta =
+    identity?.badgeLabel === "Store Wallet"
+      ? [
+          identity?.storeName,
+          identity?.storecode ? `@${identity.storecode}` : null,
+        ].filter((value): value is string => Boolean(value)).join(" · ")
+      : summary.bankLine || summary.subline;
 
   return (
-    <div className={`mt-3 overflow-hidden rounded-[20px] border p-3 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.28)] ${getIdentityPanelClassName(identity)}`}>
-      <div className="flex items-start gap-3">
-        <div className="relative flex h-11 w-11 flex-none items-center justify-center overflow-hidden rounded-[16px] border border-white/70 bg-[#fff6da] text-[11px] font-semibold text-[#946400] shadow-sm">
+    <div className={`mt-2 overflow-hidden rounded-[16px] border px-2.5 py-2 ${getIdentityPanelClassName(identity)}`}>
+      <div className="flex items-center gap-2.5">
+        <div className="relative flex h-8 w-8 flex-none items-center justify-center overflow-hidden rounded-[12px] border border-[#e4e4e7] bg-white text-[10px] font-semibold text-[#27272a]">
           <span>{getIdentityAvatarText(identity, summary.headline)}</span>
           {identity?.storeLogo ? (
             <img
@@ -394,40 +397,44 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             {identity?.badgeLabel ? (
-              <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${getIdentityBadgeClassName(identity)}`}>
+              <span className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${getIdentityBadgeClassName(identity)}`}>
                 {identity.badgeLabel}
               </span>
             ) : null}
+            {summary.title ? (
+              <div className="min-w-0 truncate text-[12px] font-semibold text-[#18181b]">
+                {summary.title}
+              </div>
+            ) : null}
           </div>
 
-          {summary.title ? (
-            <div className="mt-2 truncate text-sm font-semibold text-[#202939]">
-              {summary.title}
+          {compactMeta ? (
+            <div className="mt-1 truncate text-[11px] leading-4 text-[#71717a]">
+              {compactMeta}
             </div>
-          ) : null}
-
-          <div className="mt-1 text-[11px] leading-5 text-[#6f7685]">
-            {summary.subline}
-          </div>
-
-          {(brandChipText || summary.bankLine) ? (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {brandChipText ? (
-                <span className="inline-flex rounded-full border border-[#e7dcc3] bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#8b6c1f]">
-                  {brandChipText}
-                </span>
-              ) : null}
-              {summary.bankLine ? (
-                <span className="inline-flex rounded-full border border-[#e4e6ee] bg-white/90 px-2.5 py-1 text-[10px] font-medium text-[#5f6b85]">
-                  {summary.bankLine}
-                </span>
-              ) : null}
+          ) : (
+            <div className="mt-1 truncate text-[11px] leading-4 text-[#71717a]">
+              {summary.subline}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
     </div>
   );
+}
+
+function getCompactLinkClassName() {
+  return "text-sm font-semibold text-[#18181b] transition hover:text-[#52525b]";
+}
+
+function getTableStatusTone(status: string | null | undefined): string {
+  if (status === "confirmed") {
+    return "border-[#111111] bg-[#111111] text-white";
+  }
+  if (status === "pending") {
+    return "border-[#d4d4d8] bg-white text-[#3f3f46]";
+  }
+  return "border-[#e4e4e7] bg-[#fafafa] text-[#52525b]";
 }
 
 function buildInitialFeedItems(initialSnapshot: ScanSnapshotResponse | null | undefined): FeedItem[] {
@@ -946,15 +953,15 @@ export default function ScanHomeClientPage({
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-[#e9e2d2] bg-white shadow-[0_22px_70px_-50px_rgba(15,23,42,0.18)]">
-          <div className="border-b border-[#eee5d3] px-5 py-5 sm:px-7">
+        <section className="overflow-hidden rounded-[28px] border border-[#e4e4e7] bg-white shadow-[0_22px_70px_-56px_rgba(0,0,0,0.18)]">
+          <div className="border-b border-[#e4e4e7] px-5 py-5 sm:px-7">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#9a7610]">Latest Token Transfers</div>
-                <h2 className="mt-2 text-xl font-semibold text-[#202939]">Verified monitored transfers</h2>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#71717a]">Latest Token Transfers</div>
+                <h2 className="mt-2 text-xl font-semibold text-[#18181b]">Verified monitored transfers</h2>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 text-xs text-[#7c8495]">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#71717a]">
                 <span>{isSyncing ? "Snapshot syncing..." : "Realtime feed active"}</span>
                 {connectionErrorMessage ? <span>· {connectionErrorMessage}</span> : null}
                 {syncErrorMessage ? <span>· {syncErrorMessage}</span> : null}
@@ -962,7 +969,7 @@ export default function ScanHomeClientPage({
             </div>
           </div>
 
-          <div className="hidden border-b border-[#f0e5c4] bg-[#fff8e5] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7b6a39] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-7">
+          <div className="hidden border-b border-[#e4e4e7] bg-[#fafafa] px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#71717a] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-7">
             <div>Txn Hash</div>
             <div>Method</div>
             <div>Age</div>
@@ -972,7 +979,7 @@ export default function ScanHomeClientPage({
           </div>
 
           {filteredRows.length > 0 ? (
-            <div className="divide-y divide-[#f1eadb]">
+            <div className="divide-y divide-[#efefef]">
               {filteredRows.map((row) => {
                 const isHighlighted = row.highlightUntil > nowMs;
                 const relativeTime = getRelativeTimeInfo(row.timeValue, nowMs);
@@ -980,34 +987,34 @@ export default function ScanHomeClientPage({
                 return (
                   <div
                     key={row.id}
-                    className={`scan-live-row px-5 py-5 sm:px-7 ${isHighlighted ? "scan-live-row--highlight" : "bg-white"}`}
+                    className={`scan-live-row px-5 py-4 sm:px-7 ${isHighlighted ? "scan-live-row--highlight" : "bg-white"}`}
                   >
-                    <div className="grid gap-4 md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr]">
+                    <div className="grid gap-3 md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr]">
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Txn Hash</div>
-                        <div className="mt-1 flex items-start gap-3">
-                          <span className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-2xl border border-[#efdba1] bg-[#fff4d0] text-[11px] font-semibold text-[#8f6300]">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Txn Hash</div>
+                        <div className="mt-1 flex items-start gap-2.5">
+                          <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-xl border border-[#d4d4d8] bg-[#fafafa] text-[10px] font-semibold text-[#18181b]">
                             {row.transferCount > 1 ? "BEP" : "TXN"}
                           </span>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
                               <Link
                                 href={`/${lang}/scan/tx/${row.transactionHash}`}
-                                className="text-sm font-semibold text-[#0784c3] transition hover:text-[#05689a]"
+                                className={getCompactLinkClassName()}
                                 title={row.transactionHash}
                               >
                                 {formatShortHash(row.transactionHash)}
                               </Link>
-                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getStatusTone(row.status)}`}>
+                              <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getTableStatusTone(row.status)}`}>
                                 {getStatusLabel(row.status)}
                               </span>
                             </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[#7c8495]">
+                            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-[#71717a]">
                               <a
                                 href={getExplorerTxUrl(row.transactionHash)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="font-medium text-[#0784c3] transition hover:text-[#05689a]"
+                                className="font-medium text-[#3f3f46] transition hover:text-[#18181b]"
                               >
                                 View on {explorerHost}
                               </a>
@@ -1018,69 +1025,69 @@ export default function ScanHomeClientPage({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Method</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Method</div>
                         <div className="mt-1">
-                          <span className="inline-flex rounded-full border border-[#e5e7ef] bg-[#f8f9fb] px-3 py-1 text-xs font-semibold text-[#4b5568]">
+                          <span className="inline-flex rounded-full border border-[#d4d4d8] bg-[#fafafa] px-2.5 py-1 text-[11px] font-semibold text-[#27272a]">
                             {row.methodLabel}
                           </span>
-                          <div className="mt-2 text-sm text-[#7c8495]">{(row.chain || configuredChain || "bsc").toUpperCase()}</div>
+                          <div className="mt-1.5 text-[12px] text-[#71717a]">{(row.chain || configuredChain || "bsc").toUpperCase()}</div>
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Age</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Age</div>
                         <div className="mt-1">
-                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getRelativeTimeClassName(relativeTime.tone)}`}>
                             {relativeTime.relativeLabel}
                           </span>
-                          <div className="mt-2 text-sm text-[#7c8495]">Detected {formatDateTime(row.timeValue)}</div>
+                          <div className="mt-1.5 text-[12px] text-[#52525b]">Detected {formatDateTime(row.timeValue)}</div>
                           {row.chainTimeValue && row.chainTimeValue !== row.timeValue ? (
-                            <div className="mt-1 text-xs text-[#9ca3af]">On-chain {formatDateTime(row.chainTimeValue)}</div>
+                            <div className="mt-1 text-[11px] text-[#a1a1aa]">On-chain {formatDateTime(row.chainTimeValue)}</div>
                           ) : null}
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">From</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">From</div>
                         <div className="mt-1">
                           {row.fromSummary.href ? (
                             <Link
                               href={row.fromSummary.href}
-                              className="text-sm font-semibold text-[#0784c3] transition hover:text-[#05689a]"
+                              className={getCompactLinkClassName()}
                               title={row.fromSummary.addresses[0]}
                             >
                               {row.fromSummary.headline}
                             </Link>
                           ) : (
-                            <div className="text-sm font-semibold text-[#202939]">{row.fromSummary.headline}</div>
+                            <div className="text-sm font-semibold text-[#18181b]">{row.fromSummary.headline}</div>
                           )}
                           <PartyIdentityCard summary={row.fromSummary} />
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">To</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">To</div>
                         <div className="mt-1">
                           {row.toSummary.href ? (
                             <Link
                               href={row.toSummary.href}
-                              className="text-sm font-semibold text-[#0784c3] transition hover:text-[#05689a]"
+                              className={getCompactLinkClassName()}
                               title={row.toSummary.addresses[0]}
                             >
                               {row.toSummary.headline}
                             </Link>
                           ) : (
-                            <div className="text-sm font-semibold text-[#202939]">{row.toSummary.headline}</div>
+                            <div className="text-sm font-semibold text-[#18181b]">{row.toSummary.headline}</div>
                           )}
                           <PartyIdentityCard summary={row.toSummary} />
                         </div>
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8f8a76] md:hidden">Value</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#71717a] md:hidden">Value</div>
                         <div className="mt-1">
-                          <div className="text-sm font-semibold text-[#202939]">{formatUsdt(row.totalUsdt)} USDT</div>
-                          <div className="mt-2 text-xs text-[#7c8495]">{row.transferCount > 1 ? "Aggregated batch value" : "Single transfer value"}</div>
+                          <div className="text-sm font-semibold text-[#18181b]">{formatUsdt(row.totalUsdt)} USDT</div>
+                          <div className="mt-1.5 text-[11px] text-[#71717a]">{row.transferCount > 1 ? "Batch total" : "Single transfer"}</div>
                         </div>
                       </div>
                     </div>
@@ -1118,13 +1125,13 @@ export default function ScanHomeClientPage({
         @keyframes scanRowGlow {
           0% {
             box-shadow:
-              inset 0 0 0 1px rgba(240, 185, 11, 0.34),
-              0 18px 42px -34px rgba(180, 129, 0, 0.32);
+              inset 0 0 0 1px rgba(24, 24, 27, 0.12),
+              0 18px 42px -34px rgba(0, 0, 0, 0.16);
           }
           100% {
             box-shadow:
-              inset 0 0 0 1px rgba(240, 185, 11, 0),
-              0 0 0 0 rgba(180, 129, 0, 0);
+              inset 0 0 0 1px rgba(24, 24, 27, 0),
+              0 0 0 0 rgba(0, 0, 0, 0);
           }
         }
 
@@ -1151,7 +1158,7 @@ export default function ScanHomeClientPage({
             scanRowEnter 880ms cubic-bezier(0.18, 0.84, 0.2, 1),
             scanRowGlow 2500ms ease-out;
           background:
-            linear-gradient(90deg, rgba(255, 248, 225, 0.98) 0%, rgba(255, 255, 255, 1) 18%, rgba(255, 252, 241, 0.98) 100%);
+            linear-gradient(90deg, rgba(250, 250, 250, 0.98) 0%, rgba(255, 255, 255, 1) 18%, rgba(244, 244, 245, 0.98) 100%);
         }
 
         .scan-live-row--highlight::before {
@@ -1160,10 +1167,10 @@ export default function ScanHomeClientPage({
           left: 0;
           top: 14px;
           bottom: 14px;
-          width: 4px;
+          width: 3px;
           border-radius: 999px;
-          background: linear-gradient(180deg, #f0b90b 0%, #f8d561 100%);
-          box-shadow: 0 0 18px rgba(240, 185, 11, 0.35);
+          background: linear-gradient(180deg, #18181b 0%, #71717a 100%);
+          box-shadow: 0 0 14px rgba(24, 24, 27, 0.18);
         }
 
         .scan-live-dot {
