@@ -8,6 +8,7 @@ import {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
 } from "react";
@@ -79,7 +80,7 @@ type TransactionRow = {
 };
 
 const MAX_EVENTS = 180;
-const RESYNC_LIMIT = 180;
+const RESYNC_LIMIT = 40;
 const RESYNC_INTERVAL_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 4_800;
 const TIME_AGO_TICK_MS = 5_000;
@@ -682,6 +683,10 @@ export default function ScanHomeClientPage({
   const chainMarketLabel = getChainMarketLabel();
   const chainLogoSrc = getChainLogoSrc();
   const explorerHost = getExplorerBaseUrl().replace("https://", "");
+  const hasServerSnapshot = Boolean(initialSnapshot);
+  const shouldSkipFirstResyncRef = useRef(hasServerSnapshot);
+  const shouldSkipConnectedSyncRef = useRef(hasServerSnapshot);
+  const syncInFlightRef = useRef<Promise<void> | null>(null);
 
   const resolvedFeedMeta = useMemo(() => resolveScanFeedMeta(feedMeta), [feedMeta]);
 
@@ -729,29 +734,43 @@ export default function ScanHomeClientPage({
   }, []);
 
   const syncFromApi = useCallback(async () => {
-    setIsSyncing(true);
+    if (syncInFlightRef.current) {
+      return syncInFlightRef.current;
+    }
+
+    const syncTask = (async () => {
+      setIsSyncing(true);
+
+      try {
+        const response = await fetch(
+          `/api/realtime/scan/usdt-token-transfers?public=1&limit=${RESYNC_LIMIT}`,
+          { cache: "no-store" },
+        );
+
+        if (!response.ok) {
+          throw new Error(`snapshot request failed (${response.status})`);
+        }
+
+        const data = (await response.json()) as ScanSnapshotResponse;
+        upsertEvents(
+          Array.isArray(data.result) ? (data.result as UsdtTransactionHashRealtimeEvent[]) : [],
+          false,
+        );
+        setFeedMeta(data.meta || null);
+        setSyncErrorMessage(null);
+      } catch (error) {
+        setSyncErrorMessage(error instanceof Error ? error.message : "failed to sync");
+      } finally {
+        setIsSyncing(false);
+      }
+    })();
+
+    syncInFlightRef.current = syncTask;
 
     try {
-      const response = await fetch(
-        `/api/realtime/scan/usdt-token-transfers?public=1&limit=${RESYNC_LIMIT}`,
-        { cache: "no-store" },
-      );
-
-      if (!response.ok) {
-        throw new Error(`snapshot request failed (${response.status})`);
-      }
-
-      const data = (await response.json()) as ScanSnapshotResponse;
-      upsertEvents(
-        Array.isArray(data.result) ? (data.result as UsdtTransactionHashRealtimeEvent[]) : [],
-        false,
-      );
-      setFeedMeta(data.meta || null);
-      setSyncErrorMessage(null);
-    } catch (error) {
-      setSyncErrorMessage(error instanceof Error ? error.message : "failed to sync");
+      await syncTask;
     } finally {
-      setIsSyncing(false);
+      syncInFlightRef.current = null;
     }
   }, [upsertEvents]);
 
@@ -772,6 +791,10 @@ export default function ScanHomeClientPage({
       }
 
       if (stateChange.current === "connected") {
+        if (shouldSkipConnectedSyncRef.current) {
+          shouldSkipConnectedSyncRef.current = false;
+          return;
+        }
         void syncFromApi();
       }
     };
@@ -804,7 +827,11 @@ export default function ScanHomeClientPage({
   }, [clientId, resolvedFeedMeta.authUrl, resolvedFeedMeta.channel, resolvedFeedMeta.eventName, syncFromApi, upsertEvents]);
 
   useEffect(() => {
-    void syncFromApi();
+    if (shouldSkipFirstResyncRef.current) {
+      shouldSkipFirstResyncRef.current = false;
+    } else {
+      void syncFromApi();
+    }
     const timer = window.setInterval(() => {
       void syncFromApi();
     }, RESYNC_INTERVAL_MS);

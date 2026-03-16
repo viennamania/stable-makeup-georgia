@@ -17,38 +17,74 @@ import ScanHomeClientPage from "./scan-home-client";
 
 export const dynamic = "force-dynamic";
 
-const INITIAL_SCAN_LIMIT = 180;
+const INITIAL_SCAN_LIMIT = 60;
+const INITIAL_SCAN_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.PUBLIC_SCAN_INITIAL_SNAPSHOT_CACHE_TTL_MS || "", 10) || 5_000,
+  1_000,
+);
+
+let initialScanSnapshotCache:
+  | {
+      expiresAt: number;
+      payload: ScanSnapshotResponse;
+    }
+  | null = null;
+let initialScanSnapshotInflight: Promise<ScanSnapshotResponse> | null = null;
 
 async function buildInitialScanSnapshot(): Promise<ScanSnapshotResponse> {
-  const result = await getPublicScanTransactionHashLogEvents({
-    limit: INITIAL_SCAN_LIMIT,
-  });
+  const cachedSnapshot = initialScanSnapshotCache;
+  if (cachedSnapshot && cachedSnapshot.expiresAt > Date.now()) {
+    return cachedSnapshot.payload;
+  }
 
-  return {
-    result,
-    meta: {
-      channel: USDT_TRANSACTION_HASH_ABLY_CHANNEL,
-      eventName: USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
-      authUrl: "/api/realtime/ably-token?public=1&stream=usdt-txhash",
-      snapshotUrl: "/api/realtime/scan/usdt-token-transfers",
-      ingestUrl: "/api/realtime/scan/usdt-token-transfers/ingest",
-      thirdwebWebhookUrl: "/api/webhook/thirdweb/usdt-token-transfers",
-      thirdwebWebhookHeaders: [
-        THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER,
-        THIRDWEB_INSIGHT_WEBHOOK_SIGNATURE_HEADER,
-      ],
-      thirdwebWebhookTopic: THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC,
-      thirdwebWebhookContractAddress: getThirdwebInsightUsdtContractAddress(),
-      thirdwebWebhookSigHash: THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
-      thirdwebWebhookFilterHint: THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT,
-      authHeaders: [
-        "x-api-key",
-        "x-signature",
-        "x-timestamp",
-        "x-nonce",
-      ],
-    },
-  };
+  if (initialScanSnapshotInflight) {
+    return initialScanSnapshotInflight;
+  }
+
+  initialScanSnapshotInflight = (async () => {
+    const result = await getPublicScanTransactionHashLogEvents({
+      limit: INITIAL_SCAN_LIMIT,
+    });
+
+    const payload: ScanSnapshotResponse = {
+      result,
+      meta: {
+        channel: USDT_TRANSACTION_HASH_ABLY_CHANNEL,
+        eventName: USDT_TRANSACTION_HASH_ABLY_EVENT_NAME,
+        authUrl: "/api/realtime/ably-token?public=1&stream=usdt-txhash",
+        snapshotUrl: "/api/realtime/scan/usdt-token-transfers",
+        ingestUrl: "/api/realtime/scan/usdt-token-transfers/ingest",
+        thirdwebWebhookUrl: "/api/webhook/thirdweb/usdt-token-transfers",
+        thirdwebWebhookHeaders: [
+          THIRDWEB_INSIGHT_WEBHOOK_ID_HEADER,
+          THIRDWEB_INSIGHT_WEBHOOK_SIGNATURE_HEADER,
+        ],
+        thirdwebWebhookTopic: THIRDWEB_INSIGHT_USDT_TRANSFER_TOPIC,
+        thirdwebWebhookContractAddress: getThirdwebInsightUsdtContractAddress(),
+        thirdwebWebhookSigHash: THIRDWEB_INSIGHT_ERC20_TRANSFER_SIG_HASH,
+        thirdwebWebhookFilterHint: THIRDWEB_INSIGHT_USDT_TRANSFER_FILTER_HINT,
+        authHeaders: [
+          "x-api-key",
+          "x-signature",
+          "x-timestamp",
+          "x-nonce",
+        ],
+      },
+    };
+
+    initialScanSnapshotCache = {
+      expiresAt: Date.now() + INITIAL_SCAN_CACHE_TTL_MS,
+      payload,
+    };
+
+    return payload;
+  })();
+
+  try {
+    return await initialScanSnapshotInflight;
+  } finally {
+    initialScanSnapshotInflight = null;
+  }
 }
 
 export default async function ScanHomePage() {

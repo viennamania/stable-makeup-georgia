@@ -119,6 +119,57 @@ const SCAN_RECEIPT_RECONCILE_COOLDOWN_MS = Math.max(
   Number.parseInt(process.env.SCAN_RECEIPT_RECONCILE_COOLDOWN_MS || "", 10) || 2 * 60 * 1000,
   10 * 1000,
 );
+const SCAN_WALLET_USER_RECORD_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.SCAN_WALLET_USER_RECORD_CACHE_TTL_MS || "", 10) || 30_000,
+  5_000,
+);
+const SCAN_STORE_BRANDING_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.SCAN_STORE_BRANDING_CACHE_TTL_MS || "", 10) || 60_000,
+  5_000,
+);
+const SCAN_ACTIVE_BUYER_WALLET_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.SCAN_ACTIVE_BUYER_WALLET_CACHE_TTL_MS || "", 10) || 15_000,
+  5_000,
+);
+
+type TimedCacheEntry<T> = {
+  expiresAt: number;
+  value: T;
+};
+
+const scanWalletUserRecordCache = new Map<string, TimedCacheEntry<ScanWalletUserRecord[]>>();
+const scanStoreBrandingCache = new Map<string, TimedCacheEntry<ScanStoreBrandingRecord | null>>();
+const scanActiveBuyerWalletCache = new Map<string, TimedCacheEntry<boolean>>();
+
+function getTimedCacheValue<T>(
+  cache: Map<string, TimedCacheEntry<T>>,
+  key: string,
+): { hit: true; value: T } | { hit: false } {
+  const entry = cache.get(key);
+  if (!entry) {
+    return { hit: false };
+  }
+  if (entry.expiresAt <= Date.now()) {
+    cache.delete(key);
+    return { hit: false };
+  }
+  return {
+    hit: true,
+    value: entry.value,
+  };
+}
+
+function setTimedCacheValue<T>(
+  cache: Map<string, TimedCacheEntry<T>>,
+  key: string,
+  value: T,
+  ttlMs: number,
+): void {
+  cache.set(key, {
+    expiresAt: Date.now() + ttlMs,
+    value,
+  });
+}
 
 type ReconcileUsdtTransactionHashByReceiptParams = {
   transactionHash: string | null | undefined;
@@ -862,11 +913,33 @@ async function getScanWalletUserRecordMap(
   walletAddresses: string[],
 ): Promise<Map<string, ScanWalletUserRecord[]>> {
   const normalizedWalletAddresses = Array.from(
-    new Set(walletAddresses.map((walletAddress) => normalizeWalletAddress(walletAddress)).filter(Boolean)),
+    new Set(
+      walletAddresses
+        .map((walletAddress) => normalizeWalletAddress(walletAddress))
+        .filter((value): value is string => Boolean(value)),
+    ),
   );
 
   if (normalizedWalletAddresses.length === 0) {
     return new Map();
+  }
+
+  const recordMap = new Map<string, ScanWalletUserRecord[]>();
+  const missingWalletAddresses: string[] = [];
+
+  for (const walletAddress of normalizedWalletAddresses) {
+    const cachedRecords = getTimedCacheValue(scanWalletUserRecordCache, walletAddress);
+    if (cachedRecords.hit) {
+      if (cachedRecords.value.length > 0) {
+        recordMap.set(walletAddress, cachedRecords.value);
+      }
+      continue;
+    }
+    missingWalletAddresses.push(walletAddress);
+  }
+
+  if (missingWalletAddresses.length === 0) {
+    return recordMap;
   }
 
   const client = await clientPromise;
@@ -940,7 +1013,7 @@ async function getScanWalletUserRecordMap(
     },
     {
       $match: {
-        normalizedWalletAddress: { $in: normalizedWalletAddresses },
+        normalizedWalletAddress: { $in: missingWalletAddresses },
       },
     },
     {
@@ -968,7 +1041,7 @@ async function getScanWalletUserRecordMap(
     },
   ]).toArray();
 
-  const recordMap = new Map<string, ScanWalletUserRecord[]>();
+  const fetchedRecordMap = new Map<string, ScanWalletUserRecord[]>();
 
   for (const user of users) {
     const normalizedWalletAddress = normalizeWalletAddress(user.walletAddress) || String(user._id);
@@ -987,9 +1060,23 @@ async function getScanWalletUserRecordMap(
       sellerAccountHolder: normalizeText(user.sellerAccountHolder),
     } satisfies ScanWalletUserRecord;
 
-    const currentRecords = recordMap.get(normalizedWalletAddress) || [];
+    const currentRecords = fetchedRecordMap.get(normalizedWalletAddress) || [];
     currentRecords.push(nextRecord);
-    recordMap.set(normalizedWalletAddress, currentRecords);
+    fetchedRecordMap.set(normalizedWalletAddress, currentRecords);
+  }
+
+  for (const walletAddress of missingWalletAddresses) {
+    const nextRecords = fetchedRecordMap.get(walletAddress) || [];
+    setTimedCacheValue(
+      scanWalletUserRecordCache,
+      walletAddress,
+      nextRecords,
+      SCAN_WALLET_USER_RECORD_CACHE_TTL_MS,
+    );
+
+    if (nextRecords.length > 0) {
+      recordMap.set(walletAddress, nextRecords);
+    }
   }
 
   return recordMap;
@@ -999,11 +1086,33 @@ async function getScanStoreBrandingMap(
   storecodes: string[],
 ): Promise<Map<string, ScanStoreBrandingRecord>> {
   const normalizedStorecodes = Array.from(
-    new Set(storecodes.map((storecode) => normalizeText(storecode)?.toLowerCase() || "").filter(Boolean)),
+    new Set(
+      storecodes
+        .map((storecode) => normalizeText(storecode)?.toLowerCase() || "")
+        .filter((value): value is string => Boolean(value)),
+    ),
   );
 
   if (normalizedStorecodes.length === 0) {
     return new Map();
+  }
+
+  const brandingMap = new Map<string, ScanStoreBrandingRecord>();
+  const missingStorecodes: string[] = [];
+
+  for (const storecode of normalizedStorecodes) {
+    const cachedBranding = getTimedCacheValue(scanStoreBrandingCache, storecode);
+    if (cachedBranding.hit) {
+      if (cachedBranding.value) {
+        brandingMap.set(storecode, cachedBranding.value);
+      }
+      continue;
+    }
+    missingStorecodes.push(storecode);
+  }
+
+  if (missingStorecodes.length === 0) {
+    return brandingMap;
   }
 
   const client = await clientPromise;
@@ -1032,7 +1141,7 @@ async function getScanStoreBrandingMap(
     },
     {
       $match: {
-        normalizedStorecode: { $in: normalizedStorecodes },
+        normalizedStorecode: { $in: missingStorecodes },
       },
     },
     {
@@ -1051,7 +1160,7 @@ async function getScanStoreBrandingMap(
     },
   ]).toArray();
 
-  return new Map(
+  const fetchedBrandingMap = new Map(
     stores.map((store) => [
       normalizeText(store.storecode)?.toLowerCase() || String(store._id),
       {
@@ -1061,15 +1170,52 @@ async function getScanStoreBrandingMap(
       } satisfies ScanStoreBrandingRecord,
     ]),
   );
+
+  for (const storecode of missingStorecodes) {
+    const nextBranding = fetchedBrandingMap.get(storecode) || null;
+    setTimedCacheValue(
+      scanStoreBrandingCache,
+      storecode,
+      nextBranding,
+      SCAN_STORE_BRANDING_CACHE_TTL_MS,
+    );
+    if (nextBranding) {
+      brandingMap.set(storecode, nextBranding);
+    }
+  }
+
+  return brandingMap;
 }
 
 async function getActiveBuyerWalletAddressSet(walletAddresses: string[]): Promise<Set<string>> {
   const normalizedWalletAddresses = Array.from(
-    new Set(walletAddresses.map((walletAddress) => normalizeWalletAddress(walletAddress)).filter(Boolean)),
+    new Set(
+      walletAddresses
+        .map((walletAddress) => normalizeWalletAddress(walletAddress))
+        .filter((value): value is string => Boolean(value)),
+    ),
   );
 
   if (normalizedWalletAddresses.length === 0) {
     return new Set();
+  }
+
+  const activeWalletSet = new Set<string>();
+  const missingWalletAddresses: string[] = [];
+
+  for (const walletAddress of normalizedWalletAddresses) {
+    const cachedStatus = getTimedCacheValue(scanActiveBuyerWalletCache, walletAddress);
+    if (!cachedStatus.hit) {
+      missingWalletAddresses.push(walletAddress);
+      continue;
+    }
+    if (cachedStatus.value) {
+      activeWalletSet.add(walletAddress);
+    }
+  }
+
+  if (missingWalletAddresses.length === 0) {
+    return activeWalletSet;
   }
 
   const client = await clientPromise;
@@ -1099,7 +1245,7 @@ async function getActiveBuyerWalletAddressSet(walletAddresses: string[]): Promis
     },
     {
       $match: {
-        normalizedWalletAddress: { $in: normalizedWalletAddresses },
+        normalizedWalletAddress: { $in: missingWalletAddresses },
       },
     },
     {
@@ -1109,11 +1255,26 @@ async function getActiveBuyerWalletAddressSet(walletAddresses: string[]): Promis
     },
   ]).toArray();
 
-  return new Set(
+  const fetchedActiveWallets = new Set(
     activeWallets
       .map((item) => normalizeWalletAddress(item._id))
       .filter((value): value is string => Boolean(value)),
   );
+
+  for (const walletAddress of missingWalletAddresses) {
+    const isActive = fetchedActiveWallets.has(walletAddress);
+    setTimedCacheValue(
+      scanActiveBuyerWalletCache,
+      walletAddress,
+      isActive,
+      SCAN_ACTIVE_BUYER_WALLET_CACHE_TTL_MS,
+    );
+    if (isActive) {
+      activeWalletSet.add(walletAddress);
+    }
+  }
+
+  return activeWalletSet;
 }
 
 const buildScanWalletIdentity = ({
