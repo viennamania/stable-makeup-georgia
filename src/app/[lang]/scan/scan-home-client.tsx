@@ -72,6 +72,7 @@ const RESYNC_LIMIT = 180;
 const RESYNC_INTERVAL_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 4_800;
 const TIME_AGO_TICK_MS = 5_000;
+const PAGE_SIZE = 20;
 
 type ScanHomeClientPageProps = {
   initialSnapshot?: ScanSnapshotResponse | null;
@@ -196,10 +197,32 @@ function maskAccountNumber(value: string | null | undefined): string | null {
   if (!accountNumber) {
     return null;
   }
-  if (accountNumber.length <= 8) {
-    return accountNumber;
+  if (accountNumber.length <= 4) {
+    return `${accountNumber.slice(0, 1)}***`;
   }
-  return `${accountNumber.slice(0, 3)}-${accountNumber.slice(-4)}`;
+  if (accountNumber.length <= 8) {
+    return `${accountNumber.slice(0, 2)}***${accountNumber.slice(-2)}`;
+  }
+  return `${accountNumber.slice(0, 3)}-${"*".repeat(Math.max(2, accountNumber.length - 7))}${accountNumber.slice(-4)}`;
+}
+
+function maskIdentityText(value: string | null | undefined): string | null {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const characters = Array.from(normalized);
+  if (characters.length <= 1) {
+    return `${characters[0]}*`;
+  }
+  if (characters.length === 2) {
+    return `${characters[0]}*`;
+  }
+  if (characters.length <= 4) {
+    return `${characters[0]}${"*".repeat(characters.length - 2)}${characters[characters.length - 1]}`;
+  }
+  return `${characters.slice(0, 2).join("")}${"*".repeat(characters.length - 3)}${characters[characters.length - 1]}`;
 }
 
 function getIdentityBadgeClassName(identity: PartyIdentity | null | undefined): string {
@@ -262,7 +285,9 @@ function buildIdentityBankLine(identity: PartyIdentity | null | undefined): stri
   const parts = [
     identity.bankName,
     maskedAccount,
-    identity.accountHolder && identity.accountHolder !== identity.nickname ? identity.accountHolder : null,
+    identity.accountHolder && identity.accountHolder !== identity.nickname
+      ? maskIdentityText(identity.accountHolder)
+      : null,
   ].filter((value): value is string => Boolean(value));
 
   return parts.length > 0 ? parts.join(" · ") : null;
@@ -399,9 +424,20 @@ function PartyIdentityCard({ summary }: { summary: PartySummary }) {
           identity?.storeName,
           identity?.storecode ? `@${identity.storecode}` : null,
         ].filter((value): value is string => Boolean(value)).join(" · ")
-      : "Private details hidden";
+      : (
+          summary.bankLine
+          || maskIdentityText(identity?.nickname)
+          || maskIdentityText(identity?.accountHolder)
+          || summary.subline
+        );
 
-  const compactTitle = isStoreIdentity ? summary.title : null;
+  const compactTitle = isStoreIdentity
+    ? summary.title
+    : (
+        maskIdentityText(summary.title)
+        || maskIdentityText(identity?.nickname)
+        || maskIdentityText(identity?.accountHolder)
+      );
 
   return (
     <div className={`mt-2 overflow-hidden rounded-[16px] border px-2.5 py-2 ${getIdentityPanelClassName(identity)}`}>
@@ -498,6 +534,7 @@ export default function ScanHomeClientPage({
   const [isSyncing, setIsSyncing] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [feedMeta, setFeedMeta] = useState<ScanFeedMeta | null>(initialSnapshot?.meta || null);
 
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -765,6 +802,55 @@ export default function ScanHomeClientPage({
     });
   }, [deferredSearchQuery, transactionRows]);
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE)),
+    [filteredRows.length],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [deferredSearchQuery]);
+
+  useEffect(() => {
+    setCurrentPage((previousPage) => {
+      if (previousPage > totalPages) {
+        return totalPages;
+      }
+      if (previousPage < 1) {
+        return 1;
+      }
+      return previousPage;
+    });
+  }, [totalPages]);
+
+  const paginatedRows = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    return filteredRows.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [currentPage, filteredRows]);
+
+  const paginationRange = useMemo(() => {
+    if (filteredRows.length === 0) {
+      return {
+        from: 0,
+        to: 0,
+      };
+    }
+
+    const from = (currentPage - 1) * PAGE_SIZE + 1;
+    const to = Math.min(currentPage * PAGE_SIZE, filteredRows.length);
+
+    return { from, to };
+  }, [currentPage, filteredRows.length]);
+
+  const visiblePageNumbers = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+    return Array.from({ length: 5 }, (_, index) => startPage + index);
+  }, [currentPage, totalPages]);
+
   const totals = useMemo(() => {
     const activeWallets = new Set(filteredRows.flatMap((item) => item.addresses));
     const totalTransferLogs = filteredRows.reduce((sum, item) => sum + item.transferCount, 0);
@@ -988,6 +1074,11 @@ export default function ScanHomeClientPage({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs text-[#71717a]">
+                {filteredRows.length > 0 ? (
+                  <span>
+                    Showing {paginationRange.from}-{paginationRange.to} of {filteredRows.length.toLocaleString()}
+                  </span>
+                ) : null}
                 <span>{isSyncing ? "Snapshot syncing..." : "Realtime feed active"}</span>
                 {connectionErrorMessage ? <span>· {connectionErrorMessage}</span> : null}
                 {syncErrorMessage ? <span>· {syncErrorMessage}</span> : null}
@@ -1006,7 +1097,7 @@ export default function ScanHomeClientPage({
 
           {filteredRows.length > 0 ? (
             <div className="divide-y divide-[#efefef]">
-              {filteredRows.map((row) => {
+              {paginatedRows.map((row) => {
                 const isHighlighted = row.highlightUntil > nowMs;
                 const relativeTime = getRelativeTimeInfo(row.timeValue, nowMs);
 
@@ -1120,6 +1211,47 @@ export default function ScanHomeClientPage({
                   </div>
                 );
               })}
+
+              <div className="flex flex-col gap-3 border-t border-[#e4e4e7] bg-[#fafafa] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+                <div className="text-xs text-[#71717a]">
+                  Page {currentPage} of {totalPages} · {filteredRows.length.toLocaleString()} transactions
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((previousPage) => Math.max(1, previousPage - 1))}
+                    disabled={currentPage === 1}
+                    className="inline-flex h-9 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white px-3 text-sm font-semibold text-[#18181b] transition hover:border-[#111111] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Prev
+                  </button>
+
+                  {visiblePageNumbers.map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition ${
+                        pageNumber === currentPage
+                          ? "border-[#111111] bg-[#111111] text-white"
+                          : "border-[#d4d4d8] bg-white text-[#18181b] hover:border-[#111111]"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((previousPage) => Math.min(totalPages, previousPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex h-9 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white px-3 text-sm font-semibold text-[#18181b] transition hover:border-[#111111] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="px-5 py-16 text-center text-sm text-[#7c8495] sm:px-7">
