@@ -325,6 +325,12 @@ const THIRDWEB_BUYORDER_WEBHOOK_SYNC_TRIGGER_STATUSES = new Set([
   "cancelled",
 ]);
 
+const scheduleThirdwebBuyerWebhookSync = () => {
+  void syncThirdwebSellerUsdtWebhooksIfStale().catch((error) => {
+    console.error("Failed to sync thirdweb USDT webhooks after buyorder status change:", error);
+  });
+};
+
 const globalBuyOrderReadState = globalThis as typeof globalThis & {
   __buyOrderReadIndexesReady?: boolean;
   __buyOrderReadCache?: Map<string, { expiresAt: number; value: any }>;
@@ -692,11 +698,7 @@ async function emitBuyOrderStatusRealtimeEvent({
     return;
   }
 
-  try {
-    await syncThirdwebSellerUsdtWebhooksIfStale();
-  } catch (error) {
-    console.error("Failed to sync thirdweb USDT webhooks after buyorder status change:", error);
-  }
+  scheduleThirdwebBuyerWebhookSync();
 }
 
 // get usdtPrice by walletAddress
