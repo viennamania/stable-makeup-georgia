@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildUserCreationAudit,
+  validateBuyerRegistrationInput,
+} from "@/lib/server/user-creation-security";
 
 import {
   getUserByNickname,
@@ -42,6 +46,7 @@ import {
 
 import { ethers } from "ethers";
 
+const ROUTE = "/api/user/setBuyerWithoutWalletAddressByRandomStorecode";
 
 
 export async function POST(request: NextRequest) {
@@ -61,6 +66,23 @@ export async function POST(request: NextRequest) {
   //console.log("body", body);
 
   const nickname = userCode;
+
+  const validationError = validateBuyerRegistrationInput({
+    nickname,
+    userName,
+    userBankName,
+    userBankAccountNumber,
+  });
+
+  if (validationError) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: validationError,
+      },
+      { status: 400 }
+    );
+  }
 
   const mobile = "+821012345678";
   const password = "12345678";
@@ -83,6 +105,7 @@ export async function POST(request: NextRequest) {
 
 
   try {
+    const creationAudit = buildUserCreationAudit(request, ROUTE);
 
 
     // check storecode is valid
@@ -233,6 +256,8 @@ export async function POST(request: NextRequest) {
       mobile: mobile,
       password: password,
       buyer: buyer,
+      createdByApi: ROUTE,
+      creationAudit,
     });
 
     // return wallet address to user

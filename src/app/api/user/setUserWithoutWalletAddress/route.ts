@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildUserCreationAudit,
+  validateNicknameForCreation,
+} from "@/lib/server/user-creation-security";
 
 import {
   getUserByNickname,
@@ -42,6 +46,7 @@ import {
   
  } from "thirdweb/wallets";
 
+const ROUTE = "/api/user/setUserWithoutWalletAddress";
 
 
 export async function POST(request: NextRequest) {
@@ -52,9 +57,21 @@ export async function POST(request: NextRequest) {
 
   console.log("body", body);
 
+  const validationError = validateNicknameForCreation(nickname);
+  if (validationError) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: validationError,
+      },
+      { status: 400 }
+    );
+  }
+
 
 
   try {
+    const creationAudit = buildUserCreationAudit(request, ROUTE);
 
 
     // check storecode is valid
@@ -114,6 +131,8 @@ export async function POST(request: NextRequest) {
       nickname: nickname,
       mobile: mobile,
       password: password,
+      createdByApi: ROUTE,
+      creationAudit,
     });
 
     // return wallet address to user

@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildUserCreationAudit,
+  validateBuyerRegistrationInput,
+} from "@/lib/server/user-creation-security";
 
 import {
   getUserByNickname,
@@ -40,6 +44,7 @@ import {
   
  } from "thirdweb/wallets";
 
+const ROUTE = "/api/user/setBuyerWithoutWalletAddressByStorecode";
 
 
 export async function POST(request: NextRequest) {
@@ -64,6 +69,23 @@ export async function POST(request: NextRequest) {
   //const nickname = userCode; // trim left and right spaces
   const nickname = userCode.trim();
 
+  const validationError = validateBuyerRegistrationInput({
+    nickname,
+    userName,
+    userBankName,
+    userBankAccountNumber,
+  });
+
+  if (validationError) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: validationError,
+      },
+      { status: 400 }
+    );
+  }
+
   const mobile = "+821012345678";
   const password = "12345678";
 
@@ -85,6 +107,7 @@ export async function POST(request: NextRequest) {
 
 
   try {
+    const creationAudit = buildUserCreationAudit(request, ROUTE);
 
 
     // https://store.otc.earth/Api/walletAddress?storecode=2000001&memberid=google@gmail.com
@@ -231,6 +254,8 @@ export async function POST(request: NextRequest) {
       password: password,
       buyer: buyer,
       userType: userType,
+      createdByApi: ROUTE,
+      creationAudit,
     });
 
     // return wallet address to user

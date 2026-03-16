@@ -844,7 +844,7 @@ export default function Index({ params }: any) {
      paramDepositBankAccountNumber
    );
 
-   const [depositAmountKrw, setDepositAmountKrw] = useState(
+    const [depositAmountKrw, setDepositAmountKrw] = useState(
       paramDepositAmountKrw
     );
 
@@ -852,6 +852,7 @@ export default function Index({ params }: any) {
 
     const [loadingUser, setLoadingUser] = useState(true);
     const [user, setUser] = useState<any>(null);
+    const [userLookupError, setUserLookupError] = useState('');
 
 
    /*
@@ -911,6 +912,7 @@ export default function Index({ params }: any) {
       const fetchWalletAddress = async ( ) => {
 
         setLoadingUser(true);
+        setUserLookupError('');
   
         const mobile = '010-1234-5678';
   
@@ -928,7 +930,7 @@ export default function Index({ params }: any) {
         });
         */
 
-        const response = await fetch('/api/user/setBuyerWithoutWalletAddressByStorecode', {
+        const response = await fetch('/api/user/getUserWalletAddressByStorecodeAndNickname', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -936,48 +938,48 @@ export default function Index({ params }: any) {
           body: JSON.stringify(
             {
               storecode: storecode,
-              
-              userCode: storeUser,
-              mobile: mobile,
-    
-              userName: depositName,
-              userBankName: depositBankName,
-              userBankAccountNumber: depositBankAccountNumber,
-              userType: 'abc',
+              nickname: storeUser,
             }
           ),
         });
 
         if (!response) {
           setLoadingUser(false);
-          toast.error('회원등록에 실패했습니다.');
-          console.log('회원등록에 실패했습니다.');
+          toast.error('회원정보 조회에 실패했습니다.');
+          console.log('회원정보 조회에 실패했습니다.');
           return;
         }
 
     
         const data = await response?.json();
-    
-        console.log('setBuyerWithoutWalletAddressByStorecode data', data);
-  
-        if (!data.walletAddress) {
+
+        console.log('getUserWalletAddressByStorecodeAndNickname data', data);
+
+        const resolvedUser = data?.result;
+
+        if (!response.ok || !resolvedUser?.walletAddress) {
           setLoadingUser(false);
-          toast.error('회원등록에 실패했습니다.');
+          setUser(null);
+          setAddress('');
+          setUserLookupError(data?.error || '등록된 회원을 찾을 수 없습니다.');
+          toast.error(data?.error || '등록된 회원을 찾을 수 없습니다.');
           return;
         }
   
    
   
-        setAddress(data.walletAddress);
+        setAddress(resolvedUser.walletAddress);
         
 
 
         setUser({
           storecode: storecode,
-          walletAddress: data.walletAddress,
-          nickname: storeUser,
+          walletAddress: resolvedUser.walletAddress,
+          nickname: resolvedUser.nickname || storeUser,
           avatar: '',
           mobile: mobile,
+          buyer: resolvedUser.buyer || null,
+          userType: resolvedUser.userType || '',
         });
 
 
@@ -2191,6 +2193,25 @@ export default function Index({ params }: any) {
           />
           <div className="text-sm text-zinc-500">
             가맹점 정보를 찾을 수 없습니다.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (orderId === '0' && !loadingUser && !user) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <Image
+            src="/banner-404.gif"
+            alt="Error"
+            width={200}
+            height={200}
+            className="w-32 h-32"
+          />
+          <div className="text-sm text-zinc-500">
+            {userLookupError || '등록된 회원을 찾을 수 없습니다.'}
           </div>
         </div>
       </div>
@@ -4530,5 +4551,4 @@ const TradeDetail = (
       </div>
     );
   };
-
 

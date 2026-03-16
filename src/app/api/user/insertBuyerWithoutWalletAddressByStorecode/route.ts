@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildUserCreationAudit,
+  validateBuyerRegistrationInput,
+} from "@/lib/server/user-creation-security";
 
 import {
   getUserByNickname,
@@ -40,6 +44,7 @@ import {
   
  } from "thirdweb/wallets";
 
+const ROUTE = "/api/user/insertBuyerWithoutWalletAddressByStorecode";
 
 
 export async function POST(request: NextRequest) {
@@ -73,6 +78,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const validationError = validateBuyerRegistrationInput({
+    nickname,
+    userName,
+    userBankName,
+    userBankAccountNumber,
+  });
+
+  if (validationError) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: validationError,
+      },
+      { status: 400 }
+    );
+  }
+
   const mobile = "+821012345678";
   const password = "12345678";
 
@@ -94,6 +116,7 @@ export async function POST(request: NextRequest) {
 
 
   try {
+    const creationAudit = buildUserCreationAudit(request, ROUTE);
 
     // find user by nickname
     const user = await getUserByNickname(
@@ -200,6 +223,8 @@ export async function POST(request: NextRequest) {
       password: password,
       buyer: buyer,
       userType: userType,
+      createdByApi: ROUTE,
+      creationAudit,
     });
 
     if (!result || result?.error) {

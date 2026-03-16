@@ -1,4 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildUserCreationAudit,
+  validateNicknameForCreation,
+} from "@/lib/server/user-creation-security";
 
 import {
   getOneByWalletAddress,
@@ -6,6 +10,7 @@ import {
   updateOne,
 } from '@lib/api/user';
 
+const ROUTE = "/api/user/setUser";
 
 
 export async function POST(request: NextRequest) {
@@ -18,6 +23,13 @@ export async function POST(request: NextRequest) {
   console.log("walletAddress", walletAddress);
   console.log("nickname", nickname);
   console.log("mobile", mobile);
+
+  const validationError = validateNicknameForCreation(nickname);
+  if (validationError) {
+    return NextResponse.json({
+      error: validationError,
+    }, { status: 400 });
+  }
 
 
   if (!storecode || !walletAddress || !nickname) {
@@ -58,6 +70,8 @@ export async function POST(request: NextRequest) {
     depositName: 'John Doe',
   };
 
+  const creationAudit = buildUserCreationAudit(request, ROUTE);
+
   const result = await insertOne({
     storecode: storecode,
     walletAddress: walletAddress,
@@ -65,6 +79,8 @@ export async function POST(request: NextRequest) {
     mobile: mobile,
 
     buyer: buyer,
+    createdByApi: ROUTE,
+    creationAudit,
   });
 
   if (!result) {

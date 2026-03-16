@@ -263,11 +263,13 @@ export async function insertOne(data: any) {
   // data.depositBankAccountNumber is only number
   /// if data.depositBankAccountNumber has special character, extract only number
 
-  let depositBankAccountNumber = data.buyer.depositBankAccountNumber;
+  const buyer = data?.buyer || {};
+
+  let depositBankAccountNumber = buyer.depositBankAccountNumber;
 
 
-  if (data.buyer.depositBankAccountNumber) {
-    depositBankAccountNumber = data.buyer.depositBankAccountNumber.replace(/[^0-9]/g, '');
+  if (buyer.depositBankAccountNumber) {
+    depositBankAccountNumber = buyer.depositBankAccountNumber.replace(/[^0-9]/g, '');
   } else {
     return {
       result: null,
@@ -279,8 +281,23 @@ export async function insertOne(data: any) {
 
   console.log('depositBankAccountNumber: ' + depositBankAccountNumber);
 
-  const depositBankName = data.buyer.depositBankName;
-  const depositName = data.buyer.depositName;
+  const depositBankName = buyer.depositBankName;
+  const depositName = buyer.depositName;
+  const createdByApi = typeof data.createdByApi === 'string' && data.createdByApi.trim()
+    ? data.createdByApi.trim()
+    : null;
+  const creationAudit = data?.creationAudit && typeof data.creationAudit === 'object'
+    ? {
+        route: typeof data.creationAudit.route === 'string' ? data.creationAudit.route.trim() || null : null,
+        method: typeof data.creationAudit.method === 'string' ? data.creationAudit.method.trim() || null : null,
+        publicIp: typeof data.creationAudit.publicIp === 'string' ? data.creationAudit.publicIp.trim() || null : null,
+        publicCountry: typeof data.creationAudit.publicCountry === 'string' ? data.creationAudit.publicCountry.trim() || null : null,
+        userAgent: typeof data.creationAudit.userAgent === 'string' ? data.creationAudit.userAgent.trim().slice(0, 1000) || null : null,
+        referer: typeof data.creationAudit.referer === 'string' ? data.creationAudit.referer.trim().slice(0, 1000) || null : null,
+        origin: typeof data.creationAudit.origin === 'string' ? data.creationAudit.origin.trim().slice(0, 1000) || null : null,
+        requestedAt: typeof data.creationAudit.requestedAt === 'string' ? data.creationAudit.requestedAt : new Date().toISOString(),
+      }
+    : null;
 
 
 
@@ -373,6 +390,8 @@ export async function insertOne(data: any) {
       },
 
       userType: data.userType,
+      createdByApi: createdByApi,
+      creationAudit: creationAudit,
     }
   );
 
