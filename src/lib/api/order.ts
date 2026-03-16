@@ -9672,8 +9672,7 @@ export async function getTotalNumberOfClearanceOrders(): Promise<{ totalCount: n
 
   const matchQuery = {
     privateSale: true,
-    status: { $in: ['paymentConfirmed'] },
-    'buyer.depositCompleted': false, // buyer has not completed deposit
+    'buyer.depositCompleted': false, // buyer has not completed withdrawal handling
   };
 
   const safeOrdersLimit = Math.min(
