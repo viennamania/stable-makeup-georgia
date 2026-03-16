@@ -151,20 +151,20 @@ export default async function ScanTransactionDetailPage({
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-[#d8d2c4] bg-white shadow-[0_30px_90px_-54px_rgba(64,45,0,0.32)]">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <section className="overflow-hidden rounded-[24px] border border-[#d8d2c4] bg-white shadow-[0_30px_90px_-54px_rgba(64,45,0,0.32)]">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-            <div className="bg-[#111827] px-5 py-5 sm:px-7">
+            <div className="bg-[#111827] px-4 py-4 sm:px-6 sm:py-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-start gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-white/10 bg-white/5">
-                    <Image src={chainLogoSrc} alt={chainMarketLabel} width={42} height={42} className="h-10 w-10 object-contain" />
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border border-white/10 bg-white/5 sm:h-16 sm:w-16 sm:rounded-[20px]">
+                    <Image src={chainLogoSrc} alt={chainMarketLabel} width={42} height={42} className="h-8 w-8 object-contain sm:h-10 sm:w-10" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f8d561]">
                       Scan / Tx Detail
                     </div>
-                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[30px]">
+                    <h1 className="mt-2 text-[1.65rem] font-semibold tracking-tight text-white sm:text-[30px]">
                       Transaction Overview
                     </h1>
                     <p className="mt-2 break-all text-sm text-[#c9d1de]">{event.transactionHash}</p>
@@ -190,21 +190,16 @@ export default async function ScanTransactionDetailPage({
               </div>
             </div>
 
-            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-5 py-5 sm:px-7 lg:border-l lg:border-t-0">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Network</div>
-                  <div className="mt-2 text-lg font-semibold text-[#1d1f24]">{chainMarketLabel}</div>
-                  <div className="mt-1 text-sm text-[#6c7483]">{event.tokenSymbol} transfer trace</div>
-                </div>
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
+            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-4 py-4 sm:px-6 sm:py-5 lg:border-l lg:border-t-0">
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div className="rounded-[20px] border border-[#ecdca6] bg-white/80 px-3.5 py-3.5 sm:px-4 sm:py-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Detected</div>
                   <div className="mt-2 text-base font-semibold text-[#1d1f24]">
                     {detectedRelativeTime.relativeLabel}
                   </div>
                   <div className="mt-1 text-sm text-[#6c7483]">{formatDateTime(detectedAt)}</div>
                 </div>
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4 sm:col-span-2 lg:col-span-1">
+                <div className="rounded-[20px] border border-[#ecdca6] bg-white/80 px-3.5 py-3.5 sm:px-4 sm:py-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Amount</div>
                   <div className="mt-2 text-[28px] font-semibold tracking-tight text-[#0f7a4b]">
                     {formatUsdt(event.amountUsdt)} USDT
@@ -219,9 +214,9 @@ export default async function ScanTransactionDetailPage({
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
-          <div className="grid gap-4 px-5 py-5 sm:px-7 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)]">
-            <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffdf7] px-5 py-4 shadow-sm">
+        <section className="overflow-hidden rounded-[24px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
+          <div className="grid gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)]">
+            <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Status</div>
@@ -264,8 +259,8 @@ export default async function ScanTransactionDetailPage({
               </div>
             </div>
 
-            <div className="grid gap-3">
-              <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffdf7] px-5 py-4 shadow-sm">
+            <div className="grid gap-2.5">
+              <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">From</div>
                 {event.fromWalletAddress ? (
                   <Link
@@ -291,7 +286,7 @@ export default async function ScanTransactionDetailPage({
                   </div>
                 ) : null}
               </div>
-              <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffdf7] px-5 py-4 shadow-sm">
+              <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">To</div>
                 {event.toWalletAddress ? (
                   <Link
@@ -317,7 +312,7 @@ export default async function ScanTransactionDetailPage({
                   </div>
                 ) : null}
               </div>
-              <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffdf7] px-5 py-4 shadow-sm">
+              <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffdf7] px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Store</div>
                 <div className="mt-2 text-base font-semibold text-[#1d1f24]">{event.store?.code || "-"}</div>
                 <div className="mt-1 text-sm text-[#5f6b85]">{event.store?.name || "-"}</div>
@@ -326,18 +321,18 @@ export default async function ScanTransactionDetailPage({
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
-          <div className="border-b border-[#f0e5c4] bg-[#fff8e5] px-5 py-4 sm:px-7">
+        <section className="overflow-hidden rounded-[24px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
+          <div className="border-b border-[#f0e5c4] bg-[#fff8e5] px-4 py-3.5 sm:px-6 sm:py-4">
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7b6a39]">Related Transactions</div>
             <h2 className="mt-1 text-lg font-semibold text-[#1d1f24]">Same wallet activity</h2>
           </div>
 
           <div className="divide-y divide-[#f3ead2]">
             {relatedEvents.length === 0 ? (
-              <div className="px-6 py-10 text-sm text-[#5f6b85]">표시할 관련 transaction이 없습니다.</div>
+              <div className="px-4 py-8 text-sm text-[#5f6b85] sm:px-6 sm:py-10">표시할 관련 transaction이 없습니다.</div>
             ) : (
               relatedEvents.map((item) => (
-                <div key={item.eventId} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+                <div key={item.eventId} className="flex flex-col gap-2.5 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                   <div className="min-w-0">
                     <Link
                       href={`/${lang}/scan/tx/${item.transactionHash}`}

@@ -438,20 +438,20 @@ export default function ScanAddressTokenTransactionsPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
-      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-[#d8d2c4] bg-white shadow-[0_30px_90px_-54px_rgba(64,45,0,0.32)]">
+      <div className="mx-auto flex w-full max-w-[1520px] flex-col gap-4 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <section className="overflow-hidden rounded-[24px] border border-[#d8d2c4] bg-white shadow-[0_30px_90px_-54px_rgba(64,45,0,0.32)]">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
-            <div className="bg-[#111827] px-5 py-5 sm:px-7">
+            <div className="bg-[#111827] px-4 py-4 sm:px-6 sm:py-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="flex min-w-0 items-start gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-white/10 bg-white/5">
-                    <Image src={chainLogoSrc} alt={chainMarketLabel} width={42} height={42} className="h-10 w-10 object-contain" />
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border border-white/10 bg-white/5 sm:h-16 sm:w-16 sm:rounded-[20px]">
+                    <Image src={chainLogoSrc} alt={chainMarketLabel} width={42} height={42} className="h-8 w-8 object-contain sm:h-10 sm:w-10" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f8d561]">
                       Scan / Token Txns
                     </div>
-                    <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-[30px]">
+                    <h1 className="mt-2 text-[1.65rem] font-semibold tracking-tight text-white sm:text-[30px]">
                       Address Token Transfers
                     </h1>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-[#c9d1de]">
@@ -492,16 +492,12 @@ export default function ScanAddressTokenTransactionsPage() {
               </div>
             </div>
 
-            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-5 py-5 sm:px-7 lg:border-l lg:border-t-0">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Network</div>
-                  <div className="mt-2 text-lg font-semibold text-[#1d1f24]">{chainMarketLabel}</div>
-                  <div className="mt-1 text-sm text-[#6c7483]">{chainLabel} · USDT token transfers</div>
-                </div>
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
+            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-4 py-4 sm:px-6 sm:py-5 lg:border-l lg:border-t-0">
+              <div className="grid gap-2.5">
+                <div className="rounded-[20px] border border-[#ecdca6] bg-white/80 px-3.5 py-3.5 sm:px-4 sm:py-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Address</div>
                   <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{addressParam}</div>
+                  <div className="mt-1 text-sm text-[#6c7483]">Wallet-specific USDT transfer history</div>
                 </div>
               </div>
             </div>
@@ -511,8 +507,8 @@ export default function ScanAddressTokenTransactionsPage() {
             Token transfer history for a single wallet view
           </div>
 
-          <div className="grid gap-4 px-5 py-5 sm:px-7 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.9fr)]">
-            <div className="rounded-[24px] border border-[#111827] bg-gradient-to-br from-[#111827] via-[#1a2438] to-[#1d293f] p-5 text-white shadow-[0_26px_70px_-45px_rgba(17,24,39,0.88)]">
+          <div className="grid gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.9fr)]">
+            <div className="rounded-[20px] border border-[#111827] bg-gradient-to-br from-[#111827] via-[#1a2438] to-[#1d293f] p-4 text-white shadow-[0_26px_70px_-45px_rgba(17,24,39,0.88)] sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-300">
@@ -528,36 +524,36 @@ export default function ScanAddressTokenTransactionsPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3 sm:px-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Total Events</div>
                   <div className="mt-2 text-2xl font-semibold text-white">{totals.totalCount.toLocaleString()}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3 sm:px-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Outgoing</div>
                   <div className="mt-2 text-2xl font-semibold text-rose-300">{totals.outgoingCount.toLocaleString()}</div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-3.5 py-3 sm:px-4">
                   <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Incoming</div>
                   <div className="mt-2 text-2xl font-semibold text-emerald-300">{totals.incomingCount.toLocaleString()}</div>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-sm">
+            <div className="grid gap-2.5 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Observed USDT</div>
                 <div className="mt-2 text-[28px] font-semibold tracking-tight text-[#1d1f24]">
                   {formatUsdt(totals.totalUsdt)}
                 </div>
               </div>
-              <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-sm">
+              <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Latest Detected</div>
                 <div className="mt-2 text-base font-semibold text-[#1d1f24]">
                   {formatDateTime(totals.latestDetectedAt)}
                 </div>
               </div>
-              <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-sm">
+              <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-sm sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Realtime Status</div>
@@ -586,8 +582,8 @@ export default function ScanAddressTokenTransactionsPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[28px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
-          <div className="flex flex-col gap-3 border-b border-[#f0e5c4] bg-[#fff8e5] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <section className="overflow-hidden rounded-[24px] border border-[#e8dcc0] bg-white shadow-[0_18px_60px_-42px_rgba(64,45,0,0.28)]">
+          <div className="flex flex-col gap-3 border-b border-[#f0e5c4] bg-[#fff8e5] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.24em] text-[#7b6a39]">
                 Token Transfers

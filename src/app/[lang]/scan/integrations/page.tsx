@@ -102,52 +102,47 @@ export default function ScanIntegrationsPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-[#1f2937]">
-      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[28px] border border-[#d8d2c4] bg-white shadow-[0_32px_90px_-56px_rgba(64,45,0,0.28)]">
+      <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-4 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <section className="overflow-hidden rounded-[24px] border border-[#d8d2c4] bg-white shadow-[0_32px_90px_-56px_rgba(64,45,0,0.28)]">
           <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-            <div className="bg-[#111827] px-5 py-6 sm:px-7">
+            <div className="bg-[#111827] px-4 py-5 sm:px-6 sm:py-6">
               <div className="flex items-start gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-white/10 bg-white/5">
-                  <Image src={chainLogoSrc} alt={chainMarketLabel} width={40} height={40} className="h-10 w-10 object-contain" />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border border-white/10 bg-white/5 sm:h-16 sm:w-16 sm:rounded-[20px]">
+                  <Image src={chainLogoSrc} alt={chainMarketLabel} width={40} height={40} className="h-8 w-8 object-contain sm:h-10 sm:w-10" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.34em] text-[#f8d561]">
                     Scan Infrastructure
                   </div>
-                  <h1 className="mt-3 text-[2rem] font-semibold tracking-tight text-white sm:text-[2.3rem]">
+                  <h1 className="mt-2.5 text-[1.65rem] font-semibold tracking-tight text-white sm:mt-3 sm:text-[2.2rem]">
                     Explorer integrations and delivery rails
                   </h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c9d1de]">
+                  <p className="mt-2.5 max-w-2xl text-sm leading-6 text-[#c9d1de]">
                     Main explorer keeps only blockchain-facing transfer rows. This page exposes the worker ingress,
                     thirdweb webhook sync, snapshot recovery, and Ably broadcast topology behind that feed.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                <a href="#ingest" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a href="#ingest" className="rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/10 sm:text-sm">
                   Ingest API
                 </a>
-                <a href="#thirdweb" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+                <a href="#thirdweb" className="rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/10 sm:text-sm">
                   thirdweb Webhook
                 </a>
-                <a href="#snapshot" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+                <a href="#snapshot" className="rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/10 sm:text-sm">
                   Snapshot API
                 </a>
-                <a href="#ably" className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+                <a href="#ably" className="rounded-full border border-white/15 bg-white/5 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/10 sm:text-sm">
                   Ably Stream
                 </a>
               </div>
             </div>
 
-            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-5 py-6 sm:px-7 lg:border-l lg:border-t-0">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Network</div>
-                  <div className="mt-2 text-lg font-semibold text-[#1d1f24]">{chainMarketLabel}</div>
-                  <div className="mt-1 text-sm text-[#6c7483]">USDT transfer ingestion pipeline</div>
-                </div>
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4">
+            <div className="border-t border-[#e9dcc0] bg-[linear-gradient(180deg,_#fff6db_0%,_#fffdf7_100%)] px-4 py-4 sm:px-6 sm:py-5 lg:border-l lg:border-t-0">
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div className="rounded-[20px] border border-[#ecdca6] bg-white/80 px-3.5 py-3.5 sm:px-4 sm:py-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Status</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <StatusPill tone={isLoading ? "warn" : errorMessage ? "bad" : "good"}>
@@ -162,8 +157,9 @@ export default function ScanIntegrationsPage() {
                     {Number(thirdwebWebhookStatus?.expectedWebhookCount || 0)}
                   </div>
                 </div>
-                <div className="rounded-[22px] border border-[#ecdca6] bg-white/80 px-4 py-4 sm:col-span-2 lg:col-span-1">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Explorer</div>
+                <div className="rounded-[20px] border border-[#ecdca6] bg-white/80 px-3.5 py-3.5 sm:px-4 sm:py-4">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8a6a18]">Navigation</div>
+                  <div className="mt-2 text-sm text-[#6c7483]">Return to the public explorer feed.</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Link
                       href={`/${lang}/scan`}
@@ -182,24 +178,24 @@ export default function ScanIntegrationsPage() {
           </div>
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)]">
+        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)] sm:px-5 sm:py-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Ingest URL</div>
             <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.ingestUrl}</div>
           </div>
-          <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)]">
+          <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)] sm:px-5 sm:py-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Webhook Count</div>
             <div className="mt-2 text-[28px] font-semibold tracking-tight text-[#1d1f24]">
               {Number(thirdwebWebhookStatus?.managedWebhookCount || 0)}
             </div>
           </div>
-          <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)]">
+          <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)] sm:px-5 sm:py-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Wallet Scope</div>
             <div className="mt-2 text-[28px] font-semibold tracking-tight text-[#1d1f24]">
               {Number(thirdwebWebhookStatus?.expectedWalletCount || 0)}
             </div>
           </div>
-          <div className="rounded-[24px] border border-[#e8dcc0] bg-white px-5 py-4 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)]">
+          <div className="rounded-[20px] border border-[#e8dcc0] bg-white px-4 py-3.5 shadow-[0_16px_44px_-34px_rgba(64,45,0,0.28)] sm:px-5 sm:py-4">
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Status Fetched</div>
             <div className="mt-2 text-sm font-semibold text-[#1d1f24]">
               {formatDateTime(thirdwebWebhookStatus?.fetchedAt)}
@@ -207,7 +203,7 @@ export default function ScanIntegrationsPage() {
           </div>
         </section>
 
-        <section id="ingest" className="scroll-mt-24 rounded-[28px] border border-[#e8dcc0] bg-white p-5 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-6">
+        <section id="ingest" className="scroll-mt-24 rounded-[24px] border border-[#e8dcc0] bg-white p-4 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
@@ -217,7 +213,7 @@ export default function ScanIntegrationsPage() {
             </div>
             <StatusPill tone="neutral">Headers {resolvedFeedMeta.authHeaders.join(" · ")}</StatusPill>
           </div>
-          <div className="mt-4 rounded-[24px] border border-[#eadcb6] bg-[#fffbef] p-4">
+          <div className="mt-4 rounded-[20px] border border-[#eadcb6] bg-[#fffbef] p-3.5 sm:p-4">
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Endpoint</div>
             <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.ingestUrl}</div>
             <div className="mt-3 text-sm leading-6 text-[#5f6b85]">
@@ -227,7 +223,7 @@ export default function ScanIntegrationsPage() {
           </div>
         </section>
 
-        <section id="thirdweb" className="scroll-mt-24 rounded-[28px] border border-[#e8dcc0] bg-white p-5 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-6">
+        <section id="thirdweb" className="scroll-mt-24 rounded-[24px] border border-[#e8dcc0] bg-white p-4 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8a6a18]">thirdweb Webhook</div>
@@ -255,8 +251,8 @@ export default function ScanIntegrationsPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
-            <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffbef] p-4">
+          <div className="mt-4 grid gap-3 xl:grid-cols-[1.1fr,0.9fr]">
+            <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffbef] p-3.5 sm:p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Receiver URL</div>
               <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.thirdwebWebhookUrl}</div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -283,7 +279,7 @@ export default function ScanIntegrationsPage() {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-[#e8dcc0] bg-white p-4">
+            <div className="rounded-[20px] border border-[#e8dcc0] bg-white p-3.5 sm:p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Live Status</div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <StatusPill tone="neutral">wallets {Number(thirdwebWebhookStatus?.expectedWalletCount || 0)}</StatusPill>
@@ -308,11 +304,11 @@ export default function ScanIntegrationsPage() {
           </div>
 
           {webhookRecords.length > 0 ? (
-            <div className="mt-4 rounded-[24px] border border-[#e8dcc0] bg-white p-4">
+            <div className="mt-4 rounded-[20px] border border-[#e8dcc0] bg-white p-3.5 sm:p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Managed Webhooks</div>
               <div className="mt-4 grid gap-3">
                 {webhookRecords.map((item) => (
-                  <div key={item.id || item.name || item.webhookUrl} className="rounded-[20px] border border-[#eadcb6] bg-[#fffbef] px-4 py-3">
+                  <div key={item.id || item.name || item.webhookUrl} className="rounded-[18px] border border-[#eadcb6] bg-[#fffbef] px-3.5 py-3 sm:px-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-[#1d1f24]">{item.name || item.id || "managed webhook"}</span>
                       <StatusPill tone={item.disabled ? "bad" : "good"}>{item.disabled ? "disabled" : "active"}</StatusPill>
@@ -330,10 +326,10 @@ export default function ScanIntegrationsPage() {
           ) : null}
         </section>
 
-        <section id="snapshot" className="scroll-mt-24 rounded-[28px] border border-[#e8dcc0] bg-white p-5 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-6">
+        <section id="snapshot" className="scroll-mt-24 rounded-[24px] border border-[#e8dcc0] bg-white p-4 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-5">
           <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8a6a18]">Snapshot API</div>
           <h2 className="mt-2 text-xl font-semibold text-[#1d1f24]">Public sync endpoint</h2>
-          <div className="mt-4 rounded-[24px] border border-[#eadcb6] bg-[#fffbef] p-4">
+          <div className="mt-4 rounded-[20px] border border-[#eadcb6] bg-[#fffbef] p-3.5 sm:p-4">
             <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Endpoint</div>
             <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.snapshotUrl}</div>
             <div className="mt-3 text-sm leading-6 text-[#5f6b85]">
@@ -343,19 +339,19 @@ export default function ScanIntegrationsPage() {
           </div>
         </section>
 
-        <section id="ably" className="scroll-mt-24 rounded-[28px] border border-[#e8dcc0] bg-white p-5 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-6">
+        <section id="ably" className="scroll-mt-24 rounded-[24px] border border-[#e8dcc0] bg-white p-4 shadow-[0_18px_60px_-42px_rgba(64,45,0,0.26)] sm:p-5">
           <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8a6a18]">Ably Stream</div>
           <h2 className="mt-2 text-xl font-semibold text-[#1d1f24]">Realtime broadcast channel</h2>
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffbef] p-4">
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffbef] p-3.5 sm:p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Channel</div>
               <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.channel}</div>
             </div>
-            <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffbef] p-4">
+            <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffbef] p-3.5 sm:p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Event</div>
               <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.eventName}</div>
             </div>
-            <div className="rounded-[24px] border border-[#eadcb6] bg-[#fffbef] p-4">
+            <div className="rounded-[20px] border border-[#eadcb6] bg-[#fffbef] p-3.5 sm:p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a18]">Auth URL</div>
               <div className="mt-2 break-all text-sm font-semibold text-[#1d1f24]">{resolvedFeedMeta.authUrl}</div>
             </div>
