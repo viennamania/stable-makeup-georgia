@@ -1653,6 +1653,96 @@ export default function PromotionPage() {
           </div>
         )}
 
+        <section className="relative overflow-hidden rounded-2xl border border-cyan-400/30 bg-[radial-gradient(circle_at_top_right,_rgba(56,189,248,0.18),_transparent_34%),linear-gradient(135deg,_rgba(8,47,73,0.9),_rgba(2,6,23,0.96))] p-3.5 shadow-[0_22px_48px_-30px_rgba(14,165,233,0.58)] sm:p-5">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(34,211,238,0.16),rgba(2,6,23,0)_40%)]" />
+          <div className="relative grid gap-4 lg:grid-cols-[1.16fr_0.84fr]">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-cyan-300/55 bg-cyan-400/14 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
+                  Scan Explorer
+                </span>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                  Realtime Transfer Trace
+                </span>
+              </div>
+
+              <h2 className="mt-3 text-lg font-semibold tracking-tight text-cyan-50 sm:text-[1.55rem]">
+                프로모션 흐름을 확인했다면 실시간 전송내역으로 바로 이어서 보세요
+              </h2>
+              <p className="mt-2 max-w-3xl text-[13px] leading-6 text-cyan-100/82 sm:text-sm">
+                프로모션 참여, 출금, 지갑 연결 이후에는 Scan Explorer에서 실제 USDT 이동 내역과 지갑 흐름을
+                바로 확인할 수 있습니다. 참여 흐름과 온체인 추적을 한 화면 흐름처럼 연결합니다.
+              </p>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {[
+                  {
+                    id: "scan-route-live",
+                    title: "실시간 전송내역",
+                    description: "최신 전송 흐름과 감시 지갑 활동을 확인합니다.",
+                  },
+                  {
+                    id: "scan-route-address",
+                    title: "지갑 상세 추적",
+                    description: "주소별 이동 이력과 배치 전송을 개별로 추적합니다.",
+                  },
+                  {
+                    id: "scan-route-proof",
+                    title: "온체인 검증",
+                    description: "BscScan 기반 트랜잭션 링크로 실제 체인 상태를 연결합니다.",
+                  },
+                ].map((item) => (
+                  <article
+                    key={item.id}
+                    className="rounded-[20px] border border-white/10 bg-black/18 px-3.5 py-3 shadow-[0_18px_34px_-26px_rgba(15,23,42,0.82)]"
+                  >
+                    <div className="text-sm font-semibold text-cyan-50">{item.title}</div>
+                    <div className="mt-1.5 text-xs leading-5 text-cyan-100/72">{item.description}</div>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-cyan-300/25 bg-slate-950/45 p-4 shadow-[0_22px_40px_-32px_rgba(14,165,233,0.7)]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-cyan-300/40 bg-cyan-400/12 text-sm font-semibold text-cyan-100">
+                  SC
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-200/82">
+                    Destination
+                  </div>
+                  <div className="mt-1 text-base font-semibold text-white">/{lang}/scan</div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-[18px] border border-white/10 bg-white/5 p-3.5">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">What you get</div>
+                <ul className="mt-2 space-y-1.5 text-[12px] leading-5 text-slate-200/88">
+                  <li>실시간 USDT 전송내역 확인</li>
+                  <li>주소별 전송 히스토리 이동</li>
+                  <li>트랜잭션 상세와 BscScan 연결</li>
+                </ul>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                <Link
+                  href={`/${lang}/scan`}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-[16px] border border-cyan-200/75 bg-cyan-400/85 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                >
+                  Scan Explorer 열기
+                </Link>
+                <Link
+                  href={`/${lang}/scan/integrations`}
+                  className="inline-flex min-h-[42px] items-center justify-center rounded-[16px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  연동 구조 보기
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="relative overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/70 p-3.5 shadow-lg shadow-black/20 sm:p-4">
           <span className="mb-2 inline-flex rounded-full border border-emerald-200/55 bg-emerald-400/14 px-2 py-0.5 text-[10px] font-semibold tracking-[0.1em] text-emerald-100 sm:absolute sm:right-4 sm:top-4 sm:mb-0">
             SETTLEMENT
