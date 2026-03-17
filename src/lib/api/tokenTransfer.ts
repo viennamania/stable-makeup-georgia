@@ -131,6 +131,14 @@ const SCAN_ACTIVE_BUYER_WALLET_CACHE_TTL_MS = Math.max(
   Number.parseInt(process.env.SCAN_ACTIVE_BUYER_WALLET_CACHE_TTL_MS || "", 10) || 15_000,
   5_000,
 );
+const SCAN_TX_HASH_EVENT_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.SCAN_TX_HASH_EVENT_CACHE_TTL_MS || "", 10) || 15_000,
+  2_000,
+);
+const SCAN_ADDRESS_ACTIVITY_CACHE_TTL_MS = Math.max(
+  Number.parseInt(process.env.SCAN_ADDRESS_ACTIVITY_CACHE_TTL_MS || "", 10) || 10_000,
+  2_000,
+);
 
 type TimedCacheEntry<T> = {
   expiresAt: number;
@@ -140,6 +148,10 @@ type TimedCacheEntry<T> = {
 const scanWalletUserRecordCache = new Map<string, TimedCacheEntry<ScanWalletUserRecord[]>>();
 const scanStoreBrandingCache = new Map<string, TimedCacheEntry<ScanStoreBrandingRecord | null>>();
 const scanActiveBuyerWalletCache = new Map<string, TimedCacheEntry<boolean>>();
+const scanTxHashEventCache = new Map<string, TimedCacheEntry<UsdtTransactionHashRealtimeEvent[]>>();
+const scanAddressActivityCache = new Map<string, TimedCacheEntry<UsdtTransactionHashRealtimeEvent[]>>();
+const scanTxHashEventInflight = new Map<string, Promise<UsdtTransactionHashRealtimeEvent[]>>();
+const scanAddressActivityInflight = new Map<string, Promise<UsdtTransactionHashRealtimeEvent[]>>();
 
 function getTimedCacheValue<T>(
   cache: Map<string, TimedCacheEntry<T>>,
@@ -169,6 +181,44 @@ function setTimedCacheValue<T>(
     expiresAt: Date.now() + ttlMs,
     value,
   });
+}
+
+async function getTimedCachedAsyncValue<T>({
+  cache,
+  inflight,
+  key,
+  ttlMs,
+  loader,
+}: {
+  cache: Map<string, TimedCacheEntry<T>>;
+  inflight: Map<string, Promise<T>>;
+  key: string;
+  ttlMs: number;
+  loader: () => Promise<T>;
+}): Promise<T> {
+  const cached = getTimedCacheValue(cache, key);
+  if (cached.hit) {
+    return cached.value;
+  }
+
+  const inflightPromise = inflight.get(key);
+  if (inflightPromise) {
+    return inflightPromise;
+  }
+
+  const nextPromise = loader()
+    .then((value) => {
+      setTimedCacheValue(cache, key, value, ttlMs);
+      inflight.delete(key);
+      return value;
+    })
+    .catch((error) => {
+      inflight.delete(key);
+      throw error;
+    });
+
+  inflight.set(key, nextPromise);
+  return nextPromise;
 }
 
 type ReconcileUsdtTransactionHashByReceiptParams = {
@@ -1392,6 +1442,36 @@ const buildEventStoreWalletIdentity = (
   };
 };
 
+const hasDisplayablePartyIdentity = (
+  identity: ScanUserWalletIdentity | null | undefined,
+): boolean => {
+  if (!identity) {
+    return false;
+  }
+
+  return Boolean(
+    normalizeText(identity.badgeLabel)
+    || normalizeText(identity.nickname)
+    || normalizeText(identity.storecode)
+    || normalizeText(identity.storeName)
+    || normalizeText(identity.accountHolder),
+  );
+};
+
+const eventPartyNeedsHydration = (
+  event: UsdtTransactionHashRealtimeEvent,
+  side: "from" | "to",
+): boolean => {
+  const label = normalizeText(side === "from" ? event.fromLabel : event.toLabel);
+  const identity = side === "from" ? event.fromIdentity : event.toIdentity;
+
+  return !(label && hasDisplayablePartyIdentity(identity));
+};
+
+const eventNeedsHydration = (event: UsdtTransactionHashRealtimeEvent): boolean => {
+  return eventPartyNeedsHydration(event, "from") || eventPartyNeedsHydration(event, "to");
+};
+
 async function hydrateUsdtTransactionHashRealtimeEvents(
   events: UsdtTransactionHashRealtimeEvent[],
 ): Promise<UsdtTransactionHashRealtimeEvent[]> {
@@ -1399,14 +1479,25 @@ async function hydrateUsdtTransactionHashRealtimeEvents(
     return events;
   }
 
+  const hydrationNeededEvents = events.filter((event) => eventNeedsHydration(event));
+  if (hydrationNeededEvents.length === 0) {
+    return events;
+  }
+
   const walletAddresses = Array.from(
     new Set(
-      events.flatMap((event) => [
-        normalizeWalletAddress(event.fromWalletAddress),
-        normalizeWalletAddress(event.toWalletAddress),
-      ]).filter(Boolean),
+      hydrationNeededEvents
+        .flatMap((event) => [
+          eventPartyNeedsHydration(event, "from")
+            ? normalizeWalletAddress(event.fromWalletAddress)
+            : null,
+          eventPartyNeedsHydration(event, "to")
+            ? normalizeWalletAddress(event.toWalletAddress)
+            : null,
+        ])
+        .filter((value): value is string => Boolean(value)),
     ),
-  ) as string[];
+  );
 
   if (walletAddresses.length === 0) {
     return events;
@@ -1428,6 +1519,10 @@ async function hydrateUsdtTransactionHashRealtimeEvents(
   );
 
   return events.map((event) => {
+    if (!eventNeedsHydration(event)) {
+      return event;
+    }
+
     const fromWalletAddress = normalizeWalletAddress(event.fromWalletAddress);
     const toWalletAddress = normalizeWalletAddress(event.toWalletAddress);
     const eventStorecode = normalizeStorecodeKey(event.store?.code);
@@ -1716,11 +1811,26 @@ export async function getLatestTransactionHashLogEvents({
   limit = 50,
   address,
 }: GetLatestTransactionHashLogEventsParams = {}): Promise<UsdtTransactionHashRealtimeEvent[]> {
-  const storedEvents = await loadStoredTransactionHashLogEvents({
-    limit,
-    address,
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
+  const normalizedAddress = normalizeWalletAddress(address);
+  const cacheKey = JSON.stringify({
+    limit: safeLimit,
+    address: normalizedAddress || "",
   });
-  return hydrateUsdtTransactionHashRealtimeEvents(storedEvents);
+
+  return getTimedCachedAsyncValue({
+    cache: scanAddressActivityCache,
+    inflight: scanAddressActivityInflight,
+    key: cacheKey,
+    ttlMs: SCAN_ADDRESS_ACTIVITY_CACHE_TTL_MS,
+    loader: async () => {
+      const storedEvents = await loadStoredTransactionHashLogEvents({
+        limit: safeLimit,
+        address: normalizedAddress,
+      });
+      return hydrateUsdtTransactionHashRealtimeEvents(storedEvents);
+    },
+  });
 }
 
 export async function getTransactionHashLogEventsByHash(
@@ -1735,30 +1845,42 @@ export async function getTransactionHashLogEventsByHash(
   const client = await clientPromise;
   const collection = client.db(dbName).collection('transactionHashLogs');
   const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 200));
+  const cacheKey = JSON.stringify({
+    transactionHash: normalizedTransactionHash.toLowerCase(),
+    limit: safeLimit,
+  });
 
-  const documents = await collection
-    .find<StoredTransactionHashLogDocument>({
-      $and: [
-        {
-          transactionHash: {
-            $regex: `^${escapeRegex(normalizedTransactionHash)}$`,
-            $options: "i",
-          },
-        },
-        buildPublicScanTransactionHashLogQuery(null),
-      ],
-    })
-    .sort({ publishedAt: -1, createdAt: -1, _id: -1 })
-    .limit(safeLimit)
-    .toArray();
+  return getTimedCachedAsyncValue({
+    cache: scanTxHashEventCache,
+    inflight: scanTxHashEventInflight,
+    key: cacheKey,
+    ttlMs: SCAN_TX_HASH_EVENT_CACHE_TTL_MS,
+    loader: async () => {
+      const documents = await collection
+        .find<StoredTransactionHashLogDocument>({
+          $and: [
+            {
+              transactionHash: {
+                $regex: `^${escapeRegex(normalizedTransactionHash)}$`,
+                $options: "i",
+              },
+            },
+            buildPublicScanTransactionHashLogQuery(null),
+          ],
+        })
+        .sort({ publishedAt: -1, createdAt: -1, _id: -1 })
+        .limit(safeLimit)
+        .toArray();
 
-  const hydratedEvents = await hydrateUsdtTransactionHashRealtimeEvents(
-    documents
-      .map((document) => normalizeTransactionHashLogDocument(document))
-      .filter((item) => isPublicScanTransactionHashEvent(item)),
-  );
+      const hydratedEvents = await hydrateUsdtTransactionHashRealtimeEvents(
+        documents
+          .map((document) => normalizeTransactionHashLogDocument(document))
+          .filter((item) => isPublicScanTransactionHashEvent(item)),
+      );
 
-  return hydratedEvents.sort((left, right) => getEventTimestamp(right) - getEventTimestamp(left));
+      return hydratedEvents.sort((left, right) => getEventTimestamp(right) - getEventTimestamp(left));
+    },
+  });
 }
 
 export async function getTransactionHashLogEventByHash(
