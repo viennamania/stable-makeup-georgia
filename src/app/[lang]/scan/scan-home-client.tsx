@@ -88,6 +88,8 @@ const TIME_AGO_TICK_MS = 5_000;
 const PAGE_SIZE = 20;
 const OASIS_KYC_PLAY_URL =
   "https://play.google.com/store/apps/details?id=com.guardianHoldings.oasis&hl=en";
+const OASIS_KYC_APPSTORE_URL =
+  "https://apps.apple.com/kr/app/%EC%98%A4%EC%95%84%EC%8B%9C%EC%8A%A4-%EA%B1%B0%EB%9E%98%EC%86%8C-%ED%8A%B8%EB%A0%8C%EB%94%94%ED%95%9C-%EC%BD%94%EC%9D%B8-%EA%B1%B0%EB%9E%98/id6504232616";
 const OASIS_KYC_APP_NAME = "오아시스 거래소";
 
 type ScanHomeClientPageProps = {
@@ -1305,9 +1307,9 @@ export default function ScanHomeClientPage({
                         {OASIS_KYC_APP_NAME} 앱에서 KYC 인증을 진행하세요
                       </h2>
                       <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c7d0e0]">
-                        거래 전 신원 확인이 필요하면 Google Play에서 {OASIS_KYC_APP_NAME} 앱을 설치한 뒤
-                        앱 안에서 바로 KYC를 완료할 수 있습니다. 설치 후 본인 인증을 끝내고 다시 스캔 화면으로
-                        돌아와 실시간 전송내역을 확인하세요.
+                        거래 전 신원 확인이 필요하면 Google Play 또는 App Store에서 {OASIS_KYC_APP_NAME} 앱을
+                        설치한 뒤 앱 안에서 바로 KYC를 완료할 수 있습니다. 설치 후 본인 인증을 끝내고 다시
+                        스캔 화면으로 돌아와 실시간 전송내역을 확인하세요.
                       </p>
                     </div>
                   </div>
@@ -1317,7 +1319,7 @@ export default function ScanHomeClientPage({
                       {
                         id: "step1",
                         title: "1. 앱 설치",
-                        description: "Google Play에서 오아시스 거래소 앱을 다운로드합니다.",
+                        description: "Google Play 또는 App Store에서 오아시스 거래소 앱을 다운로드합니다.",
                       },
                       {
                         id: "step2",
@@ -1355,7 +1357,7 @@ export default function ScanHomeClientPage({
                       </div>
                       <div className="min-w-0">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#f4d98f]">
-                          Google Play Download
+                          Mobile App Download
                         </div>
                         <div className="mt-1 text-lg font-semibold text-white">
                           앱 설치 후 KYC 인증 시작
@@ -1363,20 +1365,39 @@ export default function ScanHomeClientPage({
                       </div>
                     </div>
 
-                    <div className="mt-4 rounded-[20px] border border-white/10 bg-black/15 p-3">
+                    <div className="mt-4 grid gap-3">
+                      <div className="rounded-[20px] border border-white/10 bg-black/15 p-3">
+                        <a
+                          href={OASIS_KYC_PLAY_URL}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block transition hover:scale-[1.01]"
+                        >
+                          <Image
+                            src="/google-play-badge.svg"
+                            alt="Google Play에서 다운로드"
+                            width={240}
+                            height={72}
+                            className="h-auto w-full"
+                          />
+                        </a>
+                      </div>
+
                       <a
-                        href={OASIS_KYC_PLAY_URL}
+                        href={OASIS_KYC_APPSTORE_URL}
                         target="_blank"
                         rel="noreferrer"
-                        className="block transition hover:scale-[1.01]"
+                        className="flex items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-white/6 px-4 py-3 text-white transition hover:border-[#f0ddb0] hover:bg-white/10"
                       >
-                        <Image
-                          src="/google-play-badge.svg"
-                          alt="Google Play에서 다운로드"
-                          width={240}
-                          height={72}
-                          className="h-auto w-full"
-                        />
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#c7d0e0]">
+                            Apple App Store
+                          </div>
+                          <div className="mt-1 text-sm font-semibold">iPhone에서 앱 다운로드</div>
+                        </div>
+                        <div className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-semibold text-[#f4d98f]">
+                          Open
+                        </div>
                       </a>
                     </div>
 
@@ -1394,20 +1415,31 @@ export default function ScanHomeClientPage({
                         <div className="min-w-0">
                           <div className="text-sm font-semibold text-white">{OASIS_KYC_APP_NAME}</div>
                           <div className="mt-1 text-xs leading-5 text-[#dbe3f0]">
-                            Google Play에서 앱을 설치하고, 앱 내부 KYC 메뉴에서 신원 확인을 완료하세요.
+                            Android는 Google Play, iPhone은 App Store에서 앱을 설치한 뒤 앱 내부 KYC 메뉴에서
+                            신원 확인을 완료하세요.
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <a
-                      href={OASIS_KYC_PLAY_URL}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-4 inline-flex w-full items-center justify-center rounded-[18px] bg-[#f0b90b] px-4 py-3 text-sm font-semibold text-[#111827] transition hover:bg-[#e0aa05]"
-                    >
-                      {OASIS_KYC_APP_NAME} 앱 다운로드 후 KYC 진행
-                    </a>
+                    <div className="mt-4 grid gap-2">
+                      <a
+                        href={OASIS_KYC_PLAY_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-full items-center justify-center rounded-[18px] bg-[#f0b90b] px-4 py-3 text-sm font-semibold text-[#111827] transition hover:bg-[#e0aa05]"
+                      >
+                        Google Play에서 {OASIS_KYC_APP_NAME} 앱 다운로드
+                      </a>
+                      <a
+                        href={OASIS_KYC_APPSTORE_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-full items-center justify-center rounded-[18px] border border-white/10 bg-white/6 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                      >
+                        App Store에서 {OASIS_KYC_APP_NAME} 앱 다운로드
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
