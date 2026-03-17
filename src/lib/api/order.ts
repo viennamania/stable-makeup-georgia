@@ -4535,6 +4535,220 @@ export async function deleteBuyOrder(
 
 }
 
+export async function cancelClearanceOrderByAdmin({
+  orderId,
+  actor,
+  cancelReason,
+}: {
+  orderId: string;
+  actor: {
+    walletAddress: string | null;
+    nickname?: string | null;
+    storecode?: string | null;
+    role?: string | null;
+    publicIp?: string | null;
+    signedAt?: string | null;
+  };
+  cancelReason?: string | null;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  error?: string;
+  alreadyCancelled?: boolean;
+  order?: any | null;
+  tradeId?: string | null;
+}> {
+  if (!ObjectId.isValid(orderId)) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Invalid orderId",
+    };
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  const bankTransferCollection = client.db(dbName).collection("bankTransfers");
+  const historyCollection = client
+    .db(dbName)
+    .collection("clearanceOrderAdminCancellationHistory");
+
+  const existingOrder = await collection.findOne<any>({
+    _id: new ObjectId(orderId),
+  });
+
+  if (!existingOrder) {
+    return {
+      ok: false,
+      status: 404,
+      error: "Order not found",
+    };
+  }
+
+  if (existingOrder?.privateSale !== true) {
+    return {
+      ok: false,
+      status: 400,
+      error: "Only privateSale clearance orders can be cancelled here",
+    };
+  }
+
+  if (existingOrder?.buyer?.depositCompleted === true) {
+    return {
+      ok: false,
+      status: 409,
+      error: "Withdrawal already completed",
+    };
+  }
+
+  if (String(existingOrder?.status || "").trim() === "cancelled") {
+    return {
+      ok: true,
+      status: 200,
+      alreadyCancelled: true,
+      order: existingOrder,
+      tradeId: existingOrder?.tradeId || null,
+    };
+  }
+
+  const previousOrder = await fetchBuyOrderRealtimeSnapshot(
+    collection,
+    { _id: new ObjectId(orderId) },
+  );
+  const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
+  const cancelledAt = new Date().toISOString();
+  const normalizedCancelReason =
+    String(cancelReason || "").trim() || "cancelled_by_admin_clearance_management";
+  const normalizedActor = {
+    walletAddress: toNullableText(actor?.walletAddress)?.toLowerCase() || null,
+    nickname: toNullableText(actor?.nickname),
+    storecode: toNullableText(actor?.storecode),
+    role: toNullableText(actor?.role),
+    publicIp: toNullableText(actor?.publicIp),
+    signedAt: toNullableText(actor?.signedAt),
+    cancelledAt,
+  };
+
+  const result = await collection.updateOne(
+    {
+      _id: new ObjectId(orderId),
+      status: { $ne: "cancelled" },
+      "buyer.depositCompleted": { $ne: true },
+    },
+    {
+      $set: {
+        status: "cancelled",
+        canceller: "admin",
+        cancelledAt,
+        cancelTradeReason: normalizedCancelReason,
+        cancelledByAdmin: normalizedActor,
+      },
+    },
+  );
+
+  const updatedOrder = await collection.findOne<any>({
+    _id: new ObjectId(orderId),
+  });
+
+  if (result.modifiedCount !== 1 || !updatedOrder) {
+    if (updatedOrder?.status === "cancelled") {
+      return {
+        ok: true,
+        status: 200,
+        alreadyCancelled: true,
+        order: updatedOrder,
+        tradeId: updatedOrder?.tradeId || null,
+      };
+    }
+
+    return {
+      ok: false,
+      status: 500,
+      error: "Failed to cancel clearance order",
+      order: updatedOrder || existingOrder,
+      tradeId: existingOrder?.tradeId || null,
+    };
+  }
+
+  const linkedBankTransfers = updatedOrder?.tradeId
+    ? await bankTransferCollection.find({
+        tradeId: String(updatedOrder.tradeId || ""),
+      }).toArray()
+    : [];
+
+  if (linkedBankTransfers.length > 0) {
+    await bankTransferCollection.updateMany(
+      {
+        _id: {
+          $in: linkedBankTransfers.map((item) => item?._id).filter(Boolean),
+        },
+      },
+      {
+        $set: {
+          tradeId: null,
+          match: null,
+          matchedByAdmin: false,
+          buyerInfo: null,
+          sellerInfo: null,
+          errorMessage: null,
+          memo: "청산주문 관리자 취소로 매칭 해제됨",
+          clearanceOrderCancelledAt: cancelledAt,
+          clearanceOrderCancelledReason: normalizedCancelReason,
+          clearanceOrderCancelledBy: normalizedActor,
+        },
+      },
+    );
+  }
+
+  await historyCollection.insertOne({
+    orderId,
+    tradeId: updatedOrder?.tradeId || existingOrder?.tradeId || null,
+    storecode: updatedOrder?.storecode || existingOrder?.storecode || null,
+    walletAddress: updatedOrder?.walletAddress || existingOrder?.walletAddress || null,
+    previousStatus,
+    cancelReason: normalizedCancelReason,
+    cancelledAt,
+    cancelledBy: normalizedActor,
+    linkedBankTransferIds: linkedBankTransfers.map((item) => item?._id).filter(Boolean),
+    orderSnapshotBefore: existingOrder,
+    orderSnapshotAfter: updatedOrder,
+  });
+
+  clearBuyOrderReadCache();
+
+  if (updatedOrder?.storecode && updatedOrder?.walletAddress) {
+    await syncUserBuyOrderStateByWalletAndStorecode({
+      client,
+      buyOrderCollection: collection,
+      storecode: String(updatedOrder.storecode || ""),
+      walletAddress: String(updatedOrder.walletAddress || ""),
+    });
+  }
+
+  if (previousStatus !== "cancelled") {
+    await emitBuyOrderStatusRealtimeEvent({
+      source: "order.cancelClearanceOrderByAdmin",
+      statusFrom: previousStatus,
+      statusTo: "cancelled",
+      order: updatedOrder,
+      reason: normalizedCancelReason,
+      idempotencyParts: [
+        String(orderId),
+        String(normalizedActor.walletAddress || ""),
+        cancelledAt,
+      ],
+    });
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    alreadyCancelled: false,
+    order: updatedOrder,
+    tradeId: updatedOrder?.tradeId || null,
+  };
+}
+
 export async function deleteWebhookGeneratedClearanceOrderByAdmin({
   orderId,
   actor,
