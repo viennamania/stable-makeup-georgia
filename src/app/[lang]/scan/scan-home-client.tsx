@@ -1365,7 +1365,7 @@ export default function ScanHomeClientPage({
                       </div>
                     </div>
 
-                    <div className="mt-4 grid gap-3">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-[20px] border border-white/10 bg-black/15 p-3">
                         <a
                           href={OASIS_KYC_PLAY_URL}
@@ -1383,22 +1383,22 @@ export default function ScanHomeClientPage({
                         </a>
                       </div>
 
-                      <a
-                        href={OASIS_KYC_APPSTORE_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-white/6 px-4 py-3 text-white transition hover:border-[#f0ddb0] hover:bg-white/10"
-                      >
-                        <div>
-                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#c7d0e0]">
-                            Apple App Store
-                          </div>
-                          <div className="mt-1 text-sm font-semibold">iPhone에서 앱 다운로드</div>
-                        </div>
-                        <div className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-semibold text-[#f4d98f]">
-                          Open
-                        </div>
-                      </a>
+                      <div className="rounded-[20px] border border-white/10 bg-black/15 p-3">
+                        <a
+                          href={OASIS_KYC_APPSTORE_URL}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block transition hover:scale-[1.01]"
+                        >
+                          <Image
+                            src="/apple-app-store-badge.svg"
+                            alt="App Store에서 다운로드"
+                            width={240}
+                            height={72}
+                            className="h-auto w-full"
+                          />
+                        </a>
+                      </div>
                     </div>
 
                     <div className="mt-4 rounded-[20px] border border-[#f0ddb0]/25 bg-[#fff8e5]/[0.08] p-4">
