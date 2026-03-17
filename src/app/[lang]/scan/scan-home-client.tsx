@@ -79,8 +79,9 @@ type TransactionRow = {
   addresses: string[];
 };
 
-const MAX_EVENTS = 180;
+const MAX_EVENTS = 200;
 const RESYNC_LIMIT = 40;
+const HISTORY_WINDOW_STEP = 40;
 const RESYNC_INTERVAL_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 4_800;
 const TIME_AGO_TICK_MS = 5_000;
@@ -679,6 +680,10 @@ export default function ScanHomeClientPage({
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [feedMeta, setFeedMeta] = useState<ScanFeedMeta | null>(initialSnapshot?.meta || null);
+  const [historyWindowLimit, setHistoryWindowLimit] = useState(() => {
+    const initialCount = Array.isArray(initialSnapshot?.result) ? initialSnapshot.result.length : 0;
+    return Math.max(20, Math.min(initialCount || 20, MAX_EVENTS));
+  });
 
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const clientId = useMemo(() => `scan-feed-${Math.random().toString(36).slice(2, 10)}`, []);
@@ -736,7 +741,7 @@ export default function ScanHomeClientPage({
     });
   }, []);
 
-  const syncFromApi = useCallback(async () => {
+  const syncFromApi = useCallback(async (requestedLimit?: number) => {
     if (syncInFlightRef.current) {
       return syncInFlightRef.current;
     }
@@ -745,8 +750,12 @@ export default function ScanHomeClientPage({
       setIsSyncing(true);
 
       try {
+        const effectiveLimit = Math.max(
+          1,
+          Math.min(requestedLimit ?? historyWindowLimit, MAX_EVENTS),
+        );
         const response = await fetch(
-          `/api/realtime/scan/usdt-token-transfers?public=1&limit=${RESYNC_LIMIT}`,
+          `/api/realtime/scan/usdt-token-transfers?public=1&limit=${effectiveLimit}`,
           { cache: "no-store" },
         );
 
@@ -760,6 +769,7 @@ export default function ScanHomeClientPage({
           false,
         );
         setFeedMeta(data.meta || null);
+        setHistoryWindowLimit(effectiveLimit);
         setSyncErrorMessage(null);
       } catch (error) {
         setSyncErrorMessage(error instanceof Error ? error.message : "failed to sync");
@@ -775,7 +785,7 @@ export default function ScanHomeClientPage({
     } finally {
       syncInFlightRef.current = null;
     }
-  }, [upsertEvents]);
+  }, [historyWindowLimit, upsertEvents]);
 
   useEffect(() => {
     const realtime = new Ably.Realtime({
@@ -1038,6 +1048,19 @@ export default function ScanHomeClientPage({
     () => events.length === 0 && (isSyncing || connectionState === "initialized" || connectionState === "connecting") && !syncErrorMessage,
     [connectionState, events.length, isSyncing, syncErrorMessage],
   );
+
+  const canLoadMoreHistory = historyWindowLimit < MAX_EVENTS;
+
+  const handleLoadMoreHistory = useCallback(() => {
+    if (isSyncing) {
+      return;
+    }
+    const nextLimit = Math.min(MAX_EVENTS, historyWindowLimit + HISTORY_WINDOW_STEP);
+    if (nextLimit <= historyWindowLimit) {
+      return;
+    }
+    void syncFromApi(nextLimit);
+  }, [historyWindowLimit, isSyncing, syncFromApi]);
 
   const handleSearchSubmit = useCallback((event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1658,11 +1681,22 @@ export default function ScanHomeClientPage({
               })}
 
               <div className="flex flex-col gap-3 border-t border-[#e4e4e7] bg-[#fafafa] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div className="text-xs text-[#71717a]">
-                  Page {currentPage} of {totalPages} · {filteredRows.length.toLocaleString()} transactions
-                </div>
+              <div className="text-xs text-[#71717a]">
+                Page {currentPage} of {totalPages} · {filteredRows.length.toLocaleString()} transactions
+              </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex h-9 items-center justify-center rounded-xl border border-[#e4e4e7] bg-white px-3 text-xs font-semibold text-[#71717a]">
+                    History {historyWindowLimit} / {MAX_EVENTS}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleLoadMoreHistory}
+                    disabled={!canLoadMoreHistory || isSyncing}
+                    className="inline-flex h-9 items-center justify-center rounded-xl border border-[#d4d4d8] bg-white px-3 text-sm font-semibold text-[#18181b] transition hover:border-[#111111] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {canLoadMoreHistory ? "지난 이력 더보기" : "전체 최근 이력 로드됨"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => setCurrentPage((previousPage) => Math.max(1, previousPage - 1))}
