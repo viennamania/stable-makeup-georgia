@@ -1397,6 +1397,102 @@ export default function ScanHomeClientPage({
                 </div>
               </div>
             </div>
+
+            <div className="mt-5 overflow-hidden rounded-[28px] border border-[#17352b] bg-[radial-gradient(circle_at_top_right,_rgba(110,231,183,0.16),_transparent_34%),linear-gradient(135deg,_#0b1814_0%,_#11231d_45%,_#173328_100%)] shadow-[0_30px_72px_-48px_rgba(4,23,16,0.82)]">
+              <div className="grid gap-0 xl:grid-cols-[minmax(0,1.12fr)_minmax(320px,0.88fr)]">
+                <div className="px-4 py-5 sm:px-6 sm:py-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center rounded-full border border-[#86efac]/35 bg-[#dcfce7]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#bbf7d0]">
+                      Promotion Hub
+                    </span>
+                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#d5e9df]">
+                      Reward Flow
+                    </span>
+                  </div>
+
+                  <div className="mt-4 max-w-3xl">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#6ee7b7]">
+                      Next Step From Scan
+                    </div>
+                    <h2 className="mt-2 text-[1.5rem] font-semibold tracking-tight text-white sm:text-[2rem]">
+                      실시간 전송내역을 확인했다면 프로모션 페이지로 바로 이동하세요
+                    </h2>
+                    <p className="mt-3 text-sm leading-6 text-[#d5e9df]">
+                      스캔에서 지갑 흐름을 확인한 뒤에는 프로모션 페이지에서 참여 등록, 리워드 확인, 출금 진행까지
+                      한 번에 이어갈 수 있습니다. 실시간 트랜잭션과 프로모션 참여 흐름을 자연스럽게 연결합니다.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    {[
+                      {
+                        id: "promo-join",
+                        title: "참여 등록",
+                        description: "프로모션 메인에서 회원 등록과 지갑 연결을 이어서 진행합니다.",
+                      },
+                      {
+                        id: "promo-reward",
+                        title: "리워드 확인",
+                        description: "누적 보상과 활동 내역을 한 화면에서 확인할 수 있습니다.",
+                      },
+                      {
+                        id: "promo-withdraw",
+                        title: "출금 이동",
+                        description: "프로모션 출금 페이지로 넘어가 보상 출금 절차를 이어갑니다.",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.id}
+                        className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 shadow-[0_18px_34px_-30px_rgba(0,0,0,0.5)]"
+                      >
+                        <div className="text-sm font-semibold text-white">{item.title}</div>
+                        <div className="mt-2 text-xs leading-5 text-[#d5e9df]">{item.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 bg-[linear-gradient(180deg,_rgba(255,255,255,0.05)_0%,_rgba(255,255,255,0.02)_100%)] px-4 py-5 sm:px-6 sm:py-6 xl:border-l xl:border-t-0">
+                  <div className="rounded-[26px] border border-[#6ee7b7]/20 bg-white/[0.04] p-4 shadow-[0_24px_42px_-30px_rgba(0,0,0,0.55)]">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-[#86efac]/30 bg-[#dcfce7]/10 text-lg font-semibold text-[#bbf7d0]">
+                        PR
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#86efac]">
+                          Promotion Destination
+                        </div>
+                        <div className="mt-1 text-lg font-semibold text-white">
+                          리워드 참여와 출금 흐름으로 이동
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[20px] border border-white/10 bg-black/15 p-4">
+                      <div className="text-sm font-semibold text-white">/{lang}/promotion</div>
+                      <div className="mt-1 text-xs leading-5 text-[#d5e9df]">
+                        프로모션 메인에서 회원 참여, 보상 누적 현황, 출금 단계까지 바로 이어서 볼 수 있습니다.
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-2">
+                      <Link
+                        href={`/${lang}/promotion`}
+                        className="inline-flex w-full items-center justify-center rounded-[18px] bg-[#22c55e] px-4 py-3 text-sm font-semibold text-[#07110c] transition hover:bg-[#16a34a]"
+                      >
+                        프로모션 페이지로 이동
+                      </Link>
+                      <Link
+                        href={`/${lang}/promotion/user-register`}
+                        className="inline-flex w-full items-center justify-center rounded-[18px] border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                      >
+                        프로모션 참여 등록 보기
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
