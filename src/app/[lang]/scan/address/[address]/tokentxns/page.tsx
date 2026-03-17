@@ -24,6 +24,7 @@ type PartyIdentity = NonNullable<UsdtTransactionHashRealtimeEvent["fromIdentity"
 
 const MAX_EVENTS = 120;
 const RESYNC_LIMIT = 120;
+const EVENTS_PER_PAGE = 20;
 const RESYNC_INTERVAL_MS = 10_000;
 const NEW_EVENT_HIGHLIGHT_MS = 4_800;
 const TIME_AGO_TICK_MS = 5_000;
@@ -268,6 +269,8 @@ export default function ScanAddressTokenTransactionsPage() {
   const [connectionErrorMessage, setConnectionErrorMessage] = useState<string | null>(null);
   const [syncErrorMessage, setSyncErrorMessage] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [hasCompletedInitialSync, setHasCompletedInitialSync] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const clientId = useMemo(() => `scan-usdt-${Math.random().toString(36).slice(2, 10)}`, []);
@@ -345,6 +348,7 @@ export default function ScanAddressTokenTransactionsPage() {
     } catch (error) {
       setSyncErrorMessage(error instanceof Error ? error.message : "failed to sync");
     } finally {
+      setHasCompletedInitialSync(true);
       setIsSyncing(false);
     }
   }, [addressParam, upsertEvents]);
@@ -413,6 +417,11 @@ export default function ScanAddressTokenTransactionsPage() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+    setHasCompletedInitialSync(false);
+  }, [addressParam]);
+
   const totals = useMemo(() => {
     let incomingCount = 0;
     let outgoingCount = 0;
@@ -436,6 +445,21 @@ export default function ScanAddressTokenTransactionsPage() {
       latestDetectedAt: getEventDisplayTimeValue(events[0]?.data) || null,
     };
   }, [events, normalizedAddress]);
+
+  const totalPages = Math.max(1, Math.ceil(events.length / EVENTS_PER_PAGE));
+
+  useEffect(() => {
+    setCurrentPage((previousPage) => Math.min(previousPage, totalPages));
+  }, [totalPages]);
+
+  const paginatedEvents = useMemo(() => {
+    const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
+    return events.slice(startIndex, startIndex + EVENTS_PER_PAGE);
+  }, [currentPage, events]);
+
+  const pageStartNumber = events.length === 0 ? 0 : (currentPage - 1) * EVENTS_PER_PAGE + 1;
+  const pageEndNumber = Math.min(currentPage * EVENTS_PER_PAGE, events.length);
+  const isInitialLoading = !hasCompletedInitialSync && events.length === 0;
 
   const addressExplorerUrl = getExplorerAddressUrl(addressParam);
   const chainLabel = String(configuredChain || "bsc").toUpperCase();
@@ -601,6 +625,20 @@ export default function ScanAddressTokenTransactionsPage() {
             </div>
           </div>
 
+          {isInitialLoading ? (
+            <div className="border-b border-[#f0e5c4] bg-[#fffdf7] px-4 py-4 sm:px-6">
+              <div className="flex items-center gap-3 rounded-[18px] border border-[#ecdca6] bg-[#fff8e5] px-4 py-3.5 text-sm text-[#6c5a2b]">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#f0b90b]" />
+                <div>
+                  <div className="font-semibold text-[#4a3c1a]">주소 전송내역을 불러오는 중입니다.</div>
+                  <div className="mt-0.5 text-xs text-[#8a6a18]">
+                    첫 로딩은 외부 스캔 데이터 병합 때문에 몇 초 걸릴 수 있습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
               <thead className="bg-[#fff8e5] text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7b6a39]">
@@ -616,14 +654,20 @@ export default function ScanAddressTokenTransactionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {events.length === 0 ? (
+                {isInitialLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-16 text-center text-sm text-[#5f6b85]">
+                      전송내역 스냅샷을 준비하고 있습니다.
+                    </td>
+                  </tr>
+                ) : events.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-16 text-center text-sm text-[#5f6b85]">
                       아직 표시할 transaction hash 이벤트가 없습니다.
                     </td>
                   </tr>
                 ) : (
-                  events.map((item) => {
+                  paginatedEvents.map((item) => {
                     const direction = getDirection(item.data, normalizedAddress);
                     const detectedTime = getEventDisplayTimeValue(item.data);
                     const chainTime = getEventChainTimeValue(item.data);
@@ -776,6 +820,40 @@ export default function ScanAddressTokenTransactionsPage() {
               </tbody>
             </table>
           </div>
+
+          {events.length > 0 ? (
+            <div className="flex flex-col gap-3 border-t border-[#f0e5c4] bg-[#fffdf7] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="text-xs text-[#5f6b85]">
+                Showing <span className="font-semibold text-[#1d1f24]">{pageStartNumber}-{pageEndNumber}</span> of{" "}
+                <span className="font-semibold text-[#1d1f24]">{events.length.toLocaleString()}</span> events
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage((previousPage) => Math.max(1, previousPage - 1));
+                  }}
+                  disabled={currentPage <= 1}
+                  className="rounded-full border border-[#e8dcc0] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f6b85] transition hover:border-[#dfc980] hover:text-[#1d1f24] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Prev
+                </button>
+                <span className="rounded-full border border-[#eadcb6] bg-[#fffbef] px-3 py-1.5 text-xs font-semibold text-[#7b6a39]">
+                  Page {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage((previousPage) => Math.min(totalPages, previousPage + 1));
+                  }}
+                  disabled={currentPage >= totalPages}
+                  className="rounded-full border border-[#e8dcc0] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f6b85] transition hover:border-[#dfc980] hover:text-[#1d1f24] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          ) : null}
         </section>
       </div>
     </div>
