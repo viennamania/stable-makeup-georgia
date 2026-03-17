@@ -147,6 +147,7 @@ const CLEARANCE_WITHDRAWAL_HIGHLIGHT_MS = 4_800;
 const CLEARANCE_WITHDRAWAL_CLOCK_TICK_MS = 5_000;
 
 const BUY_ORDER_DEPOSIT_COMPLETED_SIGNING_PREFIX = "admin-buyorder-deposit-completed-v1";
+const CANCEL_CLEARANCE_ORDER_SIGNING_PREFIX = "admin-cancel-clearance-order-v1";
 
 const normalizeBankTransferTransactionType = (value: string | null | undefined) => {
   const normalized = String(value || "").trim().toLowerCase();
@@ -1013,6 +1014,10 @@ export default function Index({ params, isYear2025 = false }: any) {
 
 
   const [isModalOpen, setModalOpen] = useState(false);
+  const [cancelConfirmTarget, setCancelConfirmTarget] = useState<{
+    index: number;
+    order: BuyOrder;
+  } | null>(null);
 
   const closeModal = () => setModalOpen(false);
   const openModal = () => setModalOpen(true);
@@ -1103,6 +1108,7 @@ export default function Index({ params, isYear2025 = false }: any) {
   const [totalCount, setTotalCount] = useState(0);
     
   const [buyOrders, setBuyOrders] = useState<BuyOrder[]>([]);
+  const [cancellingClearanceOrderIds, setCancellingClearanceOrderIds] = useState<string[]>([]);
 
 
   //console.log('buyOrders', buyOrders);
@@ -2232,6 +2238,64 @@ export default function Index({ params, isYear2025 = false }: any) {
 
 
   // buyOrderDepositCompleted
+  const reloadClearanceHistoryOrders = async (requesterWalletAddress: string) => {
+    await fetch(buyOrdersApiPath, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(
+        {
+          storecode: searchStorecode,
+          requesterStorecode: "admin",
+          limit: Number(limitValue),
+          page: Number(pageValue),
+          walletAddress: requesterWalletAddress,
+          searchMyOrders: searchMyOrders,
+
+          searchTradeId: searchTradeId,
+          searchBuyer: searchBuyer,
+          searchDepositName: searchDepositName,
+
+          searchStoreBankAccountNumber: searchStoreBankAccountNumber,
+          searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
+
+          searchDepositCompleted: searchDepositCompleted,
+
+          privateSale: true,
+
+          fromDate: searchFromDate,
+          toDate: searchToDate,
+        }
+      ),
+    })
+    .then(response => response.json())
+    .then(data => {
+      setBuyOrders(data.result.orders);
+
+      setBuyOrderStats({
+        totalCount: data.result.totalCount,
+        totalKrwAmount: data.result.totalKrwAmount,
+        totalUsdtAmount: data.result.totalUsdtAmount,
+        totalSettlementCount: data.result.totalSettlementCount,
+        totalSettlementAmount: data.result.totalSettlementAmount,
+        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
+        totalFeeAmount: data.result.totalFeeAmount,
+        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
+        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
+        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
+
+        totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
+        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
+      });
+
+      setTotalCount(data.result.totalCount);
+    })
+    .catch(error => {
+      console.error('Error fetching buy orders:', error);
+    });
+  };
+
   const [loadingDeposit, setLoadingDeposit] = useState([] as boolean[]);
   useEffect(() => {
     setLoadingDeposit([]);
@@ -2241,6 +2305,24 @@ export default function Index({ params, isYear2025 = false }: any) {
       }
       setLoadingDeposit(newArray);
   }, [buyOrders.length]);
+
+  const openCancelConfirmModal = (index: number, order: BuyOrder) => {
+    const orderId = String(order?._id || "").trim();
+    if (!orderId) {
+      return;
+    }
+    if (loadingDeposit[index] || cancellingClearanceOrderIds.includes(orderId)) {
+      return;
+    }
+    setCancelConfirmTarget({
+      index,
+      order,
+    });
+  };
+
+  const closeCancelConfirmModal = () => {
+    setCancelConfirmTarget(null);
+  };
 
 
   const buyOrderDepositCompleted = async (index: number, orderId: string) => {
@@ -2289,67 +2371,7 @@ export default function Index({ params, isYear2025 = false }: any) {
       return;
     }
 
-    
-    // fetch Buy Orders
-    await fetch(buyOrdersApiPath, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        {
-          storecode: searchStorecode,
-          requesterStorecode: "admin",
-          limit: Number(limitValue),
-          page: Number(pageValue),
-          walletAddress: address,
-          searchMyOrders: searchMyOrders,
-
-          //searchOrderStatusCompleted: true,
-
-          searchTradeId: searchTradeId,
-          searchBuyer: searchBuyer,
-          searchDepositName: searchDepositName,
-
-          searchStoreBankAccountNumber: searchStoreBankAccountNumber,
-          searchBuyerBankAccountNumber: searchBuyerBankAccountNumber,
-
-          searchDepositCompleted: searchDepositCompleted,
-
-          privateSale: true,
-
-          fromDate: searchFromDate,
-          toDate: searchToDate,
-        }
-      ),
-    })
-    .then(response => response.json())
-    .then(data => {
-      ///console.log('data', data);
-      setBuyOrders(data.result.orders);
-
-
-      setBuyOrderStats({
-        totalCount: data.result.totalCount,
-        totalKrwAmount: data.result.totalKrwAmount,
-        totalUsdtAmount: data.result.totalUsdtAmount,
-        totalSettlementCount: data.result.totalSettlementCount,
-        totalSettlementAmount: data.result.totalSettlementAmount,
-        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-        totalFeeAmount: data.result.totalFeeAmount,
-        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-        totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-      });
-
-
-    })
-    .catch(error => {
-      console.error('Error fetching buy orders:', error);
-    });
+    await reloadClearanceHistoryOrders(address);
 
     if (responseData?.result?.alreadyCompleted) {
       toast.success('이미 출금완료 처리된 주문입니다.');
@@ -2360,6 +2382,100 @@ export default function Index({ params, isYear2025 = false }: any) {
 
 
   }
+
+  const cancelClearanceOrderByAdmin = async (index: number, order: BuyOrder) => {
+    const orderId = String(order?._id || "").trim();
+    if (!orderId) {
+      toast.error('주문 정보를 확인할 수 없습니다.');
+      return false;
+    }
+
+    if (isYear2025) {
+      toast.error('2025 청산관리 페이지는 조회 전용입니다.');
+      return false;
+    }
+
+    if (cancellingClearanceOrderIds.includes(orderId)) {
+      return false;
+    }
+
+    if (!activeAccount || !address) {
+      toast.error('관리자 지갑을 연결해주세요.');
+      return false;
+    }
+
+    setCancellingClearanceOrderIds((prev) => Array.from(new Set([...prev, orderId])));
+
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: '/api/order/cancelClearanceOrderByAdmin',
+        signingPrefix: CANCEL_CLEARANCE_ORDER_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
+          orderId,
+          cancelReason: 'cancelled_by_admin_clearance_management',
+        },
+      });
+      const responseData = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        toast.error(responseData?.error || '청산주문 취소에 실패했습니다.');
+        return false;
+      }
+
+      setBuyOrders((prev) =>
+        prev.map((item, itemIndex) => {
+          if (itemIndex !== index && item._id !== orderId) {
+            return item;
+          }
+
+          return {
+            ...item,
+            status: 'cancelled',
+            canceller: 'admin',
+            cancelledAt:
+              responseData?.result?.order?.cancelledAt
+              || item.cancelledAt
+              || new Date().toISOString(),
+          };
+        })
+      );
+
+      await reloadClearanceHistoryOrders(address);
+
+      if (responseData?.result?.alreadyCancelled) {
+        toast.success('이미 취소된 청산주문입니다.');
+      } else {
+        toast.success(`청산주문 #${order.tradeId || orderId} 취소 완료`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('cancelClearanceOrderByAdmin error', error);
+      toast.error('청산주문 취소 중 오류가 발생했습니다.');
+      return false;
+    } finally {
+      setCancellingClearanceOrderIds((prev) =>
+        prev.filter((item) => item !== orderId),
+      );
+    }
+  };
+
+  const confirmCancelClearanceOrder = async () => {
+    if (!cancelConfirmTarget) {
+      return;
+    }
+
+    const isSuccess = await cancelClearanceOrderByAdmin(
+      cancelConfirmTarget.index,
+      cancelConfirmTarget.order,
+    );
+
+    if (isSuccess) {
+      closeCancelConfirmModal();
+    }
+  };
 
 
 
@@ -3062,6 +3178,10 @@ export default function Index({ params, isYear2025 = false }: any) {
   const latestWithdrawalRealtimeAt = filteredWithdrawalRealtimeEvents[0]?.data?.publishedAt
     || filteredWithdrawalRealtimeEvents[0]?.receivedAt
     || null;
+  const cancelConfirmOrder = cancelConfirmTarget?.order || null;
+  const cancelConfirmLoading = cancelConfirmTarget
+    ? cancellingClearanceOrderIds.includes(String(cancelConfirmTarget.order?._id || "").trim())
+    : false;
 
 
 
@@ -5185,14 +5305,14 @@ export default function Index({ params, isYear2025 = false }: any) {
                               </span>
 
                               <button
-                                disabled={loadingDeposit[index]}
+                                disabled={loadingDeposit[index] || cancellingClearanceOrderIds.includes(String(item?._id || '').trim())}
                                 className={`
                                   w-36 h-8
                                   flex flex-row gap-1 items-center justify-center
                                   text-sm text-white px-2 py-1 rounded-md
                                   bg-green-500 hover:bg-green-600
                                   transition-all duration-200 ease-in-out
-                                  ${loadingDeposit[index] ? 'opacity-50 cursor-not-allowed' : ''}
+                                  ${loadingDeposit[index] || cancellingClearanceOrderIds.includes(String(item?._id || '').trim()) ? 'opacity-50 cursor-not-allowed' : ''}
                                 `}
                                 onClick={async () => {
                                   if ( !confirm('정말로 출금을 완료하시겠습니까?')) {
@@ -5212,6 +5332,31 @@ export default function Index({ params, isYear2025 = false }: any) {
                                   />
                                 )}
                                 {loadingDeposit[index] ? "처리중..." : "출금완료하기"}
+                              </button>
+                              <button
+                                disabled={loadingDeposit[index] || cancellingClearanceOrderIds.includes(String(item?._id || '').trim())}
+                                className={`
+                                  w-36 h-8
+                                  flex flex-row gap-1 items-center justify-center
+                                  text-sm text-white px-2 py-1 rounded-md
+                                  bg-rose-500 hover:bg-rose-600
+                                  transition-all duration-200 ease-in-out
+                                  ${loadingDeposit[index] || cancellingClearanceOrderIds.includes(String(item?._id || '').trim()) ? 'opacity-50 cursor-not-allowed' : ''}
+                                `}
+                                onClick={() => {
+                                  openCancelConfirmModal(index, item);
+                                }}
+                              >
+                                {cancellingClearanceOrderIds.includes(String(item?._id || '').trim()) && (
+                                  <Image
+                                    src="/loading.png"
+                                    alt="Loading"
+                                    width={20}
+                                    height={20}
+                                    className="animate-spin"
+                                  />
+                                )}
+                                {cancellingClearanceOrderIds.includes(String(item?._id || '').trim()) ? "취소중..." : "취소하기"}
                               </button>
                             </div>
                           )}
@@ -6815,6 +6960,131 @@ export default function Index({ params, isYear2025 = false }: any) {
           
         </div>
 
+
+        <Modal
+          isOpen={Boolean(cancelConfirmOrder)}
+          onClose={closeCancelConfirmModal}
+          panelClassName="max-w-2xl"
+        >
+          {cancelConfirmOrder && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">청산주문 취소 확인</h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    아래 청산주문을 취소하시겠습니까?
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeCancelConfirmModal}
+                  className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50"
+                >
+                  닫기
+                </button>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">신청번호</span>
+                    <span className="font-semibold text-slate-900">
+                      {cancelConfirmOrder.tradeId || cancelConfirmOrder._id}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">현재상태</span>
+                    <span className="font-semibold text-slate-900">
+                      {cancelConfirmOrder.status || '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">신청시간</span>
+                    <span className="font-semibold text-slate-900">
+                      {cancelConfirmOrder.createdAt
+                        ? new Date(cancelConfirmOrder.createdAt).toLocaleString()
+                        : '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">매입량</span>
+                    <span className="font-semibold text-slate-900">
+                      {Number(cancelConfirmOrder.usdtAmount || 0).toFixed(3)} USDT
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">매입금액</span>
+                    <span className="font-semibold text-slate-900">
+                      {Number(cancelConfirmOrder.krwAmount || 0).toLocaleString()} 원
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">구매자</span>
+                    <span className="font-semibold text-slate-900">
+                      {cancelConfirmOrder?.buyer?.bankInfo?.accountHolder || '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">구매자 계좌</span>
+                    <span className="max-w-[220px] truncate font-semibold text-slate-900">
+                      {cancelConfirmOrder?.buyer?.bankInfo?.bankName
+                        ? `${cancelConfirmOrder.buyer.bankInfo.bankName} ${cancelConfirmOrder.buyer.bankInfo.accountNumber || ''}`
+                        : '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2">
+                    <span className="text-xs text-slate-500">전송 TX</span>
+                    <span className="max-w-[220px] truncate font-semibold text-slate-900">
+                      {cancelConfirmOrder.transactionHash && cancelConfirmOrder.transactionHash !== '0x'
+                        ? `${cancelConfirmOrder.transactionHash.slice(0, 8)}...${cancelConfirmOrder.transactionHash.slice(-6)}`
+                        : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                주문 상태는 취소로 전환되고, 연결된 입금 매칭 정보는 해제됩니다. 이미 발생한 온체인 전송은 되돌릴 수 없습니다.
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={closeCancelConfirmModal}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  disabled={cancelConfirmLoading}
+                  onClick={confirmCancelClearanceOrder}
+                  className={`group flex min-w-[140px] items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-white transition-all duration-200 ease-out ${
+                    cancelConfirmLoading
+                      ? 'cursor-not-allowed border-slate-300 bg-slate-400'
+                      : 'border-rose-300 bg-gradient-to-b from-rose-500 to-rose-600 shadow-[0_10px_20px_-12px_rgba(225,29,72,0.75)] hover:-translate-y-0.5 hover:from-rose-600 hover:to-rose-700 hover:shadow-[0_14px_24px_-12px_rgba(225,29,72,0.85)] active:translate-y-0'
+                  }`}
+                >
+                  {cancelConfirmLoading && (
+                    <Image
+                      src="/loading.png"
+                      alt="loading"
+                      width={16}
+                      height={16}
+                      className="h-4 w-4 animate-spin"
+                    />
+                  )}
+                  {!cancelConfirmLoading && (
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-white/40 bg-white/20 text-[10px] leading-none">
+                      !
+                    </span>
+                  )}
+                  <span>청산주문 취소</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </Modal>
 
         <Modal isOpen={isModalOpen} onClose={closeModal}>
             <TradeDetail
