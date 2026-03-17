@@ -36,6 +36,9 @@ import {
 
 const BANK_INFO_ADMIN_SIGNING_PREFIX = "stable-georgia:admin-bank-info:v1";
 const ADMIN_BANK_INFO_UPLOAD_ROUTE = "/api/upload/admin-bankinfo";
+const OASIS_KYC_PLAY_URL =
+  "https://play.google.com/store/apps/details?id=com.guardianHoldings.oasis&hl=en";
+const OASIS_KYC_APP_NAME = "오아시스 거래소";
 
 const wallets = [
   inAppWallet({
@@ -950,6 +953,143 @@ export default function BankInfoPage() {
             기준: 검색 조건 적용 결과
           </div>
         </div>
+
+        <section className="overflow-hidden rounded-[28px] border border-[#1d2430] bg-[radial-gradient(circle_at_top_left,_rgba(240,185,11,0.18),_transparent_38%),linear-gradient(135deg,_#121a26_0%,_#1b2332_48%,_#111827_100%)] shadow-[0_30px_72px_-48px_rgba(15,23,42,0.82)]">
+          <div className="grid gap-0 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+            <div className="px-4 py-5 sm:px-6 sm:py-6">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-[#f4d98f]/50 bg-[#fff2c8]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#f4d98f]">
+                  KYC Required
+                </span>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#c7d0e0]">
+                  Oasis Exchange App
+                </span>
+              </div>
+
+              <div className="mt-4 flex items-start gap-4">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-white/10 bg-white/8 shadow-[0_18px_32px_-22px_rgba(0,0,0,0.55)] sm:h-20 sm:w-20">
+                  <Image
+                    src="/oasis-exchange-app-icon.png"
+                    alt={`${OASIS_KYC_APP_NAME} 앱 아이콘`}
+                    width={68}
+                    height={68}
+                    className="h-14 w-14 rounded-[16px] object-cover sm:h-16 sm:w-16"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#f0b90b]">
+                    Oasis KYC Guide
+                  </div>
+                  <h2 className="mt-2 text-[1.45rem] font-semibold tracking-tight text-white sm:text-[1.95rem]">
+                    {OASIS_KYC_APP_NAME} 앱에서 KYC 인증을 진행하세요
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c7d0e0]">
+                    실명 계좌 등록과 거래 준비 전 신원 확인이 필요하면 Google Play에서 {OASIS_KYC_APP_NAME} 앱을 설치한 뒤
+                    앱 안에서 바로 KYC를 완료할 수 있습니다. 설치 후 본인 인증을 끝내고 다시 은행 계좌 정보를 등록하세요.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                {[
+                  {
+                    id: "step1",
+                    title: "1. 앱 설치",
+                    description: "Google Play에서 오아시스 거래소 앱을 다운로드합니다.",
+                  },
+                  {
+                    id: "step2",
+                    title: "2. KYC 진행",
+                    description: "앱에 로그인한 뒤 신분증과 본인 인증 절차를 완료합니다.",
+                  },
+                  {
+                    id: "step3",
+                    title: "3. 계좌 등록",
+                    description: "KYC 완료 후 다시 이 화면으로 돌아와 은행 계좌와 실명 정보를 등록합니다.",
+                  },
+                ].map((step) => (
+                  <div
+                    key={step.id}
+                    className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4 shadow-[0_18px_34px_-30px_rgba(0,0,0,0.5)]"
+                  >
+                    <div className="text-sm font-semibold text-white">{step.title}</div>
+                    <div className="mt-2 text-xs leading-5 text-[#c7d0e0]">{step.description}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-white/10 bg-[linear-gradient(180deg,_rgba(255,255,255,0.06)_0%,_rgba(255,255,255,0.02)_100%)] px-4 py-5 sm:px-6 sm:py-6 xl:border-l xl:border-t-0">
+              <div className="rounded-[26px] border border-[#f0ddb0]/30 bg-white/[0.04] p-4 shadow-[0_24px_42px_-30px_rgba(0,0,0,0.55)]">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-white/10 bg-white/10">
+                    <Image
+                      src="/icon-kyc.png"
+                      alt="KYC"
+                      width={34}
+                      height={34}
+                      className="h-8 w-8 object-contain"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#f4d98f]">
+                      Google Play Download
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      앱 설치 후 KYC 인증 시작
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[20px] border border-white/10 bg-black/15 p-3">
+                  <a
+                    href={OASIS_KYC_PLAY_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block transition hover:scale-[1.01]"
+                  >
+                    <Image
+                      src="/google-play-badge.svg"
+                      alt="Google Play에서 다운로드"
+                      width={240}
+                      height={72}
+                      className="h-auto w-full"
+                    />
+                  </a>
+                </div>
+
+                <div className="mt-4 rounded-[20px] border border-[#f0ddb0]/25 bg-[#fff8e5]/[0.08] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-white/10">
+                      <Image
+                        src="/oasis-exchange-app-icon.png"
+                        alt={OASIS_KYC_APP_NAME}
+                        width={40}
+                        height={40}
+                        className="h-10 w-10 rounded-[12px] object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-white">{OASIS_KYC_APP_NAME}</div>
+                      <div className="mt-1 text-xs leading-5 text-[#dbe3f0]">
+                        Google Play에서 앱을 설치하고, 앱 내부 KYC 메뉴에서 신원 확인을 완료하세요.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <a
+                  href={OASIS_KYC_PLAY_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-[18px] bg-[#f0b90b] px-4 py-3 text-sm font-semibold text-[#111827] transition hover:bg-[#e0aa05]"
+                >
+                  {OASIS_KYC_APP_NAME} 앱 다운로드 후 KYC 진행
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div className="w-full flex flex-col lg:flex-row lg:items-end gap-3 bg-white border border-zinc-200 rounded-md p-4">
           <div className="flex flex-col gap-1">
