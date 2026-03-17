@@ -243,11 +243,17 @@ function isExternalOnlyInsightEvent(event: UsdtTransactionHashRealtimeEvent): bo
   return event.source === "thirdweb.insight.tokens.transfers";
 }
 
-function getEventDisplayTimeValue(event: UsdtTransactionHashRealtimeEvent): string | null {
+function getEventDisplayTimeValue(event: UsdtTransactionHashRealtimeEvent | null | undefined): string | null {
+  if (!event) {
+    return null;
+  }
   return event.publishedAt || event.minedAt || event.createdAt || null;
 }
 
-function getEventChainTimeValue(event: UsdtTransactionHashRealtimeEvent): string | null {
+function getEventChainTimeValue(event: UsdtTransactionHashRealtimeEvent | null | undefined): string | null {
+  if (!event) {
+    return null;
+  }
   return event.minedAt || event.createdAt || null;
 }
 
