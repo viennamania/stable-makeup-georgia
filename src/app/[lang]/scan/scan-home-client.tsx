@@ -94,6 +94,13 @@ type ScanHomeClientPageProps = {
   initialSnapshot?: ScanSnapshotResponse | null;
 };
 
+function formatUsdtValueColumn(value: number): string {
+  return Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  });
+}
+
 function getEventKey(event: UsdtTransactionHashRealtimeEvent, fallbackId = ""): string {
   const queueId = String(event.queueId || "").trim();
   if (queueId) {
@@ -1240,23 +1247,31 @@ export default function ScanHomeClientPage({
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Transactions</div>
-                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transactions.toLocaleString()}</div>
-                <div className="mt-1 text-xs text-[#7c8495]">Unique transaction hashes in feed</div>
+                <div className="mt-3 flex flex-col items-end text-right">
+                  <div className="text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transactions.toLocaleString()}</div>
+                  <div className="mt-1 text-xs text-[#7c8495]">Unique transaction hashes in feed</div>
+                </div>
               </div>
               <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Token Transfers</div>
-                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transferLogs.toLocaleString()}</div>
-                <div className="mt-1 text-xs text-[#7c8495]">Individual monitored transfer logs</div>
+                <div className="mt-3 flex flex-col items-end text-right">
+                  <div className="text-[30px] font-semibold tracking-tight text-[#202939]">{totals.transferLogs.toLocaleString()}</div>
+                  <div className="mt-1 text-xs text-[#7c8495]">Individual monitored transfer logs</div>
+                </div>
               </div>
               <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Observed Value</div>
-                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#0f7a4b]">{formatUsdt(totals.totalUsdt)}</div>
-                <div className="mt-1 text-xs text-[#7c8495]">USDT aggregated from current feed</div>
+                <div className="mt-3 flex flex-col items-end text-right">
+                  <div className="text-[30px] font-semibold tracking-tight text-[#0f7a4b]">{formatUsdt(totals.totalUsdt)}</div>
+                  <div className="mt-1 text-xs text-[#7c8495]">USDT aggregated from current feed</div>
+                </div>
               </div>
               <div className="rounded-[22px] border border-[#ece4d2] bg-[#fffdfa] px-4 py-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Tracked Wallets</div>
-                <div className="mt-2 text-[30px] font-semibold tracking-tight text-[#202939]">{totals.activeWallets.toLocaleString()}</div>
-                <div className="mt-1 text-xs text-[#7c8495]">Last detected {formatDateTime(totals.latestRecordAt)}</div>
+                <div className="mt-3 flex flex-col items-end text-right">
+                  <div className="text-[30px] font-semibold tracking-tight text-[#202939]">{totals.activeWallets.toLocaleString()}</div>
+                  <div className="mt-1 text-xs text-[#7c8495]">Last detected {formatDateTime(totals.latestRecordAt)}</div>
+                </div>
               </div>
             </div>
 
@@ -1523,13 +1538,13 @@ export default function ScanHomeClientPage({
             </div>
           </div>
 
-          <div className="hidden border-b border-[#e4e4e7] bg-[#fafafa] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#71717a] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-6">
+            <div className="hidden border-b border-[#e4e4e7] bg-[#fafafa] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#71717a] md:grid md:grid-cols-[1.55fr,0.92fr,0.92fr,1.1fr,1.1fr,0.92fr] md:gap-4 sm:px-6">
             <div>Txn Hash</div>
             <div>Method</div>
             <div>Age</div>
             <div>From</div>
             <div>To</div>
-            <div>Value</div>
+            <div className="text-right">Value</div>
           </div>
 
           {filteredRows.length > 0 ? (
@@ -1593,8 +1608,8 @@ export default function ScanHomeClientPage({
 
                         <div className="shrink-0 text-right">
                           <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#71717a]">Value</div>
-                          <div className="mt-1 text-[18px] font-semibold tracking-tight text-[#18181b]">
-                            {formatUsdt(row.totalUsdt)} USDT
+                          <div className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-[#18181b]">
+                            {formatUsdtValueColumn(row.totalUsdt)} USDT
                           </div>
                           <div className="mt-1 text-[11px] text-[#71717a]">
                             {row.transferCount > 1 ? "Batch total" : "Single transfer"}
@@ -1761,10 +1776,10 @@ export default function ScanHomeClientPage({
                             />
                           </div>
 
-                          <div className="min-w-0">
+                          <div className="min-w-0 text-right">
                             {desktopRowIndex === 0 ? (
-                              <div className="mt-1">
-                                <div className="text-sm font-semibold text-[#18181b]">{formatUsdt(row.totalUsdt)} USDT</div>
+                              <div className="mt-1 flex flex-col items-end text-right">
+                                <div className="text-sm font-semibold tabular-nums text-[#18181b]">{formatUsdtValueColumn(row.totalUsdt)} USDT</div>
                                 <div className="mt-1.5 text-[11px] text-[#71717a]">{row.transferCount > 1 ? "Batch total" : "Single transfer"}</div>
                               </div>
                             ) : null}
