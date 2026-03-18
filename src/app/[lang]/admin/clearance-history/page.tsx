@@ -673,6 +673,102 @@ export default function Index({ params, isYear2025 = false }: any) {
 
   } = data;
 
+  const formatTransferStatusRelativeTime = (value: string | null | undefined) => {
+    if (!value) {
+      return "";
+    }
+
+    const timestamp = new Date(value).getTime();
+    if (Number.isNaN(timestamp)) {
+      return "";
+    }
+
+    const diffMs = Math.max(0, new Date().getTime() - timestamp);
+
+    if (diffMs < 1000 * 60) {
+      return `${Math.floor(diffMs / 1000)} ${seconds_ago}`;
+    }
+
+    if (diffMs < 1000 * 60 * 60) {
+      return `${Math.floor(diffMs / 1000 / 60)} ${minutes_ago}`;
+    }
+
+    return `${Math.floor(diffMs / 1000 / 60 / 60)} ${hours_ago}`;
+  };
+
+  const getClearanceTransferBusinessStatusLabel = (item: BuyOrder) => {
+    if (item.status === "ordered") {
+      return Buy_Order_Opened;
+    }
+
+    if (item.status === "accepted") {
+      return Trade_Started;
+    }
+
+    if (item.status === "paymentRequested") {
+      return Escrow_Completed;
+    }
+
+    if (item.status === "cancelled") {
+      return Cancelled;
+    }
+
+    if (item.status === "paymentConfirmed") {
+      return params.lang === "ko" ? "실제 트랜잭션 확인" : "On-chain transaction detected";
+    }
+
+    return "";
+  };
+
+  const getClearanceTransferStatusMeta = (item: BuyOrder) => {
+    const isDummyTransfer = isWithdrawalWebhookGeneratedClearanceOrderDummyTransfer(item);
+    const normalizedTransactionHash = String(item?.transactionHash || "").trim().toLowerCase();
+    const hasRealTransactionHash =
+      Boolean(normalizedTransactionHash)
+      && normalizedTransactionHash !== "0x"
+      && !isDummyTransfer;
+
+    if (item.status === "cancelled") {
+      return {
+        label: params.lang === "ko" ? "전송취소" : "Transfer cancelled",
+        labelClassName: "text-sm font-semibold text-red-600",
+        ageText: formatTransferStatusRelativeTime(item.cancelledAt),
+        detailLabel: getClearanceTransferBusinessStatusLabel(item),
+      };
+    }
+
+    if (hasRealTransactionHash) {
+      return {
+        label: params.lang === "ko" ? "USDT 전송완료" : "USDT transfer completed",
+        labelClassName: "text-sm font-semibold text-green-600",
+        ageText: formatTransferStatusRelativeTime(
+          item.paymentConfirmedAt || item.paymentRequestedAt || item.acceptedAt || item.createdAt,
+        ),
+        detailLabel: getClearanceTransferBusinessStatusLabel(item),
+      };
+    }
+
+    if (isDummyTransfer) {
+      return {
+        label: params.lang === "ko" ? "전송정보 대기" : "Transfer info pending",
+        labelClassName: "text-sm font-semibold text-amber-700",
+        ageText: formatTransferStatusRelativeTime(
+          item.paymentRequestedAt || item.acceptedAt || item.createdAt,
+        ),
+        detailLabel: params.lang === "ko" ? "자동생성 주문" : "Auto-generated order",
+      };
+    }
+
+    return {
+      label: params.lang === "ko" ? "USDT 전송전" : "Before USDT transfer",
+      labelClassName: "text-sm font-semibold text-yellow-600",
+      ageText: formatTransferStatusRelativeTime(
+        item.paymentRequestedAt || item.acceptedAt || item.createdAt,
+      ),
+      detailLabel: getClearanceTransferBusinessStatusLabel(item),
+    };
+  };
+
 
 
 
@@ -5645,128 +5741,30 @@ export default function Index({ params, isYear2025 = false }: any) {
                         w-56  
                         flex flex-col gap-2 items-center justify-center">
 
-                          <div className="flex flex-row items-center gap-2">
-                            {item.status === 'ordered' && (
-                              <div className="text-sm text-yellow-600 font-semibold">
-                                {Buy_Order_Opened}
-                              </div>
-                            )}
+                          {(() => {
+                            const transferStatusMeta = getClearanceTransferStatusMeta(item);
 
-
-                            {item.status === 'accepted' && (
-
-                              <div className="flex flex-row gap-2 items-center justify-center">
-                                <div className="text-sm text-green-600">
-                                  {Trade_Started}
-                                </div>
-                                <div className="text-sm text-zinc-600">
-
-                                  {params.lang === 'ko' ? (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }</p>
-                                  ) : (
-                                    <p>{
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) :
-                                      new Date().getTime() - new Date(item.acceptedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.acceptedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }</p>
+                            return (
+                              <div className="flex flex-col items-center justify-center gap-1 text-center">
+                                <div className="flex flex-row items-center gap-2">
+                                  <span className={transferStatusMeta.labelClassName}>
+                                    {transferStatusMeta.label}
+                                  </span>
+                                  {transferStatusMeta.ageText && (
+                                    <span className="text-sm text-zinc-600">
+                                      {transferStatusMeta.ageText}
+                                    </span>
                                   )}
-
                                 </div>
 
-
-                              </div>
-                            )}
-
-                            {item.status === 'paymentRequested' && (
-                              <div className="flex flex-row gap-1 items-start justify-start">
-                                <div className="text-sm text-green-600">
-                                  {Escrow_Completed}
-                                </div>
-
-                                <div className="text-sm text-zinc-600">
-                                  {
-                                    new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                    ) : new Date().getTime() - new Date(item.paymentRequestedAt).getTime() < 1000 * 60 * 60 ? (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                    ) : (
-                                      ' ' + Math.floor((new Date().getTime() - new Date(item.paymentRequestedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                    )
-                                  }
-                                </div>
-
-
-                              </div>
-                            )}
-
-                            {item.status === 'cancelled' && (
-                              <div className="flex flex-row gap-1 items-start justify-start">
-
-                                  <div className="text-sm text-red-600">
-                                    {Cancelled_at}
+                                {transferStatusMeta.detailLabel && (
+                                  <div className="text-xs text-zinc-500">
+                                    {transferStatusMeta.detailLabel}
                                   </div>
-
-                                  <div className="text-sm text-zinc-600">
-                                    {
-                                      new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000) + ' ' + seconds_ago
-                                      ) : new Date().getTime() - new Date(item.cancelledAt).getTime() < 1000 * 60 * 60 ? (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                      ) : (
-                                        ' ' + Math.floor((new Date().getTime() - new Date(item.cancelledAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                      )
-                                    }
-                                  </div>
-
+                                )}
                               </div>
-                            )}
-
-
-                            {item.status === 'paymentConfirmed' && (
-                              <div className="flex flex-row gap-1 items-start justify-start">
-
-                                <span className="text-sm font-semibold text-green-600">
-                                  USDT 전송완료
-                                </span>
-
-                                <span
-                                  className="text-sm text-zinc-600"
-                                >{
-                                  new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000) + ' ' + seconds_ago
-                                  ) : new Date().getTime() - new Date(item.paymentConfirmedAt).getTime() < 1000 * 60 * 60 ? (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60) + ' ' + minutes_ago
-                                  ) : (
-                                    ' ' + Math.floor((new Date().getTime() - new Date(item.paymentConfirmedAt).getTime()) / 1000 / 60 / 60) + ' ' + hours_ago
-                                  )
-
-                                }</span>
-                              </div>
-                            )}
-
-
-
-                            {item.status === 'completed' && (
-                              <div className="text-sm text-green-600">
-                                {Completed_at}
-                              </div>
-                            )}
-
-                          </div>
+                            );
+                          })()}
 
                           {item?.transactionHash
                           && item?.transactionHash !== '0x'
