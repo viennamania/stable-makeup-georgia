@@ -97,8 +97,10 @@ const getServerWalletFromAdminUsersByAddress = async (
   const candidates = Array.from(
     new Set([walletAddress, walletAddress.toLowerCase(), walletAddress.toUpperCase()].filter(Boolean)),
   );
+  const escapedWalletAddress = walletAddress.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, "i");
 
-  const found = await collection.findOne<{
+  let found = await collection.findOne<{
     walletAddress?: unknown;
     signerAddress?: unknown;
     nickname?: unknown;
@@ -121,6 +123,32 @@ const getServerWalletFromAdminUsersByAddress = async (
       },
     },
   );
+
+  if (!found) {
+    found = await collection.findOne<{
+      walletAddress?: unknown;
+      signerAddress?: unknown;
+      nickname?: unknown;
+    }>(
+      {
+        storecode: { $in: ["admin", "ADMIN"] },
+        signerAddress: { $type: "string", $ne: "" },
+        verified: true,
+        $or: [
+          { walletAddress: walletAddressRegex },
+          { signerAddress: walletAddressRegex },
+        ],
+      },
+      {
+        projection: {
+          _id: 0,
+          walletAddress: 1,
+          signerAddress: 1,
+          nickname: 1,
+        },
+      },
+    );
+  }
 
   if (!found) {
     return null;
