@@ -4788,15 +4788,10 @@ export default function Index({ params }: any) {
                         </span>
                       </div>
                     </th>
-                    <th className="w-[240px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">결제통장</th>
-                    {/*
-                    <th className="p-2">{Payment_Amount}</th>
-                    */}
-
-                    <th className="w-[250px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[360px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-center justify-start gap-1">
                         <span className="text-sm">
-                          {Seller}
+                          결제통장 / {Seller}
                         </span>
                         <span className="text-sm">
                           {Status}
@@ -5029,269 +5024,198 @@ export default function Index({ params }: any) {
 
 
                       <td className="px-2 py-2 align-top">
-
-                        {item?.buyer?.nickname ? (
-
-                          <div className="flex max-w-[230px] flex-col items-start gap-1">
-                            <div className="text-sm font-semibold text-yellow-600">
-                              {item.buyer?.nickname}
+                        <div className="flex min-w-[320px] flex-col gap-2.5">
+                          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2">
+                            <div className="mb-1 text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
+                              결제통장
                             </div>
-
-                            <div className="flex flex-col gap-0.5 items-start justify-center">
-                              <div className="text-xs font-medium text-zinc-600">
-                                {item.buyer?.depositBankName}
+                            {item?.buyer?.nickname ? (
+                              <div className="flex max-w-[280px] flex-col items-start gap-1">
+                                <div className="text-sm font-semibold text-yellow-600">
+                                  {item.buyer?.nickname}
+                                </div>
+                                <div className="flex flex-col gap-0.5 items-start justify-center">
+                                  <div className="text-xs font-medium text-zinc-600">
+                                    {item.buyer?.depositBankName}
+                                  </div>
+                                  <div className="text-xs font-medium text-zinc-600 break-all">
+                                    {item.buyer?.depositBankAccountNumber}
+                                  </div>
+                                  <div className="text-xs font-medium text-zinc-600">
+                                    {item.buyer?.depositName}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-xs font-medium text-zinc-600 break-all">
-                                {item.buyer?.depositBankAccountNumber}
-                              </div>
-                              <div className="text-xs font-medium text-zinc-600">
-                                {item.buyer?.depositName}
-                              </div>
-                            </div>
-                          </div>
-
-                        ) : (
-
-                          <div className="flex max-w-[230px] flex-col gap-0.5 items-start justify-center">
-                            <div className="text-xs font-medium text-zinc-600">
-                              {item.seller?.bankInfo?.bankName}
-                            </div>
-                            <div className="text-xs font-medium text-zinc-600 break-all">
-                              {
-                                item.seller?.bankInfo?.accountNumber
-                                && item.seller?.bankInfo?.accountNumber.length > 5
-                                ? item.seller?.bankInfo?.accountNumber.slice(0, 3) + '...' + item.seller?.bankInfo?.accountNumber.slice(-2)
-                                : item.seller?.bankInfo?.accountNumber
-                              }
-                            </div>
-                            <div className="text-xs font-medium text-zinc-600">
-                              {item.seller?.bankInfo?.accountHolder}
-                            </div>
-                          </div>
-
-                        )}
-
-                      </td>
-
-                      {/*
-                      <td className="p-2">
-                        <div className="flex mr-2 text-right">
-                          {
-
-                            item.status === 'paymentConfirmed' ? (
-
-                              <div className=" text-[#409192] text-xl font-semibold">
-                                {
-                                  item.krwAmount
-                                  ? Number(item.krwAmount)?.toLocaleString('ko-KR', {
-                                    style: 'currency',
-                                    currency: 'KRW',
-                                  })
-                                  : '0'
-                                }
-                              </div>
-
-                            ) : item.status === 'paymentRequested' ? (
-                              <input
-                                disabled={false}
-                                type="number"
-                                value={paymentAmounts[index]}
-                                onChange={(e) => {
-                                  setPaymentAmounts(
-                                    paymentAmounts.map((item, idx) => idx === index ? Number(e.target.value) : item)
-                                  );
-                                }}
-                                className="w-20 h-8 rounded-md text-right text-zinc-500 text-lg text-semibold"
-                              />
                             ) : (
-                              <></>
-                            )
-
-                          }
-                        </div>
-                      </td>
-                      */}
-
-                      <td className="px-2 py-2 align-top">
-                        <div className="flex min-w-[220px] flex-col items-start gap-1.5">
-                          {/* status */}
-                          {item.status === 'ordered' && (
-                            <div className="text-xs text-yellow-600 font-semibold
-                              border border-yellow-300 rounded-md px-2 py-1
-                            ">
-                              {Buy_Order_Opened}
-                            </div>
-                          )}
-
-
-                          {item.status === 'accepted' && (
-
-                            <div className="flex flex-wrap gap-1.5 items-center">
-                              
-                              <div className="text-xs text-zinc-600
-                                border border-zinc-300 rounded-md px-2 py-1
-                                ">
-                                {item.seller?.nickname}
-                              </div>
-
-                              <div className="text-xs text-[#409192]
-                                border border-green-500 rounded-md px-2 py-1
-                                ">
-                                {Trade_Started}
-                              </div>
-
-
-
-
-                            </div>
-                          )}
-
-                          {item.status === 'paymentRequested' && (
-                            <div className="flex flex-col gap-1.5 items-start justify-center">
-
-                              <div className="flex w-full flex-wrap items-center gap-2">
-                                {item.seller?.nickname && (
-                                  <div className="flex flex-row gap-1 items-center justify-start">
-                                    <Image
-                                      src="/icon-seller.png"
-                                      alt="Seller"
-                                      width={16}
-                                      height={16}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-sm font-semibold text-zinc-600">
-                                      {item.seller?.nickname}
-                                    </span>
-                                  </div>
-                                )}
-
-                                <div className="flex flex-row gap-1 items-center justify-start">
-                                  <Image
-                                    src="/icon-shield.png"
-                                    alt="Shield"
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4"
-                                  />
-                                  <span className="text-xs text-zinc-700 font-semibold">
-                                    {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
-                                  </span>
+                              <div className="flex max-w-[280px] flex-col gap-0.5 items-start justify-center">
+                                <div className="text-xs font-medium text-zinc-600">
+                                  {item.seller?.bankInfo?.bankName}
+                                </div>
+                                <div className="text-xs font-medium text-zinc-600 break-all">
+                                  {
+                                    item.seller?.bankInfo?.accountNumber
+                                    && item.seller?.bankInfo?.accountNumber.length > 5
+                                    ? item.seller?.bankInfo?.accountNumber.slice(0, 3) + '...' + item.seller?.bankInfo?.accountNumber.slice(-2)
+                                    : item.seller?.bankInfo?.accountNumber
+                                  }
+                                </div>
+                                <div className="text-xs font-medium text-zinc-600">
+                                  {item.seller?.bankInfo?.accountHolder}
                                 </div>
                               </div>
+                            )}
+                          </div>
 
-
-                              
-                              <div className="text-xs text-yellow-700
-                                border border-yellow-300 rounded-md px-2 py-1
-                                bg-yellow-50
-                                ">
-                                {Escrow_Completed}
-                              </div>
-
-
-
-
+                          <div className="rounded-lg border border-zinc-200 bg-white px-2.5 py-2">
+                            <div className="mb-1 text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
+                              {Seller} / {Status}
                             </div>
-                          )}
+                            <div className="flex min-w-[220px] flex-col items-start gap-1.5">
+                              {item.status === 'ordered' && (
+                                <div className="text-xs text-yellow-600 font-semibold
+                                  border border-yellow-300 rounded-md px-2 py-1
+                                ">
+                                  {Buy_Order_Opened}
+                                </div>
+                              )}
 
-                          {item.status === 'cancelled' && (
-                            <div className="flex flex-col gap-1.5 items-start justify-center">
-
-                              <div className="flex w-full flex-wrap items-center gap-2">
-                                <div className="flex flex-row gap-1 items-center justify-start">
-                                  <Image
-                                    src="/icon-seller.png"
-                                    alt="Seller"
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4"
-                                  />
-                                  <span className="text-xs text-zinc-500">
+                              {item.status === 'accepted' && (
+                                <div className="flex flex-wrap gap-1.5 items-center">
+                                  <div className="text-xs text-zinc-600
+                                    border border-zinc-300 rounded-md px-2 py-1
+                                  ">
                                     {item.seller?.nickname}
-                                  </span>
-                                </div>
-                                
-                                <div className="flex flex-row gap-1 items-center justify-start">
-                                  <Image
-                                    src="/icon-shield.png"
-                                    alt="Shield"
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4"
-                                  />
-                                  <span className="text-xs text-zinc-800 font-semibold">
-                                    {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="text-xs text-red-600
-                                border border-red-400 rounded-md px-2 py-1
-                              ">
-                                {
-                                  Cancelled_at
-                                }
-                              </div>
-
-                            </div>
-                          )}
-
-
-                          {/* if status is accepted, show payment request button */}
-                          {item.status === 'paymentConfirmed' && (
-                            <div className="flex flex-col gap-1.5 items-start justify-center">
-
-                              <div className="flex w-full flex-wrap items-center gap-2">
-                                {item.seller?.nickname && (
-                                  <div className="flex flex-row gap-1 items-center justify-start">
-                                    <Image
-                                      src="/icon-seller.png"
-                                      alt="Seller"
-                                      width={16}
-                                      height={16}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-sm font-semibold text-zinc-600">
-                                      {item.seller?.nickname}
-                                    </span>
                                   </div>
-                                )}
+                                  <div className="text-xs text-[#409192]
+                                    border border-green-500 rounded-md px-2 py-1
+                                  ">
+                                    {Trade_Started}
+                                  </div>
+                                </div>
+                              )}
 
-                                <div className="flex flex-row gap-1 items-center justify-start">
-                                  <Image
-                                    src="/icon-shield.png"
-                                    alt="Shield"
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4"
-                                  />
-                                  <span className="text-xs text-zinc-800 font-semibold">
-                                    {
-                                      item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)
-                                    }
+                              {item.status === 'paymentRequested' && (
+                                <div className="flex flex-col gap-1.5 items-start justify-center">
+                                  <div className="flex w-full flex-wrap items-center gap-2">
+                                    {item.seller?.nickname && (
+                                      <div className="flex flex-row gap-1 items-center justify-start">
+                                        <Image
+                                          src="/icon-seller.png"
+                                          alt="Seller"
+                                          width={16}
+                                          height={16}
+                                          className="w-4 h-4"
+                                        />
+                                        <span className="text-sm font-semibold text-zinc-600">
+                                          {item.seller?.nickname}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div className="flex flex-row gap-1 items-center justify-start">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-xs text-zinc-700 font-semibold">
+                                        {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-yellow-700
+                                    border border-yellow-300 rounded-md px-2 py-1
+                                    bg-yellow-50
+                                  ">
+                                    {Escrow_Completed}
+                                  </div>
+                                </div>
+                              )}
+
+                              {item.status === 'cancelled' && (
+                                <div className="flex flex-col gap-1.5 items-start justify-center">
+                                  <div className="flex w-full flex-wrap items-center gap-2">
+                                    <div className="flex flex-row gap-1 items-center justify-start">
+                                      <Image
+                                        src="/icon-seller.png"
+                                        alt="Seller"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-xs text-zinc-500">
+                                        {item.seller?.nickname}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-row gap-1 items-center justify-start">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-xs text-zinc-800 font-semibold">
+                                        {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-red-600
+                                    border border-red-400 rounded-md px-2 py-1
+                                  ">
+                                    {Cancelled_at}
+                                  </div>
+                                </div>
+                              )}
+
+                              {item.status === 'paymentConfirmed' && (
+                                <div className="flex flex-col gap-1.5 items-start justify-center">
+                                  <div className="flex w-full flex-wrap items-center gap-2">
+                                    {item.seller?.nickname && (
+                                      <div className="flex flex-row gap-1 items-center justify-start">
+                                        <Image
+                                          src="/icon-seller.png"
+                                          alt="Seller"
+                                          width={16}
+                                          height={16}
+                                          className="w-4 h-4"
+                                        />
+                                        <span className="text-sm font-semibold text-zinc-600">
+                                          {item.seller?.nickname}
+                                        </span>
+                                      </div>
+                                    )}
+                                    <div className="flex flex-row gap-1 items-center justify-start">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-xs text-zinc-800 font-semibold">
+                                        {item.seller?.walletAddress.slice(0, 6) + '...' + item.seller?.walletAddress.slice(-4)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs text-green-600
+                                    border border-green-500 rounded-md px-2 py-1
+                                  ">
+                                    {Completed}
                                   </span>
                                 </div>
-                              </div>
+                              )}
 
-
-                              <span className="text-xs text-green-600
-                                border border-green-500 rounded-md px-2 py-1
+                              {item.status === 'completed' && (
+                                <div className="text-xs text-[#409192]
+                                  border border-green-500 rounded-md px-2 py-1
                                 ">
-                                {Completed}
-                              </span>
-
+                                  {Completed_at}
+                                </div>
+                              )}
                             </div>
-                          )}
-
-
-                          {item.status === 'completed' && (
-                            <div className="text-xs text-[#409192]
-                              border border-green-500 rounded-md px-2 py-1
-                              ">
-                              {Completed_at}
-                            </div>
-                          )}
-
+                          </div>
                         </div>
                       </td>
 
@@ -5352,6 +5276,32 @@ export default function Index({ params }: any) {
                         </div>
                       </td>
 
+
+                      {/* 출금상태: buyer.depositCompleted */}
+                      <td className="px-2 py-2 align-top">
+
+                        {item.status !== 'cancelled' && (
+                          <>   
+                            {item?.buyer?.depositCompleted !== true
+                            ? (
+                              <div className="text-xs text-red-600
+                              flex flex-row items-center gap-2
+                              border border-red-400
+                              rounded-md px-2 py-1">
+                                출금대기중
+                              </div>
+                            ) : (
+                              <div className="text-xs text-[#409192]
+                              flex flex-row items-center gap-2
+                              border border-green-400
+                              rounded-md px-2 py-1">
+                                출금완료
+                              </div>
+                            )}
+                          </>
+                        )}
+                      
+                      </td>
 
                       <td className="px-2 py-2 align-top">
 
@@ -5775,35 +5725,6 @@ export default function Index({ params }: any) {
 
 
                         </div>
-
-
-                      </td>
-
-
-                      {/* 출금상태: buyer.depositCompleted */}
-                      <td className="px-2 py-2 align-top">
-
-                        {item.status !== 'cancelled' && (
-                          <>   
-                            {item?.buyer?.depositCompleted !== true
-                            ? (
-                              <div className="text-xs text-red-600
-                              flex flex-row items-center gap-2
-                              border border-red-400
-                              rounded-md px-2 py-1">
-                                출금대기중
-                              </div>
-                            ) : (
-                              <div className="text-xs text-[#409192]
-                              flex flex-row items-center gap-2
-                              border border-green-400
-                              rounded-md px-2 py-1">
-                                출금완료
-                              </div>
-                            )}
-                          </>
-                        )}
-                      
                       </td>
 
 
