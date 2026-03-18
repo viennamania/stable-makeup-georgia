@@ -3108,7 +3108,7 @@ export default function Index({ params }: any) {
    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
 
 
-      <div className="py-0 w-full">
+      <div className="py-0 w-full min-w-0">
 
 
         {params.center && (
@@ -4469,7 +4469,7 @@ export default function Index({ params }: any) {
 
 
 
-          <section className="mb-5 rounded-3xl border border-zinc-200 bg-white shadow-sm">
+          <section className="mb-5 w-full min-w-0 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
             <div className="border-b border-zinc-200 px-4 py-4">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div>
@@ -4568,8 +4568,8 @@ export default function Index({ params }: any) {
                   해당 가맹점에 매칭된 통장출금 webhook 이벤트가 없습니다.
                 </div>
               ) : (
-                <div className="-mx-4 overflow-x-auto px-4 pb-1">
-                  <div className="flex min-w-full items-stretch gap-3">
+                <div className="w-full overflow-x-auto px-4 pb-1 touch-pan-x [scrollbar-width:thin]">
+                  <div className="flex w-max min-w-full items-stretch gap-3">
                     {filteredWithdrawalRealtimeEvents.map((item) => {
                       const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
                       const publishedAt =
