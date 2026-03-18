@@ -2779,6 +2779,28 @@ export default function Index({ params }: any) {
 
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
+
+  const openTransactionExplorer = (txHash: string | null | undefined) => {
+    const normalizedHash = String(txHash || "").trim();
+    if (!normalizedHash || normalizedHash === "0x") {
+      return;
+    }
+
+    let url = "";
+    if (chain === "ethereum") {
+      url = `https://etherscan.io/tx/${normalizedHash}`;
+    } else if (chain === "polygon") {
+      url = `https://polygonscan.com/tx/${normalizedHash}`;
+    } else if (chain === "arbitrum") {
+      url = `https://arbiscan.io/tx/${normalizedHash}`;
+    } else if (chain === "bsc") {
+      url = `https://bscscan.com/tx/${normalizedHash}`;
+    } else {
+      url = `https://arbiscan.io/tx/${normalizedHash}`;
+    }
+
+    window.open(url, "_blank");
+  };
   
 
 
@@ -4782,6 +4804,7 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
                     <th className="w-[170px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">거래취소</th>
+                    <th className="w-[120px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">출금상태</th>
                     <th className="w-[220px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       {
                       //isProcessingSendTransaction
@@ -4805,8 +4828,6 @@ export default function Index({ params }: any) {
                         </span>
                       )}
                     </th>
-
-                    <th className="w-[120px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">출금상태</th>
                   </tr>
                 </thead>
 
@@ -5160,10 +5181,11 @@ export default function Index({ params }: any) {
 
 
                               
-                              <div className="text-xs text-yellow-600
-                                border border-yellow-400 rounded-md px-2 py-1
+                              <div className="text-xs text-yellow-700
+                                border border-yellow-300 rounded-md px-2 py-1
+                                bg-yellow-50
                                 ">
-                                USDT 전송요청
+                                {Escrow_Completed}
                               </div>
 
 
@@ -5257,104 +5279,6 @@ export default function Index({ params }: any) {
                                 ">
                                 {Completed}
                               </span>
-
-                              {item.transactionHash && item.transactionHash !== '0x' ? (
-                              <button
-                                className="text-xs text-blue-700 font-semibold
-                                  border border-blue-300 rounded-md px-2 py-1
-                                  bg-blue-50
-                                  w-full text-center
-                                  hover:bg-blue-100
-                                  transition-colors duration-150
-                                "
-
-                                onClick={() => {
-                                  let url = '';
-                                  if (chain === "ethereum") {
-                                    url = `https://etherscan.io/tx/${item.transactionHash}`;
-                                  } else if (chain === "polygon") {
-                                    url = `https://polygonscan.com/tx/${item.transactionHash}`;
-                                  } else if (chain === "arbitrum") {
-                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
-                                  } else if (chain === "bsc") {
-                                    url = `https://bscscan.com/tx/${item.transactionHash}`;
-                                  } else {
-                                    url = `https://arbiscan.io/tx/${item.transactionHash}`;
-                                  }
-                                  window.open(url, '_blank');
-
-                                }}
-
-                              >
-                                <div className="flex flex-row gap-2 items-center justify-center">
-                                  <Image
-                                    src={`/logo-chain-${chain}.png`}
-                                    alt="Chain"
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4"
-                                  />
-                                  <span className="text-xs">
-                                    USDT 전송내역(구매자)
-                                  </span>
-                                </div>
-                              </button>
-                              ) : (
-                                  <div className="text-xs text-green-600 font-semibold
-                                    border border-green-500 rounded-md px-2 py-1
-                                    ">
-                                    TXID 업데이트 중...
-                                  </div>
-                              )}
-
-
-                              {item?.settlement
-                              && item?.settlement?.txid
-                              && item?.settlement?.txid !== '0x'
-                              && (
-                                <button
-                                  className="text-xs text-blue-700 font-semibold
-                                    border border-blue-300 rounded-md px-2 py-1
-                                    bg-blue-50
-                                    w-full text-center
-                                    hover:bg-blue-100
-                                    transition-colors duration-150
-                                  "
-
-                                  onClick={() => {
-                                    let url = '';
-                                    if (chain === "ethereum") {
-                                      url = `https://etherscan.io/tx/${item.settlement.txid}`;
-                                    } else if (chain === "polygon") {
-                                      url = `https://polygonscan.com/tx/${item.settlement.txid}`;
-                                    } else if (chain === "arbitrum") {
-                                      url = `https://arbiscan.io/tx/${item.settlement.txid}`;
-                                    } else if (chain === "bsc") {
-                                      url = `https://bscscan.com/tx/${item.settlement.txid}`;
-                                    } else {
-                                      url = `https://arbiscan.io/tx/${item.settlement.txid}`;
-                                    }
-                                    window.open(url, '_blank');
-
-                                  }}
-
-
-                                >
-                                  <div className="flex flex-row gap-2 items-center justify-center">
-                                    <Image
-                                      src={`/logo-chain-${chain}.png`}
-                                      alt="Chain"
-                                      width={16}
-                                      height={16}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-xs">
-                                      USDT 전송내역(회원)
-                                    </span>
-                                  </div>
-                                </button>
-                              )}
-                
 
                             </div>
                           )}
@@ -5595,6 +5519,13 @@ export default function Index({ params }: any) {
 
                             <div className="w-full flex flex-col gap-1.5">
 
+                              <div className="text-xs text-yellow-600
+                                border border-yellow-400 rounded-md px-2 py-1
+                                bg-yellow-50
+                                ">
+                                USDT 전송요청
+                              </div>
+
                               <div className="w-full flex flex-col gap-1.5 items-start justify-center">
 
                                 {/*
@@ -5751,12 +5682,97 @@ export default function Index({ params }: any) {
 
                           {item.seller && item.seller.walletAddress !== address &&   
                           item.status === 'paymentRequested' && (
-                            <div className="text-xs text-yellow-600 font-semibold">
-                              구매자에개 {item.usdtAmount.toFixed(3).replace(/\.?0+$/, '')} USDT 전송중...
+                            <div className="w-full flex flex-col gap-1.5">
+                              <div className="text-xs text-yellow-600
+                                border border-yellow-400 rounded-md px-2 py-1
+                                bg-yellow-50
+                                ">
+                                USDT 전송요청
+                              </div>
+                              <div className="text-xs text-yellow-700 font-semibold">
+                                구매자에게 {item.usdtAmount.toFixed(3).replace(/\.?0+$/, '')} USDT 전송 대기중...
+                              </div>
                             </div>
                           )}
 
+                          {item.status === 'paymentConfirmed' && (
+                            <div className="w-full flex flex-col gap-1.5">
+                              <div className="text-xs text-green-600
+                                border border-green-500 rounded-md px-2 py-1
+                                bg-green-50
+                                ">
+                                USDT 전송완료
+                              </div>
+
+                              {item.transactionHash && item.transactionHash !== '0x' ? (
+                                <button
+                                  className="text-xs text-blue-700 font-semibold
+                                    border border-blue-300 rounded-md px-2 py-1
+                                    bg-blue-50
+                                    w-full text-center
+                                    hover:bg-blue-100
+                                    transition-colors duration-150
+                                  "
+                                  onClick={() => {
+                                    openTransactionExplorer(item.transactionHash);
+                                  }}
+                                >
+                                  <div className="flex flex-row gap-2 items-center justify-center">
+                                    <Image
+                                      src={`/logo-chain-${chain}.png`}
+                                      alt="Chain"
+                                      width={16}
+                                      height={16}
+                                      className="w-4 h-4"
+                                    />
+                                    <span className="text-xs">
+                                      USDT 전송내역(구매자)
+                                    </span>
+                                  </div>
+                                </button>
+                              ) : (
+                                <div className="text-xs text-green-600 font-semibold
+                                  border border-green-500 rounded-md px-2 py-1
+                                  bg-green-50
+                                  ">
+                                  TXID 업데이트 중...
+                                </div>
+                              )}
+
+                              {item?.settlement
+                                && item?.settlement?.txid
+                                && item?.settlement?.txid !== '0x'
+                                && (
+                                  <button
+                                    className="text-xs text-blue-700 font-semibold
+                                      border border-blue-300 rounded-md px-2 py-1
+                                      bg-blue-50
+                                      w-full text-center
+                                      hover:bg-blue-100
+                                      transition-colors duration-150
+                                    "
+                                    onClick={() => {
+                                      openTransactionExplorer(item.settlement.txid);
+                                    }}
+                                  >
+                                    <div className="flex flex-row gap-2 items-center justify-center">
+                                      <Image
+                                        src={`/logo-chain-${chain}.png`}
+                                        alt="Chain"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-xs">
+                                        USDT 전송내역(회원)
+                                      </span>
+                                    </div>
+                                  </button>
+                                )}
+                            </div>
+                          )}
                           
+
 
                         </div>
 
