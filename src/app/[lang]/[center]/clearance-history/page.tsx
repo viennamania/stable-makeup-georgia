@@ -4500,6 +4500,9 @@ export default function Index({ params }: any) {
                     <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
                       최근 {latestWithdrawalRealtimeAt ? formatRealtimeRelative(latestWithdrawalRealtimeAt, withdrawalRealtimeNowMs) : "-"}
                     </span>
+                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-zinc-600">
+                      좌우로 스크롤
+                    </span>
                     {withdrawalRealtimeLastSyncedAt && (
                       <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
                         동기화 {formatRealtimeRelative(withdrawalRealtimeLastSyncedAt, withdrawalRealtimeNowMs)}
@@ -4572,8 +4575,8 @@ export default function Index({ params }: any) {
                   해당 가맹점에 매칭된 통장출금 webhook 이벤트가 없습니다.
                 </div>
               ) : (
-                <div className="-mx-4 overflow-x-auto px-4 pb-1">
-                  <div className="flex min-w-full items-stretch gap-3">
+                <div className="-mx-4 overflow-x-auto px-4 pb-2 touch-pan-x [scrollbar-width:thin]">
+                  <div className="flex min-w-max items-stretch gap-3 snap-x snap-mandatory">
                     {filteredWithdrawalRealtimeEvents.map((item) => {
                       const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
                       const publishedAt =
@@ -4605,7 +4608,7 @@ export default function Index({ params }: any) {
                       return (
                         <article
                           key={item.id}
-                          className={`w-[280px] min-w-[280px] shrink-0 rounded-2xl border px-3 py-3 transition-all ${
+                          className={`w-[280px] min-w-[280px] shrink-0 snap-start rounded-2xl border px-3 py-3 transition-all ${
                             isHighlighted
                               ? "border-sky-300 bg-sky-50 shadow-[0_10px_24px_-18px_rgba(14,165,233,0.75)]"
                               : "border-zinc-200 bg-white shadow-sm"
