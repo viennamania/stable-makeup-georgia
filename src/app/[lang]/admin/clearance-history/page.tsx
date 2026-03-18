@@ -4763,18 +4763,9 @@ export default function Index({ params, isYear2025 = false }: any) {
                             </div>
                           </div>
 
-                          <div className="mt-3 grid grid-cols-2 gap-2">
+                          <div className="mt-3">
                             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
-                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">원본 출금정보</div>
-                              <div className="mt-1 text-xs font-semibold text-zinc-900">
-                                {String(item.data.bankAccountNumber || "-").trim() || "-"}
-                              </div>
-                              <div className="mt-1 text-[10px] text-zinc-500">
-                                {String(item.data.transactionName || "-").trim() || "-"}
-                              </div>
-                            </div>
-                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
-                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">수취 통장</div>
+                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">출금 실행 통장</div>
                               <div className="mt-1 text-xs font-semibold text-zinc-900">
                                 {receiverBankName || "-"}
                               </div>
@@ -4786,8 +4777,8 @@ export default function Index({ params, isYear2025 = false }: any) {
 
                           <div className="mt-2 rounded-xl border border-zinc-200 bg-white px-2.5 py-2">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <span className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-                                설정 통장
+                              <span className="text-[10px] tracking-[0.12em] text-zinc-500">
+                                청산주문 기준 통장
                               </span>
                               <span
                                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -4824,7 +4815,7 @@ export default function Index({ params, isYear2025 = false }: any) {
                               </div>
                             ) : (
                               <div className="mt-1.5 text-[10px] text-zinc-500">
-                                해당 가맹점 설정 통장에서 FROM 계좌를 찾지 못했습니다.
+                                해당 가맹점의 청산주문 기준 통장을 찾지 못했습니다.
                               </div>
                             )}
                           </div>
