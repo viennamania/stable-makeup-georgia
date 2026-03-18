@@ -4763,22 +4763,10 @@ export default function Index({ params, isYear2025 = false }: any) {
                             </div>
                           </div>
 
-                          <div className="mt-3">
-                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
-                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">출금 실행 통장</div>
-                              <div className="mt-1 text-xs font-semibold text-zinc-900">
-                                {receiverBankName || "-"}
-                              </div>
-                              <div className="mt-1 text-[10px] text-zinc-500">
-                                {(receiverAccountHolder || "-") + " · " + (receiverAccountNumber || "-")}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-2 rounded-xl border border-zinc-200 bg-white px-2.5 py-2">
+                          <div className="mt-3 rounded-xl border border-zinc-200 bg-white px-2.5 py-2">
                             <div className="flex flex-wrap items-center gap-1.5">
                               <span className="text-[10px] tracking-[0.12em] text-zinc-500">
-                                청산주문 기준 통장
+                                송금인 통장
                               </span>
                               <span
                                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -4815,9 +4803,21 @@ export default function Index({ params, isYear2025 = false }: any) {
                               </div>
                             ) : (
                               <div className="mt-1.5 text-[10px] text-zinc-500">
-                                해당 가맹점의 청산주문 기준 통장을 찾지 못했습니다.
+                                해당 가맹점의 송금인 통장을 찾지 못했습니다.
                               </div>
                             )}
+                          </div>
+
+                          <div className="mt-2">
+                            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
+                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">수취인 통장</div>
+                              <div className="mt-1 text-xs font-semibold text-zinc-900">
+                                {receiverBankName || "-"}
+                              </div>
+                              <div className="mt-1 text-[10px] text-zinc-500">
+                                {(receiverAccountHolder || "-") + " · " + (receiverAccountNumber || "-")}
+                              </div>
+                            </div>
                           </div>
 
                           <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px]">
