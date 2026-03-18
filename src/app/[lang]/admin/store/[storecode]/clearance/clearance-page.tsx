@@ -4725,6 +4725,13 @@ export default function Index({ params }: any) {
                             <div className="w-full flex items-center justify-center">
 
                             {
+                            item.status === 'cancelled' && (
+                              <span className="text-sm text-slate-600 border border-slate-400 rounded-md px-2 py-1">
+                                취소됨
+                              </span>
+                            )}
+
+                            {
                             item.status !== 'cancelled' && (
                               <>
 
