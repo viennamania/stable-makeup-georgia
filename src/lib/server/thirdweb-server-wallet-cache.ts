@@ -14,7 +14,7 @@ type ResolvedThirdwebServerWallet = {
   signerAddress: string;
   smartAccountAddress: string;
   label: string;
-  source: "cache" | "engine";
+  source: "cache" | "users" | "engine";
 };
 
 const normalizeString = (value: unknown): string => {
@@ -87,6 +87,61 @@ const getCachedThirdwebServerWalletByAddress = async (
   }
 
   return toResolvedServerWallet(cached, "cache");
+};
+
+const getServerWalletFromAdminUsersByAddress = async (
+  walletAddress: string,
+): Promise<ResolvedThirdwebServerWallet | null> => {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("users");
+  const candidates = Array.from(
+    new Set([walletAddress, walletAddress.toLowerCase(), walletAddress.toUpperCase()].filter(Boolean)),
+  );
+
+  const found = await collection.findOne<{
+    walletAddress?: unknown;
+    signerAddress?: unknown;
+    nickname?: unknown;
+  }>(
+    {
+      storecode: { $in: ["admin", "ADMIN"] },
+      signerAddress: { $type: "string", $ne: "" },
+      verified: true,
+      $or: [
+        { walletAddress: { $in: candidates } },
+        { signerAddress: { $in: candidates } },
+      ],
+    },
+    {
+      projection: {
+        _id: 0,
+        walletAddress: 1,
+        signerAddress: 1,
+        nickname: 1,
+      },
+    },
+  );
+
+  if (!found) {
+    return null;
+  }
+
+  const signerAddress = normalizeWalletAddress(found.signerAddress);
+  const smartAccountAddress = normalizeWalletAddress(found.walletAddress);
+
+  if (!signerAddress || !smartAccountAddress) {
+    return null;
+  }
+
+  const resolved: ResolvedThirdwebServerWallet = {
+    signerAddress,
+    smartAccountAddress,
+    label: normalizeString(found.nickname),
+    source: "users",
+  };
+
+  await writeThirdwebServerWalletToCache(resolved);
+  return resolved;
 };
 
 const writeThirdwebServerWalletToCache = async ({
@@ -200,6 +255,11 @@ export const resolveThirdwebServerWalletByAddress = async (
   const cached = await getCachedThirdwebServerWalletByAddress(walletAddress);
   if (cached) {
     return cached;
+  }
+
+  const adminUserResolved = await getServerWalletFromAdminUsersByAddress(walletAddress);
+  if (adminUserResolved) {
+    return adminUserResolved;
   }
 
   return findThirdwebServerWalletByAddressViaEngine(walletAddress);

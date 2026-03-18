@@ -41,7 +41,7 @@ type SerializableServerWalletUser = {
 
 type StorePaymentWalletCandidate = SerializableServerWalletUser & {
   thirdwebLabel: string;
-  thirdwebSource: "cache" | "engine" | null;
+  thirdwebSource: "cache" | "users" | "engine" | null;
   isActiveThirdwebWallet: boolean;
   isSmartAccountMatch: boolean;
   signerMatches: boolean;
