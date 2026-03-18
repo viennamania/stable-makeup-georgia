@@ -4487,7 +4487,7 @@ export default function Index({ params }: any) {
                       webhook 통장출금 LIVE
                     </h2>
                     <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700">
-                      {String(store?.storeName || params.center || "STORE").trim()}
+                      Ably
                     </span>
                     <span className="rounded-full border border-zinc-200 bg-white px-2 py-0.5 font-mono text-[10px] text-zinc-500">
                       {BANKTRANSFER_ABLY_EVENT_NAME}
@@ -4495,13 +4495,10 @@ export default function Index({ params }: any) {
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
                     <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
-                      가맹점 {String(store?.storeName || params.center || "-").trim()}
+                      필터 {String(store?.storeName || params.center || "-").trim()}
                     </span>
                     <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
                       최근 {latestWithdrawalRealtimeAt ? formatRealtimeRelative(latestWithdrawalRealtimeAt, withdrawalRealtimeNowMs) : "-"}
-                    </span>
-                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-1 text-zinc-600">
-                      좌우로 스크롤
                     </span>
                     {withdrawalRealtimeLastSyncedAt && (
                       <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
@@ -4566,17 +4563,13 @@ export default function Index({ params }: any) {
             </div>
 
             <div className="px-4 py-3">
-              {withdrawalRealtimeSyncing && withdrawalRealtimeEventCount === 0 ? (
-                <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-                  해당 가맹점의 통장출금 webhook 이벤트를 불러오는 중입니다.
-                </div>
-              ) : withdrawalRealtimeEventCount === 0 ? (
+              {withdrawalRealtimeEventCount === 0 ? (
                 <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
                   해당 가맹점에 매칭된 통장출금 webhook 이벤트가 없습니다.
                 </div>
               ) : (
-                <div className="-mx-4 overflow-x-auto px-4 pb-1 touch-pan-x [scrollbar-width:thin]">
-                  <div className="flex min-w-full items-stretch gap-3 snap-x snap-mandatory">
+                <div className="-mx-4 overflow-x-auto px-4 pb-1">
+                  <div className="flex min-w-full items-stretch gap-3">
                     {filteredWithdrawalRealtimeEvents.map((item) => {
                       const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
                       const publishedAt =
@@ -4608,7 +4601,7 @@ export default function Index({ params }: any) {
                       return (
                         <article
                           key={item.id}
-                          className={`w-[280px] min-w-[280px] shrink-0 snap-start rounded-2xl border px-3 py-3 transition-all ${
+                          className={`w-[280px] min-w-[280px] shrink-0 rounded-2xl border px-3 py-3 transition-all ${
                             isHighlighted
                               ? "border-sky-300 bg-sky-50 shadow-[0_10px_24px_-18px_rgba(14,165,233,0.75)]"
                               : "border-zinc-200 bg-white shadow-sm"
