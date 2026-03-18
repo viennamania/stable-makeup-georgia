@@ -4576,7 +4576,7 @@ export default function Index({ params }: any) {
                 </div>
               ) : (
                 <div className="overflow-x-auto pb-2 touch-pan-x [scrollbar-width:thin]">
-                  <div className="flex min-w-max items-stretch gap-3 snap-x snap-mandatory">
+                  <div className="grid min-w-[1280px] grid-flow-col grid-rows-1 gap-3 snap-x snap-mandatory md:grid-rows-2 md:auto-cols-[280px]">
                     {filteredWithdrawalRealtimeEvents.map((item) => {
                       const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
                       const publishedAt =
