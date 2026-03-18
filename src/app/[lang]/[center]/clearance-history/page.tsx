@@ -4575,8 +4575,8 @@ export default function Index({ params }: any) {
                   해당 가맹점에 매칭된 통장출금 webhook 이벤트가 없습니다.
                 </div>
               ) : (
-                <div className="overflow-x-auto pb-2 touch-pan-x [scrollbar-width:thin]">
-                  <div className="grid min-w-[1280px] grid-flow-col grid-rows-1 gap-3 snap-x snap-mandatory md:grid-rows-2 md:auto-cols-[280px]">
+                <div className="-mx-4 overflow-x-auto px-4 pb-1 touch-pan-x [scrollbar-width:thin]">
+                  <div className="flex min-w-full items-stretch gap-3 snap-x snap-mandatory">
                     {filteredWithdrawalRealtimeEvents.map((item) => {
                       const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
                       const publishedAt =
