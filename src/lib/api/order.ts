@@ -2406,6 +2406,7 @@ export async function insertBuyOrder(data: any) {
     return {
 
       _id: result.insertedId,
+      tradeId: tradeId,
 
       walletAddress: data.walletAddress,
       escrowWalletAddress: data.escrowWallet?.address || '', // optional, can be empty
