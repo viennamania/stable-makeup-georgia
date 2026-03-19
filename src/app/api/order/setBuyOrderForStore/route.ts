@@ -14,6 +14,7 @@ import {
   getRequestCountry,
   getRequestIp,
 } from "@/lib/server/user-read-security";
+import { insertPublicOrderApiCallLog } from "@/lib/api/publicOrderApiCallLog";
 
 
 // getOne from clients by clientid
@@ -53,6 +54,38 @@ curl -X GET "http://localhost:3000/api/order/setBuyOrderForStore?clientid=150b53
 
 const ROUTE = "/api/order/setBuyOrderForStore";
 
+async function writePublicOrderApiCallLog({
+  request,
+  payload,
+  status,
+  reason = null,
+  resultMeta = null,
+}: {
+  request: NextRequest;
+  payload: Record<string, any>;
+  status: "success" | "error";
+  reason?: string | null;
+  resultMeta?: Record<string, unknown> | null;
+}) {
+  const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
+
+  try {
+    await insertPublicOrderApiCallLog({
+      route: ROUTE,
+      method: request.method,
+      status,
+      reason,
+      publicIp: ip,
+      publicCountry: country,
+      requestBody: payload,
+      resultMeta,
+    });
+  } catch (error) {
+    console.error("Failed to write public order api call log:", error);
+  }
+}
+
 async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequest) {
 
   const clientid = payload.clientid || payload.clientId;
@@ -66,6 +99,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   ///console.log("setBuyOrder =====  body", payload);
 
   if (!clientid || !storecode || !userid || !amount) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "missing_required_fields",
+    });
 
     return NextResponse.json({
       result: null,
@@ -81,6 +120,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
 
 
   if (!client) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "invalid_clientid",
+    });
 
     return NextResponse.json({
       result: null,
@@ -112,6 +157,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   const userInfo = await getUserWalletAddressByStorecodeAndNickname(storecode, nickname);
 
   if (!userInfo) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "invalid_storecode_or_userid",
+    });
     return NextResponse.json({
       result: null,
       error: "Invalid storecode or userid",
@@ -126,6 +177,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
 
 
   if (!walletAddress) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "user_wallet_address_not_found",
+    });
 
     return NextResponse.json({
       result: null,
@@ -141,6 +198,16 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   });
 
   if (existingBuyOrder) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "existing_active_buy_order",
+      resultMeta: {
+        existingOrderId: existingBuyOrder?._id?.toString?.() || existingBuyOrder?._id || null,
+        existingTradeId: existingBuyOrder?.tradeId || null,
+      },
+    });
     return NextResponse.json({
       result: null,
       error: "Existing active buy order already exists for this member",
@@ -153,6 +220,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   const rate = client.exchangeRateUSDT?.KRW || 0;
 
   if (rate <= 0) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "invalid_exchange_rate",
+    });
 
     return NextResponse.json({
       result: null,
@@ -170,6 +243,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
       storecode,
     });
   } catch (error) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: error instanceof Error ? error.message : "failed_to_create_buy_order_escrow_wallet",
+    });
     return NextResponse.json({
       result: null,
       error: error instanceof Error ? error.message : "Failed to create buy order escrow wallet",
@@ -214,6 +293,12 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
   /////console.log("setBuyOrder =====  result", result);
 
   if (!result) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: "failed_to_insert_buy_order",
+    });
 
     return NextResponse.json({
       result: null,
@@ -222,6 +307,21 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
     , { status: 500 });
 
   }
+
+  await writePublicOrderApiCallLog({
+    request,
+    payload,
+    status: "success",
+    reason: "buy_order_created",
+    resultMeta: {
+      orderId: result?._id?.toString?.() || result?._id || null,
+      tradeId: result?.tradeId || null,
+      walletAddress: result?.walletAddress || walletAddress || null,
+      storecode,
+      nickname,
+      clientId: String(clientid || "").trim() || null,
+    },
+  });
 
 
  
@@ -235,11 +335,29 @@ async function handleSetBuyOrder(payload: Record<string, any>, request: NextRequ
 
 
 export async function POST(request: NextRequest) {
-
   try {
     const body = await request.json();
-    return handleSetBuyOrder(body, request);
+    try {
+      return await handleSetBuyOrder(body, request);
+    } catch (error) {
+      await writePublicOrderApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: error instanceof Error ? error.message : "unexpected_error",
+      });
+      return NextResponse.json({
+        result: null,
+        error: "Failed to process buy order",
+      }, { status: 500 });
+    }
   } catch (error) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload: {},
+      status: "error",
+      reason: "invalid_json_body",
+    });
     return NextResponse.json({
       result: null,
       error: "Invalid JSON body",
@@ -250,5 +368,18 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const payload = Object.fromEntries(request.nextUrl.searchParams.entries());
-  return handleSetBuyOrder(payload, request);
+  try {
+    return await handleSetBuyOrder(payload, request);
+  } catch (error) {
+    await writePublicOrderApiCallLog({
+      request,
+      payload,
+      status: "error",
+      reason: error instanceof Error ? error.message : "unexpected_error",
+    });
+    return NextResponse.json({
+      result: null,
+      error: "Failed to process buy order",
+    }, { status: 500 });
+  }
 }
