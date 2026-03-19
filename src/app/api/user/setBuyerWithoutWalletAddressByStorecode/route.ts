@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   buildUserCreationAudit,
+  normalizeBuyerRegistrationInput,
   validateBuyerRegistrationInput,
 } from "@/lib/server/user-creation-security";
 import { getRequestCountry, getRequestIp } from "@/lib/server/user-read-security";
@@ -114,13 +115,19 @@ export async function POST(request: NextRequest) {
   //console.log("body", body);
 
   //const nickname = userCode; // trim left and right spaces
-  const nickname = typeof userCode === "string" ? userCode.trim() : "";
-
-  const validationError = validateBuyerRegistrationInput({
-    nickname,
+  const normalizedInput = normalizeBuyerRegistrationInput({
+    nickname: userCode,
     userName,
     userBankName,
     userBankAccountNumber,
+  });
+  const nickname = normalizedInput.nickname;
+
+  const validationError = validateBuyerRegistrationInput({
+    nickname,
+    userName: normalizedInput.userName,
+    userBankName: normalizedInput.userBankName,
+    userBankAccountNumber: normalizedInput.userBankAccountNumber,
   });
 
   if (validationError) {
@@ -152,9 +159,9 @@ export async function POST(request: NextRequest) {
   "김성종"
   */
   const buyer = {
-    depositBankName: userBankName,
-    depositBankAccountNumber: userBankAccountNumber,
-    depositName: userName,
+    depositBankName: normalizedInput.userBankName,
+    depositBankAccountNumber: normalizedInput.userBankAccountNumber,
+    depositName: normalizedInput.userName,
   };
 
 

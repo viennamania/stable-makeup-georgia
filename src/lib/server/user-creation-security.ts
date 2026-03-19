@@ -26,6 +26,19 @@ const hasUnsafeText = (value: string): boolean => {
   return value.includes(UNICODE_REPLACEMENT_CHARACTER) || CONTROL_CHARACTER_PATTERN.test(value);
 };
 
+const safelyDecodeUriComponent = (value: unknown): string => {
+  const raw = normalizeText(value);
+  if (!raw || !/%[0-9A-Fa-f]{2}/.test(raw)) {
+    return raw;
+  }
+
+  try {
+    return decodeURIComponent(raw.replace(/\+/g, "%20")).trim();
+  } catch {
+    return raw;
+  }
+};
+
 export type UserCreationAudit = {
   route: string;
   method: string;
@@ -101,11 +114,35 @@ export const validateBuyerRegistrationInput = ({
   }
 
   const bankAccountDigits = String(userBankAccountNumber || "").replace(/[^0-9]/g, "");
-  if (bankAccountDigits.length < 6 || bankAccountDigits.length > 30) {
+  if (bankAccountDigits.length < 1 || bankAccountDigits.length > 30) {
     return "유효하지 않은 계좌번호입니다.";
   }
 
   return null;
+};
+
+export const normalizeBuyerRegistrationInput = ({
+  nickname,
+  userName,
+  userBankName,
+  userBankAccountNumber,
+}: {
+  nickname: unknown;
+  userName: unknown;
+  userBankName: unknown;
+  userBankAccountNumber: unknown;
+}) => {
+  const normalizedNickname = safelyDecodeUriComponent(nickname);
+  const normalizedUserName = safelyDecodeUriComponent(userName);
+  const normalizedUserBankName = safelyDecodeUriComponent(userBankName);
+  const normalizedUserBankAccountNumber = normalizeText(userBankAccountNumber);
+
+  return {
+    nickname: normalizedNickname,
+    userName: normalizedUserName,
+    userBankName: normalizedUserBankName,
+    userBankAccountNumber: normalizedUserBankAccountNumber,
+  };
 };
 
 export const buildUserCreationAudit = (
