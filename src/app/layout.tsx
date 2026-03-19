@@ -110,9 +110,13 @@ export default function RootLayout({
   const [showCenter, setShowCenter] = useState(false);
   const isPromotionPage = pathname?.endsWith("/promotion");
   const isScanPage = /^\/[^/]+\/scan(?:\/.*)?$/.test(String(pathname || ""));
+  const isSuperadminBuyorderWatchPage = /^\/[^/]+\/superadmin\/buyorder-watch(?:\/.*)?$/.test(
+    String(pathname || ""),
+  );
   const hideFixedChrome =
     isPromotionPage ||
     isScanPage ||
+    isSuperadminBuyorderWatchPage ||
     pathname?.endsWith("/realtime-banktransfer") ||
     pathname?.endsWith("/realtime-buyorder") ||
     pathname?.endsWith("/realtime-settlement");
