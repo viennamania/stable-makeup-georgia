@@ -267,11 +267,12 @@ export const verifyAdminSignedAction = async ({
   const country = getRequestCountry(request);
   const normalizedAllowedRoles = Array.from(
     new Set(
-      (allowedRoles || ["admin"])
+      ((allowedRoles === undefined ? ["admin"] : allowedRoles) || [])
         .map((value) => normalizeRole(value))
         .filter(Boolean),
     ),
   );
+  const hasRoleRestriction = normalizedAllowedRoles.length > 0;
 
   const writeAdminApiCallLog = async ({
     status,
@@ -417,14 +418,19 @@ export const verifyAdminSignedAction = async ({
       });
   const requesterStorecodeLower = String(requesterUser?.storecode || "").trim().toLowerCase();
   const requesterRoleLower = getRequesterRoleLower(requesterUser);
-  const requesterHasAllowedRole = normalizedAllowedRoles.includes(requesterRoleLower);
+  const requesterHasAllowedRole = hasRoleRestriction
+    ? normalizedAllowedRoles.includes(requesterRoleLower)
+    : Boolean(requesterUser);
   const requesterMatchesStorecode = requireAdminStorecode ? requesterStorecodeLower === "admin" : true;
   const requesterIsAuthorized = requesterHasAllowedRole && requesterMatchesStorecode;
 
   if (!requesterIsAuthorized) {
+    const denyReason = requesterUser
+      ? "forbidden_not_authorized_role"
+      : "forbidden_requester_not_found";
     await writeAdminApiCallLog({
       status: "blocked",
-      reason: "forbidden_not_authorized_role",
+      reason: denyReason,
       requesterUser,
       meta: {
         requesterStorecode: requesterUser?.storecode || requesterStorecode,
@@ -436,7 +442,7 @@ export const verifyAdminSignedAction = async ({
     await logUserReadSecurityEvent({
       route,
       status: "blocked",
-      reason: "forbidden_not_authorized_role",
+      reason: denyReason,
       ip,
       requesterWalletAddress,
       signatureProvided: true,

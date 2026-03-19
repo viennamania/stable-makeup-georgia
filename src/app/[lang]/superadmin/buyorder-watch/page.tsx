@@ -9,7 +9,9 @@ import { inAppWallet } from "thirdweb/wallets";
 
 import { client } from "@/app/client";
 import { useAnimatedNumber } from "@/components/useAnimatedNumber";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import { useSuperadminSession } from "@/lib/client/use-superadmin-session";
+import { VerifiedMonitoredTransfersPanel } from "./verified-monitored-transfers-panel";
 
 type SellerWalletBalanceItem = {
   id?: number | null;
@@ -94,6 +96,8 @@ const wallets = [
 const SELLER_WALLET_MIN_USDT_BALANCE = 0.1;
 const MONITOR_POLLING_MS = 15_000;
 const BLOCKED_BUY_ORDERS_LOOKBACK_HOURS = 24 * 14;
+const ACCESS_REQUEST_ROUTE = "/api/superadmin/access-requests/request";
+const ACCESS_REQUEST_SIGNING_PREFIX = "stable-georgia:superadmin:access-requests:request:v1";
 
 const truncateWallet = (value: unknown) => {
   const text = typeof value === "string" ? value.trim() : "";
@@ -268,6 +272,10 @@ export default function SuperadminBuyorderWatchPage() {
     warningCount: 0,
     infoCount: 0,
   });
+  const [accessRequestNote, setAccessRequestNote] = useState("");
+  const [accessRequestLoading, setAccessRequestLoading] = useState(false);
+  const [accessRequestError, setAccessRequestError] = useState("");
+  const [accessRequestSuccess, setAccessRequestSuccess] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [boardError, setBoardError] = useState("");
 
@@ -278,6 +286,49 @@ export default function SuperadminBuyorderWatchPage() {
   const animatedBuyerWalletTotalUsdt = useAnimatedNumber(buyerSnapshot.totalCurrentUsdtBalance, {
     decimalPlaces: 3,
   });
+
+  const handleRequestAccess = useCallback(async () => {
+    if (!activeAccount) {
+      return;
+    }
+
+    setAccessRequestLoading(true);
+    setAccessRequestError("");
+    setAccessRequestSuccess("");
+
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: ACCESS_REQUEST_ROUTE,
+        signingPrefix: ACCESS_REQUEST_SIGNING_PREFIX,
+        requesterStorecode: "superadmin",
+        body: {
+          note: accessRequestNote,
+          requestPage: `/${lang}/superadmin/buyorder-watch`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "관리자권한 요청을 접수하지 못했습니다.");
+      }
+
+      const duplicate = Boolean(data?.result?.duplicate);
+      const createdAt = formatKstDateTime(data?.result?.request?.createdAt);
+      setAccessRequestSuccess(
+        duplicate
+          ? `이미 승인 대기 중인 요청이 있습니다. 접수 시각: ${createdAt}`
+          : `관리자권한 요청이 접수되었습니다. 접수 시각: ${createdAt}`,
+      );
+      setAccessRequestNote("");
+    } catch (nextError) {
+      setAccessRequestError(
+        nextError instanceof Error ? nextError.message : "관리자권한 요청을 접수하지 못했습니다.",
+      );
+    } finally {
+      setAccessRequestLoading(false);
+    }
+  }, [accessRequestNote, activeAccount, lang]);
 
   const refreshBoard = useCallback(async ({ showLoading = false }: { showLoading?: boolean } = {}) => {
     if (!canViewBoard) {
@@ -589,6 +640,61 @@ export default function SuperadminBuyorderWatchPage() {
               Error: {error}
             </div>
           ) : null}
+
+          <div className="mt-5 rounded-[22px] border border-white/10 bg-white/[0.05] p-4">
+            <div className="text-sm font-semibold text-white">관리자권한 요청하기</div>
+            <div className="mt-2 text-xs leading-6 text-rose-100/80">
+              현재 지갑 기준으로 요청을 저장합니다. 기존 superadmin 사용자가
+              <Link
+                href={`/${lang}/superadmin/access-requests`}
+                className="mx-1 font-semibold text-fuchsia-200 underline decoration-fuchsia-300/50 underline-offset-4"
+              >
+                승인 페이지
+              </Link>
+              에서 승인하면 즉시 접근할 수 있습니다.
+            </div>
+
+            <label className="mt-4 block">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-100/70">
+                Request Note
+              </div>
+              <textarea
+                value={accessRequestNote}
+                onChange={(event) => setAccessRequestNote(event.target.value)}
+                rows={3}
+                placeholder="요청 사유나 운영 메모를 남겨두면 승인자가 확인하기 쉽습니다."
+                className="w-full rounded-[18px] border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-fuchsia-300/40"
+              />
+            </label>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleRequestAccess()}
+                disabled={accessRequestLoading}
+                className="rounded-full border border-fuchsia-300/30 bg-fuchsia-400/10 px-4 py-2 text-sm font-semibold text-fuchsia-100 transition hover:border-fuchsia-200/40 hover:bg-fuchsia-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {accessRequestLoading ? "요청 접수 중..." : "관리자권한 요청하기"}
+              </button>
+              <Link
+                href={`/${lang}/superadmin/access-requests`}
+                className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/[0.08]"
+              >
+                승인 페이지 보기
+              </Link>
+            </div>
+
+            {accessRequestSuccess ? (
+              <div className="mt-4 rounded-[16px] border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-xs leading-6 text-emerald-100">
+                {accessRequestSuccess}
+              </div>
+            ) : null}
+            {accessRequestError ? (
+              <div className="mt-4 rounded-[16px] border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-xs leading-6 text-rose-100">
+                {accessRequestError}
+              </div>
+            ) : null}
+          </div>
         </section>
       ) : null}
 
@@ -665,6 +771,8 @@ export default function SuperadminBuyorderWatchPage() {
               </div>
             </article>
           </section>
+
+          <VerifiedMonitoredTransfersPanel lang={lang} enabled={canViewBoard} />
 
           <section className="grid gap-5 xl:grid-cols-2">
             <article className="rounded-[28px] border border-emerald-400/20 bg-[linear-gradient(180deg,rgba(14,29,24,0.96),rgba(9,18,15,1))] p-5 shadow-[0_28px_100px_-72px_rgba(5,150,105,0.45)]">

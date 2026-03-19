@@ -47,6 +47,12 @@ export default function SuperadminLayout({
                 >
                   Buyorder Watch
                 </Link>
+                <Link
+                  href={`/${lang}/superadmin/access-requests`}
+                  className="rounded-full border border-fuchsia-400/30 bg-fuchsia-400/10 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 transition hover:border-fuchsia-300/50 hover:bg-fuchsia-400/15"
+                >
+                  Access Requests
+                </Link>
               </div>
             </div>
           </div>
