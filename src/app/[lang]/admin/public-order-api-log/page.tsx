@@ -258,7 +258,7 @@ export default function PublicOrderApiLogPage() {
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="storecode / nickname / clientId / tradeId 검색"
+                placeholder="storecode / nickname / clientId / wallet / tradeId 검색"
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-800"
               />
 
@@ -319,6 +319,7 @@ export default function PublicOrderApiLogPage() {
                         <div>storecode: {normalizeText(log.requestBody?.storecode)}</div>
                         <div>nickname: {normalizeText(log.requestBody?.nickname || log.requestBody?.userid || log.requestBody?.userId)}</div>
                         <div>clientId: {normalizeText(log.requestBody?.clientid || log.requestBody?.clientId)}</div>
+                        <div className="font-mono">wallet: {normalizeText(log.requestBody?.walletAddress)}</div>
                         <div>amount: {normalizeText(log.requestBody?.amount ?? log.requestBody?.krwAmount)}</div>
                       </td>
                       <td className="px-3 py-2 text-xs text-zinc-700">
