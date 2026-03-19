@@ -2156,6 +2156,10 @@ export async function insertBuyOrder(data: any) {
 
 
   const nickname = data.nickname || '';
+  const requestedMobile =
+    typeof data.mobile === 'string'
+      ? data.mobile.trim()
+      : '';
 
 
   const client = await clientPromise;
@@ -2223,6 +2227,7 @@ export async function insertBuyOrder(data: any) {
       storecode: data.storecode,
       walletAddress: data.walletAddress,
       nickname: nickname,
+      mobile: requestedMobile,
       buyOrderStatus: 'ordered',
       latestBuyOrder: {
         storecode: data.storecode,
@@ -2275,7 +2280,7 @@ export async function insertBuyOrder(data: any) {
 
 
 
-  const mobile = user?.mobile;
+  const mobile = requestedMobile || user?.mobile || '';
 
   const avatar = user?.avatar;
 

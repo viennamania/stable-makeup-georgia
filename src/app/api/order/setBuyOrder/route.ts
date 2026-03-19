@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     storecode,
     walletAddress,
     nickname,
+    mobile,
     usdtAmount,
     krwAmount,
     rate,
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
 
 
     nickname: nickname,
+    mobile: mobile,
     usdtAmount: usdtAmount,
     krwAmount: krwAmount,
     rate: rate,
