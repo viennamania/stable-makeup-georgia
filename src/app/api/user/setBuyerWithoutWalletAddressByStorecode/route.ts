@@ -3,6 +3,8 @@ import {
   buildUserCreationAudit,
   validateBuyerRegistrationInput,
 } from "@/lib/server/user-creation-security";
+import { getRequestCountry, getRequestIp } from "@/lib/server/user-read-security";
+import { insertPublicBuyerApiCallLog } from "@/lib/api/publicBuyerApiCallLog";
 
 import {
   getUserByNickname,
@@ -46,10 +48,55 @@ import {
 
 const ROUTE = "/api/user/setBuyerWithoutWalletAddressByStorecode";
 
+async function writePublicBuyerApiCallLog({
+  request,
+  payload,
+  status,
+  reason = null,
+  resultMeta = null,
+}: {
+  request: NextRequest;
+  payload: Record<string, any>;
+  status: "success" | "error";
+  reason?: string | null;
+  resultMeta?: Record<string, unknown> | null;
+}) {
+  const ip = getRequestIp(request);
+  const country = getRequestCountry(request);
+
+  try {
+    await insertPublicBuyerApiCallLog({
+      route: ROUTE,
+      method: request.method,
+      status,
+      reason,
+      publicIp: ip,
+      publicCountry: country,
+      requestBody: payload,
+      resultMeta,
+    });
+  } catch (error) {
+    console.error("Failed to write public buyer api call log:", error);
+  }
+}
+
 
 export async function POST(request: NextRequest) {
-
-  const body = await request.json();
+  let body: any = {};
+  try {
+    body = await request.json();
+  } catch {
+    await writePublicBuyerApiCallLog({
+      request,
+      payload: {},
+      status: "error",
+      reason: "invalid_json",
+    });
+    return NextResponse.json({
+      result: null,
+      error: "Invalid JSON body",
+    }, { status: 400 });
+  }
 
 
   const {
@@ -67,7 +114,7 @@ export async function POST(request: NextRequest) {
   //console.log("body", body);
 
   //const nickname = userCode; // trim left and right spaces
-  const nickname = userCode.trim();
+  const nickname = typeof userCode === "string" ? userCode.trim() : "";
 
   const validationError = validateBuyerRegistrationInput({
     nickname,
@@ -77,6 +124,12 @@ export async function POST(request: NextRequest) {
   });
 
   if (validationError) {
+    await writePublicBuyerApiCallLog({
+      request,
+      payload: body,
+      status: "error",
+      reason: validationError,
+    });
     return NextResponse.json(
       {
         result: null,
@@ -145,6 +198,21 @@ export async function POST(request: NextRequest) {
     ///console.log("user", user);
 
     if (user) {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "success",
+        reason: "user_already_exists",
+        resultMeta: {
+          nickname: user?.nickname || null,
+          walletAddress: user?.walletAddress || null,
+          storecode: user?.storecode || null,
+          buyOrderStatus: user?.buyOrderStatus || null,
+          userType: user?.userType || "",
+          liveOnAndOff: user?.liveOnAndOff,
+          isBlack: user?.isBlack || false,
+        },
+      });
       return NextResponse.json({
         result: "User already exists",
         walletAddress: user.walletAddress,
@@ -162,6 +230,16 @@ export async function POST(request: NextRequest) {
     // 등록된 회원이 아닐경우 오류처리
 
     if (!user && storecode === 'alwmkqst') {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: "user_not_found_for_store_restriction",
+        resultMeta: {
+          storecode,
+          nickname,
+        },
+      });
       return NextResponse.json({
         result: "User not found",
         walletAddress: null,
@@ -183,6 +261,12 @@ export async function POST(request: NextRequest) {
     //console.log("escrowWalletPrivateKey", escrowWalletPrivateKey);
 
     if (!userWalletPrivateKey) {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: "failed_to_generate_wallet_private_key",
+      });
       return NextResponse.json({
         result: null,
       });
@@ -195,6 +279,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!client) {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: "failed_to_create_thirdweb_client",
+      });
       return NextResponse.json({
         result: null,
       });
@@ -208,6 +298,12 @@ export async function POST(request: NextRequest) {
   
 
     if (!personalAccount) {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: "failed_to_create_personal_account",
+      });
       return NextResponse.json({
         result: null,
       });
@@ -227,6 +323,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!account) {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: "failed_to_connect_smart_wallet",
+      });
       return NextResponse.json({
         result: null,
       });
@@ -258,7 +360,41 @@ export async function POST(request: NextRequest) {
       creationAudit,
     });
 
+    if (!result || result?.error) {
+      await writePublicBuyerApiCallLog({
+        request,
+        payload: body,
+        status: "error",
+        reason: typeof result?.error === "string" ? result.error : "failed_to_create_buyer",
+        resultMeta: {
+          walletAddress: userWalletAddress,
+          nickname,
+          storecode,
+        },
+      });
+      return NextResponse.json({
+        result: null,
+        walletAddress: userWalletAddress,
+        error: result?.error || "Failed to create buyer",
+      }, { status: 500 });
+    }
+
     // return wallet address to user
+
+    await writePublicBuyerApiCallLog({
+      request,
+      payload: body,
+      status: "success",
+      reason: "buyer_created",
+      resultMeta: {
+        id: result?.id || null,
+        nickname: result?.nickname || nickname,
+        storecode: result?.storecode || storecode,
+        walletAddress: userWalletAddress,
+        userType: userType || null,
+        liveOnAndOff: true,
+      },
+    });
 
     return NextResponse.json({
 
@@ -272,6 +408,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.log("error", error);
+    await writePublicBuyerApiCallLog({
+      request,
+      payload: body,
+      status: "error",
+      reason: error instanceof Error ? error.message : "unexpected_error",
+    });
 
     return NextResponse.json({
       error,
