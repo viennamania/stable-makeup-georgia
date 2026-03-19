@@ -9,7 +9,6 @@ import {
   formatDateTime,
   formatShortAddress,
   formatShortHash,
-  formatUsdt,
   getExplorerTxUrl,
   normalizeAddress,
   resolveScanFeedMeta,
@@ -134,6 +133,13 @@ function getStatusTone(status: string | null | undefined) {
     return "border-[#fcd34d] bg-[#fff7d6] text-[#8b6c1f]";
   }
   return "border-[#d4d4d8] bg-[#fafafa] text-[#52525b]";
+}
+
+function formatFixedUsdt(value: number) {
+  return Number(value || 0).toLocaleString("en-US", {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  });
 }
 
 export function VerifiedMonitoredTransfersPanel({
@@ -422,7 +428,7 @@ export function VerifiedMonitoredTransfersPanel({
         <div className="rounded-[22px] border border-[#e8dcc1] bg-white px-4 py-4 shadow-[0_18px_40px_-34px_rgba(24,24,27,0.2)]">
           <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8b6c1f]">Observed value</div>
           <div className="mt-2 text-right text-[34px] font-semibold tracking-tight tabular-nums text-[#15803d]">
-            {formatUsdt(totalAmountUsdt)}
+            {formatFixedUsdt(totalAmountUsdt)}
           </div>
           <div className="mt-1 text-right text-xs text-[#71717a]">USDT aggregated from current feed</div>
         </div>
@@ -461,7 +467,7 @@ export function VerifiedMonitoredTransfersPanel({
               const isHighlighted = row.highlightUntil > nowMs;
               const txUrl = getExplorerTxUrl(row.transactionHash);
               const methodLabel = row.transferCount > 1 ? "Batch Transfer" : "Transfer";
-              const amountLabel = `${formatUsdt(row.totalUsdt)} USDT`;
+              const amountLabel = `${formatFixedUsdt(row.totalUsdt)} USDT`;
 
               return (
                 <article
