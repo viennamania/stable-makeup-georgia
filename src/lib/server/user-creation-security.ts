@@ -6,6 +6,7 @@ import {
 } from "@/lib/server/user-read-security";
 
 const HUMAN_LABEL_PATTERN = /^[\p{L}\p{N}\s().,&'/_-]+$/u;
+const HUMAN_DEPOSIT_NAME_PATTERN = /^[\p{L}\p{N}\s()[\].,&'/_@+:#-]+$/u;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
 const UNICODE_REPLACEMENT_CHARACTER = "\uFFFD";
 
@@ -82,7 +83,7 @@ export const validateBuyerRegistrationInput = ({
     return "예금주명 길이가 올바르지 않습니다.";
   }
 
-  if (hasUnsafeText(safeUserName) || !HUMAN_LABEL_PATTERN.test(safeUserName)) {
+  if (hasUnsafeText(safeUserName) || !HUMAN_DEPOSIT_NAME_PATTERN.test(safeUserName)) {
     return "유효하지 않은 예금주명입니다.";
   }
 
