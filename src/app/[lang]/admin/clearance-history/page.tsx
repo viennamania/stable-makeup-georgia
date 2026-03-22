@@ -298,13 +298,15 @@ const formatAdminActionDateTime = (value: string | null | undefined) => {
 const getClearanceOrderCreationMeta = (order: BuyOrder) => {
   if (isWithdrawalWebhookGeneratedClearanceOrder(order)) {
     return {
-      label: "시스템 생성",
+      label: "시스템",
+      title: "시스템 생성",
       className: "border-amber-300 bg-amber-50 text-amber-700",
     };
   }
 
   return {
-    label: "관리자 생성",
+    label: "관리자",
+    title: "관리자 생성",
     className: "border-sky-300 bg-sky-50 text-sky-700",
   };
 };
@@ -4962,7 +4964,8 @@ export default function Index({ params, isYear2025 = false }: any) {
                             }
                             </span>
                             <span
-                              className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${creationMeta.className}`}
+                              title={creationMeta.title}
+                              className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none ${creationMeta.className}`}
                             >
                               {creationMeta.label}
                             </span>
@@ -5928,7 +5931,8 @@ export default function Index({ params, isYear2025 = false }: any) {
                         const creationMeta = getClearanceOrderCreationMeta(item);
                         return (
                           <div
-                            className={`absolute right-3 top-3 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${creationMeta.className}`}
+                            title={creationMeta.title}
+                            className={`absolute right-3 top-3 inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none ${creationMeta.className}`}
                           >
                             {creationMeta.label}
                           </div>

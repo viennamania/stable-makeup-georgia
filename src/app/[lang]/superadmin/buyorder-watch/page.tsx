@@ -903,9 +903,23 @@ export default function SuperadminBuyorderWatchPage() {
                           </div>
                           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-300">
                             <span>{buyer.nickname || "익명 구매자"}</span>
-                            {buyer.storeName ? (
-                              <span className="text-slate-500">{buyer.storeName}</span>
-                            ) : null}
+                          </div>
+                          <div className="mt-2 flex min-w-0 items-center gap-2">
+                            <Image
+                              src={buyer.storeLogo || "/icon-store.png"}
+                              alt={buyer.storeName || buyer.storecode || "Store"}
+                              width={18}
+                              height={18}
+                              className="h-[18px] w-[18px] rounded-full border border-white/10 object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm text-slate-300">
+                                {buyer.storeName || buyer.storecode || "가맹점 정보 없음"}
+                              </div>
+                              {buyer.storeName && buyer.storecode ? (
+                                <div className="truncate text-[11px] text-slate-500">@{buyer.storecode}</div>
+                              ) : null}
+                            </div>
                           </div>
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
                             <span>{formatCount(buyer.orderCount || 0)} orders</span>
