@@ -3250,6 +3250,37 @@ export async function getBuyOrders(
     const clearanceStatusesForSummary = privateSale
       ? ['paymentConfirmed', 'paymentRequested']
       : ['paymentConfirmed'];
+    const normalizedTransactionHashExpr = {
+      $toLower: {
+        $ifNull: ['$transactionHash', ''],
+      },
+    };
+    const normalizedTransactionHashDummyReasonExpr = {
+      $toLower: {
+        $ifNull: [
+          '$transactionHashDummyReason',
+          {
+            $ifNull: [
+              '$createdBy.transactionHashDummyReason',
+              { $ifNull: ['$clearanceSource.transactionHashDummyReason', ''] },
+            ],
+          },
+        ],
+      },
+    };
+    const hasRealTransferExpr = {
+      $and: [
+        { $ne: [normalizedTransactionHashExpr, ''] },
+        { $ne: [normalizedTransactionHashExpr, '0x'] },
+        { $ne: [{ $ifNull: ['$transactionHashDummy', false] }, true] },
+        {
+          $ne: [
+            normalizedTransactionHashDummyReasonExpr,
+            WITHDRAWAL_WEBHOOK_CLEARANCE_DUMMY_TRANSFER_REASON,
+          ],
+        },
+      ],
+    };
     //console.log('getBuyOrders fromDateValue: ' + fromDateValue);
     //console.log('getBuyOrders toDateValue: ' + toDateValue);
 
@@ -3412,6 +3443,16 @@ export async function getBuyOrders(
           totalCount: { $sum: 1 },
           totalKrwAmount: { $sum: '$krwAmount' },
           totalUsdtAmount: { $sum: '$usdtAmount' },
+          totalTransferCount: {
+            $sum: {
+              $cond: [hasRealTransferExpr, 1, 0],
+            },
+          },
+          totalTransferAmount: {
+            $sum: {
+              $cond: [hasRealTransferExpr, { $ifNull: ['$usdtAmount', 0] }, 0],
+            },
+          },
 
           /*
           totalSettlementCount: { $sum: 1 },
@@ -3874,6 +3915,8 @@ export async function getBuyOrders(
       totalCount: totalResult.length > 0 ? totalResult[0].totalCount : 0,
       totalKrwAmount: totalResult.length > 0 ? totalResult[0].totalKrwAmount : 0,
       totalUsdtAmount: totalResult.length > 0 ? totalResult[0].totalUsdtAmount : 0,
+      totalTransferCount: totalResult.length > 0 ? totalResult[0].totalTransferCount : 0,
+      totalTransferAmount: totalResult.length > 0 ? totalResult[0].totalTransferAmount : 0,
 
       totalSettlementCount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementCount : 0,
       totalSettlementAmount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementAmount : 0,

@@ -133,6 +133,69 @@ interface BuyOrder {
 
 }
 
+type BuyOrderStats = {
+  totalCount: number;
+  totalKrwAmount: number;
+  totalUsdtAmount: number;
+  totalTransferCount: number;
+  totalTransferAmount: number;
+  totalSettlementCount: number;
+  totalSettlementAmount: number;
+  totalSettlementAmountKRW: number;
+  totalFeeAmount: number;
+  totalFeeAmountKRW: number;
+  totalAgentFeeAmount: number;
+  totalAgentFeeAmountKRW: number;
+  totalByBuyerBankAccountNumber: Array<{
+    _id: string;
+    totalCount: number;
+    totalKrwAmount: number;
+    totalUsdtAmount: number;
+    bankUserInfo: any;
+  }>;
+  totalBySellerBankAccountNumber?: Array<{
+    _id: string;
+    totalCount: number;
+    totalKrwAmount: number;
+    totalUsdtAmount: number;
+    bankUserInfo: any;
+  }>;
+};
+
+const EMPTY_BUY_ORDER_STATS: BuyOrderStats = {
+  totalCount: 0,
+  totalKrwAmount: 0,
+  totalUsdtAmount: 0,
+  totalTransferCount: 0,
+  totalTransferAmount: 0,
+  totalSettlementCount: 0,
+  totalSettlementAmount: 0,
+  totalSettlementAmountKRW: 0,
+  totalFeeAmount: 0,
+  totalFeeAmountKRW: 0,
+  totalAgentFeeAmount: 0,
+  totalAgentFeeAmountKRW: 0,
+  totalByBuyerBankAccountNumber: [],
+  totalBySellerBankAccountNumber: [],
+};
+
+const toBuyOrderStats = (result: any): BuyOrderStats => ({
+  totalCount: Number(result?.totalCount || 0),
+  totalKrwAmount: Number(result?.totalKrwAmount || 0),
+  totalUsdtAmount: Number(result?.totalUsdtAmount || 0),
+  totalTransferCount: Number(result?.totalTransferCount || 0),
+  totalTransferAmount: Number(result?.totalTransferAmount || 0),
+  totalSettlementCount: Number(result?.totalSettlementCount || 0),
+  totalSettlementAmount: Number(result?.totalSettlementAmount || 0),
+  totalSettlementAmountKRW: Number(result?.totalSettlementAmountKRW || 0),
+  totalFeeAmount: Number(result?.totalFeeAmount || 0),
+  totalFeeAmountKRW: Number(result?.totalFeeAmountKRW || 0),
+  totalAgentFeeAmount: Number(result?.totalAgentFeeAmount || 0),
+  totalAgentFeeAmountKRW: Number(result?.totalAgentFeeAmountKRW || 0),
+  totalByBuyerBankAccountNumber: result?.totalByBuyerBankAccountNumber || [],
+  totalBySellerBankAccountNumber: result?.totalBySellerBankAccountNumber || [],
+});
+
 type ClearanceWithdrawalRealtimeItem = {
   id: string;
   data: BankTransferDashboardEvent;
@@ -1211,45 +1274,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
 
 
- const [buyOrderStats, setBuyOrderStats] = useState<{
-    totalCount: number;
-    totalKrwAmount: number;
-    totalUsdtAmount: number;
-    totalSettlementCount: number;
-    totalSettlementAmount: number;
-    totalSettlementAmountKRW: number;
-    totalFeeAmount: number;
-    totalFeeAmountKRW: number;
-    totalAgentFeeAmount: number;
-    totalAgentFeeAmountKRW: number;
-    totalByBuyerBankAccountNumber: Array<{
-      _id: string;
-      totalCount: number;
-      totalKrwAmount: number;
-      totalUsdtAmount: number;
-      bankUserInfo: any;
-    }>;
-    totalBySellerBankAccountNumber?: Array<{
-      _id: string;
-      totalCount: number;
-      totalKrwAmount: number;
-      totalUsdtAmount: number;
-      bankUserInfo: any;
-    }>;
-  }>({
-    totalCount: 0,
-    totalKrwAmount: 0,
-    totalUsdtAmount: 0,
-    totalSettlementCount: 0,
-    totalSettlementAmount: 0,
-    totalSettlementAmountKRW: 0,
-    totalFeeAmount: 0,
-    totalFeeAmountKRW: 0,
-    totalAgentFeeAmount: 0,
-    totalAgentFeeAmountKRW: 0,
-    totalByBuyerBankAccountNumber: [],
-    totalBySellerBankAccountNumber: [],
-  });
+ const [buyOrderStats, setBuyOrderStats] = useState<BuyOrderStats>(EMPTY_BUY_ORDER_STATS);
 
   const [withdrawalRealtimeEvents, setWithdrawalRealtimeEvents] = useState<ClearanceWithdrawalRealtimeItem[]>([]);
   const [withdrawalRealtimeConnectionState, setWithdrawalRealtimeConnectionState] =
@@ -1623,21 +1648,7 @@ export default function Index({ params, isYear2025 = false }: any) {
               setTotalCount(data.result.totalCount);
 
 
-              setBuyOrderStats({
-                totalCount: data.result.totalCount,
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-              });
+              setBuyOrderStats(toBuyOrderStats(data.result));
 
 
 
@@ -1773,21 +1784,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
           setTotalCount(data.result.totalCount);
 
-          setBuyOrderStats({
-            totalCount: data.result.totalCount,
-            totalKrwAmount: data.result.totalKrwAmount,
-            totalUsdtAmount: data.result.totalUsdtAmount,
-            totalSettlementCount: data.result.totalSettlementCount,
-            totalSettlementAmount: data.result.totalSettlementAmount,
-            totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-            totalFeeAmount: data.result.totalFeeAmount,
-            totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-            totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-            totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-            totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-          });
+          setBuyOrderStats(toBuyOrderStats(data.result));
 
 
         }
@@ -2049,21 +2046,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
               setTotalCount(data.result.totalCount);
 
-              setBuyOrderStats({
-                totalCount: data.result.totalCount,
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-              });
+              setBuyOrderStats(toBuyOrderStats(data.result));
 
 
           })
@@ -2283,21 +2266,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
             setTotalCount(data.result.totalCount);
 
-            setBuyOrderStats({
-              totalCount: data.result.totalCount,
-              totalKrwAmount: data.result.totalKrwAmount,
-              totalUsdtAmount: data.result.totalUsdtAmount,
-              totalSettlementCount: data.result.totalSettlementCount,
-              totalSettlementAmount: data.result.totalSettlementAmount,
-              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-              totalFeeAmount: data.result.totalFeeAmount,
-              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-              totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-            });
+            setBuyOrderStats(toBuyOrderStats(data.result));
 
 
         })
@@ -2369,21 +2338,7 @@ export default function Index({ params, isYear2025 = false }: any) {
     .then(data => {
       setBuyOrders(data.result.orders);
 
-      setBuyOrderStats({
-        totalCount: data.result.totalCount,
-        totalKrwAmount: data.result.totalKrwAmount,
-        totalUsdtAmount: data.result.totalUsdtAmount,
-        totalSettlementCount: data.result.totalSettlementCount,
-        totalSettlementAmount: data.result.totalSettlementAmount,
-        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-        totalFeeAmount: data.result.totalFeeAmount,
-        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-        totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-      });
+      setBuyOrderStats(toBuyOrderStats(data.result));
 
       setTotalCount(data.result.totalCount);
     })
@@ -2702,21 +2657,7 @@ export default function Index({ params, isYear2025 = false }: any) {
       setTotalCount(data.result.totalCount);
 
 
-      setBuyOrderStats({
-        totalCount: data.result.totalCount,
-        totalKrwAmount: data.result.totalKrwAmount,
-        totalUsdtAmount: data.result.totalUsdtAmount,
-        totalSettlementCount: data.result.totalSettlementCount,
-        totalSettlementAmount: data.result.totalSettlementAmount,
-        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-        totalFeeAmount: data.result.totalFeeAmount,
-        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-        totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-      });
+      setBuyOrderStats(toBuyOrderStats(data.result));
       
 
 
@@ -4141,7 +4082,7 @@ export default function Index({ params, isYear2025 = false }: any) {
 
           {/* trade summary */}
 
-          <div className="mb-4 grid w-full grid-cols-1 gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:grid-cols-3">
+          <div className="mb-4 grid w-full grid-cols-1 gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-5">
 
             <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50/70 p-3">
               <div className="text-sm">청산수(건)</div>
@@ -4175,6 +4116,31 @@ export default function Index({ params, isYear2025 = false }: any) {
                   style={{ fontFamily: 'monospace' }}
                 >
                   {buyOrderStats.totalKrwAmount?.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50/70 p-3">
+              <div className="text-sm">전송수(건)</div>
+              <div className="text-xl font-semibold text-emerald-600">
+                {buyOrderStats.totalTransferCount?.toLocaleString()}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50/70 p-3">
+              <div className="text-sm">전송량(USDT)</div>
+              <div className="flex flex-row items-center justify-center gap-1">
+                <Image
+                  src="/icon-tether.png"
+                  alt="Tether"
+                  width={20}
+                  height={20}
+                  className="w-5 h-5"
+                />
+                <div className="text-xl font-semibold text-emerald-600"
+                  style={{ fontFamily: 'monospace' }}
+                >
+                  {buyOrderStats.totalTransferAmount?.toLocaleString()}
                 </div>
               </div>
             </div>
