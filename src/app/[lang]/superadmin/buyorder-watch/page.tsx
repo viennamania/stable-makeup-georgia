@@ -902,7 +902,7 @@ export default function SuperadminBuyorderWatchPage() {
                             </span>
                           </div>
                           <div className="mt-2 flex min-w-0 items-center gap-2 overflow-hidden text-sm">
-                            <span className="shrink-0 text-slate-300">
+                            <span className="w-36 shrink-0 truncate text-slate-300 sm:w-40">
                               {buyer.nickname || "익명 구매자"}
                             </span>
                             <span className="shrink-0 text-slate-600">·</span>
