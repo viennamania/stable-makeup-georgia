@@ -4875,13 +4875,16 @@ export default function Index({ params }: any) {
 
                               {isConfiguredAccountMatched ? (
                                 <div className="mt-1.5 space-y-1">
-                                  <div className="text-xs font-semibold text-zinc-900">
-                                    {String(configuredFromBankInfo?.bankName || "-").trim() || "-"}
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 truncate text-xs font-semibold text-zinc-900">
+                                      {String(configuredFromBankInfo?.bankName || "-").trim() || "-"}
+                                    </div>
+                                    <div className="shrink-0 text-[10px] text-zinc-500">
+                                      {String(configuredFromBankInfo?.accountHolder || "-").trim() || "-"}
+                                    </div>
                                   </div>
-                                  <div className="text-[10px] text-zinc-600">
-                                    {(String(configuredFromBankInfo?.accountHolder || "-").trim() || "-") +
-                                      " · " +
-                                      (String(configuredFromBankInfo?.accountNumber || "-").trim() || "-")}
+                                  <div className="break-all text-[10px] text-zinc-600">
+                                    {String(configuredFromBankInfo?.accountNumber || "-").trim() || "-"}
                                   </div>
                                 </div>
                               ) : (
@@ -4894,11 +4897,16 @@ export default function Index({ params }: any) {
 
                             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
                               <div className="text-[10px] tracking-[0.12em] text-zinc-500">수취인</div>
-                              <div className="mt-1 text-xs font-semibold text-zinc-900">
-                                {receiverBankName || "-"}
+                              <div className="mt-1 flex items-start justify-between gap-2">
+                                <div className="min-w-0 truncate text-xs font-semibold text-zinc-900">
+                                  {receiverBankName || "-"}
+                                </div>
+                                <div className="shrink-0 text-[10px] text-zinc-500">
+                                  {receiverAccountHolder || "-"}
+                                </div>
                               </div>
-                              <div className="mt-1 text-[10px] text-zinc-500">
-                                {(receiverAccountHolder || "-") + " · " + (receiverAccountNumber || "-")}
+                              <div className="mt-1 break-all text-[10px] text-zinc-500">
+                                {receiverAccountNumber || "-"}
                               </div>
                             </div>
                           </div>
