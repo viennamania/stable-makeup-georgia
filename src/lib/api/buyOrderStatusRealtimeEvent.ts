@@ -1619,6 +1619,7 @@ const BLOCKED_BUYORDER_MONITOR_ROUTES = new Set([
   "/api/order/buyOrderRequestPayment",
   "/api/order/requestPayment",
   "/api/order/acceptBuyOrderTask",
+  "/api/order/acceptBuyOrderTaskV2",
   "/api/order/acceptBuyOrderTaskBangbang",
   "/api/order/cancelTradeBySellerWithEscrow",
   "/api/order/cancelTradeBySeller",
@@ -1643,6 +1644,7 @@ const getBlockedBuyOrderRouteLabel = (route: string | null) => {
     case "/api/order/requestPayment":
       return "결제 요청";
     case "/api/order/acceptBuyOrderTask":
+    case "/api/order/acceptBuyOrderTaskV2":
     case "/api/order/acceptBuyOrderTaskBangbang":
       return "판매자 수락";
     case "/api/order/cancelTradeBySellerWithEscrow":
@@ -1813,6 +1815,7 @@ const isBlockedBuyOrderStillActive = ({
 
   if (
     normalizedRoute === "/api/order/acceptBuyOrderTask"
+    || normalizedRoute === "/api/order/acceptBuyOrderTaskV2"
     || normalizedRoute === "/api/order/acceptBuyOrderTaskBangbang"
   ) {
     return status === "ordered";

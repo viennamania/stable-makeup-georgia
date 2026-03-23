@@ -69,6 +69,7 @@ const BLOCKED_BUYORDER_REALTIME_ROUTES = new Set([
   "/api/order/buyOrderRequestPayment",
   "/api/order/requestPayment",
   "/api/order/acceptBuyOrderTask",
+  "/api/order/acceptBuyOrderTaskV2",
   "/api/order/acceptBuyOrderTaskBangbang",
   "/api/order/cancelTradeBySellerWithEscrow",
   "/api/order/cancelTradeBySeller",
