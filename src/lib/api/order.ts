@@ -9454,9 +9454,11 @@ export async function getAllBuyOrdersForRequestPayment(
   {
     limit,
     page,
+    acceptedBefore,
   }: {
     limit: number;
     page: number;
+    acceptedBefore?: string;
   }
 
 ): Promise<any> {
@@ -9477,6 +9479,7 @@ export async function getAllBuyOrdersForRequestPayment(
     storecode: { $ne: null },
     "buyer.depositName": { $ne: null },
     status: 'accepted',
+    ...(acceptedBefore ? { acceptedAt: { $lte: acceptedBefore } } : {}),
   };
 
   const [results, totalCount] = await Promise.all([

@@ -33,6 +33,10 @@ const BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS = Math.max(
   Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS || "", 10) || 12000,
   1000,
 );
+const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MS || "", 10) || 15000,
+  0,
+);
 const BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS = Math.max(
   Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS || "", 10) || 10000,
   1000,
@@ -336,6 +340,7 @@ const runTask = async () => {
       getAllBuyOrdersForRequestPayment({
         limit: BUYORDER_REQUEST_PAYMENT_TASK_MAX_ORDERS_PER_RUN,
         page: 1,
+        acceptedBefore: new Date(Date.now() - BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MS).toISOString(),
       }),
       BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
       "buyOrderRequestPaymentTask queue read timeout",
