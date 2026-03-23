@@ -378,9 +378,6 @@ const getClearancePaymentBankInfo = (order: BuyOrder) => {
   };
 };
 
-const formatAggregateUsdtAmount = (value: number | null | undefined) =>
-  value ? value.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000';
-
 const formatAggregateKrwAmount = (value: number | null | undefined) =>
   Number(value || 0).toLocaleString();
 
@@ -430,7 +427,7 @@ const BankAggregateStatCard = ({ item }: { item: any }) => {
         </button>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-zinc-100 pt-2">
+      <div className="mt-2 flex items-end justify-between gap-2 border-t border-zinc-100 pt-2">
         <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1">
           <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">건수</span>
           <span className="text-sm font-semibold text-zinc-900">
@@ -438,24 +435,14 @@ const BankAggregateStatCard = ({ item }: { item: any }) => {
           </span>
         </div>
 
-        <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-emerald-700/80">USDT</span>
-          <span
-            className="min-w-0 whitespace-nowrap text-sm font-semibold leading-none text-emerald-600"
-            style={{ fontFamily: 'monospace' }}
-          >
-            {formatAggregateUsdtAmount(item.totalUsdtAmount)}
-          </span>
-        </div>
-
-        <div className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-amber-700/80">원화</span>
-          <span
-            className="min-w-0 whitespace-nowrap text-sm font-semibold leading-none text-amber-600"
+        <div className="min-w-0 text-right">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-amber-700/80">원화</div>
+          <div
+            className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none text-amber-600"
             style={{ fontFamily: 'monospace' }}
           >
             {formatAggregateKrwAmount(item.totalKrwAmount)}
-          </span>
+          </div>
         </div>
       </div>
     </div>
@@ -4172,7 +4159,7 @@ export default function Index({ params }: any) {
                 구매자 통장별 집계
               </div>
               <div className="mt-1 text-xs text-zinc-500">
-                건수 · USDT · 원화 기준
+                건수 · 원화 기준
               </div>
             </div>
 
@@ -4373,7 +4360,7 @@ export default function Index({ params }: any) {
                   판매자 통장별 집계
                 </div>
                 <div className="mt-1 text-xs text-zinc-500">
-                  건수 · USDT · 원화 기준
+                  건수 · 원화 기준
                 </div>
               </div>
 
