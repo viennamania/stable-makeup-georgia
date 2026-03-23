@@ -6832,7 +6832,7 @@ const fetchBuyOrders = async () => {
                         P2P거래번호
                       </span>
                       <span className="text-xs uppercase tracking-wide text-neutral-300">
-                        거래시작시간
+                        거래완료시간
                       </span>
                     </div>
                   </th>
@@ -6881,7 +6881,7 @@ const fetchBuyOrders = async () => {
                       </div>
 
                       <div className="flex flex-row items-center justify-start gap-2 text-neutral-200">
-                        <span className="text-xs uppercase tracking-wide">자동매칭</span>
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">자동매칭</span>
                         <Image
                           src="/icon-matching.png"
                           alt="Auto Matching"
@@ -6894,13 +6894,13 @@ const fetchBuyOrders = async () => {
                         />
 
                         {/* the count of status is ordered */}
-                        <span className="text-xs font-semibold">
+                        <span className="text-xs font-semibold text-neutral-100/90">
                           {
                             buyOrders.filter((item) => item.status === 'ordered').length
                           }
                         </span>
 
-                        <span className="text-xs uppercase tracking-wide">
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">
                           거래상태
                         </span>
 
