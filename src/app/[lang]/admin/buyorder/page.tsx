@@ -9572,20 +9572,6 @@ const fetchBuyOrders = async () => {
                               </div>
                             </div>
 
-                            <div className="flex flex-row gap-1 items-center">
-                              <span className="text-sm font-semibold text-zinc-500">
-                                지갑잔액:
-                              </span>
-                              <span className="text-sm font-semibold text-green-600"
-                                style={{
-                                  fontFamily: 'monospace',
-                                }}>
-                                {item?.settlement?.settlementWalletBalance &&
-                                  `${Number(item?.settlement?.settlementWalletBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`
-                                }
-                              </span>
-                            </div>
-
                           </div>
 
                         )}
