@@ -4787,7 +4787,7 @@ export default function Index({ params }: any) {
                 </div>
               ) : (
                 <div className="w-full overflow-x-auto px-4 pb-1 touch-pan-x [scrollbar-width:thin]">
-                  <div className="flex w-max min-w-full items-stretch gap-3">
+                  <div className="flex w-max min-w-full items-start gap-3">
                     {filteredWithdrawalRealtimeEvents.map((item) => {
                       const isHighlighted = item.highlightUntil > withdrawalRealtimeNowMs;
                       const publishedAt =
@@ -4850,9 +4850,6 @@ export default function Index({ params }: any) {
                                 {Number(item.data.amount || 0).toLocaleString("ko-KR")}
                                 <span className="ml-1 text-[11px] font-medium text-rose-500">KRW</span>
                               </div>
-                              <div className="mt-1 text-[11px] text-zinc-500">
-                                {formatRealtimeDateTime(publishedAt)}
-                              </div>
                             </div>
 
                             <div className="flex min-w-0 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-1.5">
@@ -4868,7 +4865,7 @@ export default function Index({ params }: any) {
                                   {eventStoreName}
                                 </div>
                                 <div className="truncate text-[10px] text-zinc-500">
-                                  {item.data.storecode || params.center || "-"}
+                                  {formatRealtimeDateTime(publishedAt)}
                                 </div>
                               </div>
                             </div>
@@ -4876,30 +4873,8 @@ export default function Index({ params }: any) {
 
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             <div className="rounded-xl border border-zinc-200 bg-white px-2.5 py-2">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-[10px] tracking-[0.12em] text-zinc-500">
-                                  송금인 통장
-                                </span>
-                                <span
-                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                    isConfiguredAccountMatched
-                                      ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                                      : "border border-amber-200 bg-amber-50 text-amber-700"
-                                  }`}
-                                >
-                                  {isConfiguredAccountMatched ? "계좌 일치" : "계좌 미일치"}
-                                </span>
-                                {isConfiguredAccountMatched && (
-                                  <span
-                                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                      isConfiguredHolderMatched
-                                        ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-                                        : "border border-zinc-200 bg-zinc-50 text-zinc-600"
-                                    }`}
-                                  >
-                                    {isConfiguredHolderMatched ? "예금주 일치" : "예금주 상이"}
-                                  </span>
-                                )}
+                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">
+                                송금인
                               </div>
 
                               {isConfiguredAccountMatched ? (
@@ -4912,16 +4887,25 @@ export default function Index({ params }: any) {
                                       " · " +
                                       (String(configuredFromBankInfo?.accountNumber || "-").trim() || "-")}
                                   </div>
+                                  <div
+                                    className={`text-[10px] font-medium ${
+                                      isConfiguredHolderMatched ? "text-emerald-700" : "text-amber-700"
+                                    }`}
+                                  >
+                                    {isConfiguredHolderMatched ? "계좌일치 · 예금주일치" : "계좌일치 · 예금주상이"}
+                                  </div>
                                 </div>
                               ) : (
-                                <div className="mt-1.5 text-[10px] text-zinc-500">
-                                  해당 가맹점의 송금인 통장을 찾지 못했습니다.
+                                <div className="mt-1.5 space-y-1">
+                                  <div className="text-xs font-semibold text-zinc-900">-</div>
+                                  <div className="text-[10px] text-zinc-500">해당 통장 설정 없음</div>
+                                  <div className="text-[10px] font-medium text-amber-700">계좌미일치</div>
                                 </div>
                               )}
                             </div>
 
                             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2.5 py-2">
-                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">수취인 통장</div>
+                              <div className="text-[10px] tracking-[0.12em] text-zinc-500">수취인</div>
                               <div className="mt-1 text-xs font-semibold text-zinc-900">
                                 {receiverBankName || "-"}
                               </div>
