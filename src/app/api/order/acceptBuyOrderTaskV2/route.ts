@@ -43,19 +43,20 @@ export async function POST(request: NextRequest) {
 
 
 
-    ///const matchingDuration = 15; // in seconds
-    const matchingDuration = 1; // in seconds
+    const acceptanceDelaySeconds = 30;
 
 
 
     const now = new Date();
 
-    const oneMinuteAgo = new Date(now.getTime() - 1 * matchingDuration * 1000).toISOString();
-    console.log("oneMinuteAgo", oneMinuteAgo);
+    const acceptanceThreshold = new Date(
+      now.getTime() - acceptanceDelaySeconds * 1000,
+    ).toISOString();
+    console.log("acceptanceThreshold", acceptanceThreshold);
 
-    // check if order.createdAt is less than oneMinuteAgo
-    if (buyorder.createdAt > oneMinuteAgo) {
-      console.log("order.createdAt is more than 1 minute ago");
+    // Only auto-accept orders that have been waiting at least 30 seconds.
+    if (buyorder.createdAt > acceptanceThreshold) {
+      console.log("order.createdAt is newer than 30 seconds");
       continue;
     }
 
