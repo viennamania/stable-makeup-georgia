@@ -293,6 +293,42 @@ const getStoreConfiguredBankInfoByAccountNumber = (store: any, bankAccountNumber
   );
 };
 
+const toTrimmedText = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const formatCompactWalletAddress = (value: unknown) => {
+  const raw = toTrimmedText(value);
+  if (!raw) {
+    return "-";
+  }
+  if (raw.length <= 10) {
+    return raw;
+  }
+  return `${raw.slice(0, 6)}...${raw.slice(-4)}`;
+};
+
+const getClearancePaymentBankInfo = (order: BuyOrder) => {
+  const bankName =
+    toTrimmedText(order?.buyer?.depositBankName)
+    || toTrimmedText(order?.buyer?.bankInfo?.bankName);
+  const accountNumber =
+    toTrimmedText(order?.buyer?.depositBankAccountNumber)
+    || toTrimmedText(order?.buyer?.bankInfo?.accountNumber);
+  const accountHolder =
+    toTrimmedText(order?.buyer?.depositName)
+    || toTrimmedText(order?.buyer?.bankInfo?.accountHolder);
+
+  return {
+    bankName: bankName || "-",
+    accountNumber: accountNumber || "-",
+    accountHolder: accountHolder || "-",
+  };
+};
+
 
 // get escrow wallet address
 
@@ -4784,7 +4820,7 @@ export default function Index({ params }: any) {
                         </span>
                       </div>
                     </th>
-                    <th className="w-[360px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[420px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-center justify-start gap-1">
                         <span className="text-sm">
                           결제통장 / {Seller}
@@ -4936,11 +4972,7 @@ export default function Index({ params }: any) {
                               {item?.buyer?.bankInfo?.bankName}
                             </span>
                             <span className="text-xs text-zinc-600 font-medium break-all">
-                              {item?.buyer?.bankInfo?.accountNumber?.length > 8 ?
-                                item?.buyer?.bankInfo?.accountNumber.slice(0, 4) + '...' + item?.buyer?.bankInfo?.accountNumber.slice(-4)
-                                :
-                                item?.buyer?.bankInfo?.accountNumber
-                              }
+                              {item?.buyer?.bankInfo?.accountNumber}
                             </span>
                             <span className="text-xs text-zinc-600 font-medium">
                               {item?.buyer?.bankInfo?.accountHolder}
@@ -4978,7 +5010,7 @@ export default function Index({ params }: any) {
 
 
                       <td className="px-2 py-2 align-top">
-                        <div className="flex flex-col gap-1.5 items-end justify-start whitespace-nowrap">
+                        <div className="flex flex-col gap-2 items-end justify-start whitespace-nowrap">
 
                           <div className="flex flex-row gap-2 items-center justify-center">
                             <Image
@@ -4996,12 +5028,18 @@ export default function Index({ params }: any) {
                           </div>
 
 
-                          <div className="flex flex-row items-center gap-1">
-                            <span className="text-sm text-yellow-600 font-semibold"
-                              style={{ fontFamily: 'monospace' }}
-                            >
-                              {Number(item.krwAmount)?.toLocaleString()}
-                            </span>
+                          <div className="flex w-full justify-end">
+                            <div className="flex items-baseline gap-1 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 shadow-sm">
+                              <span
+                                className="text-xl font-black text-amber-700 sm:text-2xl"
+                                style={{ fontFamily: 'monospace' }}
+                              >
+                                {Number(item.krwAmount)?.toLocaleString()}
+                              </span>
+                              <span className="text-xs font-bold text-amber-600 sm:text-sm">
+                                원
+                              </span>
+                            </div>
                           </div>
 
                           <span className="text-xs text-zinc-500"
@@ -5017,92 +5055,81 @@ export default function Index({ params }: any) {
 
 
                       <td className="px-2 py-2 align-top">
-                        <div className="min-w-[320px] rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-2">
-                          <div className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
-                            결제통장 / {Seller}
-                          </div>
+                        {(() => {
+                          const paymentBankInfo = getClearancePaymentBankInfo(item);
+                          const sellerNickname = toTrimmedText(item?.seller?.nickname) || '-';
+                          const sellerWalletAddress = toTrimmedText(item?.seller?.walletAddress);
 
-                          <div className="flex flex-col gap-2.5">
-                            <div className="flex flex-col gap-1">
-                              <div className="text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
-                                결제통장
-                              </div>
-                              {item?.buyer?.nickname ? (
-                                <div className="flex max-w-[280px] flex-col items-start gap-1">
-                                  <div className="text-sm font-semibold text-yellow-600">
-                                    {item.buyer?.nickname}
+                          return (
+                            <div className="min-w-[360px] rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="min-w-0 border-r border-zinc-200 pr-3">
+                                  <div className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
+                                    결제통장 정보
                                   </div>
-                                  <div className="flex flex-col gap-0.5 items-start justify-center">
-                                    <div className="text-xs font-medium text-zinc-600">
-                                      {item.buyer?.depositBankName}
+                                  <div className="flex flex-col gap-1">
+                                    <div className="text-sm font-semibold text-zinc-800">
+                                      {paymentBankInfo.bankName}
                                     </div>
-                                    <div className="text-xs font-medium text-zinc-600 break-all">
-                                      {item.buyer?.depositBankAccountNumber}
+                                    <div
+                                      className="text-xs font-medium text-zinc-600 break-all"
+                                      style={{ fontFamily: 'monospace' }}
+                                    >
+                                      {paymentBankInfo.accountNumber}
                                     </div>
                                     <div className="text-xs font-medium text-zinc-600">
-                                      {item.buyer?.depositName}
+                                      {paymentBankInfo.accountHolder}
                                     </div>
                                   </div>
                                 </div>
-                              ) : (
-                                <div className="flex max-w-[280px] flex-col gap-0.5 items-start justify-center">
-                                  <div className="text-xs font-medium text-zinc-600">
-                                    {item.seller?.bankInfo?.bankName}
+
+                                <div className="min-w-0">
+                                  <div className="mb-2 text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
+                                    판매자 정보
                                   </div>
-                                  <div className="text-xs font-medium text-zinc-600 break-all">
-                                    {
-                                      item.seller?.bankInfo?.accountNumber
-                                      && item.seller?.bankInfo?.accountNumber.length > 5
-                                      ? item.seller?.bankInfo?.accountNumber.slice(0, 3) + '...' + item.seller?.bankInfo?.accountNumber.slice(-2)
-                                      : item.seller?.bankInfo?.accountNumber
-                                    }
-                                  </div>
-                                  <div className="text-xs font-medium text-zinc-600">
-                                    {item.seller?.bankInfo?.accountHolder}
+                                  <div className="flex flex-col gap-1.5">
+                                    <div className="flex min-w-0 items-center gap-1.5">
+                                      <Image
+                                        src="/icon-seller.png"
+                                        alt="Seller"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4 shrink-0"
+                                      />
+                                      <span className="truncate text-sm font-semibold text-zinc-800">
+                                        {sellerNickname}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex min-w-0 items-center gap-1.5">
+                                      <Image
+                                        src="/icon-shield.png"
+                                        alt="Shield"
+                                        width={16}
+                                        height={16}
+                                        className="w-4 h-4 shrink-0"
+                                      />
+                                      {sellerWalletAddress ? (
+                                        <button
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(sellerWalletAddress);
+                                            toast.success('판매자 지갑주소가 복사되었습니다.');
+                                          }}
+                                          className="truncate text-xs font-medium text-zinc-600 underline decoration-zinc-300 underline-offset-2 hover:text-blue-500"
+                                          title="판매자 지갑주소 복사"
+                                        >
+                                          {formatCompactWalletAddress(sellerWalletAddress)}
+                                        </button>
+                                      ) : (
+                                        <span className="text-xs font-medium text-zinc-600">-</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              )}
-                            </div>
-
-                            <div className="h-px w-full bg-zinc-200" />
-
-                            <div className="flex flex-col gap-1.5">
-                              <div className="text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
-                                {Seller}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                {item.seller?.nickname && (
-                                  <div className="flex flex-row gap-1 items-center justify-start">
-                                    <Image
-                                      src="/icon-seller.png"
-                                      alt="Seller"
-                                      width={16}
-                                      height={16}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-sm font-semibold text-zinc-700">
-                                      {item.seller?.nickname}
-                                    </span>
-                                  </div>
-                                )}
-                                {item.seller?.walletAddress && (
-                                  <div className="flex flex-row gap-1 items-center justify-start">
-                                    <Image
-                                      src="/icon-shield.png"
-                                      alt="Shield"
-                                      width={16}
-                                      height={16}
-                                      className="w-4 h-4"
-                                    />
-                                    <span className="text-xs font-semibold text-zinc-700">
-                                      {item.seller.walletAddress.slice(0, 6) + '...' + item.seller.walletAddress.slice(-4)}
-                                    </span>
-                                  </div>
-                                )}
                               </div>
                             </div>
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </td>
 
 
