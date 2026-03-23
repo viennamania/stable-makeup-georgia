@@ -146,7 +146,7 @@ const formatUsdtDisplay = (value: number | null | undefined) =>
   Number(value || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 const formatKrwDisplay = (value: number | null | undefined) =>
-  Number(value || 0).toLocaleString('ko-KR');
+  Math.round(Number(value || 0)).toLocaleString('ko-KR');
 
 const formatDateInputValue = (date: Date) => {
   const target = new Date(date);
@@ -205,7 +205,7 @@ const DailyCloseMetricCard = ({
       <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
         {label}
       </div>
-      <div className="mt-3 flex items-end gap-1.5">
+      <div className="mt-3 flex items-end justify-end gap-1.5 text-right">
         <span className={`text-2xl font-semibold leading-none tracking-tight ${toneClassName}`}>
           {value}
         </span>
@@ -216,7 +216,7 @@ const DailyCloseMetricCard = ({
         )}
       </div>
       {helper && (
-        <div className="mt-2 text-xs text-zinc-500">
+        <div className="mt-2 text-right text-xs text-zinc-500">
           {helper}
         </div>
       )}
