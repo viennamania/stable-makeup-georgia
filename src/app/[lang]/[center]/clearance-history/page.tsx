@@ -4846,21 +4846,23 @@ export default function Index({ params }: any) {
                               </div>
                             </div>
 
-                            <div className="flex min-w-0 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-1.5">
-                              <Image
-                                src={eventStoreLogo}
-                                alt={eventStoreName}
-                                width={24}
-                                height={24}
-                                className="h-6 w-6 rounded-full object-cover"
-                              />
-                              <div className="min-w-0">
-                                <div className="truncate text-[11px] font-semibold text-zinc-800">
-                                  {eventStoreName}
+                            <div className="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
+                              <div className="flex min-w-0 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-1.5">
+                                <Image
+                                  src={eventStoreLogo}
+                                  alt={eventStoreName}
+                                  width={24}
+                                  height={24}
+                                  className="h-6 w-6 rounded-full object-cover"
+                                />
+                                <div className="min-w-0">
+                                  <div className="truncate text-[11px] font-semibold text-zinc-800">
+                                    {eventStoreName}
+                                  </div>
                                 </div>
-                                <div className="truncate text-[10px] text-zinc-500">
-                                  {formatRealtimeDateTime(publishedAt)}
-                                </div>
+                              </div>
+                              <div className="max-w-full truncate text-[10px] text-zinc-500">
+                                {formatRealtimeDateTime(publishedAt)}
                               </div>
                             </div>
                           </div>
