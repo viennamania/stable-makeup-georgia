@@ -1589,7 +1589,7 @@ export default function Index({ params }: any) {
               </section>
 
               <section className="w-full rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[minmax(0,1fr)_540px] xl:items-end">
                   <div className="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
                     <label className="flex flex-col gap-1">
                       <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -1655,37 +1655,44 @@ export default function Index({ params }: any) {
                     </label>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                    <button
-                      type="button"
-                      className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-                      onClick={() => applyQuickDateRange(1)}
-                    >
-                      오늘
-                    </button>
-                    <button
-                      type="button"
-                      className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-                      onClick={() => applyQuickDateRange(7)}
-                    >
-                      7일
-                    </button>
-                    <button
-                      type="button"
-                      className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
-                      onClick={() => applyQuickDateRange(30)}
-                    >
-                      30일
-                    </button>
-                    <button
-                      type="button"
-                      className="h-10 rounded-xl border border-zinc-900 bg-zinc-900 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
-                      onClick={resetDailyCloseFilters}
-                    >
-                      초기화
-                    </button>
-                    {loadingBuyOrders && (
-                      <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500">
+                  <div className="flex flex-wrap items-center gap-2 xl:w-[540px] xl:justify-end">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                        onClick={() => applyQuickDateRange(1)}
+                      >
+                        오늘
+                      </button>
+                      <button
+                        type="button"
+                        className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                        onClick={() => applyQuickDateRange(7)}
+                      >
+                        7일
+                      </button>
+                      <button
+                        type="button"
+                        className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                        onClick={() => applyQuickDateRange(30)}
+                      >
+                        30일
+                      </button>
+                      <button
+                        type="button"
+                        className="h-10 rounded-xl border border-zinc-900 bg-zinc-900 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                        onClick={resetDailyCloseFilters}
+                      >
+                        초기화
+                      </button>
+                    </div>
+                    <div className="flex h-10 min-w-[112px] items-center justify-end">
+                      <div
+                        className={`flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 transition-opacity ${
+                          loadingBuyOrders ? 'opacity-100' : 'pointer-events-none opacity-0'
+                        }`}
+                        aria-hidden={!loadingBuyOrders}
+                      >
                         <Image
                           src="/loading.png"
                           alt="Loading"
@@ -1695,7 +1702,7 @@ export default function Index({ params }: any) {
                         />
                         로딩중...
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </section>
