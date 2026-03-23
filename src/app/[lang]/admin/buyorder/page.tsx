@@ -6820,10 +6820,10 @@ const fetchBuyOrders = async () => {
 
             <table className="w-full table-auto border-collapse border border-neutral-200 rounded-xl shadow-sm bg-white text-[13px] leading-tight [&>thead>tr>th]:py-2 [&>thead>tr>th]:px-3 [&>tbody>tr>td]:py-2 [&>tbody>tr>td]:px-3">
 
-              <thead className="bg-neutral-900 text-white text-sm font-semibold">
+              <thead className="bg-neutral-900 text-neutral-100 backdrop-blur-sm">
                 <tr>
 
-                  <th className="p-3 text-start">
+                  <th className="p-3 align-middle text-start text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="flex flex-col items-start justify-center gap-1">
                       <span className="text-xs uppercase tracking-wide text-neutral-300">
                         가맹점
@@ -6837,7 +6837,7 @@ const fetchBuyOrders = async () => {
                     </div>
                   </th>
 
-                  <th className="p-3 text-start">
+                  <th className="p-3 align-middle text-start text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="flex flex-col items-start justify-center gap-1">
                       <span className="text-xs uppercase tracking-wide text-neutral-300">
                         P2P 구매자 아이디
@@ -6851,7 +6851,7 @@ const fetchBuyOrders = async () => {
                     </div>
                   </th>
                   
-                  <th className="p-3 text-end">
+                  <th className="p-3 align-middle text-end text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="flex flex-col items-end justify-center gap-1">
                       <span className="text-xs uppercase tracking-wide text-neutral-300">
                         {Buy_Amount}(USDT)
@@ -6868,7 +6868,7 @@ const fetchBuyOrders = async () => {
                   <th className="p-2">{Payment_Amount}</th>
                   */}
 
-                  <th className="p-3 text-start">
+                  <th className="p-3 align-middle text-start text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="flex flex-col items-start justify-center gap-1">
 
                       <div className="flex flex-col items-start justify-center gap-1">
@@ -6910,11 +6910,11 @@ const fetchBuyOrders = async () => {
                   </th>
 
 
-                  <th className="p-2">
+                  <th className="p-3 align-middle text-start text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="w-full flex flex-col items-start justify-center gap-2">
 
                       <div className="flex flex-row items-center justify-center gap-2">
-                        <span>
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">
                           자동입금확인
                         </span>
                         <Image
@@ -6929,7 +6929,7 @@ const fetchBuyOrders = async () => {
                             ${buyOrders.filter((item) => item.status === 'paymentRequested').length > 0 ? 'animate-spin' : ''}
                           `}
                         />
-                        <span className="text-sm text-zinc-50 font-semibold">
+                        <span className="text-sm font-semibold text-neutral-100">
                           {
                             buyOrders.filter((item) => item.status === 'paymentRequested').length
                           }
@@ -6937,12 +6937,12 @@ const fetchBuyOrders = async () => {
 
                       </div>
                       <div className="w-full flex flex-col items-start justify-center gap-2">
-                        <span className="text-sm text-zinc-50 font-semibold">
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">
                           입금통장
                         </span>
                       </div>
                       <div className="w-full flex flex-col items-end justify-center gap-2">
-                        <span className="text-sm text-zinc-50 font-semibold">
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">
                           입금액(원)
                         </span>
                       </div>
@@ -6951,9 +6951,9 @@ const fetchBuyOrders = async () => {
                   </th>
 
 
-                  <th className="p-2">
+                  <th className="p-3 align-middle text-center text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <span>
+                      <span className="text-xs uppercase tracking-wide text-neutral-300">
                         P2P 거래취소
                       </span>
                       {
@@ -6968,12 +6968,12 @@ const fetchBuyOrders = async () => {
                             height={20}
                             className="w-5 h-5 animate-spin"
                           />
-                          <span className="text-sm">
+                          <span className="text-sm font-semibold text-neutral-100">
                             USDT 전송중...
                           </span>
                         </div>
                       ) : (
-                        <span className="text-sm">
+                        <span className="text-sm font-semibold text-neutral-100">
                           USDT 전송
                         </span>
                       )}
@@ -6987,11 +6987,10 @@ const fetchBuyOrders = async () => {
                   </th>
                   */}
 
-                  <th className="
-                    p-2">
+                  <th className="p-3 align-middle text-center text-[11px] font-semibold tracking-wide text-neutral-100/90">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <div className="flex flex-row items-center justify-center gap-2">
-                        <span>
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">
                           가맹점 자동결제 및 정산(USDT)
                         </span>
                         <Image
@@ -7011,7 +7010,7 @@ const fetchBuyOrders = async () => {
                           `}
                         />
 
-                        <span className="text-sm text-zinc-50 font-semibold">
+                        <span className="text-sm font-semibold text-neutral-100">
                           {
                             buyOrders.filter((item) => item.status === 'paymentConfirmed'
                             && item?.settlement?.status !== "paymentSettled"

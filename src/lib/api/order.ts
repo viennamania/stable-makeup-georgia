@@ -9059,6 +9059,37 @@ export async function getCollectOrdersForSeller(
       { automationSource: WITHDRAWAL_WEBHOOK_CLEARANCE_SOURCE },
     ],
   };
+  const normalizedTransactionHashExpr = {
+    $toLower: {
+      $ifNull: ['$transactionHash', ''],
+    },
+  };
+  const normalizedTransactionHashDummyReasonExpr = {
+    $toLower: {
+      $ifNull: [
+        '$transactionHashDummyReason',
+        {
+          $ifNull: [
+            '$createdBy.transactionHashDummyReason',
+            { $ifNull: ['$clearanceSource.transactionHashDummyReason', ''] },
+          ],
+        },
+      ],
+    },
+  };
+  const hasRealTransferExpr = {
+    $and: [
+      { $ne: [normalizedTransactionHashExpr, ''] },
+      { $ne: [normalizedTransactionHashExpr, '0x'] },
+      { $ne: [{ $ifNull: ['$transactionHashDummy', false] }, true] },
+      {
+        $ne: [
+          normalizedTransactionHashDummyReasonExpr,
+          WITHDRAWAL_WEBHOOK_CLEARANCE_DUMMY_TRANSFER_REASON,
+        ],
+      },
+    ],
+  };
 
 
   // status is not 'paymentConfirmed'
@@ -9139,6 +9170,16 @@ export async function getCollectOrdersForSeller(
           totalClearanceCount: { $sum: 1 },
           totalClearanceAmount: { $sum: '$usdtAmount' },
           totalClearanceAmountKRW: { $sum: { $toDouble: '$krwAmount' } }, // convert to double
+          totalTransferCount: {
+            $sum: {
+              $cond: [hasRealTransferExpr, 1, 0],
+            },
+          },
+          totalTransferAmount: {
+            $sum: {
+              $cond: [hasRealTransferExpr, { $ifNull: ['$usdtAmount', 0] }, 0],
+            },
+          },
 
         }
       }
@@ -9147,6 +9188,8 @@ export async function getCollectOrdersForSeller(
     const totalClearanceCount = totalClearance.length > 0 ? totalClearance[0].totalClearanceCount : 0;
     const totalClearanceAmount = totalClearance.length > 0 ? totalClearance[0].totalClearanceAmount : 0;
     const totalClearanceAmountKRW = totalClearance.length > 0 ? totalClearance[0].totalClearanceAmountKRW : 0;
+    const totalTransferCount = totalClearance.length > 0 ? totalClearance[0].totalTransferCount : 0;
+    const totalTransferAmount = totalClearance.length > 0 ? totalClearance[0].totalTransferAmount : 0;
 
     
 
@@ -9209,6 +9252,8 @@ export async function getCollectOrdersForSeller(
       totalClearanceCount: totalClearanceCount,
       totalClearanceAmount: totalClearanceAmount,
       totalClearanceAmountKRW: totalClearanceAmountKRW,
+      totalTransferCount: totalTransferCount,
+      totalTransferAmount: totalTransferAmount,
 
       totalByBuyerBankAccountNumber: totalReaultGroupByBuyerBankAccountNumber,
       totalBySellerBankAccountNumber: totalReaultGroupBySellerBankAccountNumber,

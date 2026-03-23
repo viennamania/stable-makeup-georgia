@@ -1017,6 +1017,8 @@ export default function Index({ params }: any) {
     totalClearanceCount: number;
     totalClearanceAmount: number;
     totalClearanceAmountKRW: number;
+    totalTransferCount: number;
+    totalTransferAmount: number;
 
 
     totalKrwAmount: number;
@@ -1045,6 +1047,8 @@ export default function Index({ params }: any) {
     totalClearanceCount: 0,
     totalClearanceAmount: 0,
     totalClearanceAmountKRW: 0,
+    totalTransferCount: 0,
+    totalTransferAmount: 0,
 
     totalKrwAmount: 0,
     totalUsdtAmount: 0,
@@ -1057,6 +1061,25 @@ export default function Index({ params }: any) {
     totalAgentFeeAmountKRW: 0,
     totalByBuyerBankAccountNumber: [],
     totalBySellerBankAccountNumber: [],
+  });
+
+  const toCenterBuyOrderStats = (result: any) => ({
+    totalClearanceCount: Number(result?.totalClearanceCount || 0),
+    totalClearanceAmount: Number(result?.totalClearanceAmount || 0),
+    totalClearanceAmountKRW: Number(result?.totalClearanceAmountKRW || 0),
+    totalTransferCount: Number(result?.totalTransferCount || 0),
+    totalTransferAmount: Number(result?.totalTransferAmount || 0),
+    totalKrwAmount: Number(result?.totalKrwAmount || 0),
+    totalUsdtAmount: Number(result?.totalUsdtAmount || 0),
+    totalSettlementCount: Number(result?.totalSettlementCount || 0),
+    totalSettlementAmount: Number(result?.totalSettlementAmount || 0),
+    totalSettlementAmountKRW: Number(result?.totalSettlementAmountKRW || 0),
+    totalFeeAmount: Number(result?.totalFeeAmount || 0),
+    totalFeeAmountKRW: Number(result?.totalFeeAmountKRW || 0),
+    totalAgentFeeAmount: Number(result?.totalAgentFeeAmount || 0),
+    totalAgentFeeAmountKRW: Number(result?.totalAgentFeeAmountKRW || 0),
+    totalByBuyerBankAccountNumber: result?.totalByBuyerBankAccountNumber || [],
+    totalBySellerBankAccountNumber: result?.totalBySellerBankAccountNumber || [],
   });
 
   const [withdrawalRealtimeEvents, setWithdrawalRealtimeEvents] = useState<ClearanceWithdrawalRealtimeItem[]>([]);
@@ -1423,25 +1446,7 @@ export default function Index({ params }: any) {
 
 
 
-              setBuyOrderStats({
-                //totalCount: data.result.totalCount,
-                totalClearanceCount: data.result.totalClearanceCount,
-                totalClearanceAmount: data.result.totalClearanceAmount,
-                totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-              });
+              setBuyOrderStats(toCenterBuyOrderStats(data.result));
 
 
 
@@ -1567,25 +1572,7 @@ export default function Index({ params }: any) {
           //setTotalClearanceAmount(data.result.totalClearanceAmount);
           //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
-          setBuyOrderStats({
-            //totalCount: data.result.totalCount,
-            totalClearanceCount: data.result.totalClearanceCount,
-            totalClearanceAmount: data.result.totalClearanceAmount,
-            totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-            totalKrwAmount: data.result.totalKrwAmount,
-            totalUsdtAmount: data.result.totalUsdtAmount,
-            totalSettlementCount: data.result.totalSettlementCount,
-            totalSettlementAmount: data.result.totalSettlementAmount,
-            totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-            totalFeeAmount: data.result.totalFeeAmount,
-            totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-            totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-            totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-            totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-            totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-          });
+          setBuyOrderStats(toCenterBuyOrderStats(data.result));
 
 
         }
@@ -1830,25 +1817,7 @@ export default function Index({ params }: any) {
                 //setTotalClearanceAmount(data.result.totalClearanceAmount);
                 //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
-                setBuyOrderStats({
-                  //totalCount: data.result.totalCount,
-                  totalClearanceCount: data.result.totalClearanceCount,
-                  totalClearanceAmount: data.result.totalClearanceAmount,
-                  totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-                  totalKrwAmount: data.result.totalKrwAmount,
-                  totalUsdtAmount: data.result.totalUsdtAmount,
-                  totalSettlementCount: data.result.totalSettlementCount,
-                  totalSettlementAmount: data.result.totalSettlementAmount,
-                  totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                  totalFeeAmount: data.result.totalFeeAmount,
-                  totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                  totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                  totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                  totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                  totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-                });
+                setBuyOrderStats(toCenterBuyOrderStats(data.result));
 
             })
 
@@ -1944,25 +1913,7 @@ export default function Index({ params }: any) {
               //setTotalClearanceAmount(data.result.totalClearanceAmount);
               //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
-              setBuyOrderStats({
-                //totalCount: data.result.totalCount,
-                totalClearanceCount: data.result.totalClearanceCount,
-                totalClearanceAmount: data.result.totalClearanceAmount,
-                totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-                totalKrwAmount: data.result.totalKrwAmount,
-                totalUsdtAmount: data.result.totalUsdtAmount,
-                totalSettlementCount: data.result.totalSettlementCount,
-                totalSettlementAmount: data.result.totalSettlementAmount,
-                totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-                totalFeeAmount: data.result.totalFeeAmount,
-                totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-                totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-                totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-                totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-                totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-              });
+              setBuyOrderStats(toCenterBuyOrderStats(data.result));
 
           })
 
@@ -2352,25 +2303,7 @@ export default function Index({ params }: any) {
             //setTotalClearanceAmount(data.result.totalClearanceAmount);
             //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
-            setBuyOrderStats({
-              //totalCount: data.result.totalCount,
-              totalClearanceCount: data.result.totalClearanceCount,
-              totalClearanceAmount: data.result.totalClearanceAmount,
-              totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-              totalKrwAmount: data.result.totalKrwAmount,
-              totalUsdtAmount: data.result.totalUsdtAmount,
-              totalSettlementCount: data.result.totalSettlementCount,
-              totalSettlementAmount: data.result.totalSettlementAmount,
-              totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-              totalFeeAmount: data.result.totalFeeAmount,
-              totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-              totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-              totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-              totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-              totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-            });
+            setBuyOrderStats(toCenterBuyOrderStats(data.result));
 
         })
 
@@ -2552,25 +2485,7 @@ export default function Index({ params }: any) {
       //setTotalClearanceAmount(data.result.totalClearanceAmount);
       //setTotalClearanceAmountKRW(data.result.totalClearanceAmountKRW);
 
-      setBuyOrderStats({
-        //totalCount: data.result.totalCount,
-        totalClearanceCount: data.result.totalClearanceCount,
-        totalClearanceAmount: data.result.totalClearanceAmount,
-        totalClearanceAmountKRW: data.result.totalClearanceAmountKRW,
-
-        totalKrwAmount: data.result.totalKrwAmount,
-        totalUsdtAmount: data.result.totalUsdtAmount,
-        totalSettlementCount: data.result.totalSettlementCount,
-        totalSettlementAmount: data.result.totalSettlementAmount,
-        totalSettlementAmountKRW: data.result.totalSettlementAmountKRW,
-        totalFeeAmount: data.result.totalFeeAmount,
-        totalFeeAmountKRW: data.result.totalFeeAmountKRW,
-        totalAgentFeeAmount: data.result.totalAgentFeeAmount,
-        totalAgentFeeAmountKRW: data.result.totalAgentFeeAmountKRW,
-
-        totalByBuyerBankAccountNumber: data.result.totalByBuyerBankAccountNumber || [],
-        totalBySellerBankAccountNumber: data.result.totalBySellerBankAccountNumber || [],
-      });
+      setBuyOrderStats(toCenterBuyOrderStats(data.result));
 
       
     }
@@ -4045,40 +3960,61 @@ export default function Index({ params }: any) {
             <div className="sm:hidden w-full h-0.5 bg-zinc-300"></div>
             */}
 
-            <div className="w-full xl:w-1/3
-              flex flex-row items-start justify-between gap-2 pl-4 pr-4">
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 판매주문수(건)</div>
-                <div className="text-xl font-semibold text-zinc-500">
-                  {buyOrderStats.totalClearanceCount?.toLocaleString()}
+            <div className="w-full flex flex-col xl:flex-row items-stretch justify-between gap-4 px-2 sm:px-4">
+              <div className="flex flex-1 flex-row items-start justify-between gap-3">
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">총 판매주문수(건)</div>
+                  <div className="text-xl font-semibold text-zinc-500">
+                    {buyOrderStats.totalClearanceCount?.toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">총 판매량(USDT)</div>
+                  <div className="text-sm font-semibold text-zinc-500">
+                    <span className="text-xl text-[#409192]"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(buyOrderStats.totalClearanceAmount || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">총 판매금액(원)</div>
+                  <div className="text-sm font-semibold text-zinc-500">
+                    <span className="text-xl text-yellow-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {buyOrderStats.totalClearanceAmountKRW?.toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 판매량(USDT)</div>
-                <div className="text-sm font-semibold text-zinc-500">
-                  <span className="text-xl text-[#409192]"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                    buyOrderStats.totalClearanceAmount &&
-                    buyOrderStats.totalClearanceAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    }
-                  </span>
+              <div className="h-px w-full bg-zinc-200 xl:hidden" />
+              <div className="hidden w-px self-stretch bg-zinc-200 xl:block" />
+
+              <div className="flex shrink-0 flex-row items-start justify-center gap-6 xl:min-w-[280px] xl:pl-2">
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">전송수(건)</div>
+                  <div className="text-xl font-semibold text-zinc-500">
+                    {buyOrderStats.totalTransferCount?.toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 items-center">
+                  <div className="text-sm">전송량(USDT)</div>
+                  <div className="text-sm font-semibold text-zinc-500">
+                    <span
+                      className="text-xl text-sky-600"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      {Number(buyOrderStats.totalTransferAmount || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex flex-col gap-2 items-center">
-                <div className="text-sm">총 판매금액(원)</div>
-                <div className="text-sm font-semibold text-zinc-500">
-                  <span className="text-xl text-yellow-600"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {buyOrderStats.totalClearanceAmountKRW?.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
             </div>
             
           </div>
