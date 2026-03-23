@@ -378,6 +378,18 @@ const getClearancePaymentBankInfo = (order: BuyOrder) => {
   };
 };
 
+const getClearanceRecipientBankInfo = (order: BuyOrder) => {
+  const bankName = toTrimmedText(order?.seller?.bankInfo?.bankName);
+  const accountNumber = toTrimmedText(order?.seller?.bankInfo?.accountNumber);
+  const accountHolder = toTrimmedText(order?.seller?.bankInfo?.accountHolder);
+
+  return {
+    bankName: bankName || "-",
+    accountNumber: accountNumber || "-",
+    accountHolder: accountHolder || "-",
+  };
+};
+
 const formatAggregateKrwAmount = (value: number | null | undefined) =>
   Number(value || 0).toLocaleString();
 
@@ -6997,7 +7009,7 @@ export default function Index({ params }: any) {
               ) : (
                 <div className="flex flex-col gap-3">
                   {buyerBankHistoryOrders.map((item, index) => {
-                    const paymentBankInfo = getClearancePaymentBankInfo(item);
+                    const recipientBankInfo = getClearanceRecipientBankInfo(item);
                     const sellerNickname = toTrimmedText(item?.seller?.nickname) || '-';
                     const sellerWalletAddress = toTrimmedText(item?.seller?.walletAddress);
                     const depositCompletedActorMeta = getDepositCompletedActorMeta(item?.buyer);
@@ -7056,19 +7068,19 @@ export default function Index({ params }: any) {
                         <div className="mt-3 grid gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3 sm:grid-cols-2">
                           <div className="min-w-0">
                             <div className="text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
-                              결제통장
+                              수취인 통장
                             </div>
                             <div className="mt-1 text-sm font-semibold text-zinc-800">
-                              {paymentBankInfo.bankName}
+                              {recipientBankInfo.bankName}
                             </div>
                             <div
                               className="mt-1 break-all text-xs text-zinc-600"
                               style={{ fontFamily: 'monospace' }}
                             >
-                              {paymentBankInfo.accountNumber}
+                              {recipientBankInfo.accountNumber}
                             </div>
                             <div className="mt-1 text-xs text-zinc-600">
-                              {paymentBankInfo.accountHolder}
+                              {recipientBankInfo.accountHolder}
                             </div>
                           </div>
 
