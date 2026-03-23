@@ -265,6 +265,55 @@ const formatRealtimeRelative = (value: string | null | undefined, nowMs: number)
   return `${diffDays}일 전`;
 };
 
+const formatAdminActionDateTime = (value: string | null | undefined) => {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    return "";
+  }
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) {
+    return normalized;
+  }
+  return date.toLocaleString("ko-KR");
+};
+
+const getDepositCompletedActorLabel = (buyer: any) => {
+  const actor = buyer?.depositCompletedBy;
+  const nickname = toTrimmedText(actor?.nickname);
+  if (nickname) {
+    return nickname;
+  }
+
+  const walletAddress = toTrimmedText(actor?.walletAddress);
+  if (!walletAddress) {
+    return "";
+  }
+
+  return formatCompactWalletAddress(walletAddress);
+};
+
+const getDepositCompletedActorMeta = (buyer: any) => {
+  const actor = buyer?.depositCompletedBy;
+  const nickname = String(actor?.nickname || "").trim().toLowerCase();
+  const role = String(actor?.role || "").trim().toLowerCase();
+
+  if (!actor) {
+    return null;
+  }
+
+  if (role === "system" || nickname === "withdrawal webhook") {
+    return {
+      label: "시스템 처리",
+      className: "border-amber-200 bg-amber-50 text-amber-700",
+    };
+  }
+
+  return {
+    label: "관리자 처리",
+    className: "border-sky-200 bg-sky-50 text-sky-700",
+  };
+};
+
 const normalizeStoreBankAccountNumber = (value: string | null | undefined) =>
   String(value || "").replace(/[\s-]/g, "");
 
@@ -4764,7 +4813,7 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
                     <th className="w-[170px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">거래취소</th>
-                    <th className="w-[120px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">출금상태</th>
+                    <th className="w-[180px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">출금상태</th>
                     <th className="w-[220px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
                       {
                       //isProcessingSendTransaction
@@ -5128,28 +5177,46 @@ export default function Index({ params }: any) {
 
                       {/* 출금상태: buyer.depositCompleted */}
                       <td className="px-2 py-2 align-top">
-
-                        {item.status !== 'cancelled' && (
-                          <>   
-                            {item?.buyer?.depositCompleted !== true
-                            ? (
-                              <div className="text-xs text-red-600
-                              flex flex-row items-center gap-2
-                              border border-red-400
-                              rounded-md px-2 py-1">
-                                출금대기중
-                              </div>
-                            ) : (
-                              <div className="text-xs text-[#409192]
-                              flex flex-row items-center gap-2
-                              border border-green-400
-                              rounded-md px-2 py-1">
+                        <div className="flex min-h-[120px] w-[170px] flex-col items-center justify-center gap-1">
+                          {item?.buyer?.depositCompleted === true ? (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="rounded-md border border-green-600 px-2 py-1 text-sm text-[#409192]">
                                 출금완료
-                              </div>
-                            )}
-                          </>
-                        )}
-                      
+                              </span>
+                              {(getDepositCompletedActorLabel(item?.buyer) || item?.buyer?.depositCompletedAt) && (
+                                <div className="text-center text-[11px] leading-4 text-zinc-500">
+                                  {getDepositCompletedActorMeta(item?.buyer) && (
+                                    <div className="mb-1">
+                                      <span
+                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getDepositCompletedActorMeta(item?.buyer)?.className}`}
+                                      >
+                                        {getDepositCompletedActorMeta(item?.buyer)?.label}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {getDepositCompletedActorLabel(item?.buyer) && (
+                                    <div>처리자 {getDepositCompletedActorLabel(item?.buyer)}</div>
+                                  )}
+                                  {item?.buyer?.depositCompletedAt && (
+                                    <div>{formatAdminActionDateTime(item?.buyer?.depositCompletedAt)}</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : item.status === 'cancelled' ? (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="rounded-md border border-zinc-400 px-2 py-1 text-sm text-zinc-500">
+                                출금미처리
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <span className="rounded-md border border-red-600 px-2 py-1 text-sm text-red-600">
+                                출금대기중
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-2 py-2 align-top">

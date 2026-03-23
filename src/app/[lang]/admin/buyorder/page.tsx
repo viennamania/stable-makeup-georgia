@@ -6968,12 +6968,12 @@ const fetchBuyOrders = async () => {
                             height={20}
                             className="w-5 h-5 animate-spin"
                           />
-                          <span className="text-sm font-semibold text-neutral-100">
+                          <span className="text-xs uppercase tracking-wide text-neutral-300">
                             USDT 전송중...
                           </span>
                         </div>
                       ) : (
-                        <span className="text-sm font-semibold text-neutral-100">
+                        <span className="text-xs uppercase tracking-wide text-neutral-300">
                           USDT 전송
                         </span>
                       )}
