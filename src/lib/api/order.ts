@@ -9210,8 +9210,35 @@ export async function getCollectOrdersForSeller(
         }
       },
       {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
         $group: {
           _id: '$buyer.bankInfo.accountNumber',
+          bankName: {
+            $first: {
+              $ifNull: [
+                '$buyer.depositBankName',
+                { $ifNull: ['$buyer.bankInfo.bankName', ''] },
+              ],
+            },
+          },
+          accountHolder: {
+            $first: {
+              $cond: [
+                {
+                  $and: [
+                    { $ne: [{ $ifNull: ['$buyer.depositName', ''] }, ''] },
+                    { $ne: [{ $ifNull: ['$buyer.depositName', null] }, null] },
+                  ],
+                },
+                '$buyer.depositName',
+                { $ifNull: ['$buyer.bankInfo.accountHolder', ''] },
+              ],
+            },
+          },
           totalCount: { $sum: 1 },
           totalKrwAmount: { $sum: '$krwAmount' },
           totalUsdtAmount: { $sum: '$usdtAmount' },
@@ -9234,8 +9261,23 @@ export async function getCollectOrdersForSeller(
         }
       },
       {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
         $group: {
           _id: '$seller.bankInfo.accountNumber',
+          bankName: {
+            $first: {
+              $ifNull: ['$seller.bankInfo.bankName', ''],
+            },
+          },
+          accountHolder: {
+            $first: {
+              $ifNull: ['$seller.bankInfo.accountHolder', ''],
+            },
+          },
           totalCount: { $sum: 1 },
           totalKrwAmount: { $sum: '$krwAmount' },
           totalUsdtAmount: { $sum: '$usdtAmount' },

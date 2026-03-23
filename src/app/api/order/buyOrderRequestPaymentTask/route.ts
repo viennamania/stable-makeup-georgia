@@ -33,9 +33,13 @@ const BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS = Math.max(
   Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS || "", 10) || 12000,
   1000,
 );
-const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MS = Math.max(
-  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MS || "", 10) || 15000,
+const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS || "", 10) || 10000,
   0,
+);
+const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS = Math.max(
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS || "", 10) || 40000,
+  BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS,
 );
 const BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS = Math.max(
   Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS || "", 10) || 10000,
@@ -162,6 +166,21 @@ const isTransientMongoError = (error: unknown): boolean => {
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const getRandomAcceptedDelayMs = () => {
+  if (BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS <= BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS) {
+    return BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS;
+  }
+
+  const range =
+    BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS
+    - BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS;
+
+  return (
+    BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS
+    + Math.floor(Math.random() * (range + 1))
+  );
+};
 
 const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> => {
   let attempt = 0;
@@ -334,13 +353,15 @@ const runTask = async () => {
   const processedTradeIds: string[] = [];
   const skippedTradeIds: string[] = [];
   const storeCache = new Map<string, any | null>();
+  const acceptedDelayMs = getRandomAcceptedDelayMs();
+  const acceptedBefore = new Date(Date.now() - acceptedDelayMs).toISOString();
 
   const buyordersResult = await withTransientMongoRetry(() =>
     withTimeout(
       getAllBuyOrdersForRequestPayment({
         limit: BUYORDER_REQUEST_PAYMENT_TASK_MAX_ORDERS_PER_RUN,
         page: 1,
-        acceptedBefore: new Date(Date.now() - BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MS).toISOString(),
+        acceptedBefore,
       }),
       BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
       "buyOrderRequestPaymentTask queue read timeout",
@@ -442,6 +463,8 @@ const runTask = async () => {
   const result = {
     processedTradeIds,
     skippedTradeIds,
+    acceptedDelayMs,
+    acceptedBefore,
     processedCount: processedTradeIds.length,
     skippedCount: skippedTradeIds.length,
     queueTotalCount: Number(buyordersResult?.totalCount || 0),
@@ -511,6 +534,8 @@ export async function POST(request: NextRequest) {
         meta: {
           processedTradeIds: [],
           skippedTradeIds: [],
+          acceptedDelayMs: 0,
+          acceptedBefore: "",
           processedCount: 0,
           skippedCount: 0,
           queueTotalCount: 0,
