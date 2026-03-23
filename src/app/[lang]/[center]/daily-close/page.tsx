@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, act } from "react";
+import { useState, useEffect, useMemo, use, act } from "react";
 
 import Image from "next/image";
 
@@ -142,6 +142,110 @@ const wallets = [
 const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
 const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
 
+const formatUsdtDisplay = (value: number | null | undefined) =>
+  Number(value || 0).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+const formatKrwDisplay = (value: number | null | undefined) =>
+  Number(value || 0).toLocaleString('ko-KR');
+
+const formatDateInputValue = (date: Date) => {
+  const target = new Date(date);
+  target.setHours(target.getHours() + 9);
+  return target.toISOString().split('T')[0];
+};
+
+const formatDailyCloseDate = (value: string | null | undefined) => {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString('ko-KR');
+};
+
+const formatDailyCloseWeekday = (value: string | null | undefined) => {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString('ko-KR', { weekday: 'short' });
+};
+
+const DailyCloseMetricCard = ({
+  label,
+  value,
+  unit,
+  tone = 'zinc',
+  helper,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  tone?: 'zinc' | 'emerald' | 'amber';
+  helper?: string;
+}) => {
+  const toneClassName =
+    tone === 'emerald'
+      ? 'text-emerald-700'
+      : tone === 'amber'
+        ? 'text-amber-600'
+        : 'text-zinc-900';
+
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white px-4 py-4 shadow-sm">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        {label}
+      </div>
+      <div className="mt-3 flex items-end gap-1.5">
+        <span className={`text-2xl font-semibold leading-none tracking-tight ${toneClassName}`}>
+          {value}
+        </span>
+        {unit && (
+          <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            {unit}
+          </span>
+        )}
+      </div>
+      {helper && (
+        <div className="mt-2 text-xs text-zinc-500">
+          {helper}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DailyCloseAmountCell = ({
+  usdtValue,
+  krwValue,
+}: {
+  usdtValue: number | null | undefined;
+  krwValue: number | null | undefined;
+}) => (
+  <div className="flex flex-col items-end gap-1">
+    <span
+      className="text-sm font-semibold text-emerald-700 sm:text-base"
+      style={{ fontFamily: 'monospace' }}
+    >
+      {formatUsdtDisplay(usdtValue)}
+    </span>
+    <span
+      className="text-sm font-semibold text-amber-600 sm:text-base"
+      style={{ fontFamily: 'monospace' }}
+    >
+      {formatKrwDisplay(krwValue)}
+    </span>
+  </div>
+);
 
 
 
@@ -899,6 +1003,58 @@ export default function Index({ params }: any) {
     params.center,
   ]);
 
+  const dailyCloseSummary = useMemo(() => {
+    return buyOrders.reduce(
+      (acc, order) => {
+        acc.totalDays += 1;
+        acc.totalCount += Number(order.totalCount || 0);
+        acc.totalUsdtAmount += Number(order.totalUsdtAmount || 0);
+        acc.totalKrwAmount += Number(order.totalKrwAmount || 0);
+        acc.totalSettlementAmount += Number(order.totalSettlementAmount || 0);
+        acc.totalSettlementAmountKRW += Number(order.totalSettlementAmountKRW || 0);
+        acc.totalFeeAmount += Number(order.totalAgentFeeAmount || 0) + Number(order.totalFeeAmount || 0);
+        acc.totalFeeAmountKRW += Number(order.totalAgentFeeAmountKRW || 0) + Number(order.totalFeeAmountKRW || 0);
+        acc.totalEscrowWithdrawAmount += Number(order.totalEscrowWithdrawAmount || 0);
+        acc.totalClearanceCount += Number(order.totalClearanceCount || 0);
+        acc.totalClearanceUsdtAmount += Number(order.totalClearanceUsdtAmount || 0);
+        acc.totalClearanceKrwAmount += Number(order.totalClearanceKrwAmount || 0);
+        return acc;
+      },
+      {
+        totalDays: 0,
+        totalCount: 0,
+        totalUsdtAmount: 0,
+        totalKrwAmount: 0,
+        totalSettlementAmount: 0,
+        totalSettlementAmountKRW: 0,
+        totalFeeAmount: 0,
+        totalFeeAmountKRW: 0,
+        totalEscrowWithdrawAmount: 0,
+        totalClearanceCount: 0,
+        totalClearanceUsdtAmount: 0,
+        totalClearanceKrwAmount: 0,
+      },
+    );
+  }, [buyOrders]);
+
+  const applyQuickDateRange = (days: number) => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - Math.max(0, days - 1));
+
+    setSearchFormDate(formatDateInputValue(startDate));
+    setSearchToDate(formatDateInputValue(endDate));
+  };
+
+  const resetDailyCloseFilters = () => {
+    const today = formatDateInputValue(new Date());
+    setSearchFormDate(today);
+    setSearchToDate(today);
+    setSearchBuyer("");
+    setSearchDepositName("");
+    setSearchStoreBankAccountNumber("");
+  };
+
 
 
 
@@ -1208,16 +1364,11 @@ export default function Index({ params }: any) {
       <div className="py-0 w-full">
 
 
-          <div className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2
-            p-2 rounded-lg mb-4
-            ${store?.backgroundColor ?
-              "bg-" + store.backgroundColor + " " :
-              "bg-black/10"
-            }`}>
+          <div className="mb-4 w-full rounded-2xl border border-zinc-200 bg-white/90 p-3 shadow-sm backdrop-blur-sm">
 
               <div className="flex flex-row items-center gap-2">
                 
-                {/*}
+                {/*
                 <div className="w-full flex flex-row items-center justify-end gap-2">
                   {!address && (
                     <ConnectButton
@@ -1263,9 +1414,7 @@ export default function Index({ params }: any) {
                         onClick={() => {
                           router.push('/' + params.lang + '/' + params.center + '/profile-settings');
                         }}
-                        className="
-                        items-center justify-center
-                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                        className="items-center justify-center rounded-xl border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm text-zinc-50 transition hover:bg-zinc-800"
                       >
                         <div className="
                           w-40 xl:w-48
@@ -1304,10 +1453,7 @@ export default function Index({ params }: any) {
                               });
                           } }
 
-                          className="
-                            w-32
-                            flex items-center justify-center gap-2
-                            bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
+                          className="w-32 flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50"
                       >
                         <Image
                           src="/icon-logout.webp"
@@ -1367,568 +1513,385 @@ export default function Index({ params }: any) {
 
             <CenterTopMenu lang={params.lang} center={params.center} activeKey="daily-close" />
 
+            <div className="mt-1 w-full flex flex-col gap-4">
+              <section className="w-full overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-4 p-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-sm">
+                      <Image
+                        src="/icon-statistics.png"
+                        alt="Statistics"
+                        width={26}
+                        height={26}
+                        className="h-6 w-6"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                        Daily Close
+                      </div>
+                      <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-900">
+                        통계(일별)
+                      </h1>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                        <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1">
+                          {store?.storeName || params.center}
+                        </span>
+                        <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1">
+                          {searchFromDate || '-'} ~ {searchToDate || '-'}
+                        </span>
+                        <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1">
+                          집계 {buyOrders.length.toLocaleString()}일
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-            <div className='flex flex-row items-center space-x-4'>
-                <Image
-                  src="/icon-statistics.png"
-                  alt="Statistics"
-                  width={35}
-                  height={35}
-                  className="w-6 h-6"
+                  {version !== 'bangbang' && (
+                    <div className="grid w-full gap-3 lg:max-w-[520px] lg:grid-cols-[minmax(0,1fr)_auto]">
+                      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                          Escrow Snapshot
+                        </div>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <div className="text-xs text-zinc-500">현재 보유량</div>
+                            <div
+                              className="mt-1 text-xl font-semibold text-emerald-700"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {formatUsdtDisplay(escrowBalance)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-zinc-500">오늘 수수료 차감량</div>
+                            <div
+                              className="mt-1 text-xl font-semibold text-rose-600"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {formatUsdtDisplay(todayMinusedEscrowAmount)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          router.push('/' + params.lang + '/' + params.center + '/escrow-history');
+                        }}
+                        className="inline-flex items-center justify-center rounded-2xl border border-zinc-900 bg-zinc-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                      >
+                        보유량 내역
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section className="w-full rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="grid flex-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        From
+                      </span>
+                      <input
+                        type="date"
+                        value={searchFromDate}
+                        onChange={(e) => setSearchFormDate(e.target.value)}
+                        className="h-11 rounded-xl border border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-800 outline-none transition focus:border-zinc-500"
+                      />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        To
+                      </span>
+                      <input
+                        type="date"
+                        value={searchToDate}
+                        onChange={(e) => setSearchToDate(e.target.value)}
+                        className="h-11 rounded-xl border border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-800 outline-none transition focus:border-zinc-500"
+                      />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        Buyer
+                      </span>
+                      <input
+                        type="text"
+                        value={searchBuyer}
+                        onChange={(e) => setSearchBuyer(e.target.value)}
+                        placeholder="구매자 검색"
+                        className="h-11 rounded-xl border border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-800 outline-none transition focus:border-zinc-500"
+                      />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        Deposit Name
+                      </span>
+                      <input
+                        type="text"
+                        value={searchDepositName}
+                        onChange={(e) => setSearchDepositName(e.target.value)}
+                        placeholder="입금자명 검색"
+                        className="h-11 rounded-xl border border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-800 outline-none transition focus:border-zinc-500"
+                      />
+                    </label>
+
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                        Bank Account
+                      </span>
+                      <input
+                        type="text"
+                        value={searchStoreBankAccountNumber}
+                        onChange={(e) => setSearchStoreBankAccountNumber(e.target.value)}
+                        placeholder="통장번호 검색"
+                        className="h-11 rounded-xl border border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-800 outline-none transition focus:border-zinc-500"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                    <button
+                      type="button"
+                      className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                      onClick={() => applyQuickDateRange(1)}
+                    >
+                      오늘
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                      onClick={() => applyQuickDateRange(7)}
+                    >
+                      7일
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                      onClick={() => applyQuickDateRange(30)}
+                    >
+                      30일
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 rounded-xl border border-zinc-900 bg-zinc-900 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800"
+                      onClick={resetDailyCloseFilters}
+                    >
+                      초기화
+                    </button>
+                    {loadingBuyOrders && (
+                      <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500">
+                        <Image
+                          src="/loading.png"
+                          alt="Loading"
+                          width={16}
+                          height={16}
+                          className="h-4 w-4 animate-spin"
+                        />
+                        로딩중...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <section className="grid w-full gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <DailyCloseMetricCard
+                  label="집계 일수"
+                  value={dailyCloseSummary.totalDays.toLocaleString()}
+                  unit="DAY"
                 />
+                <DailyCloseMetricCard
+                  label="총 거래수"
+                  value={dailyCloseSummary.totalCount.toLocaleString()}
+                  unit="건"
+                />
+                <DailyCloseMetricCard
+                  label="총 거래량"
+                  value={formatUsdtDisplay(dailyCloseSummary.totalUsdtAmount)}
+                  unit="USDT"
+                  tone="emerald"
+                />
+                <DailyCloseMetricCard
+                  label="총 거래금액"
+                  value={formatKrwDisplay(dailyCloseSummary.totalKrwAmount)}
+                  unit="KRW"
+                  tone="amber"
+                />
+                <DailyCloseMetricCard
+                  label="총 결제금액"
+                  value={formatKrwDisplay(dailyCloseSummary.totalSettlementAmountKRW)}
+                  unit="KRW"
+                  tone="amber"
+                />
+                <DailyCloseMetricCard
+                  label="총 청산금액"
+                  value={formatKrwDisplay(dailyCloseSummary.totalClearanceKrwAmount)}
+                  unit="KRW"
+                  tone="amber"
+                />
+              </section>
 
-                <div className="text-xl font-semibold">
-                  통계(일별)
-                </div>
-
-            </div>
-
-
-
-
-            <div className="w-full flex flex-col items-end justify-end gap-2
-            border-b border-zinc-300 pb-2">
-
-              {/* 가맹점 보유량 */}
-              {version !== 'bangbang' && (
-              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2
-                bg-white/50 backdrop-blur-sm p-2 rounded-lg shadow-md">
-
-                <div className="flex flex-col items-start xl:items-center gap-2 mb-2 xl:mb-0">                
-                  <div className="flex flex-row gap-2 items-center">
-                    <div className="flex flex-row gap-2 items-center">
-                      <Image
-                        src="/icon-escrow.png"
-                        alt="Escrow"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-lg font-semibold text-zinc-500">
-                        현재 보유량
-                      </span>
+              <section className="w-full overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+                <div className="flex flex-col gap-2 border-b border-zinc-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                      Daily Table
                     </div>
-
-                    <div className="
-                      w-32
-                      flex flex-row gap-2 items-center justify-between
-                    ">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-lg text-[#409192] font-semibold"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrowBalance.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                        }
-                      </span>
+                    <div className="mt-1 text-lg font-semibold tracking-tight text-zinc-900">
+                      일별 마감 내역
                     </div>
                   </div>
-
-                  {/* 오늘 수수료 차감량 */}
-                  <div className="flex flex-row gap-2 items-center">
-                    <span className="text-sm text-zinc-500 font-semibold">
-                      오늘 수수료 차감량
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1">
+                      {buyOrders.length.toLocaleString()} rows
                     </span>
-                    <div className="
-                      w-32
-                      flex flex-row gap-2 items-center justify-between
-                    ">
-                      <Image
-                        src="/icon-tether.png"
-                        alt="Tether"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-lg text-red-600 font-semibold"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          todayMinusedEscrowAmount && todayMinusedEscrowAmount > 0 ?
-                          todayMinusedEscrowAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') :
-                          '0.000'
-                        }
-                      </span>
-                    </div>
+                    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1">
+                      {searchFromDate || '-'} ~ {searchToDate || '-'}
+                    </span>
                   </div>
-
                 </div>
 
-
-                {/* 보유량 내역 */}
-                <button
-                  onClick={() => {
-                    router.push('/' + params.lang + '/' + params.center + '/escrow-history');
-                  }}
-                  className="bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80
-                  flex items-center justify-center gap-2
-                  border border-zinc-300 hover:border-[#3167b4]"
-                >
-                  보유량 내역
-                </button>
-
-              </div>
-              )}  
-
-              {/* 가맹점 거래 */}
-              {/*
-              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
-                <div className="flex flex-row gap-2 items-center">
-                  <Image
-                    src="/icon-trade.png"
-                    alt="Trade"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 거래
-                  </span>
-                </div>
-
-                <div className="flex flex-row items-center gap-2">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg text-[#409192] font-semibold"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                      Number(store?.totalUsdtAmount ? store?.totalUsdtAmount : 0)
-                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    }
-                  </span>
-                </div>
-
-                <div className="flex flex-row gap-1 items-center">
-                  <span className="text-lg text-yellow-600 font-semibold"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                      Number(store?.totalKrwAmount ? store?.totalKrwAmount : 0)
-                      .toLocaleString('ko-KR')
-                    }
-                  </span>
-                  <span className="text-sm text-zinc-500">
-                    원
-                  </span>
-                </div>
-              </div>
-              */}
-
-
-              {/* 가맹점 정산금 */}
-              {/*
-              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
-                <div className="flex flex-row gap-2 items-center">
-                  <Image
-                    src="/icon-settlement.png"
-                    alt="Settlement"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 정산
-                  </span>
-                </div>
-
-                <div className="flex flex-row items-center gap-2">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg text-[#409192] font-semibold"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                      Number(store?.totalSettlementAmount ? store?.totalSettlementAmount : 0)
-                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    }
-                  </span>
-                </div>
-
-                <div className="flex flex-row gap-1 items-center">
-                  <span className="text-lg text-yellow-600 font-semibold"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                      Number(store?.totalSettlementAmountKRW ? store?.totalSettlementAmountKRW : 0)
-                      .toLocaleString('ko-KR')
-                    }
-                  </span>
-                  <span className="text-sm text-zinc-500">
-                    원
-                  </span>
-                </div>
-              </div>
-              */}
-
-              {/* 가맹점 판매금 */}
-              {/*
-              {version !== 'bangbang' && (
-              <div className="flex flex-col sm:flex-row items-start xl:items-center gap-2">
-                <div className="flex flex-row gap-2 items-center">
-                  <Image
-                    src="/icon-clearance.png"
-                    alt="Clearance"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg font-semibold text-zinc-500">
-                    가맹점 판매
-                  </span>
-                </div>
-
-                <div className="flex flex-row items-center gap-2">
-                  <Image
-                    src="/icon-tether.png"
-                    alt="Tether"
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
-                  <span className="text-lg text-[#409192] font-semibold"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                      Number(store?.totalUsdtAmountClearance || 0)
-                      .toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                    }
-                  </span>
-                </div>
-
-                <div className="flex flex-row gap-1 items-center">
-                  <span className="text-lg text-yellow-600 font-semibold"
-                    style={{ fontFamily: 'monospace' }}
-                  >
-                    {
-                      Number(store?.totalKrwAmountClearance || 0)
-                      .toLocaleString('ko-KR')
-                    }
-                  </span>
-                  <span className="text-sm text-zinc-500">
-                    원
-                  </span>
-                </div>
-
-              </div>
-              )}
-              */}
-
-            </div>
-
-
-
-
-
-
-
-
-            {/* escrow history table */}
-            {/*
-            <div className="w-full flex flex-col items-start justify-start gap-2 mt-4">
-
-              <h2 className="text-lg font-semibold text-zinc-600">
-                에스크로 입출금 내역
-              </h2>
-
-              <table className="w-full table-auto border-collapse border border-zinc-800 rounded-md">
-
-                <thead className="bg-zinc-200">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                      날짜
-                    </th>
-                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      에스크로 출금량(USDT)
-                    </th>
-                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      에스크로 입금량(USDT)
-                    </th>
-                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      처리전 잔고(USDT)
-                    </th>
-                    <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                      처리후 잔고(USDT)
-                    </th>
-
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {
-                  escrowHistory && escrowHistory.length > 0 &&
-                  escrowHistory.map((escrow, index) => (
-                    <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
-                      <td className="px-4 py-2 text-sm text-zinc-700">
-                        {new Date(escrow.date).toLocaleDateString('ko-KR')}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrow.withdrawAmount
-                          ? Number(escrow.withdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : 0
-                        }
-                      </td>
-                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrow.depositAmount
-                          ? Number(escrow.depositAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : 0
-                        }
-                      </td>
-                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrow.beforeBalance
-                          ? Number(escrow.beforeBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : 0
-                        }
-                      </td>
-                      <td className="px-4 py-2 text-sm text-[#409192] font-semibold text-right"
-                        style={{ fontFamily: 'monospace' }}
-                      >
-                        {
-                          escrow.afterBalance
-                          ? Number(escrow.afterBalance).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                          : 0
-                        }
-                      </td>
-                      
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            */}
-
-
-
-            <div className="w-full overflow-x-auto mt-4">
-
-                <table className=" w-full table-auto border-collapse border border-zinc-800 rounded-md">
-
-                  <thead className="bg-zinc-200">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-zinc-600">
-                        날짜
-                      </th>
-                      {/* align right */}
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">거래수(건)</th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                        거래량(USDT)<br/>
-                        거래금액(원)
-                      </th>
-
-                      {/*
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">결제수(건)<br/>미결제수(건)</th>
-                      */}
-                      
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                        결제량(USDT)<br/>
-                        결제금액(원)
-                      </th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                        수수료량(USDT)<br/>
-                        수수료금액(원)
-                      </th>
-
-                      {/* escrow withdraw */}
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                        출금량(USDT)< br/>
-                        출금처리
-                      </th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">청산수(건)</th>
-
-                      <th className="px-4 py-2 text-right text-sm font-semibold text-zinc-600">
-                        청산량(USDT)<br/>
-                        청산금액(원)
-                      </th>
-
-                    </tr>
-                  </thead>
-                  <tbody>
-                    
-                    {buyOrders.map((order, index) => (
-                      <>
-
-                      {/* skip if order.data is today's date */}
-                      {/*
-                      {new Date(order.date).toLocaleDateString('ko-KR') !== new Date().toLocaleDateString('ko-KR') && (
-                      */}
-
-                        <tr key={index} className="border-b border-zinc-300 hover:bg-zinc-100">
-                          
-                          <td className="px-4 py-2 text-lg text-zinc-700">
-                            {new Date(order.date).toLocaleDateString('ko-KR')}
-                          </td>
-
-                          {/* align right */}
-                          <td className="px-4 py-2 text-lg text-zinc-700 text-right">
-                            {order.totalCount ? order.totalCount.toLocaleString() : 0}
-                          </td>
-
-                          <td className="px-4 py-2">
-                            <div className="flex flex-col items-end justify-end">
-                              <span className="text-lg text-[#409192] font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                              <span className="text-lg text-yellow-600 font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                            </div>
-                          </td>
-
-                          {/*
-                          <td className="px-4 py-2 text-sm text-zinc-700 text-right">
-                            {order.totalSettlementCount ? order.totalSettlementCount.toLocaleString() : 0}
-                            {' / '}
-                            {(order.totalCount || 0) - (order.totalSettlementCount || 0)}
-                          </td>
-                          */}
-
-                          <td className="px-4 py-2">
-                            <div className="flex flex-col items-end justify-end">
-                              <span className="text-lg text-[#409192] font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalSettlementAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                              <span className="text-lg text-yellow-600 font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalSettlementAmountKRW).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-2">
-                            <div className="flex flex-col items-end justify-end">
-                              <span className="text-lg text-[#409192] font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalAgentFeeAmount
-                                  + order.totalFeeAmount
-                                ).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                              <span className="text-lg text-yellow-600 font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalAgentFeeAmountKRW
-                                  + order.totalFeeAmountKRW
-                                ).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-4 py-2 text-lg text-blue-600 font-semibold text-right">
-                            {order.totalEscrowCount && order.totalEscrowCount > 0 ? (
-                              <span className="text-[#409192]"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalEscrowWithdrawAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                            ) : (
-                              <span className="text-red-600">
-                                출금대기
-                              </span>
-                            
-                            )}
-                          </td>
-
-                          <td className="px-4 py-2 text-lg text-zinc-700 text-right">
-                            {order.totalClearanceCount ? order.totalClearanceCount.toLocaleString() : 0}
-                          </td>
-
-                          <td className="px-4 py-2">
-                            <div className="flex flex-col items-end justify-end">
-                              <span className="text-lg text-[#409192] font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalClearanceUsdtAmount).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                              <span className="text-lg text-yellow-600 font-semibold"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {Number(order.totalClearanceKrwAmount).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              </span>
-                            </div>
-                          </td>
-
+                {loadingBuyOrders && buyOrders.length === 0 ? (
+                  <div className="px-4 py-10 text-center text-sm text-zinc-500">
+                    일별 마감 데이터를 불러오는 중입니다.
+                  </div>
+                ) : buyOrders.length === 0 ? (
+                  <div className="px-4 py-10 text-center text-sm text-zinc-500">
+                    조회된 일별 마감 데이터가 없습니다.
+                  </div>
+                ) : (
+                  <div className="w-full overflow-x-auto">
+                    <table className="min-w-[1160px] w-full table-auto border-collapse">
+                      <thead className="bg-zinc-900/95 text-zinc-100 backdrop-blur-sm">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            날짜
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            거래수
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            거래량 / 금액
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            결제량 / 금액
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            수수료량 / 금액
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            출금
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            청산수
+                          </th>
+                          <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
+                            청산량 / 금액
+                          </th>
                         </tr>
-
-                      {/*
-                      )}
-                      */}
-                      
-
-                      </>
-                    
-
-                        
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td colSpan={4} className="px-4 py-2 text-sm text-zinc-500">
-                        
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-
-              </div>
-
+                      </thead>
+                      <tbody>
+                        {buyOrders.map((order, index) => (
+                          <tr
+                            key={`${order.date}-${index}`}
+                            className="border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-50/80"
+                          >
+                            <td className="px-4 py-3 align-top">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-base font-semibold text-zinc-900">
+                                  {formatDailyCloseDate(order.date)}
+                                </span>
+                                <span className="text-xs text-zinc-500">
+                                  {formatDailyCloseWeekday(order.date)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right align-top">
+                              <div className="text-lg font-semibold text-zinc-900">
+                                {Number(order.totalCount || 0).toLocaleString()}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 align-top">
+                              <DailyCloseAmountCell
+                                usdtValue={order.totalUsdtAmount}
+                                krwValue={order.totalKrwAmount}
+                              />
+                            </td>
+                            <td className="px-4 py-3 align-top">
+                              <DailyCloseAmountCell
+                                usdtValue={order.totalSettlementAmount}
+                                krwValue={order.totalSettlementAmountKRW}
+                              />
+                            </td>
+                            <td className="px-4 py-3 align-top">
+                              <DailyCloseAmountCell
+                                usdtValue={Number(order.totalAgentFeeAmount || 0) + Number(order.totalFeeAmount || 0)}
+                                krwValue={Number(order.totalAgentFeeAmountKRW || 0) + Number(order.totalFeeAmountKRW || 0)}
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-right align-top">
+                              {Number(order.totalEscrowCount || 0) > 0 ? (
+                                <div className="flex flex-col items-end gap-1">
+                                  <span
+                                    className="text-sm font-semibold text-emerald-700"
+                                    style={{ fontFamily: 'monospace' }}
+                                  >
+                                    {formatUsdtDisplay(order.totalEscrowWithdrawAmount)}
+                                  </span>
+                                  <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                                    출금완료
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600">
+                                  출금대기
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right align-top">
+                              <div className="text-lg font-semibold text-zinc-900">
+                                {Number(order.totalClearanceCount || 0).toLocaleString()}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 align-top">
+                              <DailyCloseAmountCell
+                                usdtValue={order.totalClearanceUsdtAmount}
+                                krwValue={order.totalClearanceKrwAmount}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
             </div>
 
-      
-
-            
-            <div className="w-full flex flex-col items-center justify-center gap-4 p-4 bg-white shadow-md rounded-lg mt-5">
-              <div className="text-sm text-zinc-600">
-                © 2024 Stable Makeup. All rights reserved.
+            <footer className="mt-5 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-4 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-xs text-zinc-500">
+                  © {new Date().getFullYear()} Stable Makeup. All rights reserved.
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <a href={`/${params.lang}/terms-of-service`} className="rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition hover:bg-zinc-100">
+                    이용약관
+                  </a>
+                  <a href={`/${params.lang}/privacy-policy`} className="rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition hover:bg-zinc-100">
+                    개인정보처리방침
+                  </a>
+                  <a href={`/${params.lang}/contact`} className="rounded-md border border-zinc-200 px-2 py-1 text-zinc-600 transition hover:bg-zinc-100">
+                    고객센터
+                  </a>
+                </div>
               </div>
-              <div className="text-sm text-zinc-600">
-                <a href={`/${params.lang}/terms-of-service`} className="text-blue-500 hover:underline">
-                  이용약관
-                </a>
-                {' | '}
-                <a href={`/${params.lang}/privacy-policy`} className="text-blue-500 hover:underline">
-                  개인정보처리방침
-                </a>
-                {' | '}
-                <a href={`/${params.lang}/contact`} className="text-blue-500 hover:underline">
-                  고객센터
-                </a>
-              </div>
-            </div> 
+            </footer> 
 
 
 
@@ -1936,6 +1899,7 @@ export default function Index({ params }: any) {
             
           </div>
 
+        </div>
 
           <Modal isOpen={isModalOpen} onClose={closeModal}>
               <TradeDetail
@@ -2071,4 +2035,3 @@ const TradeDetail = (
       </div>
     );
   };
-
