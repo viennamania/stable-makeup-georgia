@@ -441,21 +441,33 @@ const BankAggregateStatCard = ({
             </div>
           </div>
         </div>
-        <button
-          className="inline-flex shrink-0 items-center rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
-          onClick={() => {
-            navigator.clipboard.writeText(accountNumber)
-              .then(() => {
-                toast.success(`통장번호 ${accountNumber} 복사됨`);
-              })
-              .catch((err) => {
-                toast.error('복사 실패: ' + err);
-              });
-          }}
-          title="통장번호 복사"
-        >
-          복사
-        </button>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {canOpenHistory && (
+            <button
+              type="button"
+              onClick={() => onOpenHistory?.(item)}
+              className="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 transition-colors hover:border-sky-300 hover:bg-sky-100"
+            >
+              출금내역
+            </button>
+          )}
+
+          <button
+            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[10px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+            onClick={() => {
+              navigator.clipboard.writeText(accountNumber)
+                .then(() => {
+                  toast.success(`통장번호 ${accountNumber} 복사됨`);
+                })
+                .catch((err) => {
+                  toast.error('복사 실패: ' + err);
+                });
+            }}
+            title="통장번호 복사"
+          >
+            복사
+          </button>
+        </div>
       </div>
 
       <div className="mt-2 border-t border-zinc-100 pt-2">
@@ -478,15 +490,6 @@ const BankAggregateStatCard = ({
           </div>
         </div>
 
-        {canOpenHistory && (
-          <button
-            type="button"
-            onClick={() => onOpenHistory?.(item)}
-            className="mt-2 inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-semibold text-sky-700 transition-colors hover:border-sky-300 hover:bg-sky-100"
-          >
-            출금내역
-          </button>
-        )}
       </div>
     </div>
   );
