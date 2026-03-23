@@ -13,8 +13,8 @@ export const runtime = "nodejs";
 export const preferredRegion = "icn1";
 
 const globalBuyOrderRequestPaymentTaskState = globalThis as typeof globalThis & {
-  __buyOrderRequestPaymentTaskInFlight?: Promise<any>;
-  __buyOrderRequestPaymentTaskLastResult?: { expiresAt: number; value: any };
+  __buyOrderRequestPaymentTaskV2InFlight?: Promise<any>;
+  __buyOrderRequestPaymentTaskV2LastResult?: { expiresAt: number; value: any };
 };
 
 const BUYORDER_REQUEST_PAYMENT_TASK_CACHE_TTL_MS = Math.max(
@@ -83,19 +83,19 @@ const normalizeBoolean = (value: unknown): boolean => {
 };
 
 const getCachedTaskResult = () => {
-  const cached = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskLastResult;
+  const cached = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2LastResult;
   if (!cached) {
     return null;
   }
   if (cached.expiresAt <= Date.now()) {
-    globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskLastResult = undefined;
+    globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2LastResult = undefined;
     return null;
   }
   return cached.value;
 };
 
 const setCachedTaskResult = (value: any) => {
-  globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskLastResult = {
+  globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2LastResult = {
     value,
     expiresAt: Date.now() + BUYORDER_REQUEST_PAYMENT_TASK_CACHE_TTL_MS,
   };
@@ -199,7 +199,7 @@ const withTransientMongoRetry = async <T>(work: () => Promise<T>): Promise<T> =>
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error("Unknown buyOrderRequestPaymentTask failure");
+  throw lastError instanceof Error ? lastError : new Error("Unknown buyOrderRequestPaymentTaskV2 failure");
 };
 
 const fetchJsonWithTimeout = async (
@@ -286,7 +286,7 @@ const requestPayaction = async ({
       await withTransientMongoRetry(() =>
         updateBuyOrderPayactionResult({
           orderId,
-          api: "/api/order/buyOrderRequestPaymentTask",
+          api: "/api/order/buyOrderRequestPaymentTaskV2",
           payactionResult: payactionResponse.json,
         }),
       );
@@ -364,14 +364,14 @@ const runTask = async () => {
         acceptedBefore,
       }),
       BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
-      "buyOrderRequestPaymentTask queue read timeout",
+      "buyOrderRequestPaymentTaskV2 queue read timeout",
     ),
   );
   const buyOrders = Array.isArray(buyordersResult?.orders) ? buyordersResult.orders : [];
 
   for (const buyOrder of buyOrders) {
     if (Date.now() - startedAt >= BUYORDER_REQUEST_PAYMENT_TASK_MAX_RUN_MS) {
-      console.error("buyOrderRequestPaymentTask reached max run window; stop early");
+      console.error("buyOrderRequestPaymentTaskV2 reached max run window; stop early");
       break;
     }
 
@@ -392,7 +392,7 @@ const runTask = async () => {
         withTimeout(
           getStoreByStorecode({ storecode }),
           BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
-          "buyOrderRequestPaymentTask store lookup timeout",
+          "buyOrderRequestPaymentTaskV2 store lookup timeout",
         ),
       );
       storeCache.set(storecode, store || null);
@@ -422,7 +422,7 @@ const runTask = async () => {
             },
           }),
           BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
-          "buyOrderRequestPaymentTask privateSale requestPayment timeout",
+          "buyOrderRequestPaymentTaskV2 privateSale requestPayment timeout",
         ),
       );
 
@@ -451,7 +451,7 @@ const runTask = async () => {
           transactionHash,
         }),
         BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
-        "buyOrderRequestPaymentTask requestPayment timeout",
+        "buyOrderRequestPaymentTaskV2 requestPayment timeout",
       ),
     );
 
@@ -494,7 +494,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const inFlight = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskInFlight;
+  const inFlight = globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2InFlight;
   if (!forceRun && inFlight) {
     const result = await inFlight;
     return NextResponse.json({
@@ -505,9 +505,9 @@ export async function POST(request: NextRequest) {
   }
 
   const job = runTask().finally(() => {
-    globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskInFlight = undefined;
+    globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2InFlight = undefined;
   });
-  globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskInFlight = job;
+  globalBuyOrderRequestPaymentTaskState.__buyOrderRequestPaymentTaskV2InFlight = job;
 
   try {
     const result = await job;
@@ -542,7 +542,7 @@ export async function POST(request: NextRequest) {
           fetchedOrders: 0,
           elapsedMs: 0,
         },
-        error: error instanceof Error ? error.message : "Failed to run buyOrderRequestPaymentTask",
+        error: error instanceof Error ? error.message : "Failed to run buyOrderRequestPaymentTaskV2",
       },
       { status: isTransientMongoError(error) ? 503 : 500 },
     );
