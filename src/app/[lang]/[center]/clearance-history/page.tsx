@@ -4809,12 +4809,6 @@ export default function Index({ params }: any) {
                         item.data.bankAccountNumber,
                       );
                       const isConfiguredAccountMatched = Boolean(configuredFromBankInfo);
-                      const normalizedWebhookName = String(item.data.transactionName || "").trim();
-                      const normalizedConfiguredHolder = String(configuredFromBankInfo?.accountHolder || "").trim();
-                      const isConfiguredHolderMatched =
-                        Boolean(normalizedWebhookName) &&
-                        Boolean(normalizedConfiguredHolder) &&
-                        normalizedWebhookName === normalizedConfiguredHolder;
 
                       return (
                         <article
@@ -4887,19 +4881,11 @@ export default function Index({ params }: any) {
                                       " · " +
                                       (String(configuredFromBankInfo?.accountNumber || "-").trim() || "-")}
                                   </div>
-                                  <div
-                                    className={`text-[10px] font-medium ${
-                                      isConfiguredHolderMatched ? "text-emerald-700" : "text-amber-700"
-                                    }`}
-                                  >
-                                    {isConfiguredHolderMatched ? "계좌일치 · 예금주일치" : "계좌일치 · 예금주상이"}
-                                  </div>
                                 </div>
                               ) : (
                                 <div className="mt-1.5 space-y-1">
                                   <div className="text-xs font-semibold text-zinc-900">-</div>
                                   <div className="text-[10px] text-zinc-500">해당 통장 설정 없음</div>
-                                  <div className="text-[10px] font-medium text-amber-700">계좌미일치</div>
                                 </div>
                               )}
                             </div>
