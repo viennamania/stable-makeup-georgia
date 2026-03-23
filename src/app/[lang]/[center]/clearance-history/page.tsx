@@ -378,6 +378,93 @@ const getClearancePaymentBankInfo = (order: BuyOrder) => {
   };
 };
 
+const formatAggregateUsdtAmount = (value: number | null | undefined) =>
+  value ? value.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000';
+
+const formatAggregateKrwAmount = (value: number | null | undefined) =>
+  Number(value || 0).toLocaleString();
+
+const BankAggregateStatCard = ({ item }: { item: any }) => {
+  const accountNumber = toTrimmedText(item?._id) || '기타은행';
+
+  return (
+    <div
+      className="group min-w-0 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-[0_18px_45px_-28px_rgba(15,23,42,0.34)] ring-1 ring-zinc-100 transition-all duration-200 hover:-translate-y-0.5 hover:border-zinc-300"
+    >
+      <div className="bg-[linear-gradient(135deg,rgba(236,253,245,0.92),rgba(255,255,255,0.96)_55%,rgba(239,246,255,0.96))] px-4 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 ring-1 ring-emerald-200">
+            <Image
+              src="/icon-bank.png"
+              alt="Bank"
+              width={22}
+              height={22}
+              className="h-5 w-5"
+            />
+          </div>
+          <button
+            className="inline-flex shrink-0 items-center rounded-full border border-blue-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-blue-600 transition-colors hover:bg-blue-50"
+            onClick={() => {
+              navigator.clipboard.writeText(accountNumber)
+                .then(() => {
+                  toast.success(`통장번호 ${accountNumber} 복사됨`);
+                })
+                .catch((err) => {
+                  toast.error('복사 실패: ' + err);
+                });
+            }}
+            title="통장번호 복사"
+          >
+            복사
+          </button>
+        </div>
+
+        <div className="mt-3 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+          통장번호
+        </div>
+        <div className="mt-1 break-all text-lg font-semibold tracking-tight text-zinc-900">
+          {accountNumber}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 px-4 py-4">
+        <div className="rounded-xl bg-zinc-50 px-3 py-2 text-center">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+            건수
+          </div>
+          <div className="mt-1 text-2xl font-black tracking-tight text-zinc-900">
+            {item.totalCount?.toLocaleString() || '0'}
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-emerald-50 px-3 py-2 text-center">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-emerald-700/80">
+            USDT
+          </div>
+          <div
+            className="mt-1 break-all text-sm font-black leading-tight text-emerald-600"
+            style={{ fontFamily: 'monospace' }}
+          >
+            {formatAggregateUsdtAmount(item.totalUsdtAmount)}
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-amber-50 px-3 py-2 text-center">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-amber-700/80">
+            원화
+          </div>
+          <div
+            className="mt-1 break-all text-sm font-black leading-tight text-amber-600"
+            style={{ fontFamily: 'monospace' }}
+          >
+            {formatAggregateKrwAmount(item.totalKrwAmount)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 // get escrow wallet address
 
@@ -4079,76 +4166,18 @@ export default function Index({ params }: any) {
             p-3 rounded-2xl border border-zinc-200 shadow-sm
           ">
 
-            <div className="w-full sm:w-[150px] text-sm font-semibold leading-tight text-zinc-800">
-              구매자 통장별 청산통계
+            <div className="w-full sm:w-[180px] shrink-0">
+              <div className="text-sm font-semibold leading-tight text-zinc-800">
+                구매자 통장별 집계
+              </div>
+              <div className="mt-1 text-xs text-zinc-500">
+                건수 · USDT · 원화 기준
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 w-full">
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
-                <div key={index} className="flex flex-col gap-2 items-center
-                  border border-zinc-200 rounded-lg p-4
-                  bg-zinc-50 shadow-sm
-                ">
-
-                  <div className="flex flex-row items-center justify-center gap-1">
-                    <Image
-                      src="/icon-bank.png"
-                      alt="Bank"
-                      width={20}
-                      height={20}
-                      className="w-5 h-5"
-                    />
-                    {/* copy account number button */}
-                    <button
-                      className="text-sm font-semibold underline text-blue-600"
-                      onClick={() => {
-                        const accountNumber = item._id || '기타은행';
-                        navigator.clipboard.writeText(accountNumber)
-                          .then(() => {
-                            toast.success(`통장번호 ${accountNumber} 복사됨`);
-                          })
-                          .catch((err) => {
-                            toast.error('복사 실패: ' + err);
-                          });
-                      }}
-                      title="통장번호 복사"
-                    >
-                      {item._id || '기타은행'}
-                    </button>
-                  </div>
-
-                  <div className="flex flex-row items-center justify-center gap-2">
-
-                    <div className="text-sm font-semibold">
-                      {item.totalCount?.toLocaleString() || '0'}
-                    </div>
-
-                    <div className="flex flex-col gap-1 items-end justify-center">
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <Image
-                          src="/icon-tether.png"
-                          alt="Tether"
-                          width={20}
-                          height={20}
-                          className="w-5 h-5"
-                        />
-                        <span className="text-sm font-semibold text-green-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {item.totalUsdtAmount
-                            ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                            : '0.000'}
-                        </span>
-                      </div>
-                      <div className="flex flex-row items-center justify-center gap-1">
-                        <span className="text-sm font-semibold text-yellow-600"
-                          style={{ fontFamily: 'monospace' }}>
-                          {item.totalKrwAmount?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
+                <BankAggregateStatCard key={index} item={item} />
               ))}
             </div>
 
@@ -4338,75 +4367,18 @@ export default function Index({ params }: any) {
               p-3 rounded-2xl border border-zinc-200 shadow-sm
             ">
 
-              <div className="w-full sm:w-[150px] text-sm font-semibold leading-tight text-zinc-800">
-                판매자 통장별 청산통계
+              <div className="w-full sm:w-[180px] shrink-0">
+                <div className="text-sm font-semibold leading-tight text-zinc-800">
+                  판매자 통장별 집계
+                </div>
+                <div className="mt-1 text-xs text-zinc-500">
+                  건수 · USDT · 원화 기준
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 w-full min-w-0">
+              <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {buyOrderStats.totalBySellerBankAccountNumber?.map((item, index) => (
-                  <div key={index} className="min-w-0 flex flex-col gap-2 items-center
-                    border border-zinc-200 rounded-lg p-4
-                    bg-zinc-50 shadow-sm
-                  ">
-
-                    <div className="flex w-full min-w-0 flex-row items-center justify-center gap-1">
-                      <Image
-                        src="/icon-bank.png"
-                        alt="Bank"
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      {/* copy account number button */}
-                      <button
-                        className="max-w-full truncate text-sm font-semibold underline text-blue-600"
-                        onClick={() => {
-                          const accountNumber = item._id || '기타은행';
-                          navigator.clipboard.writeText(accountNumber)
-                            .then(() => {
-                              toast.success(`통장번호 ${accountNumber} 복사됨`);
-                            })
-                            .catch((err) => {
-                              toast.error('복사 실패: ' + err);
-                            });
-                        }}
-                        title="통장번호 복사"
-                      >
-                        {item._id || '기타은행'}
-                      </button>
-                    </div>
-
-                    <div className="flex w-full flex-row items-center justify-center gap-2">
-                      <div className="text-sm font-semibold">
-                        {item.totalCount?.toLocaleString() || '0'}
-                      </div>
-
-                      <div className="flex flex-col gap-1 items-end justify-center">
-                        <div className="flex flex-row items-center justify-center gap-1">
-                          <Image
-                            src="/icon-tether.png"
-                            alt="Tether"
-                            width={20}
-                            height={20}
-                            className="w-5 h-5"
-                          />
-                          <span className="text-sm font-semibold text-green-600"
-                            style={{ fontFamily: 'monospace' }}>
-                            {item.totalUsdtAmount
-                              ? item.totalUsdtAmount.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                              : '0.000'}
-                          </span>
-                        </div>
-                        <div className="flex flex-row items-center justify-center gap-1">
-                          <span className="text-sm font-semibold text-yellow-600"
-                            style={{ fontFamily: 'monospace' }}>
-                            {item.totalKrwAmount?.toLocaleString() || '0'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+                  <BankAggregateStatCard key={index} item={item} />
                 ))}
               </div>
 
@@ -4770,51 +4742,55 @@ export default function Index({ params }: any) {
 
 
                 <thead
-                  className="sticky top-0 z-10 bg-zinc-900/95 text-zinc-100 text-xs font-semibold backdrop-blur-sm"
+                  className="sticky top-0 z-10 bg-zinc-900/95 text-zinc-100 backdrop-blur-sm"
                 >
                   <tr>
-                    <th className="w-[180px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[180px] whitespace-nowrap px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-center justify-start gap-1">
-                        <span className="text-sm">
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           #{TID}
                         </span>
-                        <span className="text-sm">
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           신청시간
                         </span>
                       </div>
                     </th>
 
-                    <th className="w-[260px] px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[260px] px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-start">
-                        <span className="text-sm">
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           {Buyer}
                         </span>
                       </div>
                     </th>
 
-                    <th className="w-[170px] px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
-                      <div className="flex flex-col items-end">
-                        <span>
+                    <th className="w-[170px] px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           판매량(USDT)
                         </span>
-                        <span>
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           판매금액(원)
                         </span>
-                        <span>
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           환율(원)
                         </span>
                       </div>
                     </th>
-                    <th className="w-[420px] px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[420px] px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-center justify-start gap-1">
-                        <span className="text-sm">
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           결제통장 / {Seller}
                         </span>
                       </div>
                     </th>
-                    <th className="w-[170px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">거래취소</th>
-                    <th className="w-[180px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">출금상태</th>
-                    <th className="w-[220px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[170px] whitespace-nowrap px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                      <span className="text-xs uppercase tracking-wide text-zinc-300">거래취소</span>
+                    </th>
+                    <th className="w-[180px] whitespace-nowrap px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                      <span className="text-xs uppercase tracking-wide text-zinc-300">출금상태</span>
+                    </th>
+                    <th className="w-[220px] whitespace-nowrap px-2 py-2 align-middle text-[11px] font-semibold tracking-wide text-zinc-100/90">
                       {
                       //isProcessingSendTransaction
                       isProcessingSendTransaction.current
@@ -4827,12 +4803,12 @@ export default function Index({ params }: any) {
                             height={20}
                             className="w-5 h-5 animate-spin"
                           />
-                          <span className="text-sm">
+                          <span className="text-xs uppercase tracking-wide text-zinc-300">
                             USDT 전송중...
                           </span>
                         </div>
                       ) : (
-                        <span className="text-sm">
+                        <span className="text-xs uppercase tracking-wide text-zinc-300">
                           USDT 전송
                         </span>
                       )}
