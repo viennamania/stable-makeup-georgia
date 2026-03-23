@@ -4788,7 +4788,7 @@ export default function Index({ params }: any) {
                   className="sticky top-0 z-10 bg-zinc-900/95 text-zinc-100 text-xs font-semibold backdrop-blur-sm"
                 >
                   <tr>
-                    <th className="w-[180px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[180px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-center justify-start gap-1">
                         <span className="text-sm">
                           #{TID}
@@ -4799,7 +4799,7 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="w-[260px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[260px] px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-start">
                         <span className="text-sm">
                           {Buyer}
@@ -4807,7 +4807,7 @@ export default function Index({ params }: any) {
                       </div>
                     </th>
 
-                    <th className="w-[170px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[170px] px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-end">
                         <span>
                           판매량(USDT)
@@ -4820,16 +4820,16 @@ export default function Index({ params }: any) {
                         </span>
                       </div>
                     </th>
-                    <th className="w-[420px] px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[420px] px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
                       <div className="flex flex-col items-center justify-start gap-1">
                         <span className="text-sm">
                           결제통장 / {Seller}
                         </span>
                       </div>
                     </th>
-                    <th className="w-[170px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">거래취소</th>
-                    <th className="w-[120px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">출금상태</th>
-                    <th className="w-[220px] whitespace-nowrap px-2 py-2 text-[11px] font-semibold tracking-wide text-zinc-100/90">
+                    <th className="w-[170px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">거래취소</th>
+                    <th className="w-[120px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">출금상태</th>
+                    <th className="w-[220px] whitespace-nowrap px-2 py-2 text-sm font-semibold tracking-wide text-zinc-100/90">
                       {
                       //isProcessingSendTransaction
                       isProcessingSendTransaction.current
