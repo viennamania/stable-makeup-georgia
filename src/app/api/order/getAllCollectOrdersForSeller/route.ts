@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
 
     fromDate,
     toDate,
+    buyerBankAccountNumber,
+    sellerBankAccountNumber,
+    skipSummary,
+    clearanceOnly,
   } = body;
 
   const guard = await verifyCenterStoreAdminGuard({
@@ -45,6 +49,10 @@ export async function POST(request: NextRequest) {
 
     fromDate,
     toDate,
+    buyerBankAccountNumber,
+    sellerBankAccountNumber,
+    skipSummary,
+    clearanceOnly,
   });
 
 

@@ -381,10 +381,29 @@ const getClearancePaymentBankInfo = (order: BuyOrder) => {
 const formatAggregateKrwAmount = (value: number | null | undefined) =>
   Number(value || 0).toLocaleString();
 
-const BankAggregateStatCard = ({ item }: { item: any }) => {
+type BankAggregateStatItem = {
+  _id: string;
+  bankName?: string;
+  accountHolder?: string;
+  totalCount: number;
+  totalKrwAmount: number;
+  totalUsdtAmount: number;
+};
+
+const BUYER_BANK_HISTORY_PAGE_SIZE = 20;
+const BUYER_BANK_HISTORY_SCROLL_THRESHOLD_PX = 180;
+
+const BankAggregateStatCard = ({
+  item,
+  onOpenHistory,
+}: {
+  item: BankAggregateStatItem;
+  onOpenHistory?: (item: BankAggregateStatItem) => void;
+}) => {
   const accountNumber = toTrimmedText(item?._id) || '기타은행';
   const bankName = toTrimmedText(item?.bankName) || '-';
   const accountHolder = toTrimmedText(item?.accountHolder) || '-';
+  const canOpenHistory = Boolean(onOpenHistory && toTrimmedText(item?._id));
 
   return (
     <div
@@ -427,23 +446,35 @@ const BankAggregateStatCard = ({ item }: { item: any }) => {
         </button>
       </div>
 
-      <div className="mt-2 flex items-end justify-between gap-2 border-t border-zinc-100 pt-2">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">건수</span>
-          <span className="text-sm font-semibold text-zinc-900">
-            {item.totalCount?.toLocaleString() || '0'}
-          </span>
-        </div>
+      <div className="mt-2 border-t border-zinc-100 pt-2">
+        <div className="flex items-end justify-between gap-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 px-2.5 py-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">건수</span>
+            <span className="text-sm font-semibold text-zinc-900">
+              {item.totalCount?.toLocaleString() || '0'}
+            </span>
+          </div>
 
-        <div className="min-w-0 text-right">
-          <div className="text-[10px] font-medium uppercase tracking-wide text-amber-700/80">원화</div>
-          <div
-            className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none text-amber-600"
-            style={{ fontFamily: 'monospace' }}
-          >
-            {formatAggregateKrwAmount(item.totalKrwAmount)}
+          <div className="min-w-0 text-right">
+            <div className="text-[10px] font-medium uppercase tracking-wide text-amber-700/80">원화</div>
+            <div
+              className="mt-0.5 whitespace-nowrap text-lg font-semibold leading-none text-amber-600"
+              style={{ fontFamily: 'monospace' }}
+            >
+              {formatAggregateKrwAmount(item.totalKrwAmount)}
+            </div>
           </div>
         </div>
+
+        {canOpenHistory && (
+          <button
+            type="button"
+            onClick={() => onOpenHistory?.(item)}
+            className="mt-2 inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-semibold text-sky-700 transition-colors hover:border-sky-300 hover:bg-sky-100"
+          >
+            출금내역
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1150,22 +1181,8 @@ export default function Index({ params }: any) {
     totalFeeAmountKRW: number;
     totalAgentFeeAmount: number;
     totalAgentFeeAmountKRW: number;
-    totalByBuyerBankAccountNumber: Array<{
-      _id: string;
-      bankName?: string;
-      accountHolder?: string;
-      totalCount: number;
-      totalKrwAmount: number;
-      totalUsdtAmount: number;
-    }>;
-    totalBySellerBankAccountNumber: Array<{
-      _id: string;
-      bankName?: string;
-      accountHolder?: string;
-      totalCount: number;
-      totalKrwAmount: number;
-      totalUsdtAmount: number;
-    }>;
+    totalByBuyerBankAccountNumber: BankAggregateStatItem[];
+    totalBySellerBankAccountNumber: BankAggregateStatItem[];
   }>({
     //totalCount: 0,
     totalClearanceCount: 0,
@@ -1187,6 +1204,16 @@ export default function Index({ params }: any) {
     totalBySellerBankAccountNumber: [],
   });
 
+  const [selectedBuyerBankHistory, setSelectedBuyerBankHistory] = useState<BankAggregateStatItem | null>(null);
+  const [buyerBankHistoryOrders, setBuyerBankHistoryOrders] = useState<BuyOrder[]>([]);
+  const [buyerBankHistoryTotalCount, setBuyerBankHistoryTotalCount] = useState(0);
+  const [buyerBankHistoryPage, setBuyerBankHistoryPage] = useState(0);
+  const [buyerBankHistoryLoading, setBuyerBankHistoryLoading] = useState(false);
+  const [buyerBankHistoryLoadingMore, setBuyerBankHistoryLoadingMore] = useState(false);
+  const [buyerBankHistoryError, setBuyerBankHistoryError] = useState<string | null>(null);
+  const buyerBankHistoryRequestKeyRef = useRef(0);
+  const buyerBankHistoryScrollContainerRef = useRef<HTMLDivElement | null>(null);
+
   const toCenterBuyOrderStats = (result: any) => ({
     totalClearanceCount: Number(result?.totalClearanceCount || 0),
     totalClearanceAmount: Number(result?.totalClearanceAmount || 0),
@@ -1205,6 +1232,201 @@ export default function Index({ params }: any) {
     totalByBuyerBankAccountNumber: result?.totalByBuyerBankAccountNumber || [],
     totalBySellerBankAccountNumber: result?.totalBySellerBankAccountNumber || [],
   });
+
+  const buyerBankHistoryHasMore =
+    selectedBuyerBankHistory !== null
+    && buyerBankHistoryOrders.length < buyerBankHistoryTotalCount;
+
+  const closeBuyerBankHistoryPanel = () => {
+    buyerBankHistoryRequestKeyRef.current += 1;
+    setSelectedBuyerBankHistory(null);
+    setBuyerBankHistoryOrders([]);
+    setBuyerBankHistoryTotalCount(0);
+    setBuyerBankHistoryPage(0);
+    setBuyerBankHistoryError(null);
+    setBuyerBankHistoryLoading(false);
+    setBuyerBankHistoryLoadingMore(false);
+  };
+
+  const fetchBuyerBankHistoryPage = async ({
+    item,
+    pageToLoad,
+    append,
+    requestKey,
+  }: {
+    item: BankAggregateStatItem;
+    pageToLoad: number;
+    append: boolean;
+    requestKey: number;
+  }) => {
+    const accountNumber = toTrimmedText(item?._id);
+    if (!address || !accountNumber) {
+      return;
+    }
+
+    if (append) {
+      setBuyerBankHistoryLoadingMore(true);
+    } else {
+      setBuyerBankHistoryLoading(true);
+      setBuyerBankHistoryError(null);
+    }
+
+    try {
+      const response = await fetch('/api/order/getAllCollectOrdersForSeller', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          storecode: params.center,
+          limit: BUYER_BANK_HISTORY_PAGE_SIZE,
+          page: pageToLoad,
+          walletAddress: address,
+          searchMyOrders: searchMyOrders,
+          fromDate: searchFromDate,
+          toDate: searchToDate,
+          buyerBankAccountNumber: accountNumber,
+          skipSummary: true,
+          clearanceOnly: true,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (requestKey !== buyerBankHistoryRequestKeyRef.current) {
+        return;
+      }
+
+      if (!response.ok) {
+        setBuyerBankHistoryError(data?.error || '출금내역을 불러오지 못했습니다.');
+        return;
+      }
+
+      const nextOrders = Array.isArray(data?.result?.orders) ? data.result.orders : [];
+      setBuyerBankHistoryOrders((previousOrders) => (
+        append ? [...previousOrders, ...nextOrders] : nextOrders
+      ));
+      setBuyerBankHistoryTotalCount(Number(data?.result?.totalCount || 0));
+      setBuyerBankHistoryPage(pageToLoad);
+      setBuyerBankHistoryError(null);
+    } catch (error) {
+      if (requestKey !== buyerBankHistoryRequestKeyRef.current) {
+        return;
+      }
+      setBuyerBankHistoryError(
+        error instanceof Error ? error.message : '출금내역을 불러오지 못했습니다.',
+      );
+    } finally {
+      if (requestKey === buyerBankHistoryRequestKeyRef.current) {
+        setBuyerBankHistoryLoading(false);
+        setBuyerBankHistoryLoadingMore(false);
+      }
+    }
+  };
+
+  const fetchBuyerBankHistoryPageRef = useRef(fetchBuyerBankHistoryPage);
+  fetchBuyerBankHistoryPageRef.current = fetchBuyerBankHistoryPage;
+
+  const openBuyerBankHistoryPanel = (item: BankAggregateStatItem) => {
+    const accountNumber = toTrimmedText(item?._id);
+
+    if (!address) {
+      toast.error('지갑 연결 후 다시 시도하세요.');
+      return;
+    }
+
+    if (!accountNumber) {
+      toast.error('통장번호를 확인할 수 없습니다.');
+      return;
+    }
+
+    const requestKey = buyerBankHistoryRequestKeyRef.current + 1;
+    buyerBankHistoryRequestKeyRef.current = requestKey;
+
+    setSelectedBuyerBankHistory(item);
+    setBuyerBankHistoryOrders([]);
+    setBuyerBankHistoryTotalCount(0);
+    setBuyerBankHistoryPage(0);
+    setBuyerBankHistoryError(null);
+    setBuyerBankHistoryLoadingMore(false);
+
+    fetchBuyerBankHistoryPage({
+      item,
+      pageToLoad: 1,
+      append: false,
+      requestKey,
+    });
+  };
+
+  const loadMoreBuyerBankHistory = () => {
+    if (!selectedBuyerBankHistory || !buyerBankHistoryHasMore) {
+      return;
+    }
+
+    if (buyerBankHistoryLoading || buyerBankHistoryLoadingMore) {
+      return;
+    }
+
+    fetchBuyerBankHistoryPage({
+      item: selectedBuyerBankHistory,
+      pageToLoad: buyerBankHistoryPage + 1,
+      append: true,
+      requestKey: buyerBankHistoryRequestKeyRef.current,
+    });
+  };
+
+  useEffect(() => {
+    if (!selectedBuyerBankHistory) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeBuyerBankHistoryPanel();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedBuyerBankHistory]);
+
+  useEffect(() => {
+    if (
+      !selectedBuyerBankHistory
+      || buyerBankHistoryLoading
+      || buyerBankHistoryLoadingMore
+      || !buyerBankHistoryHasMore
+    ) {
+      return;
+    }
+
+    const container = buyerBankHistoryScrollContainerRef.current;
+    if (!container) {
+      return;
+    }
+
+    if (container.scrollHeight <= container.clientHeight + 32) {
+      fetchBuyerBankHistoryPageRef.current({
+        item: selectedBuyerBankHistory,
+        pageToLoad: buyerBankHistoryPage + 1,
+        append: true,
+        requestKey: buyerBankHistoryRequestKeyRef.current,
+      });
+    }
+  }, [
+    selectedBuyerBankHistory,
+    buyerBankHistoryLoading,
+    buyerBankHistoryLoadingMore,
+    buyerBankHistoryHasMore,
+    buyerBankHistoryOrders.length,
+    buyerBankHistoryPage,
+  ]);
 
   const [withdrawalRealtimeEvents, setWithdrawalRealtimeEvents] = useState<ClearanceWithdrawalRealtimeItem[]>([]);
   const [withdrawalRealtimeConnectionState, setWithdrawalRealtimeConnectionState] =
@@ -4165,7 +4387,11 @@ export default function Index({ params }: any) {
 
             <div className="flex w-full flex-wrap gap-3">
               {buyOrderStats.totalByBuyerBankAccountNumber?.map((item, index) => (
-                <BankAggregateStatCard key={index} item={item} />
+                <BankAggregateStatCard
+                  key={index}
+                  item={item}
+                  onOpenHistory={openBuyerBankHistoryPanel}
+                />
               ))}
             </div>
 
@@ -6666,6 +6892,231 @@ export default function Index({ params }: any) {
       </div>
 
 
+
+
+      {selectedBuyerBankHistory && (
+        <div className="fixed inset-0 z-[120]">
+          <button
+            type="button"
+            aria-label="출금내역 패널 닫기"
+            className="absolute inset-0 bg-zinc-900/30 backdrop-blur-[1px]"
+            onClick={closeBuyerBankHistoryPanel}
+          />
+
+          <aside
+            className="absolute left-0 top-0 flex h-full w-full max-w-[460px] flex-col border-r border-zinc-200 bg-white shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="border-b border-zinc-200 px-4 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                    구매자 통장 출금내역
+                  </div>
+                  <div className="mt-1 truncate text-sm font-semibold text-zinc-900">
+                    {toTrimmedText(selectedBuyerBankHistory.bankName) || '-'}
+                    {' · '}
+                    {toTrimmedText(selectedBuyerBankHistory.accountHolder) || '-'}
+                  </div>
+                  <div
+                    className="mt-1 break-all text-lg font-bold leading-tight text-zinc-950"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {toTrimmedText(selectedBuyerBankHistory._id) || '-'}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+                    <span className="rounded-full bg-zinc-100 px-2 py-1 font-medium text-zinc-600">
+                      총 {(buyerBankHistoryTotalCount || selectedBuyerBankHistory.totalCount || 0).toLocaleString()}건
+                    </span>
+                    <span>최신순</span>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+                    onClick={() => {
+                      const accountNumber = toTrimmedText(selectedBuyerBankHistory._id);
+                      navigator.clipboard.writeText(accountNumber)
+                        .then(() => {
+                          toast.success(`통장번호 ${accountNumber} 복사됨`);
+                        })
+                        .catch((error) => {
+                          toast.error(`복사 실패: ${error}`);
+                        });
+                    }}
+                  >
+                    복사
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white text-sm font-semibold text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700"
+                    onClick={closeBuyerBankHistoryPanel}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              ref={buyerBankHistoryScrollContainerRef}
+              className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+              onScroll={(event: any) => {
+                const currentTarget = event.currentTarget as HTMLDivElement;
+                const remainingScroll =
+                  currentTarget.scrollHeight - currentTarget.scrollTop - currentTarget.clientHeight;
+
+                if (remainingScroll <= BUYER_BANK_HISTORY_SCROLL_THRESHOLD_PX) {
+                  loadMoreBuyerBankHistory();
+                }
+              }}
+            >
+              {buyerBankHistoryLoading && buyerBankHistoryOrders.length === 0 ? (
+                <div className="flex h-full min-h-[220px] items-center justify-center">
+                  <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
+                    <Image
+                      src="/loading.png"
+                      alt="Loading"
+                      width={18}
+                      height={18}
+                      className="h-4 w-4 animate-spin"
+                    />
+                    출금내역 불러오는 중...
+                  </div>
+                </div>
+              ) : buyerBankHistoryError ? (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {buyerBankHistoryError}
+                </div>
+              ) : buyerBankHistoryOrders.length === 0 ? (
+                <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-6 text-center text-sm text-zinc-500">
+                  조회된 출금내역이 없습니다.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {buyerBankHistoryOrders.map((item, index) => {
+                    const paymentBankInfo = getClearancePaymentBankInfo(item);
+                    const sellerNickname = toTrimmedText(item?.seller?.nickname) || '-';
+                    const sellerWalletAddress = toTrimmedText(item?.seller?.walletAddress);
+                    const depositCompletedActorMeta = getDepositCompletedActorMeta(item?.buyer);
+                    const depositCompletedActorLabel = getDepositCompletedActorLabel(item?.buyer);
+                    const isWithdrawalCompleted = item?.buyer?.depositCompleted === true;
+                    const isCancelled = item?.status === 'cancelled';
+
+                    return (
+                      <div
+                        key={`${item._id}-${item.tradeId}-${index}`}
+                        className="rounded-2xl border border-zinc-200 bg-white px-3 py-3 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+                              TID {item.tradeId}
+                            </div>
+                            <div className="mt-1 text-xl font-bold leading-none text-rose-600">
+                              {Number(item.krwAmount || 0).toLocaleString()}
+                              <span className="ml-1 text-sm font-semibold text-rose-500">KRW</span>
+                            </div>
+                            <div className="mt-2 text-xs text-zinc-500">
+                              {formatAdminActionDateTime(item?.createdAt)}
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                            <span
+                              className={`rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                                isWithdrawalCompleted
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  : isCancelled
+                                    ? 'border-zinc-300 bg-zinc-100 text-zinc-500'
+                                    : 'border-rose-200 bg-rose-50 text-rose-600'
+                              }`}
+                            >
+                              {isWithdrawalCompleted ? '출금완료' : isCancelled ? '출금미처리' : '출금대기중'}
+                            </span>
+
+                            {isWithdrawalCompleted && depositCompletedActorMeta && (
+                              <span
+                                className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${depositCompletedActorMeta.className}`}
+                              >
+                                {depositCompletedActorMeta.label}
+                              </span>
+                            )}
+
+                            {isWithdrawalCompleted && depositCompletedActorLabel && (
+                              <span className="text-[11px] text-zinc-500">
+                                {depositCompletedActorLabel}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-3 sm:grid-cols-2">
+                          <div className="min-w-0">
+                            <div className="text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
+                              결제통장
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-zinc-800">
+                              {paymentBankInfo.bankName}
+                            </div>
+                            <div
+                              className="mt-1 break-all text-xs text-zinc-600"
+                              style={{ fontFamily: 'monospace' }}
+                            >
+                              {paymentBankInfo.accountNumber}
+                            </div>
+                            <div className="mt-1 text-xs text-zinc-600">
+                              {paymentBankInfo.accountHolder}
+                            </div>
+                          </div>
+
+                          <div className="min-w-0 sm:text-right">
+                            <div className="text-[10px] font-semibold tracking-[0.12em] text-zinc-500">
+                              판매자
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-zinc-800">
+                              {sellerNickname}
+                            </div>
+                            {sellerWalletAddress ? (
+                              <button
+                                type="button"
+                                className="mt-1 inline-block max-w-full truncate text-xs font-medium text-zinc-600 underline decoration-zinc-300 underline-offset-2 hover:text-blue-500"
+                                title="판매자 지갑주소 복사"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(sellerWalletAddress);
+                                  toast.success('판매자 지갑주소가 복사되었습니다.');
+                                }}
+                              >
+                                {formatCompactWalletAddress(sellerWalletAddress)}
+                              </button>
+                            ) : (
+                              <div className="mt-1 text-xs text-zinc-500">-</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {buyerBankHistoryLoadingMore && (
+                    <div className="flex items-center justify-center py-2 text-xs text-zinc-500">
+                      더 불러오는 중...
+                    </div>
+                  )}
+
+                  {!buyerBankHistoryHasMore && buyerBankHistoryOrders.length > 0 && (
+                    <div className="pb-2 text-center text-[11px] text-zinc-400">
+                      마지막 출금내역까지 모두 불러왔습니다.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
 
 
       <ModalUser isOpen={isModalOpen} onClose={closeModal}>

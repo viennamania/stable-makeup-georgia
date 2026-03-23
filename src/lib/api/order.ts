@@ -9023,6 +9023,10 @@ export async function getCollectOrdersForSeller(
 
     fromDate,
     toDate,
+    buyerBankAccountNumber,
+    sellerBankAccountNumber,
+    skipSummary,
+    clearanceOnly,
   }: {
     storecode: string;
     limit: number;
@@ -9032,6 +9036,10 @@ export async function getCollectOrdersForSeller(
 
     fromDate?: string;
     toDate?: string;
+    buyerBankAccountNumber?: string;
+    sellerBankAccountNumber?: string;
+    skipSummary?: boolean;
+    clearanceOnly?: boolean;
   }
 
 ): Promise<any> {
@@ -9101,50 +9109,54 @@ export async function getCollectOrdersForSeller(
   // if storecode is empty, get all orders by wallet address
 
   // if storecode is not empty, get orders by storecode and wallet address
+    const normalizedBuyerBankAccountNumber = String(buyerBankAccountNumber || '').trim();
+    const normalizedSellerBankAccountNumber = String(sellerBankAccountNumber || '').trim();
+    const shouldSkipSummary = skipSummary === true;
+    const shouldFilterClearanceOnly = clearanceOnly === true;
 
+    const resultsMatch: Record<string, any> = {
+      storecode: storecode,
+      privateSale: true,
+      'buyer.depositName': { $eq: '' },
+      createdAt: { $gte: fromDateValue, $lt: toDateValue },
+    };
 
+    if (normalizedBuyerBankAccountNumber) {
+      resultsMatch['buyer.bankInfo.accountNumber'] = normalizedBuyerBankAccountNumber;
+    }
 
+    if (normalizedSellerBankAccountNumber) {
+      resultsMatch['seller.bankInfo.accountNumber'] = normalizedSellerBankAccountNumber;
+    }
+
+    if (shouldFilterClearanceOnly) {
+      resultsMatch.status = { $in: clearanceStatuses };
+      resultsMatch.$nor = webhookGeneratedClearanceExclusionMatch.$nor;
+    }
 
     const results = await collection.find<OrderProps>(
-      {
-        // walletAddress is not equal to walletAddress
-        //walletAddress: { $ne: walletAddress },
-
-
-        //status: 'ordered',
-  
-        //status: { $ne: 'paymentConfirmed' },
-  
-        storecode: storecode,
-
-        privateSale: true,
-
-
-        'buyer.depositName': { $eq: '' },
-
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-
-      },
+      resultsMatch,
       
       //{ projection: { _id: 0, emailVerified: 0 } }
   
     ).sort({ createdAt: -1 }).limit(limit).skip((page - 1) * limit).toArray();
   
 
-    const totalCount = await collection.countDocuments(
-      {
-        //walletAddress: { $ne: walletAddress },
+    const totalCount = await collection.countDocuments(resultsMatch);
 
-
-        storecode: storecode,
-        privateSale: true,
-
-        'buyer.depositName': { $eq: '' },
-
-        createdAt: { $gte: fromDateValue, $lt: toDateValue },
-      }
-    );
+    if (shouldSkipSummary) {
+      return {
+        totalCount,
+        totalClearanceCount: 0,
+        totalClearanceAmount: 0,
+        totalClearanceAmountKRW: 0,
+        totalTransferCount: 0,
+        totalTransferAmount: 0,
+        totalByBuyerBankAccountNumber: [],
+        totalBySellerBankAccountNumber: [],
+        orders: results,
+      };
+    }
 
 
     // totalClearanceCount
