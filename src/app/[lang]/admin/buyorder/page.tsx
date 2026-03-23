@@ -7726,9 +7726,9 @@ const fetchBuyOrders = async () => {
 
                           <div className="w-full flex flex-row gap-2 items-center justify-start">
                             <button
-                              className="text-sm text-blue-600 font-semibold
-                                border border-blue-600 rounded-lg p-2
-                                text-center
+                              className="text-xs leading-tight text-blue-600 font-semibold
+                                border border-blue-600 rounded-lg px-2.5 py-1.5
+                                text-center whitespace-nowrap
                                 hover:bg-blue-200
                                 cursor-pointer
                                 transition-all duration-200 ease-in-out
