@@ -34,11 +34,11 @@ const BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS = Math.max(
   1000,
 );
 const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS = Math.max(
-  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS || "", 10) || 10000,
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS || "", 10) || 5000,
   0,
 );
 const BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS = Math.max(
-  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS || "", 10) || 40000,
+  Number.parseInt(process.env.BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS || "", 10) || 15000,
   BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS,
 );
 const BUYORDER_REQUEST_PAYMENT_TASK_PAYACTION_TIMEOUT_MS = Math.max(
@@ -353,15 +353,16 @@ const runTask = async () => {
   const processedTradeIds: string[] = [];
   const skippedTradeIds: string[] = [];
   const storeCache = new Map<string, any | null>();
-  const acceptedDelayMs = getRandomAcceptedDelayMs();
-  const acceptedBefore = new Date(Date.now() - acceptedDelayMs).toISOString();
+  const acceptedQueryBefore = new Date(
+    Date.now() - BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS,
+  ).toISOString();
 
   const buyordersResult = await withTransientMongoRetry(() =>
     withTimeout(
       getAllBuyOrdersForRequestPayment({
         limit: BUYORDER_REQUEST_PAYMENT_TASK_MAX_ORDERS_PER_RUN,
         page: 1,
-        acceptedBefore,
+        acceptedBefore: acceptedQueryBefore,
       }),
       BUYORDER_REQUEST_PAYMENT_TASK_DB_TIMEOUT_MS,
       "buyOrderRequestPaymentTaskV2 queue read timeout",
@@ -378,8 +379,21 @@ const runTask = async () => {
     const tradeId = stringifyValue(buyOrder?.tradeId);
     const storecode = normalizeString(buyOrder?.storecode);
     const orderId = stringifyValue(buyOrder?._id);
+    const acceptedAt =
+      normalizeString((buyOrder as Record<string, unknown>)?.acceptedAt)
+      || normalizeString((buyOrder as Record<string, unknown>)?.updatedAt)
+      || normalizeString((buyOrder as Record<string, unknown>)?.createdAt);
+    const acceptedDelayMs = getRandomAcceptedDelayMs();
+    const acceptedBefore = new Date(Date.now() - acceptedDelayMs).toISOString();
 
     if (!storecode || !orderId) {
+      if (tradeId) {
+        skippedTradeIds.push(tradeId);
+      }
+      continue;
+    }
+
+    if (!acceptedAt || acceptedAt > acceptedBefore) {
       if (tradeId) {
         skippedTradeIds.push(tradeId);
       }
@@ -463,8 +477,9 @@ const runTask = async () => {
   const result = {
     processedTradeIds,
     skippedTradeIds,
-    acceptedDelayMs,
-    acceptedBefore,
+    acceptedDelayMinMs: BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS,
+    acceptedDelayMaxMs: BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS,
+    acceptedQueryBefore,
     processedCount: processedTradeIds.length,
     skippedCount: skippedTradeIds.length,
     queueTotalCount: Number(buyordersResult?.totalCount || 0),
@@ -534,8 +549,9 @@ export async function POST(request: NextRequest) {
         meta: {
           processedTradeIds: [],
           skippedTradeIds: [],
-          acceptedDelayMs: 0,
-          acceptedBefore: "",
+          acceptedDelayMinMs: BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MIN_MS,
+          acceptedDelayMaxMs: BUYORDER_REQUEST_PAYMENT_TASK_ACCEPTED_DELAY_MAX_MS,
+          acceptedQueryBefore: "",
           processedCount: 0,
           skippedCount: 0,
           queueTotalCount: 0,
