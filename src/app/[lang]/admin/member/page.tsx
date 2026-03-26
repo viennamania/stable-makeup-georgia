@@ -24,7 +24,6 @@ import {
 
 
 import {
-  getContract,
   sendAndConfirmTransaction,
   sendTransaction,
   waitForReceipt,
@@ -61,7 +60,7 @@ import {
 } from "thirdweb/wallets/in-app";
 
 
-import { balanceOf, deposit, transfer } from "thirdweb/extensions/erc20";
+import { deposit, transfer } from "thirdweb/extensions/erc20";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
  
 
@@ -96,11 +95,6 @@ import {
 
 import {
   chain,
-  ethereumContractAddressUSDT,
-  polygonContractAddressUSDT,
-  arbitrumContractAddressUSDT,
-  bscContractAddressUSDT,
-
   bscContractAddressMKRW,
 } from "@/app/config/contractAddresses";
 
@@ -196,34 +190,6 @@ export default function Index({ params }: any) {
 
 
   const activeWallet = useActiveWallet();
-    
-
-  const contract = getContract({
-    // the client you have created via `createThirdwebClient()`
-    client,
-    // the chain the contract is deployed on
-    
-    
-    //chain: arbitrum,
-    chain:  chain === "ethereum" ? ethereum :
-            chain === "polygon" ? polygon :
-            chain === "arbitrum" ? arbitrum :
-            chain === "bsc" ? bsc : arbitrum,
-  
-  
-  
-    // the contract's address
-    ///address: contractAddressArbitrum,
-
-    address: chain === "ethereum" ? ethereumContractAddressUSDT :
-            chain === "polygon" ? polygonContractAddressUSDT :
-            chain === "arbitrum" ? arbitrumContractAddressUSDT :
-            chain === "bsc" ? bscContractAddressUSDT : arbitrumContractAddressUSDT,
-
-
-    // OPTIONAL: the contract's abi
-    //abi: [...],
-  });
 
 
 
@@ -1633,149 +1599,6 @@ export default function Index({ params }: any) {
 
 
 
-
-
-
-  const [usdtBalance, setUsdtBalance] = useState([] as any[]);
-
-  allBuyer.forEach((user) => {
-    usdtBalance.push(0);
-  });
-
-
-
-
-  const getBalanceOfWalletAddress = async (walletAddress: string) => {
-  
-
-    const balance = await balanceOf({
-      contract,
-      address: walletAddress,
-    });
-    
-    console.log('getBalanceOfWalletAddress', walletAddress, 'balance', balance);
-
-    //toast.success(`잔액이 업데이트되었습니다. 잔액: ${(Number(balance) / 10 ** 6).toFixed(3)} USDT`);
-
-    // if chain is bsc, then 10 ** 18
-    if (chain === 'bsc') {
-      toast.success(`잔액이 업데이트되었습니다. 잔액: ${(Number(balance) / 10 ** 18).toFixed(3)} USDT`);
-    } else {
-      toast.success(`잔액이 업데이트되었습니다. 잔액: ${(Number(balance) / 10 ** 6).toFixed(3)} USDT`);
-    }
-
-    /*
-    setAllUsers((prev) => {
-      const newUsers = [...prev];
-      const index = newUsers.findIndex(u => u.walletAddress === walletAddress);
-      if (index !== -1) {
-        newUsers[index] = {
-          ...newUsers[index],
-          usdtBalance: Number(balance) / 10 ** 6,
-        };
-      }
-      return newUsers;
-    });
-    */
-
-
-    // update the usdtBalance of the user
-    
-    setUsdtBalance((prev) => {
-      const newUsdtBalance = [...prev];
-      const index = allBuyer.findIndex(u => u.walletAddress === walletAddress);
-      if (index !== -1) {
-        newUsdtBalance[index] = Number(balance) / 10 ** 6; // Convert to USDT
-      }
-      return newUsdtBalance;
-    });
-
-
-
-
-    return Number(balance) / 10 ** 6; // Convert to USDT
-
-  };
-
-
-
-  // clearanceWalletAddress
-  const [clearanceingWalletAddress, setClearanceingWalletAddress] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    clearanceingWalletAddress.push(false);
-  }
-
-  const clearanceWalletAddress = async (walletAddress: string, storecode: string) => {
-    
-    if (clearanceingWalletAddress.includes(true)) {
-      return;
-    }
-
-
-    // api call to clear the wallet address
-    setClearanceingWalletAddress((prev) => {
-      const newClearanceing = [...prev];
-      const index = newClearanceing.findIndex(u => u === false);
-      if (index !== -1) {
-        newClearanceing[index] = true;
-      }
-      return newClearanceing;
-    });
-
-
-    
-    const response = await fetch('/api/user/clearanceWalletAddress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        walletAddress: walletAddress,
-        storecode: storecode,
-      }),
-    });
-
-    if (!response.ok) {
-      setClearanceingWalletAddress((prev) => {
-        const newClearanceing = [...prev];
-        const index = newClearanceing.findIndex(u => u === true);
-        if (index !== -1) {
-          newClearanceing[index] = false;
-        }
-        return newClearanceing;
-      });
-      toast.error('지갑 주소 정산에 실패했습니다.');
-      return;
-    }
-
-    const data = await response.json();
-    //console.log('clearanceWalletAddress data', data);
-    if (data.result) {
-      toast.success('지갑 주소 정산이 완료되었습니다.');
-      // update the balance of the user
-      getBalanceOfWalletAddress(walletAddress);
-    } else {
-      toast.error('지갑 주소 정산에 실패했습니다.');
-    }
-    setClearanceingWalletAddress((prev) => {
-      const newClearanceing = [...prev];
-      const index = newClearanceing.findIndex(u => u === true);
-      if (index !== -1) {
-        newClearanceing[index] = false;
-      }
-      return newClearanceing;
-    });
-    return data.result;
-  };
-
-
-
-
-
-
-
-
-
   // check table view or card view
   const [tableView, setTableView] = useState(true);
 
@@ -2569,7 +2392,6 @@ export default function Index({ params }: any) {
                         <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[200px]">충전/결제</th>
                         <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[110px]">주문상태</th>
 
-                        <th className="px-3 py-3 border-b border-slate-200 text-left align-middle whitespace-nowrap min-w-[130px]">잔액확인</th>
                       </tr>
                     </thead>
 
@@ -2686,25 +2508,28 @@ export default function Index({ params }: any) {
                           </td>
 
                           <td className="px-3 py-3 border-b border-slate-100 align-top">
-                            <div className="flex flex-col items-end mr-2 justify-center gap-2 text-right">
-
-                              <div className="text-xs text-slate-500">건수</div>
-                              <div className="text-base font-semibold text-slate-900 tabular-nums">
-                                {Number(item?.totalPaymentConfirmedCount || 0).toLocaleString('ko-KR')}
+                            <div className="flex min-w-[170px] items-stretch gap-2">
+                              <div className="min-w-[54px] rounded-xl bg-slate-50 px-3 py-2 text-right">
+                                <div className="text-[11px] font-medium text-slate-500">건수</div>
+                                <div className="mt-1 text-lg font-semibold text-slate-900 tabular-nums">
+                                  {Number(item?.totalPaymentConfirmedCount || 0).toLocaleString('ko-KR')}
+                                </div>
                               </div>
 
-                              <div className="text-xs text-slate-500">금액(원)</div>
-                              <div className="text-base font-semibold text-emerald-700 tabular-nums">
-                                {Number(item?.totalPaymentConfirmedKrwAmount || 0).toLocaleString('ko-KR')}
+                              <div className="min-w-[86px] rounded-xl bg-emerald-50 px-3 py-2 text-right">
+                                <div className="text-[11px] font-medium text-emerald-700">원화</div>
+                                <div className="mt-1 text-base font-semibold text-emerald-700 tabular-nums">
+                                  {Number(item?.totalPaymentConfirmedKrwAmount || 0).toLocaleString('ko-KR')}
+                                </div>
                               </div>
 
-                              <div className="text-xs text-slate-500">USDT</div>
-                              <div className="text-base font-semibold text-sky-700 tabular-nums">
-                                {Number(item?.totalPaymentConfirmedUsdtAmount || 0).toLocaleString('ko-KR')}
+                              <div className="min-w-[72px] rounded-xl bg-sky-50 px-3 py-2 text-right">
+                                <div className="text-[11px] font-medium text-sky-700">USDT</div>
+                                <div className="mt-1 text-base font-semibold text-sky-700 tabular-nums">
+                                  {Number(item?.totalPaymentConfirmedUsdtAmount || 0).toLocaleString('ko-KR')}
+                                </div>
                               </div>
-
                             </div>
-                            
                           </td>
 
 
@@ -2819,68 +2644,6 @@ export default function Index({ params }: any) {
                               )}
                             </div>
                           </td>
-
-
-                           {/* 잔고확인 버튼 */}
-                           {/* USDT 잔액 */}
-                           <td className="px-3 py-3 border-b border-slate-100 align-top">
-                             <div className="w-24
-                               flex flex-col items-between justify-between gap-2">
- 
-                               {/*
-                               <div className="w-full flex flex-col items-center justify-center gap-2">
- 
-                                 <span className="text-lg text-[#409192]"
-                                   style={{ fontFamily: 'monospace' }}
-                                 >
-                                   {usdtBalance[index] ?
-                                     usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}{' USDT'}
-                                 </span>
-          
-                               </div>
-                               */}
- 
- 
-                               {/* button to getBalance of USDT */}
-                               <button
-                                 //disabled={!isAdmin || insertingStore}
-                                 onClick={() => {
-                                   getBalanceOfWalletAddress(item.walletAddress);
-                                 }}
-                                 className="w-full mb-2 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-sky-500 to-blue-600 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition whitespace-nowrap"
-                               >
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                 </svg>
-                                 잔액 확인하기
-                               </button>
- 
- 
-                               {/* function call button clearanceWalletAddress */}
-                               
-                               <button
-                                 onClick={() => {
-                                   clearanceWalletAddress(item.walletAddress, item.storecode);
-                                 }}
-                                 className="w-full mb-2 inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-xs font-semibold text-white px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition whitespace-nowrap"
-                               >
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v8m0 0l-3-3m3 3l3-3M6 4h12l-1 14H7L6 4z" />
-                                 </svg>
-                                 잔액 회수하기
-                               </button>
-                                
-  
-                             
- 
-                             </div>
-                           </td>
-
-
-
-
-
                         </tr>
 
                       ))}
