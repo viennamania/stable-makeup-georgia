@@ -114,6 +114,13 @@ export async function POST(request: NextRequest) {
   const result = await updateStoreAdminWalletAddress({
     storecode,
     adminWalletAddress: normalizedAdminWalletAddress,
+    audit: {
+      route: "/api/store/updateStoreAdminWalletAddress",
+      publicIp: guard.ok ? guard.ip : null,
+      requesterWalletAddress: guard.ok ? guard.requesterWalletAddress : null,
+      userAgent: request.headers.get("user-agent"),
+      updatedAt: new Date(),
+    },
   });
 
   if (!result) {

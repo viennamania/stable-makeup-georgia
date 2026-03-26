@@ -481,23 +481,68 @@ export async function updateStoreDescription(data: any) {
 
 
 // updateStoreAdminWalletAddress
+const STORE_ADMIN_WALLET_HISTORY_COLLECTION = "storeAdminWalletAddressHistory";
 export async function updateStoreAdminWalletAddress(
   {
     storecode,
     adminWalletAddress,
+    audit,
   }: {
     storecode: string;
     adminWalletAddress: string;
+    audit?: UpdateStoreWalletAddressAudit;
   }
 ): Promise<boolean> {
   const client = await clientPromise;
-  const collection = client.db(dbName).collection('stores');
+  const db = client.db(dbName);
+  const collection = db.collection('stores');
+  const historyCollection = db.collection(STORE_ADMIN_WALLET_HISTORY_COLLECTION);
+  const safeStorecode = normalizeAuditString(storecode);
+  const nextAdminWalletAddress = normalizeAuditString(adminWalletAddress);
+
+  const existingStore = await collection.findOne(
+    { storecode: safeStorecode },
+    { projection: { adminWalletAddress: 1 } },
+  );
+
+  if (!existingStore) {
+    return false;
+  }
+
+  const beforeAdminWalletAddress =
+    normalizeAuditString(existingStore?.adminWalletAddress) || null;
 
   // update storecode
   const result = await collection.updateOne(
-    { storecode: storecode },
-    { $set: { adminWalletAddress: adminWalletAddress } }
+    { storecode: safeStorecode },
+    { $set: { adminWalletAddress: nextAdminWalletAddress } }
   );
+
+  if (result?.acknowledged && result?.matchedCount > 0) {
+    clearCachedStoreByCode(safeStorecode);
+
+    const afterAdminWalletAddress = nextAdminWalletAddress || null;
+    await logStoreWalletAddressHistory(
+      historyCollection,
+      {
+        storecode: safeStorecode,
+        field: "adminWalletAddress",
+        before: beforeAdminWalletAddress,
+        after: afterAdminWalletAddress,
+        changed:
+          String(beforeAdminWalletAddress || "").toLowerCase() !==
+          String(afterAdminWalletAddress || "").toLowerCase(),
+        publicIp: normalizeAuditString(audit?.publicIp) || null,
+        requesterWalletAddress:
+          normalizeAuditString(audit?.requesterWalletAddress).toLowerCase() || null,
+        userAgent: normalizeAuditString(audit?.userAgent).slice(0, 1000) || null,
+        route: normalizeAuditString(audit?.route) || null,
+        updatedAt: audit?.updatedAt ? new Date(audit.updatedAt) : new Date(),
+      },
+      "Failed to log admin wallet address history",
+    );
+  }
+
   return Boolean(result?.acknowledged && result?.matchedCount > 0);
 }
 
@@ -728,6 +773,31 @@ export async function updateStorePrivateSellerWalletAddress(
   }
 
   return Boolean(result?.acknowledged && result?.matchedCount > 0);
+}
+
+export async function getStoreAdminWalletAddressHistory({
+  storecode,
+  limit = 20,
+}: {
+  storecode: string;
+  limit?: number;
+}) {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection(STORE_ADMIN_WALLET_HISTORY_COLLECTION);
+  const safeStorecode = String(storecode || "").trim();
+
+  if (!safeStorecode) {
+    return [];
+  }
+
+  return collection
+    .find({
+      storecode: safeStorecode,
+      field: "adminWalletAddress",
+    })
+    .sort({ updatedAt: -1, _id: -1 })
+    .limit(Math.max(1, Number(limit) || 20))
+    .toArray();
 }
 
 

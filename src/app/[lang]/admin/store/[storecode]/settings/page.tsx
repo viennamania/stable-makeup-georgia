@@ -73,6 +73,33 @@ const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on
 const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
 
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
+const STORE_ADMIN_WALLET_HISTORY_READ_SIGNING_PREFIX =
+    "stable-georgia:store-admin-wallet-history-read:v1";
+
+const shortenWalletAddress = (value?: string | null) => {
+    const walletAddress = typeof value === "string" ? value.trim() : "";
+    if (!walletAddress) {
+        return "미설정";
+    }
+    if (walletAddress.length <= 12) {
+        return walletAddress;
+    }
+    return `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`;
+};
+
+const formatHistoryDateTime = (value?: string | Date | null) => {
+    if (!value) {
+        return "-";
+    }
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return "-";
+    }
+    return new Intl.DateTimeFormat("ko-KR", {
+        dateStyle: "short",
+        timeStyle: "medium",
+    }).format(date);
+};
 
 
 
@@ -876,6 +903,246 @@ export default function SettingsPage({ params }: any) {
         }
         fetchStore();
     } , [params.storecode, address, smartAccount])
+
+
+    const [fetchingAdminWalletCandidates, setFetchingAdminWalletCandidates] = useState(false);
+    const [adminWalletCandidates, setAdminWalletCandidates] = useState([] as any[]);
+    const [selectedAdminWalletAddress, setSelectedAdminWalletAddress] = useState('');
+    const [updatingAdminWalletAddress, setUpdatingAdminWalletAddress] = useState(false);
+    const [loadingAdminWalletHistory, setLoadingAdminWalletHistory] = useState(false);
+    const [adminWalletHistory, setAdminWalletHistory] = useState([] as any[]);
+
+    useEffect(() => {
+        if (!params.storecode) {
+            setAdminWalletCandidates([]);
+            setSelectedAdminWalletAddress('');
+            return;
+        }
+
+        let cancelled = false;
+
+        const run = async () => {
+            setFetchingAdminWalletCandidates(true);
+
+            try {
+                const response = await fetch('/api/user/getAllUsersByStorecode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        storecode: params.storecode,
+                        limit: 100,
+                        page: 1,
+                        verifiedOnly: true,
+                    }),
+                });
+
+                if (!response.ok) {
+                    if (!cancelled) {
+                        toast.error('관리자 지갑 후보 조회에 실패했습니다.');
+                        setAdminWalletCandidates([]);
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                const rawUsers = Array.isArray(data?.result?.users) ? data.result.users : [];
+                const candidateMap = new Map<string, any>();
+
+                for (const user of rawUsers) {
+                    const walletAddress = typeof user?.walletAddress === 'string'
+                        ? user.walletAddress.trim()
+                        : '';
+                    const signerAddress = typeof user?.signerAddress === 'string'
+                        ? user.signerAddress.trim()
+                        : '';
+
+                    if (!walletAddress || signerAddress) {
+                        continue;
+                    }
+
+                    const normalizedWalletAddress = walletAddress.toLowerCase();
+                    if (!candidateMap.has(normalizedWalletAddress)) {
+                        candidateMap.set(normalizedWalletAddress, user);
+                    }
+                }
+
+                if (!cancelled) {
+                    setAdminWalletCandidates(Array.from(candidateMap.values()));
+                }
+            } finally {
+                if (!cancelled) {
+                    setFetchingAdminWalletCandidates(false);
+                }
+            }
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [params.storecode]);
+
+    const updateAdminWalletAddress = async () => {
+        if (updatingAdminWalletAddress) {
+            return;
+        }
+
+        if (!smartAccount || !address) {
+            toast.error('지갑을 먼저 연결하세요.');
+            return;
+        }
+
+        if (!selectedAdminWalletAddress) {
+            toast.error('가맹점 관리자 지갑을 선택하세요.');
+            return;
+        }
+
+        const normalizedSelectedAdminWalletAddress = selectedAdminWalletAddress.toLowerCase();
+        const normalizedCurrentAdminWalletAddress = typeof store?.adminWalletAddress === 'string'
+            ? store.adminWalletAddress.toLowerCase()
+            : '';
+
+        if (normalizedSelectedAdminWalletAddress === normalizedCurrentAdminWalletAddress) {
+            toast.error('현재 가맹점 관리자 지갑과 동일합니다.');
+            return;
+        }
+
+        const selectedCandidate = adminWalletCandidates.find((user) => {
+            const walletAddress = typeof user?.walletAddress === 'string'
+                ? user.walletAddress.trim().toLowerCase()
+                : '';
+            const signerAddress = typeof user?.signerAddress === 'string'
+                ? user.signerAddress.trim()
+                : '';
+
+            return walletAddress === normalizedSelectedAdminWalletAddress && !signerAddress;
+        });
+
+        if (!selectedCandidate) {
+            toast.error('검증된 일반 지갑만 가맹점 관리자 지갑으로 설정할 수 있습니다.');
+            return;
+        }
+
+        setUpdatingAdminWalletAddress(true);
+
+        try {
+            const response = await postAdminSignedJson({
+                account: smartAccount,
+                route: '/api/store/updateStoreAdminWalletAddress',
+                signingPrefix: STORE_SETTINGS_MUTATION_SIGNING_PREFIX,
+                requesterWalletAddress: address,
+                body: {
+                    storecode: params.storecode,
+                    adminWalletAddress: selectedAdminWalletAddress,
+                },
+            });
+
+            if (!response.ok) {
+                toast.error('가맹점 관리자 지갑 변경에 실패했습니다.');
+                return;
+            }
+
+            const data = await response.json();
+            if (!data.result) {
+                toast.error(data?.error || '가맹점 관리자 지갑 변경에 실패했습니다.');
+                return;
+            }
+
+            toast.success('가맹점 관리자 지갑이 변경되었습니다.');
+            setSelectedAdminWalletAddress('');
+            setStore({
+                ...store,
+                adminWalletAddress: data.adminWalletAddress || selectedAdminWalletAddress,
+            });
+            fetchAdminWalletAddressHistory();
+        } finally {
+            setUpdatingAdminWalletAddress(false);
+        }
+    };
+
+    const fetchAdminWalletAddressHistory = async () => {
+        if (!params.storecode || !smartAccount || !address || loadingAdminWalletHistory) {
+            return;
+        }
+
+        setLoadingAdminWalletHistory(true);
+
+        try {
+            const response = await postAdminSignedJson({
+                account: smartAccount,
+                route: '/api/store/getStoreAdminWalletAddressHistory',
+                signingPrefix: STORE_ADMIN_WALLET_HISTORY_READ_SIGNING_PREFIX,
+                requesterWalletAddress: address,
+                body: {
+                    storecode: params.storecode,
+                    limit: 20,
+                },
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                toast.error(data?.error || '가맹점 관리자 지갑 변경 이력 조회에 실패했습니다.');
+                setAdminWalletHistory([]);
+                return;
+            }
+
+            setAdminWalletHistory(Array.isArray(data?.result) ? data.result : []);
+        } finally {
+            setLoadingAdminWalletHistory(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!params.storecode || !smartAccount || !address) {
+            setAdminWalletHistory([]);
+            return;
+        }
+
+        let cancelled = false;
+
+        const run = async () => {
+            setLoadingAdminWalletHistory(true);
+
+            try {
+                const response = await postAdminSignedJson({
+                    account: smartAccount,
+                    route: '/api/store/getStoreAdminWalletAddressHistory',
+                    signingPrefix: STORE_ADMIN_WALLET_HISTORY_READ_SIGNING_PREFIX,
+                    requesterWalletAddress: address,
+                    body: {
+                        storecode: params.storecode,
+                        limit: 20,
+                    },
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    if (!cancelled) {
+                        setAdminWalletHistory([]);
+                    }
+                    return;
+                }
+
+                if (!cancelled) {
+                    setAdminWalletHistory(Array.isArray(data?.result) ? data.result : []);
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingAdminWalletHistory(false);
+                }
+            }
+        };
+
+        run();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [params.storecode, smartAccount, address]);
+
     // update escrowAmountUSDT of store
     // 가맹점 에스크로 수량 변경
     const [updatingEscrowAmountUSDT, setUpdatingEscrowAmountUSDT] = useState(false);
@@ -2065,6 +2332,170 @@ export default function SettingsPage({ params }: any) {
                                     className="animate-spin"
                                 />
                                 )}
+
+                                <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                                    검증된 일반 지갑만 가맹점 관리자 지갑으로 설정할 수 있습니다.
+                                    서버월렛 및 스마트지갑은 선택할 수 없습니다.
+                                </div>
+
+                                {!fetchingAdminWalletCandidates && adminWalletCandidates.length > 0 ? (
+                                    <div className="w-full flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                                        <div className="w-full flex flex-col gap-2 sm:flex-row">
+                                            <select
+                                                value={selectedAdminWalletAddress}
+                                                onChange={(e) => setSelectedAdminWalletAddress(e.target.value)}
+                                                className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                disabled={updatingAdminWalletAddress}
+                                            >
+                                                <option value="">가맹점 관리자 지갑 선택</option>
+                                                {adminWalletCandidates.map((user) => {
+                                                    const walletAddress = typeof user?.walletAddress === 'string'
+                                                        ? user.walletAddress
+                                                        : '';
+                                                    const nickname = typeof user?.nickname === 'string' && user.nickname.trim()
+                                                        ? user.nickname.trim()
+                                                        : '이름없음';
+
+                                                    return (
+                                                        <option key={user?._id || walletAddress} value={walletAddress}>
+                                                            {nickname}
+                                                            {' '}
+                                                            ({walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)})
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
+
+                                            <button
+                                                onClick={() => {
+                                                    if (!selectedAdminWalletAddress) {
+                                                        toast.error('가맹점 관리자 지갑을 선택하세요.');
+                                                        return;
+                                                    }
+
+                                                    confirm(
+                                                        `정말 ${selectedAdminWalletAddress}로 가맹점 관리자 지갑을 변경하시겠습니까?`
+                                                    ) && updateAdminWalletAddress();
+                                                }}
+                                                disabled={updatingAdminWalletAddress || !selectedAdminWalletAddress}
+                                                className={`rounded-lg bg-[#3167b4] px-4 py-2 text-sm text-white ${
+                                                    updatingAdminWalletAddress || !selectedAdminWalletAddress
+                                                        ? 'cursor-not-allowed opacity-50'
+                                                        : 'hover:bg-[#2a5a9d]'
+                                                }`}
+                                            >
+                                                {updatingAdminWalletAddress ? '변경 중...' : '관리자 지갑 변경'}
+                                            </button>
+                                        </div>
+
+                                        <span className="text-xs text-slate-500">
+                                            후보 수 {adminWalletCandidates.length}개
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="w-full flex flex-row items-center justify-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                        {fetchingAdminWalletCandidates ? (
+                                            <>
+                                                <Image
+                                                    src="/loading.png"
+                                                    alt="Loading"
+                                                    width={18}
+                                                    height={18}
+                                                    className="animate-spin"
+                                                />
+                                                <span className="text-sm text-amber-700">
+                                                    관리자 지갑 후보를 조회하는 중입니다.
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Image
+                                                    src="/icon-warning.png"
+                                                    alt="Warning"
+                                                    width={18}
+                                                    height={18}
+                                                    className="w-[18px] h-[18px]"
+                                                />
+                                                <span className="text-sm text-amber-700">
+                                                    선택 가능한 검증 지갑이 없습니다. 해당 가맹점 사용자 지갑의 인증 상태를 확인하세요.
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="w-full flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold text-slate-700">
+                                                변경 이력
+                                            </span>
+                                            <span className="text-xs text-slate-500">
+                                                최근 관리자 지갑 변경 내역 20건
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => fetchAdminWalletAddressHistory()}
+                                            disabled={!smartAccount || !address || loadingAdminWalletHistory}
+                                            className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 ${
+                                                !smartAccount || !address || loadingAdminWalletHistory
+                                                    ? 'cursor-not-allowed opacity-50'
+                                                    : 'hover:bg-slate-100'
+                                            }`}
+                                        >
+                                            {loadingAdminWalletHistory ? '조회 중...' : '새로고침'}
+                                        </button>
+                                    </div>
+
+                                    {!smartAccount || !address ? (
+                                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                                            관리자 지갑 연결 후 변경 이력을 조회할 수 있습니다.
+                                        </div>
+                                    ) : adminWalletHistory.length === 0 ? (
+                                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-500">
+                                            저장된 관리자 지갑 변경 이력이 없습니다.
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-2">
+                                            {adminWalletHistory.map((item, index) => (
+                                                <div
+                                                    key={String(item?._id || `${item?.updatedAt || 'history'}-${item?.after || ''}-${index}`)}
+                                                    className="rounded-lg border border-slate-200 bg-white px-3 py-3"
+                                                >
+                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-xs text-slate-500">변경 시각</span>
+                                                            <span className="text-sm font-medium text-slate-700">
+                                                                {formatHistoryDateTime(item?.updatedAt)}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex flex-col gap-1 sm:items-end">
+                                                            <span className="text-xs text-slate-500">변경자</span>
+                                                            <span className="text-sm font-medium text-slate-700">
+                                                                {shortenWalletAddress(item?.requesterWalletAddress)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                                        <div className="rounded-lg bg-slate-50 px-3 py-2">
+                                                            <span className="text-xs text-slate-500">이전 지갑</span>
+                                                            <div className="mt-1 text-sm font-semibold text-slate-700">
+                                                                {shortenWalletAddress(item?.before)}
+                                                            </div>
+                                                        </div>
+                                                        <div className="rounded-lg bg-emerald-50 px-3 py-2">
+                                                            <span className="text-xs text-emerald-600">변경 후 지갑</span>
+                                                            <div className="mt-1 text-sm font-semibold text-emerald-700">
+                                                                {shortenWalletAddress(item?.after)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
 
                             </div>
 
