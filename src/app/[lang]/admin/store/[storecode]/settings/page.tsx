@@ -101,6 +101,27 @@ const formatHistoryDateTime = (value?: string | Date | null) => {
     }).format(date);
 };
 
+const SETTINGS_SHELL_CARD_CLASS =
+    "w-full rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur";
+
+const SETTINGS_SECTION_HEADER_CLASS =
+    "flex flex-col gap-3 border-b border-slate-200/80 pb-4 sm:flex-row sm:items-center sm:justify-between";
+
+const SETTINGS_ICON_BADGE_CLASS =
+    "flex h-12 w-12 items-center justify-center rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-blue-100 shadow-sm";
+
+const SETTINGS_PRIMARY_BUTTON_CLASS =
+    "inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50";
+
+const SETTINGS_SECONDARY_BUTTON_CLASS =
+    "inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
+
+const SETTINGS_INPUT_CLASS =
+    "flex-1 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-50";
+
+const SETTINGS_HINT_CARD_CLASS =
+    "rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-600";
+
 
 
 
@@ -1704,11 +1725,9 @@ export default function SettingsPage({ params }: any) {
 
     return (
 
-        <main className="p-4 min-h-[100vh] flex items-start justify-center container max-w-screen-sm mx-auto">
+        <main className="min-h-[100vh] bg-[radial-gradient(circle_at_top,_rgba(191,219,254,0.42),_transparent_38%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_32%,_#f8fafc_100%)] px-4 py-5">
 
-            <div className="py-0 w-full
-                mb-36
-            ">
+            <div className="mx-auto mb-36 w-full max-w-screen-lg py-0">
         
 
                 <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg">
@@ -1753,196 +1772,193 @@ export default function SettingsPage({ params }: any) {
 
 
                 <div className="mt-5 flex flex-col items-start justify-center gap-5">
-
-                    <div className='flex flex-row items-center justify-start gap-2'>
-                        <Image
-                            src={store?.storeLogo || "/icon-store.png"}
-                            alt="Store Logo"
-                            width={35}
-                            height={35}
-                            className="w-10 h-10 rounded-full"
-                        />
-
-                        <div className="text-xl font-semibold">
-                        가맹점{' '}{
-                            store && store.storeName + " (" + store.storecode + ")"
-                        }{' '}관리
-                        </div>
-                    </div>
-
-
-                
-                    
-
                     {!fetchingStore && store && (
 
                         <>
 
-                        <div className="w-full flex flex-row gap-5 items-center justify-center">
-
-                                <button
-                                    onClick={() => {
-                                    router.push(
-                                        '/' + params.lang + '/admin/store/' + params.storecode + '/memo'
-                                    );
-                                    }}
-                                    className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80 flex flex-row items-center gap-2"
-                                >
-                                    <Image
-                                        src="/icon-memo.png"
-                                        alt="Memo"
-                                        width={20}
-                                        height={20}
-                                        className="w-4 h-4"
-                                    />
-                                    {' '}메모하기{' '}
-                                    {store?.memoCount > 0 && (
-                                        <span className="text-red-500 font-semibold">
-                                            ({store?.memoCount})
-                                        </span>
-                                    )}
-                                </button>
-
-                                {/*
-                                <button
-                                    onClick={() => {
-                                    router.push(
-                                        '/' + params.lang + '/admin/store/' + params.storecode + '/clearance'
-                                    );
-                                    }
-                                    }
-                                    className="bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                    hover:bg-[#3167b4]/80 flex flex-row items-center gap-2"
-                                >
-                                    <Image
-                                        src="/icon-clearance.png"
-                                        alt="Clearance"
-                                        width={20}
-                                        height={20}
-                                        className="w-4 h-4"
-                                    />
-                                    {' '}청산관리{' '}
-                                    {store?.clearanceCount > 0 && (
-                                        <span className="text-red-500 font-semibold">
-                                            ({store?.clearanceCount})
-                                        </span>
-                                    )}
-                                </button>
-                                */}
-
-
-
-
-                        </div>
-
-                        {/* viewOnAndOff toggle button */}
-                        <div className="w-full flex flex-row items-center justify-start gap-2">
-
-                            <Image
-                                src="/icon-visibility.png"
-                                alt="Visibility"
-                                width={35}
-                                height={35}
-                                className="w-8 h-8"
-                            />
-                            <div className="text-lg font-semibold">
-                                가맹점 노출 설정:
-                            </div>
-
-                            {store.viewOnAndOff ? (
-                                <button
-                                    onClick={() => toggleViewOnAndOff(false)}
-                                    className="bg-green-500 text-white px-3 py-1 rounded-lg
-                                    hover:bg-green-600 transition duration-200 ease-in-out
-                                    flex flex-row items-center gap-2"
-                                    disabled={isToggling}
-                                >
-                                    <span>노출중</span>
-                                    {isToggling && (
-                                        <svg
-                                            className="animate-spin h-5 w-5 text-white"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle
-                                                className="opacity-25"
-                                                cx="12"
-                                                cy="12"
-                                                r="10"
-                                                stroke="currentColor"
-                                                strokeWidth="4"
-                                            ></circle>
-                                            <path
-                                                className="opacity-75"
-                                                fill="currentColor"
-                                                d="M4 12a8 8 0 018-8v8H4z"
-                                            ></path>
-                                        </svg>
-                                    )}
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => toggleViewOnAndOff(true)}
-                                    className="bg-red-500 text-white px-3 py-1 rounded-lg
-                                    hover:bg-red-600 transition duration-200 ease-in-out
-                                    flex flex-row items-center gap-2"
-                                    disabled={isToggling}
-                                >
-                                    <span>비노출중</span>
-                                    {isToggling && (
-                                        <svg
-                                            className="animate-spin h-5 w-5 text-white"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle
-                                                className="opacity-25"
-                                                cx="12"
-                                                cy="12"
-                                                r="10"
-                                                stroke="currentColor"
-                                                strokeWidth="4"
-                                            ></circle>
-                                            <path
-                                                className="opacity-75"
-                                                fill="currentColor"
-                                                d="M4 12a8 8 0 018-8v8H4z"
-                                            ></path>
-                                        </svg>
-                                    )}
-                                </button>
-                            )}
-
-                        </div>
-
-
-                        <div className="w-full rounded-2xl border border-zinc-200 bg-white shadow-sm p-6 space-y-5">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Image
-                                        src="/icon-store.png"
-                                        alt="Store"
-                                        width={24}
-                                        height={24}
-                                        className="w-7 h-7"
-                                    />
-                                    <div className="flex flex-col">
-                                        <span className="text-lg font-semibold text-zinc-900">가맹점 기본정보 설정</span>
-                                        <span className="text-sm text-zinc-500">이름, 설명, 로고를 수정하세요.</span>
+                        <div className="w-full overflow-hidden rounded-[32px] border border-slate-200/80 bg-[linear-gradient(135deg,_rgba(15,23,42,0.98)_0%,_rgba(30,41,59,0.96)_48%,_rgba(15,118,110,0.88)_100%)] p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                                <div className="flex flex-col gap-5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative">
+                                            <div className="absolute inset-0 rounded-full bg-cyan-300/20 blur-xl" />
+                                            <Image
+                                                src={store?.storeLogo || "/icon-store.png"}
+                                                alt="Store Logo"
+                                                width={72}
+                                                height={72}
+                                                className="relative h-16 w-16 rounded-[22px] border border-white/20 bg-white/10 object-cover shadow-lg"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-100/80">
+                                                Store Settings
+                                            </div>
+                                            <div className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                                                {store?.storeName || "가맹점"} 관리
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-200">
+                                                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-medium">
+                                                    {store?.storecode}
+                                                </span>
+                                                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-slate-100/80">
+                                                    {store?.storeDescription || "가맹점 설정과 운영 보안 항목을 관리합니다."}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-3">
+                                        <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+                                                운영 상태
+                                            </div>
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <span className={`h-2.5 w-2.5 rounded-full ${store.viewOnAndOff ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                                                <span className="text-base font-semibold text-white">
+                                                    {store.viewOnAndOff ? '노출중' : '비노출중'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+                                                메모
+                                            </div>
+                                            <div className="mt-2 text-2xl font-semibold text-white">
+                                                {store?.memoCount || 0}
+                                                <span className="ml-1 text-sm font-medium text-slate-300">건</span>
+                                            </div>
+                                        </div>
+                                        <div className="rounded-2xl border border-white/10 bg-white/8 px-4 py-3 backdrop-blur-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-300">
+                                                관리자 지갑
+                                            </div>
+                                            <div className="mt-2 text-base font-semibold text-white">
+                                                {shortenWalletAddress(store?.adminWalletAddress)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3 lg:min-w-[280px] lg:items-end">
+                                    <div className="flex w-full flex-wrap gap-2 lg:justify-end">
+                                        <button
+                                            onClick={() => {
+                                                router.push(
+                                                    '/' + params.lang + '/admin/store/' + params.storecode + '/memo'
+                                                );
+                                            }}
+                                            className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+                                        >
+                                            <Image
+                                                src="/icon-memo.png"
+                                                alt="Memo"
+                                                width={18}
+                                                height={18}
+                                                className="h-4 w-4"
+                                            />
+                                            메모하기
+                                            {store?.memoCount > 0 && (
+                                                <span className="rounded-full bg-rose-500/90 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                                                    {store?.memoCount}
+                                                </span>
+                                            )}
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                window.open(
+                                                    `/${params.lang}/${params.storecode}/center`,
+                                                    '_blank'
+                                                );
+                                            }}
+                                            className="inline-flex items-center gap-2 rounded-2xl border border-cyan-300/30 bg-cyan-300/12 px-4 py-2.5 text-sm font-semibold text-cyan-50 transition hover:bg-cyan-300/18"
+                                        >
+                                            <Image
+                                                src="/icon-manager.png"
+                                                alt="Manager"
+                                                width={18}
+                                                height={18}
+                                                className="h-4 w-4"
+                                            />
+                                            관리자 홈페이지
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        onClick={() => toggleViewOnAndOff(!store.viewOnAndOff)}
+                                        className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+                                            store.viewOnAndOff
+                                                ? 'bg-emerald-400 text-emerald-950 hover:bg-emerald-300'
+                                                : 'bg-rose-400 text-rose-950 hover:bg-rose-300'
+                                        }`}
+                                        disabled={isToggling}
+                                    >
+                                        <Image
+                                            src="/icon-visibility.png"
+                                            alt="Visibility"
+                                            width={18}
+                                            height={18}
+                                            className="h-4 w-4"
+                                        />
+                                        {store.viewOnAndOff ? '노출 끄기' : '노출 켜기'}
+                                        {isToggling && (
+                                            <svg
+                                                className="h-4 w-4 animate-spin"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                ></circle>
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8v8H4z"
+                                                ></path>
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div className={`${SETTINGS_SHELL_CARD_CLASS} p-6 space-y-5`}>
+                            <div className={SETTINGS_SECTION_HEADER_CLASS}>
+                                <div className="flex items-center gap-3">
+                                    <div className={SETTINGS_ICON_BADGE_CLASS}>
+                                        <Image
+                                            src="/icon-store.png"
+                                            alt="Store"
+                                            width={24}
+                                            height={24}
+                                            className="w-6 h-6"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-semibold tracking-tight text-slate-950">가맹점 기본정보</span>
+                                        <span className="text-sm text-slate-500">운영 노출 정보와 브랜딩 요소를 정리합니다.</span>
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-700">
+                                    금융앱 스타일 운영 설정
                                 </div>
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-xs text-zinc-500">가맹점 코드</span>
+                                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">가맹점 코드</span>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xl font-semibold text-blue-600">{store?.storecode}</span>
+                                        <span className="text-2xl font-semibold tracking-tight text-sky-700">{store?.storecode}</span>
                                         <button
-                                            className="text-xs px-2 py-1 rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition"
+                                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                                             onClick={() => {
                                                 navigator.clipboard.writeText(store?.storecode || '');
                                                 toast.success('가맹점 코드가 복사되었습니다.');
@@ -1954,11 +1970,11 @@ export default function SettingsPage({ params }: any) {
                                 </div>
 
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-xs text-zinc-500">가맹점 이름</span>
+                                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">가맹점 이름</span>
                                     <div className="flex gap-2">
                                         <input
                                             disabled={!address || settingStoreName}
-                                            className="flex-1 bg-white text-zinc-800 rounded-lg px-3 py-2 text-sm border border-zinc-300 focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
+                                            className={SETTINGS_INPUT_CLASS}
                                             placeholder="가맹점 이름을 입력하세요"
                                             value={storeName}
                                             type='text'
@@ -1966,7 +1982,7 @@ export default function SettingsPage({ params }: any) {
                                         />
                                         <button
                                             disabled={!address || !storeName || settingStoreName}
-                                            className={`px-3 py-2 rounded-lg bg-[#3167b4] text-white text-sm font-semibold shadow-sm hover:bg-[#2b599d] transition ${(!storeName || settingStoreName) ? 'opacity-60' : ''}`}
+                                            className={`${SETTINGS_PRIMARY_BUTTON_CLASS} ${(!storeName || settingStoreName) ? 'opacity-60' : ''}`}
                                             onClick={() => {
                                                 confirm(`정말 ${storeName}으로 가맹점 이름을 변경하시겠습니까?`) && writeStoreName();
                                             }}
@@ -1974,15 +1990,15 @@ export default function SettingsPage({ params }: any) {
                                             {settingStoreName ? "변경 중..." : "변경"}
                                         </button>
                                     </div>
-                                    <span className="text-xs text-blue-500 font-semibold">{store?.storeName}</span>
+                                    <span className="text-xs font-semibold text-sky-600">{store?.storeName}</span>
                                 </div>
 
                                 <div className="flex flex-col gap-1 md:col-span-2">
-                                    <span className="text-xs text-zinc-500">가맹점 설명</span>
+                                    <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">가맹점 설명</span>
                                     <div className="flex gap-2">
                                         <input
                                             disabled={!address || writingStoreDescription}
-                                            className="flex-1 bg-white text-zinc-800 rounded-lg px-3 py-2 text-sm border border-zinc-300 focus:border-[#3167b4] focus:ring-2 focus:ring-[#3167b4]/20"
+                                            className={SETTINGS_INPUT_CLASS}
                                             placeholder="가맹점 설명을 입력하세요"
                                             value={storeDescription}
                                             type='text'
@@ -1990,7 +2006,7 @@ export default function SettingsPage({ params }: any) {
                                         />
                                         <button
                                             disabled={!address || !storeDescription || writingStoreDescription}
-                                            className={`px-3 py-2 rounded-lg bg-[#3167b4] text-white text-sm font-semibold shadow-sm hover:bg-[#2b599d] transition ${(!storeDescription || writingStoreDescription) ? 'opacity-60' : ''}`}
+                                            className={`${SETTINGS_PRIMARY_BUTTON_CLASS} ${(!storeDescription || writingStoreDescription) ? 'opacity-60' : ''}`}
                                             onClick={() => {
                                                 confirm(`정말 ${storeDescription}으로 가맹점 설명을 변경하시겠습니까?`) && writeStoreDescription();
                                             }}
@@ -1998,12 +2014,12 @@ export default function SettingsPage({ params }: any) {
                                             {writingStoreDescription ? "변경 중..." : "변경"}
                                         </button>
                                     </div>
-                                    <span className="text-xs text-blue-500 font-semibold">{store?.storeDescription}</span>
+                                    <span className="text-xs font-semibold text-sky-600">{store?.storeDescription}</span>
                                 </div>
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                <span className="text-xs text-zinc-500">가맹점 로고</span>
+                                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">가맹점 로고</span>
                                 <div className="w-full flex flex-row items-center justify-start gap-3">
                                     <Uploader
                                         lang={params.lang}
@@ -2015,29 +2031,30 @@ export default function SettingsPage({ params }: any) {
                                             alt="Store logo"
                                             width={64}
                                             height={64}
-                                            className="rounded-lg w-16 h-16 object-cover border border-zinc-200"
+                                            className="h-16 w-16 rounded-2xl border border-slate-200 object-cover shadow-sm"
                                         />
                                     )}
                                 </div>
                             </div>
 
                             {/* store backgroundColor */}
-                            <div className='w-full flex flex-col items-start gap-2'>
-                                <div className='flex flex-row items-center justify-center gap-2'>
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        배경색
+                            <div className='grid gap-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-4 lg:grid-cols-[1fr_280px] lg:items-end'>
+                                <div className='flex flex-col items-start gap-2'>
+                                    <div className='flex flex-row items-center justify-center gap-2'>
+                                        <div className='h-2.5 w-2.5 rounded-full bg-emerald-500'></div>
+                                        <span className="text-base font-semibold text-slate-900">
+                                            배경색
+                                        </span>
+                                        <div className={`h-8 w-8 rounded-full border border-slate-200 ${store && store.backgroundColor ? `bg-${store.backgroundColor}` : 'bg-gray-300'}`}></div>
+                                    </div>
+                                    <span className="text-sm text-slate-500">
+                                        가맹점 센터와 결제 화면의 주 배경색을 설정합니다.
                                     </span>
-                                    {/* bg-red-500 */}
-                                    <div className={`w-8 h-8 rounded-full ${store && store.backgroundColor ? `bg-${store.backgroundColor}` : 'bg-gray-300'}`}></div>
                                 </div>
-                            </div>
 
-                            <div className='
-                            w-64 flex flex-col gap-2 items-center justify-between'>
+                                <div className='w-full flex flex-col gap-2 items-center justify-between'>
                                 <select
-                                    className="bg-white text-zinc-500 rounded-lg p-2 text-sm w-full"
+                                    className={`${SETTINGS_INPUT_CLASS} w-full`}
                                     value={backgroundColor}
                                     onChange={(e) => setBackgroundColor(e.target.value)}
                                 >
@@ -2078,7 +2095,7 @@ export default function SettingsPage({ params }: any) {
 
                                 <button
                                     disabled={!address || !backgroundColor || updatingBackgroundColor}
-                                    className={`w-full bg-[#3167b4] text-zinc-100 rounded-lg p-2
+                                    className={`w-full ${SETTINGS_PRIMARY_BUTTON_CLASS}
                                         ${!backgroundColor || updatingBackgroundColor
                                         ? "opacity-50" : ""}`}
                                     onClick={() => {
@@ -2094,7 +2111,7 @@ export default function SettingsPage({ params }: any) {
                                 >
                                     {updatingBackgroundColor ? '변경 중...' : '변경하기'}
                                 </button>
-                            
+                                </div>
                             </div>
 
     
@@ -2245,189 +2262,233 @@ export default function SettingsPage({ params }: any) {
 
                         {/* store adminWalletAddress */}
                         
-                        <div className="w-full flex flex-col gap-5 items-center justify-between border border-gray-400 p-4 rounded-lg">
-                            
-
-                            <div className='w-full flex flex-row items-center justify-start gap-2
-                                border-b border-gray-300 pb-2'>
-                                <Image
-                                    src="/icon-manager.png"
-                                    alt="Manager"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
-                                />
-                                <span className="text-lg text-zinc-500">
-                                    가맹점 관리자 설정
-                                </span>
-                            </div>
-
-                            {/* new window button for store admin page */}
-                            <button
-                                onClick={() => {
-                                    window.open(
-                                        `/${params.lang}/${params.storecode}/center`,
-                                        '_blank'
-                                    );
-                                }}
-                                className="bg-[#3167b4] text-sm text-white px-4 py-2 rounded-lg"
-                            >
-                                가맹점 관리자 홈페이지 열기
-                            </button>
-
-
-
-                            <div className="w-full flex flex-col items-center justify-center gap-2">
-                    
-                                <div className="w-full flex flex-row items-center justify-start gap-2">
-                                    {/* dot */}
-                                    <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                                    <span className="text-lg">
-                                        관리자용 지갑주소
-                                    </span>
-                                </div>
-
-                                {!fetchingStore && store && store.adminWalletAddress ? (
-                                <button
-                                    onClick={() => {
-                                    navigator.clipboard.writeText(store.adminWalletAddress);
-                                    toast.success(Copied_Wallet_Address);
-                                    } }
-                                    className="text-lg text-zinc-500 underline"
-                                >
-                                    <div className='flex flex-row items-center justify-start gap-2'>
+                        <div className={`${SETTINGS_SHELL_CARD_CLASS} p-6`}>
+                            <div className={SETTINGS_SECTION_HEADER_CLASS}>
+                                <div className="flex items-center gap-3">
+                                    <div className={SETTINGS_ICON_BADGE_CLASS}>
                                         <Image
-                                            src="/icon-shield.png"
-                                            alt="Shield"
+                                            src="/icon-manager.png"
+                                            alt="Manager"
                                             width={20}
                                             height={20}
                                             className="w-5 h-5"
                                         />
-                                        <span className="text-lg text-zinc-500">
-                                            {store && store.adminWalletAddress.substring(0, 6)}...{store && store.adminWalletAddress.substring(store.adminWalletAddress.length - 4)}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-semibold tracking-tight text-slate-950">
+                                            가맹점 관리자 설정
+                                        </span>
+                                        <span className="text-sm text-slate-500">
+                                            운영 관리자 지갑을 지정하고 변경 이력을 추적합니다.
                                         </span>
                                     </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        window.open(
+                                            `/${params.lang}/${params.storecode}/center`,
+                                            '_blank'
+                                        );
+                                    }}
+                                    className={SETTINGS_SECONDARY_BUTTON_CLASS}
+                                >
+                                    가맹점 관리자 홈페이지 열기
                                 </button>
-                                ) : (
-                                <div className="flex flex-row items-center justify-start gap-2">
-                                    <Image
-                                    src="/icon-warning.png"
-                                    alt="Warning"
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
-                                    />
-                                    <span className="text-sm text-red-500">
-                                    {store && store.storeName}의 가맹점 관리자 설정이 되어 있지 않습니다.
-                                    </span>
-                                </div>
-                                )}
+                            </div>
 
-                                {fetchingStore && (
-                                <Image
-                                    src="/loading.png"
-                                    alt="Loading"
-                                    width={20}
-                                    height={20}
-                                    className="animate-spin"
-                                />
-                                )}
+                            <div className="mt-6 grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+                                <div className="flex flex-col gap-4">
+                                    <div className="rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,_rgba(248,250,252,0.95)_0%,_rgba(255,255,255,0.98)_100%)] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.06)]">
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-sm">
+                                                        <Image
+                                                            src="/icon-shield.png"
+                                                            alt="Shield"
+                                                            width={20}
+                                                            height={20}
+                                                            className="h-5 w-5"
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                                                            Admin Wallet
+                                                        </span>
+                                                        <span className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
+                                                            관리자용 지갑주소
+                                                        </span>
+                                                        <span className="text-sm text-slate-500">
+                                                            검증된 일반 지갑만 지정할 수 있습니다.
+                                                        </span>
+                                                    </div>
+                                                </div>
 
-                                <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-                                    검증된 일반 지갑만 가맹점 관리자 지갑으로 설정할 수 있습니다.
-                                    서버월렛 및 스마트지갑은 선택할 수 없습니다.
-                                </div>
+                                                {store?.adminWalletAddress ? (
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(store.adminWalletAddress);
+                                                            toast.success(Copied_Wallet_Address);
+                                                        }}
+                                                        className="rounded-2xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                                                    >
+                                                        현재 지갑 복사
+                                                    </button>
+                                                ) : null}
+                                            </div>
 
-                                {!fetchingAdminWalletCandidates && adminWalletCandidates.length > 0 ? (
-                                    <div className="w-full flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3">
-                                        <div className="w-full flex flex-col gap-2 sm:flex-row">
-                                            <select
-                                                value={selectedAdminWalletAddress}
-                                                onChange={(e) => setSelectedAdminWalletAddress(e.target.value)}
-                                                className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                disabled={updatingAdminWalletAddress}
-                                            >
-                                                <option value="">가맹점 관리자 지갑 선택</option>
-                                                {adminWalletCandidates.map((user) => {
-                                                    const walletAddress = typeof user?.walletAddress === 'string'
-                                                        ? user.walletAddress
-                                                        : '';
-                                                    const nickname = typeof user?.nickname === 'string' && user.nickname.trim()
-                                                        ? user.nickname.trim()
-                                                        : '이름없음';
-
-                                                    return (
-                                                        <option key={user?._id || walletAddress} value={walletAddress}>
-                                                            {nickname}
-                                                            {' '}
-                                                            ({walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)})
-                                                        </option>
-                                                    );
-                                                })}
-                                            </select>
-
-                                            <button
-                                                onClick={() => {
-                                                    if (!selectedAdminWalletAddress) {
-                                                        toast.error('가맹점 관리자 지갑을 선택하세요.');
-                                                        return;
-                                                    }
-
-                                                    confirm(
-                                                        `정말 ${selectedAdminWalletAddress}로 가맹점 관리자 지갑을 변경하시겠습니까?`
-                                                    ) && updateAdminWalletAddress();
-                                                }}
-                                                disabled={updatingAdminWalletAddress || !selectedAdminWalletAddress}
-                                                className={`rounded-lg bg-[#3167b4] px-4 py-2 text-sm text-white ${
-                                                    updatingAdminWalletAddress || !selectedAdminWalletAddress
-                                                        ? 'cursor-not-allowed opacity-50'
-                                                        : 'hover:bg-[#2a5a9d]'
-                                                }`}
-                                            >
-                                                {updatingAdminWalletAddress ? '변경 중...' : '관리자 지갑 변경'}
-                                            </button>
+                                            {fetchingStore ? (
+                                                <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
+                                                    <Image
+                                                        src="/loading.png"
+                                                        alt="Loading"
+                                                        width={18}
+                                                        height={18}
+                                                        className="animate-spin"
+                                                    />
+                                                    관리자 지갑 정보를 불러오는 중입니다.
+                                                </div>
+                                            ) : store && store.adminWalletAddress ? (
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(store.adminWalletAddress);
+                                                        toast.success(Copied_Wallet_Address);
+                                                    }}
+                                                    className="group rounded-[26px] border border-slate-200 bg-white px-5 py-4 text-left shadow-sm transition hover:border-sky-200 hover:shadow-[0_18px_36px_rgba(14,116,144,0.12)]"
+                                                >
+                                                    <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+                                                        Current Wallet
+                                                    </div>
+                                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                        <span className="text-2xl font-semibold tracking-tight text-slate-950">
+                                                            {shortenWalletAddress(store.adminWalletAddress)}
+                                                        </span>
+                                                        <span className="rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-500 transition group-hover:border-sky-200 group-hover:text-sky-700">
+                                                            탭해서 복사
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-3 text-sm text-slate-500 break-all">
+                                                        {store.adminWalletAddress}
+                                                    </div>
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
+                                                    <Image
+                                                        src="/icon-warning.png"
+                                                        alt="Warning"
+                                                        width={18}
+                                                        height={18}
+                                                        className="h-[18px] w-[18px]"
+                                                    />
+                                                    {store && store.storeName}의 가맹점 관리자 지갑이 아직 설정되지 않았습니다.
+                                                </div>
+                                            )}
                                         </div>
-
-                                        <span className="text-xs text-slate-500">
-                                            후보 수 {adminWalletCandidates.length}개
-                                        </span>
                                     </div>
-                                ) : (
-                                    <div className="w-full flex flex-row items-center justify-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                                        {fetchingAdminWalletCandidates ? (
-                                            <>
-                                                <Image
-                                                    src="/loading.png"
-                                                    alt="Loading"
-                                                    width={18}
-                                                    height={18}
-                                                    className="animate-spin"
-                                                />
-                                                <span className="text-sm text-amber-700">
-                                                    관리자 지갑 후보를 조회하는 중입니다.
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Image
-                                                    src="/icon-warning.png"
-                                                    alt="Warning"
-                                                    width={18}
-                                                    height={18}
-                                                    className="w-[18px] h-[18px]"
-                                                />
-                                                <span className="text-sm text-amber-700">
-                                                    선택 가능한 검증 지갑이 없습니다. 해당 가맹점 사용자 지갑의 인증 상태를 확인하세요.
-                                                </span>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
 
-                                <div className="w-full flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className={SETTINGS_HINT_CARD_CLASS}>
+                                        검증된 일반 지갑만 가맹점 관리자 지갑으로 설정할 수 있습니다.
+                                        서버월렛 및 스마트지갑은 선택 대상에서 제외됩니다.
+                                    </div>
+
+                                    {!fetchingAdminWalletCandidates && adminWalletCandidates.length > 0 ? (
+                                        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_36px_rgba(15,23,42,0.05)]">
+                                            <div className="flex flex-col gap-2">
+                                                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                                    Candidate Wallet
+                                                </span>
+                                                <span className="text-base font-semibold text-slate-900">
+                                                    관리자 지갑 변경
+                                                </span>
+                                            </div>
+
+                                            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                                                <select
+                                                    value={selectedAdminWalletAddress}
+                                                    onChange={(e) => setSelectedAdminWalletAddress(e.target.value)}
+                                                    className={SETTINGS_INPUT_CLASS}
+                                                    disabled={updatingAdminWalletAddress}
+                                                >
+                                                    <option value="">가맹점 관리자 지갑 선택</option>
+                                                    {adminWalletCandidates.map((user) => {
+                                                        const walletAddress = typeof user?.walletAddress === 'string'
+                                                            ? user.walletAddress
+                                                            : '';
+                                                        const nickname = typeof user?.nickname === 'string' && user.nickname.trim()
+                                                            ? user.nickname.trim()
+                                                            : '이름없음';
+
+                                                        return (
+                                                            <option key={user?._id || walletAddress} value={walletAddress}>
+                                                                {nickname}
+                                                                {' '}
+                                                                ({walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)})
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+
+                                                <button
+                                                    onClick={() => {
+                                                        if (!selectedAdminWalletAddress) {
+                                                            toast.error('가맹점 관리자 지갑을 선택하세요.');
+                                                            return;
+                                                        }
+
+                                                        confirm(
+                                                            `정말 ${selectedAdminWalletAddress}로 가맹점 관리자 지갑을 변경하시겠습니까?`
+                                                        ) && updateAdminWalletAddress();
+                                                    }}
+                                                    disabled={updatingAdminWalletAddress || !selectedAdminWalletAddress}
+                                                    className={SETTINGS_PRIMARY_BUTTON_CLASS}
+                                                >
+                                                    {updatingAdminWalletAddress ? '변경 중...' : '관리자 지갑 변경'}
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                                <span>후보 수 {adminWalletCandidates.length}개</span>
+                                                <span className="text-xs text-slate-500">검증 완료 일반 지갑만 노출</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-row items-center justify-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                                            {fetchingAdminWalletCandidates ? (
+                                                <>
+                                                    <Image
+                                                        src="/loading.png"
+                                                        alt="Loading"
+                                                        width={18}
+                                                        height={18}
+                                                        className="animate-spin"
+                                                    />
+                                                    <span className="text-sm text-amber-700">
+                                                        관리자 지갑 후보를 조회하는 중입니다.
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Image
+                                                        src="/icon-warning.png"
+                                                        alt="Warning"
+                                                        width={18}
+                                                        height={18}
+                                                        className="w-[18px] h-[18px]"
+                                                    />
+                                                    <span className="text-sm text-amber-700">
+                                                        선택 가능한 검증 지갑이 없습니다. 해당 가맹점 사용자 지갑의 인증 상태를 확인하세요.
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 shadow-[0_16px_36px_rgba(15,23,42,0.04)]">
                                     <div className="flex items-center justify-between gap-3">
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-slate-700">
+                                            <span className="text-sm font-semibold text-slate-900">
                                                 변경 이력
                                             </span>
                                             <span className="text-xs text-slate-500">
@@ -2437,57 +2498,53 @@ export default function SettingsPage({ params }: any) {
                                         <button
                                             onClick={() => fetchAdminWalletAddressHistory()}
                                             disabled={!smartAccount || !address || loadingAdminWalletHistory}
-                                            className={`rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 ${
-                                                !smartAccount || !address || loadingAdminWalletHistory
-                                                    ? 'cursor-not-allowed opacity-50'
-                                                    : 'hover:bg-slate-100'
-                                            }`}
+                                            className={SETTINGS_SECONDARY_BUTTON_CLASS}
                                         >
                                             {loadingAdminWalletHistory ? '조회 중...' : '새로고침'}
                                         </button>
                                     </div>
 
                                     {!smartAccount || !address ? (
-                                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                                        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                                             관리자 지갑 연결 후 변경 이력을 조회할 수 있습니다.
                                         </div>
                                     ) : adminWalletHistory.length === 0 ? (
-                                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-500">
+                                        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
                                             저장된 관리자 지갑 변경 이력이 없습니다.
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col gap-2">
+                                        <div className="flex max-h-[580px] flex-col gap-3 overflow-y-auto pr-1">
                                             {adminWalletHistory.map((item, index) => (
                                                 <div
                                                     key={String(item?._id || `${item?.updatedAt || 'history'}-${item?.after || ''}-${index}`)}
-                                                    className="rounded-lg border border-slate-200 bg-white px-3 py-3"
+                                                    className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm"
                                                 >
-                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                                         <div className="flex flex-col gap-1">
-                                                            <span className="text-xs text-slate-500">변경 시각</span>
-                                                            <span className="text-sm font-medium text-slate-700">
+                                                            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">변경 시각</span>
+                                                            <span className="text-sm font-semibold text-slate-800">
                                                                 {formatHistoryDateTime(item?.updatedAt)}
                                                             </span>
                                                         </div>
                                                         <div className="flex flex-col gap-1 sm:items-end">
-                                                            <span className="text-xs text-slate-500">변경자</span>
-                                                            <span className="text-sm font-medium text-slate-700">
+                                                            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">변경자</span>
+                                                            <span className="text-sm font-semibold text-slate-700">
                                                                 {shortenWalletAddress(item?.requesterWalletAddress)}
                                                             </span>
                                                         </div>
                                                     </div>
 
-                                                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                                                        <div className="rounded-lg bg-slate-50 px-3 py-2">
+                                                    <div className="mt-4 grid gap-2">
+                                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
                                                             <span className="text-xs text-slate-500">이전 지갑</span>
-                                                            <div className="mt-1 text-sm font-semibold text-slate-700">
-                                                                {shortenWalletAddress(item?.before)}
+                                                            <div className="mt-1 text-sm font-semibold text-slate-700 break-all">
+                                                                {item?.before || '미설정'}
                                                             </div>
                                                         </div>
-                                                        <div className="rounded-lg bg-emerald-50 px-3 py-2">
+                                                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3">
                                                             <span className="text-xs text-emerald-600">변경 후 지갑</span>
-                                                            <div className="mt-1 text-sm font-semibold text-emerald-700">
-                                                                {shortenWalletAddress(item?.after)}
+                                                            <div className="mt-1 text-sm font-semibold text-emerald-700 break-all">
+                                                                {item?.after || '미설정'}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2496,9 +2553,7 @@ export default function SettingsPage({ params }: any) {
                                         </div>
                                     )}
                                 </div>
-
                             </div>
-
  
                         </div>
 
