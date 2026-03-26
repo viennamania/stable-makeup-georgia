@@ -1080,6 +1080,7 @@ export default function RealtimeBankTransferPage() {
                     const timeInfo = getRelativeTimeInfo(item.data.publishedAt || item.receivedAt, nowMs);
                     const receiverInfo = getReceiverDisplayInfo({
                       ...item.data,
+                      balance: null,
                       status: "stored",
                     });
                     const receiverAccountHolder = receiverInfo.accountHolder
