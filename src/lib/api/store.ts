@@ -385,18 +385,39 @@ export async function updateStoreLogo(data: any) {
 export async function updateStoreMemo(data: any) {
     const client = await clientPromise;
     const collection = client.db(dbName).collection('stores');
-  
+    const safeStorecode = String(data?.storecode || '').trim();
+    const safeStoreMemo = String(data?.storeMemo || '')
+      .replace(/\u0000/g, '')
+      .trim();
+
+    if (!safeStorecode) {
+      throw new Error('Storecode is required');
+    }
+
+    if (!safeStoreMemo) {
+      throw new Error('Store memo is required');
+    }
+
     // update storeMemo
     const result = await collection.updateOne(
-      { storecode: data.storecode },
-      { $set: { storeMemo: data.storeMemo } }
+      { storecode: safeStorecode },
+      {
+        $set: {
+          storeMemo: safeStoreMemo,
+          storeMemoUpdatedAt: new Date(),
+        },
+      }
     );
     if (result.modifiedCount === 0) {
       throw new Error('Failed to update store memo');
     }
+
+    clearCachedStoreByCode(safeStorecode);
+
     return {
       success: true,
       message: 'Store memo updated successfully',
+      storeMemo: safeStoreMemo,
     };
   
 }
@@ -405,11 +426,16 @@ export async function updateStoreMemo(data: any) {
 export async function getOneStoreMemo(data: any) {
     const client = await clientPromise;
     const collection = client.db(dbName).collection('stores');
+    const safeStorecode = String(data?.storecode || '').trim();
+
+    if (!safeStorecode) {
+      throw new Error('Storecode is required');
+    }
   
     // get storeMemo
     const result = await collection.findOne(
-      { storecode: data.storecode },
-      { projection: { storeMemo: 1 } }
+      { storecode: safeStorecode },
+      { projection: { storeMemo: 1, storeMemoUpdatedAt: 1 } }
     );
 
 
@@ -422,6 +448,7 @@ export async function getOneStoreMemo(data: any) {
       success: true,
       message: 'Store memo retrieved successfully',
       storeMemo: result.storeMemo,
+      storeMemoUpdatedAt: result.storeMemoUpdatedAt || null,
     };
   
 }

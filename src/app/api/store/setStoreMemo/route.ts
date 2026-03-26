@@ -9,6 +9,11 @@ import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin
 export async function POST(request: NextRequest) {
 
   const body = await request.json();
+  const storecode = String(body?.storecode || "").trim();
+  const walletAddress = String(body?.walletAddress || "").trim();
+  const storeMemo = String(body?.storeMemo || "")
+    .replace(/\u0000/g, "")
+    .trim();
 
   const guard = await verifyStoreSettingsAdminGuard({
     request,
@@ -24,17 +29,26 @@ export async function POST(request: NextRequest) {
     }, { status: guard.status });
   }
 
-  const {
-    walletAddress,
-    storecode,
-    storeMemo,
-  } = body;
+  if (!storecode) {
+    return NextResponse.json({
+      result: null,
+      error: "storecode is required",
+    }, { status: 400 });
+  }
 
+  if (!storeMemo) {
+    return NextResponse.json({
+      result: null,
+      error: "storeMemo is required",
+    }, { status: 400 });
+  }
 
-
-
-
-
+  if (storeMemo.length > 5000) {
+    return NextResponse.json({
+      result: null,
+      error: "storeMemo is too long",
+    }, { status: 400 });
+  }
 
   const result = await updateStoreMemo({
     walletAddress,
