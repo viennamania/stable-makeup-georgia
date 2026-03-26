@@ -904,6 +904,7 @@ export async function POST(request: NextRequest) {
       traceId: traceId || null,
       transactionType: String(transaction_type || ""),
       amount: Number(amount || 0),
+      balance: Number.isFinite(Number(balance)) ? Number(balance) : null,
       transactionName: String(transaction_name || ""),
       bankAccountNumber: String(bankAccountNumber || ""),
       transactionDate: transactionDateNormalized,

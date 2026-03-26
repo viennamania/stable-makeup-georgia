@@ -30,6 +30,7 @@ export type BankTransferDashboardEvent = {
   traceId: string | null;
   transactionType: string;
   amount: number;
+  balance: number | null;
   transactionName: string;
   bankAccountNumber: string;
   transactionDate: string;
