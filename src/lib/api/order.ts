@@ -3453,6 +3453,11 @@ export async function getBuyOrders(
               $cond: [hasRealTransferExpr, { $ifNull: ['$usdtAmount', 0] }, 0],
             },
           },
+          totalTransferAmountKRW: {
+            $sum: {
+              $cond: [hasRealTransferExpr, { $ifNull: ['$krwAmount', 0] }, 0],
+            },
+          },
 
           /*
           totalSettlementCount: { $sum: 1 },
@@ -3917,6 +3922,7 @@ export async function getBuyOrders(
       totalUsdtAmount: totalResult.length > 0 ? totalResult[0].totalUsdtAmount : 0,
       totalTransferCount: totalResult.length > 0 ? totalResult[0].totalTransferCount : 0,
       totalTransferAmount: totalResult.length > 0 ? totalResult[0].totalTransferAmount : 0,
+      totalTransferAmountKRW: totalResult.length > 0 ? totalResult[0].totalTransferAmountKRW : 0,
 
       totalSettlementCount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementCount : 0,
       totalSettlementAmount: totalResultSettlement.length > 0 ? totalResultSettlement[0].totalSettlementAmount : 0,
