@@ -3,6 +3,8 @@
 import { useState, useEffect, use, act } from "react";
 
 import Image from "next/image";
+import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
+import AdminAccessState from "@/components/admin/admin-access-state";
 
 
 
@@ -1757,221 +1759,28 @@ export default function Index({ params }: any) {
 
   if (!address) {
     return (
-   <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center bg-slate-100/60">
-
-
-      <div className="py-0 w-full max-w-screen-2xl">
-
-
-        {params.center && (
-
-
-            <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
-              p-2 rounded-lg mb-4
-              ${store?.backgroundColor ?
-                "bg-" + store.backgroundColor + " " :
-                "bg-black/10"
-              }`}>
-
-
-              <div className="w-full flex flex-row items-center justify-start gap-2">
-                <Image
-                  src={store?.storeLogo || "/logo.png"}
-                  alt="logo"
-                  width={35}
-                  height={35}
-                  className="rounded-lg w-6 h-6"
-                />
-                {address && address === storeAdminWalletAddress && (
-                  <div className="text-sm text-[#3167b4] font-bold">
-                    {store?.storeName + " (" + store?.storecode + ") 가맹점 관리자"}
-                  </div>
-                )}
-                {address && address !== storeAdminWalletAddress && (
-                  <div className="text-sm text-[#3167b4] font-bold">
-                    {store?.storeName + " (" + store?.storecode + ")"}
-                  </div>
-                )}
-
-              </div>
-
-              {/*
-              {address && !loadingUser && (
-
-
-                <div className="w-full flex flex-row items-center justify-end gap-2">
-                  <button
-                    onClick={() => {
-                      router.push('/' + params.lang + '/' + params.center + '/profile-settings');
-                    }}
-                    className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  >
-                    {user?.nickname || "프로필"}
-                  </button>
-
-                  <button
-                      onClick={() => {
-                          confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                          .then(() => {
-
-                              toast.success('로그아웃 되었습니다');
-
-                              //router.push(
-                              //    "/admin/" + params.center
-                              //);
-                          });
-                      } }
-
-                      className="flex items-center justify-center gap-2
-                        bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-                  >
-                    <Image
-                      src="/icon-logout.webp"
-                      alt="Logout"
-                      width={20}
-                      height={20}
-                      className="rounded-lg w-5 h-5"
-                    />
-                    <span className="text-sm">
-                      로그아웃
-                    </span>
-                  </button>
-
-                </div>
-
-
-              )}
-              */}
-
-              {/*
-              {!address && (
-                <ConnectButton
-                  client={client}
-                  wallets={wallets}
-                  showAllWallets={false}
-                  
-                  theme={"light"}
-
-                  // button color is dark skyblue convert (49, 103, 180) to hex
-                  connectButton={{
-                      style: {
-                          backgroundColor: "#3167b4", // dark skyblue
-                          color: "#f3f4f6", // gray-300
-                          padding: "2px 10px",
-                          borderRadius: "10px",
-                          fontSize: "14px",
-                          width: "60x",
-                          height: "38px",
-                      },
-                      label: "원클릭 로그인",
-                  }}
-
-                  connectModal={{
-                    size: "wide", 
-                    //size: "compact",
-                    titleIcon: "https://www.stable.makeup/logo.png",                           
-                    showThirdwebBranding: false,
-                  }}
-
-                  locale={"ko_KR"}
-                  //locale={"en_US"}
-                />
-              )}
-              */}
-
-
-
-            </div>
-        )}
-
-
-        <div className="w-full flex flex-col justify-between items-center gap-2">
-   
-
-          <div className="w-full flex flex-row gap-2 justify-end items-center">
-
-
-          {/* right space */}
-          {/* background transparent */}
-          <select
-            //className="p-2 text-sm bg-zinc-800 text-white rounded"
-
-
-            className="p-2 text-sm bg-transparent text-zinc-800 rounded"
-
-            onChange={(e) => {
-              const lang = e.target.value;
-              router.push(
-                "/" + lang + "/" + params.center + "/center"
-              );
+      <AdminAccessState
+        variant="login"
+        title={`${store?.storeName || params.center} 회원 운영 로그인 필요`}
+        description="회원 관리 화면은 연결된 지갑과 센터 회원 상태를 확인한 뒤에만 열립니다. 로그인 후 센터 계정을 확인해주세요."
+        note="지갑 연결 후, 가맹점 관리자에게 회원 가입 또는 권한 승인을 요청해야 할 수 있습니다."
+        policyTitle="center member gate"
+        policyDescription="connected wallet / center member profile"
+        secureTitle="센터 회원 운영 보호 구역"
+        secureDescription="센터 회원 관리 화면은 연결된 지갑과 센터 회원 상태가 확인된 계정에서만 열립니다."
+        surfaceDescription={`${store?.storeName || params.center} 센터 회원 관리 화면입니다.`}
+        walletDescription="연결된 지갑과 센터 회원 정보를 함께 확인합니다."
+        actions={
+          <button
+            onClick={() => {
+              router.push('/' + params.lang + '/' + params.center + '/center');
             }}
+            className="inline-flex items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/12 px-4 py-3 text-sm font-medium text-sky-50 transition hover:bg-sky-400/20"
           >
-            <option
-              value="en"
-              selected={params.lang === "en"}
-            >
-              English(US)
-            </option>
-            <option
-              value="ko"
-              selected={params.lang === "ko"}
-            >
-              한국어(KR)
-            </option>
-            <option
-              value="zh"
-              selected={params.lang === "zh"}
-            >
-              中文(ZH)
-            </option>
-            <option
-              value="ja"
-              selected={params.lang === "ja"}
-            >
-              日本語(JP)
-            </option>
-          </select>
-
-          {/* icon-language */}
-          {/* color is tone down */}
-          <Image
-            src="/icon-language.png"
-            alt="Language"
-            width={20}
-            height={20}
-            className="rounded-lg w-6 h-6
-              opacity-50
-              "
-          />
-
-          </div>
-
-        </div>
-
-
-        {/* 로그인을 해야합니다. */}
-        <div className="w-full flex flex-col items-center justify-center gap-4
-          mt-20
-        ">
-
-          <Image
-            src="/banner-login.gif"
-            alt="Login"
-            width={200}
-            height={200}
-          />
-
-          <div className="text-lg text-gray-500">로그인을 해야합니다.</div>
-          <div className="text-sm text-gray-400">지갑 연결 후, 가맹점 관리자에게 회원 가입을 요청하세요.</div>
-
-        </div>
-
-
-      </div>
-
-    </main>
-
-
+            센터 홈으로 이동
+          </button>
+        }
+      />
     );
   }
 
@@ -1994,70 +1803,39 @@ export default function Index({ params }: any) {
 
   ) {
     return (
-
-
-      <div className={`w-full flex flex-row items-center justify-start gap-2
-      p-2 rounded-lg mb-4
-      ${store?.backgroundColor ?
-        "bg-" + store.backgroundColor + " " :
-        "bg-black/10"
-      }`}>
-
-        <div className="flex flex-row items-center justify-center gap-2">
-          <Image
-            src={store?.storeLogo || "/logo.png"}
-            alt="logo"
-            width={35}
-            height={35}
-            className="rounded-lg w-6 h-6"
-          />
-          <div className="text-sm text-[#3167b4] font-bold">
-            {store?.storeName + " (" + store?.storecode + ") 가맹점 관리자가 아닙니다."}
-          </div>
-        </div>
-
-        <div className="flex flex-row items-center justify-center gap-2">
-          <button
-            onClick={() => {
-              router.push('/' + params.lang + '/' + params.center + '/profile-settings');
-            }}
-            className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-          >
-            회원가입하러 가기
-          </button>
-        </div>
-
-
-        <button
-          onClick={() => {
-            confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-            .then(() => {
-
-                toast.success('로그아웃 되었습니다');
-
-                //router.push(
-                //    "/admin/" + params.center
-                //);
-            });
-          } }
-
-          className="flex items-center justify-center gap-2
-            bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-        >
-          <Image
-            src="/icon-logout.webp"
-            alt="Logout"
-            width={20}
-            height={20}
-            className="rounded-lg w-5 h-5"
-          />
-          <span className="text-sm">
-            로그아웃
-          </span>
-        </button>
-
-
-      </div>
+      <AdminAccessState
+        variant="denied"
+        title={`${store?.storeName || params.center} 관리자 권한이 없습니다`}
+        description="이 회원 관리 화면은 가맹점 관리자 지갑 또는 승인된 운영 관리자만 사용할 수 있습니다."
+        address={address}
+        note="센터 회원가입 후 관리자 승인 또는 role=admin 권한이 필요합니다."
+        policyTitle="store admin gate"
+        policyDescription="store admin wallet / role=admin"
+        secureTitle="센터 회원 운영 보호 구역"
+        secureDescription="센터 회원 관리 데이터는 가맹점 관리자 지갑 또는 승인된 운영 권한에서만 열립니다."
+        surfaceDescription={`${store?.storeName || params.center} 센터 회원 관리 화면입니다.`}
+        walletDescription="센터 관리자 지갑 또는 운영 관리자 권한을 확인합니다."
+        actions={
+          <>
+            <button
+              onClick={() => {
+                router.push('/' + params.lang + '/' + params.center + '/profile-settings');
+              }}
+              className="inline-flex items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/12 px-4 py-3 text-sm font-medium text-sky-50 transition hover:bg-sky-400/20"
+            >
+              회원가입하러 가기
+            </button>
+            <AdminAccessLogoutButton
+              onClick={() => {
+                confirm("로그아웃 하시겠습니까?") &&
+                  activeWallet?.disconnect().then(() => {
+                    toast.success('로그아웃 되었습니다');
+                  });
+              }}
+            />
+          </>
+        }
+      />
     );
 
   }

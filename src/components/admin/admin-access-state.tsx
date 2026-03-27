@@ -10,6 +10,12 @@ type AdminAccessStateProps = {
   address?: string | null;
   actions?: ReactNode;
   note?: string;
+  policyTitle?: string;
+  policyDescription?: ReactNode;
+  secureTitle?: string;
+  secureDescription?: string;
+  surfaceDescription?: string;
+  walletDescription?: string;
 };
 
 const formatWalletAddress = (value?: string | null) => {
@@ -74,6 +80,12 @@ export default function AdminAccessState({
   address,
   actions,
   note,
+  policyTitle,
+  policyDescription,
+  secureTitle,
+  secureDescription,
+  surfaceDescription,
+  walletDescription,
 }: AdminAccessStateProps) {
   const pathname = usePathname();
   const meta = getVariantMeta(variant);
@@ -107,7 +119,7 @@ export default function AdminAccessState({
                     {normalizedPath}
                   </div>
                   <div className="mt-2 text-sm text-slate-300">
-                    보호된 운영 영역입니다.
+                    {surfaceDescription || "보호된 운영 영역입니다."}
                   </div>
                 </div>
 
@@ -116,12 +128,16 @@ export default function AdminAccessState({
                     Access Policy
                   </div>
                   <div className={`mt-3 text-lg font-semibold tracking-[-0.04em] ${meta.toneClass}`}>
-                    admin role gate
+                    {policyTitle || "admin role gate"}
                   </div>
                   <div className="mt-2 text-sm text-slate-300">
-                    <code className="rounded bg-white/8 px-1.5 py-0.5 text-xs text-slate-100">storecode=admin</code>
-                    {" / "}
-                    <code className="rounded bg-white/8 px-1.5 py-0.5 text-xs text-slate-100">role=admin</code>
+                    {policyDescription || (
+                      <>
+                        <code className="rounded bg-white/8 px-1.5 py-0.5 text-xs text-slate-100">storecode=admin</code>
+                        {" / "}
+                        <code className="rounded bg-white/8 px-1.5 py-0.5 text-xs text-slate-100">role=admin</code>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -133,7 +149,7 @@ export default function AdminAccessState({
                     {formatWalletAddress(address)}
                   </div>
                   <div className="mt-2 text-sm text-slate-300">
-                    연결된 지갑 기준으로 권한을 확인합니다.
+                    {walletDescription || "연결된 지갑 기준으로 권한을 확인합니다."}
                   </div>
                 </div>
               </div>
@@ -146,10 +162,10 @@ export default function AdminAccessState({
                   {meta.badge}
                 </div>
                 <div className="mt-5 text-[2.1rem] font-semibold tracking-[-0.07em] text-white">
-                  운영 권한 보호 구역
+                  {secureTitle || "운영 권한 보호 구역"}
                 </div>
                 <div className="mt-2 text-sm leading-6 text-slate-300">
-                  금융 운영 화면은 민감한 상태 변경이 연결되므로 인증된 관리자 지갑에서만 열립니다.
+                  {secureDescription || "금융 운영 화면은 민감한 상태 변경이 연결되므로 인증된 관리자 지갑에서만 열립니다."}
                 </div>
               </div>
 

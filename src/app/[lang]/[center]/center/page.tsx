@@ -3,6 +3,7 @@
 import { useState, useEffect, use, act } from "react";
 
 import Image from "next/image";
+import AdminAccessState from "@/components/admin/admin-access-state";
 
 
 
@@ -1628,108 +1629,18 @@ export default function Index({ params }: any) {
 
   if (!address) {
     return (
-   <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto">
-
-
-      <div className="py-0 w-full">
-
-
-        {params.center && (
-
-
-              <div className={`w-full flex flex-col sm:flex-row items-center justify-start gap-2
-                p-2 rounded-lg mb-4
-                ${store?.backgroundColor ?
-                  "bg-" + store.backgroundColor + " " :
-                  "bg-black/10"
-                }`}>
-  
-              {/* banner-igor-bastidas-7.gif */}
-              <Image
-                src="/banner-igor-bastidas-7.gif"
-                alt="Please connect your wallet"
-                width={400}
-                height={200}
-                className="rounded-lg w-full max-w-2xl"
-              />
-              <div className="text-sm text-[#3167b4] font-bold">
-                {store?.storeName} ({store?.storecode}) 가맹점 - 지갑을 연결해주세요.
-              </div>
-              
-
-            </div>
-        )}
-
-
-        <div className="w-full flex flex-col justify-between items-center gap-2 mb-5">
-   
-
-          <div className="w-full flex flex-row gap-2 justify-end items-center">
-
-
-          {/* right space */}
-          {/* background transparent */}
-          <select
-            //className="p-2 text-sm bg-zinc-800 text-white rounded"
-
-
-            className="p-2 text-sm bg-transparent text-zinc-800 rounded"
-
-            onChange={(e) => {
-              const lang = e.target.value;
-              router.push(
-                "/" + lang + "/" + params.center + "/center"
-              );
-            }}
-          >
-            <option
-              value="en"
-              selected={params.lang === "en"}
-            >
-              English(US)
-            </option>
-            <option
-              value="ko"
-              selected={params.lang === "ko"}
-            >
-              한국어(KR)
-            </option>
-            <option
-              value="zh"
-              selected={params.lang === "zh"}
-            >
-              中文(ZH)
-            </option>
-            <option
-              value="ja"
-              selected={params.lang === "ja"}
-            >
-              日本語(JP)
-            </option>
-          </select>
-
-          {/* icon-language */}
-          {/* color is tone down */}
-          <Image
-            src="/icon-language.png"
-            alt="Language"
-            width={20}
-            height={20}
-            className="rounded-lg w-6 h-6
-              opacity-50
-              "
-          />
-
-          </div>
-
-        </div>
-
-
-      </div>
-
-    </main>
-
-
+      <AdminAccessState
+        variant="login"
+        title={`${store?.storeName || params.center} 센터 로그인 필요`}
+        description="센터 대시보드는 연결된 지갑과 센터 회원 상태를 확인한 뒤에만 열립니다. 먼저 로그인하고 센터 계정을 확인해주세요."
+        note="센터 홈페이지에서 로그인 후, 필요한 경우 관리자 승인까지 완료해야 합니다."
+        policyTitle="center member gate"
+        policyDescription="connected wallet / center member profile"
+        secureTitle="센터 운영 보호 구역"
+        secureDescription="센터 핵심 운영 대시보드는 연결된 지갑과 센터 회원 상태가 확인된 계정에서만 열립니다."
+        surfaceDescription={`${store?.storeName || params.center} 센터 메인 대시보드입니다.`}
+        walletDescription="연결된 지갑과 센터 회원 정보를 함께 확인합니다."
+      />
     );
   }
 
@@ -1914,44 +1825,18 @@ export default function Index({ params }: any) {
           </div>
         </div>
       ) : !address ? (
-        <div className="py-0 w-full flex flex-col items-center justify-center gap-4">
-          <Image
-            src="/banner-login.gif"
-            alt="Login"
-            width={200}
-            height={200}
-          />
-          <div className="text-lg text-gray-500">로그인이 필요합니다.</div>
-          <div className="text-sm text-gray-400">로그인 후 가맹점 정보를 확인하세요.</div>
-          {/*
-          <ConnectButton
-            client={client}
-            wallets={wallets}
-            showAllWallets={false}
-            theme={"light"}
-            connectButton={{
-              style: {
-                backgroundColor: "#3167b4", // dark skyblue
-                color: "#f3f4f6", // gray-300
-                padding: "2px 10px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                width: "60x",
-                height: "38px",
-              },
-              label: "원클릭 로그인",
-            }}
-            connectModal={{
-              size: "wide", 
-              //size: "compact",
-              titleIcon: "https://www.stable.makeup/logo.png",                           
-              showThirdwebBranding: false,
-            }}
-            locale={"ko_KR"}
-            //locale={"en_US"}
-          />
-          */}
-        </div>
+        <AdminAccessState
+          variant="login"
+          title={`${store?.storeName || params.center} 센터 로그인 필요`}
+          description="센터 대시보드는 연결된 지갑과 센터 회원 상태를 확인한 뒤에만 열립니다. 먼저 로그인하고 센터 계정을 확인해주세요."
+          note="센터 홈페이지에서 로그인 후, 필요한 경우 관리자 승인까지 완료해야 합니다."
+          policyTitle="center member gate"
+          policyDescription="connected wallet / center member profile"
+          secureTitle="센터 운영 보호 구역"
+          secureDescription="센터 핵심 운영 대시보드는 연결된 지갑과 센터 회원 상태가 확인된 계정에서만 열립니다."
+          surfaceDescription={`${store?.storeName || params.center} 센터 메인 대시보드입니다.`}
+          walletDescription="연결된 지갑과 센터 회원 정보를 함께 확인합니다."
+        />
       ) : (
         <div className="w-full flex flex-col items-start justify-start gap-4">
 
@@ -3481,5 +3366,3 @@ export default function Index({ params }: any) {
 
 
 };
-
-
