@@ -1,28 +1,37 @@
 'use client'
 
-import { useState, useCallback, useMemo, ChangeEvent, useEffect } from 'react'
+import { useState, useCallback, useMemo, type ChangeEvent, useEffect } from 'react'
 import toast from 'react-hot-toast'
-import LoadingDots from './loading-dots'
 import { PutBlobResult } from '@vercel/blob'
+import type { Account } from 'thirdweb/wallets'
 
-
+import LoadingDots from './loading-dots'
 import { getDictionary } from "../app/dictionaries";
-import { clientId } from '@/app/client'
+import {
+  postAdminSignedJson,
+  signAdminActionPayload,
+} from "@/lib/client/admin-signed-action";
+import {
+  CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+  CLIENT_SETTINGS_ADMIN_UPLOAD_ROUTE,
+  CLIENT_SETTINGS_ADMIN_UPLOAD_SIGNING_PREFIX,
+  CLIENT_SETTINGS_UPDATE_AVATAR_ROUTE,
+} from "@/lib/security/client-settings-admin";
+
+const MAX_FILE_SIZE_MB = 10
 
 export default function Uploader(
-
   {
     lang,
+    account,
+    walletAddress,
   }: {
     lang: string,
+    account: Account | undefined,
+    walletAddress?: string,
   }
-
 ) {
-
-  //console.log("lang", lang);
-
   const [dictionaryData, setDictionaryData] = useState({
-
     File_uploaded: "",
     Upload_a_file: "",
     Accepted_formats: "",
@@ -30,201 +39,203 @@ export default function Uploader(
     Max_file_size: "",
     Photo_upload: "",
     Confirm_upload: "",
-
   });
 
   useEffect(() => {
     async function fetchData() {
-        const dictionary = await getDictionary(lang);
-        setDictionaryData(dictionary);
+      const dictionary = await getDictionary(lang);
+      setDictionaryData(dictionary);
     }
     fetchData();
-}, [lang]);
+  }, [lang]);
 
-const {
-  File_uploaded,
-  Upload_a_file,
-  Accepted_formats,
-  Drag_and_drop_or_click_to_upload,
-  Max_file_size,
-  Photo_upload,
-  Confirm_upload,
-} = dictionaryData
-
-
-
+  const {
+    File_uploaded,
+    Upload_a_file,
+    Accepted_formats,
+    Drag_and_drop_or_click_to_upload,
+    Max_file_size,
+    Photo_upload,
+    Confirm_upload,
+  } = dictionaryData
 
   const [fileUpdated, setFileUpdated] = useState(false);
-
-
   const [data, setData] = useState<{
     image: string | null
   }>({
     image: null,
   })
   const [file, setFile] = useState<File | null>(null)
-
   const [dragActive, setDragActive] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const onChangePicture = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.currentTarget.files && event.currentTarget.files[0]
-      if (file) {
-        if (file.size / 1024 / 1024 > 50) {
-          toast.error('File size too big (max 50MB)')
+      const nextFile = event.currentTarget.files && event.currentTarget.files[0]
+      if (nextFile) {
+        if (nextFile.size / 1024 / 1024 > MAX_FILE_SIZE_MB) {
+          toast.error(`File size too big (max ${MAX_FILE_SIZE_MB}MB)`)
         } else {
-          setFile(file)
+          setFile(nextFile)
           const reader = new FileReader()
           reader.onload = (e) => {
             setData((prev) => ({ ...prev, image: e.target?.result as string }))
           }
-          reader.readAsDataURL(file)
-
+          reader.readAsDataURL(nextFile)
           setFileUpdated(true);
-
         }
       }
     },
     [setData]
   )
 
-  const [saving, setSaving] = useState(false)
-
   const saveDisabled = useMemo(() => {
-    return !data.image || saving
-  }, [data.image, saving])
-
-
-
+    return !file || !data.image || saving
+  }, [data.image, file, saving])
 
   useEffect(() => {
     const fetchData = async () => {
-        const response = await fetch("/api/client/getClientInfo", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-            }),
-        });
+      const response = await fetch("/api/client/getClientInfo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
 
-        const data = await response.json();
+      const result = await response.json();
 
-        //console.log("data", data);
-
-        if (data.result?.clientInfo?.avatar) {
-            setData(
-              (prev) => ({
-                ...prev,
-                image: data.result.clientInfo.avatar,
-              })
-            );
-        }
+      if (result.result?.clientInfo?.avatar) {
+        setData((prev) => ({
+          ...prev,
+          image: result.result.clientInfo.avatar,
+        }));
+      }
     };
 
     fetchData();
   }, []);
-
-
-
 
   return (
     <form
       className="grid gap-6"
       onSubmit={async (e) => {
         e.preventDefault()
+
+        if (!file) {
+          toast.error('업로드할 로고 파일을 선택해주세요.')
+          return
+        }
+
+        if (!account || !walletAddress) {
+          toast.error('관리자 지갑 연결이 필요합니다.')
+          return
+        }
+
         setSaving(true)
-        fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'content-type': file?.type || 'application/octet-stream' },
-          body: file,
-        }).then(async (res) => {
 
-          if (res.status === 200) {
+        try {
+          const contentType = file.type || 'application/octet-stream'
+          const signed = await signAdminActionPayload({
+            account,
+            route: CLIENT_SETTINGS_ADMIN_UPLOAD_ROUTE,
+            signingPrefix: CLIENT_SETTINGS_ADMIN_UPLOAD_SIGNING_PREFIX,
+            requesterWalletAddress: walletAddress,
+            actionFields: {
+              contentType,
+            },
+          })
 
-            const { url } = (await res.json()) as PutBlobResult
+          const uploadResponse = await fetch(CLIENT_SETTINGS_ADMIN_UPLOAD_ROUTE, {
+            method: 'POST',
+            headers: {
+              'content-type': contentType,
+              'x-admin-requester-storecode': signed.requesterStorecode,
+              'x-admin-requester-wallet-address': signed.requesterWalletAddress,
+              'x-admin-signature': signed.signature,
+              'x-admin-signed-at': signed.signedAt,
+              'x-admin-nonce': signed.nonce,
+            },
+            body: file,
+          })
 
-
-            console.log("Uploaded to Blob Storage:", url)
-            
-            const result = await fetch("/api/client/updateAvatar", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                avatar: url,
-              }),
-            });
-
-            
-
-
-
-
-            toast(
-              (t: { id: string } 
-                ) => (
-                <div className="relative">
-                  <div className="p-2">
-                    <p className="text-sm text-gray-900 mt-5">
-                      {File_uploaded}
-                    </p>
-                    {/*
-                    <p className="mt-1 text-sm text-gray-500">
-                      Your file has been uploaded to{' '}
-                      <a
-                        className="font-medium text-gray-900 underline"
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {url}
-                      </a>
-                    </p>
-                    */}
-
-                  </div>
-                  <button
-                    onClick={() => toast.dismiss(t.id)}
-                    className="absolute top-0 -right-2 inline-flex text-gray-400 focus:outline-none focus:text-gray-500 rounded-full p-1.5 hover:bg-gray-100 transition ease-in-out duration-150"
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 5.293a1 1 0 011.414 0L10
-                          8.586l3.293-3.293a1 1 0 111.414 1.414L11.414
-                          10l3.293 3.293a1 1 0 01-1.414 1.414L10
-                          11.414l-3.293 3.293a1 1 0 01-1.414-1.414L8.586
-                          10 5.293 6.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              ),
-              { duration: 3000 }
-            )
-
-          } else {
-            const error = await res.text()
-            toast.error(error)
+          if (!uploadResponse.ok) {
+            const errorPayload = await uploadResponse.json().catch(() => null)
+            toast.error(errorPayload?.error || '로고 업로드에 실패했습니다.')
+            return
           }
-          
+
+          const { url } = (await uploadResponse.json()) as PutBlobResult
+          if (!url) {
+            toast.error('업로드 결과가 올바르지 않습니다.')
+            return
+          }
+
+          const updateResponse = await postAdminSignedJson({
+            account,
+            route: CLIENT_SETTINGS_UPDATE_AVATAR_ROUTE,
+            signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+            requesterWalletAddress: walletAddress,
+            body: {
+              avatar: url,
+            },
+          })
+
+          const updateResult = await updateResponse.json().catch(() => null)
+          if (!updateResponse.ok || !updateResult?.result) {
+            toast.error(updateResult?.error || '로고 저장에 실패했습니다.')
+            return
+          }
+
+          setData((prev) => ({
+            ...prev,
+            image: url,
+          }))
+
+          toast(
+            (t: { id: string }) => (
+              <div className="relative">
+                <div className="p-2">
+                  <p className="mt-5 text-sm text-gray-900">
+                    {File_uploaded}
+                  </p>
+                </div>
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="absolute top-0 -right-2 inline-flex rounded-full p-1.5 text-gray-400 transition ease-in-out duration-150 hover:bg-gray-100 focus:outline-none focus:text-gray-500"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 5.293a1 1 0 011.414 0L10
+                        8.586l3.293-3.293a1 1 0 111.414 1.414L11.414
+                        10l3.293 3.293a1 1 0 01-1.414 1.414L10
+                        11.414l-3.293 3.293a1 1 0 01-1.414-1.414L8.586
+                        10 5.293 6.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            ),
+            { duration: 3000 }
+          )
+
+          setFile(null)
+          setFileUpdated(false)
+        } catch (error) {
+          toast.error('로고 업로드에 실패했습니다.')
+        } finally {
           setSaving(false)
-
-
-          setFileUpdated(false);
-
-        })
+        }
       }}
     >
       <div>
-        <div className="space-y-1 mb-4">
+        <div className="mb-4 space-y-1">
           <h2 className="text-sm font-semibold">
             {Upload_a_file}
           </h2>
@@ -232,7 +243,7 @@ const {
             {Accepted_formats}
           </p>
           <p className="text-sm">
-           .png, .jpg, .gif, .mp4
+            .png, .jpg, .jpeg, .webp, .gif
           </p>
         </div>
         <label
@@ -261,20 +272,21 @@ const {
               e.stopPropagation()
               setDragActive(false)
 
-              const file = e.dataTransfer.files && e.dataTransfer.files[0]
-              if (file) {
-                if (file.size / 1024 / 1024 > 50) {
-                  toast.error('File size too big (max 50MB)')
+              const nextFile = e.dataTransfer.files && e.dataTransfer.files[0]
+              if (nextFile) {
+                if (nextFile.size / 1024 / 1024 > MAX_FILE_SIZE_MB) {
+                  toast.error(`File size too big (max ${MAX_FILE_SIZE_MB}MB)`)
                 } else {
-                  setFile(file)
+                  setFile(nextFile)
                   const reader = new FileReader()
-                  reader.onload = (e) => {
+                  reader.onload = (event) => {
                     setData((prev) => ({
                       ...prev,
-                      image: e.target?.result as string,
+                      image: event.target?.result as string,
                     }))
                   }
-                  reader.readAsDataURL(file)
+                  reader.readAsDataURL(nextFile)
+                  setFileUpdated(true)
                 }
               }
             }}
@@ -330,7 +342,7 @@ const {
             id="image-upload"
             name="image"
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp,image/gif"
             className="sr-only"
             onChange={onChangePicture}
           />
@@ -349,12 +361,9 @@ const {
           {saving ? (
             <LoadingDots color="#808080" />
           ) : (
-              <p className="text-sm">
-                
-                {Confirm_upload}
-               
-
-              </p>
+            <p className="text-sm">
+              {Confirm_upload}
+            </p>
           )}
         </button>
       )}

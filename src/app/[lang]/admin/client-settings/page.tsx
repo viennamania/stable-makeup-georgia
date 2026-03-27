@@ -1,85 +1,27 @@
 // nickname settings
 'use client';
-import React, { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 
 
 import { toast } from 'react-hot-toast';
 
-import { client } from "../../../client";
-
-import {
-    getContract,
-    sendAndConfirmTransaction,
-} from "thirdweb";
-
-
-
-import {
-    polygon,
-    arbitrum,
-} from "thirdweb/chains";
-
-import {
-    ConnectButton,
-    useActiveAccount,
-    useActiveWallet,
-
-    useConnectedWallets,
-    useSetActiveWallet,
-} from "thirdweb/react";
-
-
-import {
-  inAppWallet,
-  createWallet,
-} from "thirdweb/wallets";
-
-import { getUserPhoneNumber } from "thirdweb/wallets/in-app";
+import { useActiveAccount } from "thirdweb/react";
 
 
 import Image from 'next/image';
 
-import GearSetupIcon from "@/components/gearSetupIcon";
-
-
 //import Uploader from '@/components/uploader';
-
-import { balanceOf, transfer } from "thirdweb/extensions/erc20";
- 
-
-import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
+import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import {
+    CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+    CLIENT_SETTINGS_SET_INFO_ROUTE,
+    CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
+} from "@/lib/security/client-settings-admin";
 
 
 import Uploader from '@/components/uploader-client';
-
-
-
-const storecode = "admin";
-
-
-
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: ["email", "google"],
-    },
-  }),
-];
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
-
-
-import {
-    useRouter,
-    useSearchParams,
-} from "next//navigation";
 
 
 
@@ -89,35 +31,7 @@ export default function SettingsPage({ params }: any) {
 
 
     //console.log("params", params);
-    
-    const searchParams = useSearchParams()!;
- 
-    ///const wallet = searchParams.get('wallet');
 
-
-
-
-    const contract = getContract({
-        // the client you have created via `createThirdwebClient()`
-        client,
-        // the chain the contract is deployed on 
-        
-        chain: arbitrum,
-
-        address: contractAddressArbitrum,
-    
-    
-        // OPTIONAL: the contract's abi
-        //abi: [...],
-      });
-    
-    
-
-
-      
-
-    
-    
     const [data, setData] = useState({
         title: "",
         description: "",
@@ -256,97 +170,63 @@ export default function SettingsPage({ params }: any) {
         Failed_to_create_Escrow_Wallet_Address,
 
     } = data;
-    
-    
-
-
-
-    const router = useRouter();
-
-
-
-  // get the active wallet
-  const activeWallet = useActiveWallet();
-
-  const setActiveAccount = useSetActiveWallet();
- 
-  const connectWallets = useConnectedWallets();
-
-  //console.log('connectWallets', connectWallets);
-
-  const smartConnectWallet = connectWallets?.[0];
-  const inAppConnectWallet = connectWallets?.[1];
-
-
-
-
-
 
     const smartAccount = useActiveAccount();
 
     const address = smartAccount?.address;
 
-      
- 
-
-    const [phoneNumber, setPhoneNumber] = useState("");
-
-    useEffect(() => {
-  
-  
-      if (smartAccount) {
-  
-        //const phoneNumber = await getUserPhoneNumber({ client });
-        //setPhoneNumber(phoneNumber);
-  
-  
-        getUserPhoneNumber({ client }).then((phoneNumber) => {
-          setPhoneNumber(phoneNumber || "");
-        });
-  
-  
-  
-      }
-  
-    } , [smartAccount]);
-
 
 
 
     const [user, setUser] = useState(null) as any;
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
-            
+            if (!address) {
+                setUser(null);
+                setIsAdmin(false);
+                setLoadingUser(false);
+                return;
+            }
+
             setLoadingUser(true);
 
-            const response = await fetch("/api/user/getUser", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    storecode: "admin",
-                    walletAddress: address,
-                }),
-            });
+            try {
+                const response = await fetch("/api/user/getUser", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        storecode: "admin",
+                        walletAddress: address,
+                    }),
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-
-            if (data.result) {
-                setUser(data.result);
-
-            } else {
+                if (data.result) {
+                    setUser(data.result);
+                    const userStorecode = String(data.result?.storecode || "").trim().toLowerCase();
+                    const userRole = String(data.result?.role || "").trim().toLowerCase();
+                    setIsAdmin(userStorecode === "admin" && userRole === "admin");
+                } else {
+                    setUser(null);
+                    setIsAdmin(false);
+                }
+            } catch (error) {
                 setUser(null);
+                setIsAdmin(false);
+                console.error("Failed to load admin user", error);
             }
-            setLoadingUser(false);
 
+            setLoadingUser(false);
         };
 
-        address && fetchData();
+        fetchData();
 
     }, [address]);
 
@@ -389,6 +269,10 @@ export default function SettingsPage({ params }: any) {
 
     useEffect(() => {
         const fetchClientInfo = async () => {
+            if (!address || !isAdmin) {
+                return;
+            }
+
             const response = await fetch("/api/client/getClientInfo", {
                 method: "POST",
                 headers: {
@@ -433,7 +317,7 @@ export default function SettingsPage({ params }: any) {
         };
 
         fetchClientInfo();
-    }, []);
+    }, [address, isAdmin]);
 
 
 
@@ -445,45 +329,44 @@ export default function SettingsPage({ params }: any) {
     const [updatingClientInfo, setUpdatingClientInfo] = useState(false);
 
     const updateClientInfo = async () => {
-        if (updatingClientInfo) {
+        if (updatingClientInfo || !smartAccount || !address || !isAdmin) {
             return;
         }
         
         setUpdatingClientInfo(true);
-        const response = await fetch("/api/client/setClientInfo", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                data: {
+        try {
+            const response = await postAdminSignedJson({
+                account: smartAccount,
+                route: CLIENT_SETTINGS_SET_INFO_ROUTE,
+                signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+                requesterWalletAddress: address,
+                body: {
                     name: clientName,
                     description: clientDescription,
-
                     exchangeRateUSDT: exchangeRateUSDT,
                     exchangeRateUSDTSell: exchangeRateUSDTSell,
-                }
-            }),
-        });
-
-        const data = await response.json();
-
-        //console.log("setClientInfo", data);
-
-        if (data.result) {
-            setClientInfo({
-                ...clientInfo,
-                name: clientName,
-                description: clientDescription,
-                exchangeRateUSDT: exchangeRateUSDT,
-                exchangeRateUSDTSell: exchangeRateUSDTSell,
+                },
             });
-            toast.success('Client info updated');
-        } else {
-            toast.error('Failed to update client info');
-        }
 
-        setUpdatingClientInfo(false);
+            const data = await response.json().catch(() => null);
+
+            if (response.ok && data?.result) {
+                setClientInfo({
+                    ...clientInfo,
+                    name: clientName,
+                    description: clientDescription,
+                    exchangeRateUSDT: exchangeRateUSDT,
+                    exchangeRateUSDTSell: exchangeRateUSDTSell,
+                });
+                toast.success('Client info updated');
+            } else {
+                toast.error(data?.error || 'Failed to update client info');
+            }
+        } catch (error) {
+            toast.error('Failed to update client info');
+        } finally {
+            setUpdatingClientInfo(false);
+        }
     };
 
 
@@ -491,74 +374,70 @@ export default function SettingsPage({ params }: any) {
     // /api/client/updatePayactionViewOn
     const [updatingPayactionViewOn, setUpdatingPayactionViewOn] = useState(false);
     const updatePayactionViewOn = async (value: boolean) => {
-        if (updatingPayactionViewOn) {
+        if (updatingPayactionViewOn || !smartAccount || !address || !isAdmin) {
             return;
         }
         setUpdatingPayactionViewOn(true);
-        const response = await fetch("/api/client/updatePayactionViewOn", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                payactionViewOn: value,
-            }),
-        });
-        const data = await response.json();
-        if (data.result) {
-            setPayactionViewOn(value);
-        }
-        setUpdatingPayactionViewOn(false);
-    };
-
-
-
-
-    // /api/client/getAllServerWallets
-    const [serverWallets, setServerWallets] = useState<any[]>([]);
-    useEffect(() => {
-        const fetchServerWallets = async () => {
-            const response = await fetch("/api/client/getAllServerWallets", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
+        try {
+            const response = await postAdminSignedJson({
+                account: smartAccount,
+                route: CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
+                signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+                requesterWalletAddress: address,
+                body: {
+                    payactionViewOn: value,
                 },
             });
-            const data = await response.json();
-            if (data.result) {
-                setServerWallets(data.result);
+            const data = await response.json().catch(() => null);
+            if (response.ok && data?.result) {
+                setPayactionViewOn(value);
+                toast.success('Payaction setting updated');
+            } else {
+                toast.error(data?.error || 'Failed to update payaction setting');
             }
-        };
-        fetchServerWallets();
-    }, []);
-
-
-
-    // serverWalletTransfer
-    const [serverWalletTransferring, setServerWalletTransferring] = useState(false);
-    const serverWalletTransfer = async () => {
-        if (serverWalletTransferring) {
-            return;
+        } catch (error) {
+            toast.error('Failed to update payaction setting');
+        } finally {
+            setUpdatingPayactionViewOn(false);
         }
-        setServerWalletTransferring(true);
-        const response = await fetch("/api/client/serverWalletTransfer", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-            }),
-        });
-        const data = await response.json();
-        if (data.result) {
-            toast.success("Transfer successful");
-        } else {
-            toast.error("Transfer failed");
-        }
-        setServerWalletTransferring(false);
     };
 
 
+
+    if (!address) {
+        return (
+            <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
+                <div className="w-full rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+                    <h1 className="text-xl font-semibold text-gray-900">로그인 필요</h1>
+                    <p className="mt-2 text-sm text-gray-600">관리자 지갑을 연결한 뒤 다시 시도해주세요.</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (loadingUser) {
+        return (
+            <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
+                <div className="w-full rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+                    <h1 className="text-xl font-semibold text-gray-900">접근권한 확인중</h1>
+                    <p className="mt-2 text-sm text-gray-600">admin 관리자 권한을 확인하고 있습니다.</p>
+                    <p className="mt-3 break-all text-xs text-gray-400">{address}</p>
+                </div>
+            </main>
+        );
+    }
+
+    if (!isAdmin) {
+        return (
+            <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
+                <div className="w-full rounded-lg border border-red-200 bg-red-50 p-6 text-center shadow-sm">
+                    <h1 className="text-xl font-semibold text-red-900">접근권한이 없습니다.</h1>
+                    <p className="mt-2 text-sm text-red-700">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
+                    <p className="mt-3 break-all text-xs text-red-500">{address}</p>
+                </div>
+            </main>
+        );
+    }
 
     return (
 
@@ -780,6 +659,8 @@ export default function SettingsPage({ params }: any) {
                                 </div>
                                 <Uploader
                                     lang={params.lang}
+                                    account={smartAccount}
+                                    walletAddress={address}
                                 />
                             </div>
 
@@ -1155,27 +1036,6 @@ export default function SettingsPage({ params }: any) {
 
 
                             {/* 판매자 정보 */}
-
-                            {/* servier wallet transfer */}
-                            
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                                background-gray-50 p-4 rounded-lg border border-gray-500">
-
-                               <button
-                                    disabled={serverWalletTransferring}
-                                    onClick={() => serverWalletTransfer()}
-                                    className={`
-                                        ${serverWalletTransferring ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}
-                                        w-full bg-blue-500 text-white p-2 rounded-lg
-                                    `}
-                                >
-                                    서버 월렛 USDT 1 전송 테스트
-                                </button>
-
-                            </div>
-                            
-
-
 
 
                         </div>
