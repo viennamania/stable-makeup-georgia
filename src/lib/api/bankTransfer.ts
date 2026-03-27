@@ -79,21 +79,31 @@ export type BankTransferTodaySummary = {
   updatedAt: string;
 };
 
-export async function getBankTransferTodaySummary(): Promise<BankTransferTodaySummary> {
+export async function getBankTransferTodaySummary({
+  storecode = '',
+}: {
+  storecode?: string;
+} = {}): Promise<BankTransferTodaySummary> {
   const client = await clientPromise;
   const collection = client.db(dbName).collection('bankTransfers');
 
   const { dateKst, startUtc, endUtc } = getKstUtcDayRange();
+  const normalizedStorecode = String(storecode || '').trim();
+  const matchQuery: Record<string, unknown> = {
+    transactionDateUtc: {
+      $gte: startUtc,
+      $lte: endUtc,
+    },
+  };
+
+  if (normalizedStorecode) {
+    matchQuery['storeInfo.storecode'] = normalizedStorecode;
+  }
 
   const summaryResult = await collection
     .aggregate([
       {
-        $match: {
-          transactionDateUtc: {
-            $gte: startUtc,
-            $lte: endUtc,
-          },
-        },
+        $match: matchQuery,
       },
       {
         $project: {

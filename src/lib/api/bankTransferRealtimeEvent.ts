@@ -16,6 +16,9 @@ type BankTransferRealtimeEventDocument = {
   createdAt: Date;
 };
 
+type BankTransferRealtimeEventSort = "asc" | "desc";
+type NormalizedBankTransferTransactionType = "deposited" | "withdrawn" | "";
+
 let ensureIndexesPromise: Promise<void> | null = null;
 
 async function ensureIndexes() {
@@ -31,6 +34,8 @@ async function ensureIndexes() {
       await collection.createIndex({ eventId: 1 }, { unique: true, name: "uniq_eventId" });
       await collection.createIndex({ idempotencyKey: 1, createdAt: -1 }, { name: "idx_idempotency_createdAt" });
       await collection.createIndex({ createdAt: -1 }, { name: "idx_createdAt" });
+      await collection.createIndex({ "payload.storecode": 1, _id: -1 }, { name: "idx_payload_storecode_id" });
+      await collection.createIndex({ "payload.transactionType": 1, _id: -1 }, { name: "idx_payload_transactionType_id" });
     })();
   }
 
@@ -40,6 +45,65 @@ async function ensureIndexes() {
 function toCursor(value: ObjectId): string {
   return value.toHexString();
 }
+
+const normalizeStorecode = (value: unknown) => {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+};
+
+const normalizeTransactionType = (value: unknown): NormalizedBankTransferTransactionType => {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  if (normalized === "deposited" || normalized === "deposit" || normalized === "입금") {
+    return "deposited";
+  }
+
+  if (normalized === "withdrawn" || normalized === "withdrawal" || normalized === "출금") {
+    return "withdrawn";
+  }
+
+  return "";
+};
+
+const resolveSortDirection = (value: unknown): BankTransferRealtimeEventSort => {
+  return String(value || "").trim().toLowerCase() === "desc" ? "desc" : "asc";
+};
+
+const buildTransactionTypeQuery = (value: NormalizedBankTransferTransactionType) => {
+  if (value === "deposited") {
+    return {
+      $or: [
+        {
+          "payload.transactionType": {
+            $regex: /^(deposited|deposit)$/i,
+          },
+        },
+        {
+          "payload.transactionType": "입금",
+        },
+      ],
+    };
+  }
+
+  if (value === "withdrawn") {
+    return {
+      $or: [
+        {
+          "payload.transactionType": {
+            $regex: /^(withdrawn|withdrawal)$/i,
+          },
+        },
+        {
+          "payload.transactionType": "출금",
+        },
+      ],
+    };
+  }
+
+  return {};
+};
 
 export async function saveBankTransferRealtimeEvent({
   eventId,
@@ -109,9 +173,15 @@ export async function saveBankTransferRealtimeEvent({
 export async function getBankTransferRealtimeEvents({
   sinceCursor,
   limit = 50,
+  transactionType,
+  storecode,
+  sort = "asc",
 }: {
   sinceCursor?: string | null;
   limit?: number;
+  transactionType?: string | null;
+  storecode?: string | null;
+  sort?: BankTransferRealtimeEventSort;
 }): Promise<{
   events: BankTransferDashboardEvent[];
   nextCursor: string | null;
@@ -122,22 +192,38 @@ export async function getBankTransferRealtimeEvents({
   const collection = client.db(dbName).collection<BankTransferRealtimeEventDocument>(COLLECTION_NAME);
 
   const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 200);
+  const safeStorecode = normalizeStorecode(storecode);
+  const safeTransactionType = normalizeTransactionType(transactionType);
+  const safeSort = resolveSortDirection(sort);
+  const sortDirection = safeSort === "desc" ? -1 : 1;
 
   const hasSinceCursor = Boolean(sinceCursor && ObjectId.isValid(sinceCursor));
-  const query = hasSinceCursor
-    ? {
-        _id: {
-          $gt: new ObjectId(String(sinceCursor)),
-        },
-      }
-    : {};
+  const query: Record<string, unknown> = {
+    ...buildTransactionTypeQuery(safeTransactionType),
+  };
+
+  if (safeStorecode) {
+    query["payload.storecode"] = safeStorecode;
+  }
+
+  if (hasSinceCursor) {
+    query._id = {
+      $gt: new ObjectId(String(sinceCursor)),
+    };
+  }
 
   let docs: BankTransferRealtimeEventDocument[];
 
   if (hasSinceCursor) {
     docs = await collection
       .find(query)
-      .sort({ _id: 1 })
+      .sort({ _id: sortDirection })
+      .limit(safeLimit)
+      .toArray();
+  } else if (safeSort === "desc") {
+    docs = await collection
+      .find(query)
+      .sort({ _id: -1 })
       .limit(safeLimit)
       .toArray();
   } else {
@@ -157,7 +243,9 @@ export async function getBankTransferRealtimeEvents({
     };
   });
 
-  const nextCursor = docs.length > 0 ? toCursor(docs[docs.length - 1]._id) : sinceCursor || null;
+  const nextCursor = docs.length > 0
+    ? toCursor(safeSort === "desc" ? docs[0]._id : docs[docs.length - 1]._id)
+    : sinceCursor || null;
 
   return {
     events,

@@ -44,31 +44,24 @@ export async function POST(request: NextRequest) {
     toDate = "",
   } = body;
 
+  const normalizedFromDate = fromDate && fromDate !== ""
+    ? fromDate
+    : (() => {
+        const date = new Date();
+        date.setDate(date.getDate() - 30);
+        return date.toISOString().split("T")[0];
+      })();
+  const normalizedToDate = toDate && toDate !== ""
+    ? toDate
+    : (() => {
+        const date = new Date();
+        return date.toISOString().split("T")[0];
+      })();
+
 
 
   ///console.log("getStoreSummary body", body);
 
-
-
-  // when fromDate is "" or undefined, set it to 30 days ago
-  if (!fromDate || fromDate === "") {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    body.fromDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-  }
-
-  // when toDate is "" or undefined, set it to today
-  if (!toDate || toDate === "") {
-    const date = new Date();
-    body.toDate = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-  }
-
-
-
-
-
-
-  
 
 
   const trades = await getAllTradesByAdmin({
@@ -90,8 +83,8 @@ export async function POST(request: NextRequest) {
     searchDepositName: searchDepositName,
     searchStoreBankAccountNumber: searchStoreBankAccountNumber,
 
-    fromDate: fromDate,
-    toDate: toDate,
+    fromDate: normalizedFromDate,
+    toDate: normalizedToDate,
   });
 
 
@@ -135,8 +128,8 @@ export async function POST(request: NextRequest) {
     searchDepositName: searchDepositName,
     searchStoreBankAccountNumber: searchStoreBankAccountNumber,
 
-    fromDate: fromDate,
-    toDate: toDate,
+    fromDate: normalizedFromDate,
+    toDate: normalizedToDate,
   });
 
 

@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   const isPublic = request.nextUrl.searchParams.get("public") === "1";
+  const storecode = request.nextUrl.searchParams.get("storecode")?.trim() || "";
 
   let role: "admin" | "viewer" = "viewer";
 
@@ -26,7 +27,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const summary = await getBankTransferTodaySummary();
+    const summary = await getBankTransferTodaySummary({
+      storecode,
+    });
 
     return NextResponse.json({
       status: "success",
@@ -44,4 +47,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
