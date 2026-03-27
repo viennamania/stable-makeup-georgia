@@ -101,6 +101,17 @@ const formatHistoryDateTime = (value?: string | Date | null) => {
     }).format(date);
 };
 
+type AdminWalletHistoryEntry = {
+    _id?: string;
+    before?: string | null;
+    after?: string | null;
+    changed?: boolean;
+    requesterWalletAddress?: string | null;
+    publicIp?: string | null;
+    route?: string | null;
+    updatedAt?: string | Date | null;
+};
+
 const SETTINGS_SHELL_CARD_CLASS =
     "w-full rounded-[28px] border border-slate-200/80 bg-white/90 shadow-[0_24px_60px_rgba(15,23,42,0.08)] backdrop-blur";
 
@@ -121,6 +132,9 @@ const SETTINGS_INPUT_CLASS =
 
 const SETTINGS_HINT_CARD_CLASS =
     "rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-600";
+
+const SETTINGS_META_PILL_CLASS =
+    "inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500";
 
 
 
@@ -931,7 +945,11 @@ export default function SettingsPage({ params }: any) {
     const [selectedAdminWalletAddress, setSelectedAdminWalletAddress] = useState('');
     const [updatingAdminWalletAddress, setUpdatingAdminWalletAddress] = useState(false);
     const [loadingAdminWalletHistory, setLoadingAdminWalletHistory] = useState(false);
-    const [adminWalletHistory, setAdminWalletHistory] = useState([] as any[]);
+    const [adminWalletHistory, setAdminWalletHistory] = useState<AdminWalletHistoryEntry[]>([]);
+    const latestAdminWalletHistory = adminWalletHistory[0] ?? null;
+    const adminWalletHistoryChangedCount = adminWalletHistory.reduce((count, item) => {
+        return count + (item?.changed ? 1 : 0);
+    }, 0);
 
     useEffect(() => {
         if (!params.storecode) {
@@ -1078,7 +1096,7 @@ export default function SettingsPage({ params }: any) {
                 ...store,
                 adminWalletAddress: data.adminWalletAddress || selectedAdminWalletAddress,
             });
-            fetchAdminWalletAddressHistory();
+            await fetchAdminWalletAddressHistory();
         } finally {
             setUpdatingAdminWalletAddress(false);
         }
@@ -2485,8 +2503,8 @@ export default function SettingsPage({ params }: any) {
                                     )}
                                 </div>
 
-                                <div className="flex flex-col gap-3 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 shadow-[0_16px_36px_rgba(15,23,42,0.04)]">
-                                    <div className="flex items-center justify-between gap-3">
+                                <div className="flex flex-col gap-4 rounded-[28px] border border-slate-200 bg-slate-50/90 p-5 shadow-[0_16px_36px_rgba(15,23,42,0.04)]">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         <div className="flex flex-col">
                                             <span className="text-sm font-semibold text-slate-900">
                                                 변경 이력
@@ -2504,6 +2522,46 @@ export default function SettingsPage({ params }: any) {
                                         </button>
                                     </div>
 
+                                    <div className="grid gap-3 lg:grid-cols-4">
+                                        <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                                Current Wallet
+                                            </div>
+                                            <div className="mt-2 text-sm font-semibold text-slate-900 break-all">
+                                                {store?.adminWalletAddress || latestAdminWalletHistory?.after || '미설정'}
+                                            </div>
+                                        </div>
+                                        <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                                Last Change
+                                            </div>
+                                            <div className="mt-2 text-sm font-semibold text-slate-900">
+                                                {formatHistoryDateTime(latestAdminWalletHistory?.updatedAt)}
+                                            </div>
+                                        </div>
+                                        <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                                Changed By
+                                            </div>
+                                            <div className="mt-2 text-sm font-semibold text-slate-900 break-all">
+                                                {latestAdminWalletHistory?.requesterWalletAddress || '미기록'}
+                                            </div>
+                                        </div>
+                                        <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                                                Audit Summary
+                                            </div>
+                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                <span className={SETTINGS_META_PILL_CLASS}>
+                                                    전체 {adminWalletHistory.length}건
+                                                </span>
+                                                <span className={SETTINGS_META_PILL_CLASS}>
+                                                    실변경 {adminWalletHistoryChangedCount}건
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {!smartAccount || !address ? (
                                         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                                             관리자 지갑 연결 후 변경 이력을 조회할 수 있습니다.
@@ -2513,43 +2571,77 @@ export default function SettingsPage({ params }: any) {
                                             저장된 관리자 지갑 변경 이력이 없습니다.
                                         </div>
                                     ) : (
-                                        <div className="flex max-h-[580px] flex-col gap-3 overflow-y-auto pr-1">
-                                            {adminWalletHistory.map((item, index) => (
-                                                <div
-                                                    key={String(item?._id || `${item?.updatedAt || 'history'}-${item?.after || ''}-${index}`)}
-                                                    className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm"
-                                                >
-                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                                        <div className="flex flex-col gap-1">
-                                                            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">변경 시각</span>
-                                                            <span className="text-sm font-semibold text-slate-800">
-                                                                {formatHistoryDateTime(item?.updatedAt)}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex flex-col gap-1 sm:items-end">
-                                                            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">변경자</span>
-                                                            <span className="text-sm font-semibold text-slate-700">
-                                                                {shortenWalletAddress(item?.requesterWalletAddress)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                        <div className="flex max-h-[640px] flex-col gap-3 overflow-y-auto pr-1">
+                                            {adminWalletHistory.map((item, index) => {
+                                                const isChanged = item?.changed !== false
+                                                    && String(item?.before || '').toLowerCase() !== String(item?.after || '').toLowerCase();
 
-                                                    <div className="mt-4 grid gap-2">
-                                                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                                                            <span className="text-xs text-slate-500">이전 지갑</span>
-                                                            <div className="mt-1 text-sm font-semibold text-slate-700 break-all">
-                                                                {item?.before || '미설정'}
+                                                return (
+                                                    <div
+                                                        key={String(item?._id || `${item?.updatedAt || 'history'}-${item?.after || ''}-${index}`)}
+                                                        className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm"
+                                                    >
+                                                        <div className="flex flex-col gap-3 border-b border-slate-100 pb-3 sm:flex-row sm:items-start sm:justify-between">
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">변경 시각</span>
+                                                                <span className="text-sm font-semibold text-slate-800">
+                                                                    {formatHistoryDateTime(item?.updatedAt)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col gap-1 sm:items-end">
+                                                                <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">변경자</span>
+                                                                <span className="text-sm font-semibold text-slate-700 break-all">
+                                                                    {item?.requesterWalletAddress || '미기록'}
+                                                                </span>
                                                             </div>
                                                         </div>
-                                                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3">
-                                                            <span className="text-xs text-emerald-600">변경 후 지갑</span>
-                                                            <div className="mt-1 text-sm font-semibold text-emerald-700 break-all">
-                                                                {item?.after || '미설정'}
+
+                                                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                            <span
+                                                                className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                                                                    isChanged
+                                                                        ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                                        : 'border border-slate-200 bg-slate-100 text-slate-600'
+                                                                }`}
+                                                            >
+                                                                {isChanged ? '지갑 변경' : '동일 값 저장'}
+                                                            </span>
+                                                            {item?.publicIp ? (
+                                                                <span className={SETTINGS_META_PILL_CLASS}>
+                                                                    IP {item.publicIp}
+                                                                </span>
+                                                            ) : null}
+                                                            {item?.route ? (
+                                                                <span className={`${SETTINGS_META_PILL_CLASS} max-w-full break-all`}>
+                                                                    {item.route}
+                                                                </span>
+                                                            ) : null}
+                                                        </div>
+
+                                                        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)]">
+                                                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+                                                                <span className="text-xs text-slate-500">이전 지갑</span>
+                                                                <div className="mt-1 text-sm font-semibold text-slate-700 break-all">
+                                                                    {item?.before || '미설정'}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="hidden items-center justify-center lg:flex">
+                                                                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-lg text-slate-400">
+                                                                    →
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-3">
+                                                                <span className="text-xs text-emerald-600">변경 후 지갑</span>
+                                                                <div className="mt-1 text-sm font-semibold text-emerald-700 break-all">
+                                                                    {item?.after || '미설정'}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
