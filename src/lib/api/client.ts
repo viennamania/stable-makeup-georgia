@@ -1,50 +1,90 @@
-import clientPromise from '../mongodb';
+import clientPromise, { dbName } from "../mongodb";
 
-import { dbName } from '../mongodb';
+import type { ClientExchangeRateMap } from "@/lib/client-settings";
 
+const getClientCollection = async () => {
+  const client = await clientPromise;
+  return client.db(dbName).collection("clients");
+};
 
+const updateClientFields = async (
+  clientId: string,
+  fields: Record<string, unknown>,
+  upsert = false,
+) => {
+  const collection = await getClientCollection();
 
-// getOne by clientId
+  return collection.updateOne(
+    { clientId },
+    { $set: fields },
+    { upsert },
+  );
+};
+
 export async function getOne(clientId: string) {
-  const client = await clientPromise;
-  const collection = client.db(dbName).collection('clients');
-  return collection.findOne({ clientId: clientId });
+  const collection = await getClientCollection();
+  return collection.findOne({ clientId });
 }
 
-
-// upsertOne by clientId
-export async function upsertOne(clientId: string, data: any) {
-  const client = await clientPromise;
-  const collection = client.db(dbName).collection('clients');
-  const result = await collection.updateOne(
-    { clientId: clientId },
-    { $set: data },
-    { upsert: true }
+export async function updateClientProfile(
+  clientId: string,
+  data: {
+    name: string;
+    description: string;
+  },
+) {
+  return updateClientFields(
+    clientId,
+    {
+      name: data.name,
+      description: data.description,
+    },
+    true,
   );
-  return result;
 }
 
+export async function updateClientExchangeRateBuy(
+  clientId: string,
+  exchangeRateUSDT: ClientExchangeRateMap,
+) {
+  return updateClientFields(
+    clientId,
+    {
+      exchangeRateUSDT,
+    },
+    true,
+  );
+}
 
-// updateAvatar by clientId
+export async function updateClientExchangeRateSell(
+  clientId: string,
+  exchangeRateUSDTSell: ClientExchangeRateMap,
+) {
+  return updateClientFields(
+    clientId,
+    {
+      exchangeRateUSDTSell,
+    },
+    true,
+  );
+}
+
 export async function updateAvatar(clientId: string, avatar: string) {
-  const client = await clientPromise;
-  const collection = client.db(dbName).collection('clients');
-  const result = await collection.updateOne(
-    { clientId: clientId },
-    { $set: { avatar: avatar } },
-    { upsert: false }
+  return updateClientFields(
+    clientId,
+    {
+      avatar,
+    },
+    false,
   );
-  return result;
 }
 
-// updatePayactionViewOn by clientId
 export async function updatePayactionViewOn(clientId: string, payactionViewOn: boolean) {
-  const client = await clientPromise;
-  const collection = client.db(dbName).collection('clients');
-  const result = await collection.updateOne(
-    { clientId: clientId },
-    { $set: { payactionViewOn: payactionViewOn } },
-    { upsert: false }
+  return updateClientFields(
+    clientId,
+    {
+      payactionViewOn,
+    },
+    false,
   );
-  return result;
 }

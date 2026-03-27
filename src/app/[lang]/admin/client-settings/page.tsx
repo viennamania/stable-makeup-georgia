@@ -1,1062 +1,810 @@
-// nickname settings
 'use client';
-import { useEffect, useState } from 'react';
 
-
-
-import { toast } from 'react-hot-toast';
-
+import Image from "next/image";
+import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "react-hot-toast";
 import { useActiveAccount } from "thirdweb/react";
 
-
-import Image from 'next/image';
-
-//import Uploader from '@/components/uploader';
-import { getDictionary } from "../../../dictionaries";
+import Uploader from "@/components/uploader-client";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import {
-    CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
-    CLIENT_SETTINGS_SET_INFO_ROUTE,
-    CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
+  CLIENT_EXCHANGE_RATE_KEYS,
+  clientExchangeRateMapToForm,
+  createEmptyClientExchangeRateForm,
+  parseClientExchangeRateForm,
+  type ClientExchangeRateForm,
+  type ClientExchangeRateKey,
+} from "@/lib/client-settings";
+import {
+  CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+  CLIENT_SETTINGS_UPDATE_BUY_RATE_ROUTE,
+  CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
+  CLIENT_SETTINGS_UPDATE_PROFILE_ROUTE,
+  CLIENT_SETTINGS_UPDATE_SELL_RATE_ROUTE,
 } from "@/lib/security/client-settings-admin";
 
+type SettingsPageProps = {
+  params: {
+    lang: string;
+  };
+};
 
-import Uploader from '@/components/uploader-client';
+type ClientProfileForm = {
+  name: string;
+  description: string;
+};
 
+const CHAIN_META: Record<
+  string,
+  {
+    label: string;
+    icon: string;
+    accent: string;
+    muted: string;
+  }
+> = {
+  ethereum: {
+    label: "Ethereum",
+    icon: "/logo-chain-ethereum.png",
+    accent: "from-slate-900 to-slate-700",
+    muted: "bg-slate-100 text-slate-700 border-slate-200",
+  },
+  polygon: {
+    label: "Polygon",
+    icon: "/logo-chain-polygon.png",
+    accent: "from-fuchsia-600 to-violet-500",
+    muted: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100",
+  },
+  bsc: {
+    label: "BSC",
+    icon: "/logo-chain-bsc.png",
+    accent: "from-amber-500 to-yellow-400",
+    muted: "bg-amber-50 text-amber-700 border-amber-100",
+  },
+  arbitrum: {
+    label: "Arbitrum",
+    icon: "/logo-chain-arbitrum.png",
+    accent: "from-sky-600 to-blue-500",
+    muted: "bg-sky-50 text-sky-700 border-sky-100",
+  },
+};
 
+const RATE_FIELD_META: Array<{
+  key: ClientExchangeRateKey;
+  label: string;
+  description: string;
+}> = [
+  { key: "USD", label: "USD", description: "미국 달러 기준가" },
+  { key: "KRW", label: "KRW", description: "원화 정산 기준" },
+  { key: "JPY", label: "JPY", description: "일본 엔화 기준" },
+  { key: "CNY", label: "CNY", description: "중국 위안 기준" },
+  { key: "EUR", label: "EUR", description: "유로화 기준" },
+];
 
+const createEmptyProfileForm = (): ClientProfileForm => ({
+  name: "",
+  description: "",
+});
 
+const isExchangeRateInput = (value: string) => /^\d*\.?\d*$/.test(value);
 
-export default function SettingsPage({ params }: any) {
+const formatWalletAddress = (value: string | undefined) => {
+  if (!value) {
+    return "연결되지 않음";
+  }
 
+  if (value.length <= 12) {
+    return value;
+  }
 
-    //console.log("params", params);
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+};
 
-    const [data, setData] = useState({
-        title: "",
-        description: "",
-    
-        menu : {
-        buy: "",
-        sell: "",
-        trade: "",
-        chat: "",
-        history: "",
-        settings: "",
+const areRateFormsEqual = (left: ClientExchangeRateForm, right: ClientExchangeRateForm) =>
+  CLIENT_EXCHANGE_RATE_KEYS.every((key) => left[key] === right[key]);
+
+const SettingCard = ({
+  eyebrow,
+  title,
+  description,
+  children,
+  action,
+  className = "",
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) => {
+  return (
+    <section
+      className={`overflow-hidden rounded-[28px] border border-slate-200 bg-white/90 shadow-[0_20px_70px_-40px_rgba(15,23,42,0.35)] backdrop-blur ${className}`}
+    >
+      <div className="border-b border-slate-100 px-5 py-5 sm:px-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <span className="inline-flex w-fit items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600">
+              {eyebrow}
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
+            </div>
+          </div>
+          {action ? <div className="shrink-0">{action}</div> : null}
+        </div>
+      </div>
+      <div className="px-5 py-5 sm:px-7 sm:py-6">{children}</div>
+    </section>
+  );
+};
+
+const SummaryCard = ({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  tone: "slate" | "emerald" | "amber";
+}) => {
+  const toneClass =
+    tone === "emerald"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      : tone === "amber"
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-slate-200 bg-white text-slate-900";
+
+  return (
+    <div className={`rounded-2xl border p-4 ${toneClass}`}>
+      <p className="text-xs font-semibold uppercase tracking-[0.22em] opacity-70">{label}</p>
+      <p className="mt-3 text-lg font-semibold">{value}</p>
+      <p className="mt-2 text-sm opacity-75">{hint}</p>
+    </div>
+  );
+};
+
+export default function SettingsPage({ params }: SettingsPageProps) {
+  const smartAccount = useActiveAccount();
+  const address = smartAccount?.address;
+
+  const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  const [chain, setChain] = useState("arbitrum");
+  const [clientId, setClientId] = useState("");
+  const [payactionViewOn, setPayactionViewOn] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState("");
+
+  const [profileForm, setProfileForm] = useState<ClientProfileForm>(createEmptyProfileForm());
+  const [profileSnapshot, setProfileSnapshot] = useState<ClientProfileForm>(createEmptyProfileForm());
+
+  const [buyRatesForm, setBuyRatesForm] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
+  const [buyRatesSnapshot, setBuyRatesSnapshot] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
+
+  const [sellRatesForm, setSellRatesForm] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
+  const [sellRatesSnapshot, setSellRatesSnapshot] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
+
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingBuyRates, setSavingBuyRates] = useState(false);
+  const [savingSellRates, setSavingSellRates] = useState(false);
+  const [updatingPayactionViewOn, setUpdatingPayactionViewOn] = useState(false);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      if (!address) {
+        setUser(null);
+        setIsAdmin(false);
+        setLoadingUser(false);
+        return;
+      }
+
+      setLoadingUser(true);
+
+      try {
+        const response = await fetch("/api/user/getUser", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            storecode: "admin",
+            walletAddress: address,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.result) {
+          setUser(data.result);
+          const userStorecode = String(data.result?.storecode || "").trim().toLowerCase();
+          const userRole = String(data.result?.role || "").trim().toLowerCase();
+          setIsAdmin(userStorecode === "admin" && userRole === "admin");
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        setUser(null);
+        setIsAdmin(false);
+        console.error("Failed to load admin user", error);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    loadUser();
+  }, [address]);
+
+  useEffect(() => {
+    const loadClientSettings = async () => {
+      if (!address || !isAdmin) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/client/getClientInfo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await response.json();
+        const result = data?.result;
+        const clientInfo = result?.clientInfo || {};
+
+        const nextProfile = {
+          name: String(clientInfo?.name || ""),
+          description: String(clientInfo?.description || ""),
+        };
+        const nextBuyRates = clientExchangeRateMapToForm(clientInfo?.exchangeRateUSDT);
+        const nextSellRates = clientExchangeRateMapToForm(clientInfo?.exchangeRateUSDTSell);
+
+        setChain(String(result?.chain || "arbitrum"));
+        setClientId(String(result?.clientId || ""));
+        setPayactionViewOn(Boolean(clientInfo?.payactionViewOn));
+        setProfileForm(nextProfile);
+        setProfileSnapshot(nextProfile);
+        setBuyRatesForm(nextBuyRates);
+        setBuyRatesSnapshot(nextBuyRates);
+        setSellRatesForm(nextSellRates);
+        setSellRatesSnapshot(nextSellRates);
+        setLastSyncedAt(new Date().toLocaleString("ko-KR"));
+      } catch (error) {
+        console.error("Failed to load client settings", error);
+        toast.error("센터 설정을 불러오지 못했습니다.");
+      }
+    };
+
+    loadClientSettings();
+  }, [address, isAdmin]);
+
+  const profileDirty =
+    profileForm.name !== profileSnapshot.name
+    || profileForm.description !== profileSnapshot.description;
+  const buyRatesDirty = !areRateFormsEqual(buyRatesForm, buyRatesSnapshot);
+  const sellRatesDirty = !areRateFormsEqual(sellRatesForm, sellRatesSnapshot);
+  const pendingChangeCount = [profileDirty, buyRatesDirty, sellRatesDirty].filter(Boolean).length;
+
+  const chainMeta = CHAIN_META[chain] || CHAIN_META.arbitrum;
+
+  const saveProfile = async () => {
+    if (!smartAccount || !address || !isAdmin || !profileDirty || savingProfile) {
+      return;
+    }
+
+    setSavingProfile(true);
+
+    try {
+      const response = await postAdminSignedJson({
+        account: smartAccount,
+        route: CLIENT_SETTINGS_UPDATE_PROFILE_ROUTE,
+        signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: profileForm,
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data?.result) {
+        setProfileSnapshot(profileForm);
+        toast.success("센터 정보가 저장되었습니다.");
+      } else {
+        toast.error(data?.error || "센터 정보 저장에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("센터 정보 저장에 실패했습니다.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const saveBuyRates = async () => {
+    if (!smartAccount || !address || !isAdmin || !buyRatesDirty || savingBuyRates) {
+      return;
+    }
+
+    const parsed = parseClientExchangeRateForm(buyRatesForm);
+    if (!parsed) {
+      toast.error("환율(살때) 값을 다시 확인해주세요.");
+      return;
+    }
+
+    setSavingBuyRates(true);
+
+    try {
+      const response = await postAdminSignedJson({
+        account: smartAccount,
+        route: CLIENT_SETTINGS_UPDATE_BUY_RATE_ROUTE,
+        signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
+          exchangeRateUSDT: parsed,
         },
-    
-        Go_Home: "",
-        My_Balance: "",
-        My_Nickname: "",
-        My_Buy_Trades: "",
-        My_Sell_Trades: "",
-        Buy: "",
-        Sell: "",
-        Buy_USDT: "",
-        Sell_USDT: "",
-        Contact_Us: "",
-        Buy_Description: "",
-        Sell_Description: "",
-        Send_USDT: "",
-        Pay_USDT: "",
-        Coming_Soon: "",
-        Please_connect_your_wallet_first: "",
-
-        Wallet_Settings: "",
-        Profile_Settings: "",
-
-        Profile: "",
-        My_Profile_Picture: "",
-  
-        Edit: "",
-
-
-        Cancel: "",
-        Save: "",
-        Enter_your_nickname: "",
-        Nickname_should_be_5_10_characters: "",
-
-        Seller: "",
-        Not_a_seller: "",
-        Apply: "",
-        Applying: "",
-        Enter_your_bank_name: "",
-        Enter_your_account_number: "",
-        Enter_your_account_holder: "",
-        Send_OTP: "",
-        Enter_OTP: "",
-        Verify_OTP: "",
-        OTP_verified: "",
-
-        Nickname_should_be_alphanumeric_lowercase: "",
-        Nickname_should_be_at_least_5_characters_and_at_most_10_characters: "",
-
-        Copied_Wallet_Address: "",
-
-        Escrow: "",
-
-        Make_Escrow_Wallet: "",
-
-        Escrow_Wallet_Address_has_been_created: "",
-        Failed_to_create_Escrow_Wallet_Address: "",
-  
-    
-    } );
-    
-    useEffect(() => {
-        async function fetchData() {
-            const dictionary = await getDictionary(params.lang);
-            setData(dictionary);
-        }
-        fetchData();
-    }, [params.lang]);
-    
-    const {
-        title,
-        description,
-        menu,
-        Go_Home,
-        My_Balance,
-        My_Nickname,
-        My_Buy_Trades,
-        My_Sell_Trades,
-        Buy,
-        Sell,
-        Buy_USDT,
-        Sell_USDT,
-        Contact_Us,
-        Buy_Description,
-        Sell_Description,
-        Send_USDT,
-        Pay_USDT,
-        Coming_Soon,
-        Please_connect_your_wallet_first,
-
-        Wallet_Settings,
-        Profile_Settings,
-
-        Profile,
-        My_Profile_Picture,
-  
-        Edit,
-
-        Cancel,
-        Save,
-        Enter_your_nickname,
-        Nickname_should_be_5_10_characters,
-
-        Seller,
-        Not_a_seller,
-        Apply,
-        Applying,
-        Enter_your_bank_name,
-        Enter_your_account_number,
-        Enter_your_account_holder,
-        Send_OTP,
-        Enter_OTP,
-        Verify_OTP,
-        OTP_verified,
-
-        Nickname_should_be_alphanumeric_lowercase,
-        Nickname_should_be_at_least_5_characters_and_at_most_10_characters,
-
-        Copied_Wallet_Address,
-
-        Escrow,
-
-        Make_Escrow_Wallet,
-
-        Escrow_Wallet_Address_has_been_created,
-        Failed_to_create_Escrow_Wallet_Address,
-
-    } = data;
-
-    const smartAccount = useActiveAccount();
-
-    const address = smartAccount?.address;
-
-
-
-
-    const [user, setUser] = useState(null) as any;
-    const [isAdmin, setIsAdmin] = useState(false);
-
-    const [loadingUser, setLoadingUser] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!address) {
-                setUser(null);
-                setIsAdmin(false);
-                setLoadingUser(false);
-                return;
-            }
-
-            setLoadingUser(true);
-
-            try {
-                const response = await fetch("/api/user/getUser", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        storecode: "admin",
-                        walletAddress: address,
-                    }),
-                });
-
-                const data = await response.json();
-
-                if (data.result) {
-                    setUser(data.result);
-                    const userStorecode = String(data.result?.storecode || "").trim().toLowerCase();
-                    const userRole = String(data.result?.role || "").trim().toLowerCase();
-                    setIsAdmin(userStorecode === "admin" && userRole === "admin");
-                } else {
-                    setUser(null);
-                    setIsAdmin(false);
-                }
-            } catch (error) {
-                setUser(null);
-                setIsAdmin(false);
-                console.error("Failed to load admin user", error);
-            }
-
-            setLoadingUser(false);
-        };
-
-        fetchData();
-
-    }, [address]);
-
-
-
-
-    const [chain, setChain] = useState("ethereum");
-
-    const [clientName, setClientName] = useState("");
-    const [clientDescription, setClientDescription] = useState("");
-
-    // exchange rate USDT to USD
-    // exchange rate USDT to KRW
-    // exchange roate USDT to JPY
-    // exchange rate USDT to CNY
-    // exchange rate USDT to EUR
-    const [exchangeRateUSDT, setExchangeRateUSDT] = useState({
-        USD: 0,
-        KRW: 0,
-        JPY: 0,
-        CNY: 0,
-        EUR: 0,
-    });
-
-    const [exchangeRateUSDTSell, setExchangeRateUSDTSell] = useState({
-        USD: 0,
-        KRW: 0,
-        JPY: 0,
-        CNY: 0,
-        EUR: 0,
-    });
-
-
-    // /api/client/getClientInfo
-    const [clientId, setClientId] = useState("");
-    const [clientInfo, setClientInfo] = useState<any>(null);
-
-    // payactionViewOn
-    const [payactionViewOn, setPayactionViewOn] = useState(false);
-
-    useEffect(() => {
-        const fetchClientInfo = async () => {
-            if (!address || !isAdmin) {
-                return;
-            }
-
-            const response = await fetch("/api/client/getClientInfo", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const data = await response.json();
-
-            ///console.log("clientInfo", data);
-
-            if (data.result) {
-
-                setChain(data.result.chain || "ethereum");
-
-                setClientId(data.result.clientId || "");
-
-                setClientInfo(data.result.clientInfo);
-
-                setClientName(data.result.clientInfo?.name || "");
-                setClientDescription(data.result.clientInfo?.description || "");
-
-                setExchangeRateUSDT(data.result.clientInfo?.exchangeRateUSDT || {
-                    USD: 0,
-                    KRW: 0,
-                    JPY: 0,
-                    CNY: 0,
-                    EUR: 0,
-                });
-
-                setExchangeRateUSDTSell(data.result.clientInfo?.exchangeRateUSDTSell || {
-                    USD: 0,
-                    KRW: 0,
-                    JPY: 0,
-                    CNY: 0,
-                    EUR: 0,
-                });
-
-                setPayactionViewOn(data.result.clientInfo?.payactionViewOn || false);
-            }
-
-        };
-
-        fetchClientInfo();
-    }, [address, isAdmin]);
-
-
-
-
-
-
-    // /api/client/setClientInfo
-
-    const [updatingClientInfo, setUpdatingClientInfo] = useState(false);
-
-    const updateClientInfo = async () => {
-        if (updatingClientInfo || !smartAccount || !address || !isAdmin) {
-            return;
-        }
-        
-        setUpdatingClientInfo(true);
-        try {
-            const response = await postAdminSignedJson({
-                account: smartAccount,
-                route: CLIENT_SETTINGS_SET_INFO_ROUTE,
-                signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
-                requesterWalletAddress: address,
-                body: {
-                    name: clientName,
-                    description: clientDescription,
-                    exchangeRateUSDT: exchangeRateUSDT,
-                    exchangeRateUSDTSell: exchangeRateUSDTSell,
-                },
-            });
-
-            const data = await response.json().catch(() => null);
-
-            if (response.ok && data?.result) {
-                setClientInfo({
-                    ...clientInfo,
-                    name: clientName,
-                    description: clientDescription,
-                    exchangeRateUSDT: exchangeRateUSDT,
-                    exchangeRateUSDTSell: exchangeRateUSDTSell,
-                });
-                toast.success('Client info updated');
-            } else {
-                toast.error(data?.error || 'Failed to update client info');
-            }
-        } catch (error) {
-            toast.error('Failed to update client info');
-        } finally {
-            setUpdatingClientInfo(false);
-        }
-    };
-
-
-
-    // /api/client/updatePayactionViewOn
-    const [updatingPayactionViewOn, setUpdatingPayactionViewOn] = useState(false);
-    const updatePayactionViewOn = async (value: boolean) => {
-        if (updatingPayactionViewOn || !smartAccount || !address || !isAdmin) {
-            return;
-        }
-        setUpdatingPayactionViewOn(true);
-        try {
-            const response = await postAdminSignedJson({
-                account: smartAccount,
-                route: CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
-                signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
-                requesterWalletAddress: address,
-                body: {
-                    payactionViewOn: value,
-                },
-            });
-            const data = await response.json().catch(() => null);
-            if (response.ok && data?.result) {
-                setPayactionViewOn(value);
-                toast.success('Payaction setting updated');
-            } else {
-                toast.error(data?.error || 'Failed to update payaction setting');
-            }
-        } catch (error) {
-            toast.error('Failed to update payaction setting');
-        } finally {
-            setUpdatingPayactionViewOn(false);
-        }
-    };
-
-
-
-    if (!address) {
-        return (
-            <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
-                <div className="w-full rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
-                    <h1 className="text-xl font-semibold text-gray-900">로그인 필요</h1>
-                    <p className="mt-2 text-sm text-gray-600">관리자 지갑을 연결한 뒤 다시 시도해주세요.</p>
-                </div>
-            </main>
-        );
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data?.result) {
+        setBuyRatesSnapshot(buyRatesForm);
+        toast.success("환율(살때)가 저장되었습니다.");
+      } else {
+        toast.error(data?.error || "환율(살때) 저장에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("환율(살때) 저장에 실패했습니다.");
+    } finally {
+      setSavingBuyRates(false);
+    }
+  };
+
+  const saveSellRates = async () => {
+    if (!smartAccount || !address || !isAdmin || !sellRatesDirty || savingSellRates) {
+      return;
     }
 
-    if (loadingUser) {
-        return (
-            <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
-                <div className="w-full rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
-                    <h1 className="text-xl font-semibold text-gray-900">접근권한 확인중</h1>
-                    <p className="mt-2 text-sm text-gray-600">admin 관리자 권한을 확인하고 있습니다.</p>
-                    <p className="mt-3 break-all text-xs text-gray-400">{address}</p>
-                </div>
-            </main>
-        );
+    const parsed = parseClientExchangeRateForm(sellRatesForm);
+    if (!parsed) {
+      toast.error("환율(팔때) 값을 다시 확인해주세요.");
+      return;
     }
 
-    if (!isAdmin) {
-        return (
-            <main className="p-4 min-h-[100vh] flex items-center justify-center container max-w-screen-sm mx-auto">
-                <div className="w-full rounded-lg border border-red-200 bg-red-50 p-6 text-center shadow-sm">
-                    <h1 className="text-xl font-semibold text-red-900">접근권한이 없습니다.</h1>
-                    <p className="mt-2 text-sm text-red-700">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
-                    <p className="mt-3 break-all text-xs text-red-500">{address}</p>
-                </div>
-            </main>
-        );
+    setSavingSellRates(true);
+
+    try {
+      const response = await postAdminSignedJson({
+        account: smartAccount,
+        route: CLIENT_SETTINGS_UPDATE_SELL_RATE_ROUTE,
+        signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
+          exchangeRateUSDTSell: parsed,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data?.result) {
+        setSellRatesSnapshot(sellRatesForm);
+        toast.success("환율(팔때)가 저장되었습니다.");
+      } else {
+        toast.error(data?.error || "환율(팔때) 저장에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("환율(팔때) 저장에 실패했습니다.");
+    } finally {
+      setSavingSellRates(false);
+    }
+  };
+
+  const updatePayactionView = async (value: boolean) => {
+    if (!smartAccount || !address || !isAdmin || updatingPayactionViewOn) {
+      return;
     }
 
+    setUpdatingPayactionViewOn(true);
+
+    try {
+      const response = await postAdminSignedJson({
+        account: smartAccount,
+        route: CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
+        signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
+          payactionViewOn: value,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && data?.result) {
+        setPayactionViewOn(value);
+        toast.success("페이액션 사용 설정이 저장되었습니다.");
+      } else {
+        toast.error(data?.error || "페이액션 설정 저장에 실패했습니다.");
+      }
+    } catch (error) {
+      toast.error("페이액션 설정 저장에 실패했습니다.");
+    } finally {
+      setUpdatingPayactionViewOn(false);
+    }
+  };
+
+  const updateRateField = (
+    setter: React.Dispatch<React.SetStateAction<ClientExchangeRateForm>>,
+    key: ClientExchangeRateKey,
+    value: string,
+  ) => {
+    if (!isExchangeRateInput(value)) {
+      return;
+    }
+
+    setter((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  if (!address) {
     return (
-
-        <main className="p-4 min-h-[100vh] flex items-start justify-center container max-w-screen-sm mx-auto">
-
-            <div className="py-0 w-full">
-        
-
-                <div className="w-full flex flex-row gap-2 items-center justify-start text-zinc-500 text-lg"
-                >
-                    {/* go back button */}
-                    <div className="w-full flex justify-start items-center gap-2">
-                        <button
-                            onClick={() => window.history.back()}
-                            className="flex items-center justify-center bg-gray-200 rounded-lg p-2
-                            hover:bg-gray-300 transition duration-200 ease-in-out"
-                        >
-                            <Image
-                                src="/icon-back.png"
-                                alt="Back"
-                                width={20}
-                                height={20}
-                                className="rounded-full"
-                            />
-                            <span className="ml-2 text-sm text-gray-500 font-semibold">
-                                돌아가기
-                            </span>
-                        </button>
-
-                    </div>
-
-                    {loadingUser && (
-                        <div className="w-full flex flex-row items-center justify-end gap-1">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
-                            <div className="w-20 h-6 bg-gray-200 rounded-lg animate-pulse" />
-                        </div>
-                    )}
-
-                    {address && !loadingUser && (
-                        <div className="w-full flex flex-row items-center justify-end gap-1">
-                            <Image
-                                src={user?.avatar || "/icon-user.png"}
-                                alt="User Avatar"
-                                width={30}
-                                height={30}
-                                className="w-8 h-8 rounded-full"
-                            />
-                            <span className="text-lg text-gray-500 font-semibold">
-                            {user?.nickname || "프로필"}
-                            </span>
-                        </div>
-                    )}
-
-                </div>
-
-
-
-                <div className="mt-5 flex flex-col items-start justify-center space-y-4">
-
-                    <div className='flex flex-row items-center space-x-4'>
-                        <Image
-                            src={"/icon-gear.png"}
-                            alt="Settings"
-                            width={20}
-                            height={20}
-                            className="rounded-full"
-                        />
-                        <div className="text-xl font-semibold">
-                            센터 설정
-                        </div>
-
-                    </div>
-
-
-                    {/* clientInfo */}
-                    {true ? (
-                        <div className="
-                            mt-4
-                            w-full flex flex-col items-start justify-start gap-4">
-
-                            {/* CLIENTID */}
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                            border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        CLIENTID
-                                    </span>
-                                </div>
-                                <span className="text-sm text-gray-500">
-                                    {clientId || 'Loading...'}
-                                </span>
-                            </div>
-
-
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                            border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        현재 체인
-                                    </span>
-                                </div>
-
-                                <div className="flex flex-row items-center justify-center gap-4 mb-4">
-                                    
-                                    <div className={`
-                                    w-20 h-20
-                                    flex flex-col items-center justify-center gap-1 ${chain === 'ethereum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
-                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
-                                    <Image
-                                        src={`/logo-chain-ethereum.png`}
-                                        alt={`Chain logo for Ethereum`}
-                                        width={25}
-                                        height={25}
-                                        className="h-6 w-6 rounded-full"
-                                        style={{ objectFit: "cover" }}
-                                    />
-                                    <span className={`
-                                        ${chain === 'ethereum' ? 'text-blue-500' : 'text-gray-600'}
-                                        hover:text-blue-500
-                                    `}>
-                                        Ethereum
-                                    </span>
-                                    </div>
-
-                                    <div className={`
-                                    w-20 h-20
-                                    flex flex-col items-center justify-center gap-1 ${chain === 'polygon' ? 'border-2 border-blue-500 p-2 rounded' : ''}
-                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
-                                    <Image
-                                        src={`/logo-chain-polygon.png`}
-                                        alt={`Chain logo for Polygon`}
-                                        width={25}
-                                        height={25}
-                                        className="h-6 w-6 rounded-full"
-                                        style={{ objectFit: "cover" }}
-                                    />
-                                    <span className={`
-                                        ${chain === 'polygon' ? 'text-blue-500' : 'text-gray-600'}
-                                        hover:text-blue-500
-                                    `}>
-                                        Polygon
-                                    </span>
-                                    </div>
-
-                                    <div className={`
-                                    w-20 h-20
-                                    flex flex-col items-center justify-center gap-1 ${chain === 'bsc' ? 'border-2 border-blue-500 p-2 rounded' : ''}
-                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
-                                    <Image
-                                        src={`/logo-chain-bsc.png`}
-                                        alt={`Chain logo for BSC`}
-                                        width={25}
-                                        height={25}
-                                        className="h-6 w-6 rounded-full"
-                                        style={{ objectFit: "cover" }}
-                                    />
-                                    <span className={`
-                                        ${chain === 'bsc' ? 'text-blue-500' : 'text-gray-600'}
-                                        hover:text-blue-500
-                                    `}>
-                                        BSC
-                                    </span>
-                                    </div>
-
-                                    <div className={`
-                                    w-20 h-20
-                                    flex flex-col items-center justify-center gap-1 ${chain === 'arbitrum' ? 'border-2 border-blue-500 p-2 rounded' : ''}
-                                    hover:bg-blue-500 hover:text-white transition-colors duration-200`}>
-                                    <Image
-                                        src={`/logo-chain-arbitrum.png`}
-                                        alt={`Chain logo for Arbitrum`}
-                                        width={25}
-                                        height={25}
-                                        className="h-6 w-6 rounded-full"
-                                        style={{ objectFit: "cover" }}
-                                    />
-                                    <span className={`
-                                        ${chain === 'arbitrum' ? 'text-blue-500' : 'text-gray-600'}
-                                        hover:text-blue-500
-                                    `}>
-                                        Arbitrum
-                                    </span>
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-
-                            {/* 센터 로고 */}
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                            border-b border-gray-200 pb-4">
-                                <div className='flex flex-row items-center justify-start gap-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        센터 로고
-                                    </span>
-                                </div>
-                                <Uploader
-                                    lang={params.lang}
-                                    account={smartAccount}
-                                    walletAddress={address}
-                                />
-                            </div>
-
-
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                                background-gray-50 p-4 rounded-lg border border-gray-500">
-
-                                {/* 센터 정보 변경 */}
-                                <div className='flex flex-row items-center justify-start gap-2 mb-4
-                                border-b border-gray-200 pb-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-lg text-gray-500 font-semibold">
-                                        센터 정보 변경
-                                    </span>
-                                </div>
-
-                                <div className="w-full flex flex-col items-start justify-start gap-2
-                                border-b border-gray-200 pb-4">
-                                    <div className='flex flex-row items-center justify-start gap-2'>
-                                        <Image
-                                            src={`/icon-dot-green.png`}
-                                            alt={`Dot icon`}
-                                            width={10}
-                                            height={10}
-                                            className="h-2.5 w-2.5"
-                                        />
-                                        <span className="text-sm text-gray-500 font-semibold">
-                                            센터 이름
-                                        </span>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={clientName}
-                                        onChange={(e) => setClientName(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-lg"
-                                        placeholder="센터 이름"
-                                    />
-                                </div>
-
-                                <div className="w-full flex flex-col items-start justify-start gap-2
-                                border-b border-gray-200 pb-4">
-                                    <div className='flex flex-row items-center justify-start gap-2'>
-                                        <Image
-                                            src={`/icon-dot-green.png`}
-                                            alt={`Dot icon`}
-                                            width={10}
-                                            height={10}
-                                            className="h-2.5 w-2.5"
-                                        />
-                                        <span className="text-sm text-gray-500 font-semibold">
-                                            센터 소개
-                                        </span>
-                                    </div>
-                                    <textarea
-                                        value={clientDescription}
-                                        rows={4}
-                                        onChange={(e) => setClientDescription(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-lg"
-                                        placeholder="센터 소개"
-                                    />
-                                </div>
-
-                                {/*
-                                <div className="w-full flex flex-col items-start justify-start space-y-2">
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        센터 로고
-                                    </span>
-                                    <Uploader
-                                        value={clientInfo.logo || ''}
-                                        onChange={(value) => updateClientInfo({ logo: value })}
-                                    />
-                                </div>
-                                */}
-
-
-                                {/* exchange rate USDT */}
-                                <div className="w-full flex flex-col items-start justify-start gap-2
-                                border-b border-gray-200 pb-4">
-                                    <div className='flex flex-row items-center justify-start gap-2'>
-                                        <Image
-                                            src={`/icon-dot-green.png`}
-                                            alt={`Dot icon`}
-                                            width={10}
-                                            height={10}
-                                            className="h-2.5 w-2.5"
-                                        />
-                                        <span className="text-sm text-gray-500 font-semibold">
-                                            환율(살때) (USDT to ...)
-                                        </span>
-                                    </div>
-
-                                    <div className="w-full grid grid-cols-5 gap-4">
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                USD
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDT.USD}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, USD: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                KRW
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDT.KRW}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, KRW: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                JPY
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDT.JPY}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, JPY: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                CNY
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDT.CNY}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, CNY: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                EUR
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDT.EUR}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDT({ ...exchangeRateUSDT, EUR: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-                                    </div>
-
-                                </div>
-        
-
-                                {/*  환율(팔때) (USDT to ...) */}
-                                <div className="w-full flex flex-col items-start justify-start gap-2 border-b border-gray-200 pb-4">
-                                    <div className='flex flex-row items-center justify-start gap-2'>
-                                        <Image
-                                            src={`/icon-dot-green.png`}
-                                            alt={`Dot icon`}
-                                            width={10}
-                                            height={10}
-                                            className="h-2.5 w-2.5"
-                                        />
-                                        <span className="text-sm text-gray-500 font-semibold">
-                                            환율(팔때) (USDT to ...)
-                                        </span>
-                                    </div>
-                                    <div className="w-full grid grid-cols-5 gap-4">
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                USD
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDTSell.USD}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, USD: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                KRW
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDTSell.KRW}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, KRW: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                JPY
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDTSell.JPY}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, JPY: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                CNY
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDTSell.CNY}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, CNY: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-
-                                        <div className="flex flex-col items-start justify-start space-y-1">
-                                            <span className="text-sm text-gray-500">
-                                                EUR
-                                            </span>
-                                            <input
-                                                type="text"
-                                                value={exchangeRateUSDTSell.EUR}
-                                                onChange={(e) => {
-                                                    // check number character only
-                                                    if (!/^\d*\.?\d*$/.test(e.target.value)) {
-                                                        return;
-                                                    }
-
-                                                    setExchangeRateUSDTSell({ ...exchangeRateUSDTSell, EUR: Number(e.target.value) })
-                                                }}
-                                                className="w-full p-2 border border-gray-300 rounded-lg"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    disabled={updatingClientInfo}
-                                    onClick={() => updateClientInfo()}
-                                    className={`w-full bg-blue-500 text-white p-2 rounded-lg ${updatingClientInfo ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
-                                >
-                                    {updatingClientInfo ? '저장 중...' : '저장하기'}
-                                </button>
-
-                            </div>
-
-
-                            {/* 페이액션 사용 유무 */}
-                            {/* On/Off 토글 */}
-                            {/* payactionViewOn */}
-                            <div className="w-full flex flex-col items-start justify-start gap-2
-                                background-gray-50 p-4 rounded-lg border border-gray-500">
-
-                                <div className='flex flex-row items-center justify-start gap-2 mb-4
-                                border-b border-gray-200 pb-2'>
-                                    <Image
-                                        src={`/icon-dot-green.png`}
-                                        alt={`Dot icon`}
-                                        width={10}
-                                        height={10}
-                                        className="h-2.5 w-2.5"
-                                    />
-                                    <span className="text-lg text-gray-500 font-semibold">
-                                        페이액션 사용 유무
-                                    </span>
-                                </div>
-
-                                <div className="w-full flex flex-row items-center justify-between">
-                                    <span className="text-sm text-gray-500 font-semibold">
-                                        페이액션 사용 설정
-                                    </span>
-                                    {payactionViewOn === false ? (
-                                        <button
-                                            disabled={updatingPayactionViewOn}
-                                            onClick={() => updatePayactionViewOn(true)}
-                                            className={`
-                                                ${updatingPayactionViewOn ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-500'}
-                                                px-4 py-2 bg-red-400 text-white rounded-lg
-                                            `}
-                                        >
-                                            {updatingPayactionViewOn ? '업데이트 중...' : '사용 안함'}
-                                        </button>
-                                    ) : (
-                                        <button
-                                            disabled={updatingPayactionViewOn}
-                                            onClick={() => updatePayactionViewOn(false)}
-                                            className={`
-                                                ${updatingPayactionViewOn ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500'}
-                                                px-4 py-2 bg-green-400 text-white rounded-lg
-                                            `}
-                                        >
-                                            {updatingPayactionViewOn ? '업데이트 중...' : '사용 함'}
-                                        </button>
-                                    )}
-                                </div>
-
-                            </div>
-
-
-
-                            {/* 판매자 정보 */}
-
-
-                        </div>
-                    ) : (
-                        <div className="w-full flex flex-col items-center justify-center">
-                            <span className="text-sm text-gray-500">
-                                Loading...
-                            </span>
-                        </div>
-                    )}
-
-
-                </div>
-
-
+      <main className="flex min-h-[100vh] items-center justify-center bg-slate-100 px-4 py-10">
+        <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_32px_80px_-56px_rgba(15,23,42,0.5)]">
+          <h1 className="text-xl font-semibold text-slate-950">로그인 필요</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">관리자 지갑을 연결한 뒤 다시 시도해주세요.</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (loadingUser) {
+    return (
+      <main className="flex min-h-[100vh] items-center justify-center bg-slate-100 px-4 py-10">
+        <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_32px_80px_-56px_rgba(15,23,42,0.5)]">
+          <h1 className="text-xl font-semibold text-slate-950">접근권한 확인중</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">admin 관리자 권한을 점검하고 있습니다.</p>
+          <p className="mt-3 break-all text-xs text-slate-400">{address}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="flex min-h-[100vh] items-center justify-center bg-slate-100 px-4 py-10">
+        <div className="w-full max-w-md rounded-[28px] border border-red-200 bg-red-50 p-8 text-center shadow-[0_32px_80px_-56px_rgba(15,23,42,0.5)]">
+          <h1 className="text-xl font-semibold text-red-900">접근권한이 없습니다.</h1>
+          <p className="mt-2 text-sm leading-6 text-red-700">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
+          <p className="mt-3 break-all text-xs text-red-500">{address}</p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-[100vh] bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(16,185,129,0.14),_transparent_22%),linear-gradient(180deg,_#f7fafc_0%,_#eef4fb_100%)] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <section className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-[linear-gradient(135deg,_rgba(15,23,42,0.97),_rgba(30,41,59,0.95)_52%,_rgba(15,118,110,0.9))] px-6 py-6 text-white shadow-[0_40px_120px_-56px_rgba(15,23,42,0.7)] sm:px-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(148,163,184,0.16),transparent_30%),radial-gradient(circle_at_80%_0%,rgba(16,185,129,0.18),transparent_26%)]" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <button
+                onClick={() => window.history.back()}
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/10"
+              >
+                <Image src="/icon-back.png" alt="Back" width={18} height={18} className="h-4 w-4 rounded-full" />
+                이전 화면
+              </button>
+              <div className="mt-5 inline-flex items-center rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-emerald-200">
+                Financial System Settings
+              </div>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">센터 시스템 설정</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                운영 로고, 센터 프로필, 매수/매도 환율, 결제 연동 토글을 각각 독립적으로 관리하는 금융앱 운영 콘솔입니다.
+              </p>
             </div>
 
-        </main>
+            <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[360px]">
+              <SummaryCard
+                label="관리자 지갑"
+                value={formatWalletAddress(address)}
+                hint={user?.nickname ? `${user.nickname} 계정으로 로그인됨` : "관리자 계정 확인 완료"}
+                tone="slate"
+              />
+              <SummaryCard
+                label="동기화 상태"
+                value={lastSyncedAt || "방금 불러옴"}
+                hint={pendingChangeCount > 0 ? `${pendingChangeCount}개 섹션에 미저장 변경 있음` : "모든 설정이 저장된 상태"}
+                tone={pendingChangeCount > 0 ? "amber" : "emerald"}
+              />
+            </div>
+          </div>
+        </section>
 
-    );
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <SummaryCard
+            label="CLIENT ID"
+            value={clientId || "미설정"}
+            hint="결제/시세 기준 클라이언트 식별값"
+            tone="slate"
+          />
+          <SummaryCard
+            label="ACTIVE CHAIN"
+            value={chainMeta.label}
+            hint="센터가 현재 사용 중인 정산 체인"
+            tone="slate"
+          />
+          <SummaryCard
+            label="PAYACTION"
+            value={payactionViewOn ? "활성화" : "비활성화"}
+            hint={payactionViewOn ? "결제 연동 기능이 켜져 있습니다." : "결제 연동 기능이 꺼져 있습니다."}
+            tone={payactionViewOn ? "emerald" : "amber"}
+          />
+        </div>
 
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.7fr)]">
+          <div className="space-y-6">
+            <SettingCard
+              eyebrow="Center Identity"
+              title="센터 정보 변경"
+              description="브랜드명과 소개 문구를 별도 API로 저장합니다. 환율과는 분리되어 즉시 독립 반영됩니다."
+              action={(
+                <button
+                  type="button"
+                  onClick={saveProfile}
+                  disabled={!profileDirty || savingProfile}
+                  className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    !profileDirty || savingProfile
+                      ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                      : "bg-slate-950 text-white hover:bg-slate-800"
+                  }`}
+                >
+                  {savingProfile ? "저장 중..." : profileDirty ? "센터 정보 저장" : "저장 완료"}
+                </button>
+              )}
+            >
+              <div className="grid gap-5">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-700">센터 이름</span>
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(event) =>
+                      setProfileForm((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                    placeholder="센터 이름"
+                    className="h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
+                  />
+                </label>
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-700">센터 소개</span>
+                  <textarea
+                    value={profileForm.description}
+                    onChange={(event) =>
+                      setProfileForm((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                    rows={5}
+                    placeholder="센터 소개 문구를 입력하세요."
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition focus:border-sky-400 focus:bg-white"
+                  />
+                </label>
+              </div>
+            </SettingCard>
+
+            <SettingCard
+              eyebrow="Market Buy Rates"
+              title="환율(살때)"
+              description="USDT를 고객이 구매할 때 사용하는 기준 환율입니다. 매도 환율과 별도 API로 저장됩니다."
+              action={(
+                <button
+                  type="button"
+                  onClick={saveBuyRates}
+                  disabled={!buyRatesDirty || savingBuyRates}
+                  className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    !buyRatesDirty || savingBuyRates
+                      ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                      : "bg-sky-600 text-white hover:bg-sky-500"
+                  }`}
+                >
+                  {savingBuyRates ? "저장 중..." : buyRatesDirty ? "매수 환율 저장" : "저장 완료"}
+                </button>
+              )}
+            >
+              <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
+                {RATE_FIELD_META.map((item) => (
+                  <div
+                    key={`buy-${item.key}`}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-sky-200 hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">{item.description}</p>
+                      </div>
+                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                        Buy
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={buyRatesForm[item.key]}
+                      onChange={(event) => updateRateField(setBuyRatesForm, item.key, event.target.value)}
+                      className="mt-4 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base font-semibold text-slate-900 outline-none transition focus:border-sky-400"
+                    />
+                  </div>
+                ))}
+              </div>
+            </SettingCard>
+
+            <SettingCard
+              eyebrow="Market Sell Rates"
+              title="환율(팔때)"
+              description="USDT를 고객이 판매할 때 사용하는 기준 환율입니다. 매수 환율과 독립적으로 관리됩니다."
+              action={(
+                <button
+                  type="button"
+                  onClick={saveSellRates}
+                  disabled={!sellRatesDirty || savingSellRates}
+                  className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    !sellRatesDirty || savingSellRates
+                      ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                      : "bg-emerald-600 text-white hover:bg-emerald-500"
+                  }`}
+                >
+                  {savingSellRates ? "저장 중..." : sellRatesDirty ? "매도 환율 저장" : "저장 완료"}
+                </button>
+              )}
+            >
+              <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
+                {RATE_FIELD_META.map((item) => (
+                  <div
+                    key={`sell-${item.key}`}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-emerald-200 hover:bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{item.label}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">{item.description}</p>
+                      </div>
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                        Sell
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={sellRatesForm[item.key]}
+                      onChange={(event) => updateRateField(setSellRatesForm, item.key, event.target.value)}
+                      className="mt-4 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base font-semibold text-slate-900 outline-none transition focus:border-emerald-400"
+                    />
+                  </div>
+                ))}
+              </div>
+            </SettingCard>
+          </div>
+
+          <div className="space-y-6">
+            <SettingCard
+              eyebrow="Brand Asset"
+              title="센터 로고"
+              description="보호된 업로드 라우트로 이미지를 저장하고, 관리자 서명 검증 후 로고 URL을 반영합니다."
+            >
+              <Uploader
+                lang={params.lang}
+                account={smartAccount}
+                walletAddress={address}
+              />
+            </SettingCard>
+
+            <SettingCard
+              eyebrow="Payment Control"
+              title="페이액션 사용 유무"
+              description="결제 연동 기능을 실운영 환경에서 즉시 켜거나 끌 수 있습니다."
+            >
+              <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,_#f8fafc_0%,_#eef6ff_100%)] p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">현재 상태</p>
+                    <p className="mt-2 text-2xl font-semibold text-slate-950">
+                      {payactionViewOn ? "활성화" : "비활성화"}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {payactionViewOn
+                        ? "결제 연동이 외부 시스템과 연결되어 주문 화면에 노출됩니다."
+                        : "결제 연동이 잠시 중단되어 주문 화면에 표시되지 않습니다."}
+                    </p>
+                  </div>
+
+                  <div className="flex rounded-full bg-white p-1 shadow-[0_14px_30px_-18px_rgba(15,23,42,0.35)]">
+                    <button
+                      type="button"
+                      disabled={updatingPayactionViewOn}
+                      onClick={() => updatePayactionView(true)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        payactionViewOn
+                          ? "bg-emerald-500 text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-800"
+                      } ${updatingPayactionViewOn ? "cursor-not-allowed opacity-60" : ""}`}
+                    >
+                      사용
+                    </button>
+                    <button
+                      type="button"
+                      disabled={updatingPayactionViewOn}
+                      onClick={() => updatePayactionView(false)}
+                      className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        !payactionViewOn
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-800"
+                      } ${updatingPayactionViewOn ? "cursor-not-allowed opacity-60" : ""}`}
+                    >
+                      중지
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </SettingCard>
+
+            <SettingCard
+              eyebrow="System Context"
+              title="환경 정보"
+              description="운영 시스템에서 참조하는 체인과 식별 정보를 읽기 전용으로 표시합니다."
+            >
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Client ID</p>
+                  <p className="mt-3 break-all text-sm font-semibold text-slate-900">{clientId || "미설정"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Settlement Chain</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    {Object.entries(CHAIN_META).map(([key, meta]) => {
+                      const active = key === chain;
+
+                      return (
+                        <div
+                          key={key}
+                          className={`rounded-2xl border p-3 transition ${
+                            active
+                              ? "border-transparent bg-[linear-gradient(135deg,#0f172a,#0f766e)] text-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.7)]"
+                              : meta.muted
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Image src={meta.icon} alt={meta.label} width={22} height={22} className="h-5 w-5 rounded-full" />
+                            <span className="text-sm font-semibold">{meta.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">운영 메모</p>
+                  <p className="mt-3 text-sm leading-6 text-amber-900">
+                    프로필, 매수환율, 매도환율은 각각 별도 API로 저장됩니다. 필요한 섹션만 수정하고 즉시 반영할 수 있습니다.
+                  </p>
+                </div>
+              </div>
+            </SettingCard>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }
-
-          
