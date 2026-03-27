@@ -1,30 +1,32 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { updateClientExchangeRateSell } from "@lib/api/client";
-import { parseClientExchangeRateMap } from "@/lib/client-settings";
+import { getClientExchangeRateHistory } from "@lib/api/client";
+import type { ClientExchangeRateHistoryType } from "@/lib/client-settings";
 import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 import {
-  CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
-  CLIENT_SETTINGS_UPDATE_SELL_RATE_ROUTE,
+  CLIENT_SETTINGS_ADMIN_READ_SIGNING_PREFIX,
+  CLIENT_SETTINGS_GET_RATE_HISTORY_ROUTE,
   extractClientSettingsAdminActionFields,
   isPlainObject,
 } from "@/lib/security/client-settings-admin";
 
 const clientId = process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "";
-const MAX_EXCHANGE_RATE = 10_000_000;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 30;
 
-const isValidExchangeRateMap = (value: unknown) => {
-  const parsed = parseClientExchangeRateMap(value);
-  if (!parsed) {
-    return null;
+const parseHistoryType = (value: unknown): ClientExchangeRateHistoryType | null => {
+  if (value === "buy" || value === "sell") {
+    return value;
   }
+  return null;
+};
 
-  const values = Object.values(parsed);
-  if (values.some((item) => item < 0 || item > MAX_EXCHANGE_RATE)) {
-    return null;
+const parseLimit = (value: unknown) => {
+  const parsed = Number.parseInt(String(value || ""), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_LIMIT;
   }
-
-  return parsed;
+  return Math.min(parsed, MAX_LIMIT);
 };
 
 export async function POST(request: NextRequest) {
@@ -49,8 +51,8 @@ export async function POST(request: NextRequest) {
 
   const authResult = await verifyAdminSignedAction({
     request,
-    route: CLIENT_SETTINGS_UPDATE_SELL_RATE_ROUTE,
-    signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+    route: CLIENT_SETTINGS_GET_RATE_HISTORY_ROUTE,
+    signingPrefix: CLIENT_SETTINGS_ADMIN_READ_SIGNING_PREFIX,
     requesterStorecodeRaw: body.requesterStorecode ?? "admin",
     requesterWalletAddressRaw: body.requesterWalletAddress,
     signatureRaw: body.signature,
@@ -69,31 +71,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const exchangeRateUSDTSell = isValidExchangeRateMap(body.exchangeRateUSDTSell);
-
-  if (!exchangeRateUSDTSell) {
+  const rateType = parseHistoryType(body.rateType);
+  if (!rateType) {
     return NextResponse.json(
       {
         result: null,
-        error: "Invalid sell exchange rates",
+        error: "Invalid rate history type",
       },
       { status: 400 },
     );
   }
 
-  const result = await updateClientExchangeRateSell(clientId, exchangeRateUSDTSell, {
-    route: CLIENT_SETTINGS_UPDATE_SELL_RATE_ROUTE,
-    publicIp: authResult.ip,
-    requesterWalletAddress: authResult.requesterWalletAddress,
-    requesterNickname: authResult.requesterUser?.nickname,
-    requesterStorecode: authResult.requesterStorecode,
-    requesterRole: authResult.requesterUser?.role || authResult.requesterUser?.rold,
-    userAgent: request.headers.get("user-agent"),
-    updatedAt: new Date(),
+  const result = await getClientExchangeRateHistory({
+    clientId,
+    rateType,
+    limit: parseLimit(body.limit),
   });
 
   return NextResponse.json({
-    result: result.result,
-    historyEntry: result.historyEntry,
+    result,
   });
 }

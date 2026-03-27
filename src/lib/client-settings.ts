@@ -1,9 +1,24 @@
 export const CLIENT_EXCHANGE_RATE_KEYS = ["USD", "KRW", "JPY", "CNY", "EUR"] as const;
 
 export type ClientExchangeRateKey = (typeof CLIENT_EXCHANGE_RATE_KEYS)[number];
+export type ClientExchangeRateHistoryType = "buy" | "sell";
 
 export type ClientExchangeRateMap = Record<ClientExchangeRateKey, number>;
 export type ClientExchangeRateForm = Record<ClientExchangeRateKey, string>;
+export type ClientExchangeRateHistoryItem = {
+  _id: string;
+  clientId: string;
+  rateType: ClientExchangeRateHistoryType;
+  before: ClientExchangeRateMap;
+  after: ClientExchangeRateMap;
+  changedKeys: ClientExchangeRateKey[];
+  requesterWalletAddress: string;
+  requesterNickname: string;
+  requesterStorecode: string;
+  requesterRole: string;
+  route: string;
+  updatedAt: string;
+};
 
 export const createEmptyClientExchangeRateMap = (): ClientExchangeRateMap => ({
   USD: 0,
@@ -57,6 +72,20 @@ export const normalizeClientExchangeRateValue = (value: unknown): number | null 
   return null;
 };
 
+export const areClientExchangeRateMapsEqual = (
+  left: ClientExchangeRateMap,
+  right: ClientExchangeRateMap,
+) => {
+  return CLIENT_EXCHANGE_RATE_KEYS.every((key) => left[key] === right[key]);
+};
+
+export const getChangedClientExchangeRateKeys = (
+  before: ClientExchangeRateMap,
+  after: ClientExchangeRateMap,
+): ClientExchangeRateKey[] => {
+  return CLIENT_EXCHANGE_RATE_KEYS.filter((key) => before[key] !== after[key]);
+};
+
 export const parseClientExchangeRateMap = (value: unknown): ClientExchangeRateMap | null => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -91,4 +120,42 @@ export const parseClientExchangeRateForm = (value: ClientExchangeRateForm): Clie
   }
 
   return next;
+};
+
+export const parseClientExchangeRateHistoryItem = (
+  value: unknown,
+): ClientExchangeRateHistoryItem | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const after = parseClientExchangeRateMap(record.after);
+
+  if (!after) {
+    return null;
+  }
+
+  const before = parseClientExchangeRateMap(record.before) || createEmptyClientExchangeRateMap();
+  const changedKeysSource = Array.isArray(record.changedKeys) ? record.changedKeys : [];
+  const changedKeys = changedKeysSource
+    .map((item) => String(item))
+    .filter((item): item is ClientExchangeRateKey =>
+      CLIENT_EXCHANGE_RATE_KEYS.includes(item as ClientExchangeRateKey),
+    );
+
+  return {
+    _id: String(record._id || ""),
+    clientId: String(record.clientId || ""),
+    rateType: record.rateType === "sell" ? "sell" : "buy",
+    before,
+    after,
+    changedKeys,
+    requesterWalletAddress: String(record.requesterWalletAddress || ""),
+    requesterNickname: String(record.requesterNickname || ""),
+    requesterStorecode: String(record.requesterStorecode || ""),
+    requesterRole: String(record.requesterRole || ""),
+    route: String(record.route || ""),
+    updatedAt: String(record.updatedAt || ""),
+  };
 };

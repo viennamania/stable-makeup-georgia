@@ -81,9 +81,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = await updateClientExchangeRateBuy(clientId, exchangeRateUSDT);
+  const result = await updateClientExchangeRateBuy(clientId, exchangeRateUSDT, {
+    route: CLIENT_SETTINGS_UPDATE_BUY_RATE_ROUTE,
+    publicIp: authResult.ip,
+    requesterWalletAddress: authResult.requesterWalletAddress,
+    requesterNickname: authResult.requesterUser?.nickname,
+    requesterStorecode: authResult.requesterStorecode,
+    requesterRole: authResult.requesterUser?.role || authResult.requesterUser?.rold,
+    userAgent: request.headers.get("user-agent"),
+    updatedAt: new Date(),
+  });
 
   return NextResponse.json({
-    result,
+    result: result.result,
+    historyEntry: result.historyEntry,
   });
 }

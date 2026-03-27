@@ -11,12 +11,19 @@ import {
   CLIENT_EXCHANGE_RATE_KEYS,
   clientExchangeRateMapToForm,
   createEmptyClientExchangeRateForm,
+  isClientExchangeRateInput,
+  parseClientExchangeRateHistoryItem,
   parseClientExchangeRateForm,
+  type ClientExchangeRateHistoryItem,
+  type ClientExchangeRateHistoryType,
   type ClientExchangeRateForm,
   type ClientExchangeRateKey,
+  type ClientExchangeRateMap,
 } from "@/lib/client-settings";
 import {
+  CLIENT_SETTINGS_ADMIN_READ_SIGNING_PREFIX,
   CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
+  CLIENT_SETTINGS_GET_RATE_HISTORY_ROUTE,
   CLIENT_SETTINGS_UPDATE_BUY_RATE_ROUTE,
   CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
   CLIENT_SETTINGS_UPDATE_PROFILE_ROUTE,
@@ -86,7 +93,7 @@ const createEmptyProfileForm = (): ClientProfileForm => ({
   description: "",
 });
 
-const isExchangeRateInput = (value: string) => /^\d*\.?\d*$/.test(value);
+const HISTORY_LIMIT = 10;
 
 const formatWalletAddress = (value: string | undefined) => {
   if (!value) {
@@ -102,6 +109,49 @@ const formatWalletAddress = (value: string | undefined) => {
 
 const areRateFormsEqual = (left: ClientExchangeRateForm, right: ClientExchangeRateForm) =>
   CLIENT_EXCHANGE_RATE_KEYS.every((key) => left[key] === right[key]);
+
+const formatDateTime = (value: string | undefined) => {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("ko-KR");
+};
+
+const formatRateValue = (value: number) => {
+  if (!Number.isFinite(value)) {
+    return "-";
+  }
+
+  return new Intl.NumberFormat("ko-KR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 6,
+  }).format(value);
+};
+
+const formatHistoryActor = (item: ClientExchangeRateHistoryItem) => {
+  const walletLabel = item.requesterWalletAddress
+    ? formatWalletAddress(item.requesterWalletAddress)
+    : "관리자";
+
+  if (item.requesterNickname) {
+    return `${item.requesterNickname} · ${walletLabel}`;
+  }
+
+  return walletLabel;
+};
+
+const mergeHistoryEntry = (
+  current: ClientExchangeRateHistoryItem[],
+  incoming: ClientExchangeRateHistoryItem,
+) => {
+  return [incoming, ...current.filter((item) => item._id !== incoming._id)].slice(0, HISTORY_LIMIT);
+};
 
 const SettingCard = ({
   eyebrow,
@@ -168,6 +218,119 @@ const SummaryCard = ({
   );
 };
 
+const ExchangeRateHistoryPanel = ({
+  tone,
+  loaded,
+  loading,
+  items,
+  onLoad,
+}: {
+  tone: "sky" | "emerald";
+  loaded: boolean;
+  loading: boolean;
+  items: ClientExchangeRateHistoryItem[];
+  onLoad: () => void;
+}) => {
+  const toneClass =
+    tone === "sky"
+      ? {
+          wrapper: "border-sky-100 bg-[linear-gradient(180deg,_rgba(240,249,255,0.9),_rgba(255,255,255,1))]",
+          button: "border-sky-200 text-sky-700 hover:bg-sky-50",
+          badge: "bg-sky-100 text-sky-700",
+          value: "text-sky-900",
+        }
+      : {
+          wrapper: "border-emerald-100 bg-[linear-gradient(180deg,_rgba(236,253,245,0.92),_rgba(255,255,255,1))]",
+          button: "border-emerald-200 text-emerald-700 hover:bg-emerald-50",
+          badge: "bg-emerald-100 text-emerald-700",
+          value: "text-emerald-900",
+        };
+
+  return (
+    <div className={`mt-6 rounded-[24px] border p-4 sm:p-5 ${toneClass.wrapper}`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">최근 변경 이력</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            저장 시점의 변경 전/후 환율과 변경 관리자 정보를 기록합니다.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onLoad}
+          disabled={loading}
+          className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold transition ${toneClass.button} ${loading ? "cursor-not-allowed opacity-60" : ""}`}
+        >
+          {loading ? "불러오는 중..." : loaded ? "이력 새로고침" : "이력 보기"}
+        </button>
+      </div>
+
+      {!loaded ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-500">
+          관리자 서명 후 최근 {HISTORY_LIMIT}건의 환율 변경 이력을 조회할 수 있습니다.
+        </div>
+      ) : null}
+
+      {loaded && items.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-4 text-sm leading-6 text-slate-500">
+          저장된 환율 변경 이력이 없습니다.
+        </div>
+      ) : null}
+
+      {loaded && items.length > 0 ? (
+        <div className="mt-4 space-y-3">
+          {items.map((item) => {
+            const displayKeys = item.changedKeys.length > 0 ? item.changedKeys : CLIENT_EXCHANGE_RATE_KEYS;
+
+            return (
+              <div
+                key={item._id || `${item.rateType}-${item.updatedAt}`}
+                className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.35)]"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{formatHistoryActor(item)}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {formatDateTime(item.updatedAt)}
+                      {item.requesterRole ? ` · ${item.requesterRole}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {displayKeys.map((key) => (
+                      <span
+                        key={`${item._id}-${key}`}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${toneClass.badge}`}
+                      >
+                        {key}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {displayKeys.map((key) => (
+                    <div
+                      key={`${item._id}-${key}-row`}
+                      className="grid grid-cols-[56px_minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm"
+                    >
+                      <span className="font-semibold text-slate-700">{key}</span>
+                      <span className="truncate text-slate-500">{formatRateValue(item.before[key])}</span>
+                      <span className="text-slate-400">→</span>
+                      <span className={`truncate text-right font-semibold ${toneClass.value}`}>
+                        {formatRateValue(item.after[key])}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 export default function SettingsPage({ params }: SettingsPageProps) {
   const smartAccount = useActiveAccount();
   const address = smartAccount?.address;
@@ -186,9 +349,15 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
   const [buyRatesForm, setBuyRatesForm] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
   const [buyRatesSnapshot, setBuyRatesSnapshot] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
+  const [buyRateHistory, setBuyRateHistory] = useState<ClientExchangeRateHistoryItem[]>([]);
+  const [buyRateHistoryLoaded, setBuyRateHistoryLoaded] = useState(false);
+  const [buyRateHistoryLoading, setBuyRateHistoryLoading] = useState(false);
 
   const [sellRatesForm, setSellRatesForm] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
   const [sellRatesSnapshot, setSellRatesSnapshot] = useState<ClientExchangeRateForm>(createEmptyClientExchangeRateForm());
+  const [sellRateHistory, setSellRateHistory] = useState<ClientExchangeRateHistoryItem[]>([]);
+  const [sellRateHistoryLoaded, setSellRateHistoryLoaded] = useState(false);
+  const [sellRateHistoryLoading, setSellRateHistoryLoading] = useState(false);
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingBuyRates, setSavingBuyRates] = useState(false);
@@ -294,6 +463,69 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
   const chainMeta = CHAIN_META[chain] || CHAIN_META.arbitrum;
 
+  const applyHistoryEntry = (
+    rateType: ClientExchangeRateHistoryType,
+    historyEntry: ClientExchangeRateHistoryItem | null,
+  ) => {
+    if (!historyEntry) {
+      return;
+    }
+
+    if (rateType === "buy") {
+      setBuyRateHistoryLoaded(true);
+      setBuyRateHistory((current) => mergeHistoryEntry(current, historyEntry));
+      return;
+    }
+
+    setSellRateHistoryLoaded(true);
+    setSellRateHistory((current) => mergeHistoryEntry(current, historyEntry));
+  };
+
+  const loadRateHistory = async (rateType: ClientExchangeRateHistoryType) => {
+    if (!smartAccount || !address || !isAdmin) {
+      return;
+    }
+
+    const setLoading = rateType === "buy" ? setBuyRateHistoryLoading : setSellRateHistoryLoading;
+    const setLoaded = rateType === "buy" ? setBuyRateHistoryLoaded : setSellRateHistoryLoaded;
+    const setHistory = rateType === "buy" ? setBuyRateHistory : setSellRateHistory;
+
+    setLoading(true);
+
+    try {
+      const response = await postAdminSignedJson({
+        account: smartAccount,
+        route: CLIENT_SETTINGS_GET_RATE_HISTORY_ROUTE,
+        signingPrefix: CLIENT_SETTINGS_ADMIN_READ_SIGNING_PREFIX,
+        requesterWalletAddress: address,
+        body: {
+          rateType,
+          limit: HISTORY_LIMIT,
+        },
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (response.ok && Array.isArray(data?.result)) {
+        const nextHistory = data.result
+          .map(parseClientExchangeRateHistoryItem)
+          .filter(
+            (item: ClientExchangeRateHistoryItem | null): item is ClientExchangeRateHistoryItem =>
+              Boolean(item),
+          );
+
+        setHistory(nextHistory);
+        setLoaded(true);
+      } else {
+        toast.error(data?.error || "변경 이력을 불러오지 못했습니다.");
+      }
+    } catch (error) {
+      toast.error("변경 이력을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const saveProfile = async () => {
     if (!smartAccount || !address || !isAdmin || !profileDirty || savingProfile) {
       return;
@@ -314,6 +546,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
       if (response.ok && data?.result) {
         setProfileSnapshot(profileForm);
+        setLastSyncedAt(new Date().toLocaleString("ko-KR"));
         toast.success("센터 정보가 저장되었습니다.");
       } else {
         toast.error(data?.error || "센터 정보 저장에 실패했습니다.");
@@ -330,8 +563,8 @@ export default function SettingsPage({ params }: SettingsPageProps) {
       return;
     }
 
-    const parsed = parseClientExchangeRateForm(buyRatesForm);
-    if (!parsed) {
+    const nextBuyRates = parseClientExchangeRateForm(buyRatesForm);
+    if (!nextBuyRates) {
       toast.error("환율(살때) 값을 다시 확인해주세요.");
       return;
     }
@@ -345,14 +578,18 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
         requesterWalletAddress: address,
         body: {
-          exchangeRateUSDT: parsed,
+          exchangeRateUSDT: nextBuyRates,
         },
       });
 
       const data = await response.json().catch(() => null);
 
       if (response.ok && data?.result) {
-        setBuyRatesSnapshot(buyRatesForm);
+        const normalizedForm = clientExchangeRateMapToForm(nextBuyRates);
+        setBuyRatesForm(normalizedForm);
+        setBuyRatesSnapshot(normalizedForm);
+        applyHistoryEntry("buy", parseClientExchangeRateHistoryItem(data?.historyEntry));
+        setLastSyncedAt(new Date().toLocaleString("ko-KR"));
         toast.success("환율(살때)가 저장되었습니다.");
       } else {
         toast.error(data?.error || "환율(살때) 저장에 실패했습니다.");
@@ -369,8 +606,8 @@ export default function SettingsPage({ params }: SettingsPageProps) {
       return;
     }
 
-    const parsed = parseClientExchangeRateForm(sellRatesForm);
-    if (!parsed) {
+    const nextSellRates = parseClientExchangeRateForm(sellRatesForm);
+    if (!nextSellRates) {
       toast.error("환율(팔때) 값을 다시 확인해주세요.");
       return;
     }
@@ -384,14 +621,18 @@ export default function SettingsPage({ params }: SettingsPageProps) {
         signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
         requesterWalletAddress: address,
         body: {
-          exchangeRateUSDTSell: parsed,
+          exchangeRateUSDTSell: nextSellRates,
         },
       });
 
       const data = await response.json().catch(() => null);
 
       if (response.ok && data?.result) {
-        setSellRatesSnapshot(sellRatesForm);
+        const normalizedForm = clientExchangeRateMapToForm(nextSellRates);
+        setSellRatesForm(normalizedForm);
+        setSellRatesSnapshot(normalizedForm);
+        applyHistoryEntry("sell", parseClientExchangeRateHistoryItem(data?.historyEntry));
+        setLastSyncedAt(new Date().toLocaleString("ko-KR"));
         toast.success("환율(팔때)가 저장되었습니다.");
       } else {
         toast.error(data?.error || "환율(팔때) 저장에 실패했습니다.");
@@ -425,6 +666,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
       if (response.ok && data?.result) {
         setPayactionViewOn(value);
+        setLastSyncedAt(new Date().toLocaleString("ko-KR"));
         toast.success("페이액션 사용 설정이 저장되었습니다.");
       } else {
         toast.error(data?.error || "페이액션 설정 저장에 실패했습니다.");
@@ -441,7 +683,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     key: ClientExchangeRateKey,
     value: string,
   ) => {
-    if (!isExchangeRateInput(value)) {
+    if (!isClientExchangeRateInput(value)) {
       return;
     }
 
@@ -606,20 +848,32 @@ export default function SettingsPage({ params }: SettingsPageProps) {
             <SettingCard
               eyebrow="Market Buy Rates"
               title="환율(살때)"
-              description="USDT를 고객이 구매할 때 사용하는 기준 환율입니다. 매도 환율과 별도 API로 저장됩니다."
+              description="USDT를 고객이 구매할 때 사용하는 기준 환율입니다. 저장 시 변경 이력이 자동으로 기록됩니다."
               action={(
-                <button
-                  type="button"
-                  onClick={saveBuyRates}
-                  disabled={!buyRatesDirty || savingBuyRates}
-                  className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
-                    !buyRatesDirty || savingBuyRates
-                      ? "cursor-not-allowed bg-slate-100 text-slate-400"
-                      : "bg-sky-600 text-white hover:bg-sky-500"
-                  }`}
-                >
-                  {savingBuyRates ? "저장 중..." : buyRatesDirty ? "매수 환율 저장" : "저장 완료"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void loadRateHistory("buy")}
+                    disabled={buyRateHistoryLoading}
+                    className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2.5 text-sm font-semibold text-sky-700 transition hover:bg-sky-50 ${
+                      buyRateHistoryLoading ? "cursor-not-allowed opacity-60" : ""
+                    }`}
+                  >
+                    {buyRateHistoryLoading ? "이력 조회 중..." : buyRateHistoryLoaded ? "이력 새로고침" : "이력 보기"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveBuyRates}
+                    disabled={!buyRatesDirty || savingBuyRates}
+                    className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                      !buyRatesDirty || savingBuyRates
+                        ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                        : "bg-sky-600 text-white hover:bg-sky-500"
+                    }`}
+                  >
+                    {savingBuyRates ? "저장 중..." : buyRatesDirty ? "매수 환율 저장" : "저장 완료"}
+                  </button>
+                </div>
               )}
             >
               <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
@@ -647,25 +901,45 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   </div>
                 ))}
               </div>
+
+              <ExchangeRateHistoryPanel
+                tone="sky"
+                loaded={buyRateHistoryLoaded}
+                loading={buyRateHistoryLoading}
+                items={buyRateHistory}
+                onLoad={() => void loadRateHistory("buy")}
+              />
             </SettingCard>
 
             <SettingCard
               eyebrow="Market Sell Rates"
               title="환율(팔때)"
-              description="USDT를 고객이 판매할 때 사용하는 기준 환율입니다. 매수 환율과 독립적으로 관리됩니다."
+              description="USDT를 고객이 판매할 때 사용하는 기준 환율입니다. 저장 시 변경 이력이 자동으로 기록됩니다."
               action={(
-                <button
-                  type="button"
-                  onClick={saveSellRates}
-                  disabled={!sellRatesDirty || savingSellRates}
-                  className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
-                    !sellRatesDirty || savingSellRates
-                      ? "cursor-not-allowed bg-slate-100 text-slate-400"
-                      : "bg-emerald-600 text-white hover:bg-emerald-500"
-                  }`}
-                >
-                  {savingSellRates ? "저장 중..." : sellRatesDirty ? "매도 환율 저장" : "저장 완료"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void loadRateHistory("sell")}
+                    disabled={sellRateHistoryLoading}
+                    className={`inline-flex items-center justify-center rounded-full border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 ${
+                      sellRateHistoryLoading ? "cursor-not-allowed opacity-60" : ""
+                    }`}
+                  >
+                    {sellRateHistoryLoading ? "이력 조회 중..." : sellRateHistoryLoaded ? "이력 새로고침" : "이력 보기"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveSellRates}
+                    disabled={!sellRatesDirty || savingSellRates}
+                    className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                      !sellRatesDirty || savingSellRates
+                        ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                        : "bg-emerald-600 text-white hover:bg-emerald-500"
+                    }`}
+                  >
+                    {savingSellRates ? "저장 중..." : sellRatesDirty ? "매도 환율 저장" : "저장 완료"}
+                  </button>
+                </div>
               )}
             >
               <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
@@ -693,6 +967,14 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                   </div>
                 ))}
               </div>
+
+              <ExchangeRateHistoryPanel
+                tone="emerald"
+                loaded={sellRateHistoryLoaded}
+                loading={sellRateHistoryLoading}
+                items={sellRateHistory}
+                onLoad={() => void loadRateHistory("sell")}
+              />
             </SettingCard>
           </div>
 
@@ -797,7 +1079,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">운영 메모</p>
                   <p className="mt-3 text-sm leading-6 text-amber-900">
-                    프로필, 매수환율, 매도환율은 각각 별도 API로 저장됩니다. 필요한 섹션만 수정하고 즉시 반영할 수 있습니다.
+                    프로필, 매수환율, 매도환율은 각각 별도 API로 저장됩니다. 환율 저장 시에는 변경 전후 값과 변경 시각이 자동으로 이력에 기록됩니다.
                   </p>
                 </div>
               </div>
