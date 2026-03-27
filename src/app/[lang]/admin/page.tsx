@@ -3,6 +3,8 @@
 import { useState, useEffect, use } from "react";
 
 import Image from "next/image";
+import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
+import AdminAccessState from "@/components/admin/admin-access-state";
 
 
 import {
@@ -953,11 +955,13 @@ export default function Index({ params }: any) {
 
   if (address && loadingUser) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 p-4">
-        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
-        <p className="text-lg">회원 정보를 확인하고 있습니다.</p>
-        <div className="text-lg text-gray-500">{address}</div>
-      </div>
+      <AdminAccessState
+        variant="checking"
+        title="운영 권한을 확인하고 있습니다"
+        description="연결된 지갑 기준으로 관리자 프로필과 권한 정책을 검증하는 중입니다."
+        address={address}
+        note="확인이 끝나면 접근 가능한 운영 화면만 열립니다."
+      />
     );
   }
 
@@ -969,63 +973,33 @@ export default function Index({ params }: any) {
       : '/' + params.lang + '/admin/user/user-register';
 
     return (
-      <div className="flex flex-col items-center justify-center gap-4 p-4">
-
-        <h1 className="text-2xl font-bold">접근권한이 없습니다.</h1>
-        <p className="text-lg">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
-        <div className="text-lg text-gray-500">{address}</div>
-
-
-            {/* 회원가입한후 가맹점 관리자 등록신청을 하세요 */}
-            {/* 회원가입하러 가기 */}
-            <div className="flex flex-row items-center justify-center gap-2">
-              <button
-                onClick={() => {
-                  router.push(fallbackActionPath);
-                }}
-                className="flex bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                {fallbackActionLabel}
-              </button>
-            </div>
-
-
-
-              {/* logout button */}
-              <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
-
-
-              
-
-
-
-      </div>
+      <AdminAccessState
+        variant="denied"
+        title="관리자 권한이 확인되지 않았습니다"
+        description="이 운영 홈은 금융 시스템 관리자 계정만 접근할 수 있습니다. 회원 상태를 점검한 뒤 다시 시도해주세요."
+        address={address}
+        note="권한 기준: storecode=admin, role=admin"
+        actions={
+          <>
+            <button
+              onClick={() => {
+                router.push(fallbackActionPath);
+              }}
+              className="inline-flex items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/12 px-4 py-3 text-sm font-medium text-sky-50 transition hover:bg-sky-400/20"
+            >
+              {fallbackActionLabel}
+            </button>
+            <AdminAccessLogoutButton
+              onClick={() => {
+                confirm("로그아웃 하시겠습니까?") &&
+                  activeWallet?.disconnect().then(() => {
+                    toast.success('로그아웃 되었습니다');
+                  });
+              }}
+            />
+          </>
+        }
+      />
     );
   }
 

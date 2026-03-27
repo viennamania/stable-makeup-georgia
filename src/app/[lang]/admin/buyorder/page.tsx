@@ -1,7 +1,10 @@
 'use client';
 
+import * as Ably from "ably";
 import React, { useState, useEffect, use, act, useRef, useMemo, useCallback } from "react";
 import Image from "next/image";
+import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
+import AdminAccessState from "@/components/admin/admin-access-state";
 
 import ModalUser from '@/components/modal-user';
 import Modal from '@/components/modal';
@@ -96,6 +99,11 @@ import {
 import { useAnimatedNumber } from "@/components/useAnimatedNumber";
 import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
+import {
+  BANKTRANSFER_UNMATCHED_ABLY_CHANNEL,
+  BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME,
+  type BankTransferUnmatchedRealtimeEvent,
+} from "@/lib/ably/constants";
 
 // status → pulse utility
 const statusPulseClass = (status: string | undefined) => {
@@ -1836,6 +1844,9 @@ getAllBuyOrders result totalAgentFeeAmountKRW 0
   const [markingUnmatchedId, setMarkingUnmatchedId] = useState<string | null>(null);
   const lastAlarmSoundRef = useRef<number>(0);
   const [unmatchedCountdown, setUnmatchedCountdown] = useState('00:00:00');
+  const unmatchedRealtimeClientIdRef = useRef(`admin-unmatched-${Math.random().toString(36).slice(2, 10)}`);
+  const unmatchedRealtimeRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const unmatchedRealtimeEventIdRef = useRef("");
 
   // 입금내역 선택 모달 상태
 const [depositModalOpen, setDepositModalOpen] = useState(false);
@@ -2563,6 +2574,53 @@ const depositAmountMatches = useMemo(() => {
       fetchUnmatchedTransfers();
     }, ADMIN_UNMATCHED_TRANSFER_POLLING_MS);
     return () => clearInterval(interval);
+  }, [searchFromDate, searchToDate, searchStorecode]);
+
+  useEffect(() => {
+    const realtime = new Ably.Realtime({
+      authUrl: `/api/realtime/ably-token?public=1&stream=banktransfer&clientId=${unmatchedRealtimeClientIdRef.current}`,
+    });
+    const unmatchedChannel = realtime.channels.get(BANKTRANSFER_UNMATCHED_ABLY_CHANNEL);
+
+    const scheduleRefresh = () => {
+      if (unmatchedRealtimeRefreshTimerRef.current) {
+        clearTimeout(unmatchedRealtimeRefreshTimerRef.current);
+      }
+      unmatchedRealtimeRefreshTimerRef.current = setTimeout(() => {
+        unmatchedRealtimeRefreshTimerRef.current = null;
+        void fetchUnmatchedTransfers();
+      }, 300);
+    };
+
+    const onConnectionStateChange = (stateChange: Ably.ConnectionStateChange) => {
+      if (stateChange.current === "connected") {
+        scheduleRefresh();
+      }
+    };
+
+    const onUnmatchedMessage = (message: Ably.Message) => {
+      const event = (message.data || {}) as BankTransferUnmatchedRealtimeEvent;
+      const eventId = event.eventId || String(message.id || "");
+      if (eventId && unmatchedRealtimeEventIdRef.current === eventId) {
+        return;
+      }
+      if (eventId) {
+        unmatchedRealtimeEventIdRef.current = eventId;
+      }
+      scheduleRefresh();
+    };
+
+    realtime.connection.on(onConnectionStateChange);
+    void unmatchedChannel.subscribe(BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME, onUnmatchedMessage);
+
+    return () => {
+      if (unmatchedRealtimeRefreshTimerRef.current) {
+        clearTimeout(unmatchedRealtimeRefreshTimerRef.current);
+      }
+      unmatchedChannel.unsubscribe(BANKTRANSFER_UNMATCHED_ABLY_EVENT_NAME, onUnmatchedMessage);
+      realtime.connection.off(onConnectionStateChange);
+      realtime.close();
+    };
   }, [searchFromDate, searchToDate, searchStorecode]);
 
   // alarm sound when any unmatched item has alarmOn !== false
@@ -4753,69 +4811,36 @@ const fetchBuyOrders = async () => {
 
   if (address && loadingUser) {
     return (
-    <main className="p-4 pb-10 min-h-[100vh] flex items-start justify-center container max-w-screen-2xl mx-auto bg-neutral-50 text-gray-900">
-        <div className="py-0 w-full flex flex-col items-center justify-center gap-4">
-
-          <Image
-            src="/banner-loading.gif"
-            alt="Loading"
-            width={200}
-            height={200}
-          />
-
-          <div className="text-lg text-gray-500">회원 정보를 불러오는 중</div>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="checking"
+        title="주문 운영 권한을 확인하고 있습니다"
+        description="주문 관리 화면 진입 전, 연결된 지갑의 관리자 프로필을 검증하는 중입니다."
+        address={address}
+        note="확인 완료 후 거래 주문 운영 화면이 열립니다."
+      />
     );
   }
 
 
   if (address && !loadingUser && !isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center">
-
-        <h1 className="text-2xl font-bold">
-          {userLoadError ? "회원 정보를 불러오지 못했습니다." : "접근 권한이 없습니다."}
-        </h1>
-        <p className="text-lg">
-          {userLoadError || "이 페이지에 접근할 권한이 없습니다."}
-        </p>
-        <div className="text-lg text-gray-500">{address}</div>
-
-
-
-              
-              {/* logout button */}
-              <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
-
-
-      </div>
+      <AdminAccessState
+        variant="denied"
+        title={userLoadError ? "회원 정보를 불러오지 못했습니다" : "주문 운영 권한이 없습니다"}
+        description={userLoadError || "이 화면은 금융 운영 관리자에게만 열립니다. 관리자 권한을 확인한 뒤 다시 시도해주세요."}
+        address={address}
+        note={userLoadError ? "지갑 연결 상태나 회원 정보를 다시 확인해주세요." : "권한 기준: storecode=admin, role=admin"}
+        actions={
+          <AdminAccessLogoutButton
+            onClick={() => {
+              confirm("로그아웃 하시겠습니까?") &&
+                activeWallet?.disconnect().then(() => {
+                  toast.success('로그아웃 되었습니다');
+                });
+            }}
+          />
+        }
+      />
     );
   }
 
@@ -6832,7 +6857,7 @@ const fetchBuyOrders = async () => {
                         P2P거래번호
                       </span>
                       <span className="text-xs uppercase tracking-wide text-neutral-300">
-                        거래완료시간
+                        거래시작시간
                       </span>
                     </div>
                   </th>
@@ -6881,7 +6906,7 @@ const fetchBuyOrders = async () => {
                       </div>
 
                       <div className="flex flex-row items-center justify-start gap-2 text-neutral-200">
-                        <span className="text-xs uppercase tracking-wide text-neutral-300">자동매칭</span>
+                        <span className="text-xs uppercase tracking-wide">자동매칭</span>
                         <Image
                           src="/icon-matching.png"
                           alt="Auto Matching"
@@ -6894,13 +6919,13 @@ const fetchBuyOrders = async () => {
                         />
 
                         {/* the count of status is ordered */}
-                        <span className="text-xs font-semibold text-neutral-100/90">
+                        <span className="text-xs font-semibold">
                           {
                             buyOrders.filter((item) => item.status === 'ordered').length
                           }
                         </span>
 
-                        <span className="text-xs uppercase tracking-wide text-neutral-300">
+                        <span className="text-xs uppercase tracking-wide">
                           거래상태
                         </span>
 

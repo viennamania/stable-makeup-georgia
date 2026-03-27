@@ -4,6 +4,7 @@
 
 import React, { use, useEffect, useState } from 'react';
 
+import AdminAccessState from "@/components/admin/admin-access-state";
 import { toast } from 'react-hot-toast';
 import { client } from '../../../client';
 
@@ -694,31 +695,44 @@ export default function SendUsdt({ params }: any) {
 
   if (!address) {
     return (
-      <main className="min-h-[100vh] bg-zinc-100 px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <div className="text-lg font-semibold text-zinc-700">{Please_connect_your_wallet_first}</div>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="login"
+        title="관리자 지갑 연결이 필요합니다"
+        description="금고 출금 화면은 관리자 지갑 인증 이후에만 열립니다. 지갑을 연결한 뒤 다시 시도해주세요."
+        note="출금 요청은 관리자 서명과 권한 검증을 동시에 요구합니다."
+      />
     );
   }
 
   if (loadingUser) {
     return (
-      <main className="min-h-[100vh] bg-zinc-100 px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
-          <div className="text-lg font-semibold text-zinc-700">회원 정보를 불러오는 중...</div>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="checking"
+        title="금고 출금 권한을 확인하고 있습니다"
+        description="연결된 지갑의 관리자 프로필과 출금 권한을 검증하는 중입니다."
+        address={address}
+        note="확인이 완료되면 금고 출금 화면으로 진입합니다."
+      />
     );
   }
 
   if (!isAdmin) {
     return (
-      <main className="min-h-[100vh] bg-zinc-100 px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
-          <div className="text-lg font-semibold text-red-500">You do not have permission to access this page.</div>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="denied"
+        title="금고 출금 권한이 없습니다"
+        description="금고 출금은 금융 운영 관리자에게만 허용됩니다. 승인된 관리자 지갑으로 다시 접속해주세요."
+        address={address}
+        note="권한 기준: storecode=admin, role=admin"
+        actions={
+          <button
+            onClick={() => window.history.back()}
+            className="inline-flex items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/12 px-4 py-3 text-sm font-medium text-sky-50 transition hover:bg-sky-400/20"
+          >
+            이전 화면
+          </button>
+        }
+      />
     );
   }
 

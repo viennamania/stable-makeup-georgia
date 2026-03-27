@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, use, act } from "react";
 
 import Image from "next/image";
+import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
+import AdminAccessState from "@/components/admin/admin-access-state";
 
 
 
@@ -1908,43 +1910,23 @@ export default function Index({ params }: any) {
 
   if (address && !loadingUser && !isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center">
-
-        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
-        <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
-        <div className="text-lg text-gray-500">{address}</div>
-
-              {/* logout button */}
-              <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  }}
-
-                  className="flex items-center justify-center gap-2
-                    bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:from-[#1d4ed8] hover:to-[#1e40af]"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
-
-
-      </div>
+      <AdminAccessState
+        variant="denied"
+        title="가맹점 운영 권한이 없습니다"
+        description="가맹점 관리 화면은 금융 운영 관리자에게만 개방됩니다. 관리자 권한을 확인한 뒤 다시 시도해주세요."
+        address={address}
+        note="권한 기준: storecode=admin, role=admin"
+        actions={
+          <AdminAccessLogoutButton
+            onClick={() => {
+              confirm("로그아웃 하시겠습니까?") &&
+                activeWallet?.disconnect().then(() => {
+                  toast.success('로그아웃 되었습니다');
+                });
+            }}
+          />
+        }
+      />
     );
   }
 

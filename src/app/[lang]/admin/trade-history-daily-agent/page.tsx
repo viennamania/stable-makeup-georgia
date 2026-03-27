@@ -3,6 +3,8 @@
 import { useState, useEffect, use, act } from "react";
 
 import Image from "next/image";
+import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
+import AdminAccessState from "@/components/admin/admin-access-state";
 
 
 
@@ -1153,43 +1155,23 @@ export default function Index({ params }: any) {
 
   if (address && !loadingUser && !isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center">
-
-        <h1 className="text-2xl font-bold">접근권한을 확인중입니다...</h1>
-        <p className="text-lg">이 페이지에 접근할 권한이 없습니다.</p>
-        <div className="text-lg text-gray-500">{address}</div>
-
-              {/* logout button */}
-              <button
-                  onClick={() => {
-                      confirm("로그아웃 하시겠습니까?") && activeWallet?.disconnect()
-                      .then(() => {
-
-                          toast.success('로그아웃 되었습니다');
-
-                          //router.push(
-                          //    "/admin/" + params.center
-                          //);
-                      });
-                  } }
-
-                  className="flex items-center justify-center gap-2
-                    bg-[#3167b4] text-sm text-[#f3f4f6] px-4 py-2 rounded-lg hover:bg-[#3167b4]/80"
-              >
-                <Image
-                  src="/icon-logout.webp"
-                  alt="Logout"
-                  width={20}
-                  height={20}
-                  className="rounded-lg w-5 h-5"
-                />
-                <span className="text-sm">
-                  로그아웃
-                </span>
-              </button>
-
-
-      </div>
+      <AdminAccessState
+        variant="denied"
+        title="에이전트 일별 이력 권한이 없습니다"
+        description="이 운영 화면은 금융 관리자 계정만 접근할 수 있습니다. 연결된 지갑 권한을 다시 확인해주세요."
+        address={address}
+        note="권한 기준: storecode=admin, role=admin"
+        actions={
+          <AdminAccessLogoutButton
+            onClick={() => {
+              confirm("로그아웃 하시겠습니까?") &&
+                activeWallet?.disconnect().then(() => {
+                  toast.success('로그아웃 되었습니다');
+                });
+            }}
+          />
+        }
+      />
     );
   }
 
@@ -2272,6 +2254,5 @@ const TradeDetail = (
       </div>
     );
   };
-
 
 

@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "react-hot-toast";
 import { useActiveAccount } from "thirdweb/react";
 
+import AdminAccessState from "@/components/admin/admin-access-state";
 import Uploader from "@/components/uploader-client";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import {
@@ -695,36 +696,44 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
   if (!address) {
     return (
-      <main className="flex min-h-[100vh] items-center justify-center bg-slate-100 px-4 py-10">
-        <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_32px_80px_-56px_rgba(15,23,42,0.5)]">
-          <h1 className="text-xl font-semibold text-slate-950">로그인 필요</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">관리자 지갑을 연결한 뒤 다시 시도해주세요.</p>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="login"
+        title="관리자 지갑 연결이 필요합니다"
+        description="센터 시스템 설정은 관리자 지갑 서명 기반으로 보호됩니다. 지갑을 연결한 뒤 다시 시도해주세요."
+        note="민감한 설정 변경은 모두 관리자 서명을 요구합니다."
+      />
     );
   }
 
   if (loadingUser) {
     return (
-      <main className="flex min-h-[100vh] items-center justify-center bg-slate-100 px-4 py-10">
-        <div className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-8 text-center shadow-[0_32px_80px_-56px_rgba(15,23,42,0.5)]">
-          <h1 className="text-xl font-semibold text-slate-950">접근권한 확인중</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">admin 관리자 권한을 점검하고 있습니다.</p>
-          <p className="mt-3 break-all text-xs text-slate-400">{address}</p>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="checking"
+        title="센터 설정 권한을 확인하고 있습니다"
+        description="연결된 지갑이 admin 운영 정책과 일치하는지 점검하는 중입니다."
+        address={address}
+        note="확인 완료 후에만 센터 프로필과 환율 설정 화면이 열립니다."
+      />
     );
   }
 
   if (!isAdmin) {
     return (
-      <main className="flex min-h-[100vh] items-center justify-center bg-slate-100 px-4 py-10">
-        <div className="w-full max-w-md rounded-[28px] border border-red-200 bg-red-50 p-8 text-center shadow-[0_32px_80px_-56px_rgba(15,23,42,0.5)]">
-          <h1 className="text-xl font-semibold text-red-900">접근권한이 없습니다.</h1>
-          <p className="mt-2 text-sm leading-6 text-red-700">storecode=admin, role=admin 회원만 접근할 수 있습니다.</p>
-          <p className="mt-3 break-all text-xs text-red-500">{address}</p>
-        </div>
-      </main>
+      <AdminAccessState
+        variant="denied"
+        title="센터 설정 접근 권한이 없습니다"
+        description="이 화면은 금융 운영 관리자만 접근할 수 있습니다. 연결된 지갑의 운영 권한을 다시 확인해주세요."
+        address={address}
+        note="권한 기준: storecode=admin, role=admin"
+        actions={
+          <button
+            onClick={() => window.history.back()}
+            className="inline-flex items-center justify-center rounded-2xl border border-sky-300/20 bg-sky-400/12 px-4 py-3 text-sm font-medium text-sky-50 transition hover:bg-sky-400/20"
+          >
+            이전 화면
+          </button>
+        }
+      />
     );
   }
 
