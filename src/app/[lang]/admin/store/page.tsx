@@ -68,6 +68,7 @@ import { add } from "thirdweb/extensions/farcaster/keyGateway";
 import AppBarComponent from "@/components/Appbar/AppBar";
 import { getDictionary } from "../../../dictionaries";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 //import Chat from "@/components/Chat";
 import { ClassNames } from "@emotion/react";
 
@@ -841,8 +842,6 @@ export default function Index({ params }: any) {
               .then(data => {
                   //console.log('data', data);
                   setUser(data.result);
-
-                  setIsAdmin(data.result?.role === "admin");
               })
 
           });
@@ -880,18 +879,12 @@ export default function Index({ params }: any) {
 
     setLoadingUser(true);
 
-    fetch('/api/user/getUser', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            storecode: "admin",
-            walletAddress: address,
-        }),
+    postGetUserSelfSigned({
+        account: activeAccount,
+        storecode: "admin",
+        walletAddress: address,
     })
-    .then(response => response.json())
-    .then(data => {
+    .then((data) => {
         
         //console.log('data.result', data.result);
 
@@ -914,7 +907,7 @@ export default function Index({ params }: any) {
     });
 
 
-  } , [address]);
+  } , [address, activeAccount]);
 
 
   //console.log('user', user);

@@ -8,6 +8,7 @@ import { useActiveAccount } from "thirdweb/react";
 import AdminAccessState from "@/components/admin/admin-access-state";
 import Uploader from "@/components/uploader-client";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
+import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 import {
   CLIENT_EXCHANGE_RATE_KEYS,
   clientExchangeRateMapToForm,
@@ -377,18 +378,11 @@ export default function SettingsPage({ params }: SettingsPageProps) {
       setLoadingUser(true);
 
       try {
-        const response = await fetch("/api/user/getUser", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            storecode: "admin",
-            walletAddress: address,
-          }),
+        const data = await postGetUserSelfSigned({
+          account: activeAccount,
+          storecode: "admin",
+          walletAddress: address,
         });
-
-        const data = await response.json();
 
         if (data.result) {
           setUser(data.result);
@@ -409,7 +403,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
     };
 
     loadUser();
-  }, [address]);
+  }, [address, activeAccount]);
 
   useEffect(() => {
     const loadClientSettings = async () => {

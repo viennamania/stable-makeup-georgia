@@ -5,6 +5,7 @@ import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import AdminAccessLogoutButton from "@/components/admin/admin-access-logout-button";
 import AdminAccessState from "@/components/admin/admin-access-state";
+import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
 
 
 import {
@@ -550,19 +551,11 @@ export default function Index({ params }: any) {
         setLoadingUser(true);
 
         try {
-
-          const response = await fetch("/api/user/getUser", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                  storecode: storecode,
-                  walletAddress: address,
-              }),
+          const data = await postGetUserSelfSigned({
+            account: activeAccount,
+            storecode: storecode,
+            walletAddress: address,
           });
-
-          const data = await response.json();
 
           //console.log("getUser data.result", data.result);
 
@@ -608,7 +601,7 @@ export default function Index({ params }: any) {
 
       fetchData();
 
-  }, [address, storecode]);
+  }, [address, activeAccount, storecode]);
 
 
   
