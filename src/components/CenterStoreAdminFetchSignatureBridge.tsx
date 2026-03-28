@@ -53,6 +53,8 @@ const SELF_WALLET_ACTION_PATHS = new Set([
 
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
 const SELF_READ_SIGNING_PREFIX = "stable-georgia:get-user:self:v1";
+const GET_USER_BY_WALLET_ADDRESS_ADMIN_SIGNING_PREFIX =
+  "stable-georgia:get-user-by-wallet:admin:v1";
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -274,6 +276,7 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         ...payload,
         requesterWalletAddress: requesterWalletAddress,
       };
+      let targetInput: RequestInfo | URL = input;
 
       if (isSelfReadPath) {
         const storecode = normalizeString(payload.storecode);
@@ -282,17 +285,38 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         if (!storecode || !targetWalletAddress) {
           return originalFetch(input, init);
         }
-        signingMessage = buildSelfReadSigningMessage({
-          storecode,
-          walletAddress: targetWalletAddress,
-          signedAtIso: signedAt,
-        });
-        signedPayload = {
-          ...payload,
-          storecode,
-          walletAddress: targetWalletAddress,
-          requesterWalletAddress: targetWalletAddress,
-        };
+        if (storecode.toLowerCase() === "admin") {
+          const adminActionFields = {
+            storecode: "admin",
+            walletAddress: targetWalletAddress,
+          };
+          signingMessage = buildStoreSettingsMutationSigningMessage({
+            route: "/api/user/getUserByWalletAddress",
+            requesterStorecode: "admin",
+            requesterWalletAddress,
+            nonce,
+            signedAtIso: signedAt,
+            actionFields: adminActionFields,
+          }).replace(STORE_SETTINGS_MUTATION_SIGNING_PREFIX, GET_USER_BY_WALLET_ADDRESS_ADMIN_SIGNING_PREFIX);
+          signedPayload = {
+            ...adminActionFields,
+            requesterStorecode: "admin",
+            requesterWalletAddress,
+          };
+          targetInput = "/api/user/getUserByWalletAddress";
+        } else {
+          signingMessage = buildSelfReadSigningMessage({
+            storecode,
+            walletAddress: targetWalletAddress,
+            signedAtIso: signedAt,
+          });
+          signedPayload = {
+            ...payload,
+            storecode,
+            walletAddress: targetWalletAddress,
+            requesterWalletAddress: targetWalletAddress,
+          };
+        }
       } else if (isSelfWalletActionPath) {
         const storecode = normalizeString(payload.storecode);
         const targetWalletAddress =
@@ -358,7 +382,7 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         signature,
         signedAt,
       };
-      if (!isSelfReadPath) {
+      if (!isSelfReadPath || normalizeString((signedPayload as Record<string, unknown>).requesterStorecode)) {
         signedPayload = {
           ...signedPayload,
           nonce,
@@ -377,11 +401,15 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         body: JSON.stringify(signedPayload),
       };
 
-      if (input instanceof Request) {
-        return originalFetch(input.url, signedInit);
+      if (targetInput instanceof Request) {
+        return originalFetch(targetInput.url, signedInit);
       }
 
-      return originalFetch(input, signedInit);
+      if (input instanceof Request) {
+        return originalFetch(typeof targetInput === "string" ? targetInput : targetInput.toString(), signedInit);
+      }
+
+      return originalFetch(targetInput, signedInit);
     };
   }, []);
 
