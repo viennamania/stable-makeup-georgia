@@ -81,6 +81,7 @@ import { paymentUrl } from "../../../config/payment";
 
 import { version } from "../../../config/version";
 import { postGetUserSelfSigned } from "@/lib/client/get-user-self-signed";
+import { postCenterStoreAdminSignedJson } from "@/lib/client/center-store-admin-signed-action";
 import CenterTopMenu from "@/components/center/CenterTopMenu";
 
 
@@ -193,6 +194,13 @@ const formatShortWalletAddress = (value: unknown) => {
     return text;
   }
   return `${text.slice(0, 6)}...${text.slice(-4)}`;
+};
+
+const normalizeWalletAddress = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim().toLowerCase();
 };
 
 const getCreatorRoleLabel = (createdBy: any) => {
@@ -508,6 +516,7 @@ export default function Index({ params }: any) {
   const activeAccount = useActiveAccount();
 
   const address = activeAccount?.address;
+  const normalizedAddress = normalizeWalletAddress(address);
 
 
 
@@ -938,16 +947,25 @@ export default function Index({ params }: any) {
       setFetchingStore(true);
   
       const fetchData = async () => {
-          const response = await fetch("/api/store/getOneStore", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
+          const response = activeAccount
+            ? await postCenterStoreAdminSignedJson({
+                account: activeAccount,
+                route: "/api/store/getOneStore",
                 storecode: params.center,
-                ////walletAddress: address,
-              }),
-          });
+                requesterWalletAddress: address,
+                body: {
+                  storecode: params.center,
+                },
+              })
+            : await fetch("/api/store/getOneStore", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  storecode: params.center,
+                }),
+            });
   
           const data = await response.json();
   
@@ -956,10 +974,10 @@ export default function Index({ params }: any) {
           if (data.result) {
   
             setStore(data.result);
-  
-            setStoreAdminWalletAddress(data.result?.adminWalletAddress);
+            const normalizedStoreAdminWalletAddress = normalizeWalletAddress(data.result?.adminWalletAddress);
+            setStoreAdminWalletAddress(normalizedStoreAdminWalletAddress);
 
-            if (data.result?.adminWalletAddress === address) {
+            if (normalizedStoreAdminWalletAddress && normalizedStoreAdminWalletAddress === normalizedAddress) {
               setIsAdmin(true);
             }
   
@@ -986,12 +1004,13 @@ export default function Index({ params }: any) {
       };
 
       if (!params.center) {
+        setFetchingStore(false);
         return;
       }
   
       fetchData();
   
-    } , [params.center, address]);
+    } , [params.center, address, activeAccount, normalizedAddress]);
 
 
 
@@ -1602,15 +1621,25 @@ export default function Index({ params }: any) {
   // if store.adminWalletAddress is same as address, return "가맹점 관리자" else return "가맹점"
   // if user?.role is not "admin", return "가맹점"
 
+  const normalizedStoreAdminWalletAddress = normalizeWalletAddress(
+    store?.adminWalletAddress || storeAdminWalletAddress,
+  );
+  const hasStoreAdminAccess = Boolean(
+    normalizedAddress
+    && normalizedStoreAdminWalletAddress
+    && normalizedAddress === normalizedStoreAdminWalletAddress,
+  );
+  const hasGlobalAdminRole = user?.role === "admin";
+
   
   if (
     (
       address
     && store
-    
-    &&  address !== store.adminWalletAddress
-
-    && user?.role !== "admin")
+    && !fetchingStore
+    && !loadingUser
+    && !hasStoreAdminAccess
+    && !hasGlobalAdminRole)
     
 
   ) {
