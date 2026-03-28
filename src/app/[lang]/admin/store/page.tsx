@@ -908,9 +908,10 @@ export default function Index({ params }: any) {
         setUser(null);
         setEscrowWalletAddress('');
         setIsAdmin(false);
+    })
+    .finally(() => {
+        setLoadingUser(false);
     });
-
-    setLoadingUser(false);
 
 
   } , [address]);
@@ -3041,7 +3042,11 @@ export default function Index({ params }: any) {
                                 */}
                                 <a
                                   href={
-                                    '/' + params.lang + '/' + item.storecode + '/center'
+                                    'https://stable-georgia-console.vercel.app/'
+                                    + encodeURIComponent(params.lang)
+                                    + '/'
+                                    + encodeURIComponent(item.storecode)
+                                    + '/buyorder'
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"

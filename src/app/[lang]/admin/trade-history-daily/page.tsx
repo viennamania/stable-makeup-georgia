@@ -631,9 +631,10 @@ export default function Index({ params }: any) {
         console.error('Error:', JSON.stringify(error));
         setUser(null);
         setIsAdmin(false);
+    })
+    .finally(() => {
+        setLoadingUser(false);
     });
-
-    setLoadingUser(false);
 
 
   } , [address]);

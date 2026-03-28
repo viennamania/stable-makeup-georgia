@@ -852,10 +852,10 @@ export default function Index({ params }: any) {
     })
     .catch((error) => {
         console.error('Error:', JSON.stringify(error));
+    })
+    .finally(() => {
+        setLoadingUser(false);
     });
-
-
-    setLoadingUser(false);
 
   } , [address]);
 

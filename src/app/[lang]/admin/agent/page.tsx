@@ -859,9 +859,10 @@ export default function Index({ params }: any) {
         setUser(null);
         setEscrowWalletAddress('');
         setIsAdmin(false);
+    })
+    .finally(() => {
+        setLoadingUser(false);
     });
-
-    setLoadingUser(false);
 
 
   } , [address]);
