@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect } from "react";
 import { useActiveAccount } from "thirdweb/react";
 
 import {
@@ -55,6 +55,8 @@ const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mu
 const SELF_READ_SIGNING_PREFIX = "stable-georgia:get-user:self:v1";
 const GET_USER_BY_WALLET_ADDRESS_ADMIN_SIGNING_PREFIX =
   "stable-georgia:get-user-by-wallet:admin:v1";
+const PROTECTED_REQUEST_ACCOUNT_WAIT_MS = 10000;
+const PROTECTED_REQUEST_SIGN_TIMEOUT_MS = 10000;
 
 const normalizeString = (value: unknown) => {
   if (typeof value !== "string") {
@@ -153,10 +155,20 @@ const wait = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+type SignableAccount = {
+  address?: string;
+  signMessage: (input: { message: string }) => Promise<string>;
+};
+
+type BridgeWindow = typeof window & {
+  __centerStoreAdminFetchPatched?: boolean;
+  __centerStoreAdminActiveAccount?: SignableAccount | null;
+};
+
 const signMessageWithRetry = async ({
   account,
   message,
-  timeoutMs = 5000,
+  timeoutMs = PROTECTED_REQUEST_SIGN_TIMEOUT_MS,
 }: {
   account: { signMessage: (input: { message: string }) => Promise<string> };
   message: string;
@@ -183,20 +195,14 @@ const signMessageWithRetry = async ({
 
 export default function CenterStoreAdminFetchSignatureBridge() {
   const activeAccount = useActiveAccount();
-  const activeAccountRef = useRef(activeAccount);
 
-  useLayoutEffect(() => {
-    activeAccountRef.current = activeAccount;
-  }, [activeAccount]);
-
-  useLayoutEffect(() => {
+  const installFetchPatch = () => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const globalWindow = window as typeof window & {
-      __centerStoreAdminFetchPatched?: boolean;
-    };
+    const globalWindow = window as BridgeWindow;
+    globalWindow.__centerStoreAdminActiveAccount = activeAccount ?? null;
 
     if (globalWindow.__centerStoreAdminFetchPatched) {
       return;
@@ -245,12 +251,12 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         return originalFetch(input, init);
       }
 
-      let account = activeAccountRef.current;
+      let account = globalWindow.__centerStoreAdminActiveAccount;
       if (!account) {
-        const waitUntil = Date.now() + 2500;
+        const waitUntil = Date.now() + PROTECTED_REQUEST_ACCOUNT_WAIT_MS;
         while (!account && Date.now() < waitUntil) {
           await wait(50);
-          account = activeAccountRef.current;
+          account = globalWindow.__centerStoreAdminActiveAccount;
         }
       }
 
@@ -411,7 +417,18 @@ export default function CenterStoreAdminFetchSignatureBridge() {
 
       return originalFetch(targetInput, signedInit);
     };
-  }, []);
+  };
+
+  installFetchPatch();
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const globalWindow = window as BridgeWindow;
+    globalWindow.__centerStoreAdminActiveAccount = activeAccount ?? null;
+  }, [activeAccount]);
 
   return null;
 }
