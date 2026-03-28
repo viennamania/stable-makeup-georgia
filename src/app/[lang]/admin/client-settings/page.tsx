@@ -334,8 +334,8 @@ const ExchangeRateHistoryPanel = ({
 };
 
 export default function SettingsPage({ params }: SettingsPageProps) {
-  const smartAccount = useActiveAccount();
-  const address = smartAccount?.address;
+  const activeAccount = useActiveAccount();
+  const address = activeAccount?.address;
 
   const [user, setUser] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -477,7 +477,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   };
 
   const loadRateHistory = async (rateType: ClientExchangeRateHistoryType) => {
-    if (!smartAccount || !address || !isAdmin) {
+    if (!activeAccount || !address || !isAdmin) {
       return;
     }
 
@@ -489,7 +489,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
     try {
       const response = await postAdminSignedJson({
-        account: smartAccount,
+        account: activeAccount,
         route: CLIENT_SETTINGS_GET_RATE_HISTORY_ROUTE,
         signingPrefix: CLIENT_SETTINGS_ADMIN_READ_SIGNING_PREFIX,
         requesterWalletAddress: address,
@@ -522,7 +522,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   };
 
   const saveProfile = async () => {
-    if (!smartAccount || !address || !isAdmin || !profileDirty || savingProfile) {
+    if (!activeAccount || !address || !isAdmin || !profileDirty || savingProfile) {
       return;
     }
 
@@ -530,7 +530,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
     try {
       const response = await postAdminSignedJson({
-        account: smartAccount,
+        account: activeAccount,
         route: CLIENT_SETTINGS_UPDATE_PROFILE_ROUTE,
         signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
         requesterWalletAddress: address,
@@ -554,7 +554,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   };
 
   const saveBuyRates = async () => {
-    if (!smartAccount || !address || !isAdmin || !buyRatesDirty || savingBuyRates) {
+    if (!activeAccount || !address || !isAdmin || !buyRatesDirty || savingBuyRates) {
       return;
     }
 
@@ -568,7 +568,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
     try {
       const response = await postAdminSignedJson({
-        account: smartAccount,
+        account: activeAccount,
         route: CLIENT_SETTINGS_UPDATE_BUY_RATE_ROUTE,
         signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
         requesterWalletAddress: address,
@@ -597,7 +597,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   };
 
   const saveSellRates = async () => {
-    if (!smartAccount || !address || !isAdmin || !sellRatesDirty || savingSellRates) {
+    if (!activeAccount || !address || !isAdmin || !sellRatesDirty || savingSellRates) {
       return;
     }
 
@@ -611,7 +611,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
     try {
       const response = await postAdminSignedJson({
-        account: smartAccount,
+        account: activeAccount,
         route: CLIENT_SETTINGS_UPDATE_SELL_RATE_ROUTE,
         signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
         requesterWalletAddress: address,
@@ -640,7 +640,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
   };
 
   const updatePayactionView = async (value: boolean) => {
-    if (!smartAccount || !address || !isAdmin || updatingPayactionViewOn) {
+    if (!activeAccount || !address || !isAdmin || updatingPayactionViewOn) {
       return;
     }
 
@@ -648,7 +648,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
 
     try {
       const response = await postAdminSignedJson({
-        account: smartAccount,
+        account: activeAccount,
         route: CLIENT_SETTINGS_UPDATE_PAYACTION_ROUTE,
         signingPrefix: CLIENT_SETTINGS_ADMIN_MUTATION_SIGNING_PREFIX,
         requesterWalletAddress: address,
@@ -989,7 +989,7 @@ export default function SettingsPage({ params }: SettingsPageProps) {
             >
               <Uploader
                 lang={params.lang}
-                account={smartAccount}
+                account={activeAccount}
                 walletAddress={address}
               />
             </SettingCard>
