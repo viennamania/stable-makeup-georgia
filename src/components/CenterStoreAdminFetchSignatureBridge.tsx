@@ -151,6 +151,34 @@ const wait = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+const signMessageWithRetry = async ({
+  account,
+  message,
+  timeoutMs = 5000,
+}: {
+  account: { signMessage: (input: { message: string }) => Promise<string> };
+  message: string;
+  timeoutMs?: number;
+}) => {
+  const waitUntil = Date.now() + Math.max(500, timeoutMs);
+  let lastError: unknown = null;
+
+  while (Date.now() < waitUntil) {
+    try {
+      return await account.signMessage({
+        message,
+      });
+    } catch (error) {
+      lastError = error;
+      await wait(100);
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Failed to sign protected request");
+};
+
 export default function CenterStoreAdminFetchSignatureBridge() {
   const activeAccount = useActiveAccount();
   const activeAccountRef = useRef(activeAccount);
@@ -320,7 +348,8 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         };
       }
 
-      const signature = await account.signMessage({
+      const signature = await signMessageWithRetry({
+        account,
         message: signingMessage,
       });
 
