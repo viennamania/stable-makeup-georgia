@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
     walletAddress,
     fromDate,
     toDate,
+    searchBuyer,
+    searchDepositName,
+    searchStoreBankAccountNumber,
   } = body;
 
   const guard = await verifyCenterStoreAdminGuard({
@@ -40,6 +43,9 @@ export async function POST(request: NextRequest) {
     storecode,
     fromDate,
     toDate,
+    searchBuyer,
+    searchDepositName,
+    searchStoreBankAccountNumber,
   });
 
   //console.log("getAllBuyOrders result", result);

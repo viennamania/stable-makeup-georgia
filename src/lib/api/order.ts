@@ -3965,11 +3965,17 @@ export async function getBuyOrdersGroupByStorecodeDaily(
     storecode,
     fromDate,
     toDate,
+    searchBuyer,
+    searchDepositName,
+    searchStoreBankAccountNumber,
   }: {
 
     storecode: string;
     fromDate: string;
     toDate: string;
+    searchBuyer?: string;
+    searchDepositName?: string;
+    searchStoreBankAccountNumber?: string;
 
   }
 ): Promise<any> {
@@ -3998,6 +4004,9 @@ export async function getBuyOrdersGroupByStorecodeDaily(
 
 
   const normalizedStorecode = (storecode || "").trim();
+  const normalizedSearchBuyer = normalizeSearchText(searchBuyer);
+  const normalizedSearchDepositName = normalizeSearchText(searchDepositName);
+  const normalizedSearchStoreBankAccountNumber = normalizeSearchText(searchStoreBankAccountNumber);
   const isAllStoreScope =
     normalizedStorecode === "" || normalizedStorecode.toLowerCase() === "all";
   const escapedStorecode = normalizedStorecode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -4005,23 +4014,29 @@ export async function getBuyOrdersGroupByStorecodeDaily(
     ? { $ne: null }
     : { $regex: `^${escapedStorecode}$`, $options: 'i' };
 
+  const orderMatchQuery: Record<string, unknown> = {
+    storecode: storecodeMatch,
+    status: 'paymentConfirmed',
+    privateSale: { $ne: true },
+    createdAt: {
+      $gte: fromDateValue,
+      $lte: toDateValue,
+    },
+  };
+
+  appendContainsFilter(orderMatchQuery, 'nickname', normalizedSearchBuyer);
+  appendContainsFilter(orderMatchQuery, 'buyer.depositName', normalizedSearchDepositName);
+  appendContainsFilter(
+    orderMatchQuery,
+    'store.bankInfo.accountNumber',
+    normalizedSearchStoreBankAccountNumber,
+  );
+
   // order by date descending
   
   const pipeline = [
     {
-      $match: {
-        
-       // if storecode is not empty, then match storecode
-        storecode: storecodeMatch,
-
-
-        status: 'paymentConfirmed',
-        privateSale: { $ne: true },
-        createdAt: {
-          $gte: fromDateValue,
-          $lte: toDateValue,
-        }
-      }
+      $match: orderMatchQuery
     },
     {
       $group: {
@@ -4115,22 +4130,28 @@ export async function getBuyOrdersGroupByStorecodeDaily(
 
   const escrowResults = await escrowCollection.aggregate(escrowPipeline).toArray();
 
+  const privateSaleMatchQuery: Record<string, unknown> = {
+    storecode: storecodeMatch,
+    status: 'paymentConfirmed',
+    privateSale: true,
+    createdAt: {
+      $gte: fromDateValue,
+      $lte: toDateValue,
+    },
+  };
+
+  appendContainsFilter(privateSaleMatchQuery, 'nickname', normalizedSearchBuyer);
+  appendContainsFilter(privateSaleMatchQuery, 'buyer.depositName', normalizedSearchDepositName);
+  appendContainsFilter(
+    privateSaleMatchQuery,
+    'store.bankInfo.accountNumber',
+    normalizedSearchStoreBankAccountNumber,
+  );
+
 
   const pipelinePrivateSale = [
     {
-      $match: {
-        
-       // if storecode is not empty, then match storecode
-        storecode: storecodeMatch,
-
-
-        status: 'paymentConfirmed',
-        privateSale: true,
-        createdAt: {
-          $gte: fromDateValue,
-          $lte: toDateValue,
-        }
-      }
+      $match: privateSaleMatchQuery
     },
     {
       $group: {
