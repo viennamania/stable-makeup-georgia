@@ -25,18 +25,12 @@ import {
 
 
 import {
-  getContract,
   sendAndConfirmTransaction,
   sendTransaction,
   waitForReceipt,
 } from "thirdweb";
 
 
-
-import {
-  polygon,
-  arbitrum,
-} from "thirdweb/chains";
 
 import {
   ConnectButton,
@@ -66,7 +60,7 @@ import {
 } from "thirdweb/wallets/in-app";
 
 
-import { balanceOf, transfer } from "thirdweb/extensions/erc20";
+import { transfer } from "thirdweb/extensions/erc20";
 import { add } from "thirdweb/extensions/farcaster/keyGateway";
  
 
@@ -190,19 +184,50 @@ const MEMBER_TYPE_OPTIONS = [
   { value: 'DDD', label: '4등급 회원' },
 ];
 
+const formatShortWalletAddress = (value: unknown) => {
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (!text) {
+    return '-';
+  }
+  if (text.length <= 12) {
+    return text;
+  }
+  return `${text.slice(0, 6)}...${text.slice(-4)}`;
+};
+
+const getCreatorRoleLabel = (createdBy: any) => {
+  const matchedBy = String(createdBy?.matchedBy || '').trim().toLowerCase();
+  const role = String(createdBy?.role || '').trim().toLowerCase();
+  const storecode = String(createdBy?.storecode || '').trim().toLowerCase();
+
+  if (matchedBy === 'global_admin' || storecode === 'admin' || role === 'admin') {
+    return '전체 관리자';
+  }
+
+  if (matchedBy === 'store_admin_wallet' || role === 'store_admin') {
+    return '가맹점 관리자';
+  }
+
+  if (!role) {
+    return '운영자';
+  }
+
+  return role;
+};
+
+const getCreatorDisplayName = (createdBy: any) => {
+  const nickname = typeof createdBy?.nickname === 'string' ? createdBy.nickname.trim() : '';
+  if (nickname) {
+    return nickname;
+  }
+  return getCreatorRoleLabel(createdBy);
+};
+
 
 
 // get escrow wallet address
 
 //const escrowWalletAddress = "0x2111b6A49CbFf1C8Cc39d13250eF6bd4e1B59cF6";
-
-
-
-const contractAddress = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"; // USDT on Polygon
-const contractAddressArbitrum = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"; // USDT on Arbitrum
-
-
-
 
 export default function Index({ params }: any) {
 
@@ -222,30 +247,6 @@ export default function Index({ params }: any) {
 
 
   const activeWallet = useActiveWallet();
-    
-
-  const contract = getContract({
-    // the client you have created via `createThirdwebClient()`
-    client,
-    // the chain the contract is deployed on
-    
-    
-    chain: arbitrum,
-  
-  
-  
-    // the contract's address
-    ///address: contractAddressArbitrum,
-
-    address: contractAddressArbitrum,
-
-
-    // OPTIONAL: the contract's abi
-    //abi: [...],
-  });
-
-
-
   const [data, setData] = useState({
     title: "",
     description: "",
@@ -531,71 +532,6 @@ export default function Index({ params }: any) {
 
   } , [activeAccount, address, params.center]);
   
-
-
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [balance, setBalance] = useState(0);
-  useEffect(() => {
-
-    // get the balance
-    const getBalance = async () => {
-
-      ///console.log('getBalance address', address);
-
-      
-      const result = await balanceOf({
-        contract,
-        address: address || "",
-      });
-
-  
-      //console.log(result);
-  
-      setBalance( Number(result) / 10 ** 6 );
-
-
-      /*
-      await fetch('/api/user/getBalanceByWalletAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chain: params.center,
-          walletAddress: address,
-        }),
-      })
-
-      .then(response => response.json())
-
-      .then(data => {
-          setNativeBalance(data.result?.displayValue);
-      });
-      */
-
-
-
-    };
-
-
-    if (address) getBalance();
-
-    const interval = setInterval(() => {
-      if (address) getBalance();
-    } , 5000);
-
-    return () => clearInterval(interval);
-
-  } , [address, contract, params.center]);
-
-
-
-
-
-
-
-
-
 
 
   const [escrowWalletAddress, setEscrowWalletAddress] = useState('');
@@ -1378,130 +1314,6 @@ export default function Index({ params }: any) {
   }
 
   */
-
-
-
-  const [usdtBalance, setUsdtBalance] = useState([] as any[]);
-  allUsers.forEach((user) => {
-    usdtBalance.push(0);
-  });
-
-
-
-  const getBalanceOfWalletAddress = async (walletAddress: string) => {
-  
-
-    const balance = await balanceOf({
-      contract,
-      address: walletAddress,
-    });
-    
-    console.log('getBalanceOfWalletAddress', walletAddress, 'balance', balance);
-
-    toast.success(`잔액이 업데이트되었습니다. 잔액: ${(Number(balance) / 10 ** 6).toFixed(3)} USDT`);
-
-    /*
-    setAllUsers((prev) => {
-      const newUsers = [...prev];
-      const index = newUsers.findIndex(u => u.walletAddress === walletAddress);
-      if (index !== -1) {
-        newUsers[index] = {
-          ...newUsers[index],
-          usdtBalance: Number(balance) / 10 ** 6,
-        };
-      }
-      return newUsers;
-    });
-    */
-    // update the usdtBalance of the user
-    setUsdtBalance((prev) => {
-      const newUsdtBalance = [...prev];
-      const index = allUsers.findIndex(u => u.walletAddress === walletAddress);
-      if (index !== -1) {
-        newUsdtBalance[index] = Number(balance) / 10 ** 6; // Convert to USDT
-      }
-      return newUsdtBalance;
-    });
-
-
-
-
-    return Number(balance) / 10 ** 6; // Convert to USDT
-
-  };
-
-
-
-  // clearanceWalletAddress
-  const [clearanceingWalletAddress, setClearanceingWalletAddress] = useState([] as boolean[]);
-  for (let i = 0; i < 100; i++) {
-    clearanceingWalletAddress.push(false);
-  }
-
-  const clearanceWalletAddress = async (walletAddress: string, storecode: string) => {
-    
-    if (clearanceingWalletAddress.includes(true)) {
-      return;
-    }
-
-    // api call to clear the wallet address
-    setClearanceingWalletAddress((prev) => {
-      const newClearanceing = [...prev];
-      const index = newClearanceing.findIndex(u => u === false);
-      if (index !== -1) {
-        newClearanceing[index] = true;
-      }
-      return newClearanceing;
-    });
-
-    const response = await fetch('/api/user/clearanceWalletAddress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        walletAddress: walletAddress,
-        storecode: storecode,
-      }),
-    });
-
-    if (!response.ok) {
-      setClearanceingWalletAddress((prev) => {
-        const newClearanceing = [...prev];
-        const index = newClearanceing.findIndex(u => u === true);
-        if (index !== -1) {
-          newClearanceing[index] = false;
-        }
-        return newClearanceing;
-      });
-      toast.error('지갑 주소 정산에 실패했습니다.');
-      return;
-    }
-
-    const data = await response.json();
-    //console.log('clearanceWalletAddress data', data);
-    if (data.result) {
-      toast.success('지갑 주소 정산이 완료되었습니다.');
-      // update the balance of the user
-      getBalanceOfWalletAddress(walletAddress);
-    } else {
-      toast.error('지갑 주소 정산에 실패했습니다.');
-    }
-    setClearanceingWalletAddress((prev) => {
-      const newClearanceing = [...prev];
-      const index = newClearanceing.findIndex(u => u === true);
-      if (index !== -1) {
-        newClearanceing[index] = false;
-      }
-      return newClearanceing;
-    });
-    return data.result;
-  };
-
-
-
- 
-
 
 
 
@@ -2512,6 +2324,7 @@ export default function Index({ params }: any) {
                   >
                     <tr>
                       <th className="p-2">등록일</th>
+                      <th className="p-2">추가자</th>
                       <th className="p-2">회원 아이디</th>
                       <th className="p-2">회원등급</th>
                       <th className="p-2">회원 통장</th>
@@ -2525,7 +2338,6 @@ export default function Index({ params }: any) {
                       <th className="p-2">회원 결제페이지</th>
                       <th className="p-2">회원 USDT지갑</th>
                       <th className="p-2">주문상태</th>
-                      <th className="p-2">잔액확인</th>
                     </tr>
                   </thead>
 
@@ -2558,6 +2370,20 @@ export default function Index({ params }: any) {
                                 minute: '2-digit',
                                 second: '2-digit',
                               })}
+                            </span>
+                          </div>
+                        </td>
+
+                        <td className="p-2">
+                          <div className="flex min-w-[9rem] flex-col items-start justify-center">
+                            <span className="text-sm font-semibold text-slate-900">
+                              {getCreatorDisplayName(item?.createdBy)}
+                            </span>
+                            <span className="text-xs text-slate-500">
+                              {getCreatorRoleLabel(item?.createdBy)}
+                            </span>
+                            <span className="text-xs text-slate-400" style={{ fontFamily: 'monospace' }}>
+                              {formatShortWalletAddress(item?.createdBy?.walletAddress)}
                             </span>
                           </div>
                         </td>
@@ -2861,74 +2687,6 @@ export default function Index({ params }: any) {
                             </span>
                           </div>
                         </td>
-
-                        {/* 잔고확인 버튼 */}
-                        {/* USDT 잔액 */}
-                        <td className="p-2">
-                          <div className="w-24
-                            flex flex-col items-between justify-between gap-2">
-
-                            {/*
-                            <div className="w-full flex flex-col items-center justify-center gap-2">
-
-                              <span className="text-lg text-[#409192]"
-                                style={{ fontFamily: 'monospace' }}
-                              >
-                                {usdtBalance[index] ?
-                                  usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'}{' USDT'}
-                              </span>
-        
-                            </div>
-                            */}
-
-
-                            {/* button to getBalance of USDT */}
-                            <button
-                              //disabled={!isAdmin || insertingStore}
-                              onClick={() => {
-                                //if (!isAdmin || insertingStore) return;
-                                //getBalance(item.storecode);
-
-                                getBalanceOfWalletAddress(item.walletAddress);
-        
-
-                                //toast.success('잔액을 가져왔습니다.');
-
-                                // toast usdtBalance[index] is updated
-                                //toast.success(`잔액을 가져왔습니다. 현재 잔액: ${usdtBalance[index] ? usdtBalance[index].toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.000'} USDT`);
-
-                              }}
-                              className={`
-                                w-full mb-2
-                                bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                hover:bg-[#3167b4]/80
-                              `}
-                            >
-                              잔액 확인하기
-                            </button>
-
-
-                            {/* function call button clearanceWalletAddress */}
-                            <button
-                              onClick={() => {
-                                clearanceWalletAddress(item.walletAddress, item.storecode);
-                              }}
-                              className={`
-                                w-full mb-2
-                                bg-[#3167b4] text-sm text-white px-2 py-1 rounded-lg
-                                hover:bg-[#3167b4]/80
-                              `}
-                            >
-                              잔액 회수하기
-                            </button>
-
-
-
-
-                          </div>
-                        </td>
-
-
                       </tr>
 
                     ))}
@@ -2983,6 +2741,19 @@ export default function Index({ params }: any) {
                       >
                         회원등급 변경하기
                       </button>
+                    </div>
+
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="text-xs font-medium text-slate-500">추가자</div>
+                      <div className="mt-1 text-sm font-semibold text-slate-900">
+                        {getCreatorDisplayName(item?.createdBy)}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {getCreatorRoleLabel(item?.createdBy)}
+                      </div>
+                      <div className="mt-1 break-all text-xs text-slate-500" style={{ fontFamily: 'monospace' }}>
+                        {item?.createdBy?.walletAddress || '-'}
+                      </div>
                     </div>
 
                     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -3118,26 +2889,6 @@ export default function Index({ params }: any) {
                       <div className="mt-1 break-all text-xs text-slate-700">
                         {item?.walletAddress}
                       </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => {
-                          getBalanceOfWalletAddress(item.walletAddress);
-                        }}
-                        className="rounded-lg bg-[#3167b4] px-2 py-2 text-xs font-semibold text-white hover:bg-[#3167b4]/80"
-                      >
-                        잔액 확인하기
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          clearanceWalletAddress(item.walletAddress, item.storecode);
-                        }}
-                        className="rounded-lg bg-[#3167b4] px-2 py-2 text-xs font-semibold text-white hover:bg-[#3167b4]/80"
-                      >
-                        잔액 회수하기
-                      </button>
                     </div>
                   </div>
                 ))}

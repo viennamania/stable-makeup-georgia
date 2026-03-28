@@ -68,6 +68,18 @@ export interface UserProps {
   totalPaymentConfirmedKrwAmount: number;
   totalPaymentConfirmedUsdtAmount: number;
 
+  createdBy?: {
+    walletAddress?: string | null;
+    nickname?: string | null;
+    role?: string | null;
+    storecode?: string | null;
+    matchedBy?: string | null;
+    requestedAt?: string | null;
+    route?: string | null;
+    publicIp?: string | null;
+    publicCountry?: string | null;
+  };
+
 }
 
 export interface ResultProps {
@@ -298,6 +310,37 @@ export async function insertOne(data: any) {
         requestedAt: typeof data.creationAudit.requestedAt === 'string' ? data.creationAudit.requestedAt : new Date().toISOString(),
       }
     : null;
+  const createdBy = data?.createdBy && typeof data.createdBy === 'object'
+    ? {
+        walletAddress: typeof data.createdBy.walletAddress === 'string'
+          ? data.createdBy.walletAddress.trim().toLowerCase() || null
+          : null,
+        nickname: typeof data.createdBy.nickname === 'string'
+          ? data.createdBy.nickname.trim() || null
+          : null,
+        role: typeof data.createdBy.role === 'string'
+          ? data.createdBy.role.trim() || null
+          : null,
+        storecode: typeof data.createdBy.storecode === 'string'
+          ? data.createdBy.storecode.trim() || null
+          : null,
+        matchedBy: typeof data.createdBy.matchedBy === 'string'
+          ? data.createdBy.matchedBy.trim() || null
+          : null,
+        requestedAt: typeof data.createdBy.requestedAt === 'string'
+          ? data.createdBy.requestedAt
+          : creationAudit?.requestedAt || new Date().toISOString(),
+        route: typeof data.createdBy.route === 'string'
+          ? data.createdBy.route.trim() || null
+          : createdByApi,
+        publicIp: typeof data.createdBy.publicIp === 'string'
+          ? data.createdBy.publicIp.trim() || null
+          : creationAudit?.publicIp || null,
+        publicCountry: typeof data.createdBy.publicCountry === 'string'
+          ? data.createdBy.publicCountry.trim() || null
+          : creationAudit?.publicCountry || null,
+      }
+    : null;
 
 
 
@@ -392,6 +435,7 @@ export async function insertOne(data: any) {
       userType: data.userType,
       createdByApi: createdByApi,
       creationAudit: creationAudit,
+      createdBy: createdBy,
     }
   );
 
@@ -1607,6 +1651,7 @@ export async function getAllBuyers(
 
         userType: 1,
         liveOnAndOff: 1,
+        createdBy: 1,
 
       }
     },

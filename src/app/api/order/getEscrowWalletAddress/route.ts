@@ -9,6 +9,7 @@ import {
   setEscrowWalletAddressByWalletAddress,
 } from "@lib/api/user";
 import { chain as configuredChain } from "@/app/config/contractAddresses";
+import { verifyUserWalletActionGuard } from "@/lib/server/user-wallet-action-guard";
 
 const serverWalletChain =
   configuredChain === "ethereum"
@@ -39,19 +40,32 @@ async function resolveSmartWalletAddress(client: ReturnType<typeof createThirdwe
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
 
-  const storecode = String(body?.storecode || "").trim();
-  const walletAddress = String(body?.walletAddress || "").trim();
+  const guard = await verifyUserWalletActionGuard({
+    request,
+    route: "/api/order/getEscrowWalletAddress",
+    body,
+    storecodeRaw: body.storecode,
+    walletAddressRaw: body.walletAddress,
+  });
 
-  if (!storecode || !walletAddress) {
+  if (!guard.ok) {
     return NextResponse.json(
       {
-        error: "Missing required fields: storecode, walletAddress",
+        error: guard.error,
       },
-      { status: 400 },
+      { status: guard.status },
     );
   }
+
+  const storecode = guard.storecode;
+  const walletAddress = guard.walletAddress;
 
   const secretKey = process.env.THIRDWEB_SECRET_KEY || "";
   if (!secretKey) {

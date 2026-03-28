@@ -4,9 +4,11 @@ import {
   normalizeBuyerRegistrationInput,
   validateBuyerRegistrationInput,
 } from "@/lib/server/user-creation-security";
+import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
 
 import {
   getUserByNickname,
+  getOneByWalletAddress,
 	insertOne,
 } from '@lib/api/user';
 
@@ -50,7 +52,12 @@ const ROUTE = "/api/user/insertBuyerWithoutWalletAddressByStorecode";
 
 export async function POST(request: NextRequest) {
 
-  const body = await request.json();
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
 
 
   const {
@@ -62,6 +69,26 @@ export async function POST(request: NextRequest) {
     userBankAccountNumber,
     userType,
   } = body;
+
+  const safeStorecode = typeof storecode === "string" ? storecode.trim() : "";
+
+  const guard = await verifyCenterStoreAdminGuard({
+    request,
+    route: ROUTE,
+    body,
+    storecodeRaw: safeStorecode,
+    requesterWalletAddressRaw: body.requesterWalletAddress ?? body.walletAddress,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: guard.error,
+      },
+      { status: guard.status }
+    );
+  }
 
   //const { storecode, nickname, mobile, password } = body;
 
@@ -75,7 +102,7 @@ export async function POST(request: NextRequest) {
   });
   const nickname = normalizedInput.nickname;
 
-  if (!storecode || !nickname) {
+  if (!safeStorecode || !nickname) {
     return NextResponse.json(
       {
         result: null,
@@ -124,10 +151,30 @@ export async function POST(request: NextRequest) {
 
   try {
     const creationAudit = buildUserCreationAudit(request, ROUTE);
+    const requesterWalletAddress = String(guard.requesterWalletAddress || "").trim().toLowerCase();
+    const requesterUser = requesterWalletAddress
+      ? (
+          guard.requesterIsAdmin
+            ? await getOneByWalletAddress("admin", requesterWalletAddress)
+            : await getOneByWalletAddress(safeStorecode, requesterWalletAddress)
+              || await getOneByWalletAddress("admin", requesterWalletAddress)
+        )
+      : null;
+    const createdBy = {
+      walletAddress: requesterWalletAddress || null,
+      nickname: requesterUser?.nickname || null,
+      role: requesterUser?.role || (guard.requesterIsAdmin ? "admin" : "store_admin"),
+      storecode: requesterUser?.storecode || (guard.requesterIsAdmin ? "admin" : safeStorecode),
+      matchedBy: guard.matchedBy || null,
+      requestedAt: creationAudit.requestedAt,
+      route: ROUTE,
+      publicIp: creationAudit.publicIp,
+      publicCountry: creationAudit.publicCountry,
+    };
 
     // find user by nickname
     const user = await getUserByNickname(
-      storecode,
+      safeStorecode,
       nickname
     );
 
@@ -222,7 +269,7 @@ export async function POST(request: NextRequest) {
 
 
     const result = await insertOne({
-      storecode: storecode,
+      storecode: safeStorecode,
       walletAddress: userWalletAddress,
       walletPrivateKey: userWalletPrivateKey,
       nickname: nickname,
@@ -232,6 +279,7 @@ export async function POST(request: NextRequest) {
       userType: userType,
       createdByApi: ROUTE,
       creationAudit,
+      createdBy,
     });
 
     if (!result || result?.error) {

@@ -8,6 +8,10 @@ import {
   extractCenterStoreAdminActionFields,
   isPlainObject,
 } from "@/lib/security/center-store-admin-signing";
+import {
+  buildUserWalletActionSigningMessage,
+  extractUserWalletActionFields,
+} from "@/lib/security/user-wallet-action-signing";
 
 const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/order/acceptBuyOrder",
@@ -29,6 +33,7 @@ const PROTECTED_CENTER_STORE_ADMIN_PATHS = new Set([
   "/api/store/getEscrowBalance",
   "/api/user/getAllBuyers",
   "/api/user/clearanceWalletAddress",
+  "/api/user/insertBuyerWithoutWalletAddressByStorecode",
   "/api/user/updateUserBankInfo",
   "/api/user/updateUserType",
 ]);
@@ -39,6 +44,11 @@ const PROTECTED_STORE_SETTINGS_MUTATION_PATHS = new Set([
 
 const SELF_READ_USER_PATHS = new Set([
   "/api/user/getUser",
+]);
+
+const SELF_WALLET_ACTION_PATHS = new Set([
+  "/api/order/getEscrowWalletAddress",
+  "/api/user/setUserVerified",
 ]);
 
 const STORE_SETTINGS_MUTATION_SIGNING_PREFIX = "stable-georgia:store-settings-mutation:v1";
@@ -165,8 +175,9 @@ export default function CenterStoreAdminFetchSignatureBridge() {
       const isCenterStoreAdminPath = PROTECTED_CENTER_STORE_ADMIN_PATHS.has(path);
       const isStoreSettingsMutationPath = PROTECTED_STORE_SETTINGS_MUTATION_PATHS.has(path);
       const isSelfReadPath = SELF_READ_USER_PATHS.has(path);
+      const isSelfWalletActionPath = SELF_WALLET_ACTION_PATHS.has(path);
 
-      if (!isCenterStoreAdminPath && !isStoreSettingsMutationPath && !isSelfReadPath) {
+      if (!isCenterStoreAdminPath && !isStoreSettingsMutationPath && !isSelfReadPath && !isSelfWalletActionPath) {
         return originalFetch(input, init);
       }
 
@@ -241,6 +252,29 @@ export default function CenterStoreAdminFetchSignatureBridge() {
           walletAddress: targetWalletAddress,
           requesterWalletAddress: targetWalletAddress,
         };
+      } else if (isSelfWalletActionPath) {
+        const storecode = normalizeString(payload.storecode);
+        const targetWalletAddress =
+          normalizeString(payload.walletAddress).toLowerCase() || requesterWalletAddress;
+        if (!storecode || !targetWalletAddress || targetWalletAddress !== requesterWalletAddress) {
+          return originalFetch(input, init);
+        }
+        signedPayload = {
+          ...payload,
+          storecode,
+          walletAddress: targetWalletAddress,
+        };
+        const selfActionFields = extractUserWalletActionFields(signedPayload);
+        selfActionFields.storecode = storecode;
+        selfActionFields.walletAddress = targetWalletAddress;
+        signingMessage = buildUserWalletActionSigningMessage({
+          route: path,
+          storecode,
+          walletAddress: targetWalletAddress,
+          nonce,
+          signedAtIso: signedAt,
+          actionFields: selfActionFields,
+        });
       } else if (isCenterStoreAdminPath) {
         const storecode = normalizeString(payload.storecode);
         const requesterStorecode = normalizeString(payload.requesterStorecode);

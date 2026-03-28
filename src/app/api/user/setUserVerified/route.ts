@@ -3,14 +3,40 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
 	insertOneVerified,
 } from '@lib/api/user';
+import { verifyUserWalletActionGuard } from "@/lib/server/user-wallet-action-guard";
 
 
 
 export async function POST(request: NextRequest) {
 
-  const body = await request.json();
+  let body: Record<string, unknown> = {};
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    body = {};
+  }
 
-  const { storecode, walletAddress, nickname, mobile, email } = body;
+  const guard = await verifyUserWalletActionGuard({
+    request,
+    route: "/api/user/setUserVerified",
+    body,
+    storecodeRaw: body.storecode,
+    walletAddressRaw: body.walletAddress,
+  });
+
+  if (!guard.ok) {
+    return NextResponse.json(
+      {
+        result: null,
+        error: guard.error,
+      },
+      { status: guard.status }
+    );
+  }
+
+  const nickname = typeof body.nickname === "string" ? body.nickname.trim() : "";
+  const mobile = typeof body.mobile === "string" ? body.mobile.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
 
   
 
@@ -32,8 +58,8 @@ export async function POST(request: NextRequest) {
 
 
   const result = await insertOneVerified({
-    storecode: storecode,
-    walletAddress: walletAddress,
+    storecode: guard.storecode,
+    walletAddress: guard.walletAddress,
     nickname: nickname,
     mobile: mobile,
     email: email,
