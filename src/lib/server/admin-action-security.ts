@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 import {
+  getOneAdminWalletUserByWalletAddress,
   getOneByWalletAddress,
   getOneByWalletAddressAcrossStores,
 } from "@lib/api/user";
@@ -411,7 +412,9 @@ export const verifyAdminSignedAction = async ({
   }
 
   const requesterUser = requireAdminStorecode
-    ? await getOneByWalletAddress(requesterStorecode, requesterWalletAddress)
+    ? requesterStorecode.toLowerCase() === "admin"
+      ? await getOneAdminWalletUserByWalletAddress(requesterWalletAddress)
+      : await getOneByWalletAddress(requesterStorecode, requesterWalletAddress)
     : await getAuthorizedRequesterAcrossStores({
         walletAddress: requesterWalletAddress,
         allowedRoles: normalizedAllowedRoles,

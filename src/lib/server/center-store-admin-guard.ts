@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { insertAdminApiCallLog } from "@/lib/api/adminApiCallLog";
 import clientPromise, { dbName } from "@/lib/mongodb";
 import { getStoreByStorecode } from "@lib/api/store";
-import { getOneByWalletAddress } from "@lib/api/user";
+import { getOneAdminWalletUserByWalletAddress, getOneByWalletAddress } from "@lib/api/user";
 import {
   buildCenterStoreAdminSigningMessage,
   extractCenterStoreAdminActionFields,
@@ -553,7 +553,7 @@ export const verifyCenterStoreAdminGuard = async ({
       requesterIsAdmin = cachedRequester.requesterIsAdmin;
     } else {
       requesterAdminUser = await withTransientMongoRetry(() =>
-        getOneByWalletAddress("admin", requesterWalletAddress),
+        getOneAdminWalletUserByWalletAddress(requesterWalletAddress),
       );
       requesterIsAdmin = isGlobalAdminUser(requesterAdminUser);
       requesterCache.set(requesterCacheKey, {

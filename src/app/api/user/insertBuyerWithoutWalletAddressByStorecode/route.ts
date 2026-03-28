@@ -8,6 +8,7 @@ import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-gua
 
 import {
   getUserByNickname,
+  getOneAdminWalletUserByWalletAddress,
   getOneByWalletAddress,
 	insertOne,
 } from '@lib/api/user';
@@ -155,9 +156,9 @@ export async function POST(request: NextRequest) {
     const requesterUser = requesterWalletAddress
       ? (
           guard.requesterIsAdmin
-            ? await getOneByWalletAddress("admin", requesterWalletAddress)
+            ? await getOneAdminWalletUserByWalletAddress(requesterWalletAddress)
             : await getOneByWalletAddress(safeStorecode, requesterWalletAddress)
-              || await getOneByWalletAddress("admin", requesterWalletAddress)
+              || await getOneAdminWalletUserByWalletAddress(requesterWalletAddress)
         )
       : null;
     const createdBy = {

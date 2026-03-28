@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getOneByWalletAddress } from "@lib/api/user";
+import { getOneAdminWalletUserByWalletAddress } from "@lib/api/user";
 import { getAdminApiCallLogs } from "@/lib/api/adminApiCallLog";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+  const requesterUser = await getOneAdminWalletUserByWalletAddress(requesterWalletAddress);
   const requesterStorecode = String(requesterUser?.storecode || "").trim().toLowerCase();
   const requesterRole = String(requesterUser?.role || "").trim().toLowerCase();
 

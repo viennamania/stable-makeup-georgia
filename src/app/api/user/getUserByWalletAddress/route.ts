@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  getOneAdminWalletUserByWalletAddress,
   getOneByWalletAddress,
   getOneByWalletAddressAcrossStores,
 } from "@lib/api/user";
@@ -109,7 +110,9 @@ export async function POST(request: NextRequest) {
   }
 
   const result = storecode
-    ? await getOneByWalletAddress(storecode, walletAddress)
+    ? storecode === "admin"
+      ? await getOneAdminWalletUserByWalletAddress(walletAddress)
+      : await getOneByWalletAddress(storecode, walletAddress)
     : await getOneByWalletAddressAcrossStores(walletAddress);
 
   const sanitizedResult = sanitizeUserForResponse(result);

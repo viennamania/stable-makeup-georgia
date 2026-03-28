@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-import { getOneByWalletAddress } from "@lib/api/user";
+import { getOneAdminWalletUserByWalletAddress, getOneByWalletAddress } from "@lib/api/user";
 import { insertStoreSettingsApiCallLog } from "@/lib/api/storeSettingsApiCallLog";
 import { verifyAdminSignedAction } from "@/lib/server/admin-action-security";
 import { getRequestCountry, getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
@@ -59,7 +59,7 @@ export const verifyStoreSettingsAdminGuard = async ({
   if (requireSigned && !hasSignatureFields) {
     let requesterUser = null;
     if (requesterWalletAddress) {
-      requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+      requesterUser = await getOneAdminWalletUserByWalletAddress(requesterWalletAddress);
     }
 
     await insertStoreSettingsApiCallLog({
@@ -95,7 +95,7 @@ export const verifyStoreSettingsAdminGuard = async ({
 
     let requesterUser = signedResult.ok ? signedResult.requesterUser : null;
     if (!requesterUser && requesterWalletAddress) {
-      requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+      requesterUser = await getOneAdminWalletUserByWalletAddress(requesterWalletAddress);
     }
 
     await insertStoreSettingsApiCallLog({
@@ -133,7 +133,7 @@ export const verifyStoreSettingsAdminGuard = async ({
     };
   }
 
-  const requesterUser = await getOneByWalletAddress("admin", requesterWalletAddress);
+  const requesterUser = await getOneAdminWalletUserByWalletAddress(requesterWalletAddress);
   const requesterStorecode = String(requesterUser?.storecode || "").trim().toLowerCase();
   const requesterRole = String(requesterUser?.role || "").trim().toLowerCase();
 

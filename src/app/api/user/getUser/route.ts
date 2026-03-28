@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  getOneAdminWalletUserByWalletAddress,
   getOneByWalletAddress,
 } from "@lib/api/user";
 import {
@@ -317,7 +318,9 @@ export async function POST(request: NextRequest) {
     const existingJob = inFlight.get(cacheKey);
     const job = existingJob || withTransientMongoRetry(() =>
       withTimeout(
-        getOneByWalletAddress(storecode, targetWalletAddress),
+        storecode.toLowerCase() === "admin"
+          ? getOneAdminWalletUserByWalletAddress(targetWalletAddress)
+          : getOneByWalletAddress(storecode, targetWalletAddress),
         GET_USER_ROUTE_TIMEOUT_MS,
         "getUser timeout",
       ),
@@ -330,7 +333,7 @@ export async function POST(request: NextRequest) {
     const adminScopedUser = storecode !== "admin"
       ? await withTransientMongoRetry(() =>
           withTimeout(
-            getOneByWalletAddress("admin", targetWalletAddress),
+            getOneAdminWalletUserByWalletAddress(targetWalletAddress),
             GET_USER_ROUTE_TIMEOUT_MS,
             "getUser timeout",
           ),

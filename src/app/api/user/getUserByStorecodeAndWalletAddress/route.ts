@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  getOneAdminWalletUserByWalletAddress,
   getOneByStorecodeAndWalletAddress,
   getOneByWalletAddress,
 } from "@lib/api/user";
@@ -151,7 +152,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const requesterUser = await getOneByWalletAddress(requesterStorecode, requesterWalletAddress);
+  const requesterUser = requesterStorecode.toLowerCase() === "admin"
+    ? await getOneAdminWalletUserByWalletAddress(requesterWalletAddress)
+    : await getOneByWalletAddress(requesterStorecode, requesterWalletAddress);
   const requesterStorecodeLower = String(requesterUser?.storecode || "").trim().toLowerCase();
   const requesterRoleLower = String(requesterUser?.role || "").trim().toLowerCase();
   const isAdmin = requesterStorecodeLower === "admin" && requesterRoleLower === "admin";

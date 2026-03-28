@@ -1172,6 +1172,48 @@ export async function getOneByWalletAddressAcrossStores(
 
 }
 
+export async function getOneAdminWalletUserByWalletAddress(
+  walletAddress: string,
+): Promise<UserProps | null> {
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('users');
+
+  const walletAddressRaw = String(walletAddress || '').trim();
+  if (!walletAddressRaw) {
+    return null;
+  }
+
+  const walletAddressCandidates = Array.from(
+    new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
+  );
+
+  const baseQuery = {
+    storecode: { $regex: '^admin$', $options: 'i' },
+    role: { $regex: '^admin$', $options: 'i' },
+  };
+
+  const exactMatches = await collection.find<UserProps>({
+    ...baseQuery,
+    walletAddress: { $in: walletAddressCandidates },
+  }).limit(25).toArray();
+
+  const exactMatch = selectPreferredUserByWallet(exactMatches);
+  if (exactMatch) {
+    return exactMatch as UserProps;
+  }
+
+  const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
+
+  const regexMatches = await collection.find<UserProps>({
+    ...baseQuery,
+    walletAddress: walletAddressRegex,
+  }).limit(25).toArray();
+
+  return selectPreferredUserByWallet(regexMatches) as UserProps | null;
+}
+
 
 
 export async function checkSellerByWalletAddress(
