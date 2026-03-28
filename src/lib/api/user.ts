@@ -7,6 +7,7 @@ import { ObjectId } from 'mongodb';
 import { access } from 'fs';
 
 export interface UserProps {
+  _id?: ObjectId | string,
   /*
   name: string;
   username: string;
@@ -37,6 +38,7 @@ export interface UserProps {
   loginedAt: string,
   followers : number,
   emailVerified: boolean,
+  verified?: boolean,
   bio: string,
 
   password: string,
@@ -90,6 +92,78 @@ export interface ResultProps {
 
 const escapeRegexText = (value: string) => {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const getUserRolePriority = (user: Partial<UserProps> | null | undefined) => {
+  const storecode = String(user?.storecode || "").trim().toLowerCase();
+  const role = String(user?.role || "").trim().toLowerCase();
+
+  if (storecode === "admin" && role === "admin") {
+    return 4;
+  }
+
+  if (role === "admin") {
+    return 3;
+  }
+
+  if (role) {
+    return 2;
+  }
+
+  return 1;
+};
+
+const getUserRecencyTimestamp = (user: Partial<UserProps> | null | undefined) => {
+  const updatedAtMs = Date.parse(String(user?.updatedAt || ""));
+  if (Number.isFinite(updatedAtMs)) {
+    return updatedAtMs;
+  }
+
+  const createdAtMs = Date.parse(String(user?.createdAt || ""));
+  if (Number.isFinite(createdAtMs)) {
+    return createdAtMs;
+  }
+
+  return 0;
+};
+
+const getUserObjectIdTimestamp = (user: Partial<UserProps> | null | undefined) => {
+  if (user?._id instanceof ObjectId) {
+    return user._id.getTimestamp().getTime();
+  }
+
+  if (typeof user?._id === "string" && ObjectId.isValid(user._id)) {
+    return new ObjectId(user._id).getTimestamp().getTime();
+  }
+
+  return 0;
+};
+
+const selectPreferredUserByWallet = <T extends Partial<UserProps>>(users: T[]) => {
+  if (!Array.isArray(users) || users.length === 0) {
+    return null;
+  }
+
+  const sorted = [...users].sort((left, right) => {
+    const rolePriorityDiff = getUserRolePriority(right) - getUserRolePriority(left);
+    if (rolePriorityDiff !== 0) {
+      return rolePriorityDiff;
+    }
+
+    const verifiedPriorityDiff = Number(Boolean(right?.verified)) - Number(Boolean(left?.verified));
+    if (verifiedPriorityDiff !== 0) {
+      return verifiedPriorityDiff;
+    }
+
+    const recencyDiff = getUserRecencyTimestamp(right) - getUserRecencyTimestamp(left);
+    if (recencyDiff !== 0) {
+      return recencyDiff;
+    }
+
+    return getUserObjectIdTimestamp(right) - getUserObjectIdTimestamp(left);
+  });
+
+  return sorted[0] || null;
 };
 
 const BUYORDER_STATUS_OVERVIEW_STATUSES = [
@@ -1038,21 +1112,24 @@ export async function getOneByWalletAddress(
     new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
   );
 
-  const results = await collection.findOne<UserProps>({
+  const exactMatches = await collection.find<UserProps>({
     storecode: storecode,
     walletAddress: { $in: walletAddressCandidates },
-  });
+  }).limit(25).toArray();
 
-  if (results) {
-    return results;
+  const exactMatch = selectPreferredUserByWallet(exactMatches);
+  if (exactMatch) {
+    return exactMatch as UserProps;
   }
 
   const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
-  return await collection.findOne<UserProps>({
+  const regexMatches = await collection.find<UserProps>({
     storecode: storecode,
     walletAddress: walletAddressRegex,
-  });
+  }).limit(25).toArray();
+
+  return selectPreferredUserByWallet(regexMatches) as UserProps | null;
 }
 
 
@@ -1075,20 +1152,23 @@ export async function getOneByWalletAddressAcrossStores(
     new Set([walletAddressRaw, walletAddressRaw.toLowerCase(), walletAddressRaw.toUpperCase()]),
   );
 
-  const results = await collection.findOne<UserProps>({
+  const exactMatches = await collection.find<UserProps>({
     walletAddress: { $in: walletAddressCandidates },
-  });
+  }).limit(25).toArray();
 
-  if (results) {
-    return results;
+  const exactMatch = selectPreferredUserByWallet(exactMatches);
+  if (exactMatch) {
+    return exactMatch as UserProps;
   }
 
   const escapedWalletAddress = walletAddressRaw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const walletAddressRegex = new RegExp(`^${escapedWalletAddress}$`, 'i');
 
-  return await collection.findOne<UserProps>({
+  const regexMatches = await collection.find<UserProps>({
     walletAddress: walletAddressRegex,
-  });
+  }).limit(25).toArray();
+
+  return selectPreferredUserByWallet(regexMatches) as UserProps | null;
 
 }
 

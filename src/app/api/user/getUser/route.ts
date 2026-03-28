@@ -29,6 +29,12 @@ const normalizeString = (value: unknown): string => {
   return value.trim();
 };
 
+const isGlobalAdminUser = (user: any) => {
+  const storecode = normalizeString(user?.storecode).toLowerCase();
+  const role = normalizeString(user?.role).toLowerCase();
+  return storecode === "admin" && role === "admin";
+};
+
 const globalGetUserRouteCacheState = globalThis as typeof globalThis & {
   __getUserRouteCache?: Map<
     string,
@@ -320,7 +326,23 @@ export async function POST(request: NextRequest) {
       inFlight.set(cacheKey, job);
     }
 
-    const result = await job;
+    const storeScopedUser = await job;
+    const adminScopedUser = storecode !== "admin"
+      ? await withTransientMongoRetry(() =>
+          withTimeout(
+            getOneByWalletAddress("admin", targetWalletAddress),
+            GET_USER_ROUTE_TIMEOUT_MS,
+            "getUser timeout",
+          ),
+        )
+      : null;
+    const elevatedByGlobalAdmin = isGlobalAdminUser(adminScopedUser);
+    const result = elevatedByGlobalAdmin
+      ? {
+          ...(storeScopedUser || adminScopedUser || {}),
+          role: "admin",
+        }
+      : storeScopedUser;
     const sanitizedResult = sanitizeUserForResponse(result);
 
     routeCache.set(cacheKey, {
@@ -342,6 +364,7 @@ export async function POST(request: NextRequest) {
       rateLimited: false,
       extra: {
         found: Boolean(result),
+        elevatedByGlobalAdmin,
         requireSignature,
       },
     });

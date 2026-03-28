@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useActiveAccount } from "thirdweb/react";
 
 import {
@@ -150,11 +150,11 @@ export default function CenterStoreAdminFetchSignatureBridge() {
   const activeAccount = useActiveAccount();
   const activeAccountRef = useRef(activeAccount);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     activeAccountRef.current = activeAccount;
   }, [activeAccount]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
