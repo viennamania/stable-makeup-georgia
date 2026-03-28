@@ -146,6 +146,11 @@ const createNonce = () => {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const wait = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 export default function CenterStoreAdminFetchSignatureBridge() {
   const activeAccount = useActiveAccount();
   const activeAccountRef = useRef(activeAccount);
@@ -210,7 +215,15 @@ export default function CenterStoreAdminFetchSignatureBridge() {
         return originalFetch(input, init);
       }
 
-      const account = activeAccountRef.current;
+      let account = activeAccountRef.current;
+      if (!account) {
+        const waitUntil = Date.now() + 2500;
+        while (!account && Date.now() < waitUntil) {
+          await wait(50);
+          account = activeAccountRef.current;
+        }
+      }
+
       if (!account) {
         return originalFetch(input, init);
       }
