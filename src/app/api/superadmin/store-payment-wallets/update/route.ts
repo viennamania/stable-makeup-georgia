@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
   }
 
   const storecode = normalizeString(body?.storecode).toLowerCase();
+  const settlementWalletAddressRaw = normalizeString(body?.settlementWalletAddress);
   const settlementWalletAddress = normalizeWalletAddress(body?.settlementWalletAddress);
 
   if (!storecode || !settlementWalletAddress) {
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     nonceRaw: body?.nonce,
     actionFields: {
       storecode,
-      settlementWalletAddress,
+      settlementWalletAddress: settlementWalletAddressRaw,
     },
   });
 
