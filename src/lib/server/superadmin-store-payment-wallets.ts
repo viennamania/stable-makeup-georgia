@@ -140,6 +140,11 @@ const buildSettlementWalletNickname = (store: any, storecode: string) => {
   return storeName ? `${storeName} 자동결제` : `${normalizeString(storecode)} 자동결제`;
 };
 
+const buildSellerWalletNickname = (store: any, storecode: string) => {
+  const storeName = normalizeString(store?.storeName);
+  return storeName ? `${storeName} 판매지갑` : `${normalizeString(storecode)} 판매지갑`;
+};
+
 const syncThirdwebWebhookState = async (baseUrl: string) => {
   try {
     return await syncThirdwebSellerUsdtWebhooks({
@@ -367,12 +372,9 @@ export const assignSuperadminStoreSettlementWallet = async ({
     throw new Error("storecode and valid settlementWalletAddress are required");
   }
 
-  const serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
-    normalizedStorecode,
-    normalizedSettlementWalletAddress,
-  );
-  if (!serverWalletUser) {
-    throw new Error("settlementWalletAddress must belong to a server wallet user in the same store");
+  const store = await getStoreByStorecode({ storecode: normalizedStorecode });
+  if (!store) {
+    throw new Error("Store not found");
   }
 
   const resolvedThirdwebServerWallet = await resolveThirdwebServerWalletByAddress(
@@ -384,6 +386,24 @@ export const assignSuperadminStoreSettlementWallet = async ({
 
   if (resolvedThirdwebServerWallet.smartAccountAddress !== normalizedSettlementWalletAddress) {
     throw new Error("settlementWalletAddress must be a Thirdweb server wallet smart account address");
+  }
+
+  let serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
+    normalizedStorecode,
+    normalizedSettlementWalletAddress,
+  );
+
+  if (!serverWalletUser) {
+    serverWalletUser = await upsertStoreServerWalletUser({
+      storecode: normalizedStorecode,
+      walletAddress: normalizedSettlementWalletAddress,
+      signerAddress: resolvedThirdwebServerWallet.signerAddress,
+      nicknameBase: buildSettlementWalletNickname(store, normalizedStorecode),
+    });
+  }
+
+  if (!serverWalletUser) {
+    throw new Error("settlementWalletAddress could not be registered as a server wallet user in the store");
   }
 
   const serverWalletUserSignerAddress = normalizeWalletAddress(serverWalletUser?.signerAddress);
@@ -533,12 +553,9 @@ export const assignSuperadminStoreSellerWallet = async ({
     throw new Error("storecode and valid sellerWalletAddress are required");
   }
 
-  const serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
-    normalizedStorecode,
-    normalizedSellerWalletAddress,
-  );
-  if (!serverWalletUser) {
-    throw new Error("sellerWalletAddress must belong to a server wallet user in the same store");
+  const store = await getStoreByStorecode({ storecode: normalizedStorecode });
+  if (!store) {
+    throw new Error("Store not found");
   }
 
   const resolvedThirdwebServerWallet = await resolveThirdwebServerWalletByAddress(
@@ -550,6 +567,24 @@ export const assignSuperadminStoreSellerWallet = async ({
 
   if (resolvedThirdwebServerWallet.smartAccountAddress !== normalizedSellerWalletAddress) {
     throw new Error("sellerWalletAddress must be a Thirdweb server wallet smart account address");
+  }
+
+  let serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
+    normalizedStorecode,
+    normalizedSellerWalletAddress,
+  );
+
+  if (!serverWalletUser) {
+    serverWalletUser = await upsertStoreServerWalletUser({
+      storecode: normalizedStorecode,
+      walletAddress: normalizedSellerWalletAddress,
+      signerAddress: resolvedThirdwebServerWallet.signerAddress,
+      nicknameBase: buildSellerWalletNickname(store, normalizedStorecode),
+    });
+  }
+
+  if (!serverWalletUser) {
+    throw new Error("sellerWalletAddress could not be registered as a server wallet user in the store");
   }
 
   const serverWalletUserSignerAddress = normalizeWalletAddress(serverWalletUser?.signerAddress);
