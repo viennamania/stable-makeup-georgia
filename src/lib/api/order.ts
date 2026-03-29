@@ -9348,6 +9348,126 @@ export async function getCollectOrdersForSeller(
 }
 
 
+export async function getClearanceSellerBankBalanceSummary(
+  {
+    storecode,
+    fromDate,
+    toDate,
+    privateSale = false,
+  }: {
+    storecode?: string;
+    fromDate?: string;
+    toDate?: string;
+    privateSale?: boolean;
+  },
+): Promise<any> {
+  const fromDateValue = fromDate
+    ? new Date(`${fromDate}T00:00:00+09:00`).toISOString()
+    : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate
+    ? new Date(`${toDate}T23:59:59+09:00`).toISOString()
+    : new Date().toISOString();
+  const normalizedStorecode = String(storecode || "").trim();
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const clearanceStatuses = privateSale
+    ? ['paymentConfirmed', 'paymentRequested']
+    : ['paymentConfirmed'];
+
+  const query: Record<string, any> = {
+    status: { $in: clearanceStatuses },
+    createdAt: { $gte: fromDateValue, $lt: toDateValue },
+    privateSale: privateSale ? true : { $ne: true },
+  };
+
+  if (normalizedStorecode) {
+    query.storecode = normalizedStorecode;
+  }
+
+  const items = await collection.aggregate([
+    {
+      $match: query,
+    },
+    {
+      $group: {
+        _id: '$seller.bankInfo.realAccountNumber',
+        totalCount: { $sum: 1 },
+        totalKrwAmount: { $sum: '$krwAmount' },
+        totalUsdtAmount: { $sum: '$usdtAmount' },
+      },
+    },
+    {
+      $lookup: {
+        from: 'bankInfos',
+        localField: '_id',
+        foreignField: 'realAccountNumber',
+        as: 'bankUserInfo',
+      },
+    },
+    {
+      $addFields: {
+        primaryBankUserInfo: { $arrayElemAt: ['$bankUserInfo', 0] },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        totalCount: 1,
+        totalKrwAmount: 1,
+        totalUsdtAmount: 1,
+        bankName: {
+          $ifNull: ['$primaryBankUserInfo.bankName', ''],
+        },
+        accountHolder: {
+          $ifNull: ['$primaryBankUserInfo.accountHolder', ''],
+        },
+        accountNumber: {
+          $ifNull: [
+            '$primaryBankUserInfo.defaultAccountNumber',
+            {
+              $ifNull: [
+                '$primaryBankUserInfo.realAccountNumber',
+                {
+                  $ifNull: ['$primaryBankUserInfo.accountNumber', ''],
+                },
+              ],
+            },
+          ],
+        },
+        realAccountNumber: {
+          $ifNull: ['$primaryBankUserInfo.realAccountNumber', ''],
+        },
+        defaultAccountNumber: {
+          $ifNull: ['$primaryBankUserInfo.defaultAccountNumber', ''],
+        },
+        balance: {
+          $cond: [
+            { $ne: [{ $ifNull: ['$primaryBankUserInfo.balance', null] }, null] },
+            { $toDouble: '$primaryBankUserInfo.balance' },
+            null,
+          ],
+        },
+      },
+    },
+    {
+      $sort: {
+        balance: -1,
+        totalUsdtAmount: -1,
+        _id: 1,
+      },
+    },
+  ], {
+    maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+  }).toArray();
+
+  return {
+    totalCount: items.length,
+    items,
+  };
+}
+
+
 export async function getAdminClearanceOrders(
   {
     storecode,

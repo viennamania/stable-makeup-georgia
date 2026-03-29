@@ -1771,6 +1771,8 @@ export async function getClearanceStoreDirectory(
           storeName: 1,
           companyName: 1,
           storeLogo: 1,
+          favoriteOnAndOff: 1,
+          clearanceSortOrder: 1,
           bankInfo: 1,
           bankInfoAAA: 1,
           bankInfoBBB: 1,
