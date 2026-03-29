@@ -1727,6 +1727,80 @@ export async function getStoreDirectory(
   }
 }
 
+export async function getClearanceStoreDirectory(
+  {
+    limit,
+    page,
+    search = "",
+  }: {
+    limit: number;
+    page: number;
+    search?: string;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('stores');
+  await ensureStoreReadIndexes(collection);
+
+  const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 500);
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeSearch = String(search || "").trim();
+
+  const query: any = {
+    storecode: { $nin: ['admin', 'agent'] },
+  };
+
+  if (safeSearch) {
+    const searchPattern = escapeRegexLiteral(safeSearch);
+    query.$or = [
+      { storecode: { $regex: searchPattern, $options: 'i' } },
+      { storeName: { $regex: searchPattern, $options: 'i' } },
+      { companyName: { $regex: searchPattern, $options: 'i' } },
+    ];
+  }
+
+  try {
+    const [totalCount, stores] = await Promise.all([
+      collection.countDocuments(query, {
+        maxTimeMS: STORE_BALANCE_INQUIRY_QUERY_MAX_TIME_MS,
+      }),
+      collection.find(query, {
+        projection: {
+          createdAt: 1,
+          storecode: 1,
+          storeName: 1,
+          companyName: 1,
+          storeLogo: 1,
+          bankInfo: 1,
+          bankInfoAAA: 1,
+          bankInfoBBB: 1,
+          bankInfoCCC: 1,
+          bankInfoDDD: 1,
+        },
+        sort: {
+          storeName: 1,
+          createdAt: -1,
+        },
+        collation: {
+          locale: 'ko',
+          strength: 1,
+        },
+        skip: (safePage - 1) * safeLimit,
+        limit: safeLimit,
+        maxTimeMS: STORE_BALANCE_INQUIRY_QUERY_MAX_TIME_MS,
+      }).toArray(),
+    ]);
+
+    return {
+      totalCount,
+      stores,
+    };
+  } catch (error) {
+    console.error('Error fetching clearance store directory:', error);
+    throw new Error('Failed to fetch clearance store directory');
+  }
+}
+
 // getAllStoresForAgent
 export async function getAllStoresForAgent(
   {

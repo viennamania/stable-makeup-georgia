@@ -9348,6 +9348,133 @@ export async function getCollectOrdersForSeller(
 }
 
 
+export async function getAdminClearanceOrders(
+  {
+    storecode,
+    limit,
+    page,
+    walletAddress,
+    searchMyOrders,
+    fromDate,
+    toDate,
+  }: {
+    storecode?: string;
+    limit: number;
+    page: number;
+    walletAddress?: string;
+    searchMyOrders?: boolean;
+    fromDate?: string;
+    toDate?: string;
+  }
+): Promise<any> {
+  const fromDateValue = fromDate
+    ? new Date(`${fromDate}T00:00:00+09:00`).toISOString()
+    : '1970-01-01T00:00:00Z';
+  const toDateValue = toDate
+    ? new Date(`${toDate}T23:59:59+09:00`).toISOString()
+    : new Date().toISOString();
+
+  const normalizedStorecode = String(storecode || "").trim();
+  const normalizedWalletAddress = String(walletAddress || "").trim();
+  const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 200);
+  const safePage = Math.max(1, Number(page) || 1);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection('buyorders');
+  const normalizedTransactionHashExpr = {
+    $toLower: {
+      $ifNull: ['$transactionHash', ''],
+    },
+  };
+  const normalizedTransactionHashDummyReasonExpr = {
+    $toLower: {
+      $ifNull: [
+        '$transactionHashDummyReason',
+        {
+          $ifNull: [
+            '$createdBy.transactionHashDummyReason',
+            { $ifNull: ['$clearanceSource.transactionHashDummyReason', ''] },
+          ],
+        },
+      ],
+    },
+  };
+  const hasRealTransferExpr = {
+    $and: [
+      { $ne: [normalizedTransactionHashExpr, ''] },
+      { $ne: [normalizedTransactionHashExpr, '0x'] },
+      { $ne: [{ $ifNull: ['$transactionHashDummy', false] }, true] },
+      {
+        $ne: [
+          normalizedTransactionHashDummyReasonExpr,
+          WITHDRAWAL_WEBHOOK_CLEARANCE_DUMMY_TRANSFER_REASON,
+        ],
+      },
+    ],
+  };
+
+  const query: Record<string, any> = {
+    privateSale: true,
+    createdAt: { $gte: fromDateValue, $lt: toDateValue },
+    ...(normalizedStorecode ? { storecode: normalizedStorecode } : { storecode: { $ne: null } }),
+    ...(searchMyOrders && normalizedWalletAddress ? { walletAddress: normalizedWalletAddress } : {}),
+  };
+
+  const [orders, totalCount, summary] = await Promise.all([
+    collection.find<OrderProps>(
+      query,
+      {
+        maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+      },
+    )
+      .sort({ createdAt: -1 })
+      .limit(safeLimit)
+      .skip((safePage - 1) * safeLimit)
+      .toArray(),
+    collection.countDocuments(query, {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }),
+    collection.aggregate([
+      {
+        $match: query,
+      },
+      {
+        $group: {
+          _id: null,
+          totalTransferCount: {
+            $sum: {
+              $cond: [hasRealTransferExpr, 1, 0],
+            },
+          },
+          totalTransferAmount: {
+            $sum: {
+              $cond: [hasRealTransferExpr, { $ifNull: ['$usdtAmount', 0] }, 0],
+            },
+          },
+          totalTransferAmountKRW: {
+            $sum: {
+              $cond: [hasRealTransferExpr, { $ifNull: ['$krwAmount', 0] }, 0],
+            },
+          },
+        },
+      },
+    ], {
+      maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+    }).toArray(),
+  ]);
+
+  const totals = summary[0] || {};
+
+  return {
+    totalCount: Number(totalCount || 0),
+    totalClearanceCount: Number(totals.totalTransferCount || 0),
+    totalClearanceAmount: Number(totals.totalTransferAmount || 0),
+    totalClearanceAmountKRW: Number(totals.totalTransferAmountKRW || 0),
+    orders,
+  };
+}
+
+
 
 
 
