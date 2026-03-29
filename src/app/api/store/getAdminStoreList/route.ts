@@ -71,6 +71,8 @@ const sanitizeStoreForPublic = (store: any) => {
     paymentUrl: store.paymentUrl,
     viewOnAndOff: store.viewOnAndOff,
     liveOnAndOff: store.liveOnAndOff,
+    adminWalletAddress: store.adminWalletAddress,
+    settlementWalletAddress: store.settlementWalletAddress,
     settlementFeePercent: store.settlementFeePercent,
   };
 };
