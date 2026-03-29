@@ -1,7 +1,9 @@
 import { createThirdwebClient, Engine } from "thirdweb";
 
+import clientPromise, { dbName } from "@/lib/mongodb";
 import {
   getStoreByStorecode,
+  updateStoreSellerWalletAddress,
   updateStoreSettlementWalletAddress,
 } from "@lib/api/store";
 import {
@@ -10,7 +12,10 @@ import {
   upsertStoreServerWalletUser,
 } from "@lib/api/user";
 import { syncThirdwebSellerUsdtWebhooks } from "@/lib/server/thirdweb-insight-webhook-sync";
-import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
+import {
+  primeThirdwebServerWalletCache,
+  resolveThirdwebServerWalletByAddress,
+} from "@/lib/server/thirdweb-server-wallet-cache";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 type WalletAudit = {
@@ -39,6 +44,11 @@ type SerializableServerWalletUser = {
   createdAt: string;
 };
 
+type StorePaymentWalletListItem = SerializableStore & {
+  totalUsdtAmount: number;
+  totalPaymentConfirmedCount: number;
+};
+
 type StorePaymentWalletCandidate = SerializableServerWalletUser & {
   thirdwebLabel: string;
   thirdwebSource: "cache" | "users" | "engine" | null;
@@ -47,6 +57,7 @@ type StorePaymentWalletCandidate = SerializableServerWalletUser & {
   signerMatches: boolean;
   assignmentEligible: boolean;
   isCurrentSettlementWallet: boolean;
+  isCurrentSellerWallet: boolean;
 };
 
 type StorePaymentWalletOverview = {
@@ -56,10 +67,24 @@ type StorePaymentWalletOverview = {
   eligibleCandidateCount: number;
 };
 
+type StorePaymentWalletListResult = {
+  stores: StorePaymentWalletListItem[];
+  totalCount: number;
+  page: number;
+  limit: number;
+};
+
 type StorePaymentWalletMutationResult = {
   created: boolean;
   engineWalletCreated: boolean;
   settlementWalletAddress: string;
+  signerAddress: string;
+  user: SerializableServerWalletUser;
+  thirdwebWebhookSync: Record<string, unknown>;
+};
+
+type StoreSellerWalletMutationResult = {
+  sellerWalletAddress: string;
   signerAddress: string;
   user: SerializableServerWalletUser;
   thirdwebWebhookSync: Record<string, unknown>;
@@ -72,6 +97,16 @@ const normalizeString = (value: unknown): string => {
   return value.trim();
 };
 
+const normalizeNumber = (value: unknown): number => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  const parsed = Number.parseFloat(normalizeString(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const serializeStore = (store: any): SerializableStore => ({
   storecode: normalizeString(store?.storecode).toLowerCase(),
   storeName: normalizeString(store?.storeName),
@@ -79,6 +114,12 @@ const serializeStore = (store: any): SerializableStore => ({
   sellerWalletAddress: normalizeWalletAddress(store?.sellerWalletAddress),
   privateSellerWalletAddress: normalizeWalletAddress(store?.privateSellerWalletAddress),
   settlementWalletAddress: normalizeWalletAddress(store?.settlementWalletAddress),
+});
+
+const serializeStoreListItem = (store: any): StorePaymentWalletListItem => ({
+  ...serializeStore(store),
+  totalUsdtAmount: normalizeNumber(store?.totalUsdtAmount),
+  totalPaymentConfirmedCount: Math.trunc(normalizeNumber(store?.totalPaymentConfirmedCount)),
 });
 
 const serializeUser = (user: any): SerializableServerWalletUser => ({
@@ -99,45 +140,6 @@ const buildSettlementWalletNickname = (store: any, storecode: string) => {
   return storeName ? `${storeName} 자동결제` : `${normalizeString(storecode)} 자동결제`;
 };
 
-const findServerWalletByLabel = async ({
-  client,
-  label,
-}: {
-  client: ReturnType<typeof createThirdwebClient>;
-  label: string;
-}) => {
-  let page = 1;
-
-  while (true) {
-    const result = await Engine.getServerWallets({
-      client,
-      page,
-      limit: 500,
-    });
-
-    const accounts = Array.isArray(result?.accounts) ? result.accounts : [];
-    const matched = accounts.find(
-      (account) => normalizeString(account?.label) === label,
-    );
-
-    if (matched) {
-      return matched;
-    }
-
-    const pagination = result?.pagination;
-    const currentPage = Number(pagination?.page || page);
-    const limit = Number(pagination?.limit || 0);
-    const totalCount = Number(pagination?.totalCount || 0);
-    const hasMore = Boolean(limit > 0 && totalCount > currentPage * limit);
-
-    if (!hasMore || accounts.length === 0) {
-      return null;
-    }
-
-    page = currentPage + 1;
-  }
-};
-
 const syncThirdwebWebhookState = async (baseUrl: string) => {
   try {
     return await syncThirdwebSellerUsdtWebhooks({
@@ -155,9 +157,11 @@ const syncThirdwebWebhookState = async (baseUrl: string) => {
 const inspectServerWalletUserCandidate = async ({
   user,
   currentSettlementWalletAddress,
+  currentSellerWalletAddress,
 }: {
   user: any;
   currentSettlementWalletAddress: string | null;
+  currentSellerWalletAddress: string | null;
 }): Promise<StorePaymentWalletCandidate> => {
   const serialized = serializeUser(user);
   const walletAddress = serialized.walletAddress;
@@ -173,6 +177,7 @@ const inspectServerWalletUserCandidate = async ({
       signerMatches: false,
       assignmentEligible: false,
       isCurrentSettlementWallet: false,
+      isCurrentSellerWallet: false,
     };
   }
 
@@ -194,15 +199,18 @@ const inspectServerWalletUserCandidate = async ({
     signerMatches,
     assignmentEligible: Boolean(isActiveThirdwebWallet && isSmartAccountMatch && signerMatches),
     isCurrentSettlementWallet: walletAddress === currentSettlementWalletAddress,
+    isCurrentSellerWallet: walletAddress === currentSellerWalletAddress,
   };
 };
 
 const loadStoreServerWalletCandidates = async ({
   storecode,
   currentSettlementWalletAddress,
+  currentSellerWalletAddress,
 }: {
   storecode: string;
   currentSettlementWalletAddress: string | null;
+  currentSellerWalletAddress: string | null;
 }) => {
   const users = await getAllUsersByStorecodeFiltered({
     storecode,
@@ -217,13 +225,16 @@ const loadStoreServerWalletCandidates = async ({
       inspectServerWalletUserCandidate({
         user,
         currentSettlementWalletAddress,
+        currentSellerWalletAddress,
       }),
     ),
   );
 
   return walletCandidates.sort((left, right) => {
-    if (left.isCurrentSettlementWallet !== right.isCurrentSettlementWallet) {
-      return left.isCurrentSettlementWallet ? -1 : 1;
+    const leftCurrent = Number(left.isCurrentSettlementWallet) + Number(left.isCurrentSellerWallet);
+    const rightCurrent = Number(right.isCurrentSettlementWallet) + Number(right.isCurrentSellerWallet);
+    if (leftCurrent !== rightCurrent) {
+      return rightCurrent - leftCurrent;
     }
     if (left.assignmentEligible !== right.assignmentEligible) {
       return left.assignmentEligible ? -1 : 1;
@@ -238,6 +249,7 @@ const getReusableSettlementWalletCandidate = async (store: SerializableStore) =>
   const candidates = await loadStoreServerWalletCandidates({
     storecode: store.storecode,
     currentSettlementWalletAddress: store.settlementWalletAddress,
+    currentSellerWalletAddress: store.sellerWalletAddress,
   });
 
   if (store.settlementWalletAddress) {
@@ -262,6 +274,7 @@ export const getSuperadminStorePaymentWalletOverview = async (
   const walletCandidates = await loadStoreServerWalletCandidates({
     storecode: serializedStore.storecode,
     currentSettlementWalletAddress: serializedStore.settlementWalletAddress,
+    currentSellerWalletAddress: serializedStore.sellerWalletAddress,
   });
 
   return {
@@ -269,6 +282,71 @@ export const getSuperadminStorePaymentWalletOverview = async (
     walletCandidates,
     totalCandidateCount: walletCandidates.length,
     eligibleCandidateCount: walletCandidates.filter((item) => item.assignmentEligible).length,
+  };
+};
+
+export const getSuperadminStorePaymentWalletList = async ({
+  search = "",
+  page = 1,
+  limit = 24,
+}: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<StorePaymentWalletListResult> => {
+  const safeSearch = normalizeString(search);
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const safeLimit = Number.isFinite(limit) && limit > 0
+    ? Math.min(Math.floor(limit), 60)
+    : 24;
+
+  const query: Record<string, unknown> = {
+    storecode: { $nin: ["admin", "agent", "ADMIN", "AGENT"] },
+  };
+
+  if (safeSearch) {
+    const searchRegex = new RegExp(escapeRegex(safeSearch), "i");
+    query.$or = [
+      { storeName: searchRegex },
+      { storecode: searchRegex },
+    ];
+  }
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("stores");
+
+  const [totalCount, stores] = await Promise.all([
+    collection.countDocuments(query),
+    collection
+      .find(query, {
+        projection: {
+          _id: 0,
+          storecode: 1,
+          storeName: 1,
+          storeLogo: 1,
+          sellerWalletAddress: 1,
+          privateSellerWalletAddress: 1,
+          settlementWalletAddress: 1,
+          totalUsdtAmount: 1,
+          totalPaymentConfirmedCount: 1,
+          createdAt: 1,
+        },
+      })
+      .sort({
+        storeName: 1,
+        createdAt: -1,
+      })
+      .collation({ locale: "ko", strength: 1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .toArray(),
+  ]);
+
+  return {
+    stores: stores.map((item) => serializeStoreListItem(item)),
+    totalCount,
+    page: safePage,
+    limit: safeLimit,
   };
 };
 
@@ -388,29 +466,24 @@ export const createSuperadminStoreSettlementWallet = async ({
   });
 
   const label = buildSettlementWalletLabel(normalizedStorecode);
-  let engineWallet = await findServerWalletByLabel({ client, label });
-  let engineWalletCreated = false;
-
-  if (!engineWallet) {
-    engineWallet = await Engine.createServerWallet({
-      client,
-      label,
-    });
-    engineWalletCreated = true;
-  }
+  const engineWallet = await Engine.createServerWallet({
+    client,
+    label,
+  });
+  const engineWalletCreated = true;
 
   let signerAddress = normalizeWalletAddress(engineWallet?.address);
   let smartAccountAddress = normalizeWalletAddress(engineWallet?.smartAccountAddress);
 
-  if (!smartAccountAddress) {
-    const refreshedWallet = await findServerWalletByLabel({ client, label });
-    signerAddress = normalizeWalletAddress(refreshedWallet?.address || signerAddress);
-    smartAccountAddress = normalizeWalletAddress(refreshedWallet?.smartAccountAddress);
+  if (!signerAddress || !smartAccountAddress) {
+    throw new Error("Thirdweb server wallet was created without a smart account address. Retry the request.");
   }
 
-  if (!signerAddress || !smartAccountAddress) {
-    throw new Error("Failed to resolve created Thirdweb server wallet addresses");
-  }
+  await primeThirdwebServerWalletCache({
+    signerAddress,
+    smartAccountAddress,
+    label,
+  });
 
   const user = await upsertStoreServerWalletUser({
     storecode: normalizedStorecode,
@@ -439,6 +512,66 @@ export const createSuperadminStoreSettlementWallet = async ({
     settlementWalletAddress: smartAccountAddress,
     signerAddress,
     user: serializeUser(user),
+    thirdwebWebhookSync,
+  };
+};
+
+export const assignSuperadminStoreSellerWallet = async ({
+  storecode,
+  sellerWalletAddress,
+  audit,
+  baseUrl,
+}: {
+  storecode: string;
+  sellerWalletAddress: string;
+  audit: WalletAudit;
+  baseUrl: string;
+}): Promise<StoreSellerWalletMutationResult> => {
+  const normalizedStorecode = normalizeString(storecode).toLowerCase();
+  const normalizedSellerWalletAddress = normalizeWalletAddress(sellerWalletAddress);
+  if (!normalizedStorecode || !normalizedSellerWalletAddress) {
+    throw new Error("storecode and valid sellerWalletAddress are required");
+  }
+
+  const serverWalletUser = await getOneServerWalletByStorecodeAndWalletAddress(
+    normalizedStorecode,
+    normalizedSellerWalletAddress,
+  );
+  if (!serverWalletUser) {
+    throw new Error("sellerWalletAddress must belong to a server wallet user in the same store");
+  }
+
+  const resolvedThirdwebServerWallet = await resolveThirdwebServerWalletByAddress(
+    normalizedSellerWalletAddress,
+  );
+  if (!resolvedThirdwebServerWallet) {
+    throw new Error("sellerWalletAddress must be an active Thirdweb server wallet");
+  }
+
+  if (resolvedThirdwebServerWallet.smartAccountAddress !== normalizedSellerWalletAddress) {
+    throw new Error("sellerWalletAddress must be a Thirdweb server wallet smart account address");
+  }
+
+  const serverWalletUserSignerAddress = normalizeWalletAddress(serverWalletUser?.signerAddress);
+  if (!serverWalletUserSignerAddress || serverWalletUserSignerAddress !== resolvedThirdwebServerWallet.signerAddress) {
+    throw new Error("sellerWalletAddress does not match the store server wallet signer");
+  }
+
+  const updatedStore = await updateStoreSellerWalletAddress({
+    storecode: normalizedStorecode,
+    sellerWalletAddress: normalizedSellerWalletAddress,
+    audit,
+  });
+  if (!updatedStore) {
+    throw new Error("Store not found");
+  }
+
+  const thirdwebWebhookSync = await syncThirdwebWebhookState(baseUrl);
+
+  return {
+    sellerWalletAddress: normalizedSellerWalletAddress,
+    signerAddress: resolvedThirdwebServerWallet.signerAddress,
+    user: serializeUser(serverWalletUser),
     thirdwebWebhookSync,
   };
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useParams } from "next/navigation";
 import { useActiveAccount } from "thirdweb/react";
@@ -17,12 +17,13 @@ type WalletCandidate = {
   signerAddress?: string | null;
   createdAt?: string;
   thirdwebLabel?: string;
-  thirdwebSource?: "cache" | "engine" | null;
+  thirdwebSource?: "cache" | "users" | "engine" | null;
   isActiveThirdwebWallet?: boolean;
   isSmartAccountMatch?: boolean;
   signerMatches?: boolean;
   assignmentEligible?: boolean;
   isCurrentSettlementWallet?: boolean;
+  isCurrentSellerWallet?: boolean;
 };
 
 type LookupResult = {
@@ -39,13 +40,28 @@ type LookupResult = {
   eligibleCandidateCount: number;
 };
 
+type StoreListItem = {
+  storecode: string;
+  storeName?: string;
+  storeLogo?: string;
+  sellerWalletAddress?: string | null;
+  privateSellerWalletAddress?: string | null;
+  settlementWalletAddress?: string | null;
+  totalUsdtAmount?: number;
+  totalPaymentConfirmedCount?: number;
+};
+
 const LOOKUP_ROUTE = "/api/superadmin/store-payment-wallets/lookup";
 const CREATE_ROUTE = "/api/superadmin/store-payment-wallets/create";
 const UPDATE_ROUTE = "/api/superadmin/store-payment-wallets/update";
+const LIST_ROUTE = "/api/superadmin/store-payment-wallets/list";
+const UPDATE_SELLER_ROUTE = "/api/superadmin/store-payment-wallets/update-seller";
 
 const LOOKUP_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:lookup:v1";
 const CREATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:create:v1";
 const UPDATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update:v1";
+const LIST_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:list:v1";
+const UPDATE_SELLER_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update-seller:v1";
 
 const normalizeString = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -92,9 +108,14 @@ export default function SuperadminStorePaymentWalletsPage() {
 
   const lang = params?.lang || "ko";
   const [storecodeInput, setStorecodeInput] = useState("");
+  const [storeSearchInput, setStoreSearchInput] = useState("");
   const [resolvedStorecode, setResolvedStorecode] = useState("");
   const [manualWalletAddress, setManualWalletAddress] = useState("");
+  const [manualSellerWalletAddress, setManualSellerWalletAddress] = useState("");
   const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
+  const [storeList, setStoreList] = useState<StoreListItem[]>([]);
+  const [storeListTotalCount, setStoreListTotalCount] = useState(0);
+  const [loadingStoreList, setLoadingStoreList] = useState(false);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [runningAction, setRunningAction] = useState("");
   const [lastActionSummary, setLastActionSummary] = useState("");
@@ -109,6 +130,53 @@ export default function SuperadminStorePaymentWalletsPage() {
     () => (lookupResult?.walletCandidates || []).find((item) => item.isCurrentSettlementWallet) || null,
     [lookupResult],
   );
+
+  const currentSellerCandidate = useMemo(
+    () => (lookupResult?.walletCandidates || []).find((item) => item.isCurrentSellerWallet) || null,
+    [lookupResult],
+  );
+
+  const fetchStoreList = useCallback(async (searchRaw?: string) => {
+    if (!activeAccount) {
+      return;
+    }
+
+    setLoadingStoreList(true);
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: LIST_ROUTE,
+        signingPrefix: LIST_SIGNING_PREFIX,
+        requesterStorecode: "superadmin",
+        body: {
+          searchStore: normalizeString(searchRaw ?? storeSearchInput),
+          page: 1,
+          limit: 18,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "가맹점 목록을 불러오지 못했습니다.");
+      }
+
+      setStoreList(Array.isArray(data?.result?.stores) ? data.result.stores : []);
+      setStoreListTotalCount(Number(data?.result?.totalCount || 0));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "가맹점 목록을 불러오지 못했습니다.";
+      toast.error(message);
+    } finally {
+      setLoadingStoreList(false);
+    }
+  }, [activeAccount, storeSearchInput]);
+
+  useEffect(() => {
+    if (!showControls) {
+      setStoreList([]);
+      setStoreListTotalCount(0);
+      return;
+    }
+    void fetchStoreList("");
+  }, [fetchStoreList, showControls]);
 
   const fetchStoreOverview = async (storecodeRaw?: string) => {
     const storecode = normalizeString(storecodeRaw || storecodeInput).toLowerCase();
@@ -189,6 +257,7 @@ export default function SuperadminStorePaymentWalletsPage() {
       );
       toast.success(data?.result?.created ? "새 결제용 지갑을 생성했습니다." : "기존 server wallet을 결제용 지갑으로 반영했습니다.");
       await fetchStoreOverview(resolvedStorecode);
+      await fetchStoreList(storeSearchInput);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "결제용 지갑 생성에 실패했습니다.");
     } finally {
@@ -215,7 +284,7 @@ export default function SuperadminStorePaymentWalletsPage() {
       return;
     }
 
-    setRunningAction(settlementWalletAddress);
+    setRunningAction(`settlement:${settlementWalletAddress}`);
     try {
       const response = await postAdminSignedJson({
         account: activeAccount,
@@ -236,8 +305,57 @@ export default function SuperadminStorePaymentWalletsPage() {
       setLastActionSummary(`최근 작업: ${settlementWalletAddress} 로 settlement wallet 변경`);
       toast.success("결제용 지갑주소를 변경했습니다.");
       await fetchStoreOverview(resolvedStorecode);
+      await fetchStoreList(storeSearchInput);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "결제용 지갑 변경에 실패했습니다.");
+    } finally {
+      setRunningAction("");
+    }
+  };
+
+  const runAssignSellerWallet = async (walletAddressRaw?: string) => {
+    if (!activeAccount) {
+      toast.error("지갑 연결이 필요합니다.");
+      return;
+    }
+    if (!resolvedStorecode) {
+      toast.error("먼저 가맹점을 선택하세요.");
+      return;
+    }
+
+    const sellerWalletAddress = normalizeString(walletAddressRaw || manualSellerWalletAddress);
+    if (!sellerWalletAddress) {
+      toast.error("배정할 seller smart account 주소를 입력하세요.");
+      return;
+    }
+    if (!confirm(`${resolvedStorecode} seller wallet을 ${sellerWalletAddress} 로 변경하시겠습니까?`)) {
+      return;
+    }
+
+    setRunningAction(`seller:${sellerWalletAddress}`);
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: UPDATE_SELLER_ROUTE,
+        signingPrefix: UPDATE_SELLER_SIGNING_PREFIX,
+        requesterStorecode: "superadmin",
+        body: {
+          storecode: resolvedStorecode,
+          sellerWalletAddress,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "판매자 지갑 변경에 실패했습니다.");
+      }
+
+      setManualSellerWalletAddress("");
+      setLastActionSummary(`최근 작업: ${sellerWalletAddress} 로 seller wallet 변경`);
+      toast.success("판매자 지갑주소를 변경했습니다.");
+      await fetchStoreOverview(resolvedStorecode);
+      await fetchStoreList(storeSearchInput);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "판매자 지갑 변경에 실패했습니다.");
     } finally {
       setRunningAction("");
     }
@@ -252,11 +370,12 @@ export default function SuperadminStorePaymentWalletsPage() {
               Module 01 / Payment Wallets
             </div>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-[36px]">
-              가맹점 결제용 지갑주소 생성·변경
+              가맹점 결제·판매자 지갑 관리
             </h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300/82">
-              settlement wallet을 thirdweb server wallet smart account 기준으로 생성하거나,
-              같은 가맹점에 귀속된 검증된 후보 주소로 다시 배정하는 superadmin 전용 운영 화면입니다.
+              superadmin이 가맹점 목록에서 대상을 선택한 뒤 settlement wallet 생성과 seller wallet 배정을
+              모두 처리하는 운영 화면입니다. 모든 변경은 같은 가맹점에 귀속된 검증된 thirdweb smart account
+              후보만 허용됩니다.
             </p>
 
             <div className="mt-5 flex flex-wrap gap-2">
@@ -265,6 +384,9 @@ export default function SuperadminStorePaymentWalletsPage() {
               </span>
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
                 Smart Account Validation
+              </span>
+              <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-100">
+                Seller Wallet Binding
               </span>
               <span className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-100">
                 Webhook Auto Sync
@@ -328,7 +450,7 @@ export default function SuperadminStorePaymentWalletsPage() {
 
       {activeAccount && !loadingSession && !isSuperadmin ? (
         <section className="rounded-[26px] border border-rose-400/20 bg-rose-500/10 px-5 py-5 text-sm text-rose-100">
-          현재 지갑은 superadmin 권한이 없어서 settlement wallet 생성·변경 기능을 사용할 수 없습니다.
+          현재 지갑은 superadmin 권한이 없어서 가맹점 지갑 관리 기능을 사용할 수 없습니다.
         </section>
       ) : null}
 
@@ -338,11 +460,130 @@ export default function SuperadminStorePaymentWalletsPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+                  Store Directory
+                </div>
+                <h3 className="mt-2 text-xl font-semibold text-white">가맹점 목록에서 선택</h3>
+                <p className="mt-2 text-sm text-slate-400">
+                  가맹점을 선택하면 아래 상세 영역에서 settlement wallet과 seller wallet을 바로 변경할 수 있습니다.
+                </p>
+              </div>
+
+              <div className="flex w-full flex-col gap-3 md:flex-row lg:max-w-[720px]">
+                <input
+                  value={storeSearchInput}
+                  onChange={(event) => setStoreSearchInput(event.target.value)}
+                  placeholder="가맹점명 또는 storecode 검색"
+                  className="h-12 w-full rounded-2xl border border-white/10 bg-[#0d1322] px-4 text-sm text-white outline-none transition focus:border-cyan-400/50 focus:ring-4 focus:ring-cyan-500/10"
+                />
+                <button
+                  type="button"
+                  onClick={() => void fetchStoreList()}
+                  disabled={loadingStoreList}
+                  className="h-12 rounded-2xl bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+                  {loadingStoreList ? "불러오는 중..." : "목록 새로고침"}
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {loadingStoreList ? (
+                <div className="rounded-[24px] border border-dashed border-white/10 bg-[#0d1322] p-5 text-sm text-slate-500">
+                  가맹점 목록을 불러오는 중입니다.
+                </div>
+              ) : storeList.length === 0 ? (
+                <div className="rounded-[24px] border border-dashed border-white/10 bg-[#0d1322] p-5 text-sm text-slate-500">
+                  검색 조건에 맞는 가맹점이 없습니다.
+                </div>
+              ) : (
+                storeList.map((item) => {
+                  const selected = resolvedStorecode === item.storecode;
+                  return (
+                    <button
+                      key={item.storecode}
+                      type="button"
+                      onClick={() => {
+                        setStorecodeInput(item.storecode);
+                        void fetchStoreOverview(item.storecode);
+                      }}
+                      className={`rounded-[24px] border p-5 text-left transition ${
+                        selected
+                          ? "border-cyan-300/40 bg-cyan-500/10"
+                          : "border-white/10 bg-[#0d1322] hover:border-cyan-300/30 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-lg font-semibold text-white">{item.storeName || item.storecode}</div>
+                          <div className="mt-1 text-xs font-mono uppercase tracking-[0.16em] text-slate-500">
+                            {item.storecode}
+                          </div>
+                        </div>
+                        {selected ? (
+                          <span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-200">
+                            selected
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
+                          item.settlementWalletAddress
+                            ? "border-cyan-300/30 bg-cyan-400/10 text-cyan-200"
+                            : "border-white/10 bg-white/[0.04] text-slate-300"
+                        }`}>
+                          {item.settlementWalletAddress ? "settlement ready" : "settlement empty"}
+                        </span>
+                        <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
+                          item.sellerWalletAddress
+                            ? "border-emerald-300/30 bg-emerald-400/10 text-emerald-200"
+                            : "border-white/10 bg-white/[0.04] text-slate-300"
+                        }`}>
+                          {item.sellerWalletAddress ? "seller ready" : "seller empty"}
+                        </span>
+                        <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
+                          item.privateSellerWalletAddress
+                            ? "border-amber-300/30 bg-amber-400/10 text-amber-100"
+                            : "border-white/10 bg-white/[0.04] text-slate-300"
+                        }`}>
+                          {item.privateSellerWalletAddress ? "private seller ready" : "private seller empty"}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Confirmed</div>
+                          <div className="mt-2 text-base font-semibold text-white">
+                            {Number(item.totalPaymentConfirmedCount || 0).toLocaleString("ko-KR")}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                          <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">USDT</div>
+                          <div className="mt-2 text-base font-semibold text-white">
+                            {Number(item.totalUsdtAmount || 0).toLocaleString("ko-KR")}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="mt-4 text-xs text-slate-500">
+              총 {storeListTotalCount.toLocaleString("ko-KR")}개 가맹점 중 {storeList.length.toLocaleString("ko-KR")}개 표시
+            </div>
+          </section>
+
+          <section className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
                   Store Lookup
                 </div>
-                <h3 className="mt-2 text-xl font-semibold text-white">가맹점 단위 조회</h3>
+                <h3 className="mt-2 text-xl font-semibold text-white">직접 storecode 조회</h3>
                 <p className="mt-2 text-sm text-slate-400">
-                  storecode 기준으로 현재 settlement wallet, 검증된 server wallet 후보, smart account 상태를 함께 확인합니다.
+                  목록에서 바로 선택해도 되고, storecode를 직접 입력해 현재 settlement/seller wallet과 후보 smart account를 확인할 수도 있습니다.
                 </p>
               </div>
 
@@ -380,18 +621,19 @@ export default function SuperadminStorePaymentWalletsPage() {
               </div>
             </div>
             <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
-              <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Candidates</div>
-              <div className="mt-3 text-2xl font-semibold text-white">
-                {lookupResult.totalCandidateCount.toLocaleString("ko-KR")}
+              <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Current Seller</div>
+              <div className="mt-3 break-all text-sm font-semibold text-white">
+                {formatWallet(lookupResult.store.sellerWalletAddress)}
               </div>
-              <div className="mt-2 text-sm text-slate-400">verified + signerAddress 보유 사용자 기준</div>
             </div>
             <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5">
               <div className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Assignable</div>
               <div className="mt-3 text-2xl font-semibold text-cyan-200">
                 {lookupResult.eligibleCandidateCount.toLocaleString("ko-KR")}
               </div>
-              <div className="mt-2 text-sm text-slate-400">active thirdweb smart account only</div>
+              <div className="mt-2 text-sm text-slate-400">
+                후보 {lookupResult.totalCandidateCount.toLocaleString("ko-KR")}개 중 active thirdweb smart account
+              </div>
             </div>
           </section>
 
@@ -400,7 +642,7 @@ export default function SuperadminStorePaymentWalletsPage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.26em] text-slate-500">Current Binding</div>
-                  <h3 className="mt-2 text-xl font-semibold text-white">현재 결제용 지갑 상태</h3>
+                  <h3 className="mt-2 text-xl font-semibold text-white">현재 settlement / seller 지갑 상태</h3>
                 </div>
 
                 <button
@@ -443,50 +685,98 @@ export default function SuperadminStorePaymentWalletsPage() {
                     현재 settlement wallet이 후보 server wallet 목록과 매칭되지 않습니다. 검증된 후보를 선택하거나 새 지갑을 생성하세요.
                   </div>
                 )}
+
+                {currentSellerCandidate ? (
+                  <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                    현재 seller wallet은 후보 목록과 매칭됩니다.
+                    <div className="mt-2 font-semibold">{currentSellerCandidate.nickname || formatShortWallet(currentSellerCandidate.walletAddress)}</div>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+                    현재 seller wallet이 후보 server wallet 목록과 매칭되지 않습니다. 아래 후보나 수동 입력으로 다시 지정하세요.
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
               <div className="text-[11px] uppercase tracking-[0.26em] text-slate-500">Manual Rebind</div>
-              <h3 className="mt-2 text-xl font-semibold text-white">수동 주소 변경</h3>
+              <h3 className="mt-2 text-xl font-semibold text-white">수동 settlement / seller 변경</h3>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 같은 storecode에 등록된 verified server wallet user의 smart account 주소만 통과합니다.
               </p>
 
-              <div className="mt-5 space-y-3">
-                <input
-                  value={manualWalletAddress}
-                  onChange={(event) => setManualWalletAddress(event.target.value)}
-                  placeholder="0x... smart account 주소 입력"
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-[#0d1322] px-4 text-sm text-white outline-none transition focus:border-cyan-400/50 focus:ring-4 focus:ring-cyan-500/10"
-                />
-                <button
-                  type="button"
-                  onClick={() => void runAssignWallet()}
-                  disabled={!isSuperadmin || runningAction !== ""}
-                  className="h-12 w-full rounded-2xl bg-white text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-                >
-                  {runningAction === manualWalletAddress ? "변경중..." : "이 주소로 변경"}
-                </button>
-              </div>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-[24px] border border-white/10 bg-[#0d1322] p-4">
+                  <div className="text-sm font-semibold text-white">Settlement Wallet 변경</div>
+                  <div className="mt-3 space-y-3">
+                    <input
+                      value={manualWalletAddress}
+                      onChange={(event) => setManualWalletAddress(event.target.value)}
+                      placeholder="0x... settlement smart account 주소 입력"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-[#111a2d] px-4 text-sm text-white outline-none transition focus:border-cyan-400/50 focus:ring-4 focus:ring-cyan-500/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void runAssignWallet()}
+                      disabled={!isSuperadmin || runningAction !== ""}
+                      className="h-12 w-full rounded-2xl bg-white text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                    >
+                      {runningAction === `settlement:${normalizeString(manualWalletAddress)}` ? "변경중..." : "결제용 지갑으로 변경"}
+                    </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {eligibleCandidates.length === 0 ? (
+                      <div className="text-sm text-slate-500">즉시 배정 가능한 후보가 없습니다.</div>
+                    ) : (
+                      eligibleCandidates.map((item) => (
+                        <button
+                          key={`settlement-${String(item.walletAddress || item._id)}`}
+                          type="button"
+                          onClick={() => setManualWalletAddress(normalizeString(item.walletAddress))}
+                          className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
+                        >
+                          {item.nickname || formatShortWallet(item.walletAddress)}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
 
-              <div className="mt-5 rounded-[24px] border border-white/10 bg-[#0d1322] p-4">
-                <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Fast Select</div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {eligibleCandidates.length === 0 ? (
-                    <div className="text-sm text-slate-500">즉시 배정 가능한 후보가 없습니다.</div>
-                  ) : (
-                    eligibleCandidates.map((item) => (
-                      <button
-                        key={String(item.walletAddress || item._id)}
-                        type="button"
-                        onClick={() => setManualWalletAddress(normalizeString(item.walletAddress))}
-                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-cyan-300/40 hover:bg-cyan-400/10"
-                      >
-                        {item.nickname || formatShortWallet(item.walletAddress)}
-                      </button>
-                    ))
-                  )}
+                <div className="rounded-[24px] border border-white/10 bg-[#0d1322] p-4">
+                  <div className="text-sm font-semibold text-white">Seller Wallet 변경</div>
+                  <div className="mt-3 space-y-3">
+                    <input
+                      value={manualSellerWalletAddress}
+                      onChange={(event) => setManualSellerWalletAddress(event.target.value)}
+                      placeholder="0x... seller smart account 주소 입력"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-[#111a2d] px-4 text-sm text-white outline-none transition focus:border-emerald-400/50 focus:ring-4 focus:ring-emerald-500/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void runAssignSellerWallet()}
+                      disabled={!isSuperadmin || runningAction !== ""}
+                      className="h-12 w-full rounded-2xl bg-emerald-300 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                    >
+                      {runningAction === `seller:${normalizeString(manualSellerWalletAddress)}` ? "변경중..." : "판매자 지갑으로 변경"}
+                    </button>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {eligibleCandidates.length === 0 ? (
+                      <div className="text-sm text-slate-500">즉시 배정 가능한 후보가 없습니다.</div>
+                    ) : (
+                      eligibleCandidates.map((item) => (
+                        <button
+                          key={`seller-${String(item.walletAddress || item._id)}`}
+                          type="button"
+                          onClick={() => setManualSellerWalletAddress(normalizeString(item.walletAddress))}
+                          className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-emerald-300/40 hover:bg-emerald-400/10"
+                        >
+                          {item.nickname || formatShortWallet(item.walletAddress)}
+                        </button>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -499,7 +789,7 @@ export default function SuperadminStorePaymentWalletsPage() {
                 <h3 className="mt-2 text-xl font-semibold text-white">검증된 후보 smart account</h3>
               </div>
               <div className="text-xs text-slate-400">
-                current {currentSettlementCandidate ? "matched" : "unmatched"}
+                settlement {currentSettlementCandidate ? "matched" : "unmatched"} / seller {currentSellerCandidate ? "matched" : "unmatched"}
               </div>
             </div>
 
@@ -531,7 +821,12 @@ export default function SuperadminStorePaymentWalletsPage() {
                       <div className="flex flex-wrap gap-2">
                         {item.isCurrentSettlementWallet ? (
                           <span className="rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold text-cyan-200">
-                            current
+                            current settlement
+                          </span>
+                        ) : null}
+                        {item.isCurrentSellerWallet ? (
+                          <span className="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold text-emerald-200">
+                            current seller
                           </span>
                         ) : null}
                         {item.assignmentEligible ? (
@@ -588,14 +883,24 @@ export default function SuperadminStorePaymentWalletsPage() {
                       <div className="text-xs text-slate-500">
                         created {formatDateTime(item.createdAt)}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => void runAssignWallet(item.walletAddress || "")}
-                        disabled={!item.assignmentEligible || runningAction !== ""}
-                        className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-                      >
-                        {runningAction === item.walletAddress ? "변경중..." : "이 지갑으로 배정"}
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void runAssignWallet(item.walletAddress || "")}
+                          disabled={!item.assignmentEligible || runningAction !== ""}
+                          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                        >
+                          {runningAction === `settlement:${item.walletAddress}` ? "변경중..." : "결제용 지갑으로 배정"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void runAssignSellerWallet(item.walletAddress || "")}
+                          disabled={!item.assignmentEligible || runningAction !== ""}
+                          className="rounded-full bg-emerald-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                        >
+                          {runningAction === `seller:${item.walletAddress}` ? "변경중..." : "판매자 지갑으로 배정"}
+                        </button>
+                      </div>
                     </div>
                   </article>
                 ))
@@ -605,7 +910,7 @@ export default function SuperadminStorePaymentWalletsPage() {
             </>
           ) : (
             <section className="rounded-[28px] border border-dashed border-white/10 bg-[#0d1322] p-6 text-sm text-slate-400">
-              조회할 가맹점의 `storecode`를 입력하면 settlement wallet 상태와 재배정 가능한 smart account 후보가 표시됩니다.
+              가맹점 목록에서 먼저 선택하거나 `storecode`를 직접 입력하면 settlement / seller wallet 상태와 재배정 가능한 smart account 후보가 표시됩니다.
             </section>
           )}
         </>
