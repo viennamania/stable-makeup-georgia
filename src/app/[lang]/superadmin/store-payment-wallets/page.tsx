@@ -36,6 +36,8 @@ type LookupResult = {
     sellerWalletAddress?: string | null;
     privateSellerWalletAddress?: string | null;
     settlementWalletAddress?: string | null;
+    settlementFeeWalletAddress?: string | null;
+    settlementFeePercent?: number | null;
   };
   walletCandidates: WalletCandidate[];
   totalCandidateCount: number;
@@ -58,12 +60,16 @@ const CREATE_ROUTE = "/api/superadmin/store-payment-wallets/create";
 const UPDATE_ROUTE = "/api/superadmin/store-payment-wallets/update";
 const LIST_ROUTE = "/api/superadmin/store-payment-wallets/list";
 const UPDATE_SELLER_ROUTE = "/api/superadmin/store-payment-wallets/update-seller";
+const UPDATE_SETTLEMENT_FEE_WALLET_ROUTE = "/api/superadmin/store-payment-wallets/update-settlement-fee-wallet";
+const UPDATE_SETTLEMENT_FEE_PERCENT_ROUTE = "/api/superadmin/store-payment-wallets/update-settlement-fee-percent";
 
 const LOOKUP_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:lookup:v1";
 const CREATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:create:v1";
 const UPDATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update:v1";
 const LIST_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:list:v1";
 const UPDATE_SELLER_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update-seller:v1";
+const UPDATE_SETTLEMENT_FEE_WALLET_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update-settlement-fee-wallet:v1";
+const UPDATE_SETTLEMENT_FEE_PERCENT_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update-settlement-fee-percent:v1";
 const STORE_LIST_PAGE_SIZE = 60;
 const wallets = [
   inAppWallet({
@@ -78,6 +84,21 @@ const normalizeString = (value: unknown): string => {
     return "";
   }
   return value.trim();
+};
+
+const normalizeFeePercentInput = (value: string) => {
+  const sanitized = value.replace(/[^\d.]/g, "");
+  const [integerPart = "", ...decimalParts] = sanitized.split(".");
+  const decimalPart = decimalParts.join("").slice(0, 2);
+  return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+};
+
+const formatPercent = (value: unknown) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return "-";
+  }
+  return `${parsed.toLocaleString("ko-KR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
 };
 
 const formatWallet = (value: unknown) => {
@@ -122,6 +143,8 @@ export default function SuperadminStorePaymentWalletsPage() {
   const [resolvedStorecode, setResolvedStorecode] = useState("");
   const [manualWalletAddress, setManualWalletAddress] = useState("");
   const [manualSellerWalletAddress, setManualSellerWalletAddress] = useState("");
+  const [manualSettlementFeeWalletAddress, setManualSettlementFeeWalletAddress] = useState("");
+  const [settlementFeePercentInput, setSettlementFeePercentInput] = useState("");
   const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
   const [storeList, setStoreList] = useState<StoreListItem[]>([]);
   const [storeListTotalCount, setStoreListTotalCount] = useState(0);
@@ -199,6 +222,18 @@ export default function SuperadminStorePaymentWalletsPage() {
     }
     void fetchStoreList({ searchRaw: "", page: 1 });
   }, [fetchStoreList, showControls]);
+
+  useEffect(() => {
+    if (!lookupResult?.store) {
+      setManualSettlementFeeWalletAddress("");
+      setSettlementFeePercentInput("");
+      return;
+    }
+
+    setManualSettlementFeeWalletAddress(normalizeString(lookupResult.store.settlementFeeWalletAddress));
+    const percent = Number(lookupResult.store.settlementFeePercent);
+    setSettlementFeePercentInput(Number.isFinite(percent) && percent > 0 ? String(percent) : "");
+  }, [lookupResult]);
 
   const fetchStoreOverview = async (storecodeRaw?: string) => {
     const storecode = normalizeString(storecodeRaw || storecodeInput).toLowerCase();
@@ -378,6 +413,104 @@ export default function SuperadminStorePaymentWalletsPage() {
       await fetchStoreList({ searchRaw: storeSearchInput, page: storeListPage });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "판매자 지갑 변경에 실패했습니다.");
+    } finally {
+      setRunningAction("");
+    }
+  };
+
+  const runUpdateSettlementFeeWallet = async () => {
+    if (!activeAccount) {
+      toast.error("지갑 연결이 필요합니다.");
+      return;
+    }
+    if (!resolvedStorecode) {
+      toast.error("먼저 가맹점을 선택하세요.");
+      return;
+    }
+
+    const settlementFeeWalletAddress = normalizeString(manualSettlementFeeWalletAddress);
+    if (!settlementFeeWalletAddress) {
+      toast.error("정산 수수료 지갑주소를 입력하세요.");
+      return;
+    }
+    if (!confirm(`${resolvedStorecode} 정산 수수료 지갑을 ${settlementFeeWalletAddress} 로 변경하시겠습니까?`)) {
+      return;
+    }
+
+    setRunningAction(`settlement-fee-wallet:${settlementFeeWalletAddress}`);
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: UPDATE_SETTLEMENT_FEE_WALLET_ROUTE,
+        signingPrefix: UPDATE_SETTLEMENT_FEE_WALLET_SIGNING_PREFIX,
+        requesterStorecode: "superadmin",
+        body: {
+          storecode: resolvedStorecode,
+          settlementFeeWalletAddress,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "정산 수수료 지갑 변경에 실패했습니다.");
+      }
+
+      setLastActionSummary(`최근 작업: ${settlementFeeWalletAddress} 로 settlement fee wallet 변경`);
+      toast.success("정산 수수료 지갑주소를 변경했습니다.");
+      await fetchStoreOverview(resolvedStorecode);
+      await fetchStoreList({ searchRaw: storeSearchInput, page: storeListPage });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "정산 수수료 지갑 변경에 실패했습니다.");
+    } finally {
+      setRunningAction("");
+    }
+  };
+
+  const runUpdateSettlementFeePercent = async () => {
+    if (!activeAccount) {
+      toast.error("지갑 연결이 필요합니다.");
+      return;
+    }
+    if (!resolvedStorecode) {
+      toast.error("먼저 가맹점을 선택하세요.");
+      return;
+    }
+
+    const settlementFeePercent = Number(settlementFeePercentInput);
+    if (!Number.isFinite(settlementFeePercent)) {
+      toast.error("정산 수수료율을 숫자로 입력하세요.");
+      return;
+    }
+    if (settlementFeePercent < 0.01 || settlementFeePercent > 2.0) {
+      toast.error("정산 수수료율은 0.01 ~ 2.00 범위만 가능합니다.");
+      return;
+    }
+    if (!confirm(`${resolvedStorecode} 정산 수수료율을 ${settlementFeePercent}% 로 변경하시겠습니까?`)) {
+      return;
+    }
+
+    setRunningAction(`settlement-fee-percent:${settlementFeePercent}`);
+    try {
+      const response = await postAdminSignedJson({
+        account: activeAccount,
+        route: UPDATE_SETTLEMENT_FEE_PERCENT_ROUTE,
+        signingPrefix: UPDATE_SETTLEMENT_FEE_PERCENT_SIGNING_PREFIX,
+        requesterStorecode: "superadmin",
+        body: {
+          storecode: resolvedStorecode,
+          settlementFeePercent,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "정산 수수료율 변경에 실패했습니다.");
+      }
+
+      setLastActionSummary(`최근 작업: settlement fee percent ${settlementFeePercent}% 로 변경`);
+      toast.success("정산 수수료율을 변경했습니다.");
+      await fetchStoreOverview(resolvedStorecode);
+      await fetchStoreList({ searchRaw: storeSearchInput, page: storeListPage });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "정산 수수료율 변경에 실패했습니다.");
     } finally {
       setRunningAction("");
     }
@@ -765,6 +898,21 @@ export default function SuperadminStorePaymentWalletsPage() {
                   </div>
                 </div>
 
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Settlement Fee Wallet</div>
+                    <div className="mt-2 break-all text-sm text-slate-200">
+                      {formatWallet(lookupResult.store.settlementFeeWalletAddress)}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Settlement Fee Percent</div>
+                    <div className="mt-2 break-all text-sm text-slate-200">
+                      {formatPercent(lookupResult.store.settlementFeePercent)}
+                    </div>
+                  </div>
+                </div>
+
                 {currentSettlementCandidate ? (
                   <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4 text-sm text-cyan-100">
                     현재 settlement wallet은 후보 목록과 매칭됩니다.
@@ -791,9 +939,9 @@ export default function SuperadminStorePaymentWalletsPage() {
 
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
               <div className="text-[11px] uppercase tracking-[0.26em] text-slate-500">Manual Rebind</div>
-              <h3 className="mt-2 text-xl font-semibold text-white">수동 settlement / seller 변경</h3>
+              <h3 className="mt-2 text-xl font-semibold text-white">수동 settlement / seller / fee 변경</h3>
               <p className="mt-2 text-sm leading-6 text-slate-400">
-                같은 storecode에 등록된 verified server wallet user의 smart account 주소만 통과합니다.
+                settlement / seller 는 active thirdweb server wallet을, settlement fee wallet은 verified admin wallet을 사용합니다.
               </p>
 
               <div className="mt-5 space-y-4">
@@ -866,6 +1014,57 @@ export default function SuperadminStorePaymentWalletsPage() {
                         </button>
                       ))
                     )}
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-white/10 bg-[#0d1322] p-4">
+                  <div className="text-sm font-semibold text-white">Settlement Fee Wallet 변경</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-400">
+                    검증된 `storecode=admin` 관리자 지갑 주소만 저장할 수 있습니다.
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    <input
+                      value={manualSettlementFeeWalletAddress}
+                      onChange={(event) => setManualSettlementFeeWalletAddress(event.target.value)}
+                      placeholder="0x... 정산 수수료 수취 admin wallet 주소 입력"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-[#111a2d] px-4 text-sm text-white outline-none transition focus:border-violet-400/50 focus:ring-4 focus:ring-violet-500/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void runUpdateSettlementFeeWallet()}
+                      disabled={!isSuperadmin || runningAction !== ""}
+                      className="h-12 w-full rounded-2xl bg-violet-300 text-sm font-semibold text-slate-950 transition hover:bg-violet-200 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                    >
+                      {runningAction === `settlement-fee-wallet:${normalizeString(manualSettlementFeeWalletAddress)}`
+                        ? "변경중..."
+                        : "정산 수수료 지갑 저장"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-white/10 bg-[#0d1322] p-4">
+                  <div className="text-sm font-semibold text-white">Settlement Fee Percent 변경</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-400">
+                    허용 범위는 `0.01% ~ 2.00%` 입니다.
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    <input
+                      value={settlementFeePercentInput}
+                      onChange={(event) => setSettlementFeePercentInput(normalizeFeePercentInput(event.target.value))}
+                      placeholder="0.30"
+                      inputMode="decimal"
+                      className="h-12 w-full rounded-2xl border border-white/10 bg-[#111a2d] px-4 text-sm text-white outline-none transition focus:border-violet-400/50 focus:ring-4 focus:ring-violet-500/10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void runUpdateSettlementFeePercent()}
+                      disabled={!isSuperadmin || runningAction !== ""}
+                      className="h-12 w-full rounded-2xl bg-violet-200 text-sm font-semibold text-slate-950 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                    >
+                      {runningAction === `settlement-fee-percent:${Number(settlementFeePercentInput)}`
+                        ? "변경중..."
+                        : "정산 수수료율 저장"}
+                    </button>
                   </div>
                 </div>
               </div>

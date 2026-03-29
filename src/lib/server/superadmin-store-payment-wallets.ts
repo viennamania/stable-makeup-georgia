@@ -32,6 +32,8 @@ type SerializableStore = {
   sellerWalletAddress: string | null;
   privateSellerWalletAddress: string | null;
   settlementWalletAddress: string | null;
+  settlementFeeWalletAddress: string | null;
+  settlementFeePercent: number;
 };
 
 type SerializableServerWalletUser = {
@@ -114,6 +116,8 @@ const serializeStore = (store: any): SerializableStore => ({
   sellerWalletAddress: normalizeWalletAddress(store?.sellerWalletAddress),
   privateSellerWalletAddress: normalizeWalletAddress(store?.privateSellerWalletAddress),
   settlementWalletAddress: normalizeWalletAddress(store?.settlementWalletAddress),
+  settlementFeeWalletAddress: normalizeWalletAddress(store?.settlementFeeWalletAddress),
+  settlementFeePercent: normalizeNumber(store?.settlementFeePercent),
 });
 
 const serializeStoreListItem = (store: any): StorePaymentWalletListItem => ({
