@@ -88,9 +88,15 @@ const normalizeString = (value: unknown): string => {
 
 const normalizeFeePercentInput = (value: string) => {
   const sanitized = value.replace(/[^\d.]/g, "");
+  if (!sanitized) {
+    return "";
+  }
   const [integerPart = "", ...decimalParts] = sanitized.split(".");
   const decimalPart = decimalParts.join("").slice(0, 2);
-  return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+  if (!sanitized.includes(".")) {
+    return integerPart;
+  }
+  return `${integerPart || "0"}.${decimalPart}`;
 };
 
 const formatPercent = (value: unknown) => {
