@@ -1659,6 +1659,163 @@ export async function getAllStores(
   }
 }
 
+export async function getAdminStoreList(
+  {
+    limit,
+    page,
+    search = "",
+    agentcode = "",
+    sortBy = "",
+  }: {
+    limit: number;
+    page: number;
+    search?: string;
+    agentcode?: string;
+    sortBy?: string;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("stores");
+  await ensureStoreReadIndexes(collection);
+
+  const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 200);
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeSearch = String(search || "").trim();
+  const safeAgentcode = String(agentcode || "").trim();
+
+  const query: any = {
+    storecode: { $nin: ["admin", "agent"] },
+  };
+
+  if (safeSearch) {
+    const searchPattern = escapeRegexLiteral(safeSearch);
+    query.$or = [
+      { storecode: { $regex: searchPattern, $options: "i" } },
+      { storeName: { $regex: searchPattern, $options: "i" } },
+      { companyName: { $regex: searchPattern, $options: "i" } },
+    ];
+  }
+
+  if (safeAgentcode) {
+    const agentcodePattern = escapeRegexLiteral(safeAgentcode);
+    query.agentcode = { $regex: agentcodePattern, $options: "i" };
+  }
+
+  const sortStage =
+    sortBy === "storeNameDesc"
+      ? { storeName: -1, createdAt: -1 }
+      : { totalUsdtAmount: -1, createdAt: -1 };
+  const aggregateOptions =
+    sortBy === "storeNameDesc"
+      ? { collation: { locale: "ko", strength: 1 } }
+      : {};
+
+  try {
+    const [facet] = await collection.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: "agents",
+          localField: "agentcode",
+          foreignField: "agentcode",
+          as: "agentInfo",
+        },
+      },
+      {
+        $unwind: { path: "$agentInfo", preserveNullAndEmptyArrays: true },
+      },
+      {
+        $facet: {
+          stores: [
+            {
+              $project: {
+                createdAt: 1,
+                storecode: 1,
+                storeName: 1,
+                companyName: 1,
+                storeLogo: 1,
+                storeDescription: 1,
+                agentcode: 1,
+                agentName: { $ifNull: ["$agentInfo.agentName", null] },
+                agentLogo: { $ifNull: ["$agentInfo.agentLogo", null] },
+                totalBuyerCount: 1,
+                totalPaymentConfirmedCount: 1,
+                totalUsdtAmount: 1,
+                totalSettlementCount: 1,
+                totalSettlementAmountKRW: 1,
+                escrowAmountUSDT: 1,
+                maxPaymentAmountKRW: 1,
+                paymentUrl: 1,
+                viewOnAndOff: 1,
+                liveOnAndOff: 1,
+                adminWalletAddress: 1,
+                settlementWalletAddress: 1,
+                settlementFeePercent: 1,
+              },
+            },
+            { $sort: sortStage },
+            { $skip: (safePage - 1) * safeLimit },
+            { $limit: safeLimit },
+          ],
+          totalCount: [
+            { $count: "value" },
+          ],
+          summary: [
+            {
+              $group: {
+                _id: null,
+                visibleCount: {
+                  $sum: {
+                    $cond: [
+                      { $ne: ["$viewOnAndOff", false] },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                withPaymentUrlCount: {
+                  $sum: {
+                    $cond: [
+                      {
+                        $gt: [
+                          { $strLenCP: { $ifNull: ["$paymentUrl", ""] } },
+                          0,
+                        ],
+                      },
+                      1,
+                      0,
+                    ],
+                  },
+                },
+                totalBuyerCount: { $sum: { $ifNull: ["$totalBuyerCount", 0] } },
+                totalUsdtAmount: { $sum: { $ifNull: ["$totalUsdtAmount", 0] } },
+                totalSettlementAmountKRW: { $sum: { $ifNull: ["$totalSettlementAmountKRW", 0] } },
+              },
+            },
+          ],
+        },
+      },
+    ], aggregateOptions).toArray();
+
+    const summary = facet?.summary?.[0] || {};
+
+    return {
+      totalCount: Number(facet?.totalCount?.[0]?.value || 0),
+      stores: Array.isArray(facet?.stores) ? facet.stores : [],
+      summary: {
+        visibleCount: Number(summary.visibleCount || 0),
+        withPaymentUrlCount: Number(summary.withPaymentUrlCount || 0),
+        totalBuyerCount: Number(summary.totalBuyerCount || 0),
+        totalUsdtAmount: Number(summary.totalUsdtAmount || 0),
+        totalSettlementAmountKRW: Number(summary.totalSettlementAmountKRW || 0),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching admin store list:", error);
+    throw new Error("Failed to fetch admin store list");
+  }
+}
+
 const escapeRegexLiteral = (value: string) => {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };

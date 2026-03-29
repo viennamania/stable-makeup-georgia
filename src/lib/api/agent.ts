@@ -512,6 +512,57 @@ export async function getAllAgents(
   };
 }
 
+export async function getAgentDirectory(
+  {
+    limit,
+    page,
+    search = "",
+  }: {
+    limit: number;
+    page: number;
+    search?: string;
+  }
+): Promise<any> {
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("agents");
+
+  const safeLimit = Math.min(Math.max(1, Number(limit) || 1), 300);
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeSearch = String(search || "").trim();
+
+  const query: any = {
+    agentcode: { $ne: "head" },
+  };
+
+  if (safeSearch) {
+    const searchPattern = safeSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    query.$or = [
+      { agentcode: { $regex: searchPattern, $options: "i" } },
+      { agentName: { $regex: searchPattern, $options: "i" } },
+    ];
+  }
+
+  const [totalCount, agents] = await Promise.all([
+    collection.countDocuments(query),
+    collection.find(query)
+      .project({
+        agentcode: 1,
+        agentName: 1,
+        agentLogo: 1,
+      })
+      .sort({ agentName: 1, agentcode: 1 })
+      .collation({ locale: "ko", strength: 1 })
+      .skip((safePage - 1) * safeLimit)
+      .limit(safeLimit)
+      .toArray(),
+  ]);
+
+  return {
+    totalCount,
+    agents,
+  };
+}
+
 
 
 // updatePayactionKeys
@@ -891,4 +942,3 @@ export async function getAllStoresForBalanceInquiry(
     throw new Error('Failed to fetch stores');
   }
 }
-
