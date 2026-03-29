@@ -16,7 +16,7 @@ const normalizeString = (value: unknown): string => {
 };
 
 const normalizePositiveInt = (value: unknown, fallback: number, max: number) => {
-  const parsed = Number.parseInt(normalizeString(value), 10);
+  const parsed = Number.parseInt(String(value ?? "").trim(), 10);
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return fallback;
   }

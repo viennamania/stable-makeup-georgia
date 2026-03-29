@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useParams } from "next/navigation";
-import { useActiveAccount } from "thirdweb/react";
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
+import { inAppWallet } from "thirdweb/wallets";
 
+import { client } from "@/app/client";
 import { postAdminSignedJson } from "@/lib/client/admin-signed-action";
 import { useSuperadminSession } from "@/lib/client/use-superadmin-session";
 
@@ -62,6 +64,13 @@ const CREATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:c
 const UPDATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update:v1";
 const LIST_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:list:v1";
 const UPDATE_SELLER_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update-seller:v1";
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: ["email", "google"],
+    },
+  }),
+];
 
 const normalizeString = (value: unknown): string => {
   if (typeof value !== "string") {
@@ -438,7 +447,46 @@ export default function SuperadminStorePaymentWalletsPage() {
 
       {!activeAccount ? (
         <section className="rounded-[26px] border border-amber-400/20 bg-amber-500/10 px-5 py-5 text-sm text-amber-100">
-          지갑을 먼저 연결해야 superadmin 기능을 사용할 수 있습니다.
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="font-medium text-amber-50">
+                지갑을 먼저 연결해야 superadmin 기능을 사용할 수 있습니다.
+              </div>
+              <div className="mt-2 text-sm leading-6 text-amber-100/80">
+                연결 후 현재 지갑의 `role` 또는 `rold`가 `superadmin`인지 바로 확인합니다.
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              <ConnectButton
+                client={client}
+                wallets={wallets}
+                showAllWallets={false}
+                theme="dark"
+                connectButton={{
+                  label: "지갑 연결",
+                  style: {
+                    background:
+                      "linear-gradient(135deg, rgba(34,211,238,0.92), rgba(14,165,233,0.92))",
+                    color: "#020617",
+                    borderRadius: "999px",
+                    padding: "0 18px",
+                    height: "44px",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    boxShadow: "0 14px 40px -18px rgba(34,211,238,0.8)",
+                  },
+                }}
+                connectModal={{
+                  size: "wide",
+                  title: "Superadmin Wallet Connect",
+                  titleIcon: "https://www.stable.makeup/logo.png",
+                  showThirdwebBranding: false,
+                }}
+                locale="ko_KR"
+              />
+            </div>
+          </div>
         </section>
       ) : null}
 
