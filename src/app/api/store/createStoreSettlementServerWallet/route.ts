@@ -12,7 +12,10 @@ import {
 
 import { verifyStoreSettingsAdminGuard } from "@/lib/server/store-settings-admin-guard";
 import { syncThirdwebSellerUsdtWebhooks } from "@/lib/server/thirdweb-insight-webhook-sync";
-import { resolveThirdwebServerWalletByAddress } from "@/lib/server/thirdweb-server-wallet-cache";
+import {
+  primeThirdwebServerWalletCache,
+  resolveThirdwebServerWalletByAddress,
+} from "@/lib/server/thirdweb-server-wallet-cache";
 import { getRequestIp, normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 export const runtime = "nodejs";
@@ -41,45 +44,6 @@ const serializeUser = (user: any) => ({
   walletAddress: normalizeWalletAddress(user?.walletAddress),
   signerAddress: normalizeWalletAddress(user?.signerAddress),
 });
-
-const findServerWalletByLabel = async ({
-  client,
-  label,
-}: {
-  client: ReturnType<typeof createThirdwebClient>;
-  label: string;
-}) => {
-  let page = 1;
-
-  while (true) {
-    const result = await Engine.getServerWallets({
-      client,
-      page,
-      limit: 500,
-    });
-
-    const accounts = Array.isArray(result?.accounts) ? result.accounts : [];
-    const matched = accounts.find(
-      (account) => normalizeString(account?.label) === label,
-    );
-
-    if (matched) {
-      return matched;
-    }
-
-    const pagination = result?.pagination;
-    const currentPage = Number(pagination?.page || page);
-    const limit = Number(pagination?.limit || 0);
-    const totalCount = Number(pagination?.totalCount || 0);
-    const hasMore = Boolean(limit > 0 && totalCount > currentPage * limit);
-
-    if (!hasMore || accounts.length === 0) {
-      return null;
-    }
-
-    page = currentPage + 1;
-  }
-};
 
 const syncThirdwebWebhookState = async (request: NextRequest) => {
   try {
@@ -231,37 +195,30 @@ export async function POST(request: NextRequest) {
     });
 
     const label = buildSettlementWalletLabel(storecode);
-    let engineWallet = await findServerWalletByLabel({ client, label });
-    let engineWalletCreated = false;
-
-    if (!engineWallet) {
-      engineWallet = await Engine.createServerWallet({
-        client,
-        label,
-      });
-      engineWalletCreated = true;
-    }
+    const engineWallet = await Engine.createServerWallet({
+      client,
+      label,
+    });
+    const engineWalletCreated = true;
 
     let signerAddress = normalizeWalletAddress(engineWallet?.address);
     let smartAccountAddress = normalizeWalletAddress(engineWallet?.smartAccountAddress);
-
-    if (!smartAccountAddress) {
-      const refreshedWallet = await findServerWalletByLabel({ client, label });
-      signerAddress = normalizeWalletAddress(refreshedWallet?.address || signerAddress);
-      smartAccountAddress = normalizeWalletAddress(
-        refreshedWallet?.smartAccountAddress,
-      );
-    }
 
     if (!signerAddress || !smartAccountAddress) {
       return NextResponse.json(
         {
           result: null,
-          error: "Failed to resolve created Thirdweb server wallet addresses",
+          error: "Thirdweb server wallet was created without a smart account address. Retry the request.",
         },
         { status: 500 },
       );
     }
+
+    await primeThirdwebServerWalletCache({
+      signerAddress,
+      smartAccountAddress,
+      label,
+    });
 
     const user = await upsertStoreServerWalletUser({
       storecode,

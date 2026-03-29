@@ -1207,7 +1207,7 @@ export default function BankInfoPage() {
                 <th className="px-3 py-3 text-left w-36 text-amber-700">실계좌번호</th>
                 <th className="px-3 py-3 text-left w-24">은행명</th>
                 <th className="px-3 py-3 text-left w-28">예금주</th>
-                <th className="px-3 py-3 text-left w-24">실명정보</th>
+                <th className="px-3 py-3 text-left w-36">실명정보</th>
                 <th className="px-3 py-3 text-left w-36">사용중인 계좌번호</th>
                 <th className="px-3 py-3 text-left w-32">별칭</th>
                 <th className="px-3 py-3 text-left w-40">생성/수정일</th>
@@ -1303,23 +1303,30 @@ export default function BankInfoPage() {
                           className="w-full min-w-0 p-2 border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-400 focus:border-zinc-400"
                         />
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => openRealNamePanel(info)}
-                          className="text-left text-zinc-900 hover:underline underline-offset-4"
-                        >
+                        <span className="text-zinc-900">
                           {info?.accountHolder || '-'}
-                        </button>
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-3 align-top overflow-hidden">
-                      {info?.realName && info?.residentNumber && info?.phoneNumber && info?.idCardImageUrl ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                          verified
-                        </span>
-                      ) : (
-                        <span className="text-xs text-zinc-400">-</span>
-                      )}
+                      <div className="flex flex-col items-start gap-2">
+                        {info?.realName && info?.residentNumber && info?.phoneNumber && info?.idCardImageUrl ? (
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                            verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
+                            미등록
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => openRealNamePanel(info)}
+                          className="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 transition hover:bg-amber-100"
+                        >
+                          KYC 정보
+                        </button>
+                      </div>
                     </td>
                     <td className="px-3 py-3 align-top overflow-hidden">
                       {isEditing ? (

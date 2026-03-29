@@ -66,7 +66,10 @@ import {
 import {
   BANKTRANSFER_ABLY_CHANNEL,
   BANKTRANSFER_ABLY_EVENT_NAME,
+  BUYORDER_STATUS_ABLY_CHANNEL,
+  BUYORDER_STATUS_ABLY_EVENT_NAME,
   type BankTransferDashboardEvent,
+  type BuyOrderStatusRealtimeEvent,
 } from "@lib/ably/constants";
 
 
@@ -1303,6 +1306,43 @@ export default function Index({ params }: any) {
 
     }, [fetchBuyOrders, normalizedStorecode]);
 
+    useEffect(() => {
+      if (!normalizedStorecode) {
+        return;
+      }
+
+      const realtime = new Ably.Realtime({
+        authUrl: `/api/realtime/ably-token?public=1&stream=buyorder&clientId=${clearanceOrderRealtimeClientIdRef.current}`,
+      });
+      const channel = realtime.channels.get(BUYORDER_STATUS_ABLY_CHANNEL);
+
+      const onMessage = (message: Ably.Message) => {
+        const event = (message.data || {}) as BuyOrderStatusRealtimeEvent;
+        const eventId = String(event.eventId || message.id || "").trim();
+
+        if (eventId && clearanceOrderRealtimeLastEventIdRef.current === eventId) {
+          return;
+        }
+
+        if (eventId) {
+          clearanceOrderRealtimeLastEventIdRef.current = eventId;
+        }
+
+        if (String(event.store?.code || "").trim() !== normalizedStorecode) {
+          return;
+        }
+
+        fetchBuyOrders();
+      };
+
+      void channel.subscribe(BUYORDER_STATUS_ABLY_EVENT_NAME, onMessage);
+
+      return () => {
+        channel.unsubscribe(BUYORDER_STATUS_ABLY_EVENT_NAME, onMessage);
+        realtime.close();
+      };
+    }, [fetchBuyOrders, normalizedStorecode]);
+
 
 
 
@@ -2298,6 +2338,10 @@ export default function Index({ params }: any) {
     const withdrawalRealtimeClientIdRef = useRef(
       `clearance-management-${Math.random().toString(36).slice(2, 10)}`,
     );
+    const clearanceOrderRealtimeClientIdRef = useRef(
+      `clearance-orders-${Math.random().toString(36).slice(2, 10)}`,
+    );
+    const clearanceOrderRealtimeLastEventIdRef = useRef("");
     
     const fetchStore = useCallback(async () => {
         if (fetchingStoreRef.current || !normalizedStorecode) {

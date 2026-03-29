@@ -4603,19 +4603,6 @@ export default function Index({ params }: any) {
                       {BANKTRANSFER_ABLY_EVENT_NAME}
                     </span>
                   </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
-                      필터 {String(store?.storeName || params.center || "-").trim()}
-                    </span>
-                    <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
-                      최근 {latestWithdrawalRealtimeAt ? formatRealtimeRelative(latestWithdrawalRealtimeAt, withdrawalRealtimeNowMs) : "-"}
-                    </span>
-                    {withdrawalRealtimeLastSyncedAt && (
-                      <span className="rounded-full border border-zinc-200 bg-white px-2 py-1">
-                        동기화 {formatRealtimeRelative(withdrawalRealtimeLastSyncedAt, withdrawalRealtimeNowMs)}
-                      </span>
-                    )}
-                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 xl:justify-end">

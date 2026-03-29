@@ -132,7 +132,9 @@ const isRecurringSweepProcess = (pid) => {
       .toString()
       .trim();
     if (!command) return false;
-    return command.includes("recurring-sweep-usdt.mjs");
+    const firstToken = command.split(/\s+/)[0] || "";
+    const isNodeProcess = /(^|\/)node($|[^/])/.test(firstToken);
+    return isNodeProcess && command.includes("recurring-sweep-usdt.mjs");
   } catch {
     return false;
   }
@@ -154,7 +156,9 @@ const hasOtherRecurringSweepProcess = (selfPid = process.pid) => {
       const pid = Number(trimmed.slice(0, firstSpace).trim());
       const command = trimmed.slice(firstSpace + 1).trim();
       if (!Number.isFinite(pid) || pid <= 0 || pid === selfPid) continue;
-      if (command.includes("recurring-sweep-usdt.mjs")) return true;
+      const firstToken = command.split(/\s+/)[0] || "";
+      const isNodeProcess = /(^|\/)node($|[^/])/.test(firstToken);
+      if (isNodeProcess && command.includes("recurring-sweep-usdt.mjs")) return true;
     }
   } catch {}
   return false;

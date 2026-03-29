@@ -5,6 +5,7 @@ import {
   Engine,
 } from "thirdweb";
 
+import { primeThirdwebServerWalletCache } from "@/lib/server/thirdweb-server-wallet-cache";
 import { normalizeWalletAddress } from "@/lib/server/user-read-security";
 
 export const BUY_ORDER_ESCROW_WALLET_MODE = {
@@ -38,45 +39,6 @@ const normalizeString = (value: unknown): string => {
     return "";
   }
   return value.trim();
-};
-
-const findServerWalletByLabel = async ({
-  client,
-  label,
-}: {
-  client: ReturnType<typeof createThirdwebClient>;
-  label: string;
-}) => {
-  let page = 1;
-
-  while (true) {
-    const result = await Engine.getServerWallets({
-      client,
-      page,
-      limit: 500,
-    });
-
-    const accounts = Array.isArray(result?.accounts) ? result.accounts : [];
-    const matched = accounts.find(
-      (account) => normalizeString(account?.label) === label,
-    );
-
-    if (matched) {
-      return matched;
-    }
-
-    const pagination = result?.pagination;
-    const currentPage = Number(pagination?.page || page);
-    const limit = Number(pagination?.limit || 0);
-    const totalCount = Number(pagination?.totalCount || 0);
-    const hasMore = Boolean(limit > 0 && totalCount > currentPage * limit);
-
-    if (!hasMore || accounts.length === 0) {
-      return null;
-    }
-
-    page = currentPage + 1;
-  }
 };
 
 const getThirdwebSecretKey = () => {
@@ -162,17 +124,15 @@ export const createBuyOrderEscrowWallet = async ({
   let signerAddress = normalizeWalletAddress(engineWallet?.address);
   let smartAccountAddress = normalizeWalletAddress(engineWallet?.smartAccountAddress);
 
-  if (!smartAccountAddress) {
-    const refreshedWallet = await findServerWalletByLabel({ client, label });
-    signerAddress = normalizeWalletAddress(refreshedWallet?.address || signerAddress);
-    smartAccountAddress = normalizeWalletAddress(
-      refreshedWallet?.smartAccountAddress,
-    );
+  if (!signerAddress || !smartAccountAddress) {
+    throw new Error("Thirdweb server wallet was created without a smart account address. Retry the request.");
   }
 
-  if (!signerAddress || !smartAccountAddress) {
-    throw new Error("Failed to resolve Thirdweb server wallet addresses");
-  }
+  await primeThirdwebServerWalletCache({
+    signerAddress,
+    smartAccountAddress,
+    label,
+  });
 
   return {
     mode: BUY_ORDER_ESCROW_WALLET_MODE.SERVER_WALLET,

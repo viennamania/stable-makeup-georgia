@@ -17,6 +17,12 @@ type ResolvedThirdwebServerWallet = {
   source: "cache" | "users" | "engine";
 };
 
+type PrimeThirdwebServerWalletCacheInput = {
+  signerAddress: unknown;
+  smartAccountAddress: unknown;
+  label?: unknown;
+};
+
 const normalizeString = (value: unknown): string => {
   if (typeof value !== "string") {
     return "";
@@ -225,6 +231,29 @@ const writeThirdwebServerWalletToCache = async ({
       { upsert: true },
     ),
   ]);
+};
+
+export const primeThirdwebServerWalletCache = async ({
+  signerAddress,
+  smartAccountAddress,
+  label,
+}: PrimeThirdwebServerWalletCacheInput): Promise<ResolvedThirdwebServerWallet | null> => {
+  const normalizedSignerAddress = normalizeWalletAddress(signerAddress);
+  const normalizedSmartAccountAddress = normalizeWalletAddress(smartAccountAddress);
+
+  if (!normalizedSignerAddress || !normalizedSmartAccountAddress) {
+    return null;
+  }
+
+  const resolved: ResolvedThirdwebServerWallet = {
+    signerAddress: normalizedSignerAddress,
+    smartAccountAddress: normalizedSmartAccountAddress,
+    label: normalizeString(label),
+    source: "engine",
+  };
+
+  await writeThirdwebServerWalletToCache(resolved);
+  return resolved;
 };
 
 const findThirdwebServerWalletByAddressViaEngine = async (
