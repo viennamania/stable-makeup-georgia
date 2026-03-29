@@ -64,6 +64,7 @@ const CREATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:c
 const UPDATE_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update:v1";
 const LIST_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:list:v1";
 const UPDATE_SELLER_SIGNING_PREFIX = "stable-georgia:superadmin:store-payment-wallets:update-seller:v1";
+const STORE_LIST_PAGE_SIZE = 60;
 const wallets = [
   inAppWallet({
     auth: {
@@ -124,6 +125,7 @@ export default function SuperadminStorePaymentWalletsPage() {
   const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
   const [storeList, setStoreList] = useState<StoreListItem[]>([]);
   const [storeListTotalCount, setStoreListTotalCount] = useState(0);
+  const [storeListPage, setStoreListPage] = useState(1);
   const [loadingStoreList, setLoadingStoreList] = useState(false);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [runningAction, setRunningAction] = useState("");
@@ -145,10 +147,19 @@ export default function SuperadminStorePaymentWalletsPage() {
     [lookupResult],
   );
 
-  const fetchStoreList = useCallback(async (searchRaw?: string) => {
+  const totalStoreListPages = useMemo(() => {
+    const pages = Math.ceil(storeListTotalCount / STORE_LIST_PAGE_SIZE);
+    return Math.max(1, pages || 1);
+  }, [storeListTotalCount]);
+
+  const fetchStoreList = useCallback(async (options?: { searchRaw?: string; page?: number }) => {
     if (!activeAccount) {
       return;
     }
+
+    const nextSearch = normalizeString(options?.searchRaw ?? storeSearchInput);
+    const nextPageRaw = options?.page ?? 1;
+    const nextPage = Number.isFinite(nextPageRaw) ? Math.max(1, Math.trunc(nextPageRaw)) : 1;
 
     setLoadingStoreList(true);
     try {
@@ -158,9 +169,9 @@ export default function SuperadminStorePaymentWalletsPage() {
         signingPrefix: LIST_SIGNING_PREFIX,
         requesterStorecode: "superadmin",
         body: {
-          searchStore: normalizeString(searchRaw ?? storeSearchInput),
-          page: 1,
-          limit: 18,
+          searchStore: nextSearch,
+          page: nextPage,
+          limit: STORE_LIST_PAGE_SIZE,
         },
       });
       const data = await response.json();
@@ -170,6 +181,7 @@ export default function SuperadminStorePaymentWalletsPage() {
 
       setStoreList(Array.isArray(data?.result?.stores) ? data.result.stores : []);
       setStoreListTotalCount(Number(data?.result?.totalCount || 0));
+      setStoreListPage(nextPage);
     } catch (error) {
       const message = error instanceof Error ? error.message : "가맹점 목록을 불러오지 못했습니다.";
       toast.error(message);
@@ -182,9 +194,10 @@ export default function SuperadminStorePaymentWalletsPage() {
     if (!showControls) {
       setStoreList([]);
       setStoreListTotalCount(0);
+      setStoreListPage(1);
       return;
     }
-    void fetchStoreList("");
+    void fetchStoreList({ searchRaw: "", page: 1 });
   }, [fetchStoreList, showControls]);
 
   const fetchStoreOverview = async (storecodeRaw?: string) => {
@@ -266,7 +279,7 @@ export default function SuperadminStorePaymentWalletsPage() {
       );
       toast.success(data?.result?.created ? "새 결제용 지갑을 생성했습니다." : "기존 server wallet을 결제용 지갑으로 반영했습니다.");
       await fetchStoreOverview(resolvedStorecode);
-      await fetchStoreList(storeSearchInput);
+      await fetchStoreList({ searchRaw: storeSearchInput, page: storeListPage });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "결제용 지갑 생성에 실패했습니다.");
     } finally {
@@ -314,7 +327,7 @@ export default function SuperadminStorePaymentWalletsPage() {
       setLastActionSummary(`최근 작업: ${settlementWalletAddress} 로 settlement wallet 변경`);
       toast.success("결제용 지갑주소를 변경했습니다.");
       await fetchStoreOverview(resolvedStorecode);
-      await fetchStoreList(storeSearchInput);
+      await fetchStoreList({ searchRaw: storeSearchInput, page: storeListPage });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "결제용 지갑 변경에 실패했습니다.");
     } finally {
@@ -362,7 +375,7 @@ export default function SuperadminStorePaymentWalletsPage() {
       setLastActionSummary(`최근 작업: ${sellerWalletAddress} 로 seller wallet 변경`);
       toast.success("판매자 지갑주소를 변경했습니다.");
       await fetchStoreOverview(resolvedStorecode);
-      await fetchStoreList(storeSearchInput);
+      await fetchStoreList({ searchRaw: storeSearchInput, page: storeListPage });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "판매자 지갑 변경에 실패했습니다.");
     } finally {
@@ -525,7 +538,7 @@ export default function SuperadminStorePaymentWalletsPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => void fetchStoreList()}
+                  onClick={() => void fetchStoreList({ page: 1 })}
                   disabled={loadingStoreList}
                   className="h-12 rounded-2xl bg-white px-5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
@@ -618,8 +631,37 @@ export default function SuperadminStorePaymentWalletsPage() {
               )}
             </div>
 
-            <div className="mt-4 text-xs text-slate-500">
-              총 {storeListTotalCount.toLocaleString("ko-KR")}개 가맹점 중 {storeList.length.toLocaleString("ko-KR")}개 표시
+            <div className="mt-4 flex flex-col gap-3 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
+              <div>
+                총 {storeListTotalCount.toLocaleString("ko-KR")}개 가맹점 중{" "}
+                {storeListTotalCount > 0
+                  ? `${(((storeListPage - 1) * STORE_LIST_PAGE_SIZE) + 1).toLocaleString("ko-KR")} - ${Math.min(
+                      storeListPage * STORE_LIST_PAGE_SIZE,
+                      storeListTotalCount,
+                    ).toLocaleString("ko-KR")}`
+                  : "0"}개 표시
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void fetchStoreList({ page: storeListPage - 1 })}
+                  disabled={loadingStoreList || storeListPage <= 1}
+                  className="inline-flex h-9 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  이전
+                </button>
+                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-slate-300">
+                  {storeListPage.toLocaleString("ko-KR")} / {totalStoreListPages.toLocaleString("ko-KR")} 페이지
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void fetchStoreList({ page: storeListPage + 1 })}
+                  disabled={loadingStoreList || storeListPage >= totalStoreListPages}
+                  className="inline-flex h-9 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  다음
+                </button>
+              </div>
             </div>
           </section>
 
