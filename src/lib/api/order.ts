@@ -123,6 +123,10 @@ export interface OrderProps {
   processedBy?: any,
   processedByName?: string | null,
   processedByWalletAddress?: string | null,
+  cancelledBy?: any,
+  cancelledByAdmin?: any,
+  cancelledByName?: string | null,
+  cancelledByWalletAddress?: string | null,
 }
 
 export interface ResultProps {
@@ -187,6 +191,11 @@ const BUYORDER_REALTIME_PROJECTION = {
   processedBy: 1,
   processedByName: 1,
   processedByWalletAddress: 1,
+  cancelledAt: 1,
+  cancelledBy: 1,
+  cancelledByAdmin: 1,
+  cancelledByName: 1,
+  cancelledByWalletAddress: 1,
   settlement: 1,
 } as const;
 
@@ -6352,6 +6361,7 @@ export async function cancelTradeBySeller(
     orderId,
     walletAddress,
     cancelTradeReason,
+    actor,
 
     escrowTransactionHash,
 
@@ -6360,6 +6370,15 @@ export async function cancelTradeBySeller(
     orderId: string;
     walletAddress: string;
     cancelTradeReason: string;
+    actor?: {
+      walletAddress?: string | null;
+      nickname?: string | null;
+      storecode?: string | null;
+      role?: string | null;
+      publicIp?: string | null;
+      signedAt?: string | null;
+      matchedBy?: string | null;
+    } | null;
 
     escrowTransactionHash?: string; // optional, if exists, then update escrowTransactionHash
   
@@ -6410,15 +6429,31 @@ export async function cancelTradeBySeller(
   );
   const previousStatus = previousOrder?.status ? String(previousOrder.status) : null;
   const previousEscrowTransactionHash = toNormalizedHash(previousOrder?.escrowTransactionHash);
+  const cancelledAt = new Date().toISOString();
+  const normalizedCancelledBy = {
+    walletAddress:
+      toNullableText(actor?.walletAddress || walletAddress)?.toLowerCase() || null,
+    nickname: toNullableText(actor?.nickname),
+    storecode: toNullableText(actor?.storecode) || toNullableText(storecode),
+    role: toNullableText(actor?.role),
+    publicIp: toNullableText(actor?.publicIp),
+    signedAt: toNullableText(actor?.signedAt),
+    matchedBy: toNullableText(actor?.matchedBy),
+    cancelledAt,
+  };
   const updateFields: Record<string, unknown> = {
     status: 'cancelled',
-    cancelledAt: new Date().toISOString(),
+    cancelledAt,
     cancelTradeReason: cancelTradeReason,
+    cancelledBy: normalizedCancelledBy,
+    cancelledByAdmin: normalizedCancelledBy,
+    cancelledByName: normalizedCancelledBy.nickname,
+    cancelledByWalletAddress: normalizedCancelledBy.walletAddress,
   };
 
   if (escrowTransactionHash) {
     updateFields.escrowTransactionHash = escrowTransactionHash;
-    updateFields.escrowTransactionCancelledAt = new Date().toISOString();
+    updateFields.escrowTransactionCancelledAt = cancelledAt;
   }
 
   // check status is 'accepted' or 'paymentRequested'
@@ -6461,6 +6496,7 @@ export async function cancelTradeBySeller(
     );
 
     const updatedEscrowTransactionHash = toNormalizedHash(updated?.escrowTransactionHash);
+    clearBuyOrderReadCache();
     if (
       updated &&
       (previousStatus !== 'cancelled' ||
@@ -6476,6 +6512,8 @@ export async function cancelTradeBySeller(
           String(orderId),
           String(walletAddress || ""),
           String(escrowTransactionHash || ""),
+          String(normalizedCancelledBy.walletAddress || ""),
+          cancelledAt,
         ],
       });
     }

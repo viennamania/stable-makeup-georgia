@@ -13,6 +13,7 @@ import {
   getOneByWalletAddress 
 } from '@lib/api/user';
 import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
+import { resolveCenterStoreOrderActionActor } from "@/lib/server/order-action-actor";
 
 import {
   getPayactionKeys,
@@ -94,6 +95,15 @@ export async function POST(request: NextRequest) {
       result: null,
     });
   }
+
+  const cancelledBy = await resolveCenterStoreOrderActionActor({
+    request,
+    requesterWalletAddress: guard.requesterWalletAddress,
+    requesterIsAdmin: guard.requesterIsAdmin,
+    matchedBy: guard.matchedBy,
+    storecode: String(buyOrder.storecode || storecode || "").trim(),
+    signedAt: body?.signedAt,
+  });
 
 
 
@@ -209,6 +219,7 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       walletAddress: walletAddress,
       cancelTradeReason: cancelTradeReason,
+      actor: cancelledBy,
     });
 
     if (resultCancelTradeBySeller) {
@@ -232,6 +243,7 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       walletAddress: walletAddress,
       cancelTradeReason: cancelTradeReason,
+      actor: cancelledBy,
     });
 
 

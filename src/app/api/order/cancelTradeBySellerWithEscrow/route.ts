@@ -12,6 +12,7 @@ import {
 import {
   getOneByWalletAddress 
 } from '@lib/api/user';
+import { resolveCenterStoreOrderActionActor } from "@/lib/server/order-action-actor";
 
 
 
@@ -74,6 +75,15 @@ export async function POST(request: NextRequest) {
       result: null,
     });
   }
+
+  const cancelledBy = await resolveCenterStoreOrderActionActor({
+    request,
+    requesterWalletAddress: walletAddress,
+    requesterIsAdmin: false,
+    matchedBy: "store_admin_wallet",
+    storecode: String(buyOrder.storecode || storecode || "").trim(),
+    signedAt: body?.signedAt,
+  });
 
   console.log("buyOrder.status", buyOrder.status);
 
@@ -173,6 +183,7 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       walletAddress: walletAddress,
       cancelTradeReason: cancelTradeReason,
+      actor: cancelledBy,
     });
 
     if (resultCancelTradeBySeller) {
@@ -190,6 +201,7 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       walletAddress: walletAddress,
       cancelTradeReason: cancelTradeReason,
+      actor: cancelledBy,
     });
 
 
@@ -220,6 +232,7 @@ export async function POST(request: NextRequest) {
       orderId: orderId,
       walletAddress: walletAddress,
       cancelTradeReason: cancelTradeReason,
+      actor: cancelledBy,
     });
 
 
