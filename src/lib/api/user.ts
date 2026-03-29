@@ -1665,6 +1665,7 @@ export async function getAllBuyers(
   {
     agentcode,
     storecode,
+    searchStore,
     search,
     depositName,
     userType = 'all',
@@ -1673,6 +1674,7 @@ export async function getAllBuyers(
   }: {
     agentcode: string;
     storecode: string;
+    searchStore?: string;
     search: string;
     depositName: string;
     userType?: string;
@@ -1689,6 +1691,8 @@ export async function getAllBuyers(
 
   
   const normalizedAgentcode = String(agentcode || '').trim();
+  const normalizedStorecode = String(storecode || '').trim();
+  const normalizedSearchStore = String(searchStore || '').trim();
   const normalizedUserType = String(userType || 'all').trim();
   const normalizedUserTypeUpper = normalizedUserType.toUpperCase();
   const gradeUserTypes = ['AAA', 'BBB', 'CCC', 'DDD'];
@@ -1700,23 +1704,42 @@ export async function getAllBuyers(
         : normalizedUserType !== '' && normalizedUserType !== 'all'
           ? normalizedUserType
           : null;
-  const baseUserMatch = {
-    nickname: { $regex: String(search), $options: 'i' },
-    'buyer.depositName': { $regex: String(depositName), $options: 'i' },
-    'storecode': { $regex: String(storecode), $options: 'i' },
-    ...(userTypeFilter ? { userType: userTypeFilter } : {}),
-    walletAddress: { $exists: true, $ne: null },
-    $or: [
-      { verified: { $exists: false } },
-      { verified: false },
-    ],
-  };
-  const aggregateMatch = {
-    ...baseUserMatch,
+  const baseUserConditions: Record<string, unknown>[] = [
+    { nickname: { $regex: String(search), $options: 'i' } },
+    { 'buyer.depositName': { $regex: String(depositName), $options: 'i' } },
+    ...(normalizedStorecode !== ''
+      ? [{ storecode: { $regex: normalizedStorecode, $options: 'i' } }]
+      : []),
+    ...(userTypeFilter ? [{ userType: userTypeFilter }] : []),
+    { walletAddress: { $exists: true, $ne: null } },
+    {
+      $or: [
+        { verified: { $exists: false } },
+        { verified: false },
+      ],
+    },
+  ];
+  const aggregateConditions: Record<string, unknown>[] = [
+    ...baseUserConditions,
     ...(normalizedAgentcode !== ''
-      ? { 'storeInfo.agentcode': { $regex: normalizedAgentcode, $options: 'i' } }
-      : {}),
-  };
+      ? [{ 'storeInfo.agentcode': { $regex: normalizedAgentcode, $options: 'i' } }]
+      : []),
+    ...(normalizedSearchStore !== ''
+      ? [{
+          $or: [
+            { storecode: { $regex: normalizedSearchStore, $options: 'i' } },
+            { 'storeInfo.storeName': { $regex: normalizedSearchStore, $options: 'i' } },
+            { 'storeInfo.companyName': { $regex: normalizedSearchStore, $options: 'i' } },
+          ],
+        }]
+      : []),
+  ];
+  const baseUserMatch = baseUserConditions.length > 1
+    ? { $and: baseUserConditions }
+    : (baseUserConditions[0] || {});
+  const aggregateMatch = aggregateConditions.length > 1
+    ? { $and: aggregateConditions }
+    : (aggregateConditions[0] || {});
 
 
   // user.storecode joine stores collection to get store.accessToken
@@ -1828,7 +1851,7 @@ export async function getAllBuyers(
     */
 
   let totalCount = 0;
-  if (normalizedAgentcode !== '') {
+  if (normalizedAgentcode !== '' || normalizedSearchStore !== '') {
     const totalCountResult = await collection.aggregate<{ totalCount: number }>([
       {
         $lookup: {

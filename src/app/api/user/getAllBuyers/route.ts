@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
   const {
     agentcode,
     storecode,
+    searchStore,
     search,
     depositName,
     userType,
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
   const result = await getAllBuyers({
     agentcode: normalizeString(agentcode),
     storecode: safeStorecode,
+    searchStore: normalizeString(searchStore),
     search: normalizeString(search),
     depositName: normalizeString(depositName),
     userType: normalizeString(userType) || 'all',
