@@ -60,6 +60,7 @@ import {
 import {
   getPayactionKeys,
 } from '@lib/api/store';
+import { resolveCenterStoreOrderActionActor } from "@/lib/server/order-action-actor";
 
 
 
@@ -240,6 +241,15 @@ export async function POST(request: NextRequest) {
 
 
 
+    const paymentConfirmedBy = await resolveCenterStoreOrderActionActor({
+      request,
+      requesterWalletAddress: guard.requesterWalletAddress,
+      requesterIsAdmin: guard.requesterIsAdmin,
+      matchedBy: guard.matchedBy,
+      storecode: requestedStorecode || buyOrderStorecode,
+      signedAt: body?.signedAt,
+    });
+
     const result = await buyOrderConfirmPayment({
       //lang: lang,
       //storecode: storecode,
@@ -251,6 +261,9 @@ export async function POST(request: NextRequest) {
       transactionHash: transactionHash,
 
       sellerWalletAddressBalance: sellerWalletAddressBalance,
+      autoConfirmPayment: false,
+      matchedByAdmin: true,
+      paymentConfirmedBy,
 
     });
 

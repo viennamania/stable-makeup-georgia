@@ -9,6 +9,7 @@ import {
 
 } from '@lib/api/order';
 import { verifyCenterStoreAdminGuard } from "@/lib/server/center-store-admin-guard";
+import { resolveCenterStoreOrderActionActor } from "@/lib/server/order-action-actor";
 
 // Download the helper library from https://www.twilio.com/docs/node/install
 import twilio from "twilio";
@@ -100,6 +101,15 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    const paymentConfirmedBy = await resolveCenterStoreOrderActionActor({
+      request,
+      requesterWalletAddress: guard.requesterWalletAddress,
+      requesterIsAdmin: guard.requesterIsAdmin,
+      matchedBy: guard.matchedBy,
+      storecode: requestedStorecode || buyOrderStorecode,
+      signedAt: body?.signedAt,
+    });
+
     const result = await buyOrderConfirmPayment({
       lang: lang,
       storecode: storecode,
@@ -107,6 +117,9 @@ export async function POST(request: NextRequest) {
       paymentAmount: paymentAmount,
 
       transactionHash: transactionHash,
+      autoConfirmPayment: false,
+      matchedByAdmin: true,
+      paymentConfirmedBy,
     });
   
   

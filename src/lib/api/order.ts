@@ -112,6 +112,17 @@ export interface OrderProps {
 
   createdByApi?: string | null,
   createdByRequest?: any,
+  autoConfirmPayment?: boolean | null,
+  matchedByAdmin?: boolean | null,
+  paymentConfirmedBy?: any,
+  paymentConfirmedByName?: string | null,
+  paymentConfirmedByWalletAddress?: string | null,
+  confirmedBy?: any,
+  confirmedByName?: string | null,
+  confirmedByWalletAddress?: string | null,
+  processedBy?: any,
+  processedByName?: string | null,
+  processedByWalletAddress?: string | null,
 }
 
 export interface ResultProps {
@@ -152,6 +163,7 @@ const BUYORDER_REALTIME_PROJECTION = {
   _id: 1,
   tradeId: 1,
   status: 1,
+  updatedAt: 1,
   walletAddress: 1,
   storecode: 1,
   store: 1,
@@ -159,11 +171,22 @@ const BUYORDER_REALTIME_PROJECTION = {
   usdtAmount: 1,
   nickname: 1,
   buyer: 1,
+  autoConfirmPayment: 1,
+  matchedByAdmin: 1,
   cancelTradeReason: 1,
   transactionHash: 1,
   escrowTransactionHash: 1,
   queueId: 1,
   minedAt: 1,
+  paymentConfirmedBy: 1,
+  paymentConfirmedByName: 1,
+  paymentConfirmedByWalletAddress: 1,
+  confirmedBy: 1,
+  confirmedByName: 1,
+  confirmedByWalletAddress: 1,
+  processedBy: 1,
+  processedByName: 1,
+  processedByWalletAddress: 1,
   settlement: 1,
 } as const;
 
@@ -5563,6 +5586,20 @@ export async function buyOrderConfirmPayment(data: any) {
   const paymentAmount = data.paymentAmount || 0;
 
   const autoConfirmPayment = data.autoConfirmPayment;
+  const paymentConfirmedAt = new Date().toISOString();
+  const normalizedPaymentConfirmedBy =
+    data.paymentConfirmedBy && typeof data.paymentConfirmedBy === "object" && !Array.isArray(data.paymentConfirmedBy)
+      ? {
+          walletAddress: toNullableText(data.paymentConfirmedBy.walletAddress)?.toLowerCase() || null,
+          nickname: toNullableText(data.paymentConfirmedBy.nickname),
+          storecode: toNullableText(data.paymentConfirmedBy.storecode),
+          role: toNullableText(data.paymentConfirmedBy.role),
+          publicIp: toNullableText(data.paymentConfirmedBy.publicIp),
+          signedAt: toNullableText(data.paymentConfirmedBy.signedAt),
+          matchedBy: toNullableText(data.paymentConfirmedBy.matchedBy),
+          confirmedAt: paymentConfirmedAt,
+        }
+      : null;
 
 
   const client = await clientPromise;
@@ -5572,7 +5609,8 @@ export async function buyOrderConfirmPayment(data: any) {
   let result = null;
   const updateFields: Record<string, unknown> = {
     status: 'paymentConfirmed',
-    paymentConfirmedAt: new Date().toISOString(),
+    updatedAt: paymentConfirmedAt,
+    paymentConfirmedAt,
     paymentAmount: paymentAmount,
     transactionHash: data.transactionHash,
     sellerWalletAddressBalance: data.sellerWalletAddressBalance,
@@ -5582,8 +5620,24 @@ export async function buyOrderConfirmPayment(data: any) {
     updateFields.queueId = data.queueId;
   }
 
-  if (autoConfirmPayment) {
+  if (typeof autoConfirmPayment === "boolean") {
     updateFields.autoConfirmPayment = autoConfirmPayment;
+  }
+
+  if (typeof data.matchedByAdmin === "boolean") {
+    updateFields.matchedByAdmin = data.matchedByAdmin;
+  }
+
+  if (normalizedPaymentConfirmedBy) {
+    updateFields.paymentConfirmedBy = normalizedPaymentConfirmedBy;
+    updateFields.paymentConfirmedByName = normalizedPaymentConfirmedBy.nickname;
+    updateFields.paymentConfirmedByWalletAddress = normalizedPaymentConfirmedBy.walletAddress;
+    updateFields.confirmedBy = normalizedPaymentConfirmedBy;
+    updateFields.confirmedByName = normalizedPaymentConfirmedBy.nickname;
+    updateFields.confirmedByWalletAddress = normalizedPaymentConfirmedBy.walletAddress;
+    updateFields.processedBy = normalizedPaymentConfirmedBy;
+    updateFields.processedByName = normalizedPaymentConfirmedBy.nickname;
+    updateFields.processedByWalletAddress = normalizedPaymentConfirmedBy.walletAddress;
   }
 
   if (data.escrowTransactionHash) {
@@ -5614,6 +5668,8 @@ export async function buyOrderConfirmPayment(data: any) {
   // result: {"acknowledged":true,"modifiedCount":1,"upsertedId":null,"upsertedCount":0,"matchedCount":1}
 
   if (result && result.modifiedCount > 0) {
+
+    clearBuyOrderReadCache();
 
 
 
@@ -5957,14 +6013,15 @@ export async function buyOrderConfirmPayment(data: any) {
 
 
 
-    return {
-      status: 'paymentConfirmed',
-      paymentAmount: paymentAmount,
-      queueId: data.queueId,
-      transactionHash: data.transactionHash,
-      paymentConfirmedAt: new Date().toISOString(),
-      autoConfirmPayment: autoConfirmPayment,
-    };
+      return {
+        status: 'paymentConfirmed',
+        paymentAmount: paymentAmount,
+        queueId: data.queueId,
+        transactionHash: data.transactionHash,
+        paymentConfirmedAt,
+        autoConfirmPayment: autoConfirmPayment,
+        paymentConfirmedBy: normalizedPaymentConfirmedBy,
+      };
 
     
   } else {
