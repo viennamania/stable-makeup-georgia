@@ -208,22 +208,41 @@ export async function POST(request: NextRequest) {
 
   const requestedStorecode = normalizeString(body.storecode);
   const requesterStorecode = normalizeString(body.requesterStorecode);
+  const guardStorecode = requesterStorecode || requestedStorecode || "admin";
   const authIntent = hasCenterStoreAuthIntent(body);
   let privilegedRead = false;
+  let effectiveStorecode = requestedStorecode;
 
   if (authIntent) {
     const guard = await verifyCenterStoreAdminGuard({
       request,
       route: "/api/order/getAdminClearanceOrders",
       body,
-      storecodeRaw: requestedStorecode || requesterStorecode || "admin",
+      storecodeRaw: guardStorecode,
       requesterWalletAddressRaw: body.requesterWalletAddress ?? body.walletAddress,
     });
     privilegedRead = guard.ok;
+
+    if (guard.ok) {
+      const requesterScopeStorecode = requesterStorecode || guardStorecode;
+      const requestedDiffersFromRequesterScope = Boolean(
+        requestedStorecode
+          && requesterScopeStorecode
+          && requestedStorecode.toLowerCase() !== requesterScopeStorecode.toLowerCase(),
+      );
+
+      if (!guard.requesterIsAdmin && requestedDiffersFromRequesterScope) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      effectiveStorecode = guard.requesterIsAdmin
+        ? requestedStorecode
+        : guardStorecode;
+    }
   }
 
   const result = await getAdminClearanceOrders({
-    storecode: requestedStorecode,
+    storecode: effectiveStorecode,
     limit: parsePositiveInt(body.limit, 30),
     page: parsePositiveInt(body.page, 1),
     walletAddress: privilegedRead ? normalizeString(body.walletAddress) : "",
