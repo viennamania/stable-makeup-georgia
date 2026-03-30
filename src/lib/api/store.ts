@@ -1864,6 +1864,8 @@ export async function getStoreDirectory(
           storeName: 1,
           companyName: 1,
           storeLogo: 1,
+          viewOnAndOff: 1,
+          liveOnAndOff: 1,
         },
         sort: {
           createdAt: -1,
