@@ -113,6 +113,24 @@ const sanitizeActorForPublic = (actor: unknown) => {
   };
 };
 
+const sanitizeCreatedByForPublic = (createdBy: unknown) => {
+  if (!createdBy || typeof createdBy !== "object" || Array.isArray(createdBy)) {
+    return createdBy;
+  }
+
+  const input = createdBy as Record<string, unknown>;
+  return {
+    walletAddress: maskWalletLikeValue(input.walletAddress),
+    nickname: maskName(input.nickname),
+    role: normalizeString(input.role) || null,
+    storecode: normalizeString(input.storecode) || null,
+    requestedAt: normalizeString(input.requestedAt) || null,
+    route: normalizeString(input.route) || null,
+    source: normalizeString(input.source) || null,
+    transactionHashDummyReason: normalizeString(input.transactionHashDummyReason) || null,
+  };
+};
+
 const sanitizeOrderForPublic = (order: unknown) => {
   if (!order || typeof order !== "object" || Array.isArray(order)) {
     return order;
@@ -136,6 +154,7 @@ const sanitizeOrderForPublic = (order: unknown) => {
     ...input,
     nickname: maskName(input.nickname),
     walletAddress: maskWalletLikeValue(input.walletAddress),
+    createdBy: sanitizeCreatedByForPublic(input.createdBy),
     buyer: buyer
       ? {
           ...buyer,
