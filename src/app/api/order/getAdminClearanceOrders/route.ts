@@ -212,6 +212,8 @@ export async function POST(request: NextRequest) {
   const authIntent = hasCenterStoreAuthIntent(body);
   let privilegedRead = false;
   let effectiveStorecode = requestedStorecode;
+  let authStatus = 0;
+  let authError = "";
 
   if (authIntent) {
     const guard = await verifyCenterStoreAdminGuard({
@@ -222,6 +224,10 @@ export async function POST(request: NextRequest) {
       requesterWalletAddressRaw: body.requesterWalletAddress ?? body.walletAddress,
     });
     privilegedRead = guard.ok;
+    if (!guard.ok) {
+      authStatus = guard.status;
+      authError = guard.error;
+    }
 
     if (guard.ok) {
       const requesterScopeStorecode = requesterStorecode || guardStorecode;
@@ -256,7 +262,17 @@ export async function POST(request: NextRequest) {
       ? {
           ...result,
           view: "privileged",
+          authIntent,
+          authStatus: 0,
+          authError: "",
+          authRecoverySuggested: false,
         }
-      : sanitizeClearanceResultForPublic(result),
+      : {
+          ...sanitizeClearanceResultForPublic(result),
+          authIntent,
+          authStatus,
+          authError,
+          authRecoverySuggested: authIntent && authStatus !== 0 && authStatus !== 403,
+        },
   });
 }
