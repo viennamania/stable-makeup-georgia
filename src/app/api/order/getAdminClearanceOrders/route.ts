@@ -155,6 +155,10 @@ const sanitizeOrderForPublic = (order: unknown) => {
     nickname: maskName(input.nickname),
     walletAddress: maskWalletLikeValue(input.walletAddress),
     createdBy: sanitizeCreatedByForPublic(input.createdBy),
+    cancelledBy: sanitizeActorForPublic(input.cancelledBy),
+    cancelledByAdmin: sanitizeActorForPublic(input.cancelledByAdmin),
+    cancelledByName: maskName(input.cancelledByName),
+    cancelledByWalletAddress: maskWalletLikeValue(input.cancelledByWalletAddress),
     buyer: buyer
       ? {
           ...buyer,
