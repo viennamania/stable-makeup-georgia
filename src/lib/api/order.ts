@@ -7951,6 +7951,321 @@ export async function getAllTradesByAdmin(
 
 
 
+export async function getAdminP2PTradeHistory(
+  {
+    storecode,
+    limit,
+    page,
+    fromDate,
+    toDate,
+    searchKeyword,
+    searchTradeId,
+    searchStoreName,
+    searchBuyer,
+    searchSeller,
+    searchDepositName,
+    searchBuyerBankAccountNumber,
+    searchSellerBankAccountNumber,
+    userType,
+  }: {
+    storecode?: string;
+    limit: number;
+    page: number;
+    fromDate?: string;
+    toDate?: string;
+    searchKeyword?: string;
+    searchTradeId?: string;
+    searchStoreName?: string;
+    searchBuyer?: string;
+    searchSeller?: string;
+    searchDepositName?: string;
+    searchBuyerBankAccountNumber?: string;
+    searchSellerBankAccountNumber?: string;
+    userType?: string;
+  }
+): Promise<any> {
+  const defaultFromDate = new Date();
+  defaultFromDate.setDate(defaultFromDate.getDate() - 30);
+
+  const fromDateValue = fromDate
+    ? new Date(`${fromDate}T00:00:00+09:00`)
+    : defaultFromDate;
+  const toDateValue = toDate
+    ? new Date(`${toDate}T23:59:59.999+09:00`)
+    : new Date();
+
+  const safeLimit = Math.min(Math.max(1, Number(limit || 0) || 1), 200);
+  const safePage = Math.max(1, Number(page || 0) || 1);
+  const skip = (safePage - 1) * safeLimit;
+
+  const safeStorecode = normalizeSearchText(storecode);
+  const safeSearchKeyword = normalizeSearchText(searchKeyword);
+  const safeSearchTradeId = normalizeSearchText(searchTradeId);
+  const safeSearchStoreName = normalizeSearchText(searchStoreName);
+  const safeSearchBuyer = normalizeSearchText(searchBuyer);
+  const safeSearchSeller = normalizeSearchText(searchSeller);
+  const safeSearchDepositName = normalizeSearchText(searchDepositName);
+  const safeSearchBuyerBankAccountNumber = normalizeSearchText(searchBuyerBankAccountNumber);
+  const safeSearchSellerBankAccountNumber = normalizeSearchText(searchSellerBankAccountNumber);
+  const safeUserType = normalizeSearchText(userType);
+
+  const client = await clientPromise;
+  const collection = client.db(dbName).collection("buyorders");
+  await ensureBuyOrderReadIndexes(collection);
+
+  const cacheKey = `getAdminP2PTradeHistory:${JSON.stringify({
+    storecode: safeStorecode,
+    limit: safeLimit,
+    page: safePage,
+    fromDate: fromDateValue.toISOString(),
+    toDate: toDateValue.toISOString(),
+    searchKeyword: safeSearchKeyword,
+    searchTradeId: safeSearchTradeId,
+    searchStoreName: safeSearchStoreName,
+    searchBuyer: safeSearchBuyer,
+    searchSeller: safeSearchSeller,
+    searchDepositName: safeSearchDepositName,
+    searchBuyerBankAccountNumber: safeSearchBuyerBankAccountNumber,
+    searchSellerBankAccountNumber: safeSearchSellerBankAccountNumber,
+    userType: safeUserType,
+  })}`;
+  const cached = getBuyOrderCachedValue(cacheKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const pipeline: Record<string, any>[] = [
+    {
+      $match: {
+        status: "paymentConfirmed",
+        privateSale: { $ne: true },
+        ...(safeStorecode ? { storecode: safeStorecode } : { storecode: { $ne: null } }),
+      },
+    },
+    {
+      $addFields: {
+        historyAtDate: {
+          $ifNull: [
+            {
+              $convert: {
+                input: "$paymentConfirmedAt",
+                to: "date",
+                onError: null,
+                onNull: null,
+              },
+            },
+            {
+              $convert: {
+                input: "$createdAt",
+                to: "date",
+                onError: null,
+                onNull: null,
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      $match: {
+        historyAtDate: {
+          $gte: fromDateValue,
+          $lte: toDateValue,
+        },
+      },
+    },
+  ];
+
+  if (safeUserType && safeUserType.toLowerCase() !== "all") {
+    if (safeUserType === "EMPTY") {
+      pipeline.push({
+        $match: {
+          $or: [
+            { userType: { $exists: false } },
+            { userType: null },
+            { userType: "" },
+          ],
+        },
+      });
+    } else {
+      pipeline.push({
+        $match: {
+          userType: safeUserType,
+        },
+      });
+    }
+  }
+
+  const keywordRegex = toContainsRegexFilter(safeSearchKeyword);
+  if (keywordRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { tradeId: keywordRegex },
+          { storecode: keywordRegex },
+          { "store.storeName": keywordRegex },
+          { "store.companyName": keywordRegex },
+          { nickname: keywordRegex },
+          { "buyer.nickname": keywordRegex },
+          { "buyer.depositName": keywordRegex },
+          { walletAddress: keywordRegex },
+          { "buyer.walletAddress": keywordRegex },
+          { "buyer.bankInfo.accountNumber": keywordRegex },
+          { "buyer.depositBankAccountNumber": keywordRegex },
+          { "seller.nickname": keywordRegex },
+          { "seller.walletAddress": keywordRegex },
+          { "seller.signerAddress": keywordRegex },
+          { "seller.bankInfo.accountHolder": keywordRegex },
+          { "seller.bankInfo.accountNumber": keywordRegex },
+        ],
+      },
+    });
+  }
+
+  const searchTradeIdRegex = toContainsRegexFilter(safeSearchTradeId);
+  if (searchTradeIdRegex) {
+    pipeline.push({
+      $match: {
+        tradeId: searchTradeIdRegex,
+      },
+    });
+  }
+
+  const searchStoreNameRegex = toContainsRegexFilter(safeSearchStoreName);
+  if (searchStoreNameRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { storecode: searchStoreNameRegex },
+          { "store.storeName": searchStoreNameRegex },
+          { "store.companyName": searchStoreNameRegex },
+        ],
+      },
+    });
+  }
+
+  const searchBuyerRegex = toContainsRegexFilter(safeSearchBuyer);
+  if (searchBuyerRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { nickname: searchBuyerRegex },
+          { "buyer.nickname": searchBuyerRegex },
+          { walletAddress: searchBuyerRegex },
+          { "buyer.walletAddress": searchBuyerRegex },
+        ],
+      },
+    });
+  }
+
+  const searchSellerRegex = toContainsRegexFilter(safeSearchSeller);
+  if (searchSellerRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { "seller.nickname": searchSellerRegex },
+          { "seller.walletAddress": searchSellerRegex },
+          { "seller.signerAddress": searchSellerRegex },
+          { "seller.bankInfo.accountHolder": searchSellerRegex },
+          { "seller.bankInfo.accountNumber": searchSellerRegex },
+        ],
+      },
+    });
+  }
+
+  const searchDepositNameRegex = toContainsRegexFilter(safeSearchDepositName);
+  if (searchDepositNameRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { "buyer.depositName": searchDepositNameRegex },
+          { "buyer.bankInfo.accountHolder": searchDepositNameRegex },
+        ],
+      },
+    });
+  }
+
+  const searchBuyerBankAccountRegex = toContainsRegexFilter(safeSearchBuyerBankAccountNumber);
+  if (searchBuyerBankAccountRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { "buyer.bankInfo.accountNumber": searchBuyerBankAccountRegex },
+          { "buyer.depositBankAccountNumber": searchBuyerBankAccountRegex },
+        ],
+      },
+    });
+  }
+
+  const searchSellerBankAccountRegex = toContainsRegexFilter(safeSearchSellerBankAccountNumber);
+  if (searchSellerBankAccountRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { "seller.bankInfo.accountNumber": searchSellerBankAccountRegex },
+          { "store.bankInfo.accountNumber": searchSellerBankAccountRegex },
+        ],
+      },
+    });
+  }
+
+  pipeline.push({
+    $facet: {
+      orders: [
+        { $sort: { historyAtDate: -1, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: safeLimit },
+        { $project: { historyAtDate: 0 } },
+      ],
+      summary: [
+        {
+          $group: {
+            _id: null,
+            totalCount: { $sum: 1 },
+            totalKrwAmount: { $sum: { $ifNull: ["$krwAmount", 0] } },
+            totalUsdtAmount: { $sum: { $ifNull: ["$usdtAmount", 0] } },
+            totalSettlementCount: {
+              $sum: {
+                $cond: [{ $ne: ["$settlement", null] }, 1, 0],
+              },
+            },
+            totalSettlementAmount: { $sum: toDoubleExpr("settlement.settlementAmount") },
+            totalSettlementAmountKRW: { $sum: toDoubleExpr("settlement.settlementAmountKRW") },
+            totalFeeAmount: { $sum: toDoubleExpr("settlement.feeAmount") },
+            totalFeeAmountKRW: { $sum: toDoubleExpr("settlement.feeAmountKRW") },
+            totalAgentFeeAmount: { $sum: toDoubleExpr("settlement.agentFeeAmount") },
+            totalAgentFeeAmountKRW: { $sum: toDoubleExpr("settlement.agentFeeAmountKRW") },
+          },
+        },
+      ],
+    },
+  });
+
+  const [facetResult = {}] = await collection.aggregate(pipeline, {
+    maxTimeMS: BUYORDER_QUERY_MAX_TIME_MS,
+  }).toArray();
+
+  const orders = Array.isArray(facetResult?.orders) ? facetResult.orders : [];
+  const summary = facetResult?.summary?.[0] || {};
+  const result = {
+    totalCount: Number(summary?.totalCount || 0),
+    totalKrwAmount: Number(summary?.totalKrwAmount || 0),
+    totalUsdtAmount: Number(summary?.totalUsdtAmount || 0),
+    totalSettlementCount: Number(summary?.totalSettlementCount || 0),
+    totalSettlementAmount: Number(summary?.totalSettlementAmount || 0),
+    totalSettlementAmountKRW: Number(summary?.totalSettlementAmountKRW || 0),
+    totalFeeAmount: Number(summary?.totalFeeAmount || 0),
+    totalFeeAmountKRW: Number(summary?.totalFeeAmountKRW || 0),
+    totalAgentFeeAmount: Number(summary?.totalAgentFeeAmount || 0),
+    totalAgentFeeAmountKRW: Number(summary?.totalAgentFeeAmountKRW || 0),
+    orders,
+    trades: orders,
+  };
+
+  setBuyOrderCachedValue(cacheKey, result);
+  return result;
+}
+
  // getAllClearancesByAdmin
   // all orders with status 'paymentConfirmed' and privateSale is true
  export async function getAllClearancesByAdmin(
