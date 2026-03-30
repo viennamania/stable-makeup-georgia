@@ -82,6 +82,192 @@ const normalizeBoolean = (value: unknown): boolean => {
   return false;
 };
 
+const hasCenterStoreAuthIntent = (body: Record<string, unknown>) => {
+  return Boolean(
+    normalizeString(body.signature)
+    || normalizeString(body.signedAt)
+    || normalizeString(body.nonce)
+    || normalizeString(body.requesterWalletAddress)
+    || normalizeString(body.walletAddress),
+  );
+};
+
+const maskName = (value: unknown) => {
+  const safe = normalizeString(value);
+  if (!safe) {
+    return "";
+  }
+
+  const chars = Array.from(safe);
+  if (chars.length === 1) {
+    return "*";
+  }
+  if (chars.length === 2) {
+    return `${chars[0]}*`;
+  }
+
+  return `${chars[0]}${"*".repeat(Math.max(1, chars.length - 2))}${chars[chars.length - 1]}`;
+};
+
+const maskWalletLikeValue = (value: unknown) => {
+  const safe = normalizeString(value);
+  if (!safe) {
+    return "";
+  }
+  if (safe.length <= 12) {
+    return safe;
+  }
+  return `${safe.slice(0, 6)}...${safe.slice(-4)}`;
+};
+
+const maskAccountNumber = (value: unknown) => {
+  const safe = normalizeString(value).replace(/\s+/g, "");
+  if (!safe) {
+    return "";
+  }
+  if (safe.length <= 4) {
+    return "*".repeat(safe.length);
+  }
+  return `${"*".repeat(Math.max(0, safe.length - 4))}${safe.slice(-4)}`;
+};
+
+const sanitizeBankInfoForPublic = (bankInfo: unknown) => {
+  if (!bankInfo || typeof bankInfo !== "object" || Array.isArray(bankInfo)) {
+    return bankInfo;
+  }
+
+  const input = bankInfo as Record<string, unknown>;
+  return {
+    ...input,
+    accountHolder: maskName(input.accountHolder),
+    accountNumber: maskAccountNumber(input.accountNumber),
+    realAccountNumber: maskAccountNumber(input.realAccountNumber),
+    defaultAccountNumber: maskAccountNumber(input.defaultAccountNumber),
+  };
+};
+
+const sanitizeActionActorForPublic = (actor: unknown) => {
+  if (!actor || typeof actor !== "object" || Array.isArray(actor)) {
+    return actor;
+  }
+
+  const input = actor as Record<string, unknown>;
+  return {
+    ...input,
+    walletAddress: maskWalletLikeValue(input.walletAddress),
+    nickname: maskName(input.nickname),
+    publicIp: null,
+  };
+};
+
+const sanitizeSettlementInfoForPublic = (settlement: unknown) => {
+  if (!settlement || typeof settlement !== "object" || Array.isArray(settlement)) {
+    return settlement;
+  }
+
+  const input = settlement as Record<string, unknown>;
+  return {
+    ...input,
+    settlementWalletAddress: maskWalletLikeValue(input.settlementWalletAddress),
+    feeWalletAddress: maskWalletLikeValue(input.feeWalletAddress),
+    agentFeeWalletAddress: maskWalletLikeValue(input.agentFeeWalletAddress),
+  };
+};
+
+const sanitizeEscrowWalletForPublic = (escrowWallet: unknown) => {
+  if (!escrowWallet || typeof escrowWallet !== "object" || Array.isArray(escrowWallet)) {
+    return escrowWallet;
+  }
+
+  const input = escrowWallet as Record<string, unknown>;
+  return {
+    ...input,
+    transactionHash: maskWalletLikeValue(input.transactionHash),
+  };
+};
+
+const sanitizeOrderForPublic = (order: unknown) => {
+  if (!order || typeof order !== "object" || Array.isArray(order)) {
+    return order;
+  }
+
+  const input = order as Record<string, unknown>;
+  const buyer =
+    input.buyer && typeof input.buyer === "object" && !Array.isArray(input.buyer)
+      ? (input.buyer as Record<string, unknown>)
+      : null;
+  const seller =
+    input.seller && typeof input.seller === "object" && !Array.isArray(input.seller)
+      ? (input.seller as Record<string, unknown>)
+      : null;
+  const store =
+    input.store && typeof input.store === "object" && !Array.isArray(input.store)
+      ? (input.store as Record<string, unknown>)
+      : null;
+
+  return {
+    ...input,
+    nickname: maskName(input.nickname),
+    walletAddress: maskWalletLikeValue(input.walletAddress),
+    paymentConfirmedBy: sanitizeActionActorForPublic(input.paymentConfirmedBy),
+    paymentConfirmedByName: maskName(input.paymentConfirmedByName),
+    paymentConfirmedByWalletAddress: maskWalletLikeValue(input.paymentConfirmedByWalletAddress),
+    confirmedBy: sanitizeActionActorForPublic(input.confirmedBy),
+    confirmedByName: maskName(input.confirmedByName),
+    confirmedByWalletAddress: maskWalletLikeValue(input.confirmedByWalletAddress),
+    processedBy: sanitizeActionActorForPublic(input.processedBy),
+    processedByName: maskName(input.processedByName),
+    processedByWalletAddress: maskWalletLikeValue(input.processedByWalletAddress),
+    cancelledBy: sanitizeActionActorForPublic(input.cancelledBy),
+    cancelledByAdmin: sanitizeActionActorForPublic(input.cancelledByAdmin),
+    cancelledByName: maskName(input.cancelledByName),
+    cancelledByWalletAddress: maskWalletLikeValue(input.cancelledByWalletAddress),
+    settlement: sanitizeSettlementInfoForPublic(input.settlement),
+    escrowWallet: sanitizeEscrowWalletForPublic(input.escrowWallet),
+    buyer: buyer
+      ? {
+          ...buyer,
+          nickname: maskName(buyer.nickname),
+          walletAddress: maskWalletLikeValue(buyer.walletAddress),
+          depositName: maskName(buyer.depositName),
+          depositBankAccountNumber: maskAccountNumber(buyer.depositBankAccountNumber),
+          bankInfo: sanitizeBankInfoForPublic(buyer.bankInfo),
+        }
+      : input.buyer,
+    seller: seller
+      ? {
+          ...seller,
+          nickname: maskName(seller.nickname),
+          walletAddress: maskWalletLikeValue(seller.walletAddress),
+          signerAddress: maskWalletLikeValue(seller.signerAddress),
+          bankInfo: sanitizeBankInfoForPublic(seller.bankInfo),
+        }
+      : input.seller,
+    store: store
+      ? {
+          ...store,
+          bankInfo: sanitizeBankInfoForPublic(store.bankInfo),
+          bankInfoAAA: sanitizeBankInfoForPublic(store.bankInfoAAA),
+          bankInfoBBB: sanitizeBankInfoForPublic(store.bankInfoBBB),
+          bankInfoCCC: sanitizeBankInfoForPublic(store.bankInfoCCC),
+          bankInfoDDD: sanitizeBankInfoForPublic(store.bankInfoDDD),
+        }
+      : input.store,
+  };
+};
+
+const sanitizeBuyOrdersResultForPublic = (result: Record<string, unknown>) => {
+  return {
+    ...result,
+    view: "public",
+    totalBySellerBankAccountNumber: [],
+    totalByBuyerBankAccountNumber: [],
+    orders: Array.isArray(result.orders)
+      ? result.orders.map((order) => sanitizeOrderForPublic(order))
+      : [],
+  };
+};
+
 const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
@@ -258,35 +444,39 @@ export async function POST(request: NextRequest) {
 
   const requestedStorecode = normalizeStorecode(storecode);
   const requesterStorecode = normalizeStorecode(body?.requesterStorecode);
-
   const guardStorecode = requesterStorecode || requestedStorecode || "admin";
+  const authIntent = hasCenterStoreAuthIntent(body);
+  let privilegedRead = false;
+  let effectiveStorecode = requestedStorecode;
 
-  const guard = await verifyCenterStoreAdminGuard({
-    request,
-    route: "/api/order/getAllBuyOrders",
-    body,
-    storecodeRaw: guardStorecode,
-    requesterWalletAddressRaw: body?.requesterWalletAddress || walletAddress,
-  });
+  if (authIntent) {
+    const guard = await verifyCenterStoreAdminGuard({
+      request,
+      route: "/api/order/getAllBuyOrders",
+      body,
+      storecodeRaw: guardStorecode,
+      requesterWalletAddressRaw: body?.requesterWalletAddress || walletAddress,
+    });
 
-  if (!guard.ok) {
-    return NextResponse.json({ error: guard.error }, { status: guard.status });
+    privilegedRead = guard.ok;
+
+    if (guard.ok) {
+      const requesterScopeStorecode = requesterStorecode || guardStorecode;
+      const requestedDiffersFromRequesterScope = Boolean(
+        requestedStorecode
+          && requesterScopeStorecode
+          && requestedStorecode.toLowerCase() !== requesterScopeStorecode.toLowerCase(),
+      );
+
+      if (!guard.requesterIsAdmin && requestedDiffersFromRequesterScope) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      effectiveStorecode = guard.requesterIsAdmin
+        ? requestedStorecode
+        : guardStorecode;
+    }
   }
-
-  const requesterScopeStorecode = requesterStorecode || guardStorecode;
-  const requestedDiffersFromRequesterScope = Boolean(
-    requestedStorecode
-      && requesterScopeStorecode
-      && requestedStorecode.toLowerCase() !== requesterScopeStorecode.toLowerCase(),
-  );
-
-  if (!guard.requesterIsAdmin && requestedDiffersFromRequesterScope) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const effectiveStorecode = guard.requesterIsAdmin
-    ? requestedStorecode
-    : guardStorecode;
 
   const safeLimit = Math.min(
     Math.max(1, parsePositiveInt(limit, GET_ALL_BUY_ORDERS_DEFAULT_LIMIT)),
@@ -294,11 +484,16 @@ export async function POST(request: NextRequest) {
   );
   const safePage = Math.max(1, parsePositiveInt(page, 1));
   const isSearchDepositCompleted = normalizeBoolean(searchDepositCompleted);
-  const safeSearchMyOrders = normalizeBoolean(searchMyOrders);
+  const safeSearchMyOrders = privilegedRead ? normalizeBoolean(searchMyOrders) : false;
   const safeSearchOrderStatusCancelled = normalizeBoolean(searchOrderStatusCancelled);
   const safeSearchOrderStatusCompleted = normalizeBoolean(searchOrderStatusCompleted);
   const safePrivateSale = normalizeBoolean(privateSale);
-  const safeManualConfirmPayment = normalizeBoolean(manualConfirmPayment);
+  const safeManualConfirmPayment = privilegedRead ? normalizeBoolean(manualConfirmPayment) : false;
+  const safeWalletAddress = privilegedRead ? normalizeString(walletAddress) : "";
+  const safeSearchBuyer = privilegedRead ? normalizeString(searchBuyer) : "";
+  const safeSearchDepositName = privilegedRead ? normalizeString(searchDepositName) : "";
+  const safeSearchStoreBankAccountNumber = privilegedRead ? normalizeString(searchStoreBankAccountNumber) : "";
+  const safeSearchBuyerBankAccountNumber = privilegedRead ? normalizeString(searchBuyerBankAccountNumber) : "";
 
   // searchStoreBankAccountNumber
   //console.log("getAllBuyOrders searchStoreBankAccountNumber", searchStoreBankAccountNumber);
@@ -330,21 +525,22 @@ export async function POST(request: NextRequest) {
 
   const routeCache = getRouteCache();
   const cacheKey = createCacheKey({
+    view: privilegedRead ? "privileged" : "public",
     agentcode: normalizeString(agentcode),
     storecode: effectiveStorecode,
     limit: safeLimit,
     page: safePage,
-    walletAddress: normalizeString(walletAddress).toLowerCase(),
+    walletAddress: safeWalletAddress.toLowerCase(),
     searchMyOrders: safeSearchMyOrders,
     searchOrderStatusCancelled: safeSearchOrderStatusCancelled,
     searchOrderStatusCompleted: safeSearchOrderStatusCompleted,
     searchStoreName: normalizeString(searchStoreName),
     privateSale: safePrivateSale,
     searchTradeId: normalizeString(searchTradeId),
-    searchBuyer: normalizeString(searchBuyer),
-    searchDepositName: normalizeString(searchDepositName),
-    searchStoreBankAccountNumber: normalizeString(searchStoreBankAccountNumber),
-    searchBuyerBankAccountNumber: normalizeString(searchBuyerBankAccountNumber),
+    searchBuyer: safeSearchBuyer,
+    searchDepositName: safeSearchDepositName,
+    searchStoreBankAccountNumber: safeSearchStoreBankAccountNumber,
+    searchBuyerBankAccountNumber: safeSearchBuyerBankAccountNumber,
     searchDepositCompleted: isSearchDepositCompleted,
     fromDate: normalizeString(body.fromDate),
     toDate: normalizeString(body.toDate),
@@ -373,17 +569,17 @@ export async function POST(request: NextRequest) {
               page: safePage,
               agentcode: normalizeString(agentcode),
               storecode: effectiveStorecode,
-              walletAddress: normalizeString(walletAddress),
+              walletAddress: safeWalletAddress,
               searchMyOrders: safeSearchMyOrders,
               searchOrderStatusCancelled: safeSearchOrderStatusCancelled,
               searchOrderStatusCompleted: safeSearchOrderStatusCompleted,
               searchStoreName: normalizeString(searchStoreName),
               privateSale: safePrivateSale,
               searchTradeId: normalizeString(searchTradeId),
-              searchBuyer: normalizeString(searchBuyer),
-              searchDepositName: normalizeString(searchDepositName),
-              searchStoreBankAccountNumber: normalizeString(searchStoreBankAccountNumber),
-              searchBuyerBankAccountNumber: normalizeString(searchBuyerBankAccountNumber),
+              searchBuyer: safeSearchBuyer,
+              searchDepositName: safeSearchDepositName,
+              searchStoreBankAccountNumber: safeSearchStoreBankAccountNumber,
+              searchBuyerBankAccountNumber: safeSearchBuyerBankAccountNumber,
               searchDepositCompleted: isSearchDepositCompleted,
               fromDate: normalizeString(body.fromDate),
               toDate: normalizeString(body.toDate),
@@ -402,14 +598,20 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await job;
+    const responseResult = privilegedRead
+      ? {
+          ...result,
+          view: "privileged",
+        }
+      : sanitizeBuyOrdersResultForPublic(result);
 
     routeCache.set(cacheKey, {
-      value: result,
+      value: responseResult,
       expiresAt: Date.now() + GET_ALL_BUY_ORDERS_ROUTE_CACHE_TTL_MS,
     });
 
     return NextResponse.json({
-      result,
+      result: responseResult,
       cached: false,
     });
   } catch (error) {
@@ -425,6 +627,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         result: {
+          view: privilegedRead ? "privileged" : "public",
           totalCount: 0,
           totalKrwAmount: 0,
           totalUsdtAmount: 0,
