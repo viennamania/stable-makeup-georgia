@@ -448,6 +448,8 @@ export async function POST(request: NextRequest) {
   const authIntent = hasCenterStoreAuthIntent(body);
   let privilegedRead = false;
   let effectiveStorecode = requestedStorecode;
+  let authStatus = 0;
+  let authError = "";
 
   if (authIntent) {
     const guard = await verifyCenterStoreAdminGuard({
@@ -459,6 +461,10 @@ export async function POST(request: NextRequest) {
     });
 
     privilegedRead = guard.ok;
+    if (!guard.ok) {
+      authStatus = guard.status;
+      authError = guard.error;
+    }
 
     if (guard.ok) {
       const requesterScopeStorecode = requesterStorecode || guardStorecode;
@@ -602,8 +608,18 @@ export async function POST(request: NextRequest) {
       ? {
           ...result,
           view: "privileged",
+          authIntent,
+          authStatus: 0,
+          authError: "",
+          authRecoverySuggested: false,
         }
-      : sanitizeBuyOrdersResultForPublic(result);
+      : {
+          ...sanitizeBuyOrdersResultForPublic(result),
+          authIntent,
+          authStatus,
+          authError,
+          authRecoverySuggested: authIntent && authStatus !== 0 && authStatus !== 403,
+        };
 
     routeCache.set(cacheKey, {
       value: responseResult,
@@ -628,6 +644,10 @@ export async function POST(request: NextRequest) {
       {
         result: {
           view: privilegedRead ? "privileged" : "public",
+          authIntent,
+          authStatus,
+          authError,
+          authRecoverySuggested: authIntent && authStatus !== 0 && authStatus !== 403,
           totalCount: 0,
           totalKrwAmount: 0,
           totalUsdtAmount: 0,
