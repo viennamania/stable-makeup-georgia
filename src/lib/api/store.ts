@@ -1928,6 +1928,8 @@ export async function getClearanceStoreDirectory(
           storeName: 1,
           companyName: 1,
           storeLogo: 1,
+          viewOnAndOff: 1,
+          liveOnAndOff: 1,
           favoriteOnAndOff: 1,
           clearanceSortOrder: 1,
           bankInfo: 1,

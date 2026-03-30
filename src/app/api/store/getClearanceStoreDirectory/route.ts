@@ -57,6 +57,8 @@ const sanitizeStoreForPublic = (store: any) => {
     storeName: store.storeName,
     companyName: store.companyName,
     storeLogo: store.storeLogo,
+    viewOnAndOff: store.viewOnAndOff,
+    liveOnAndOff: store.liveOnAndOff,
     favoriteOnAndOff: store.favoriteOnAndOff,
     clearanceSortOrder: store.clearanceSortOrder,
   };
