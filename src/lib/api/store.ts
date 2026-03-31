@@ -394,22 +394,38 @@ export async function updateStoreMemo(data: any) {
       throw new Error('Storecode is required');
     }
 
-    if (!safeStoreMemo) {
-      throw new Error('Store memo is required');
+    const existingStore = await collection.findOne(
+      { storecode: safeStorecode },
+      { projection: { storeMemo: 1, storeMemoUpdatedAt: 1 } }
+    );
+
+    if (!existingStore) {
+      throw new Error('Store not found');
     }
 
-    // update storeMemo
+    const previousMemo = String(existingStore?.storeMemo || '').trim();
+    if (previousMemo === safeStoreMemo) {
+      return {
+        success: true,
+        message: 'Store memo unchanged',
+        storeMemo: safeStoreMemo,
+        storeMemoUpdatedAt: existingStore?.storeMemoUpdatedAt || null,
+        unchanged: true,
+      };
+    }
+
+    const nextUpdatedAt = new Date();
     const result = await collection.updateOne(
       { storecode: safeStorecode },
       {
         $set: {
           storeMemo: safeStoreMemo,
-          storeMemoUpdatedAt: new Date(),
+          storeMemoUpdatedAt: nextUpdatedAt,
         },
       }
     );
-    if (result.modifiedCount === 0) {
-      throw new Error('Failed to update store memo');
+    if (result.matchedCount === 0) {
+      throw new Error('Store not found');
     }
 
     clearCachedStoreByCode(safeStorecode);
@@ -418,6 +434,7 @@ export async function updateStoreMemo(data: any) {
       success: true,
       message: 'Store memo updated successfully',
       storeMemo: safeStoreMemo,
+      storeMemoUpdatedAt: nextUpdatedAt,
     };
   
 }
@@ -447,7 +464,7 @@ export async function getOneStoreMemo(data: any) {
     return {
       success: true,
       message: 'Store memo retrieved successfully',
-      storeMemo: result.storeMemo,
+      storeMemo: String(result.storeMemo || ''),
       storeMemoUpdatedAt: result.storeMemoUpdatedAt || null,
     };
   

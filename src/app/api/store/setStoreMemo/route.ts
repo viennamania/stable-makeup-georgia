@@ -36,13 +36,6 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
   }
 
-  if (!storeMemo) {
-    return NextResponse.json({
-      result: null,
-      error: "storeMemo is required",
-    }, { status: 400 });
-  }
-
   if (storeMemo.length > 5000) {
     return NextResponse.json({
       result: null,
